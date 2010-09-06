@@ -213,7 +213,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new ClusteredGetCommand(key, cacheName);
    }
 
-   public void initializeReplicableCommand(ReplicableCommand c) {
+   /**
+    * @param isRemote true if the command is deserialized and is executed remote.
+    */
+   public void initializeReplicableCommand(ReplicableCommand c, boolean isRemote) {
       if (c == null) return;
       switch (c.getCommandId()) {
          case PutKeyValueCommand.COMMAND_ID:
@@ -230,14 +233,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
             rc.init(interceptorChain, icc);
             if (rc.getCommands() != null)
                for (ReplicableCommand nested : rc.getCommands()) {
-                  initializeReplicableCommand(nested);
+                  initializeReplicableCommand(nested, false);
                }
             break;
          case SingleRpcCommand.COMMAND_ID:
             SingleRpcCommand src = (SingleRpcCommand) c;
             src.init(interceptorChain, icc);
             if (src.getCommand() != null)
-               initializeReplicableCommand(src.getCommand());
+               initializeReplicableCommand(src.getCommand(), false);
 
             break;
          case InvalidateCommand.COMMAND_ID:
@@ -253,15 +256,18 @@ public class CommandsFactoryImpl implements CommandsFactory {
             pc.init(interceptorChain, icc, txTable);
             pc.initialize(notifier);
             if (pc.getModifications() != null)
-               for (ReplicableCommand nested : pc.getModifications()) initializeReplicableCommand(nested);
+               for (ReplicableCommand nested : pc.getModifications()) initializeReplicableCommand(nested, false);
+            pc.markTransactionAsRemote(isRemote);
             break;
          case CommitCommand.COMMAND_ID:
             CommitCommand commitCommand = (CommitCommand) c;
             commitCommand.init(interceptorChain, icc, txTable);
+            commitCommand.markTransactionAsRemote(isRemote);
             break;
          case RollbackCommand.COMMAND_ID:
             RollbackCommand rollbackCommand = (RollbackCommand) c;
             rollbackCommand.init(interceptorChain, icc, txTable);
+            rollbackCommand.markTransactionAsRemote(isRemote);
             break;
          case ClearCommand.COMMAND_ID:
             ClearCommand cc = (ClearCommand) c;
@@ -274,6 +280,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case LockControlCommand.COMMAND_ID:
             LockControlCommand lcc = (LockControlCommand) c;
             lcc.init(interceptorChain, icc, txTable);
+            lcc.markTransactionAsRemote(isRemote);
             break;
          case RehashControlCommand.COMMAND_ID:
             RehashControlCommand rcc = (RehashControlCommand) c;

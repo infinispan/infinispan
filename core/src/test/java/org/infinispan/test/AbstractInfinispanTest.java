@@ -21,31 +21,58 @@
  */
 package org.infinispan.test;
 
+import org.testng.AssertJUnit;
+import org.testng.annotations.AfterTest;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
-import org.testng.annotations.AfterTest;
+import static org.testng.Assert.assertEquals;
 
 /**
- * AbstractInfinispanTest is a superclass of all Infinispan tests. 
- * 
+ * AbstractInfinispanTest is a superclass of all Infinispan tests.
+ *
  * @author Vladimir Blagojevic
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public class AbstractInfinispanTest {
-   
-   @AfterTest(alwaysRun=true)
+
+   @AfterTest(alwaysRun = true)
    protected void nullifyInstanceFields() {
-      for(Class<?> current = this.getClass();current.getSuperclass() != null; current = current.getSuperclass()) {
+      for (Class<?> current = this.getClass(); current.getSuperclass() != null; current = current.getSuperclass()) {
          Field[] fields = current.getDeclaredFields();
-         for(Field f:fields) {
-            try {               
-               if(!Modifier.isStatic(f.getModifiers()) && !f.getDeclaringClass().isPrimitive()) {
+         for (Field f : fields) {
+            try {
+               if (!Modifier.isStatic(f.getModifiers()) && !f.getDeclaringClass().isPrimitive()) {
                   f.setAccessible(true);
                   f.set(this, null);
                }
-            } catch (Exception e) {} 
-         }         
-      }      
+            } catch (Exception e) {}
+         }
+      }
+   }
+
+   public void eventually(Condition ec, long timeout) {
+      int loops = 10;
+      long sleepDuration = timeout / loops;
+      try {
+         for (int i = 0; i < loops; i++) {
+
+            if (ec.isSatisfied()) break;
+            Thread.sleep(sleepDuration);
+         }
+         assertEquals(true, ec.isSatisfied());
+      } catch (Exception e) {
+         throw new RuntimeException("Unexpected!", e);
+      }
+   }
+
+   public void eventually(Condition ec) {
+      eventually(ec, 10000);
+   }
+
+   public interface Condition {
+      public boolean isSatisfied() throws Exception;
    }
 }

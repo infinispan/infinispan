@@ -32,6 +32,8 @@ import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.RemoteTransaction;
 import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -45,14 +47,20 @@ import java.util.Set;
  * For more details refer to: https://jira.jboss.org/jira/browse/ISPN-70 https://jira.jboss.org/jira/browse/ISPN-48
  *
  * @author Vladimir Blagojevic (<a href="mailto:vblagoje@redhat.com">vblagoje@redhat.com</a>)
+ * @author Mircea.Markus@jboss.com
+ * @param
  * @since 4.0
  */
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.LOCK_CONTROL_COMMAND)
 public class LockControlCommand extends AbstractTransactionBoundaryCommand {
+
+   private static Log log = LogFactory.getLog(LockControlCommand.class);
+
    public static final int COMMAND_ID = 3;
    private Set<Object> keys;
    private Object singleKey;
    private boolean implicit = false;
+   private boolean unlock = false;
 
    public LockControlCommand() {
    }
@@ -143,8 +151,13 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
       RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext();
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
 
-      boolean remoteTxinitiated = transaction != null;
-      if (!remoteTxinitiated) {
+      if (transaction == null) {
+         if (unlock) {
+            if (log.isTraceEnabled()) {
+               log.trace("Unlock for in-existing transaction: " + globalTx + ". Not doing anything.");
+            }
+            return null;
+         }
          //create a remote tx without any modifications (we do not know modifications ahead of time)
          transaction = txTable.createRemoteTransaction(globalTx);
       }
@@ -159,11 +172,11 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    public Object[] getParameters() {
       if (keys == null || keys.isEmpty()) {
          if (singleKey == null)
-            return new Object[]{globalTx, cacheName, (byte) 1};
+            return new Object[]{globalTx, cacheName, unlock, (byte) 1};
          else
-            return new Object[]{globalTx, cacheName, (byte) 2, singleKey};
+            return new Object[]{globalTx, cacheName, unlock, (byte) 2, singleKey};
       }
-      return new Object[]{globalTx, cacheName, (byte) 3, keys};
+      return new Object[]{globalTx, cacheName, unlock, (byte) 3, keys};
    }
 
    @SuppressWarnings("unchecked")
@@ -172,20 +185,29 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
          throw new IllegalStateException("Unusupported command id:" + commandId);
       globalTx = (GlobalTransaction) args[0];
       cacheName = (String) args[1];
+      unlock = (Boolean)args[2];
 
       keys = null;
       singleKey = null;
-      byte mode = (Byte) args[2];
+      byte mode = (Byte) args[3];
       switch (mode) {
          case 1:
             break; // do nothing
          case 2:
-            singleKey = args[3];
+            singleKey = args[4];
             break;
          case 3:
-            keys = (Set<Object>) args[3];
+            keys = (Set<Object>) args[4];
             break;
       }
+   }
+
+   public boolean isUnlock() {
+      return unlock;
+   }
+
+   public void setUnlock(boolean unlock) {
+      this.unlock = unlock;
    }
 
    public boolean equals(Object o) {
@@ -197,7 +219,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
       LockControlCommand that = (LockControlCommand) o;
       if (!super.equals(that))
          return false;
-      return keys.equals(that.keys) && Util.safeEquals(singleKey, that.singleKey);
+      return keys.equals(that.keys) && Util.safeEquals(singleKey, that.singleKey) && (unlock == that.unlock);
    }
 
    public int hashCode() {
@@ -213,6 +235,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
             ", cacheName='" + cacheName +
             ", implicit='" + implicit +
             ", keys=" + keys +
+            ", unlock=" + unlock +
             ", singleKey=" + singleKey + '}';
    }
 }

@@ -92,11 +92,13 @@ public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {
 
       t0.execute(PerCacheExecutorThread.Operations.COMMIT_TX);
 
-      LockManager lockManager = TestingUtil.extractLockManager(cache1);
-      while (!lockManager.isLocked("k1")) {
-         Thread.sleep(50);
-      }
-      System.out.println("successful replication !");
+      final LockManager lm1 = TestingUtil.extractLockManager(cache1);
+
+      eventually(new Condition() {
+         public boolean isSatisfied() throws Exception {
+            return lm1.isLocked("k1");
+         }
+      }); //now t0 replicated, acquired lock on k1 and it tries to acquire lock on k2
 
 
       t1.setKeyValue("k1", "v1_t1");
@@ -106,15 +108,18 @@ public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {
       Object t1Response = t1.waitForResponse();
       Object t0Response = remoteReplicationInterceptor.getResponse();
 
-      System.out.println("t0Response = " + t0Response);
-      System.out.println("t1Response = " + t1Response);
+      log.trace("t0Response = " + t0Response);
+      log.trace("t1Response = " + t1Response);
 
       assert xor(t1Response instanceof DeadlockDetectedException, t0Response instanceof DeadlockDetectedException);
+      TransactionTable transactionTable1 = TestingUtil.extractComponent(cache1, TransactionTable.class);
+
 
       if (t0Response instanceof DeadlockDetectedException) {
          replListener(cache0).expectWithTx(PutKeyValueCommand.class, PutKeyValueCommand.class);
          assertEquals(t1.execute(PerCacheExecutorThread.Operations.COMMIT_TX), PerCacheExecutorThread.OperationsResult.COMMIT_TX_OK);
          replListener(cache0).waitForRpc();
+         assertEquals(transactionTable1.getLocalTxCount(), 0);         
       }
 
       DeadlockDetectingLockManager ddLm0 = (DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache0);
@@ -132,8 +137,6 @@ public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {
 
       assertEquals(transactionTable0.getRemoteTxCount(), 0);
 
-      TransactionTable transactionTable1 = TestingUtil.extractComponent(cache1, TransactionTable.class);
-      assertEquals(transactionTable1.getLocalTxCount(), 0);
       for (int i = 0; i < 20; i++) {
          if (!(transactionTable1.getRemoteTxCount() == 0)) Thread.sleep(50);
       }
@@ -163,7 +166,7 @@ public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {
             return invokeNextInterceptor(ctx, command);
          } catch (Throwable throwable) {
             if (!ctx.isOriginLocal()) {
-               log.trace("Setting thrownExceptionForRemoteTx to " + throwable);
+               log.trace("Setting executionResponse to " + throwable);
                executionResponse = throwable;
             } else {
                log.trace("Ignoring throwable " + throwable);

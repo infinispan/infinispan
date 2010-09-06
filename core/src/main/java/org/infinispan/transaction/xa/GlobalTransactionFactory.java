@@ -1,6 +1,7 @@
 package org.infinispan.transaction.xa;
 
 import org.infinispan.config.Configuration;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.Address;
@@ -8,13 +9,23 @@ import org.infinispan.remoting.transport.Address;
 import java.util.Random;
 
 /**
- * Factory for GlobalTransaction/DadlockDetectingGlobalTransaction.
+ * Factory for GlobalTransaction/DeadlockDetectingGlobalTransaction.
  *
  * @author Mircea.Markus@jboss.com
  */
 public class GlobalTransactionFactory {
 
    private boolean isEddEnabled = false;
+
+   private DistributionManager distributionManager;
+
+   private Configuration configuration;
+
+   @Inject
+   public void init(DistributionManager distributionManager, Configuration configuration) {
+      this.distributionManager = distributionManager;
+      this.configuration = configuration;
+   }
 
    /** this class is internally synchronized, so it can be shared between instances */
    private final Random rnd = new Random();
@@ -43,7 +54,7 @@ public class GlobalTransactionFactory {
 
    public GlobalTransaction instantiateGlobalTransaction() {
       if (isEddEnabled) {
-         return new DeadlockDetectingGlobalTransaction();
+         return new DldGlobalTransaction();
       } else {
          return new GlobalTransaction();
       }
@@ -52,7 +63,12 @@ public class GlobalTransactionFactory {
    public GlobalTransaction newGlobalTransaction(Address addr, boolean remote) {
       GlobalTransaction gtx;
       if (isEddEnabled) {
-         DeadlockDetectingGlobalTransaction globalTransaction = new DeadlockDetectingGlobalTransaction(addr, remote);
+         DldGlobalTransaction globalTransaction;
+         if (configuration.getCacheMode().isDistributed()) {
+            globalTransaction = new DistDldGlobalTransaction(addr, remote, distributionManager, configuration.getNumOwners());
+         } else {
+            globalTransaction = new DldGlobalTransaction(addr, remote);
+         }
          globalTransaction.setCoinToss(generateRandomId());
          gtx = globalTransaction;
       } else {

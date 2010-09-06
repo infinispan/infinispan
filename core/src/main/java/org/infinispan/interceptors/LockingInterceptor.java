@@ -58,7 +58,6 @@ import java.util.Map;
  * Interceptor to implement <a href="http://wiki.jboss.org/wiki/JBossCacheMVCC">MVCC</a> functionality.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @author Mircea.Markus@jboss.com
  * @see <a href="http://wiki.jboss.org/wiki/JBossCacheMVCC">MVCC designs</a>
  * @since 4.0
  */
@@ -139,21 +138,45 @@ public class LockingInterceptor extends CommandInterceptor {
          if (localTxScope) {
             c.attachGlobalTransaction((GlobalTransaction) ctx.getLockOwner());
          }
-         try {
-            for (Object key : c.getKeys()) {
-               if (c.isImplicit() && localTxScope && !lockManager.ownsLock(key, ctx.getLockOwner())) {
-                  //if even one key is unlocked we need to invoke this lock command cluster wide...
-                  shouldInvokeOnCluster = true;
+
+         if (c.isUnlock()) {
+            lockManager.releaseLocks(ctx);
+            if (log.isTraceEnabled()) log.trace("Lock released for: " + ctx.getLockOwner());
+            return null;
+         }
+
+         for (Object key : c.getKeys()) {
+            if (c.isImplicit() && localTxScope && !lockManager.ownsLock(key, ctx.getLockOwner())) {
+               //if even one key is unlocked we need to invoke this lock command cluster wide...
+               shouldInvokeOnCluster = true;
+               break;
+            }
+         }
+         boolean goRemoteFirst = configuration.isEnableDeadlockDetection() && localTxScope;
+         if (goRemoteFirst) {
+            Object result = invokeNextInterceptor(ctx, c);
+            try {
+               for (Object key : c.getKeys()) {
+                  entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, false);
                }
+            } catch (Throwable e) {
+               //if anything happen during locking then unlock remote
+               c.setUnlock(true);
+               invokeNextInterceptor(ctx, c);
+               throw e;
+            }
+            return result;
+         } else {
+            for (Object key : c.getKeys()) {
                entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, false);
             }
             if (shouldInvokeOnCluster || c.isExplicit())
                return invokeNextInterceptor(ctx, c);
             else
                return null;
-         } catch (Throwable te) {
-            return cleanLocksAndRethrow(ctx, te);
          }
+      } catch (Throwable te) {
+            return cleanLocksAndRethrow(ctx, te);
       } finally {
          if (ctx.isInTxScope()) {
             doAfterCall(ctx);

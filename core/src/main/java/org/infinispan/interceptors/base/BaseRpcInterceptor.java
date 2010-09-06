@@ -56,11 +56,12 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
       if (ctx.isOriginLocal()) {
-         rpcManager.broadcastRpcCommand(command, true, false);
+         //unlock will happen async as it is a best effort
+         boolean sync = !command.isUnlock();
+         rpcManager.broadcastRpcCommand(command, sync, false);
       }
       return retVal;
    }
-
 
    protected final boolean isSynchronous(InvocationContext ctx) {
       if (ctx.hasFlag(Flag.FORCE_SYNCHRONOUS))

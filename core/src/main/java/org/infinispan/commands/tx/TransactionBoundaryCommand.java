@@ -30,9 +30,12 @@ import org.infinispan.commands.VisitableCommand;
  * {@link org.infinispan.transaction.xa.GlobalTransaction}
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public interface TransactionBoundaryCommand extends VisitableCommand, CacheRpcCommand {
 
    GlobalTransaction getGlobalTransaction();
+
+   void markTransactionAsRemote(boolean remote);
 }

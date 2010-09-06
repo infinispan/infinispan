@@ -8,6 +8,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -23,6 +24,7 @@ import java.util.HashSet;
  * For more details refer to: https://jira.jboss.org/jira/browse/ISPN-70 https://jira.jboss.org/jira/browse/ISPN-48
  *
  * @author <a href="mailto:vblagoje@redhat.com">Vladimir Blagojevic (vblagoje@redhat.com)</a>
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
@@ -35,10 +37,8 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
-         throws Throwable {
-      boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
-      if (localTxScope) {
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      if (shouldAcquireRemoteLock(ctx)) {
          lockEagerly(ctx, Collections.singleton(command.getKey()));
       }
       return invokeNextInterceptor(ctx, command);
@@ -46,8 +46,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
-      if (localTxScope) {
+      if (shouldAcquireRemoteLock(ctx)) {
          lockEagerly(ctx, Collections.singleton(command.getKey()));
       }
       return invokeNextInterceptor(ctx, command);
@@ -56,8 +55,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
          throws Throwable {
-      boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
-      if (localTxScope) {
+      if (shouldAcquireRemoteLock(ctx)) {
          lockEagerly(ctx, Collections.singleton(command.getKey()));
       }
       return invokeNextInterceptor(ctx, command);
@@ -65,8 +63,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
-      if (localTxScope) {
+      if (shouldAcquireRemoteLock(ctx)) {
          lockEagerly(ctx, new HashSet<Object>(command.getMap().keySet()));
       }
       return invokeNextInterceptor(ctx, command);
@@ -74,8 +71,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
-      if (localTxScope) {
+      if (shouldAcquireRemoteLock(ctx)) {
          lockEagerly(ctx, Collections.singleton(command.getKey()));
       }
       return invokeNextInterceptor(ctx, command);
@@ -84,8 +80,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
    @Override
    public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command)
          throws Throwable {
-      boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
-      if (localTxScope) {
+      if (shouldAcquireRemoteLock(ctx)) {
          lockEagerly(ctx, Collections.singleton(command.getKey()));
       }
       return invokeNextInterceptor(ctx, command);
@@ -94,5 +89,9 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
    private Object lockEagerly(InvocationContext ctx, Collection<Object> keys) throws Throwable {
       LockControlCommand lcc = cf.buildLockControlCommand(keys, true);
       return invokeNextInterceptor(ctx, lcc);
+   }
+
+   private boolean shouldAcquireRemoteLock(InvocationContext ctx) {
+      return ctx.isInTxScope() & ctx.isOriginLocal() && !ctx.hasFlag(Flag.CACHE_MODE_LOCAL);
    }
 }

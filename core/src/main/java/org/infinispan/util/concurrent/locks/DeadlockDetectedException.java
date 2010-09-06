@@ -1,6 +1,7 @@
 package org.infinispan.util.concurrent.locks;
 
 import org.infinispan.CacheException;
+import org.infinispan.util.concurrent.TimeoutException;
 
 /**
  * Exception signaling detected deadlocks.

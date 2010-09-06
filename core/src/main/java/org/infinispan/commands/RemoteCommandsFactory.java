@@ -6,6 +6,7 @@ import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.LockIntentionNotificationCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -29,10 +30,11 @@ import org.infinispan.remoting.transport.Transport;
  * cache-specific components into it.
  * <p />
  * Usually a second step to unmarshalling a command from a byte stream (after
- * creating an un-initialized version using this factory) is to pass the command though {@link org.infinispan.commands.CommandsFactory#initializeReplicableCommand(ReplicableCommand)}.
+ * creating an un-initialized version using this factory) is to pass the command though {@link CommandsFactory#initializeReplicableCommand(ReplicableCommand,boolean)}.
  *
- * @see org.infinispan.commands.CommandsFactory#initializeReplicableCommand(ReplicableCommand)
+ * @see CommandsFactory#initializeReplicableCommand(ReplicableCommand,boolean)
  * @author Manik Surtani
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
@@ -48,7 +50,7 @@ public class RemoteCommandsFactory {
     * Creates an un-initialized command.  Un-initialized in the sense that parameters will be set, but any components
     * specific to the cache in question will not be set.
     * <p/>
-    * You would typically set these parameters using {@link org.infinispan.commands.CommandsFactory#initializeReplicableCommand(ReplicableCommand)}
+    * You would typically set these parameters using {@link CommandsFactory#initializeReplicableCommand(ReplicableCommand,boolean)}
     * <p/>
     *
     * @param id         id of the command

@@ -83,39 +83,41 @@ public interface Ids {
    static final byte INVALIDATE_L1_COMMAND = 35;
    static final byte LOCK_CONTROL_COMMAND = 36;
    static final byte EVICT_COMMAND = 37;
-
    // others
+
    static final byte GLOBAL_TRANSACTION = 38;
    static final byte JGROUPS_ADDRESS = 39;
    static final byte MARSHALLED_VALUE = 40;
    static final byte TRANSACTION_LOG_ENTRY = 41;
    static final byte BUCKET = 42;
    static final byte DEADLOCK_DETECTING_GLOBAL_TRANSACTION = 43;
-
    /**
     * ids for infinispan tree classes *
     */
 
    static final byte NODE_KEY = 44;
-   static final byte FQN = 45;
 
+   static final byte FQN = 45;
    static final byte ATOMIC_HASH_MAP_DELTA = 46;
+
    static final byte ATOMIC_PUT_OPERATION = 47;
    static final byte ATOMIC_REMOVE_OPERATION = 48;
    static final byte ATOMIC_CLEAR_OPERATION = 49;
-
    static final byte REHASH_CONTROL_COMMAND = 50;
+
    static final byte DEFAULT_CONSISTENT_HASH = 51;
    static final byte UNION_CONSISTENT_HASH = 52;
    static final byte JOIN_COMPLETE_COMMAND = 53;
-
    /*
     * ids for server modules
     */
+
    static final byte SERVER_CACHE_VALUE = 55;
    static final byte MEMCACHED_CACHE_VALUE = 56;
    static final byte BYTE_ARRAY_KEY = 57;
    static final byte TOPOLOGY_ADDRESS = 58;
    static final byte TOPOLOGY_VIEW = 59;
 
+   //added in 4.2
+   static final byte LOCK_INTENTION_NOTIFICATION_COMMAND = 60;
 }

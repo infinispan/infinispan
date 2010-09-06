@@ -69,7 +69,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       CommandsFactory commandsFactory = cr.getLocalComponent(CommandsFactory.class);
 
       // initialize this command with components specific to the intended cache instance
-      commandsFactory.initializeReplicableCommand(cmd);
+      commandsFactory.initializeReplicableCommand(cmd, true);
 
       try {
          log.trace("Calling perform() on {0}", cmd);

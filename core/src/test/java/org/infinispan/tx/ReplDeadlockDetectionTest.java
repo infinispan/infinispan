@@ -111,7 +111,7 @@ public class ReplDeadlockDetectionTest extends MultipleCacheManagersTest {
       t2.setKeyValue("key", "value2");
       assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t1.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
       assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t2.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
-      System.out.println("After beggin");
+      System.out.println("After begin");
 
       t1.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
       t2.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
@@ -209,7 +209,7 @@ public class ReplDeadlockDetectionTest extends MultipleCacheManagersTest {
 
       replicationLatch.countDown();
 
-      Thread.sleep(3000); //just to make sure the remote tx thread managed to spin around for some times. 
+      Thread.sleep(3000); //just to make sure the remote tx thread managed to spin around for some times.
       lm2.unlock("key");
 
       t1.waitForResponse();

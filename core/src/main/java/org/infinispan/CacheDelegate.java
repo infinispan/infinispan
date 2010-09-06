@@ -287,8 +287,6 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
 
    public void lock(K key) {
       assertKeyNotNull(key);
-      //this will be removed with https://jira.jboss.org/browse/ISPN-598 
-      ConfigurationValidatingVisitor.checkEagerLockingAndDld(config, true);
       lock(Collections.singletonList(key));
    }
 
