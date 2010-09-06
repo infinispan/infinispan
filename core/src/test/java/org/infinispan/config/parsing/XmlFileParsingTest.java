@@ -162,6 +162,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
       assert c.isUseEagerLocking();
+      assert c.isEagerLockSingleNode();
       assert !c.isSyncRollbackPhase();
 
       c = namedCaches.get("syncRepl");

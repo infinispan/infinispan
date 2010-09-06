@@ -117,8 +117,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
 
    @Override
    public String toString() {
-      return getClass().getSimpleName() + "{" +
-            "gtx=" + globalTx +
+      return ", gtx=" + globalTx +
             ", cacheName='" + cacheName + '\'' +
             '}';
    }

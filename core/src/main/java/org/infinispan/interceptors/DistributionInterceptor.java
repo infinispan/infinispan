@@ -19,6 +19,7 @@ import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
@@ -30,6 +31,7 @@ import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -41,6 +43,7 @@ import java.util.Set;
  * The interceptor that handles distribution of entries across a cluster, as well as transparent lookup
  *
  * @author Manik Surtani
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public class DistributionInterceptor extends BaseRpcInterceptor {
@@ -189,8 +192,28 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      if (ctx.isOriginLocal())
-         rpcManager.invokeRemotely(dm.getAffectedNodes(command.getKeys()), command, true, true);
+      if (ctx.isOriginLocal()) {
+         if (configuration.isEagerLockSingleNode()) {
+            //only main data owner is locked, see: https://jira.jboss.org/browse/ISPN-615
+            Map<Object, List<Address>> toMulticast = dm.locateAll(command.getKeys(), 1);
+
+            //now compile address reunion
+            List<Address> where;
+            if (toMulticast.size() == 1) {//avoid building an extra array, as most often this will be a single key
+               where = toMulticast.values().iterator().next();
+               rpcManager.invokeRemotely(where, command, true, true);
+            } else {
+               where = new ArrayList<Address>();
+               for (List<Address> values:  toMulticast.values()) {
+                  where.addAll(values);
+               }
+               rpcManager.invokeRemotely(where, command, true, true);
+            }
+            ((LocalTxInvocationContext)ctx).remoteLocksAcquired(where);
+         } else {
+            rpcManager.invokeRemotely(dm.getAffectedNodes(command.getKeys()), command, true, true);
+         }
+      }
       return invokeNextInterceptor(ctx, command);
    }
 

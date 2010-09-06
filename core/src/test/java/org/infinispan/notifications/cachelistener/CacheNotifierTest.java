@@ -26,13 +26,14 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
    private TransactionManager tm;
    private CacheNotifier mockNotifier;
    private CacheNotifier origNotifier;
+   private CacheContainer cm;
 
    @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
       Configuration c = new Configuration();
       c.setCacheMode(Configuration.CacheMode.LOCAL);
       c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-      CacheContainer cm = TestCacheManagerFactory.createCacheManager(c, true);
+      cm = TestCacheManagerFactory.createCacheManager(c, true);
 
       cache = cm.getCache();
       tm = TestingUtil.getTransactionManager(cache);
@@ -44,6 +45,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
    public void tearDown() throws Exception {
       TestingUtil.replaceComponent(cache, CacheNotifier.class, origNotifier, true);
       TestingUtil.killCaches(cache);
+      cm.stop();
    }
 
    @AfterClass

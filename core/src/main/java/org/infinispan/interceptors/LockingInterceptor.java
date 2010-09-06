@@ -58,6 +58,7 @@ import java.util.Map;
  * Interceptor to implement <a href="http://wiki.jboss.org/wiki/JBossCacheMVCC">MVCC</a> functionality.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Mircea.Markus@jboss.com
  * @see <a href="http://wiki.jboss.org/wiki/JBossCacheMVCC">MVCC designs</a>
  * @since 4.0
  */
@@ -156,9 +157,7 @@ public class LockingInterceptor extends CommandInterceptor {
          if (goRemoteFirst) {
             Object result = invokeNextInterceptor(ctx, c);
             try {
-               for (Object key : c.getKeys()) {
-                  entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, false);
-               }
+               lockKeysForRemoteTx(ctx, c);
             } catch (Throwable e) {
                //if anything happen during locking then unlock remote
                c.setUnlock(true);
@@ -167,9 +166,7 @@ public class LockingInterceptor extends CommandInterceptor {
             }
             return result;
          } else {
-            for (Object key : c.getKeys()) {
-               entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, false);
-            }
+            lockKeysForRemoteTx(ctx, c);
             if (shouldInvokeOnCluster || c.isExplicit())
                return invokeNextInterceptor(ctx, c);
             else
@@ -183,6 +180,12 @@ public class LockingInterceptor extends CommandInterceptor {
          } else {
             throw new IllegalStateException("Attempting to lock but there is no transactional context in scope. " + ctx);
          }
+      }
+   }
+
+   private void lockKeysForRemoteTx(TxInvocationContext ctx, LockControlCommand c) throws InterruptedException {
+      for (Object key : c.getKeys()) {
+         entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, false);
       }
    }
 

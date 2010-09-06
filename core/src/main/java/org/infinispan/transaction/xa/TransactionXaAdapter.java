@@ -10,6 +10,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.BidirectionalLinkedHashMap;
 import org.infinispan.util.BidirectionalMap;
 import org.infinispan.util.InfinispanCollections;
@@ -21,7 +22,11 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This acts both as an local {@link org.infinispan.transaction.xa.CacheTransaction} and implementor of an {@link
@@ -50,6 +55,10 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
    private TransactionTable txTable;
    private Transaction transaction;
 
+   private Set<Address> remoteLockedNodes;
+   private boolean isMarkedForRollback;
+
+
    public TransactionXaAdapter(GlobalTransaction globalTx, InvocationContextContainer icc, InterceptorChain invoker,
                                CommandsFactory commandsFactory, Configuration configuration, TransactionTable txTable,
                                Transaction transaction) {
@@ -71,6 +80,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
    }
 
    public int prepare(Xid xid) throws XAException {
+      checkMarkedForRollback();
       if (configuration.isOnePhaseCommit()) {
          if (trace)
             log.trace("Received prepare for tx: " + xid + " . Skipping call as 1PC will be used.");
@@ -99,6 +109,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
          LocalTxInvocationContext ctx = icc.createTxInvocationContext();
          ctx.setXaCache(this);
          if (configuration.isOnePhaseCommit()) {
+            checkMarkedForRollback();
             if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
             PrepareCommand command = commandsFactory.buildPrepareCommand(globalTx, modifications, true);
             try {
@@ -243,4 +254,24 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
             ", txTimeout=" + txTimeout +
             '}';
    }
+
+   public boolean hasRemoteLocksAcquired(List<Address> leavers) {
+      if (log.isTraceEnabled()) {
+         log.trace("My remote locks: " + remoteLockedNodes + ", leavers are:" + leavers);
+      }
+      return (remoteLockedNodes != null) && !Collections.disjoint(remoteLockedNodes, leavers);
+   }
+
+   public void locksAcquired(Collection<Address> nodes) {
+      if (remoteLockedNodes == null) remoteLockedNodes = new HashSet<Address>();
+      remoteLockedNodes.addAll(nodes);
+   }
+
+   public void markForRollback() {
+      isMarkedForRollback = true;
+   }
+
+   private void checkMarkedForRollback() throws XAException {
+      if (isMarkedForRollback) throw new XAException(XAException.XA_RBOTHER);
+   }   
 }

@@ -2,11 +2,13 @@ package org.infinispan.context.impl;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.util.BidirectionalMap;
 
 import javax.transaction.Transaction;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -77,5 +79,9 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
    @Override
    public boolean hasLockedKey(Object key) {
       return xaAdapter != null && super.hasLockedKey(key);
+   }
+
+   public void remoteLocksAcquired(Collection<Address> nodes) {
+      xaAdapter.locksAcquired(nodes);
    }
 }
