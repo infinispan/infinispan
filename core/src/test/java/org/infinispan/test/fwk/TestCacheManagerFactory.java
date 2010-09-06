@@ -16,8 +16,10 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -294,17 +296,16 @@ public class TestCacheManagerFactory {
    }
 
    private static class PerThreadCacheManagers {
-      HashMap<String, EmbeddedCacheManager> cacheManagers = new HashMap<String, EmbeddedCacheManager>();
+      HashMap<EmbeddedCacheManager, String> cacheManagers = new HashMap<EmbeddedCacheManager, String>();
 
       public void checkManagersClosed(String testName) {
-         for (String cmName : cacheManagers.keySet()) {
-            EmbeddedCacheManager cm = cacheManagers.get(cmName);
-            if (cm.getStatus().allowInvocations()) {
+         for (Map.Entry<EmbeddedCacheManager, String> cmEntry : cacheManagers.entrySet()) {
+            if (cmEntry.getKey().getStatus().allowInvocations()) {
                String thName = Thread.currentThread().getName();
                String errorMessage = '\n' +
                      "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
                      "!!!!!! (" + thName + ") Exiting because " + testName + " has NOT shut down all the cache managers it has started !!!!!!!\n" +
-                     "!!!!!! (" + thName + ") The still-running cacheManager was created here: " + cmName + " !!!!!!!\n" +
+                     "!!!!!! (" + thName + ") The still-running cacheManager was created here: " + cmEntry.getValue() + " !!!!!!!\n" +
                      "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
                log.error(errorMessage);
                System.err.println(errorMessage);
@@ -315,7 +316,7 @@ public class TestCacheManagerFactory {
       }
 
       public String getNextCacheName() {
-         int index = cacheManagers.keySet().size();
+         int index = cacheManagers.size();
          char name = (char) ((int)'A' + index);
          StringBuffer result = new StringBuffer(5);
          for (int i = 0; i < 5; i++) {
@@ -325,7 +326,7 @@ public class TestCacheManagerFactory {
       }
 
       public void add(String methodName, DefaultCacheManager cm) {
-         cacheManagers.put(methodName, cm);
+         cacheManagers.put(cm, methodName);
       }
    }
 }
