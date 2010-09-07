@@ -2,6 +2,7 @@ package org.infinispan.notifications.cachemanagerlistener.event;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
 
 import java.util.List;
 
@@ -11,7 +12,7 @@ import java.util.List;
  * @author Manik Surtani
  * @since 4.0
  */
-public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChangedEvent {
+public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChangedEvent, MergeEvent {
 
    String cacheName;
    EmbeddedCacheManager cacheManager;
@@ -20,6 +21,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    Address localAddress;
    int viewId;
    private boolean needsToRejoin;
+   private List<List<Address>> subgroupsMerged;
 
    public EventImpl() {
    }
@@ -103,6 +105,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       if (localAddress != null ? !localAddress.equals(event.localAddress) : event.localAddress != null) return false;
       if (newMembers != null ? !newMembers.equals(event.newMembers) : event.newMembers != null) return false;
       if (oldMembers != null ? !oldMembers.equals(event.oldMembers) : event.oldMembers != null) return false;
+      if (!Util.safeEquals(subgroupsMerged, event.subgroupsMerged)) return false;
       if (type != event.type) return false;
 
       return true;
@@ -117,6 +120,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       result = 31 * result + (localAddress != null ? localAddress.hashCode() : 0);
       result = 31 * result + viewId;
       result = 31 * result + (needsToRejoin ? 1 : 0);
+      result = 31 * result + (subgroupsMerged == null ? 0 : subgroupsMerged.hashCode());
       return result;
    }
 
@@ -129,6 +133,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
               ", localAddress=" + localAddress +
               ", viewId=" + viewId +
               ", needsToRejoin=" + needsToRejoin +
+              ", subgroupsMerged=" + subgroupsMerged +
               '}';
    }
 
@@ -139,4 +144,13 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    public boolean isNeedsToRejoin() {
       return needsToRejoin;
    }
+
+   public void setSubgroupsMerged(List<List<Address>> subgroupsMerged) {
+      this.subgroupsMerged = subgroupsMerged;
+   }
+
+   public List<List<Address>> getSubgroupsMerged() {
+      return this.subgroupsMerged;
+   }
+
 }

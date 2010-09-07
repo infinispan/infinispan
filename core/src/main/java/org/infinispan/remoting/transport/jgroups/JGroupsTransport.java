@@ -72,20 +72,18 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * An encapsulation of a JGroups transport.  JGroups transports can be configured using a variety of methods, usually
- * by passing in one of the following properties:
- * <ul>
- * <li><tt>configurationString</tt> - a JGroups configuration String</li>
- * <li><tt>configurationXml</tt> - JGroups configuration XML as a String</li>
- * <li><tt>configurationFile</tt> - String pointing to a JGroups XML configuration file</li>
- * <li><tt>channelLookup</tt> - Fully qualified class name of a {@link org.infinispan.remoting.transport.jgroups.JGroupsChannelLookup} instance</li>
- * </ul>
- * These are normally passed in as Properties in {@link org.infinispan.config.GlobalConfiguration#setTransportProperties(java.util.Properties)}
+ * An encapsulation of a JGroups transport.  JGroups transports can be configured using a variety of methods, usually by
+ * passing in one of the following properties: <ul> <li><tt>configurationString</tt> - a JGroups configuration
+ * String</li> <li><tt>configurationXml</tt> - JGroups configuration XML as a String</li> <li><tt>configurationFile</tt>
+ * - String pointing to a JGroups XML configuration file</li> <li><tt>channelLookup</tt> - Fully qualified class name of
+ * a {@link org.infinispan.remoting.transport.jgroups.JGroupsChannelLookup} instance</li> </ul> These are normally
+ * passed in as Properties in {@link org.infinispan.config.GlobalConfiguration#setTransportProperties(java.util.Properties)}
  * or in the Infinispan XML configuration file.
- * 
+ *
  * @author Manik Surtani
  * @author Galder Zamarreño
  * @since 4.0
@@ -156,7 +154,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
       // ensure that the channel has FLUSH enabled.
       // see ISPN-83 for details.
-      if ( channel.getProtocolStack()!= null && channel.getProtocolStack().findProtocol(FLUSH.class) == null)
+      if (channel.getProtocolStack() != null && channel.getProtocolStack().findProtocol(FLUSH.class) == null)
          throw new ConfigurationException("Flush should be enabled. This is related to https://jira.jboss.org/jira/browse/ISPN-83");
    }
 
@@ -169,7 +167,8 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
          }
       }
       address = new JGroupsAddress(channel.getAddress());
-      if (log.isInfoEnabled()) log.info("Cache local address is {0}, physical addresses are {1}", getAddress(), getPhysicalAddresses());
+      if (log.isInfoEnabled())
+         log.info("Cache local address is {0}, physical addresses are {1}", getAddress(), getPhysicalAddresses());
    }
 
    public int getViewId() {
@@ -220,7 +219,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    private void initChannelAndRPCDispatcher() throws CacheException {
       initChannel();
       dispatcher = new CommandAwareRpcDispatcher(channel, this,
-                                                 asyncExecutor, inboundInvocationHandler, flushTracker, distributedSyncTimeout);
+              asyncExecutor, inboundInvocationHandler, flushTracker, distributedSyncTimeout);
       MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
       dispatcher.setRequestMarshaller(adapter);
       dispatcher.setResponseMarshaller(adapter);
@@ -379,7 +378,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
    public List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
                                         boolean usePriorityQueue, ResponseFilter responseFilter, boolean supportReplay)
-         throws Exception {
+           throws Exception {
 
       if (recipients != null && recipients.isEmpty()) {
          // don't send if dest list is empty
@@ -399,8 +398,8 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       if (!usePriorityQueue && ResponseMode.SYNCHRONOUS == mode) usePriorityQueue = true;
       try {
          RspList rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode),
-                                                        timeout, recipients != null, usePriorityQueue,
-                                                        toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, recipients == null || recipients.size() == members.size());
+                 timeout, recipients != null, usePriorityQueue,
+                 toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, recipients == null || recipients.size() == members.size());
 
          if (mode.isAsynchronous()) return Collections.emptyList();// async case
 
@@ -475,15 +474,49 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    // Implementations of JGroups interfaces
    // ------------------------------------------------------------------------------------------------------------------
 
+   private interface Notify {
+      void emitNotification(List<Address> oldMembers, View newView);
+   }
+
+   private class NotifyViewChange implements Notify {
+      @Override
+      public void emitNotification(List<Address> oldMembers, View newView) {
+         notifier.notifyViewChange(members, oldMembers, getAddress(), (int) newView.getVid().getId(), needsToRejoin(newView));
+      }
+   }
+
+   private class NotifyMerge implements Notify {
+
+      @Override
+      public void emitNotification(List<Address> oldMembers, View newView) {
+         MergeView mv = (MergeView) newView;
+         notifier.notifyMerge(members, oldMembers, getAddress(), (int) newView.getVid().getId(), needsToRejoin(newView), getSubgroups(mv.getSubgroups()));
+      }
+
+      private List<List<Address>> getSubgroups(Vector<View> subviews) {
+         List<List<Address>> l = new ArrayList<List<Address>>(subviews.size());
+         for (View v: subviews) l.add(fromJGroupsAddressList(v.getMembers()));
+         return l;         
+      }
+   }
+
    public void viewAccepted(View newView) {
       Vector<org.jgroups.Address> newMembers = newView.getMembers();
       List<Address> oldMembers = null;
-      if (log.isInfoEnabled()) log.info("Received new cluster view: {0}", newView);
+      Notify n = null;
+      if (newView instanceof MergeView) {
+         if (log.isInfoEnabled()) log.info("Received new, MERGED cluster view: {0}", newView);
+         if (notifier != null) n = new NotifyMerge();
+      } else {
+         if (log.isInfoEnabled()) log.info("Received new cluster view: {0}", newView);
+         if (notifier != null) n = new NotifyViewChange();
+      }
+
       synchronized (membersListLock) {
          boolean needNotification = false;
          if (newMembers != null) {
             oldMembers = members;
-            // we need a defensive copy anyway            
+            // we need a defensive copy anyway
             members = fromJGroupsAddressList(newMembers);
             needNotification = true;
          }
@@ -491,13 +524,14 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
          coordinator = (members != null && !members.isEmpty() && members.get(0).equals(getAddress()));
 
          // now notify listeners - *after* updating the coordinator. - JBCACHE-662
-         if (needNotification && notifier != null) {
-            notifier.notifyViewChange(members, oldMembers, getAddress(), (int) newView.getVid().getId(), needsToRejoin(newView));
+         if (needNotification && n != null) {
+            n.notify();
          }
 
          // Wake up any threads that are waiting to know about who the coordinator is
          membersListLock.notifyAll();
       }
+
    }
 
    private boolean needsToRejoin(View v) {
@@ -505,7 +539,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
          MergeView mv = (MergeView) v;
          org.jgroups.Address coord = v.getMembers().get(0);
          View winningPartition = null;
-         for (View p: mv.getSubgroups()) {
+         for (View p : mv.getSubgroups()) {
             if (p.getMembers().get(0).equals(coord)) {
                winningPartition = p;
                break;
@@ -622,6 +656,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    }
 
    // mainly for unit testing
+
    public CommandAwareRpcDispatcher getCommandAwareRpcDispatcher() {
       return dispatcher;
    }
