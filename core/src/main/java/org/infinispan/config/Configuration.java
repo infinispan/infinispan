@@ -28,8 +28,10 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.remoting.ReplicationQueueImpl;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.CacheException;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -262,6 +264,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public void setReplQueueInterval(long replQueueInterval, TimeUnit timeUnit) {
       setReplQueueInterval(timeUnit.toMillis(replQueueInterval));
+   }
+
+   public void setReplQueueClass(String classname) {
+      this.clustering.async.setReplQueueClass(classname);
    }
 
   
@@ -535,6 +541,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public long getReplQueueInterval() {
       return clustering.async.replQueueInterval;
+   }
+
+   public String getReplQueueClass() {
+      return this.clustering.async.replQueueClass;
    }
 
    public boolean isExposeJmxStatistics() {
@@ -1179,6 +1189,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        *             <a href=&quot;http://community.jboss.org/docs/DOC-15725&quot;>here</a>" */
       protected Boolean asyncMarshalling=false;
 
+      /**
+       * @configRef desc="This overrides the replication queue implementation class.  Overriding the default allows
+       *                  you to add behavior to the queue, typically by subclassing the default implementation."
+       */
+      protected String replQueueClass = ReplicationQueueImpl.class.getName();
+
       private AsyncType(boolean readFromXml) {
          super();
          this.readFromXml = readFromXml;
@@ -1204,6 +1220,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             return false;
          if (useReplQueue != null ? !useReplQueue.equals(asyncType.useReplQueue) : asyncType.useReplQueue != null)
             return false;
+         if (!Util.safeEquals(replQueueClass, asyncType.replQueueClass))
+            return false;
 
          return true;
       }
@@ -1215,6 +1233,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          result = 31 * result + (replQueueMaxElements != null ? replQueueMaxElements.hashCode() : 0);
          result = 31 * result + (replQueueInterval != null ? replQueueInterval.hashCode() : 0);
          result = 31 * result + (asyncMarshalling != null ? asyncMarshalling.hashCode() : 0);
+         result = 31 * result + (replQueueClass != null ? replQueueClass.hashCode() : 0);
          return result;
       }
 
@@ -1244,6 +1263,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setAsyncMarshalling(Boolean asyncMarshalling) {
          testImmutability("asyncMarshalling");
          this.asyncMarshalling = asyncMarshalling;
+      }
+
+      @XmlAttribute
+      public void setReplQueueClass(String replQueueClass) {
+         testImmutability("replQueueClass");
+         this.replQueueClass = replQueueClass;
       }
    }
    

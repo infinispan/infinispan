@@ -23,10 +23,21 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    protected EmbeddedCacheManager cacheManager;
    protected Cache<Object, Object> cache;
 
+   protected void setup() throws Exception {
+      cacheManager = createCacheManager();
+      if (cache == null) cache = cacheManager.getCache();
+   }
+
+   protected void teardown() {
+      TestingUtil.killCacheManagers(cacheManager);
+      cache = null;
+      cacheManager = null;
+   }
+
    @BeforeClass()
    protected void createBeforeClass() throws Exception {
       try {
-         if (cleanup == CleanupPhase.AFTER_TEST) cacheManager = createCacheManager();
+         if (cleanup == CleanupPhase.AFTER_TEST) setup();
       } catch (Exception e) {
          log.error("Unexpected!", e);
          throw e;
@@ -36,7 +47,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    @BeforeMethod
    protected void createBeforeMethod() throws Exception {
       try {
-         if (cleanup == CleanupPhase.AFTER_METHOD) cacheManager = createCacheManager();
+         if (cleanup == CleanupPhase.AFTER_METHOD) setup();
       } catch (Exception e) {
          log.error("Unexpected!", e);
          throw e;
@@ -46,7 +57,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    @AfterClass(alwaysRun=true)
    protected void destroyAfterClass() {
       try {
-         if (cleanup == CleanupPhase.AFTER_TEST) TestingUtil.killCacheManagers(cacheManager);
+         if (cleanup == CleanupPhase.AFTER_TEST) teardown();
       } catch (Exception e) {
          log.error("Unexpected!", e);
       }
@@ -54,7 +65,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
    @AfterMethod(alwaysRun=true)
    protected void destroyAfterMethod() {
-      if (cleanup == CleanupPhase.AFTER_METHOD) TestingUtil.killCacheManagers(cacheManager);
+      if (cleanup == CleanupPhase.AFTER_METHOD) teardown();
    }
 
    @AfterMethod(alwaysRun=true)
