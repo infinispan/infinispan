@@ -23,6 +23,7 @@ package org.infinispan.factories;
 
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.remoting.ReplicationQueue;
+import org.infinispan.util.Util;
 
 /**
  * Factory for ReplicationQueue.
@@ -33,9 +34,14 @@ import org.infinispan.remoting.ReplicationQueue;
 @DefaultFactoryFor(classes = ReplicationQueue.class)
 public class ReplicationQueueFactory extends EmptyConstructorNamedCacheFactory implements AutoInstantiableFactory {
    @Override
+   @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
       if ((!configuration.getCacheMode().isSynchronous()) && configuration.isUseReplQueue()) {
-         return super.construct(componentType);
+         String type = configuration.getReplQueueClass();
+         if (type == null)
+            return super.construct(componentType);
+         else
+            return (T) super.construct(Util.loadClass(type));
       } else {
          return null;
       }

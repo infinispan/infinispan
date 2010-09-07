@@ -37,6 +37,9 @@ import org.infinispan.transaction.TransactionLog;
 import org.infinispan.util.Util;
 import org.infinispan.container.EntryFactory;
 
+import static org.infinispan.util.Util.getInstance;
+import static org.infinispan.util.Util.loadClass;
+
 /**
  * Simple factory that just uses reflection and an empty constructor of the component type.
  *
@@ -47,22 +50,22 @@ import org.infinispan.container.EntryFactory;
         CacheLoaderManager.class, InvocationContextContainer.class, PassivationManager.class,
         BatchContainer.class, TransactionLog.class, EvictionManager.class, InvocationContextContainer.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+
    @Override
+   @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
       if (componentType.isInterface()) {
          Class componentImpl;
          if (componentType.equals(StreamingMarshaller.class)) {
-            VersionAwareMarshaller versionAwareMarshaller = Util.getInstance(VersionAwareMarshaller.class);
+            VersionAwareMarshaller versionAwareMarshaller = getInstance(VersionAwareMarshaller.class);
             return componentType.cast(versionAwareMarshaller);
-         } else if (componentType.equals(InvocationContextContainer.class)) {
-            componentImpl = InvocationContextContainerImpl.class;
          } else {
             // add an "Impl" to the end of the class name and try again
-            componentImpl = Util.loadClass(componentType.getName() + "Impl");
+            componentImpl = loadClass(componentType.getName() + "Impl");
          }
-         return componentType.cast(Util.getInstance(componentImpl));
+         return componentType.cast(getInstance(componentImpl));
       } else {
-         return Util.getInstance(componentType);
+         return getInstance(componentType);
       }
    }
 }

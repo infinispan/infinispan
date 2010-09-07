@@ -30,6 +30,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.util.logging.Log;
@@ -49,113 +50,33 @@ import java.util.concurrent.TimeUnit;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ReplicationQueue {
-   private static final Log log = LogFactory.getLog(ReplicationQueue.class);
-
-   /**
-    * Max elements before we flush
-    */
-   private long maxElements = 500;
-
-   /**
-    * Holds the replication jobs.
-    */
-   private final BlockingQueue<ReplicableCommand> elements = new LinkedBlockingQueue<ReplicableCommand>();
-
-   /**
-    * For periodical replication
-    */
-   private ScheduledExecutorService scheduledExecutor = null;
-   private RpcManager rpcManager;
-   private Configuration configuration;
-   private boolean enabled;
-   private CommandsFactory commandsFactory;
-
-   public boolean isEnabled() {
-      return enabled;
-   }
-
-   @Inject
-   private void injectDependencies(@ComponentName(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR) ScheduledExecutorService executor,
-                                   RpcManager rpcManager, Configuration configuration, CommandsFactory commandsFactory) {
-      this.rpcManager = rpcManager;
-      this.configuration = configuration;
-      this.commandsFactory = commandsFactory;
-      this.scheduledExecutor = executor;
-   }
-
-   /**
-    * Starts the asynchronous flush queue.
-    */
-   @Start
-   public void start() {
-      long interval = configuration.getReplQueueInterval();
-      log.trace("Starting replication queue, with interval {0} and maxElements {1}", interval, maxElements);
-      this.maxElements = configuration.getReplQueueMaxElements();
-      // check again
-      enabled = configuration.isUseReplQueue();
-      if (enabled && interval > 0) {
-         scheduledExecutor.scheduleWithFixedDelay(new Runnable() {
-            public void run() {
-               flush();
-            }
-         }, interval, interval, TimeUnit.MILLISECONDS);
-      }
-   }
-
-   /**
-    * Stops the asynchronous flush queue.
-    */
-   @Stop(priority = 9) // Stop before transport
-   public void stop() {
-      if (scheduledExecutor != null) {
-         scheduledExecutor.shutdownNow();
-      }
-      scheduledExecutor = null;
-   }
+public interface ReplicationQueue extends Lifecycle {
 
 
    /**
-    * Adds a new method call.
+    * @return true if this replication queue is enabled, false otherwise.
     */
-   public void add(ReplicableCommand job) {
-      if (job == null)
-         throw new NullPointerException("job is null");
-      try {
-         elements.put(job);
-         if (elements.size() >= maxElements) flush();
-      } catch (InterruptedException ie) {
-         Thread.interrupted();
-      }
-   }
+   boolean isEnabled();
 
    /**
-    * Flushes existing method calls.
+    * Adds a new command to the replication queue.
+    *
+    * @param job command to add to the queue
     */
-   public void flush() {
-      List<ReplicableCommand> toReplicate = new LinkedList<ReplicableCommand>();
-      elements.drainTo(toReplicate);
-      if (log.isTraceEnabled()) log.trace("flush(): flushing repl queue (num elements={0})", toReplicate.size());
+   void add(ReplicableCommand job);
 
-      int toReplicateSize = toReplicate.size();
-      if (toReplicateSize > 0) {
-         try {
-            log.trace("Flushing {0} elements", toReplicateSize);
-            MultipleRpcCommand multipleRpcCommand = commandsFactory.buildReplicateCommand(toReplicate);
-            // send to all live caches in the cluster
-            rpcManager.invokeRemotely(null, multipleRpcCommand, ResponseMode.getAsyncResponseMode(configuration), configuration.getSyncReplTimeout());
-         }
-         catch (Throwable t) {
-            log.error("failed replicating " + toReplicate.size() + " elements in replication queue", t);
-         }
-      }
-   }
+   /**
+    * Flushes existing jobs in the replication queue.
+    */
+   void flush();
 
-   public int getElementsCount() {
-      return elements.size();
-   }
+   /**
+    * @return the number of elements in the replication queue.
+    */
+   int getElementsCount();
 
-   public void reset() {
-      elements.clear();
-   }
+   /**
+    * Resets the replication queue, typically used when a cache is restarted.
+    */
+   void reset();
 }
