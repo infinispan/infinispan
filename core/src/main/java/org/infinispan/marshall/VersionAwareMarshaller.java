@@ -53,6 +53,7 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
 
    private static final int VERSION_400 = 400;
    private static final int VERSION_410 = 410;
+   private static final int VERSION_420 = 420;
    private static final int CUSTOM_MARSHALLER = 999;
 
    private final JBossMarshaller defaultMarshaller;
@@ -119,8 +120,8 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
    public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
       ObjectOutput out = defaultMarshaller.startObjectOutput(os, isReentrant);
       try {
-         out.writeShort(VERSION_410);
-         if (trace) log.trace("Wrote version {0}", VERSION_410);
+         out.writeShort(VERSION_420);
+         if (trace) log.trace("Wrote version {0}", VERSION_420);
       } catch (Exception e) {
          finishObjectOutput(out);
          log.error("Unable to read version id from first two bytes of stream, barfing.");
