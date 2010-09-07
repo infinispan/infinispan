@@ -6,7 +6,10 @@ import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
@@ -35,10 +38,10 @@ public class RemoteCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest
       return remoteCacheStoreConfig;
    }
 
-   @AfterTest
+   @AfterMethod(alwaysRun = true)
    public void tearDown() {
       hrServer.stop();
-      localCacheManager.stop();
+      TestingUtil.killCacheManagers(localCacheManager);
    }
 
    @Override
