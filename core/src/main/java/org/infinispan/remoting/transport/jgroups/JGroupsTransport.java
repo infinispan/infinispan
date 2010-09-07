@@ -524,9 +524,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
          coordinator = (members != null && !members.isEmpty() && members.get(0).equals(getAddress()));
 
          // now notify listeners - *after* updating the coordinator. - JBCACHE-662
-         if (needNotification && n != null) {
-            n.notify();
-         }
+         if (needNotification && n != null) n.emitNotification(oldMembers, newView);
 
          // Wake up any threads that are waiting to know about who the coordinator is
          membersListLock.notifyAll();
