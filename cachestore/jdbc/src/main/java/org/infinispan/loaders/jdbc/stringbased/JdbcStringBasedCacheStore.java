@@ -195,16 +195,16 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          log.trace("Running sql '" + sql + "' on " + ed + ". Key string is '" + lockingKey + "'");
       Connection connection = null;
       PreparedStatement ps = null;
+      ByteBuffer byteBuffer = JdbcUtil.marshall(getMarshaller(), ed.toInternalCacheValue());
       try {
          connection = connectionFactory.getConnection();
          ps = connection.prepareStatement(sql);
-         ByteBuffer byteBuffer = JdbcUtil.marshall(getMarshaller(), ed.toInternalCacheValue());
          ps.setBinaryStream(1, byteBuffer.getStream(), byteBuffer.getLength());
          ps.setLong(2, ed.getExpiryTime());
          ps.setString(3, lockingKey);
          ps.executeUpdate();
       } catch (SQLException ex) {
-         logAndThrow(ex, "Error while storing string keys to database");
+         logAndThrow(ex, "Error while storing string key to database; key: '"+lockingKey+"', buffer size of value: " + byteBuffer.getLength() + " bytes");
       } finally {
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(connection);
