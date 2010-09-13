@@ -21,7 +21,9 @@
  */
 package org.infinispan.manager;
 
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
+import org.infinispan.CacheException;
 import org.infinispan.Version;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
@@ -44,6 +46,7 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
@@ -63,6 +66,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * A <tt>CacheManager</tt> is the primary mechanism for retrieving a {@link Cache} instance, and is often used as a
@@ -113,6 +118,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    private final ConcurrentMap<String, Cache> caches = new ConcurrentHashMap<String, Cache>();
    private final ConcurrentMap<String, Configuration> configurationOverrides = new ConcurrentHashMap<String, Configuration>();
    private final GlobalComponentRegistry globalComponentRegistry;
+   private final ReentrantPerEntryLockContainer cacheNameLockContainer;
 
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults.  See {@link Configuration}
@@ -200,7 +206,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       this.globalConfiguration.accept(new ConfigurationValidatingVisitor());
       this.defaultConfiguration = defaultConfiguration == null ? new Configuration() : defaultConfiguration.clone();
       this.defaultConfiguration.accept(new ConfigurationValidatingVisitor());
-      globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this);
+      this.globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this);
+      this.cacheNameLockContainer = new ReentrantPerEntryLockContainer(this.defaultConfiguration.getConcurrencyLevel());
       if (start)
          start();
    }
@@ -239,6 +246,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             configurationOverrides.put(entry.getKey(), c);
          }
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this);
+         cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());         
       } catch (RuntimeException re) {
          throw new ConfigurationException(re);
       }
@@ -280,6 +288,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             configurationOverrides.put(entry.getKey(), c);
          }
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this);
+         cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());         
       } catch (ConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {
@@ -329,7 +338,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          }
 
          globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this);
-
+         cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());
       } catch (RuntimeException re) {
          throw new ConfigurationException(re);
       }
@@ -406,10 +415,25 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       if (cacheName == null)
          throw new NullPointerException("Null arguments not allowed");
 
-      if (caches.containsKey(cacheName))
-         return caches.get(cacheName);
+      Cache<K, V> cache = caches.get(cacheName);
+      if (cache != null && cache.getStatus() == ComponentStatus.RUNNING)
+         return cache;
 
-      return createCache(cacheName);
+      boolean acquired = false;
+      try {
+         if (cacheNameLockContainer.acquireLock(cacheName, defaultConfiguration.getLockAcquisitionTimeout(), MILLISECONDS) != null) {
+            acquired = true;
+            return createCache(cacheName);
+         } else {
+            throw new CacheException("Unable to acquire lock on cache with name " + cacheName);
+         }
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException("Interrupted while trying to get lock on cache with cache name " + cacheName, e);
+      } finally {
+         if (acquired)
+            cacheNameLockContainer.releaseLock(cacheName);
+      }
    }
 
    public String getClusterName() {
@@ -434,7 +458,12 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       return t != null && t.isCoordinator();
    }
 
+   @GuardedBy("Cache name lock container keeps a lock per cache name which guards this method")
    private Cache createCache(String cacheName) {
+      Cache existingCache = caches.get(cacheName);
+      if (existingCache != null)
+         return existingCache;
+
       Configuration c;
       if (cacheName.equals(DEFAULT_CACHE_NAME) || !configurationOverrides.containsKey(cacheName))
          c = defaultConfiguration.clone();
@@ -444,13 +473,12 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       c.setGlobalConfiguration(globalConfiguration);
       c.assertValid();
       Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName);
-      Cache other = caches.putIfAbsent(cacheName, cache);
-      if (other == null) {
-         cache.start();
-         return cache;
-      } else {
-         return other;
-      }
+      existingCache = caches.put(cacheName, cache);
+      if (existingCache != null)
+         throw new IllegalStateException("attempt to initialize the cache twice");
+
+      cache.start();
+      return cache;
    }
 
    public void start() {
