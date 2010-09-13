@@ -54,7 +54,7 @@ public class MarshalledValue {
    volatile protected byte[] raw;
    volatile private int cachedHashCode = 0;
    // by default equals() will test on the instance rather than the byte array if conversion is required.
-   private transient boolean equalityPreferenceForInstance = true;
+   private transient volatile boolean equalityPreferenceForInstance = true;
    private final StreamingMarshaller marshaller;
 
    public MarshalledValue(Object instance, boolean equalityPreferenceForInstance, StreamingMarshaller marshaller) throws NotSerializableException {
@@ -180,7 +180,7 @@ public class MarshalledValue {
       if (instance != null && that.instance != null) return instance.equals(that.instance);
 
       // if conversion of one representation to the other is necessary, then see which we prefer converting.
-      if (equalityPreferenceForInstance) {
+      if (equalityPreferenceForInstance && that.equalityPreferenceForInstance) {
          if (instance == null) deserialize();
          if (that.instance == null) that.deserialize();
          return instance.equals(that.instance);
@@ -214,6 +214,11 @@ public class MarshalledValue {
          .append(", cachedHashCode=").append(cachedHashCode)
          .append("}@").append(Integer.toHexString(System.identityHashCode(this)));
       return sb.toString();
+   }
+
+   public MarshalledValue setEqualityPreferenceForInstance(boolean equalityPreferenceForInstance) {
+      this.equalityPreferenceForInstance = equalityPreferenceForInstance;
+      return this;
    }
 
    /**
