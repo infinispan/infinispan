@@ -26,6 +26,7 @@ import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.ValuesCommand;
+import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -113,10 +114,23 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
          value = createMarshalledValue(command.getValue(), ctx);
          command.setValue(value);
       }
-      Object retVal = invokeNextInterceptor(ctx, command);
-      compact(key);
-      compact(value);
-      return processRetVal(retVal);
+
+      // If origin is remote, set equality preference for raw so that deserialization is avoided
+      // Don't do this for local invocations so that unnecessary serialization is avoided.
+      boolean isRawComparisonRequired = !ctx.isOriginLocal() && command.getKey() instanceof MarshalledValue;
+      if (isRawComparisonRequired)
+         ((MarshalledValue) command.getKey()).setEqualityPreferenceForInstance(false);
+
+      try {
+         Object retVal = invokeNextInterceptor(ctx, command);
+         compact(key);
+         compact(value);
+         return processRetVal(retVal);
+      } finally {
+         // Regardless of what happens with the remote key update, revert to equality for instance
+         if (isRawComparisonRequired)
+            ((MarshalledValue) command.getKey()).setEqualityPreferenceForInstance(true);
+      }
    }
 
    @Override
@@ -222,6 +236,29 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       compact(newValue);
       compact(oldValue);
       return processRetVal(retVal);
+   }
+
+   @Override
+   public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
+      // If origin is remote, set equality preference for raw so that deserialization is avoided
+      // Don't do this for local invocations so that unnecessary serialization is avoided.
+      boolean isRemote = !ctx.isOriginLocal();
+      if (isRemote)
+         forceComparison(false, command);
+
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         if (isRemote)
+            forceComparison(true, command);
+      }
+   }
+
+   private void forceComparison(boolean isCompareInstance, InvalidateCommand command) {
+      for (Object key : command.getKeys()) {
+         if (key instanceof MarshalledValue)
+            ((MarshalledValue) key).setEqualityPreferenceForInstance(isCompareInstance);
+      }
    }
 
    private Object compactAndProcessRetVal(Set<MarshalledValue> marshalledValues, Object retVal)

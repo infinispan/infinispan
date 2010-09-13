@@ -63,6 +63,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Tests implicit marshalled values
@@ -256,7 +257,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       Cache cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
       
-      Pojo key1 = new Pojo(), value1 = new Pojo(), key2 = new Pojo(), value2 = new Pojo();
+      Pojo key1 = new Pojo(1), value1 = new Pojo(11), key2 = new Pojo(2), value2 = new Pojo(22);
       String key3 = "3", value3 = "three"; 
       cache1.put(key1, value1);
       cache1.put(key2, value2);
@@ -461,6 +462,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       cache2.addListener(l);
       try {
          Pojo pojo = new Pojo();
+         // Mock listener will force deserialization on transport thread. Ignore this by setting b to false.
+         pojo.b = false;
          cache1.put("key", pojo);
          assert l.newValue instanceof Pojo;
          assertSerializationCounts(1, 1);
@@ -476,6 +479,19 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       cache1.put(pojo, pojo);
       cache1.evict(pojo);
       assert !cache1.containsKey(pojo);
+   }
+
+   public void testModificationsOnSameCustomKey() {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
+
+      Pojo key = new Pojo();
+
+      cache1.put(key, "1");
+      cache2.put(key, "2");
+
+      // Deserialization only occurs when the cache2.put occurs, not during transport thread execution.
+      assertSerializationCounts(3, 1);
    }
 
    @Listener
@@ -506,10 +522,17 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
    public static class Pojo implements Externalizable {
       public int i;
-      boolean b;
+      boolean b = true;
       static int serializationCount, deserializationCount;
       final Log log = LogFactory.getLog(Pojo.class);
       private static final long serialVersionUID = -2888014339659501395L;
+
+      public Pojo(int i) {
+         this.i = i;
+      }
+
+      public Pojo() {
+      }
 
       public boolean equals(Object o) {
          if (this == o) return true;
@@ -533,15 +556,27 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       public void writeExternal(ObjectOutput out) throws IOException {
          out.writeInt(i);
          out.writeBoolean(b);
-         serializationCount++;
-         log.trace("serializationCount=" + serializationCount);
+         int serCount = updateSerializationCount();
+         log.trace("serializationCount=" + serCount);
       }
 
       public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
          i = in.readInt();
          b = in.readBoolean();
-         deserializationCount++;
-         log.trace("deserializationCount=" + deserializationCount);
+         if (b) {
+            // TODO: Find a better way to make sure a transport (JGroups) thread is not attempting to deserialize stuff
+            assert !Thread.currentThread().getName().startsWith("OOB") : "Transport (JGroups) thread is trying to deserialize stuff!!";
+         }
+         int deserCount = updateDeserializationCount();
+         log.trace("deserializationCount=" + deserCount);
+      }
+
+      public int updateSerializationCount() {
+         return ++serializationCount;
+      }
+
+      public int updateDeserializationCount() {
+         return ++deserializationCount;
       }
    }
 
