@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -44,9 +45,9 @@ public class TransactionTable {
    private static final Log log = LogFactory.getLog(TransactionTable.class);
    private static boolean trace = log.isTraceEnabled();
 
-   private final Map<Transaction, TransactionXaAdapter> localTransactions = new HashMap<Transaction, TransactionXaAdapter>();
+   private final Map<Transaction, TransactionXaAdapter> localTransactions = new ConcurrentHashMap<Transaction, TransactionXaAdapter>();
 
-   private final Map<GlobalTransaction, RemoteTransaction> remoteTransactions = new HashMap<GlobalTransaction, RemoteTransaction>();
+   private final Map<GlobalTransaction, RemoteTransaction> remoteTransactions = new ConcurrentHashMap<GlobalTransaction, RemoteTransaction>();
 
    private CommandsFactory commandsFactory;
    private Configuration configuration;
