@@ -43,7 +43,7 @@ import org.infinispan.util.logging.LogFactory;
 public class InvertedLeaveTask extends RehashTask {
 
    private static final Log log = LogFactory.getLog(InvertedLeaveTask.class);
-   private static final boolean trace = true;
+   private static final boolean trace = log.isTraceEnabled();
    private final List<Address> leavers;
    private final Address self;
    private final List<Address> leaversHandled;
@@ -67,8 +67,7 @@ public class InvertedLeaveTask extends RehashTask {
    }
 
    protected void performRehash() throws Exception {
-      long start = System.currentTimeMillis();
-      boolean trace = log.isTraceEnabled();
+      long start = trace ? System.currentTimeMillis() : 0;
 
       int replCount = configuration.getNumOwners();
       ConsistentHash oldCH = ConsistentHashHelper.createConsistentHash(configuration, dmi.getConsistentHash().getCaches(), leaversHandled);
@@ -107,13 +106,15 @@ public class InvertedLeaveTask extends RehashTask {
             if (trace)
                log.trace("Rehash not enabled, so not pulling state.");
          }
-         if (trace)
-            log.info("{0} completed leave rehash in {1}!", self, Util.prettyPrintTime(System.currentTimeMillis()
-                     - start));
-      } catch (Exception e) {        
+      } catch (Exception e) {
          throw new CacheException("Unexpected exception", e);
       } finally {
          leavers.removeAll(leaversHandled);
+         if (trace)
+            log.info("{0} completed leave rehash in {1}!", self, Util.prettyPrintTime(System.currentTimeMillis()
+                     - start));
+         else
+            log.info("{0} completed leave rehash!", self);
       }
    }
 

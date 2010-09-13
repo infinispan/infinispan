@@ -45,6 +45,7 @@ import java.util.Random;
 public class JoinTask extends RehashTask {
 
    private static final Log log = LogFactory.getLog(JoinTask.class);
+   private static final boolean trace = log.isTraceEnabled();
    private final Address self;
 
    public JoinTask(RpcManager rpcManager, CommandsFactory commandsFactory, Configuration conf,
@@ -70,8 +71,7 @@ public class JoinTask extends RehashTask {
    }
 
    protected void performRehash() throws Exception {
-      long start = System.currentTimeMillis();
-      boolean trace = log.isTraceEnabled();
+      long start = trace ? System.currentTimeMillis() : 0;
       if (log.isDebugEnabled()) log.debug("Commencing rehash on node: " + getMyAddress() + ". Before start, dmi.joinComplete = " + dmi.isJoinComplete());
       TransactionLogger transactionLogger = dmi.getTransactionLogger();
       boolean unlocked = false;
@@ -137,14 +137,16 @@ public class JoinTask extends RehashTask {
             invalidateInvalidHolders(chOld, chNew);
          }
 
-         if (trace)
-            log.info("{0} completed join in {1}!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
       } catch (Exception e) {
          log.error("Caught exception!", e);
          throw new CacheException("Unexpected exception", e);
       } finally {
          if (!unlocked) transactionLogger.unlockAndDisable();
          dmi.setJoinComplete(true);
+         if (trace)
+            log.info("{0} completed join rehash in {1}!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
+         else
+            log.info("{0} completed join rehash!", self);
       }
    }
 
