@@ -25,7 +25,8 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    public Transaction getRunningTransaction() {
-      throw new IllegalStateException("this method can only be called for locally originated transactions!");
+      // this method is only valid for locally originated transactions!
+      return null;
    }
 
    public Object getLockOwner() {
