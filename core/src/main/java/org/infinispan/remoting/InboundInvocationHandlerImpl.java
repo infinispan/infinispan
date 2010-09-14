@@ -44,11 +44,11 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    public Response handle(CacheRpcCommand cmd) throws Throwable {
       String cacheName = cmd.getCacheName();
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
-      long giveupTime = System.currentTimeMillis() + 30000; // arbitraty (?) wait time for caches to start
-      while (cr == null && System.currentTimeMillis() < giveupTime) {
-         Thread.sleep(100);
-         cr = gcr.getNamedComponentRegistry(cacheName);
-      }
+//      long giveupTime = System.currentTimeMillis() + 30000; // arbitraty (?) wait time for caches to start
+//      while (cr == null && System.currentTimeMillis() < giveupTime) {
+//         Thread.sleep(100);
+//         cr = gcr.getNamedComponentRegistry(cacheName);
+//      }
 
       if (cr == null) {
          if (log.isInfoEnabled()) log.info("Cache named {0} does not exist on this cache manager!", cacheName);
@@ -58,7 +58,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       Configuration localConfig = cr.getComponent(Configuration.class);
 
       if (!cr.getStatus().allowInvocations()) {
-         giveupTime = System.currentTimeMillis() + localConfig.getStateRetrievalTimeout();
+         long giveupTime = System.currentTimeMillis() + localConfig.getStateRetrievalTimeout();
          while (cr.getStatus().startingUp() && System.currentTimeMillis() < giveupTime) Thread.sleep(100);
          if (!cr.getStatus().allowInvocations()) {
             log.warn("Cache named [{0}] exists but isn't in a state to handle invocations.  Its state is {1}.", cacheName, cr.getStatus());
