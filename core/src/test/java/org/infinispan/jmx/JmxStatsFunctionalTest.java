@@ -296,6 +296,14 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       assert !existsObject(jmxDomain2 + ":cache-name=remote_cache(repl_sync),jmx-resource=Statistics");
    }
 
+   public void testStopUnstartedCacheManager() {
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
+      globalConfiguration.setExposeGlobalJmxStatistics(true);
+      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+      cm = TestCacheManagerFactory.createCacheManager(false, globalConfiguration);
+      cm.stop();
+   }
+
    static boolean existsObject(String s) {
       try {
          ObjectName objectName = new ObjectName(s);

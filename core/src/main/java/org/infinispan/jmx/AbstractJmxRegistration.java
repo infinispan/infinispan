@@ -50,8 +50,10 @@ public abstract class AbstractJmxRegistration {
    }
 
    protected void unregisterMBeans(Set<AbstractComponentRegistry.Component> components) {
-      ComponentsJmxRegistration registrar = buildRegistrar(components);
-      registrar.unregisterMBeans();
+      if (mBeanServer != null) {
+         ComponentsJmxRegistration registrar = buildRegistrar(components);
+         registrar.unregisterMBeans();
+      }
    }
 
    protected MBeanServer getMBeanServer(GlobalConfiguration configuration) {
