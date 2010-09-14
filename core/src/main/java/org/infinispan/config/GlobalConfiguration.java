@@ -132,6 +132,21 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       globalJmxStatistics.setAllowDuplicateDomains(allowDuplicateDomains);
    }
 
+   public boolean isStrictPeerToPeer() {
+      return transport.strictPeerToPeer;
+   }
+
+   /**
+    * If set to true, RPC operations will fail if the named cache does not exist on remote nodes
+    * with a NamedCacheNotFoundException.  Otherwise, operations will succeed but it will be
+    * logged on the caller that the RPC did not succeed on certain nodes due to the named cache
+    * not being available.
+    * @param strictPeerToPeer flag controlling this behavior
+    */
+   public void setStrictPeerToPeer(boolean strictPeerToPeer) {
+      transport.setStrictPeerToPeer(strictPeerToPeer);
+   }
+
    /**
     * Behavior of the JVM shutdown hook registered by the cache
     */
@@ -588,6 +603,14 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       protected String clusterName = "Infinispan-Cluster";
 
       /**
+       * @configRef desc = "If set to true, RPC operations will fail if the named cache does not exist on remote nodes
+       *                    with a NamedCacheNotFoundException.  Otherwise, operations will succeed but it will be
+       *                    logged on the caller that the RPC did not succeed on certain nodes due to the named cache
+       *                    not being available."
+       */
+      protected Boolean strictPeerToPeer = true;      
+
+      /**
        * @configRef desc="Cluster-wide synchronization timeout for locks.  Used to coordinate changes in cluster
        * membership."
        */
@@ -649,6 +672,12 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       public void setProperties(TypedProperties properties) {
          testImmutability("properties");
          this.properties = properties;
+      }
+
+      @XmlElement
+      public void setStrictPeerToPeer(Boolean strictPeerToPeer) {
+         testImmutability("strictPeerToPeer");
+         this.strictPeerToPeer = strictPeerToPeer;
       }
 
       @Override
