@@ -494,6 +494,16 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       assertSerializationCounts(3, 1);
    }
 
+   public void testReturnValueDeserialization() { 
+      Cache cache1 = cache(0, "replSync");
+      cache(1, "replSync");
+
+      Pojo v1 = new Pojo(1);
+      cache1.put("1", v1);
+      Pojo previous = (Pojo) cache1.put("1", new Pojo(2));
+      assert previous.equals(v1);
+   }
+
    @Listener
    public static class MockListener {
       Object newValue;
