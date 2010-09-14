@@ -99,7 +99,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       Map map = wrapMap(command.getMap(), marshalledValues, ctx);
       command.setMap(map);
       Object retVal = invokeNextInterceptor(ctx, command);
-      return compactAndProcessRetVal(marshalledValues, retVal);
+      return compactAndProcessRetVal(marshalledValues, retVal, ctx);
    }
 
    @Override
@@ -125,7 +125,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
          Object retVal = invokeNextInterceptor(ctx, command);
          compact(key);
          compact(value);
-         return processRetVal(retVal);
+         return processRetVal(retVal, ctx);
       } finally {
          // Regardless of what happens with the remote key update, revert to equality for instance
          if (isRawComparisonRequired)
@@ -142,7 +142,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       }
       Object retVal = invokeNextInterceptor(ctx, command);
       compact(value);
-      return processRetVal(retVal);
+      return processRetVal(retVal, ctx);
    }
 
    @Override
@@ -154,7 +154,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       }
       Object retVal = invokeNextInterceptor(ctx, command);
       compact(value);
-      return processRetVal(retVal);
+      return processRetVal(retVal, ctx);
    }
 
    @Override
@@ -167,7 +167,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       }
       Object retVal = invokeNextInterceptor(ctx, command);
       compact(mv);
-      return processRetVal(retVal);
+      return processRetVal(retVal, ctx);
    }
 
    @Override
@@ -235,7 +235,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       compact(key);
       compact(newValue);
       compact(oldValue);
-      return processRetVal(retVal);
+      return processRetVal(retVal, ctx);
    }
 
    @Override
@@ -261,11 +261,11 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       }
    }
 
-   private Object compactAndProcessRetVal(Set<MarshalledValue> marshalledValues, Object retVal)
+   private Object compactAndProcessRetVal(Set<MarshalledValue> marshalledValues, Object retVal, InvocationContext ctx)
            throws IOException, ClassNotFoundException {
       if (trace) log.trace("Compacting MarshalledValues created");
       for (MarshalledValue mv : marshalledValues) compact(mv);
-      return processRetVal(retVal);
+      return processRetVal(retVal, ctx);
    }
 
    private void compact(MarshalledValue mv) {
@@ -273,10 +273,12 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       mv.compact(false, false);
    }
 
-   private Object processRetVal(Object retVal) throws IOException, ClassNotFoundException {
+   private Object processRetVal(Object retVal, InvocationContext ctx) throws IOException, ClassNotFoundException {
       if (retVal instanceof MarshalledValue) {
-         if (trace) log.trace("Return is a marshall value, so extract instance from: {0}", retVal);
-         retVal = ((MarshalledValue) retVal).get();
+         if (ctx.isOriginLocal()) {
+            if (trace) log.trace("Return is a marshall value, so extract instance from: {0}", retVal);
+            retVal = ((MarshalledValue) retVal).get();
+         }
       }
       return retVal;
    }
