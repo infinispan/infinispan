@@ -42,11 +42,11 @@ public class TestCacheManagerFactory {
       }
    };
 
-   private static DefaultCacheManager newDefaultCacheManager(GlobalConfiguration gc, Configuration c, boolean keepJmxDomain) {
+   private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfiguration gc, Configuration c, boolean keepJmxDomain) {
       if (!keepJmxDomain) {
          gc.setJmxDomain("infinispan" + jmxDomainPostfix.incrementAndGet());
       }
-      return newDefaultCacheManager(gc, c);
+      return newDefaultCacheManager(start, gc, c);
    }
 
    public static EmbeddedCacheManager fromXml(String xmlFile, boolean allowDupeDomains) throws IOException {
@@ -80,7 +80,7 @@ public class TestCacheManagerFactory {
 
       minimizeThreads(gc);
 
-      EmbeddedCacheManager cm = newDefaultCacheManager(gc, c, false);
+      EmbeddedCacheManager cm = newDefaultCacheManager(true, gc, c, false);
       for (Map.Entry<String, Configuration> e: named.entrySet()) cm.defineConfiguration(e.getKey(), e.getValue());
       cm.start();
       return cm;
@@ -104,7 +104,7 @@ public class TestCacheManagerFactory {
       minimizeThreads(globalConfiguration);
       Configuration c = new Configuration();
       if (transactional) amendJTA(c);
-      return newDefaultCacheManager(globalConfiguration, c, false);
+      return newDefaultCacheManager(true, globalConfiguration, c, false);
    }
 
    private static void amendJTA(Configuration c) {
@@ -129,7 +129,7 @@ public class TestCacheManagerFactory {
       Properties newTransportProps = new Properties();
       newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
       globalConfiguration.setTransportProperties(newTransportProps);
-      return newDefaultCacheManager(globalConfiguration, defaultCacheConfig, false);
+      return newDefaultCacheManager(true, globalConfiguration, defaultCacheConfig, false);
    }
 
    /**
@@ -137,7 +137,11 @@ public class TestCacheManagerFactory {
     * during running tests in parallel.
     */
    public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration) {
-      return internalCreateJmxDomain(configuration, false);
+      return internalCreateJmxDomain(true, configuration, false);
+   }
+
+   public static EmbeddedCacheManager createCacheManager(boolean start, GlobalConfiguration configuration) {
+      return internalCreateJmxDomain(start, configuration, false);
    }
 
    /**
@@ -146,14 +150,14 @@ public class TestCacheManagerFactory {
     * An approach to ensure this, is to set the domain name to the name of the test class that instantiates the CacheManager.
     */
    public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(GlobalConfiguration configuration) {
-      return internalCreateJmxDomain(configuration, true);
+      return internalCreateJmxDomain(true, configuration, true);
    }
 
-   private static EmbeddedCacheManager internalCreateJmxDomain(GlobalConfiguration configuration, boolean enforceJmxDomain) {
+   private static EmbeddedCacheManager internalCreateJmxDomain(boolean start, GlobalConfiguration configuration, boolean enforceJmxDomain) {
       amendMarshaller(configuration);
       minimizeThreads(configuration);
       amendTransport(configuration);
-      return newDefaultCacheManager(configuration, new Configuration(), enforceJmxDomain);
+      return newDefaultCacheManager(start, configuration, new Configuration(), enforceJmxDomain);
    }
 
    public static EmbeddedCacheManager createCacheManager(Configuration.CacheMode mode, boolean indexing) {
@@ -186,7 +190,7 @@ public class TestCacheManagerFactory {
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
       if (transactional) amendJTA(defaultCacheConfig);
-      return newDefaultCacheManager(globalConfiguration, defaultCacheConfig, false);
+      return newDefaultCacheManager(true, globalConfiguration, defaultCacheConfig, false);
    }
 
    public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg) {
@@ -198,7 +202,7 @@ public class TestCacheManagerFactory {
       amendMarshaller(configuration);
       amendTransport(configuration);
       if (transactional) amendJTA(defaultCfg);
-      return newDefaultCacheManager(configuration, defaultCfg, false);
+      return newDefaultCacheManager(true, configuration, defaultCfg, false);
    }
 
    private static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean transactional, boolean keepJmxDomainName) {
@@ -210,7 +214,7 @@ public class TestCacheManagerFactory {
       amendMarshaller(configuration);
       if (!dontFixTransport) amendTransport(configuration);
       if (transactional) amendJTA(defaultCfg);
-      return newDefaultCacheManager(configuration, defaultCfg, keepJmxDomainName);
+      return newDefaultCacheManager(true, configuration, defaultCfg, keepJmxDomainName);
    }
 
    /**
@@ -268,8 +272,8 @@ public class TestCacheManagerFactory {
       }
    }
 
-   private static DefaultCacheManager newDefaultCacheManager(GlobalConfiguration gc, Configuration c) {
-      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc, c, true);
+   private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfiguration gc, Configuration c) {
+      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc, c, start);
       PerThreadCacheManagers threadCacheManagers = perThreadCacheManagers.get();
       String methodName = extractMethodName();
       threadCacheManagers.add(methodName, defaultCacheManager);
