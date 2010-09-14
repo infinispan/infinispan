@@ -173,8 +173,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
 
    protected void initAndTest() {
-      System.out.println("Caches are " + cacheAddresses);
-
       for (Cache<Object, String> c : caches) assert c.isEmpty();
 
       c1.put("k1", "value");

@@ -124,8 +124,6 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
       // lets first see what the value of k1 is on c1 ...
 
-      System.out.println("***** K1 on C1 is " + c1.get(keys.get(0)));
-
       assertOnAllCachesAndOwnership(keys.get(0), "transactionally_replaced");
       assertOnAllCachesAndOwnership(keys.get(1), "v" + 2);
       assertOnAllCachesAndOwnership(keys.get(2), "v" + 3);

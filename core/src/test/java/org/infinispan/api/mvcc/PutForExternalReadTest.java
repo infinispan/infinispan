@@ -256,7 +256,6 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       assert tt2.getRemoteTxCount() == 0 : "Cache 2 should have no stale global TXs";
       assert tt2.getLocalTxCount() == 0 : "Cache 2 should have no stale local TXs";
 
-      System.out.println("PutForExternalReadTest.testMemLeakOnSuspendedTransactions");
       replListener2.expectWithTx(PutKeyValueCommand.class);
       tm1.begin();
       cache1.putForExternalRead(key, value);

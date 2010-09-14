@@ -69,7 +69,6 @@ public class L1OnRehashTest extends BaseDistFunctionalTest {
    public void testInvalidationBehaviorOnRehash() {
       // start with 2 caches...
       List<MagicKey> keys = init();
-      System.out.println("Old CH positions are " + getConsistentHash(c1));
       // add 1
       performRehashEvent();
       int joinerPos = waitForRehashCompletion();
@@ -81,7 +80,6 @@ public class L1OnRehashTest extends BaseDistFunctionalTest {
       // 3. C1, C2, J
       // for the purpose of CH, 1 == 3.
 
-      System.out.println("New CH positions are " + getConsistentHash(c1));
       // invalidations happen asynchronously!  :(
       TestingUtil.sleepThread(2000);
 
