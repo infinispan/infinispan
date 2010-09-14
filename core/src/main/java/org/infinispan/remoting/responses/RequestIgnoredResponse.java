@@ -41,6 +41,11 @@ public class RequestIgnoredResponse extends InvalidResponse {
    }
 
    @Override
+   public boolean isValid() {
+      return true;
+   }
+
+   @Override
    public String toString() {
       return "RequestIgnoredResponse";
    }
