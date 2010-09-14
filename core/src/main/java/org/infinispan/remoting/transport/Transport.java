@@ -17,6 +17,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.statetransfer.StateTransferException;
+import org.infinispan.util.logging.Log;
 
 import java.util.Collection;
 import java.util.List;
@@ -34,6 +35,9 @@ import java.util.concurrent.ExecutorService;
 public interface Transport extends Lifecycle {
    // TODO discovery should be abstracted away into a separate set of interfaces such that it is not tightly coupled to the transport
 
+   @Inject
+   void setConfiguration(GlobalConfiguration gc);
+
    /**
     * Initializes the transport with global cache configuration and transport-specific properties.
     *
@@ -44,7 +48,7 @@ public interface Transport extends Lifecycle {
     * @param notifier      notifier to use
     */
    @Inject
-   void initialize(GlobalConfiguration c, StreamingMarshaller marshaller,
+   void initialize(StreamingMarshaller marshaller,
                    @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
                    InboundInvocationHandler handler, CacheManagerNotifier notifier);
 
@@ -134,4 +138,6 @@ public interface Transport extends Lifecycle {
    void stop();
 
    int getViewId();
+
+   Log getLog();
 }

@@ -35,6 +35,7 @@ import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.transport.AbstractTransport;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.remoting.transport.Transport;
@@ -88,7 +89,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class JGroupsTransport implements Transport, ExtendedMembershipListener, ExtendedMessageListener {
+public class JGroupsTransport extends AbstractTransport implements ExtendedMembershipListener, ExtendedMessageListener {
    public static final String CONFIGURATION_STRING = "configurationString";
    public static final String CONFIGURATION_XML = "configurationXml";
    public static final String CONFIGURATION_FILE = "configurationFile";
@@ -106,7 +107,6 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    CommandAwareRpcDispatcher dispatcher;
    static final Log log = LogFactory.getLog(JGroupsTransport.class);
    static final boolean trace = log.isTraceEnabled();
-   protected GlobalConfiguration c;
    protected TypedProperties props;
    protected InboundInvocationHandler inboundInvocationHandler;
    protected StreamingMarshaller marshaller;
@@ -130,13 +130,16 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    public JGroupsTransport() {
    }
 
+   public Log getLog() {
+      return log;
+   }
+
    // ------------------------------------------------------------------------------------------------------------------
    // Lifecycle and setup stuff
    // ------------------------------------------------------------------------------------------------------------------
 
-   public void initialize(GlobalConfiguration c, StreamingMarshaller marshaller, ExecutorService asyncExecutor,
+   public void initialize(StreamingMarshaller marshaller, ExecutorService asyncExecutor,
                           InboundInvocationHandler inboundInvocationHandler, CacheManagerNotifier notifier) {
-      this.c = c;
       this.marshaller = marshaller;
       this.asyncExecutor = asyncExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
@@ -144,8 +147,8 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    }
 
    public void start() {
-      props = TypedProperties.toTypedProperties(c.getTransportProperties());
-      distributedSyncTimeout = c.getDistributedSyncTimeout();
+      props = TypedProperties.toTypedProperties(configuration.getTransportProperties());
+      distributedSyncTimeout = configuration.getDistributedSyncTimeout();
 
       if (log.isInfoEnabled()) log.info("Starting JGroups Channel");
 
@@ -161,7 +164,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    protected void startJGroupsChannelIfNeeded() {
       if (startChannel) {
          try {
-            channel.connect(c.getClusterName());
+            channel.connect(configuration.getClusterName());
          } catch (ChannelException e) {
             throw new CacheException("Unable to start JGroups Channel", e);
          }
@@ -204,7 +207,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
          buildChannel();
          // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise invalidations targeted at
          // remote instances will be received by self.
-         String transportNodeName = c.getTransportNodeName();
+         String transportNodeName = configuration.getTransportNodeName();
          if (transportNodeName != null && transportNodeName.length() > 0) {
             long range = Short.MAX_VALUE * 2;
             long randomInRange = (long) ((Math.random() * range) % range) + 1;
@@ -412,37 +415,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
          boolean noValidResponses = true;
          for (Rsp rsp : rsps.values()) {
-            if (rsp.wasSuspected() || !rsp.wasReceived()) {
-               if (rsp.wasSuspected()) {
-                  throw new SuspectException("Suspected member: " + rsp.getSender());
-               } else {
-                  // if we have a response filter then we may not have waited for some nodes!
-                  if (responseFilter == null) throw new TimeoutException("Replication timeout for " + rsp.getSender());
-               }
-            } else {
-               noValidResponses = false;
-               Object value = rsp.getValue();
-               if (value instanceof Response) {
-                  Response response = (Response) value;
-                  if (response instanceof ExceptionResponse) {
-                     Exception e = ((ExceptionResponse) value).getException();
-                     if (!(e instanceof ReplicationException)) {
-                        // if we have any application-level exceptions make sure we throw them!!
-                        if (trace) log.trace("Received exception from " + rsp.getSender(), e);
-                        throw e;
-                     }
-                  }
-                  retval.add(response);
-               } else if (value instanceof Exception) {
-                  Exception e = (Exception) value;
-                  if (trace) log.trace("Unexpected exception from " + rsp.getSender(), e);
-                  throw e;
-               } else if (value instanceof Throwable) {
-                  Throwable t = (Throwable) value;
-                  if (trace) log.trace("Unexpected throwable from " + rsp.getSender(), t);
-                  throw new CacheException("Remote (" + rsp.getSender() + ") failed unexpectedly", t);
-               }
-            }
+            noValidResponses = parseResponseAndAddToResponseList(rsp.getValue(), retval, rsp.wasSuspected(), rsp.wasReceived(), new JGroupsAddress(rsp.getSender()), responseFilter != null) && noValidResponses;
          }
 
          if (noValidResponses) throw new TimeoutException("Timed out waiting for valid responses!");
