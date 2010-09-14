@@ -100,6 +100,6 @@ public enum ComponentStatus {
    }
 
    public boolean startingUp() {
-      return this != ComponentStatus.RUNNING;
+      return this == ComponentStatus.RUNNING || this == ComponentStatus.INITIALIZING || this == ComponentStatus.INSTANTIATED;
    }
 }
