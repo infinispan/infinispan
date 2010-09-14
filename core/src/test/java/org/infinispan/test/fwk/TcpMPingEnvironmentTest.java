@@ -65,19 +65,15 @@ public class TcpMPingEnvironmentTest {
          BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
          String line = reader.readLine();
-         System.out.println("line = " + line);
          StringBuilder result = new StringBuilder();
          while (line != null) {
             result.append(line).append('\n');
             line = reader.readLine();
          }
          log.trace(printPrefix + result);
-         System.out.println(printPrefix + result);
          inputStream.close();
       } catch (IOException e) {
          log.trace("Cannot print " + printPrefix + " !",e);
-         System.out.println("Cannot print " + printPrefix + " !" + e);
-         e.printStackTrace();
       }
    }
 
@@ -85,9 +81,6 @@ public class TcpMPingEnvironmentTest {
     * Tests that different clusters are created and that they don't overlap.
     */
    public void testDifferentClusters() throws Exception {
-      log.trace("aaaaa");
-      log.info("aaaaa");
-
       JChannel first1 = new JChannel("stacks/tcp_mping/tcp1.xml");
       JChannel first2 = new JChannel("stacks/tcp_mping/tcp1.xml");
       JChannel first3 = new JChannel("stacks/tcp_mping/tcp1.xml");

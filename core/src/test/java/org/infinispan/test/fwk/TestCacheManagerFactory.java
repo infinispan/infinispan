@@ -322,11 +322,7 @@ public class TestCacheManagerFactory {
       public String getNextCacheName() {
          int index = cacheManagers.size();
          char name = (char) ((int)'A' + index);
-         StringBuffer result = new StringBuffer(5);
-         for (int i = 0; i < 5; i++) {
-            result.append(name);
-         }
-         return result.toString();
+         return "Node" + name;
       }
 
       public void add(String methodName, DefaultCacheManager cm) {
