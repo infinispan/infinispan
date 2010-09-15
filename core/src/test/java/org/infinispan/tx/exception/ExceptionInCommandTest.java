@@ -5,8 +5,6 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.RollbackException;
@@ -56,16 +54,12 @@ public class ExceptionInCommandTest extends MultipleCacheManagersTest {
 
    }
 
-   private static Log log = LogFactory.getLog(ExceptionInCommandTest.class);
-
    private static class MyDelta implements Delta , Serializable {
       transient Thread creator;
 
       public void setCreator() {creator = Thread.currentThread();}
 
       public DeltaAware merge(DeltaAware d) {
-         log.trace("Creator == " );
-
          if (creator != Thread.currentThread())
             throw new RuntimeException("Induced!");
          return new AtomicHashMap();
