@@ -23,11 +23,12 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -44,9 +45,9 @@ public class TransactionTable {
    private static final Log log = LogFactory.getLog(TransactionTable.class);
    private static boolean trace = log.isTraceEnabled();
 
-   private final Map<Transaction, TransactionXaAdapter> localTransactions = new HashMap<Transaction, TransactionXaAdapter>();
+   private final Map<Transaction, TransactionXaAdapter> localTransactions = new ConcurrentHashMap<Transaction, TransactionXaAdapter>();
 
-   private final Map<GlobalTransaction, RemoteTransaction> remoteTransactions = new HashMap<GlobalTransaction, RemoteTransaction>();
+   private final Map<GlobalTransaction, RemoteTransaction> remoteTransactions = new ConcurrentHashMap<GlobalTransaction, RemoteTransaction>();
 
    private CommandsFactory commandsFactory;
    private Configuration configuration;
@@ -82,6 +83,12 @@ public class TransactionTable {
       lockBreakingService.shutdownNow();
    }
 
+   public Set<Object> getLockedKeysForRemoteTransaction(GlobalTransaction gtx) {
+      RemoteTransaction transaction = remoteTransactions.get(gtx);
+      if (transaction == null) return Collections.EMPTY_SET;
+      return transaction.getLockedKeys();
+   }
+
    @Listener
    public class StaleTransactionCleanup {
       @ViewChanged
@@ -89,35 +96,47 @@ public class TransactionTable {
          final List<Address> leavers = MembershipArithmetic.getMembersLeft(vce.getOldMembers(), vce.getNewMembers());
          if (!leavers.isEmpty()) {
             if (trace) log.trace("Saw {0} leavers - kicking off a lock breaking task", leavers.size());
-            try {
-               lockBreakingService.submit(new Runnable() {
-                  public void run() {
-                     Set<GlobalTransaction> toKill = new HashSet<GlobalTransaction>();
-                     for (GlobalTransaction gt : remoteTransactions.keySet()) {
-                        if (leavers.contains(gt.getAddress())) toKill.add(gt);
-                     }
-
-                     if (trace)
-                        log.trace("Global transactions {0} pertain to leavers list {1} and need to be killed", toKill, leavers);
-
-                     for (GlobalTransaction gtx : toKill) {
-                        if (trace) log.trace("Killing {0}", gtx);
-                        RollbackCommand rc = new RollbackCommand(gtx);
-                        rc.init(invoker, icc, TransactionTable.this);
-                        try {
-                           rc.perform(null);
-                        } catch (Throwable e) {
-                           log.warn("Unable to roll back gtx " + gtx, e);
-                        } finally {
-                           removeRemoteTransaction(gtx);
-                        }
-                     }
+            cleanTxForWhichTheOwnerLeft(leavers);
+            if (configuration.isUseEagerLocking() && configuration.isEagerLockSingleNode() && configuration.getCacheMode().isDistributed()) {
+               for (TransactionXaAdapter xaAdapter : localTransactions.values()) {
+                  if (xaAdapter.hasRemoteLocksAcquired(leavers)) {
+                     xaAdapter.markForRollback();
                   }
-               });
-            } catch (RejectedExecutionException ree) {
-               log.debug("Unable to submit task to executor", ree);
+               }
             }
          }
+      }
+
+      private void cleanTxForWhichTheOwnerLeft(final List<Address> leavers) {
+         try {
+            lockBreakingService.submit(new Runnable() {
+               public void run() {
+                  Set<GlobalTransaction> toKill = new HashSet<GlobalTransaction>();
+                  for (GlobalTransaction gt : remoteTransactions.keySet()) {
+                     if (leavers.contains(gt.getAddress())) toKill.add(gt);
+                  }
+
+                  if (trace)
+                     log.trace("Global transactions {0} pertain to leavers list {1} and need to be killed", toKill, leavers);
+
+                  for (GlobalTransaction gtx : toKill) {
+                     if (trace) log.trace("Killing {0}", gtx);
+                     RollbackCommand rc = new RollbackCommand(gtx);
+                     rc.init(invoker, icc, TransactionTable.this);
+                     try {
+                        rc.perform(null);
+                     } catch (Throwable e) {
+                        log.warn("Unable to roll back gtx " + gtx, e);
+                     } finally {
+                        removeRemoteTransaction(gtx);
+                     }
+                  }
+               }
+            });
+         } catch (RejectedExecutionException ree) {
+            log.debug("Unable to submit task to executor", ree);
+         }
+
       }
    }
 

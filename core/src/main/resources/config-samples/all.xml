@@ -81,7 +81,7 @@
             transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
             syncRollbackPhase="false"
             syncCommitPhase="false"
-            useEagerLocking="false"/>
+            useEagerLocking="true" eagerLockSingleNode="true"/>
 
       <!--
       Used to register JMX statistics in any available MBean server

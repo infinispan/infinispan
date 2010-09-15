@@ -105,7 +105,7 @@ public class RehashControlCommand extends BaseRpcCommand {
       // we need to "fix" these command lists - essentially propagate the init.  TODO think of a nicer way to do this!!
       for (List<? extends ReplicableCommand> commandList : Arrays.asList(txLogCommands, pendingPrepares)) {
          if (commandList != null) {
-            for (ReplicableCommand cmd : commandList) commandsFactory.initializeReplicableCommand(cmd);
+            for (ReplicableCommand cmd : commandList) commandsFactory.initializeReplicableCommand(cmd, false);
          }
       }
    }

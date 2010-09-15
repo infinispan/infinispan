@@ -232,7 +232,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          WriteCommand[] mods = logEntry.getModifications();
          if (trace) log.trace("Mods = {0}", Arrays.toString(mods));
          for (WriteCommand mod : mods) {
-            commandsFactory.initializeReplicableCommand(mod);
+            commandsFactory.initializeReplicableCommand(mod, false);
             ctx.setFlags(CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
             interceptorChain.invoke(ctx, mod);
          }
@@ -265,7 +265,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
             if (!transactionLog.hasPendingPrepare(command)) {
                if (trace) log.trace("Applying pending prepare {0}", command);
-               commandsFactory.initializeReplicableCommand(command);
+               commandsFactory.initializeReplicableCommand(command, false);
                RemoteTxInvocationContext ctx = invocationContextContainer.createRemoteTxInvocationContext();
                RemoteTransaction transaction = txTable.createRemoteTransaction(command.getGlobalTransaction(), command.getModifications());
                ctx.setRemoteTransaction(transaction);

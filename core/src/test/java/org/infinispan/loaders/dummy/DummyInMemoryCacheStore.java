@@ -31,6 +31,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    public void store(InternalCacheEntry ed) {
       if (ed != null) {
          if (trace) log.trace("Store {0} in dummy map store@{1}", ed, Integer.toHexString(System.identityHashCode(store)));
+         config.failIfNeeded(ed.getKey());
          store.put(ed.getKey(), ed);
       }
    }
@@ -158,6 +159,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       boolean debug;
       String store = "__DEFAULT_STORE__";
       boolean cleanBetweenRestarts = true;
+      private Object failKey;
 
       public Cfg() {
          setCacheLoaderClassName(DummyInMemoryCacheStore.class.getName());
@@ -196,6 +198,14 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
 
       public boolean isCleanBetweenRestarts() {
          return cleanBetweenRestarts;
+      }
+
+      public void setFailKey(Object failKey) {
+         this.failKey = failKey;
+      }
+
+      public void failIfNeeded(Object key) {
+         if(failKey != null && failKey.equals(key)) throw new RuntimeException("Induced failure on key:" + key);
       }
    }
 }

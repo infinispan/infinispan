@@ -112,19 +112,7 @@ public class TxInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      return enlistReadAndInvokeNext(ctx, command);
-   }
-
-   /**
-    * Designed to be overridden.  Returns a VisitableCommand fit for replaying locally, based on the modification passed
-    * in.  If a null value is returned, this means that the command should not be replayed.
-    *
-    * @param modification modification in a prepare call
-    * @return a VisitableCommand representing this modification, fit for replaying, or null if the command should not be
-    *         replayed.
-    */
-   protected VisitableCommand getCommandToReplay(VisitableCommand modification) {
-      return modification;
+       return enlistReadAndInvokeNext(ctx, command);
    }
 
    @Override
@@ -180,7 +168,8 @@ public class TxInterceptor extends CommandInterceptor {
          if (localModeNotForced(ctx)) shouldAddMod = true;
          localTxContext.setXaCache(xaAdapter);
       }
-      Object rv = invokeNextInterceptor(ctx, command);
+      Object rv;
+      rv = invokeNextInterceptor(ctx, command);
       if (!ctx.isInTxScope())
          transactionLog.logNoTxWrite(command);
       if (command.isSuccessful() && shouldAddMod) xaAdapter.addModification(command);
@@ -246,5 +235,17 @@ public class TxInterceptor extends CommandInterceptor {
    @Metric(displayName = "Rollbacks", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public long getRollbacks() {
       return rollbacks.get();
+   }
+
+   /**
+    * Designed to be overridden.  Returns a VisitableCommand fit for replaying locally, based on the modification passed
+    * in.  If a null value is returned, this means that the command should not be replayed.
+    *
+    * @param modification modification in a prepare call
+    * @return a VisitableCommand representing this modification, fit for replaying, or null if the command should not be
+    *         replayed.
+    */
+   protected VisitableCommand getCommandToReplay(VisitableCommand modification) {
+      return modification;
    }
 }

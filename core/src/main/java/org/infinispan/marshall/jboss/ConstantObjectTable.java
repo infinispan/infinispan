@@ -73,7 +73,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.transaction.xa.DeadlockDetectingGlobalTransaction;
+import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.FastCopyHashMap;
@@ -119,7 +119,7 @@ public class ConstantObjectTable implements ObjectTable {
       JDK_EXTERNALIZERS.put("java.util.Collections$SingletonList", SingletonListExternalizer.class.getName());
 
       MARSHALLABLES.add(GlobalTransaction.class.getName());
-      MARSHALLABLES.add(DeadlockDetectingGlobalTransaction.class.getName());
+      MARSHALLABLES.add(DldGlobalTransaction.class.getName());
       MARSHALLABLES.add(JGroupsAddress.class.getName());
       MARSHALLABLES.add("org.infinispan.util.Immutables$ImmutableMapWrapper");
       MARSHALLABLES.add(MarshalledValue.class.getName());

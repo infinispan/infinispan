@@ -106,7 +106,7 @@ public class GlobalTransaction implements Cloneable {
    @Override
    public String toString() {
       StringBuilder sb = new StringBuilder();
-      sb.append("GlobalTransaction:<").append(addr).append(">:").append(id);
+      sb.append("GlobalTransaction:<").append(addr).append(">:").append(id).append(isRemote() ? ":remote" : ":local");
       return sb.toString();
    }
 

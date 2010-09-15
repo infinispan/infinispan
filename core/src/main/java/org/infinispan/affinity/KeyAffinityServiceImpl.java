@@ -94,6 +94,8 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       if (!started) {
          throw new IllegalStateException("You have to start the service first!");
       }
+      if (address == null)
+         throw new NullPointerException("Null address not supported!");
       BlockingQueue queue = address2key.get(address);
       try {
          maxNumberInvariant.readLock().lock();

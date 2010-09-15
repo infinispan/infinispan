@@ -48,11 +48,6 @@ public interface InvocationContext extends EntryLookup, FlagContainer, Cloneable
     */
    Object getLockOwner();
 
-   /**
-    * Returns true if the context has any locked entries associated with it.
-    */
-   boolean hasLockedEntries();
-
    boolean isUseFutureReturnType();
 
    void setUseFutureReturnType(boolean useFutureReturnType);
@@ -60,10 +55,8 @@ public interface InvocationContext extends EntryLookup, FlagContainer, Cloneable
    InvocationContext clone();
 
    /**
-    * Retrieves a set of keys added to the context within the scope of the current invocation up to the current point
-    * in time.  This is usually all of the keys added to the context, unless transactions are used in which case it is
-    * a subset of all the keys added to the context.
-    * @return a Set of keys, which may be an empty set.
+    * Returns the set of keys that are locked for writing.
     */
-   Set<Object> getKeysAddedInCurrentInvocation();
+   public Set getLockedKeys();
+
 }

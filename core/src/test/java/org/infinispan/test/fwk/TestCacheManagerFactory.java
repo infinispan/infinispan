@@ -16,13 +16,15 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * CacheManagers in unit tests should be created with this factory, in order to avoid resource clashes.
- * See http://community.jboss.org/wiki/ParallelTestSuite for more details.
+ * CacheManagers in unit tests should be created with this factory, in order to avoid resource clashes. See
+ * http://community.jboss.org/wiki/ParallelTestSuite for more details.
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
@@ -51,9 +53,9 @@ public class TestCacheManagerFactory {
 
    public static EmbeddedCacheManager fromXml(String xmlFile, boolean allowDupeDomains) throws IOException {
       InfinispanConfiguration parser = InfinispanConfiguration.newInfinispanConfiguration(
-               xmlFile,
-               InfinispanConfiguration.resolveSchemaPath(),
-               new ConfigurationValidatingVisitor());
+            xmlFile,
+            InfinispanConfiguration.resolveSchemaPath(),
+            new ConfigurationValidatingVisitor());
       return fromConfigFileParser(parser, allowDupeDomains);
    }
 
@@ -67,8 +69,8 @@ public class TestCacheManagerFactory {
 
    public static EmbeddedCacheManager fromStream(InputStream is, boolean allowDupeDomains) throws IOException {
       InfinispanConfiguration parser = InfinispanConfiguration.newInfinispanConfiguration(
-               is, InfinispanConfiguration.findSchemaInputStream(),
-               new ConfigurationValidatingVisitor());
+            is, InfinispanConfiguration.findSchemaInputStream(),
+            new ConfigurationValidatingVisitor());
       return fromConfigFileParser(parser, allowDupeDomains);
    }
 
@@ -81,7 +83,7 @@ public class TestCacheManagerFactory {
       minimizeThreads(gc);
 
       EmbeddedCacheManager cm = newDefaultCacheManager(true, gc, c, false);
-      for (Map.Entry<String, Configuration> e: named.entrySet()) cm.defineConfiguration(e.getKey(), e.getValue());
+      for (Map.Entry<String, Configuration> e : named.entrySet()) cm.defineConfiguration(e.getKey(), e.getValue());
       cm.start();
       return cm;
    }
@@ -126,9 +128,7 @@ public class TestCacheManagerFactory {
       globalConfiguration.setTransportNodeName(perThreadCacheManagers.get().getNextCacheName());
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
-      Properties newTransportProps = new Properties();
-      newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
-      globalConfiguration.setTransportProperties(newTransportProps);
+      amendTransport(globalConfiguration);
       return newDefaultCacheManager(true, globalConfiguration, defaultCacheConfig, false);
    }
 
@@ -145,9 +145,10 @@ public class TestCacheManagerFactory {
    }
 
    /**
-    * Creates a cache manager that won't try to modify the configured jmx domain name: {@link org.infinispan.config.GlobalConfiguration#getJmxDomain()}}.
-    * This method must be used with care, and one should make sure that no domain name collision happens when the parallel suite executes.
-    * An approach to ensure this, is to set the domain name to the name of the test class that instantiates the CacheManager.
+    * Creates a cache manager that won't try to modify the configured jmx domain name: {@link
+    * org.infinispan.config.GlobalConfiguration#getJmxDomain()}}. This method must be used with care, and one should
+    * make sure that no domain name collision happens when the parallel suite executes. An approach to ensure this, is
+    * to set the domain name to the name of the test class that instantiates the CacheManager.
     */
    public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(GlobalConfiguration configuration) {
       return internalCreateJmxDomain(true, configuration, true);
@@ -183,10 +184,13 @@ public class TestCacheManagerFactory {
 
    public static EmbeddedCacheManager createCacheManager(Configuration defaultCacheConfig, boolean transactional) {
       GlobalConfiguration globalConfiguration;
-      if (defaultCacheConfig.getCacheMode().isClustered())
+      if (defaultCacheConfig.getCacheMode().isClustered()) {
          globalConfiguration = GlobalConfiguration.getClusteredDefault();
-      else
+         amendTransport(globalConfiguration);
+      }
+      else {
          globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
+      }
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
       if (transactional) amendJTA(defaultCacheConfig);
@@ -247,7 +251,7 @@ public class TestCacheManagerFactory {
       if (configuration.getTransportClass() != null) { //this is local
          Properties newTransportProps = new Properties();
          Properties previousSettings = configuration.getTransportProperties();
-         if (previousSettings!=null) {
+         if (previousSettings != null) {
             newTransportProps.putAll(previousSettings);
          }
          newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
@@ -276,6 +280,7 @@ public class TestCacheManagerFactory {
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc, c, start);
       PerThreadCacheManagers threadCacheManagers = perThreadCacheManagers.get();
       String methodName = extractMethodName();
+      log.trace("Adding DCM (" + defaultCacheManager.getAddress() + ") for method: '" + methodName + "'");
       threadCacheManagers.add(methodName, defaultCacheManager);
       return defaultCacheManager;
    }
@@ -283,8 +288,7 @@ public class TestCacheManagerFactory {
    private static String extractMethodName() {
       StackTraceElement[] stack = Thread.currentThread().getStackTrace();
       if (stack.length == 0) return null;
-      for (int i = stack.length - 1; i > 0; i--)
-      {
+      for (int i = stack.length - 1; i > 0; i--) {
          StackTraceElement e = stack[i];
          String className = e.getClassName();
          if ((className.indexOf("org.infinispan") != -1) && className.indexOf("org.infinispan.test") < 0)
@@ -298,17 +302,16 @@ public class TestCacheManagerFactory {
    }
 
    private static class PerThreadCacheManagers {
-      HashMap<String, EmbeddedCacheManager> cacheManagers = new HashMap<String, EmbeddedCacheManager>();
+      HashMap<EmbeddedCacheManager, String> cacheManagers = new HashMap<EmbeddedCacheManager, String>();
 
       public void checkManagersClosed(String testName) {
-         for (String cmName : cacheManagers.keySet()) {
-            EmbeddedCacheManager cm = cacheManagers.get(cmName);
-            if (cm.getStatus().allowInvocations()) {
+         for (Map.Entry<EmbeddedCacheManager, String> cmEntry : cacheManagers.entrySet()) {
+            if (cmEntry.getKey().getStatus().allowInvocations()) {
                String thName = Thread.currentThread().getName();
                String errorMessage = '\n' +
                      "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
                      "!!!!!! (" + thName + ") Exiting because " + testName + " has NOT shut down all the cache managers it has started !!!!!!!\n" +
-                     "!!!!!! (" + thName + ") The still-running cacheManager was created here: " + cmName + " !!!!!!!\n" +
+                     "!!!!!! (" + thName + ") The still-running cacheManager was created here: " + cmEntry.getValue() + " !!!!!!!\n" +
                      "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
                log.error(errorMessage);
                System.err.println(errorMessage);
@@ -319,13 +322,13 @@ public class TestCacheManagerFactory {
       }
 
       public String getNextCacheName() {
-         int index = cacheManagers.keySet().size();
-         char name = (char) ((int)'A' + index);
+         int index = cacheManagers.size();
+         char name = (char) ((int) 'A' + index);
          return "Node" + name;
       }
 
       public void add(String methodName, DefaultCacheManager cm) {
-         cacheManagers.put(methodName, cm);
+         cacheManagers.put(cm, methodName);
       }
    }
 }

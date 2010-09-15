@@ -62,7 +62,6 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    public void putLookedUpEntry(Object key, CacheEntry e) {
-      keyAddedInCurrentInvocation(key);
       remoteTransaction.putLookedUpEntry(key, e);
    }
 
@@ -76,7 +75,6 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
 
    public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
       for (Map.Entry<Object, CacheEntry> ce: lookedUpEntries.entrySet()) {
-         keyAddedInCurrentInvocation(ce.getKey());
          remoteTransaction.putLookedUpEntry(ce.getKey(), ce.getValue());
       }
    }

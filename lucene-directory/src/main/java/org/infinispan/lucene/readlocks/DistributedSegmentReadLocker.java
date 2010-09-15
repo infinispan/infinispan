@@ -159,12 +159,15 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       FileCacheKey key = new FileCacheKey(indexName, filename);
       boolean batch = cache.startBatch();
       FileMetadata file = (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).remove(key);
-      for (int i = 0; i < file.getNumberOfChunks(); i++) {
-         ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, filename, i);
-         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(chunkKey);  
+      if (file != null) { //during optimization of index a same file could be deleted twice, so you could see a null here
+         for (int i = 0; i < file.getNumberOfChunks(); i++) {
+            ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, filename, i);
+            cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(chunkKey);
+         }
+         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(key);
       }
-      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(key);
-      //last operation, as being set as value==0 it prevents others from using it during the deletion process:
+      // last operation, as being set as value==0 it prevents others from using it during the
+      // deletion process:
       cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(readLockKey);
       if (batch) {
          cache.endBatch(true);

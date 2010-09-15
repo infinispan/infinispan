@@ -3,11 +3,9 @@ package org.infinispan.context.impl;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.util.BidirectionalMap;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -22,7 +20,6 @@ import java.util.Set;
 public abstract class AbstractInvocationContext implements InvocationContext {
 
    protected volatile EnumSet<Flag> flags;
-   protected Set<Object> keysAddedInCurrentInvocation;
 
    // since this is finite, small, and strictly an internal API, it is cheaper/quicker to use bitmasking rather than
    // an EnumSet.
@@ -111,7 +108,6 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    public void reset() {
       flags = null;
       contextFlags = 0;
-      keysAddedInCurrentInvocation = null;
    }
 
    public boolean isFlagsUninitialized() {
@@ -127,17 +123,6 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       }
    }
 
-   public boolean hasLockedEntries() {
-      BidirectionalMap<Object, CacheEntry> lookedUpEntries = getLookedUpEntries();
-      boolean result = false;
-      for (CacheEntry e : lookedUpEntries.values()) {
-         if (e.isChanged()) {
-            result = true;
-         }
-      }
-      return result;
-   }
-
 
    public boolean isUseFutureReturnType() {
       return isContextFlagSet(ContextFlag.USE_FUTURE_RETURN_TYPE);
@@ -147,32 +132,24 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       setContextFlag(ContextFlag.USE_FUTURE_RETURN_TYPE, useFutureReturnType);
    }
 
-   /**
-    * Records that a key has been added.  This method should be called by all implementations of {@link org.infinispan.context.InvocationContext#putLookedUpEntry(Object, org.infinispan.container.entries.CacheEntry)}
-    * and {@link org.infinispan.context.InvocationContext#putLookedUpEntries(java.util.Map)} for each key added.
-    *
-    * @param key key to record
-    */
-   protected void keyAddedInCurrentInvocation(Object key) {
-      if (keysAddedInCurrentInvocation == null) keysAddedInCurrentInvocation = new HashSet<Object>(4);
-      keysAddedInCurrentInvocation.add(key);
-   }
-
-   public Set<Object> getKeysAddedInCurrentInvocation() {
-      if (keysAddedInCurrentInvocation == null) return Collections.emptySet();
-      return keysAddedInCurrentInvocation;
-   }
-
    @Override
    public AbstractInvocationContext clone() {
       try {
          AbstractInvocationContext dolly = (AbstractInvocationContext) super.clone();
          if (flags != null) dolly.flags = flags.clone();
-         dolly.keysAddedInCurrentInvocation = null;
          return dolly;
       } catch (CloneNotSupportedException e) {
          throw new IllegalStateException("Impossible!");
       }
+   }
+
+   public Set getLockedKeys() {
+      Set result = new HashSet();
+      for (Object key : getLookedUpEntries().keySet()) {
+         if (hasLockedKey(key))
+            result.add(key);
+      }
+      return result;
    }
 
    @Override

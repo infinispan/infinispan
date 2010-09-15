@@ -259,13 +259,17 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public Map<Object, List<Address>> locateAll(Collection<Object> keys) {
+      return locateAll(keys, replCount);
+   }
+
+   public Map<Object, List<Address>> locateAll(Collection<Object> keys, int numOwners) {
       if (consistentHash == null) {
          Map<Object, List<Address>> m = new HashMap<Object, List<Address>>(keys.size());
          List<Address> selfList = Collections.singletonList(self);
          for (Object k : keys) m.put(k, selfList);
          return m;
       }
-      return consistentHash.locateAll(keys, replCount);
+      return consistentHash.locateAll(keys, numOwners);
    }
 
    public void transformForL1(CacheEntry entry) {

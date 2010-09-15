@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -24,6 +25,7 @@ public final class PerCacheExecutorThread extends Thread {
    private BlockingQueue<Object> toExecute = new ArrayBlockingQueue<Object>(1);
    private volatile Object response;
    private CountDownLatch responseLatch = new CountDownLatch(1);
+   private volatile Transaction ongoingTransaction;
 
    private volatile Object key, value;
 
@@ -75,6 +77,7 @@ public final class PerCacheExecutorThread extends Thread {
                TransactionManager txManager = TestingUtil.getTransactionManager(cache);
                try {
                   txManager.begin();
+                  ongoingTransaction = txManager.getTransaction();
                   setResponse(OperationsResult.BEGGIN_TX_OK);
                } catch (Exception e) {
                   log.trace("Failure on beggining tx", e);
@@ -86,6 +89,7 @@ public final class PerCacheExecutorThread extends Thread {
                TransactionManager txManager = TestingUtil.getTransactionManager(cache);
                try {
                   txManager.commit();
+                  ongoingTransaction = null;
                   setResponse(OperationsResult.COMMIT_TX_OK);
                } catch (Exception e) {
                   log.trace("Exception while committing tx", e);
@@ -210,6 +214,9 @@ public final class PerCacheExecutorThread extends Thread {
     */
    public static enum OperationsResult {
       BEGGIN_TX_OK, COMMIT_TX_OK, PUT_KEY_VALUE_OK, REMOVE_KEY_OK, REPLACE_KEY_VALUE_OK, STOP_THREAD_OK
+   }
 
+   public Transaction getOngoingTransaction() {
+      return ongoingTransaction;
    }
 }

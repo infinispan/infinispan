@@ -22,25 +22,33 @@
 package org.infinispan.interceptors;
 
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.util.concurrent.locks.LockManager;
 
+import javax.transaction.Status;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
+/**
+ * @author Mircea.Markus@jboss.com
+ */
 public class InvocationContextInterceptor extends CommandInterceptor {
 
-   LockManager lockManager;
+   private TransactionManager tm;
+
+   @Inject
+   public void init(TransactionManager tm) {
+      this.tm = tm;
+   }
 
    @Override
    public Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       return handleAll(ctx, command);
-   }
-
-   @Inject
-   public void injectLockManager(LockManager lockManager) {
-      this.lockManager = lockManager;
    }
 
    private Object handleAll(InvocationContext ctx, VisitableCommand command) throws Throwable {
@@ -57,30 +65,41 @@ public class InvocationContextInterceptor extends CommandInterceptor {
          return invokeNextInterceptor(ctx, command);
       }
       catch (Throwable th) {
-         // make sure we release locks for all keys locked in this invocation!
-         for (Object key: ctx.getKeysAddedInCurrentInvocation()) {
-            if (ctx.hasLockedKey(key)) {
-               if (suppressExceptions) {
-                  if (log.isDebugEnabled()) log.debug("Caught exception, Releasing lock on key " + key + " acquired during the current invocation!");
-               } else {
-                  if (log.isInfoEnabled()) log.info("Caught exception, Releasing lock on key " + key + " acquired during the current invocation!");
-               }
-               // unlock key!
-               lockManager.unlock(key);
-               ctx.removeLookedUpEntry(key);
-            }
-         }
-
          if (suppressExceptions) {
             log.trace("Exception while executing code, failing silently...", th);
             return null;
          } else {
+            if (ctx.isInTxScope() && ctx.isOriginLocal()) {
+               if (trace) log.trace("Transaction marked for rollback as exception was received.");
+               markTxForRollbackAndRethrow(ctx, th);
+               throw new IllegalStateException("This should not be reached");
+            }
             log.error("Execution error: ", th);
-
             throw th;
          }
       } finally {
          ctx.reset();
       }
+   }
+
+   private Object markTxForRollbackAndRethrow(InvocationContext ctx, Throwable te) throws Throwable {
+      if (ctx.isOriginLocal() && ctx.isInTxScope()) {
+         Transaction transaction = tm.getTransaction();
+         if (transaction != null && isValidRunningTx(transaction)) {
+            transaction.setRollbackOnly();
+         }
+      }
+      throw te;
+   }   
+
+   public boolean isValidRunningTx(Transaction tx) throws Exception {
+      int status;
+      try {
+         status = tx.getStatus();
+      }
+      catch (SystemException e) {
+         throw new CacheException("Unexpected!", e);
+      }
+      return status == Status.STATUS_ACTIVE || status == Status.STATUS_PREPARING;
    }
 }

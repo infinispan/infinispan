@@ -438,6 +438,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.transaction.setUseEagerLocking(useEagerLocking);
    }
 
+   public void setEagerLockSingleNode(boolean eagerLockSingleNode) {
+      this.transaction.setEagerLockSingleNode(eagerLockSingleNode);
+   }
+
    public void setUseReplQueue(boolean useReplQueue) {
       this.clustering.async.setUseReplQueue(useReplQueue);
    }
@@ -614,6 +618,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public boolean isUseEagerLocking() {
       return transaction.useEagerLocking;
+   }
+
+   public boolean isEagerLockSingleNode() {
+      return transaction.eagerLockSingleNode;
    }
 
    public long getStateRetrievalTimeout() {
@@ -847,6 +855,17 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        * */
       @Dynamic
       protected Boolean useEagerLocking = false;
+
+      /**
+       * @configRef desc="Only has effect for DIST mode and when useEagerLocking is set to true. When this is enabled, then only one node
+       * is locked in the cluster, disregarding numOwners config. On the opposite, if this is false, then on all cache.lock() calls
+       * numOwners RPCs are being performed. The node that gets locked is the main data owner, i.e. the node where data
+       * would reside if numOwners==1. If the node where the lock resides crashes, then the transaction is marked for rollback -
+       * data is in a consistent state, no fault tolerance."
+       */
+      @Dynamic
+      protected Boolean eagerLockSingleNode = false;
+
       
       public TransactionType(String transactionManagerLookupClass) {
          this.transactionManagerLookupClass = transactionManagerLookupClass;
@@ -882,6 +901,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setUseEagerLocking(Boolean useEagerLocking) {
          testImmutability("useEagerLocking");
          this.useEagerLocking = useEagerLocking;
+
+      }
+
+      @XmlAttribute
+      public void setEagerLockSingleNode(Boolean eagerLockSingleNode) {
+         testImmutability("useEagerLocking");
+         this.eagerLockSingleNode = eagerLockSingleNode;
       }
 
       @Override

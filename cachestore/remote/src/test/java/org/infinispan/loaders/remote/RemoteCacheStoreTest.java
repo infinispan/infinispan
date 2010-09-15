@@ -9,6 +9,7 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
@@ -45,7 +46,7 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
       return remoteCacheStore;
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterMethod(alwaysRun = true)
    public void tearDown() {
       hrServer.stop();
       localCacheManager.stop();
@@ -77,3 +78,5 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
    public void testLoadKeys() throws CacheLoaderException {
    }
 }
+
+

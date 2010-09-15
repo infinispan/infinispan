@@ -46,11 +46,6 @@ public interface TxInvocationContext extends InvocationContext {
    Transaction getRunningTransaction();
 
    /**
-    * Returns true if the current tx is either ACTIVE or PREPARING, false otherwise.
-    */
-   boolean isValidRunningTx();
-
-   /**
     * Registers a new participant with the transaction.
     */
    void addAffectedKeys(Object... keys);

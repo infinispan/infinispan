@@ -48,18 +48,5 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
 
    @Override
    public void visitConfiguration(Configuration bean) {
-      checkEagerLockingAndDld(bean);
-   }
-
-   private void checkEagerLockingAndDld(Configuration bean) {
-      boolean isEagerLocking = bean.isUseEagerLocking();
-      checkEagerLockingAndDld(bean, isEagerLocking);
-   }
-
-   public static void checkEagerLockingAndDld(Configuration bean, boolean eagerLocking) {
-      boolean isDealLockDetection = bean.isEnableDeadlockDetection();
-      if (isDealLockDetection && eagerLocking) {
-         throw new ConfigurationException("Deadlock detection cannot be used with eager locking until ISPN-596 is fixed. See https://jira.jboss.org/browse/ISPN-596");
-      }
    }
 }

@@ -18,6 +18,7 @@ import java.util.Set;
  * A component that manages the distribution of elements across a cache cluster
  *
  * @author Manik Surtani
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -44,6 +45,11 @@ public interface DistributionManager {
     * @return a list of addresses where the key may reside
     */
    Map<Object, List<Address>> locateAll(Collection<Object> keys);
+
+   /**
+    * Same as {@link #locateAll(java.util.Collection)}, but the list of addresses only contains numOwners owners.
+    */
+   Map<Object, List<Address>> locateAll(Collection<Object> keys, int numOwners);
 
    /**
     * Transforms a cache entry so it is marked for L1 rather than the primary cache data structure.  This should be done

@@ -18,6 +18,8 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -160,6 +162,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
       assert c.isUseEagerLocking();
+      assert c.isEagerLockSingleNode();
       assert !c.isSyncRollbackPhase();
 
       c = namedCaches.get("syncRepl");

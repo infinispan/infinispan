@@ -68,8 +68,13 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       return globalTx;
    }
 
+   public void markTransactionAsRemote(boolean isRemote) {
+      globalTx.setRemote(isRemote);
+   }
+
    public Object perform(InvocationContext ctx) throws Throwable {
       if (ctx != null) throw new IllegalStateException("Expected null context!");
+      markGtxAsRemote();
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
       if (transaction == null) {
          if (trace) log.info("Not found RemoteTransaction for tx id: " + globalTx);
@@ -112,9 +117,12 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
 
    @Override
    public String toString() {
-      return getClass().getSimpleName() + "{" +
-            "gtx=" + globalTx +
+      return ", gtx=" + globalTx +
             ", cacheName='" + cacheName + '\'' +
             '}';
+   }
+
+   private void markGtxAsRemote() {
+      globalTx.setRemote(true);
    }
 }

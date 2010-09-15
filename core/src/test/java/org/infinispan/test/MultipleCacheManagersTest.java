@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -211,4 +212,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * {@link #addClusterEnabledCacheManager()}
     */
    protected abstract void createCacheManagers() throws Throwable;
+
+   public Address address(int cacheIndex) {
+      return cache(cacheIndex).getAdvancedCache().getRpcManager().getAddress();
+   }
 }

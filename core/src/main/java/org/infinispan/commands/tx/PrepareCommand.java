@@ -105,7 +105,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       ctx.setRemoteTransaction(remoteTransaction);
 
       if (trace)
-         log.trace("Invoking remotly orginated prepare: " + this);
+         log.trace("Invoking remotely originated prepare: " + this + " with invocation context: " + ctx);
       notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), ctx);
       try {
          return invoker.invoke(ctx, this);

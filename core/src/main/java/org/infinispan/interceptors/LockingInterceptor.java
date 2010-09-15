@@ -58,6 +58,7 @@ import java.util.Map;
  * Interceptor to implement <a href="http://wiki.jboss.org/wiki/JBossCacheMVCC">MVCC</a> functionality.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Mircea.Markus@jboss.com
  * @see <a href="http://wiki.jboss.org/wiki/JBossCacheMVCC">MVCC designs</a>
  * @since 4.0
  */
@@ -138,23 +139,53 @@ public class LockingInterceptor extends CommandInterceptor {
          if (localTxScope) {
             c.attachGlobalTransaction((GlobalTransaction) ctx.getLockOwner());
          }
+
+         if (c.isUnlock()) {
+            lockManager.releaseLocks(ctx);
+            if (log.isTraceEnabled()) log.trace("Lock released for: " + ctx.getLockOwner());
+            return null;
+         }
+
          for (Object key : c.getKeys()) {
             if (c.isImplicit() && localTxScope && !lockManager.ownsLock(key, ctx.getLockOwner())) {
-               //if even one key is unlocked we need to invoke this lock command cluster wide... 
+               //if even one key is unlocked we need to invoke this lock command cluster wide...
                shouldInvokeOnCluster = true;
+               break;
             }
-            entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, false);
          }
-         if (shouldInvokeOnCluster || c.isExplicit())
-            return invokeNextInterceptor(ctx, c);
-         else
-            return null;
+         boolean goRemoteFirst = configuration.isEnableDeadlockDetection() && localTxScope;
+         if (goRemoteFirst) {
+            Object result = invokeNextInterceptor(ctx, c);
+            try {
+               lockKeysForRemoteTx(ctx, c);
+            } catch (Throwable e) {
+               //if anything happen during locking then unlock remote
+               c.setUnlock(true);
+               invokeNextInterceptor(ctx, c);
+               throw e;
+            }
+            return result;
+         } else {
+            lockKeysForRemoteTx(ctx, c);
+            if (shouldInvokeOnCluster || c.isExplicit())
+               return invokeNextInterceptor(ctx, c);
+            else
+               return null;
+         }
+      } catch (Throwable te) {
+            return cleanLocksAndRethrow(ctx, te);
       } finally {
          if (ctx.isInTxScope()) {
             doAfterCall(ctx);
          } else {
             throw new IllegalStateException("Attempting to lock but there is no transactional context in scope. " + ctx);
          }
+      }
+   }
+
+   private void lockKeysForRemoteTx(TxInvocationContext ctx, LockControlCommand c) throws InterruptedException {
+      for (Object key : c.getKeys()) {
+         entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, false);
       }
    }
 
@@ -167,6 +198,8 @@ public class LockingInterceptor extends CommandInterceptor {
          for (InternalCacheEntry entry : dataContainer.entrySet())
             entryFactory.wrapEntryForWriting(ctx, entry, false, false, false, false, false);
          return invokeNextInterceptor(ctx, command);
+      } catch (Throwable te) {
+         return cleanLocksAndRethrow(ctx, te);
       } finally {
          doAfterCall(ctx);
       }
@@ -183,10 +216,14 @@ public class LockingInterceptor extends CommandInterceptor {
    public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
       try {
          if (command.getKeys() != null) {
-            for (Object key : command.getKeys()) entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false, false);
+            for (Object key : command.getKeys())
+               entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false, false);
          }
          return invokeNextInterceptor(ctx, command);
-      } finally {
+      } catch (Throwable te) {
+         return cleanLocksAndRethrow(ctx, te);
+      }
+      finally {
          doAfterCall(ctx);
       }
    }
@@ -196,7 +233,10 @@ public class LockingInterceptor extends CommandInterceptor {
       try {
          entryFactory.wrapEntryForWriting(ctx, command.getKey(), true, false, false, false, !command.isPutIfAbsent());
          return invokeNextInterceptor(ctx, command);
-      } finally {
+      } catch (Throwable te) {
+         return cleanLocksAndRethrow(ctx, te);
+      }
+      finally {
          doAfterCall(ctx);
       }
    }
@@ -208,6 +248,8 @@ public class LockingInterceptor extends CommandInterceptor {
             entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, true);
          }
          return invokeNextInterceptor(ctx, command);
+      } catch (Throwable te) {
+         return cleanLocksAndRethrow(ctx, te);
       }
       finally {
          doAfterCall(ctx);
@@ -219,6 +261,8 @@ public class LockingInterceptor extends CommandInterceptor {
       try {
          entryFactory.wrapEntryForWriting(ctx, command.getKey(), false, true, false, true, false);
          return invokeNextInterceptor(ctx, command);
+      } catch (Throwable te) {
+         return cleanLocksAndRethrow(ctx, te);
       }
       finally {
          doAfterCall(ctx);
@@ -230,6 +274,8 @@ public class LockingInterceptor extends CommandInterceptor {
       try {
          entryFactory.wrapEntryForWriting(ctx, command.getKey(), false, true, false, false, false);
          return invokeNextInterceptor(ctx, command);
+      } catch (Throwable te) {
+         return cleanLocksAndRethrow(ctx, te);
       }
       finally {
          doAfterCall(ctx);
@@ -292,6 +338,11 @@ public class LockingInterceptor extends CommandInterceptor {
       } else {
          lockManager.releaseLocks(ctx);
       }
+   }
+
+   private Object cleanLocksAndRethrow(InvocationContext ctx, Throwable te) throws Throwable {
+      cleanupLocks(ctx, false);
+      throw te;
    }
 
    protected void commitEntry(CacheEntry entry) {
