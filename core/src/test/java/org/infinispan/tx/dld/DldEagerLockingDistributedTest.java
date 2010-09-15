@@ -15,8 +15,6 @@ import javax.transaction.SystemException;
 import java.util.concurrent.Executor;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
@@ -34,6 +32,7 @@ public class DldEagerLockingDistributedTest extends BaseDldEagerLockingTest {
       config.setNumOwners(1);
       config.setEnableDeadlockDetection(true);
       config.setUseEagerLocking(true);
+
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(config, true);
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(config, true);
       registerCacheManager(cm1);

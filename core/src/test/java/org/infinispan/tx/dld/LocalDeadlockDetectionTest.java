@@ -21,7 +21,7 @@ import javax.transaction.RollbackException;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "tx.LocalDeadlockDetectionTest")
+@Test(groups = "functional", testName = "tx.dld.LocalDeadlockDetectionTest")
 public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
 
    private PerCacheExecutorThread t1;

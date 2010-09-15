@@ -79,4 +79,36 @@ public abstract class BaseDldLazyLockingTest extends BaseDldTest {
       LockManager lm1 = TestingUtil.extractComponent(cache(1), LockManager.class);
       assert !lm1.isLocked("key") : "It is locked by " + lm1.getOwner("key");
    }
+
+   protected void testLocalVsRemoteDeadlock(Object k0, Object k1) {
+
+      PerCacheExecutorThread t0 = new PerCacheExecutorThread(cache(0), 0);
+      PerCacheExecutorThread t1 = new PerCacheExecutorThread(cache(1), 1);
+
+      assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t0.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
+      assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t1.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
+
+      t0.setKeyValue(k0, "k0_0");
+      t0.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
+
+      t1.setKeyValue(k1, "k1_0");
+      assertEquals(t1.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE), PerCacheExecutorThread.OperationsResult.PUT_KEY_VALUE_OK);
+      t1.setKeyValue(k0, "k0_1");
+      assertEquals(t1.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE), PerCacheExecutorThread.OperationsResult.PUT_KEY_VALUE_OK);
+      t1.executeNoResponse(PerCacheExecutorThread.Operations.COMMIT_TX);
+
+      t0.setKeyValue(k1, "k1_0");
+      t0.executeNoResponse(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
+
+      log.info("---Before commit");
+      t0.executeNoResponse(PerCacheExecutorThread.Operations.COMMIT_TX);
+
+      Object t0Response = t0.waitForResponse();
+      Object t1Response = t1.waitForResponse();
+
+      boolean v1 = t0Response instanceof Exception;
+      boolean v2 = t1Response instanceof Exception;
+      assert xor(v1, v2) : "both exceptions? " + (v1 && v2);
+
+   }
 }

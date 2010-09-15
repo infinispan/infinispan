@@ -19,7 +19,7 @@ import java.util.concurrent.Executor;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(groups = "functional", testName = "tx.DistSymmetricDldTest")
+@Test(groups = "functional", testName = "tx.dld.DldLazyLockingDistributionTest")
 public class DldLazyLockingDistributionTest extends BaseDldLazyLockingTest {
 
    private KeyAffinityService cas;

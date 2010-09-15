@@ -13,7 +13,7 @@ import javax.transaction.TransactionManager;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(groups = "functional", testName = "tx.EagerTxDeadlockDetectionTest")
+@Test(groups = "functional", testName = "tx.dld.DldEagerLockingReplicationTest")
 public class DldEagerLockingReplicationTest extends BaseDldEagerLockingTest {
 
    @Override
