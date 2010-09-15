@@ -59,7 +59,9 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.RemoteTransaction;
 import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -67,6 +69,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -256,8 +259,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
             pc.init(interceptorChain, icc, txTable);
             pc.initialize(notifier);
             if (pc.getModifications() != null)
-               for (ReplicableCommand nested : pc.getModifications()) initializeReplicableCommand(nested, false);
+               for (ReplicableCommand nested : pc.getModifications())  {
+                  initializeReplicableCommand(nested, false);
+               }
             pc.markTransactionAsRemote(isRemote);
+            if (configuration.isEnableDeadlockDetection() && isRemote) {
+               DldGlobalTransaction transaction = (DldGlobalTransaction) pc.getGlobalTransaction();
+               transaction.setLocksHeldAtOrigin(pc.getAffectedKeys());
+            }
             break;
          case CommitCommand.COMMAND_ID:
             CommitCommand commitCommand = (CommitCommand) c;
@@ -281,6 +290,21 @@ public class CommandsFactoryImpl implements CommandsFactory {
             LockControlCommand lcc = (LockControlCommand) c;
             lcc.init(interceptorChain, icc, txTable);
             lcc.markTransactionAsRemote(isRemote);
+            if (configuration.isEnableDeadlockDetection() && isRemote) {
+               DldGlobalTransaction gtx = (DldGlobalTransaction) lcc.getGlobalTransaction();
+               RemoteTransaction transaction = txTable.getRemoteTransaction(gtx);
+               if (transaction != null) {
+                  if (!configuration.getCacheMode().isDistributed()) {
+                     Set<Object> keys = txTable.getLockedKeysForRemoteTransaction(gtx);
+                     GlobalTransaction gtx2 = transaction.getGlobalTransaction();
+                     ((DldGlobalTransaction) gtx2).setLocksHeldAtOrigin(keys);
+                     gtx.setLocksHeldAtOrigin(keys);
+                  } else {
+                     GlobalTransaction gtx2 = transaction.getGlobalTransaction();
+                     ((DldGlobalTransaction) gtx2).setLocksHeldAtOrigin(gtx.getLocksHeldAtOrigin());
+                  }
+               }
+            }
             break;
          case RehashControlCommand.COMMAND_ID:
             RehashControlCommand rcc = (RehashControlCommand) c;

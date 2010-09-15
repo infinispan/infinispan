@@ -48,7 +48,6 @@ import java.util.Set;
  *
  * @author Vladimir Blagojevic (<a href="mailto:vblagoje@redhat.com">vblagoje@redhat.com</a>)
  * @author Mircea.Markus@jboss.com
- * @param
  * @since 4.0
  */
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.LOCK_CONTROL_COMMAND)

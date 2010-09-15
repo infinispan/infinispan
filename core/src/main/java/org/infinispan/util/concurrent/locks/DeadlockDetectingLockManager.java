@@ -6,7 +6,6 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
-import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
@@ -62,12 +61,12 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
          if (trace) log.trace("Using early dead lock detection");
          final long start = System.currentTimeMillis();
          DldGlobalTransaction thisTx = (DldGlobalTransaction) ctx.getLockOwner();
-         thisTx.setLockLocalLockIntention(key);
+         thisTx.setLockIntention(key);
          if (trace) log.trace("Setting lock intention to: " + key);
 
          while (System.currentTimeMillis() < (start + lockTimeout)) {
             if (lockContainer.acquireLock(key, spinDuration, MILLISECONDS) != null) {
-               thisTx.setLockLocalLockIntention(null); //clear lock intention
+               thisTx.setLockIntention(null); //clear lock intention
                if (trace) log.trace("successfully acquired lock on " + key + ", returning ...");
                return true;
             } else {
@@ -112,26 +111,21 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
    private boolean ownsRemoteIntention(DldGlobalTransaction lockOwnerTx, DldGlobalTransaction thisTx, Object key) {
       if (!lockOwnerTx.isRemote()) {
          // I've already acquired lock on this key before replicating here, so this mean we are in deadlock. This assumes the fact that
-         // if trying to acquire a remote lock, a tx first acquires a local lock. This stands true in all situations but
-         // when DLD + eager locking is used (in this scenario remote locks are acquired first).
-         if (lockOwnerTx.isAcquiringRemoteLock(key, thisTx.getAddress())) {
+         // if trying to acquire a remote lock, a tx first acquires a local lock. 
+         if (thisTx.hasLockAtOrigin(lockOwnerTx.getRemoteLockIntention())) {
             if (trace)
                log.trace("Same key deadlock detected: lock owner tries to acquire lock remotely on " + key + " but we have it!");
             return true;
          }
-         for (Object remoteIntention : lockOwnerTx.getRemoteLockIntention()) {
-            if (ownsLock(remoteIntention, thisTx)) {
-                  if (trace) log.trace("We own lock on a key ('" + remoteIntention + "') on which other tx wants to acquire remote lock");
-               return true;
-            }
-         }
+      } else {
+         if (trace) log.trace("Lock owner is remote: " + lockOwnerTx);
       }
       return false;
    }
 
-   private boolean ownsLocalIntention(DldGlobalTransaction tx, Object intention) {
-      boolean result = intention != null && ownsLock(intention, tx);
-      if (trace) log.trace("Intention is '" + intention + "'. Do we own lock for it? " + result + " We == " + tx);
+   private boolean ownsLocalIntention(DldGlobalTransaction thisTx, Object intention) {
+      boolean result = intention != null && ownsLock(intention, thisTx);
+      if (trace) log.trace("Local intention is '" + intention + "'. Do we own lock for it? " + result + " We == " + thisTx);
       return result;
    }
 

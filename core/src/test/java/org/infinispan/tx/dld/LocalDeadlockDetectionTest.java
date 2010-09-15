@@ -1,4 +1,4 @@
-package org.infinispan.tx;
+package org.infinispan.tx.dld;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;

@@ -88,7 +88,7 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
       Lock mockLock = createNiceMock(Lock.class);
       expect(lc.acquireLock("k", SPIN_DURATION, TimeUnit.MILLISECONDS)).andReturn(mockLock);
       lockOwner.setRemote(false);
-      lockOwner.setLockLocalLockIntention("k");
+      lockOwner.setLockIntention("k");
       lockManager.setOwner(lockOwner);
       lockManager.setOwnsLock(true);
       replay(lc);

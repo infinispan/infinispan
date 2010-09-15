@@ -3,11 +3,11 @@ package org.infinispan.context.impl;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.util.BidirectionalMap;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -123,17 +123,6 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       }
    }
 
-   public boolean hasLockedEntries() {
-      BidirectionalMap<Object, CacheEntry> lookedUpEntries = getLookedUpEntries();
-      boolean result = false;
-      for (CacheEntry e : lookedUpEntries.values()) {
-         if (e.isChanged()) {
-            result = true;
-         }
-      }
-      return result;
-   }
-
 
    public boolean isUseFutureReturnType() {
       return isContextFlagSet(ContextFlag.USE_FUTURE_RETURN_TYPE);
@@ -152,6 +141,15 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       } catch (CloneNotSupportedException e) {
          throw new IllegalStateException("Impossible!");
       }
+   }
+
+   public Set getLockedKeys() {
+      Set result = new HashSet();
+      for (Object key : getLookedUpEntries().keySet()) {
+         if (hasLockedKey(key))
+            result.add(key);
+      }
+      return result;
    }
 
    @Override

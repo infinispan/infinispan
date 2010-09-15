@@ -28,10 +28,11 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
    private volatile boolean isMarkedForRollback;
 
-   private transient volatile Object lockLocalLockIntention;
+   private transient volatile Object localLockIntention;
 
    protected volatile Set<Object> remoteLockIntention = Collections.EMPTY_SET;
 
+   private volatile Set<Object> locksAtOrigin = Collections.EMPTY_SET;
 
    public DldGlobalTransaction() {
    }
@@ -76,8 +77,9 @@ public class DldGlobalTransaction extends GlobalTransaction {
       return "DldGlobalTransaction{" +
             "coinToss=" + coinToss +
             ", isMarkedForRollback=" + isMarkedForRollback +
-            ", lockIntention=" + lockLocalLockIntention +
+            ", lockIntention=" + localLockIntention +
             ", affectedKeys=" + remoteLockIntention +
+            ", locksAtOrigin=" + locksAtOrigin +
             "} " + super.toString();
    }
 
@@ -93,11 +95,11 @@ public class DldGlobalTransaction extends GlobalTransaction {
     * Returns the key this transaction intends to lock. 
     */
    public Object getLockIntention() {
-      return lockLocalLockIntention;
+      return localLockIntention;
    }
 
-   public void setLockLocalLockIntention(Object lockIntention) {
-      this.lockLocalLockIntention = lockIntention;
+   public void setLockIntention(Object lockIntention) {                                                                                                       
+      this.localLockIntention = lockIntention;
    }
 
    public boolean wouldLose(DldGlobalTransaction other) {
@@ -112,13 +114,32 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
    public void setRemoteLockIntention(Set<Object> remoteLockIntention) {
       if (trace) {
-         log.trace("Setting the affected keys set to: " + remoteLockIntention);
+         log.trace("Setting the remote lock intention: " + remoteLockIntention);
       }
       this.remoteLockIntention = remoteLockIntention;
    }
 
    public Set<Object> getRemoteLockIntention() {
       return remoteLockIntention;
+   }
+
+   public boolean hasLockAtOrigin(Set<Object> remoteLockIntention) {
+      if (log.isTraceEnabled()) log.trace("Our(" + this + ") locks at origin are: " + locksAtOrigin + ". Others remote lock intention is: " + remoteLockIntention);
+      for (Object key : remoteLockIntention) {
+         if (this.locksAtOrigin.contains(key)) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   public void setLocksHeldAtOrigin(Set<Object> locksAtOrigin) {
+      if (trace) log.trace("Setting locks at origin for (" + this + ")  to " + locksAtOrigin);
+      this.locksAtOrigin = locksAtOrigin;
+   }
+
+   public Set<Object> getLocksHeldAtOrigin() {
+      return this.locksAtOrigin;
    }
 
    public static class Externalizer extends GlobalTransaction.Externalizer {
@@ -131,12 +152,23 @@ public class DldGlobalTransaction extends GlobalTransaction {
          super.writeObject(output, subject);
          DldGlobalTransaction ddGt = (DldGlobalTransaction) subject;
          output.writeLong(ddGt.getCoinToss());
+         if (ddGt.locksAtOrigin.isEmpty()) {
+            output.writeObject(null);
+         } else {
+            output.writeObject(ddGt.locksAtOrigin);
+         }
       }
 
       @Override
       public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          DldGlobalTransaction ddGt = (DldGlobalTransaction) super.readObject(input);
          ddGt.setCoinToss(input.readLong());
+         Object locksAtOriginObj = input.readObject();
+         if (locksAtOriginObj == null) {
+            ddGt.setLocksHeldAtOrigin(Collections.EMPTY_SET);
+         } else {
+            ddGt.setLocksHeldAtOrigin((Set<Object>) locksAtOriginObj);
+         }
          return ddGt;
       }
    }

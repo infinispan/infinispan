@@ -1,4 +1,4 @@
-package org.infinispan.tx;
+package org.infinispan.tx.dld;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;

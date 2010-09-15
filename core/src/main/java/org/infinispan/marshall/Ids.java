@@ -117,7 +117,4 @@ public interface Ids {
    static final byte BYTE_ARRAY_KEY = 57;
    static final byte TOPOLOGY_ADDRESS = 58;
    static final byte TOPOLOGY_VIEW = 59;
-
-   //added in 4.2
-   static final byte LOCK_INTENTION_NOTIFICATION_COMMAND = 60;
 }

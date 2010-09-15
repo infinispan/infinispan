@@ -23,7 +23,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +81,12 @@ public class TransactionTable {
    @Stop
    private void stop() {
       lockBreakingService.shutdownNow();
+   }
+
+   public Set<Object> getLockedKeysForRemoteTransaction(GlobalTransaction gtx) {
+      RemoteTransaction transaction = remoteTransactions.get(gtx);
+      if (transaction == null) return Collections.EMPTY_SET;
+      return transaction.getLockedKeys();
    }
 
    @Listener

@@ -4,11 +4,15 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.util.BidirectionalLinkedHashMap;
 import org.infinispan.util.BidirectionalMap;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Defines the state of a remotely originated transaction.
@@ -17,6 +21,8 @@ import java.util.List;
  * @since 4.0
  */
 public class RemoteTransaction implements CacheTransaction, Cloneable {
+
+   private static Log log = LogFactory.getLog(RemoteTransaction.class);
 
    private List<WriteCommand> modifications;
 
@@ -58,6 +64,9 @@ public class RemoteTransaction implements CacheTransaction, Cloneable {
    }
 
    public void putLookedUpEntry(Object key, CacheEntry e) {
+      if (log.isTraceEnabled()) {
+         log.trace("Adding key " + key + " to tx " + getGlobalTransaction());
+      }
       lookedUpEntries.put(key, e);
    }
 
@@ -102,5 +111,15 @@ public class RemoteTransaction implements CacheTransaction, Cloneable {
             ", lookedUpEntries=" + lookedUpEntries +
             ", tx=" + tx +
             '}';
+   }
+
+   public Set<Object> getLockedKeys() {
+      Set<Object> result = new HashSet<Object>();
+      for (Object key : getLookedUpEntries().keySet()) {
+         result.add(key);
+      }
+      if (lookedUpEntries.entrySet().size() != result.size())
+         throw new IllegalStateException("Different sizes!");
+      return result;
    }
 }

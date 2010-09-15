@@ -12,12 +12,12 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
-import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
-import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.RemoteTransaction;
+import org.infinispan.transaction.xa.TransactionTable;
 
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * This interceptor populates the {@link org.infinispan.transaction.xa.DldGlobalTransaction} with
@@ -31,15 +31,6 @@ import java.util.Collections;
  * @since 4.0
  */
 public class DeadlockDetectingInterceptor extends CommandInterceptor {
-
-   private LockManager lockManager;
-   private TransactionManager txManager;
-
-   @Inject
-   public void init(LockManager lockManager, TransactionManager txManager) {
-      this.lockManager = lockManager;
-      this.txManager = txManager;
-   }
 
    /**
     * Only does a sanity check.
@@ -71,7 +62,12 @@ public class DeadlockDetectingInterceptor extends CommandInterceptor {
       DldGlobalTransaction globalTransaction = (DldGlobalTransaction) ctx.getGlobalTransaction();
       if (ctx.isOriginLocal()) {
          globalTransaction.setRemoteLockIntention(command.getKeys());
-      }      
+         //in the case of DIST we need to propagate the list of keys. In all other situations in can be determined
+         // based on the actual command
+         if (configuration.getCacheMode().isDistributed()) {
+            ((DldGlobalTransaction) ctx.getGlobalTransaction()).setLocksHeldAtOrigin(ctx.getLockedKeys());
+         }
+      }
       return handleDataCommand(ctx, command);
    }
 

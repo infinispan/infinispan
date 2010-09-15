@@ -64,17 +64,12 @@ public class GlobalTransactionFactory {
       GlobalTransaction gtx;
       if (isEddEnabled) {
          DldGlobalTransaction globalTransaction;
-         if (configuration.getCacheMode().isDistributed()) {
-            globalTransaction = new DistDldGlobalTransaction(addr, remote, distributionManager, configuration.getNumOwners());
-         } else {
-            globalTransaction = new DldGlobalTransaction(addr, remote);
-         }
+         globalTransaction = new DldGlobalTransaction(addr, remote);
          globalTransaction.setCoinToss(generateRandomId());
          gtx = globalTransaction;
       } else {
          gtx = new GlobalTransaction(addr, remote);
       }
-
       return gtx;
    }
 }
