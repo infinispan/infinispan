@@ -1,4 +1,4 @@
-package org.infinispan.tx.timeout;
+package org.infinispan.tx.exception;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;

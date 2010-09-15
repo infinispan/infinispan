@@ -1,6 +1,5 @@
 package org.infinispan.interceptors;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -113,11 +112,7 @@ public class TxInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      try {
-         return enlistReadAndInvokeNext(ctx, command);
-      } catch (Throwable t) {
-         return markTxForRollbackAndRethrow(ctx, t);
-      }
+       return enlistReadAndInvokeNext(ctx, command);
    }
 
    @Override
@@ -174,7 +169,7 @@ public class TxInterceptor extends CommandInterceptor {
          localTxContext.setXaCache(xaAdapter);
       }
       Object rv;
-      rv = invokeNextAndRollbackTxOnFailure(ctx, command);
+      rv = invokeNextInterceptor(ctx, command);
       if (!ctx.isInTxScope())
          transactionLog.logNoTxWrite(command);
       if (command.isSuccessful() && shouldAddMod) xaAdapter.addModification(command);
@@ -252,37 +247,5 @@ public class TxInterceptor extends CommandInterceptor {
     */
    protected VisitableCommand getCommandToReplay(VisitableCommand modification) {
       return modification;
-   }
-
-   private Object markTxForRollbackAndRethrow(InvocationContext ctx, Throwable te) throws Throwable {
-      if (ctx.isOriginLocal() && ctx.isInTxScope()) {
-         Transaction transaction = tm.getTransaction();
-         if (transaction != null && isValidRunningTx(transaction)) {
-            transaction.setRollbackOnly();
-         }
-      }
-      throw te;
-   }
-
-   private Object invokeNextAndRollbackTxOnFailure(InvocationContext ctx, WriteCommand command) throws Throwable {
-      Object rv;
-      try {
-         rv = invokeNextInterceptor(ctx, command);
-      } catch (Throwable te) {
-         markTxForRollbackAndRethrow(ctx, te);
-         throw new IllegalStateException("This should not be reached");
-      }
-      return rv;
-   }
-
-   public boolean isValidRunningTx(Transaction tx) throws Exception {
-      int status;
-      try {
-         status = tx.getStatus();
-      }
-      catch (SystemException e) {
-         throw new CacheException("Unexpected!", e);
-      }
-      return status == Status.STATUS_ACTIVE || status == Status.STATUS_PREPARING;
    }
 }

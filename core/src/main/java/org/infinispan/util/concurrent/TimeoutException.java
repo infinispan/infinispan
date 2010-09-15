@@ -29,11 +29,7 @@ import org.infinispan.CacheException;
  * from all members.
  *
  * @author <a href="mailto:bela@jboss.org">Bela Ban</a>.
- *         <p/>
- *         <p/>
- *         <p><b>Revisions:</b>
- *         <p/>
- *         <p>Dec 28 2002 Bela Ban: first implementation
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public class TimeoutException extends CacheException {

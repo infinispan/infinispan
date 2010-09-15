@@ -25,46 +25,63 @@ public final class ControlledRpcManager implements RpcManager {
 
    private volatile CountDownLatch replicationLatch;
 
+   private boolean fail;
+
    public ControlledRpcManager(RpcManager realOne) {
       this.realOne = realOne;
    }
 
    private RpcManager realOne;
 
+   public boolean isFail() {
+      return fail;
+   }
+
+   public void setFail(boolean fail) {
+      this.fail = fail;
+   }
+
    public void setReplicationLatch(CountDownLatch replicationLatch) {
       this.replicationLatch = replicationLatch;
    }
 
    public List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) {
+      failIfNeeded();
       waitFirst(rpcCommand);
       return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter);
    }
 
    public List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue) {
+      failIfNeeded();
       waitFirst(rpcCommand);
       return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue);
    }
 
    public List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) throws Exception {
+      failIfNeeded();
       waitFirst(rpcCommand);
       return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout);
    }
 
    public void retrieveState(String cacheName, long timeout) throws StateTransferException {
+      failIfNeeded();
       realOne.retrieveState(cacheName, timeout);
    }
 
    public void broadcastRpcCommand(ReplicableCommand rpc, boolean sync) throws ReplicationException {
+      failIfNeeded();
       waitFirst(rpc);
       realOne.broadcastRpcCommand(rpc, sync);
    }
 
    public void broadcastRpcCommand(ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException {
+      failIfNeeded();
       waitFirst(rpc);
       realOne.broadcastRpcCommand(rpc, sync, usePriorityQueue);
    }
 
    private void waitFirst(ReplicableCommand rpcCommand) {
+      failIfNeeded();
       if (!(rpcCommand instanceof ClusteredGetCommand) && !(rpcCommand instanceof LockControlCommand)) {
          System.out.println(Thread.currentThread().getName() + " -- replication trigger called!");
          try {
@@ -77,30 +94,37 @@ public final class ControlledRpcManager implements RpcManager {
    }
 
    public void broadcastRpcCommandInFuture(ReplicableCommand rpc, NotifyingNotifiableFuture<Object> future) {
+      failIfNeeded();
       realOne.broadcastRpcCommandInFuture(rpc, future);
    }
 
    public void broadcastRpcCommandInFuture(ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future) {
+      failIfNeeded();
       realOne.broadcastRpcCommandInFuture(rpc, usePriorityQueue, future);
    }
 
    public void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws ReplicationException {
+      failIfNeeded();
       realOne.invokeRemotely(recipients, rpc, sync);
    }
 
    public void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException {
+      failIfNeeded();
       realOne.invokeRemotely(recipients, rpc, sync, usePriorityQueue);
    }
 
    public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<Object> future) {
+      failIfNeeded();
       realOne.invokeRemotelyInFuture(recipients, rpc, future);
    }
 
    public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future) {
+      failIfNeeded();
       realOne.invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, future);
    }
 
    public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future, long timeout) {
+      failIfNeeded();
       realOne.invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, future, timeout);
    }
 
@@ -114,5 +138,9 @@ public final class ControlledRpcManager implements RpcManager {
 
    public Address getAddress() {
       return realOne.getAddress();
+   }
+
+   public void failIfNeeded() {
+      if (fail) throw new IllegalStateException("Induced failure!");
    }
 }
