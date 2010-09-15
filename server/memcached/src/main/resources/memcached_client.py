@@ -44,7 +44,7 @@ import math
 import random
 import sys
 
-endpoints = ["127.0.0.1:11211", "127.0.0.1:11212", "127.0.0.1:11213"]
+endpoints = ["127.0.0.1:11211"]
 
 def connect():
   ipaddress = choose_random_endpoint()

@@ -89,7 +89,7 @@
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.guava>r03</version.guava>
       <version.h2.driver>1.1.117</version.h2.driver>
-      <version.hibernate.search>3.2.1.Final</version.hibernate.search>
+      <version.hibernate.search>3.3.0.Beta1</version.hibernate.search>
       <version.jackson>1.4.1</version.jackson>
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
@@ -115,7 +115,6 @@
       <version.rhq.plugingen>1.4.0.B01</version.rhq.plugingen>
       <version.rhq>1.2.0.GA</version.rhq>
       <version.scala>2.8.0</version.scala>
-      <version.slf4j>1.5.8</version.slf4j>
       <version.spymemcached>2.5</version.spymemcached>
       <version.testng>5.11</version.testng>
       <version.webdav.servlet>2.0</version.webdav.servlet>
