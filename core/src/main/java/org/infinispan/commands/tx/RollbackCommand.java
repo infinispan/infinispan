@@ -53,4 +53,9 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
    public byte getCommandId() {
       return COMMAND_ID;
    }
+
+   @Override
+   public String toString() {
+      return "RollbackCommand{ " + super.toString();
+   }
 }

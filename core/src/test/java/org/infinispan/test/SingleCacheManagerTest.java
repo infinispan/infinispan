@@ -10,6 +10,10 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 /**
  * Base class for tests that operate on a single (most likely local) cache instance. This operates similar to {@link
  * org.infinispan.test.MultipleCacheManagersTest}, but on only once CacheManager.
@@ -76,6 +80,19 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    protected Configuration getDefaultStandaloneConfig(boolean transactional) {
       return TestCacheManagerFactory.getDefaultConfiguration(transactional);
    }
+
+   protected TransactionManager tm() {
+      return cache.getAdvancedCache().getTransactionManager();
+   }
+
+   protected Transaction tx() {
+      try {
+         return cache.getAdvancedCache().getTransactionManager().getTransaction();
+      } catch (SystemException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
 
    protected abstract EmbeddedCacheManager createCacheManager() throws Exception;
 }

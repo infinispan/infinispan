@@ -69,12 +69,12 @@ public class InvocationContextInterceptor extends CommandInterceptor {
             log.trace("Exception while executing code, failing silently...", th);
             return null;
          } else {
+            log.error("Execution error: ", th);            
             if (ctx.isInTxScope() && ctx.isOriginLocal()) {
                if (trace) log.trace("Transaction marked for rollback as exception was received.");
                markTxForRollbackAndRethrow(ctx, th);
                throw new IllegalStateException("This should not be reached");
             }
-            log.error("Execution error: ", th);
             throw th;
          }
       } finally {
