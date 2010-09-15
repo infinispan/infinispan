@@ -30,16 +30,16 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
     * use TestingUtil.clearContent(cacheManager);
     */
    @Deprecated
-   public void clearContent(CacheContainer cacheContainer) {
-      TestingUtil.clearContent(cacheContainer);
+   public void clearContent(EmbeddedCacheManager embeddedCacheManager) {
+      TestingUtil.clearContent(embeddedCacheManager);
    }
 
    /**
     * use TestingUtil.getRunningCaches(cacheManager);
     */
    @Deprecated
-   protected Set<Cache> getRunningCaches(CacheContainer cacheContainer) {
-      return TestingUtil.getRunningCaches(cacheContainer);
+   protected Set<Cache> getRunningCaches(EmbeddedCacheManager embeddedCacheManager) {
+      return TestingUtil.getRunningCaches(embeddedCacheManager);
    }
 
    /**
