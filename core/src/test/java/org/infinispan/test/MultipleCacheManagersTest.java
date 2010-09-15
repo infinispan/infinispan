@@ -2,7 +2,9 @@ package org.infinispan.test;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
+import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -12,6 +14,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -142,9 +147,61 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return cm;
    }
 
+   /**
+    * Creates a new cache manager, starts it, and adds it to the list of known cache managers on the current thread.
+    */
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration.CacheMode mode, boolean transactional) {
+      Configuration configuration = getDefaultClusteredConfig(mode, transactional);
+      configuration.setCacheMode(mode);
+      return addClusterEnabledCacheManager(configuration);
+   }
+
+   protected void addClusterEnabledCacheManagers(Configuration.CacheMode mode, boolean transactional, int count) {
+      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, transactional);
+   }
+
+   protected void addClusterEnabledCacheManagers(Configuration.CacheMode mode, int count) {
+      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, true);
+   }
+
    protected void defineConfigurationOnAllManagers(String cacheName, Configuration c) {
       for (EmbeddedCacheManager cm : cacheManagers) {
          cm.defineConfiguration(cacheName, c);
+      }
+   }
+
+   protected void waitForClusterToForm(String cacheName) {
+      List<Cache> caches;
+      caches = getCaches(cacheName);
+      Cache<Object, Object> cache = caches.get(0);
+      TestingUtil.blockUntilViewsReceived(10000, caches);
+      if (cache.getConfiguration().getCacheMode().isDistributed()) {
+         BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(caches);
+      }
+   }
+
+   private List<Cache> getCaches(String cacheName) {
+      List<Cache> caches;
+      caches = new ArrayList<Cache>();
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         caches.add(cacheName == null ? cm.getCache() : cm.getCache(cacheName));
+      }
+      return caches;
+   }
+
+   protected void waitForClusterToForm() {
+      waitForClusterToForm(null);
+   }
+
+   protected TransactionManager tm(int i) {
+      return cache(i).getAdvancedCache().getTransactionManager();
+   }
+
+   protected Transaction tx(int i) {
+      try {
+         return cache(i).getAdvancedCache().getTransactionManager().getTransaction();
+      } catch (SystemException e) {
+         throw new RuntimeException(e);
       }
    }
 
