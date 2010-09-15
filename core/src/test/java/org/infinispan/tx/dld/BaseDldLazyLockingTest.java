@@ -100,15 +100,26 @@ public abstract class BaseDldLazyLockingTest extends BaseDldTest {
       t0.setKeyValue(k1, "k1_0");
       t0.executeNoResponse(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
 
-      log.info("---Before commit");
-      t0.executeNoResponse(PerCacheExecutorThread.Operations.COMMIT_TX);
-
       Object t0Response = t0.waitForResponse();
       Object t1Response = t1.waitForResponse();
 
-      boolean v1 = t0Response instanceof Exception;
-      boolean v2 = t1Response instanceof Exception;
-      assert xor(v1, v2) : "both exceptions? " + (v1 && v2);
+      boolean v0 = t0Response instanceof Exception;
+      boolean v1 = t1Response instanceof Exception;
+      assert xor(v0, v1) : "both exceptions? " + (v0 && v1);
 
+      if (!v1) {
+         System.out.println("V0" );
+         assertEquals(cache(0).get(k0), "k0_1");
+         assertEquals(cache(0).get(k1), "k1_1");
+         assertEquals(cache(1).get(k0), "k0_1");
+         assertEquals(cache(1).get(k1), "k1_1");
+      } else {
+         System.out.println("v1 = " + v1);
+         assertEquals(t0.execute(PerCacheExecutorThread.Operations.COMMIT_TX), PerCacheExecutorThread.OperationsResult.COMMIT_TX_OK);
+         assertEquals(cache(0).get(k0), "k0_0");
+         assertEquals(cache(0).get(k1), "k1_0");
+         assertEquals(cache(1).get(k0), "k0_0");
+         assertEquals(cache(1).get(k1), "k1_0");
+      }
    }
 }

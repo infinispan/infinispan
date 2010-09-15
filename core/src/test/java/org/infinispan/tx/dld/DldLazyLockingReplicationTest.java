@@ -83,7 +83,7 @@ public class DldLazyLockingReplicationTest extends BaseDldLazyLockingTest {
 
    public void testLocalVsRemoteDeadlock() {
       replicationLatch.countDown();
-//      testLocalVsRemoteDeadlock("k0", "k1");
+      testLocalVsRemoteDeadlock("k0", "k1");
    }
 
    public void testExpectedInnerStructure() {
