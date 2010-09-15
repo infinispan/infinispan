@@ -12,7 +12,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test
+@Test (testName = "remoting.NonExistentCacheTest", groups = "functional")
 public class NonExistentCacheTest extends AbstractInfinispanTest {
 
    public void testStrictPeerToPeer() {
