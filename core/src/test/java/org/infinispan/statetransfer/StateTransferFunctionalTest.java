@@ -21,8 +21,6 @@ import java.io.Serializable;
 @Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest", enabled = true)
 public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
-   protected static final String ADDRESS_CLASSNAME = Address.class.getName();
-   protected static final String PERSON_CLASSNAME = Person.class.getName();
    public static final String A_B_NAME = "a_b_name";
    public static final String A_C_NAME = "a_c_name";
    public static final String A_D_NAME = "a_d_age";

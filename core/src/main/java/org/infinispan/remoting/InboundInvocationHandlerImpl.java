@@ -8,6 +8,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.NamedCacheNotFoundException;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -34,25 +35,41 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    GlobalComponentRegistry gcr;
    private static final Log log = LogFactory.getLog(InboundInvocationHandlerImpl.class);
    private StreamingMarshaller marshaller;
+   private EmbeddedCacheManager embeddedCacheManager;
 
    @Inject
-   public void inject(GlobalComponentRegistry gcr, StreamingMarshaller marshaller) {
+   public void inject(GlobalComponentRegistry gcr, StreamingMarshaller marshaller, EmbeddedCacheManager embeddedCacheManager) {
       this.gcr = gcr;
       this.marshaller = marshaller;
+      this.embeddedCacheManager = embeddedCacheManager;
+   }
+
+   private boolean isDefined(String cacheName) {
+      log.error("Defined caches: {0}", embeddedCacheManager.getCacheNames());
+      return embeddedCacheManager.getCacheNames().contains(cacheName);
    }
 
    public Response handle(CacheRpcCommand cmd) throws Throwable {
       String cacheName = cmd.getCacheName();
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
-//      long giveupTime = System.currentTimeMillis() + 30000; // arbitraty (?) wait time for caches to start
-//      while (cr == null && System.currentTimeMillis() < giveupTime) {
-//         Thread.sleep(100);
-//         cr = gcr.getNamedComponentRegistry(cacheName);
-//      }
 
       if (cr == null) {
-         if (log.isInfoEnabled()) log.info("Cache named {0} does not exist on this cache manager!", cacheName);
-         return new ExceptionResponse(new NamedCacheNotFoundException(cacheName));
+         // lets see if the cache is *defined* and perhaps just not started.
+         if (isDefined(cacheName)) {
+            log.info("Will trya nd wait for the cache to start");
+            long giveupTime = System.currentTimeMillis() + 30000; // arbitraty (?) wait time for caches to start
+            while (cr == null && System.currentTimeMillis() < giveupTime) {
+               Thread.sleep(100);
+               cr = gcr.getNamedComponentRegistry(cacheName);
+            }
+         } else {
+            log.info("Cache {0} is not defined.  No point in waiting.", cacheName);
+         }
+
+         if (cr == null) {
+            if (log.isInfoEnabled()) log.info("Cache named {0} does not exist on this cache manager!", cacheName);
+            return new ExceptionResponse(new NamedCacheNotFoundException(cacheName));
+         }
       }
 
       Configuration localConfig = cr.getComponent(Configuration.class);
