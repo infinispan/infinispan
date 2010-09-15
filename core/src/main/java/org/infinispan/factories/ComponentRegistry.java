@@ -52,6 +52,10 @@ public class ComponentRegistry extends AbstractComponentRegistry {
          if (globalComponents == null) throw new NullPointerException("GlobalComponentRegistry cannot be null!");
          this.globalComponents = globalComponents;
 
+         // set this up *before* starting the components since some components - specifically state transfer - needs to be
+         // able to locate this registry via the InboundInvocationHandler
+         this.globalComponents.registerNamedComponentRegistry(this, cacheName);
+
          registerDefaultClassLoader(null);
          registerComponent(this, ComponentRegistry.class);
          registerComponent(configuration, Configuration.class);
@@ -135,10 +139,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
          globalComponents.start();
       }
       boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
-
-      // set this up *before* starting the components since some components - specifically state transfer - needs to be
-      // able to locate this registry via the InboundInvocationHandler
-      globalComponents.registerNamedComponentRegistry(this, cacheName);
 
       if (needToNotify) {
          for (ModuleLifecycle l : moduleLifecycles) {
