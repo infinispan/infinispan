@@ -24,6 +24,7 @@ package org.infinispan.stress;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -70,7 +71,7 @@ public class PutIfAbsentStressTest {
     * Testing putIfAbsent's behaviour on a Local cache.
     */
    protected void testonInfinispanLocal() throws Exception {
-      CacheContainer cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       ConcurrentMap<String, String> map = cm.getCache();
       try {
          testConcurrentLocking(map);

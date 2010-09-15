@@ -427,7 +427,7 @@ public class TestingUtil {
       killCacheManagers(cacheManagers.toArray(new CacheContainer[cacheManagers.size()]));
    }
    
-   public static void clearContent(CacheContainer cacheContainer) {
+   public static void clearContent(EmbeddedCacheManager cacheContainer) {
       if (cacheContainer != null) {
          Set<Cache> runningCaches = getRunningCaches(cacheContainer);
          for (Cache cache : runningCaches) {
@@ -443,14 +443,14 @@ public class TestingUtil {
       }
    }
    
-   protected static Set<Cache> getRunningCaches(CacheContainer cacheContainer) {
-      ConcurrentMap<String, Cache> caches = (ConcurrentMap<String, Cache>) TestingUtil.extractField(DefaultCacheManager.class, cacheContainer, "caches");
-      if (caches == null) return Collections.emptySet();
-      Set<Cache> result = new HashSet<Cache>();
-      for (Cache cache : caches.values()) {
-         if (cache.getStatus() == ComponentStatus.RUNNING) result.add(cache);
+   protected static Set<Cache> getRunningCaches(EmbeddedCacheManager cacheContainer) {
+      Set<Cache> running = new HashSet<Cache>();
+      for (String cacheName: cacheContainer.getCacheNames()) {
+         Cache c = cacheContainer.getCache(cacheName);
+         if (c.getStatus().allowInvocations()) running.add(c);
       }
-      return result;
+
+      return running;
    }
    
    private static void clearRunningTx(Cache cache) {
