@@ -428,7 +428,7 @@ public class TestingUtil {
    }
    
    public static void clearContent(EmbeddedCacheManager cacheContainer) {
-      if (cacheContainer != null) {
+      if (cacheContainer != null && cacheContainer.getStatus().allowInvocations()) {
          Set<Cache> runningCaches = getRunningCaches(cacheContainer);
          for (Cache cache : runningCaches) {
             clearRunningTx(cache);
