@@ -26,8 +26,11 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.CacheContainer;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;
@@ -40,10 +43,12 @@ import javax.transaction.TransactionManager;
 public class InvocationContextInterceptor extends CommandInterceptor {
 
    private TransactionManager tm;
+   private ComponentRegistry componentRegistry;
 
    @Inject
-   public void init(TransactionManager tm) {
+   public void init(TransactionManager tm, ComponentRegistry componentRegistry) {
       this.tm = tm;
+      this.componentRegistry = componentRegistry;
    }
 
    @Override
@@ -53,6 +58,15 @@ public class InvocationContextInterceptor extends CommandInterceptor {
 
    private Object handleAll(InvocationContext ctx, VisitableCommand command) throws Throwable {
       boolean suppressExceptions = false;
+
+      ComponentStatus status = componentRegistry.getStatus();
+      if (status.isTerminated()) {
+         String cacheName = componentRegistry.getCacheName();
+         String prefix = "Cache '" + cacheName + "'";
+         if (cacheName.equals(CacheContainer.DEFAULT_CACHE_NAME))
+            prefix = "Default cache";
+         throw new IllegalStateException(prefix + " is in 'TERMINATED' state and so it does not accept new invocations. Either restart it or recreate the cache container.");
+      }
 
       if (trace) log.trace("Invoked with command " + command + " and InvocationContext [" + ctx + "]");
       if (ctx == null) throw new IllegalStateException("Null context not allowed!!");

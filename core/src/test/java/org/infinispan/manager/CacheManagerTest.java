@@ -150,4 +150,33 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       assert lazyLru.isUseLazyDeserialization();
       assert lazyLru.getEvictionStrategy() == EvictionStrategy.LRU;
    }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testCacheStopManagerStopFollowedByGetCache() {
+      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      try {
+         Cache cache = localCacheManager.getCache();
+         cache.put("k", "v");
+         cache.stop();
+         localCacheManager.stop();
+         localCacheManager.getCache();
+      } finally {
+         TestingUtil.killCacheManagers(localCacheManager);
+      }
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testCacheStopManagerStopFollowedByCacheOp() {
+      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      try {
+         Cache cache = localCacheManager.getCache();
+         cache.put("k", "v");
+         cache.stop();
+         localCacheManager.stop();
+         cache.put("k", "v2");
+      } finally {
+         TestingUtil.killCacheManagers(localCacheManager);
+      }
+   }
+   
 }

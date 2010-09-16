@@ -376,6 +376,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    private Configuration defineConfiguration(String cacheName, Configuration configOverride,
                                              Configuration defaultConfigIfNotPresent, boolean checkExisting) {
+      assertIsNotTerminated();
       if (cacheName == null || configOverride == null)
          throw new NullPointerException("Null arguments not allowed");
       if (cacheName.equals(DEFAULT_CACHE_NAME))
@@ -420,6 +421,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     */
    @SuppressWarnings("unchecked")
    public <K, V> Cache<K, V> getCache(String cacheName) {
+      assertIsNotTerminated();
       if (cacheName == null)
          throw new NullPointerException("Null arguments not allowed");
 
@@ -561,6 +563,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          return Collections.emptySet();
       else
          return Immutables.immutableSetWrap(names);
+   }
+
+   private void assertIsNotTerminated() {
+      if (globalComponentRegistry.getStatus().isTerminated())
+         throw new IllegalStateException("Cache container has been stopped and cannot be reused. Recreate the cache container.");
    }
 
    @ManagedAttribute(description = "The status of the cache manager instance.")

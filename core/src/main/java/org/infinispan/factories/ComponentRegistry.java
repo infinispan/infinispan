@@ -171,4 +171,9 @@ public class ComponentRegistry extends AbstractComponentRegistry {
          cacheManagerNotifier.notifyCacheStopped(cacheName);
       }
    }
+
+   public String getCacheName() {
+      return cacheName;
+   }
+
 }
