@@ -11,6 +11,7 @@
    </parent>
 
    <artifactId>infinispan-server-core</artifactId>
+   <packaging>bundle</packaging>
    <name>Infinispan Server Core Module</name>
    <description>Infinispan server core module</description>
 
@@ -60,8 +61,17 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     ${project.groupId}.server.core.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+               </instructions>
+            </configuration>
+         </plugin>
       </plugins>
-
    </build>
-
 </project>

@@ -11,6 +11,7 @@
    </parent>
 
    <artifactId>infinispan-server-memcached</artifactId>
+   <packaging>bundle</packaging>
    <name>Infinispan Server Memcached Module</name>
    <description>Infinispan server memcached module</description>
 
@@ -60,6 +61,17 @@
                   </goals>
                </execution>
             </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     ${project.groupId}.server.memcached.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+               </instructions>
+            </configuration>
          </plugin>
       </plugins>
    </build>

@@ -115,6 +115,7 @@
       <version.rhq.plugingen>1.4.0.B01</version.rhq.plugingen>
       <version.rhq>1.2.0.GA</version.rhq>
       <version.scala>2.8.0</version.scala>
+      <version.slf4j>1.6.1</version.slf4j>
       <version.spymemcached>2.5</version.spymemcached>
       <version.testng>5.11</version.testng>
       <version.webdav.servlet>2.0</version.webdav.servlet>
@@ -231,6 +232,21 @@
             <version>2.4.3</version>
             <configuration>
                <encoding>UTF-8</encoding>
+            </configuration>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <version>2.0.1</version>
+            <extensions>true</extensions>
+            <configuration>
+               <instructions>
+                  <Bundle-DocURL>http://www.infinispan.org/</Bundle-DocURL>
+                  <Export-Package>
+                     ${project.groupId}.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+               </instructions>
             </configuration>
          </plugin>
 

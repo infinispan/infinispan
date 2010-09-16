@@ -11,9 +11,9 @@
    </parent>
 
    <artifactId>infinispan-client-hotrod</artifactId>
+   <packaging>bundle</packaging>
    <name>Infinispan Client Hotrod Module</name>
    <description>Infinispan client hotrod module</description>
-   <packaging>jar</packaging>
    <properties>
       <version.avro>1.3.3</version.avro>
    </properties>
@@ -69,4 +69,20 @@
       </dependency>
 
    </dependencies>
+
+   <build>     
+      <plugins>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     ${project.groupId}.client.hotrod.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+               </instructions>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 </project>

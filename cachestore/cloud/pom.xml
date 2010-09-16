@@ -10,6 +10,7 @@
       <relativePath>../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-cachestore-cloud</artifactId>
+   <packaging>bundle</packaging>
    <name>Infinispan CloudCacheStore</name>
    <description>Infinispan CloudCacheStore module</description>
 
@@ -101,6 +102,17 @@
                      <value>${infinispan.test.jclouds.service}</value>
                   </property>
                </systemProperties>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     ${project.groupId}.loaders.cloud.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+               </instructions>
             </configuration>
          </plugin>
       </plugins>
