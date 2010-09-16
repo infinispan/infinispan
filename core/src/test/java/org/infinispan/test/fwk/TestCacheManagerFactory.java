@@ -101,10 +101,15 @@ public class TestCacheManagerFactory {
     * @param transactional if true, the cache manager will support transactions by default.
     */
    public static EmbeddedCacheManager createLocalCacheManager(boolean transactional) {
+      return createLocalCacheManager(transactional, -1);
+   }
+
+   public static EmbeddedCacheManager createLocalCacheManager(boolean transactional, long lockAcquisitionTimeout) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
       Configuration c = new Configuration();
+      if (lockAcquisitionTimeout > -1) c.setLockAcquisitionTimeout(lockAcquisitionTimeout);
       if (transactional) amendJTA(c);
       return newDefaultCacheManager(true, globalConfiguration, c, false);
    }
