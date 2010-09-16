@@ -433,7 +433,9 @@ public class TestingUtil {
          for (Cache cache : runningCaches) {
             clearRunningTx(cache);
          }
-         if (!((EmbeddedCacheManager) cacheContainer).getStatus().allowInvocations()) return;
+
+         if (!cacheContainer.getStatus().allowInvocations()) return;
+
          for (Cache cache : runningCaches) {
             removeInMemoryData(cache);
             clearCacheLoader(cache);
@@ -449,6 +451,9 @@ public class TestingUtil {
          Cache c = cacheContainer.getCache(cacheName);
          if (c.getStatus().allowInvocations()) running.add(c);
       }
+
+      Cache defaultCache = ((DefaultCacheManager) cacheContainer).getCache();
+      if (defaultCache.getStatus().allowInvocations()) running.add(defaultCache);
 
       return running;
    }
