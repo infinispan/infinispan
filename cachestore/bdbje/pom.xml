@@ -11,6 +11,7 @@
    </parent>
 
    <artifactId>infinispan-cachestore-bdbje</artifactId>
+   <packaging>bundle</packaging>
    <name>Infinispan BDBJE CacheStore</name>
    <description>Infinispan BerkeleyDB JavaEdition CacheStore module</description>
    <dependencies>
@@ -27,4 +28,20 @@
          <url>http://download.oracle.com/maven/</url>
       </repository>
    </repositories>
+
+   <build>     
+      <plugins>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     ${project.groupId}.loaders.bdbje.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+               </instructions>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 </project>

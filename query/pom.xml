@@ -11,6 +11,7 @@
    </parent>
 
    <artifactId>infinispan-query</artifactId>
+   <packaging>bundle</packaging>
    <name>Infinispan Query API</name>
    <description>Infinispan Query API module</description>
    <dependencies>
@@ -49,4 +50,20 @@
       </dependency>
 
    </dependencies>
+
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     ${project.groupId}.query.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+               </instructions>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 </project>

@@ -10,6 +10,7 @@
    </parent>
 
    <artifactId>infinispan-server-websocket</artifactId>
+   <packaging>bundle</packaging>
    <name>Infinispan WebSocket Server</name>
    <description>WebSocket interface for Infinispan</description>
 
@@ -29,4 +30,19 @@
 
    </dependencies>
 
+   <build>     
+      <plugins>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     ${project.groupId}.server.websocket.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+               </instructions>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 </project>

@@ -11,6 +11,7 @@
    </parent>
 
    <artifactId>infinispan-lucene-directory</artifactId>
+   <packaging>bundle</packaging>
    <name>Infinispan Lucene Directory Implementation</name>
    <description>A Lucene directory implementation based on Infinispan</description>
 
@@ -70,6 +71,18 @@
                </excludes>
             </configuration>
          </plugin>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     ${project.groupId}.lucene.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+               </instructions>
+            </configuration>
+         </plugin>
+
       </plugins>
    </build>
 
