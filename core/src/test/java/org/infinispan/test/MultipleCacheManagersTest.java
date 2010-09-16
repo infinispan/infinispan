@@ -82,7 +82,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    @AfterMethod(alwaysRun=true)
    protected void clearContent() throws Throwable {
       if (cleanup == CleanupPhase.AFTER_TEST) {
-         assertSupportedConfig();
+//         assertSupportedConfig();
          log.debug("*** Test method complete; clearing contents on all caches.");
          if (cacheManagers.isEmpty())
             throw new IllegalStateException("No caches registered! Use registerCacheManager(Cache... caches) do that!");
@@ -106,10 +106,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          for (Cache cache : TestingUtil.getRunningCaches(cm)) {
             Configuration config = cache.getConfiguration();
             try {
-               assert config.isSyncCommitPhase();
-               assert config.isSyncRollbackPhase();
+               assert config.isSyncCommitPhase() : "Must use a sync commit phase!";
+               assert config.isSyncRollbackPhase(): "Must use a sync rollback phase!";
             } catch (AssertionError e) {
-               log.error("Invalid config for cache: " + getClass().getName());
+               log.error("Invalid config for cache in test: " + getClass().getName());
                throw e;
             }
          }
@@ -213,7 +213,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          Cache<K, V> cache = cm.getCache(cacheName);
          caches.add(cache);
       }
-      TestingUtil.blockUntilViewsReceived(10000, caches);
+      TestingUtil.blockUntilViewsReceived(30000, caches);
       return caches;
    }
 
