@@ -19,7 +19,7 @@
 
    <dependencies>
    	<dependency>
-   		<groupId>net.dataforte</groupId>
+   		<groupId>net.dataforte.cassandra</groupId>
    		<artifactId>cassandra-connection-pool</artifactId>
    		<version>0.1.0</version>
    	</dependency>
