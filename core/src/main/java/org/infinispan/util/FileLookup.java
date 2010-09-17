@@ -52,7 +52,7 @@ public class FileLookup {
       InputStream is = filename == null || filename.length() == 0 ? null : getAsInputStreamFromClassLoader(filename);
       if (is == null) {
          if (log.isDebugEnabled())
-            log.debug("Unable to find configuration file " + filename + " in classpath; searching for this file on the filesystem instead.");
+            log.debug("Unable to find file " + filename + " in classpath; searching for this file on the filesystem instead.");
          try {
             is = new FileInputStream(filename);
          }
