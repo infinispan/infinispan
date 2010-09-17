@@ -15,6 +15,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,8 +53,8 @@ public class BdbjeResourceFactory {
      * @return open Environment with a lock timeout of {@link org.infinispan.loaders.bdbje.BdbjeCacheStoreConfig#getLockAcquistionTimeout()}
      *         milliseconds.
      */
-    public Environment createEnvironment(File envLocation) throws DatabaseException {
-        EnvironmentConfig envConfig = new EnvironmentConfig();
+    public Environment createEnvironment(File envLocation, Properties environmentProperties) throws DatabaseException {
+        EnvironmentConfig envConfig = environmentProperties == null ? new EnvironmentConfig() : new EnvironmentConfig(environmentProperties);
         envConfig.setAllowCreate(true);
         envConfig.setTransactional(true);
         envConfig.setLockTimeout(config.getLockAcquistionTimeout(), TimeUnit.MILLISECONDS);

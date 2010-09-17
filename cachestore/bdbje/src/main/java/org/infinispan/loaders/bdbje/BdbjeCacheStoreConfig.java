@@ -1,6 +1,12 @@
 package org.infinispan.loaders.bdbje;
 
 import org.infinispan.loaders.AbstractCacheStoreConfig;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.util.FileLookup;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 /**
  * Configures {@link org.infinispan.loaders.bdbje.BdbjeCacheStore}.  This allows you to tune a number of characteristics
@@ -17,6 +23,11 @@ import org.infinispan.loaders.AbstractCacheStoreConfig;
  * database persisting the class information for objects in this store.  This defaults to <tt>{@link
  * org.infinispan.Cache#getName()} cache#name}_class_catalog</tt>.</li>
  * <p/>
+ * <li><tt>environmentPropertiesFile</tt> - the name of the SleepyCat properties file containing <tt>je.*</tt>
+ * properties to initialize the JE environment.  Defaults to null, no properties are passed in to the JE engine if this
+ * is null or empty.  The file specified needs to be available on the classpath, or must be an absolute path to a valid
+ * properties file.  Refer to SleepyCat JE Environment configuration documentation for details.</tt>.</li>
+ * <p/>
  * </ul>
  * <p/>
  * Please see {@link AbstractCacheStoreConfig} for more configuration parameters.
@@ -32,6 +43,7 @@ public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
    private String catalogDbName;
    private String expiryDbPrefix;
    private String cacheName;
+   private String environmentPropertiesFile;
    private static final long serialVersionUID = -2913308899139287416L;
 
    public String getExpiryDbPrefix() {
@@ -107,6 +119,30 @@ public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
          return cacheDbNamePrefix + "_" + cacheName;
       } else {
          return cacheName;
+      }
+   }
+
+   public String getEnvironmentPropertiesFile() {
+      return environmentPropertiesFile;
+   }
+
+   public void setEnvironmentPropertiesFile(String environmentPropertiesFile) {
+      this.environmentPropertiesFile = environmentPropertiesFile;
+   }
+
+   public Properties readEnvironmentProperties() throws CacheLoaderException {
+      if (environmentPropertiesFile == null || environmentPropertiesFile.trim().length() == 0) return null;
+      InputStream i = new FileLookup().lookupFile(environmentPropertiesFile);
+      if (i != null) {
+         Properties p = new Properties();
+         try {
+            p.load(i);
+         } catch (IOException ioe) {
+            throw new CacheLoaderException("Unable to read environment properties file " + environmentPropertiesFile, ioe);
+         }
+         return p;
+      } else {
+         return null;
       }
    }
 }

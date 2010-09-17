@@ -146,7 +146,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
 
       File location = verifyOrCreateEnvironmentDirectory(new File(cfg.getLocation()));
       try {
-         env = factory.createEnvironment(location);
+         env = factory.createEnvironment(location, cfg.readEnvironmentProperties());
          cacheDb = factory.createDatabase(env, cfg.getCacheDbName());
          Database catalogDb = factory.createDatabase(env, cfg.getCatalogDbName());
          expiryDb = factory.createDatabase(env, cfg.getExpiryDbName());
