@@ -1,0 +1,27 @@
+Infinispan is Copyright 2008 - 2010, Red Hat Middleware LLC
+and individual contributors, and is licensed under the GNU LGPL.
+
+A summary of the individual contributors is given below.
+Any omission should be sent to msurtani@redhat.com.
+
+SVN Login(s)                                 Name
+-------------------------------------------------------------------------------
+adriancole                                   Adrian Cole
+aamonten                                     Alejandro Montenegro
+bela, bela@jboss.com, belaban                Bela Ban
+bstansberry, bstansberry@jboss.com           Brian Stansberry
+dpospisi@redhat.com                          Dominik Pospisil
+gzamarreno, galder.zamarreno@jboss.com       Galder Zamarreno
+pilhuhn                                      Heiko W. Rupp
+jgreene, jason.greene@jboss.com              Jason T. Greene
+lmoren                                       Lukasz Moren
+msurtani, manik.surtani@jboss.com            Manik Surtani
+michael.neale@jboss.com                      Michael Neale
+mmarkus, mircea.markus                       Mircea Markus
+navssurtani                                  Navin Surtani
+noelo                                        Noel O'Connor
+pvdyck                                       Phillipe van Dyck
+sannegrinovero                               Sanne Grinovero
+tfenelly                                     Tom Fenelly
+vblagojevic, vblagojevic@jboss.com           Vladimir Blagojevic
+-------------------------------------------------------------------------------

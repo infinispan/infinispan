@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:4.1 http://www.infinispan.org/schemas/infinispan-config-4.1.xsd"
+      xmlns="urn:infinispan:config:4.1">
+
+   <!-- *************************** -->
+   <!-- System-wide global settings -->
+   <!-- *************************** -->
+
+   <global>
+
+      <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+         <properties>
+            <property name="maxThreads" value="5"/>
+            <property name="threadNamePrefix" value="AsyncListenerThread"/>
+         </properties>
+      </asyncListenerExecutor>
+      <transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
+         <properties>
+            <property name="configurationFile" value="udp.xml"/>
+         </properties>
+      </transport>
+
+
+   </global>
+
+   <!-- *************************** -->
+   <!-- Default "template" settings -->
+   <!-- *************************** -->
+   <default>
+      <clustering mode="D">
+         <async/>
+         <hash numOwners="1" rehashEnabled="false"/>
+         <l1 enabled="true"/>
+      </clustering>
+   </default>
+</infinispan>

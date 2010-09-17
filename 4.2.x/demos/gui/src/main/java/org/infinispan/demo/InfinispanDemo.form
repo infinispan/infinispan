@@ -1,0 +1,518 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.infinispan.demo.InfinispanDemo">
+  <grid id="27dc6" binding="panel1" default-binding="true" layout-manager="FormLayout">
+    <rowspec value="center:max(d;4px):noGrow"/>
+    <rowspec value="top:3dlu:noGrow"/>
+    <rowspec value="center:600px:grow"/>
+    <rowspec value="top:3dlu:noGrow"/>
+    <rowspec value="center:max(d;4px):noGrow"/>
+    <colspec value="fill:800px:grow"/>
+    <colspec value="left:4dlu:noGrow"/>
+    <colspec value="fill:100px:grow"/>
+    <constraints>
+      <xy x="20" y="20" width="1011" height="661"/>
+    </constraints>
+    <properties/>
+    <border type="line" title="Infinispan GUI Demo Application">
+      <font size="14" style="3"/>
+      <title-color color="-16750951"/>
+      <color color="-16750951"/>
+    </border>
+    <children>
+      <tabbedpane id="d853c" binding="mainPane">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="200"/>
+          </grid>
+          <forms defaultalign-vert="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="7aed3" binding="controlPanelTab" layout-manager="FormLayout">
+            <rowspec value="center:m:noGrow"/>
+            <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:max(d;4px):noGrow"/>
+            <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:d:grow"/>
+            <colspec value="fill:d:noGrow"/>
+            <colspec value="left:4dlu:noGrow"/>
+            <colspec value="fill:max(d;4px):noGrow"/>
+            <colspec value="left:4dlu:noGrow"/>
+            <colspec value="fill:d:grow"/>
+            <constraints>
+              <tabbedpane title="Control panel">
+                <tooltip value="This tab contains cache controls and general information about the cache configuration."/>
+              </tabbedpane>
+            </constraints>
+            <properties>
+              <toolTipText value=""/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <component id="953e7" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-vert="false"/>
+                </constraints>
+                <properties>
+                  <font style="1"/>
+                  <text value="Command"/>
+                </properties>
+              </component>
+              <component id="82b76" class="javax.swing.JButton" binding="actionButton">
+                <constraints>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-vert="false"/>
+                </constraints>
+                <properties>
+                  <text value="Button"/>
+                </properties>
+              </component>
+              <vspacer id="8cdf4">
+                <constraints>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-vert="false"/>
+                </constraints>
+              </vspacer>
+              <component id="458fc" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-vert="false"/>
+                </constraints>
+                <properties>
+                  <font style="1"/>
+                  <text value="Cache configuration file"/>
+                </properties>
+              </component>
+              <component id="1eef8" class="javax.swing.JLabel" binding="configFileName">
+                <constraints>
+                  <grid row="2" column="2" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-vert="false"/>
+                </constraints>
+                <properties>
+                  <font style="3"/>
+                  <text value=" "/>
+                </properties>
+              </component>
+              <scrollpane id="4638">
+                <constraints>
+                  <grid row="4" column="2" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-horz="false" defaultalign-vert="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="ded97" class="javax.swing.JTextArea" binding="configFileContents">
+                    <constraints/>
+                    <properties>
+                      <background color="-3355444"/>
+                      <font name="Courier New" size="10"/>
+                      <text value=""/>
+                    </properties>
+                  </component>
+                </children>
+              </scrollpane>
+              <component id="17832" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <font size="12" style="2"/>
+                  <text value="Note that you can specify a configuration file to use by passing in -Dinfinispan.configuration=file:/path/to/config.xml"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="73867" binding="dataViewTab" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <tabbedpane title="Data view" enabled="false">
+                <tooltip value="This tab contains a view of all the data in the cache."/>
+              </tabbedpane>
+            </constraints>
+            <properties>
+              <enabled value="true"/>
+              <toolTipText value=""/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <scrollpane id="1b795">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <background color="-1118482"/>
+                  <horizontalScrollBarPolicy value="30"/>
+                </properties>
+                <border type="none"/>
+                <children>
+                  <component id="90e0f" class="javax.swing.JTable" binding="dataTable" custom-create="true">
+                    <constraints/>
+                    <properties/>
+                  </component>
+                </children>
+              </scrollpane>
+              <grid id="9cc33" binding="dataViewControlPanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <vspacer id="71737">
+                    <constraints>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                  </vspacer>
+                  <component id="ae7a5" class="javax.swing.JButton" binding="refreshButton">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                        <preferred-size width="100" height="-1"/>
+                        <maximum-size width="150" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <text value="Refresh view"/>
+                    </properties>
+                  </component>
+                  <component id="3ef4b" class="javax.swing.JLabel" binding="cacheContentsSizeLabel">
+                    <constraints>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Blah"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+            </children>
+          </grid>
+          <grid id="b4b20" binding="clusterViewTab" layout-manager="FormLayout">
+            <rowspec value="center:d:grow"/>
+            <colspec value="fill:d:grow"/>
+            <constraints>
+              <tabbedpane title="Cluster view" enabled="false">
+                <tooltip value="This tab contains a view of the cluster topology"/>
+              </tabbedpane>
+            </constraints>
+            <properties>
+              <toolTipText value=""/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <scrollpane id="b9d5f">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-horz="false" defaultalign-vert="false"/>
+                </constraints>
+                <properties>
+                  <background color="-1118482"/>
+                  <horizontalScrollBarPolicy value="30"/>
+                </properties>
+                <border type="none"/>
+                <children>
+                  <component id="d96d2" class="javax.swing.JTable" binding="clusterTable">
+                    <constraints/>
+                    <properties>
+                      <background color="-992313"/>
+                      <gridColor color="-16777216"/>
+                      <intercellSpacing width="3" height="3"/>
+                      <showHorizontalLines value="true"/>
+                      <showVerticalLines value="false"/>
+                    </properties>
+                  </component>
+                </children>
+              </scrollpane>
+            </children>
+          </grid>
+          <grid id="54b2f" binding="dataGeneratorTab" layout-manager="FormLayout">
+            <rowspec value="center:max(d;4px):noGrow"/>
+            <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:max(d;4px):noGrow"/>
+            <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:max(d;4px):noGrow"/>
+            <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:max(d;4px):noGrow"/>
+            <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:max(d;4px):noGrow"/>
+            <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:d:grow"/>
+            <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:max(d;4px):noGrow"/>
+            <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:max(d;4px):noGrow"/>
+            <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:d:grow"/>
+            <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:max(d;4px):noGrow"/>
+            <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:max(d;4px):noGrow"/>
+            <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:d:grow"/>
+            <colspec value="fill:d:noGrow"/>
+            <colspec value="left:4dlu:noGrow"/>
+            <colspec value="fill:200px:noGrow"/>
+            <colspec value="left:4dlu:noGrow"/>
+            <colspec value="fill:200px:grow"/>
+            <constraints>
+              <tabbedpane title="Manipulate data" enabled="false">
+                <tooltip value="This tab provides you with the ability to add or remove data from the cache."/>
+              </tabbedpane>
+            </constraints>
+            <properties>
+              <toolTipText value=""/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <component id="7917a" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <labelFor value="4e02"/>
+                  <text value="Key"/>
+                </properties>
+              </component>
+              <component id="b834" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <labelFor value="5eb9b"/>
+                  <text value="Value"/>
+                </properties>
+              </component>
+              <component id="4e02" class="javax.swing.JTextField" binding="keyTextField" default-binding="true">
+                <constraints>
+                  <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                    <preferred-size width="150" height="-1"/>
+                  </grid>
+                  <forms defaultalign-horz="false"/>
+                </constraints>
+                <properties>
+                  <toolTipText value="Cached entry key"/>
+                </properties>
+              </component>
+              <component id="5eb9b" class="javax.swing.JTextField" binding="valueTextField" default-binding="true">
+                <constraints>
+                  <grid row="4" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                    <preferred-size width="150" height="-1"/>
+                  </grid>
+                  <forms defaultalign-horz="false"/>
+                </constraints>
+                <properties>
+                  <toolTipText value="Cached entry value"/>
+                </properties>
+              </component>
+              <component id="24ed" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <font style="3"/>
+                  <text value="Single entry manipulator"/>
+                </properties>
+              </component>
+              <component id="aacea" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="12" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <font style="3"/>
+                  <text value="Random data generator"/>
+                </properties>
+              </component>
+              <component id="c9835" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="14" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <text value="Max entries"/>
+                </properties>
+              </component>
+              <component id="43cf0" class="javax.swing.JButton" binding="cacheClearButton">
+                <constraints>
+                  <grid row="20" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-horz="false"/>
+                </constraints>
+                <properties>
+                  <text value="C&amp;lear cache"/>
+                  <toolTipText value="Clears all caches"/>
+                </properties>
+              </component>
+              <component id="dae1c" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="18" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <font style="3"/>
+                  <text value="Clear cache"/>
+                </properties>
+              </component>
+              <component id="402fc" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <text value="MaxIdle (millis)"/>
+                </properties>
+              </component>
+              <component id="6a9f0" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <text value="Lifespan (millis)"/>
+                </properties>
+              </component>
+              <component id="ca2af" class="javax.swing.JRadioButton" binding="putEntryRadioButton">
+                <constraints>
+                  <grid row="2" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <selected value="true"/>
+                  <text value="&amp;Put Entry"/>
+                  <toolTipText value="Adds a new entry or overwrites an existing one"/>
+                </properties>
+              </component>
+              <component id="f10d0" class="javax.swing.JRadioButton" binding="getEntryRadioButton" default-binding="true">
+                <constraints>
+                  <grid row="4" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <text value="&amp;Get Entry"/>
+                  <toolTipText value="Retrieves a cache entry, potentially from a remote cache"/>
+                </properties>
+              </component>
+              <component id="e9453" class="javax.swing.JRadioButton" binding="removeEntryRadioButton">
+                <constraints>
+                  <grid row="6" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <text value="&amp;Remove Entry"/>
+                  <toolTipText value="Removes an entry from the cache"/>
+                </properties>
+              </component>
+              <component id="11f60" class="javax.swing.JButton" binding="goButton" default-binding="true">
+                <constraints>
+                  <grid row="8" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-horz="false"/>
+                </constraints>
+                <properties>
+                  <text value="&amp;Go"/>
+                  <toolTipText value="Perform operation"/>
+                </properties>
+              </component>
+              <component id="32377" class="javax.swing.JButton" binding="randomGeneratorButton">
+                <constraints>
+                  <grid row="14" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-horz="false"/>
+                </constraints>
+                <properties>
+                  <text value="Ge&amp;nerate"/>
+                  <toolTipText value="Generates random data"/>
+                </properties>
+              </component>
+              <component id="7a363" class="javax.swing.JSlider" binding="generateSlider">
+                <constraints>
+                  <grid row="14" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-horz="false"/>
+                </constraints>
+                <properties>
+                  <maximum value="1000"/>
+                  <minimum value="1"/>
+                  <minorTickSpacing value="100"/>
+                  <paintLabels value="true"/>
+                  <paintTicks value="true"/>
+                  <valueIsAdjusting value="true"/>
+                </properties>
+              </component>
+              <component id="1e4f0" class="javax.swing.JSpinner" binding="lifespanSpinner">
+                <constraints>
+                  <grid row="6" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-horz="false"/>
+                </constraints>
+                <properties>
+                  <toolTipText value="Lifespan of the cache entry, in milliseconds.  Defaults to what is declared in XML config.  -1 is immortal."/>
+                </properties>
+              </component>
+              <component id="10b2a" class="javax.swing.JSpinner" binding="maxIdleSpinner">
+                <constraints>
+                  <grid row="8" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-horz="false"/>
+                </constraints>
+                <properties>
+                  <toolTipText value="MaxIdle of the cache entry, in milliseconds.  Defaults to what is declared in XML config.  -1 is immortal."/>
+                </properties>
+              </component>
+              <vspacer id="de3e7">
+                <constraints>
+                  <grid row="22" column="0" row-span="1" col-span="5" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-vert="false"/>
+                </constraints>
+              </vspacer>
+              <vspacer id="3df43">
+                <constraints>
+                  <grid row="16" column="0" row-span="1" col-span="5" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-vert="false"/>
+                </constraints>
+              </vspacer>
+              <vspacer id="767c9">
+                <constraints>
+                  <grid row="10" column="0" row-span="1" col-span="5" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-vert="false"/>
+                </constraints>
+              </vspacer>
+            </children>
+          </grid>
+        </children>
+      </tabbedpane>
+      <component id="97005" class="javax.swing.JLabel" binding="cacheStatus">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <forms/>
+        </constraints>
+        <properties>
+          <font style="3"/>
+          <text value="Initializing"/>
+          <toolTipText value="Cache status"/>
+          <verticalAlignment value="3"/>
+        </properties>
+      </component>
+      <component id="4afab" class="javax.swing.JProgressBar" binding="cacheStatusProgressBar">
+        <constraints>
+          <grid row="4" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <forms defaultalign-horz="false"/>
+        </constraints>
+        <properties>
+          <indeterminate value="true"/>
+          <orientation value="0"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+  <buttonGroups>
+    <group name="cacheFunction">
+      <member id="ca2af"/>
+      <member id="e9453"/>
+      <member id="f9bf"/>
+      <member id="f2b07"/>
+      <member id="41b43"/>
+      <member id="f10d0"/>
+    </group>
+  </buttonGroups>
+</form>
