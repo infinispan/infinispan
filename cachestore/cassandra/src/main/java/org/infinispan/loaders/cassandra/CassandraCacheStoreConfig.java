@@ -8,6 +8,8 @@ import org.infinispan.loaders.LockSupportCacheStoreConfig;
  * Configures {@link CassandraCacheStore}.
  */
 public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
+	
+	
 
 	/**
 	 * @configRef desc="The Cassandra keyspace"
@@ -27,6 +29,7 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
 	PoolProperties poolProperties;
 
 	public CassandraCacheStoreConfig() {
+		setCacheLoaderClassName(CassandraCacheStore.class.getName());
 		poolProperties = new PoolProperties();
 	}
 
