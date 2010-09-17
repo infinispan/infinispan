@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd"
+      xmlns="urn:infinispan:config:4.0">
+
+   <!--
+      This configuration is illegal on purpose for testing, don't reuse!
+   -->
+
+   <default>
+      <jmxStatistics enabled="true" />
+      <loaders passivation="false" shared="true" preload="true">
+         <loader class="org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore" fetchPersistentState="false"
+            ignoreModifications="false" purgeOnStartup="false">
+
+            <properties>
+               <property name="connectionFactoryClass" value="org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory"/>
+               <property name="connectionUrl" value="jdbc:h2:mem:infinispan_binary_based;DB_CLOSE_DELAY=-1"/>
+               <property name="userName" value="sa"/>
+               <property name="password" value="" />
+               <property name="driverClass" value="org.h2.Driver"/>
+               <property name="dropTableOnExit" value="true"/>
+               <property name="createTableOnStart" value="true"/>
+
+               <property name="bucketTableNamePrefix" value="bucket" />
+               <property name="idColumnType" value="VARCHAR(255)" />
+               <property name="idColumnName" value="idCol" />
+               <property name="dataColumnName" value="dataCol" />
+               <property name="dataColumnType" value="BINARY" />
+
+               <property name="timestampColumnName" value="timestampCol" />
+               <!-- A valid column type should be used:  -->
+               <property name="timestampColumnType" value="SomethingUnsupportedHere:)" />
+               <!--<property name="timestampColumnType" value="BIGINT" />-->
+            </properties>
+
+         </loader>
+      </loaders>
+   </default>
+
+</infinispan>

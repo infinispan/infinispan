@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd"
+      xmlns="urn:infinispan:config:4.0">
+   <global>
+      <transport clusterName="WebDavGridFS" />
+   </global>
+
+   <default>
+      <locking concurrencyLevel="1000" lockAcquisitionTimeout="60000" />
+      <lazyDeserialization enabled="true" />
+   </default>
+
+   <namedCache name="data">
+      <clustering mode="d">
+         <sync replTimeout="60000" />
+         <l1 enabled="false" />
+      </clustering>
+   </namedCache>
+
+   <namedCache name="metadata">
+      <clustering mode="r">
+         <sync replTimeout="60000" />
+         <stateRetrieval fetchInMemoryState="true" />
+      </clustering>
+   </namedCache>
+</infinispan>
