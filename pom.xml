@@ -1,11 +1,13 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>4.2.0.ALPHA2</version>
+      <version>5.0.0-SNAPSHOT</version>
       <relativePath>parent/pom.xml</relativePath>
    </parent>
 
@@ -76,18 +78,18 @@
                               <link>http://java.sun.com/javase/6/docs/api/</link>
                               <link>http://java.sun.com/javaee/5/docs/api/</link>
                            </links>
-                           <footer>
+                           <footer><![CDATA[
                       Google Analytics
-&lt;script type='text/javascript'&gt;
+<script type='text/javascript'>
 var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-&lt;/script&gt;
-&lt;script type='text/javascript'&gt;
+</script>
+<script type='text/javascript'>
 try {
 var pageTracker = _gat._getTracker("UA-8601422-4");
 pageTracker._trackPageview();
-} catch(err) {}&lt;/script&gt;
-                     </footer>
+} catch(err) {}</script>
+                     ]]></footer>
                         </configuration>
                      </execution>
                   </executions>
@@ -132,7 +134,8 @@ pageTracker._trackPageview();
          </build>
       </profile>
 
-      
+      <!-- This profile is an scaled down version of the distribution profile which should only be used to speed up
+      testing of distribution zip files. It doesn't generate any documentation and only generates the -all.zip distribution -->
       <profile>
          <id>minimal-distribution</id>
          <activation>
@@ -179,7 +182,7 @@ pageTracker._trackPageview();
          </build>
       </profile>
 
-      
+      <!-- TODO somehow combine this with the 'distribution' profile so all docs are built together -->
       <profile>
          <id>jmxdoc</id>
          <activation>
@@ -200,18 +203,18 @@ pageTracker._trackPageview();
                         <artifactId>infinispan-tools</artifactId>
                         <version>${project.version}</version>
                      </docletArtifact>
-                     <footer>
-                &lt;!-- Google Analytics --&gt;
-&lt;script type='text/javascript'&gt;
+                     <footer><![CDATA[
+                <!-- Google Analytics -->
+<script type='text/javascript'>
 var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-&lt;/script&gt;
-&lt;script type='text/javascript'&gt;
+</script>
+<script type='text/javascript'>
 try {
 var pageTracker = _gat._getTracker("UA-8601422-4");
 pageTracker._trackPageview();
-} catch(err) {}&lt;/script&gt;
-               </footer>
+} catch(err) {}</script>
+               ]]></footer>
                   </configuration>
                   <executions>
                      <execution>
@@ -227,7 +230,7 @@ pageTracker._trackPageview();
          </build>
       </profile>
 
-      
+      <!-- TODO somehow combine this with the 'distribution' profile so all docs are built together -->
       <profile>
          <id>configdoc</id>
          <activation>
@@ -248,18 +251,18 @@ pageTracker._trackPageview();
                         <artifactId>infinispan-tools</artifactId>
                         <version>${project.version}</version>
                      </docletArtifact>
-                     <footer>
-                &lt;!-- Google Analytics --&gt;
-&lt;script type='text/javascript'&gt;
+                     <footer><![CDATA[
+                <!-- Google Analytics -->
+<script type='text/javascript'>
 var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-&lt;/script&gt;
-&lt;script type='text/javascript'&gt;
+</script>
+<script type='text/javascript'>
 try {
 var pageTracker = _gat._getTracker("UA-8601422-4");
 pageTracker._trackPageview();
-} catch(err) {}&lt;/script&gt;
-               </footer>
+} catch(err) {}</script>
+               ]]></footer>
                   </configuration>
                   <executions>
                      <execution>
@@ -284,7 +287,7 @@ pageTracker._trackPageview();
                         </goals>
                         <configuration>
                            <tasks>
-                              <copy file="tools/src/main/resources/stylesheet2.css" todir="target/site/apidocs" />
+                              <copy file="tools/src/main/resources/stylesheet2.css" todir="target/site/apidocs"/>
                            </tasks>
                         </configuration>
                      </execution>
