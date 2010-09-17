@@ -16,7 +16,7 @@ import java.util.concurrent.Future;
 /**
  * Test that verifies that CacheContainer.getCache() can be called concurrently.
  *
- * @author Galder Zamarre�o
+ * @author Galder Zamarreño
  * @since 4.2
  */
 @Test(groups = "functional", testName = "ConcurrentCacheManagerTest")

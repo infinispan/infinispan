@@ -101,23 +101,22 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
       mgr.begin();
 
-		// do a replace on empty key
-		// https://jira.jboss.org/browse/ISPN-514
-		Object old = cache1.replace(k, "blah");
+      //do a replace on empty key
+      //https://jira.jboss.org/browse/ISPN-514
+      Object old = cache1.replace(k, "blah");
+      
+      boolean replaced = cache1.replace(k, "Vladimir","Blagojevic");
+      assert !replaced;
+      
+      assertNull("Should be null", cache1.get(k));     
+      assertNull("Should be null", cache2.get(k));
 
-		boolean replaced = cache1.replace(k, "Vladimir", "Blagojevic");
-		assert !replaced;
+      mgr.commit();
 
-		assertNull("Should be null", cache1.get(k));
-		assertNull("Should be null", cache2.get(k));
-
-		mgr.commit();
-
-		assertNoLocks(cache1);
-		assertNoLocks(cache2);
-		cache1.clear();
-		cache2.clear();
-	}  
+      assertNoLocks(cache1);
+      assertNoLocks(cache2);
+      cache1.clear();cache2.clear();
+   }
 
    private void concurrentLockingHelper(final boolean sameNode, final boolean useTx)
          throws Exception {

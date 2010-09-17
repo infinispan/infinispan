@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
 /**
  * Tests {@link Flag#SKIP_LOCKING} logic
  *
- * @author Galder Zamarre�o
+ * @author Galder Zamarreño
  * @since 4.1
  */
 @Test(groups = "functional", testName = "api.SkipLockingTest")

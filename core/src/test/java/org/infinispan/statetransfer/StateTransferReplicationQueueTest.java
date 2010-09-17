@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * State transfer and replication queue test verifying that the interaction between them two works in fine.
  *
- * @author Galder Zamarre�o
+ * @author Galder Zamarreño
  * @since 4.1
  */
 @Test(groups = "functional", testName = "statetransfer.StateTransferReplicationQueueTest", enabled = true)

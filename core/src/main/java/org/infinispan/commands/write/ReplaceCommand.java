@@ -31,7 +31,7 @@ import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 
 /**
  * @author Mircea.Markus@jboss.com
- * @author Galder Zamarre�o
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.REPLACE_COMMAND)
@@ -63,9 +63,9 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
       if (e != null) {
          if (ctx.isOriginLocal()) {
-        	 	//ISPN-514
+            //ISPN-514
             if (e.isNull() || e.getValue() == null) return returnValue(null, false);    
-
+            
             if (oldValue == null || oldValue.equals(e.getValue())) {
                Object old = e.setValue(newValue);
                e.setLifespan(lifespanMillis);

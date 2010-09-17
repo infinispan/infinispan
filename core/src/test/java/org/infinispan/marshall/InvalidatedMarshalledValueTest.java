@@ -13,7 +13,7 @@ import static org.infinispan.marshall.MarshalledValueTest.*;
 /**
  * // TODO: Document this
  *
- * @author Galder Zamarre�o
+ * @author Galder Zamarreño
  * @since // TODO
  */
 @Test(groups = "functional", testName = "marshall.InvalidatedMarshalledValueTest")

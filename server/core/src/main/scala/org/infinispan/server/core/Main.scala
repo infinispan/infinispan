@@ -85,7 +85,7 @@ object Main extends Logging {
          System.err.println("ERROR: Please indicate protocol to run with -r parameter")
          showAndExit
       }
-      
+
       // TODO: move class name and protocol number to a resource file under the corresponding project
       val clazz = protocol match {
          case "memcached" => "org.infinispan.server.memcached.MemcachedServer"
@@ -99,6 +99,7 @@ object Main extends Logging {
       // Servers need a shutdown hook to close down network layer, so there's no need for an extra shutdown hook.
       // Removing Infinispan's hook also makes shutdown procedures for server and cache manager sequential, avoiding
       // issues with having the JGroups channel disconnected before it's removed itself from the topology view.
+      cacheManager.getGlobalConfiguration.setShutdownHookBehavior(ShutdownHookBehavior.DONT_REGISTER)
       addShutdownHook(new ShutdownHook(server, cacheManager))
       server.start(props, cacheManager)
    }
@@ -216,6 +217,10 @@ object Main extends Logging {
 }
 
 private class ShutdownHook(server: ProtocolServer, cacheManager: CacheContainer) extends Thread with Logging {
+
+   // Constructor code inline
+   setName("ShutdownHookThread")
+
    override def run {
       if (server != null) {
          info("Posting Shutdown Request to the server...")

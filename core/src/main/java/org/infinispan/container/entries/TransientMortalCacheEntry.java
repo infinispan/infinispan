@@ -88,7 +88,7 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
    public final void reincarnate() {
       cacheValue.created = System.currentTimeMillis();
-   }
+   }   
 
    public long getMaxIdle() {
       return cacheValue.maxIdle;

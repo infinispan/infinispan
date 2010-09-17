@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<smooks-resource-list xmlns="http://www.milyn.org/xsd/smooks-1.1.xsd"
-                      xmlns:csv="http://www.milyn.org/xsd/smooks/csv-1.2.xsd">
-    <csv:reader fields="GenbankAccessionNumber,Host,GenomeSequenceNumber,SubType,country,YearFound,SequenceLength,VirusName,HostAge,HostGender,FullLengthSequence" separator="&#009;">
-        <csv:listBinding beanId="customerList" class="org.infinispan.ec2demo.Nucleotide_Protein_Element"/>
-    </csv:reader>
-
-</smooks-resource-list>

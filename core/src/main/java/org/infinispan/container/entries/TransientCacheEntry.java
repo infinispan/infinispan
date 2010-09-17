@@ -41,7 +41,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
    public final void reincarnate() {
       // no-op
-   }
+   }   
 
    public final boolean canExpire() {
       return true;

@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
  * Cache and CacheContainer instances have been stopped. This emulates redeployment
  * scenarios under a situations where the CacheContainer is a shared resource.
  *
- * @author Galder Zamarre�o
+ * @author Galder Zamarreño
  * @since 4.2
  */
 @Test(groups = "functional", testName = "api.TerminatedCacheTest")

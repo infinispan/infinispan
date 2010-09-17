@@ -74,7 +74,7 @@
             useLockStriping="true"
             />
 
-      <!--
+      <!--                                 //http://community.jboss.org/wiki/LockingandConcurrency#Locking_a_single_remote_node
       Used to register a transaction manager and participate in ongoing transactions.
       -->
       <transaction

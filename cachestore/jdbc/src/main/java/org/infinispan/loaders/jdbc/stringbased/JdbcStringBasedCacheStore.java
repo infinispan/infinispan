@@ -354,7 +354,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
 
    private void enforceTwoWayMapper(String where) throws CacheLoaderException {
       if (!(key2StringMapper instanceof TwoWayKey2StringMapper)) {
-         String message = "In order for JdbcStringBasedCacheStore to support " + where + ", the Key2StringMapper " +
+         String message = "In order for JdbcStringBasedCacheStore to support " + where + ", the supplied Key2StringMapper " +
                "needs to implement TwoWayKey2StringMapper. You should either make " + key2StringMapper.getClass().getName() +
                " implement TwoWayKey2StringMapper or disable " + where + ". See [https://jira.jboss.org/browse/ISPN-579] for more details.";
          log.error(message);

@@ -21,6 +21,7 @@
  */
 package org.infinispan.test;
 
+import org.testng.AssertJUnit;
 import org.testng.annotations.AfterTest;
 
 import java.lang.reflect.Field;

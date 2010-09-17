@@ -23,7 +23,7 @@ package org.infinispan.query.backend;
 
 import org.hibernate.search.cfg.SearchConfiguration;
 import org.hibernate.search.engine.SearchFactoryImplementor;
-import org.hibernate.search.impl.SearchFactoryBuilder;
+import org.hibernate.search.impl.SearchFactoryImpl;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
@@ -100,9 +100,10 @@ public class QueryHelper {
       this.classes = classes;
 
       // Set up the search factory for hibernate search first.
-      SearchConfiguration config = new SearchableCacheConfiguration(classes, properties);
-      searchFactory = new SearchFactoryBuilder().configuration(config).buildSearchFactory();
-      
+
+      SearchConfiguration cfg = new SearchableCacheConfiguration(classes, properties);
+      searchFactory = new SearchFactoryImpl(cfg);
+
       applyProperties(cache.getConfiguration());
    }
 

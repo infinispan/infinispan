@@ -14,7 +14,7 @@ import java.lang.reflect.Method;
 /**
  * Cache API test with lazy deserialization turned on.
  *
- * @author Galder Zamarre�o
+ * @author Galder Zamarreño
  * @since 4.1
  */
 @Test(groups = "functional", testName = "api.lazy.LazyCacheAPITest")

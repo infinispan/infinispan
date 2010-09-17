@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
  * // TODO: Document this
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 4.1
  */
 @Test(groups = "functional", testName = "marshall.MarshalledValueSingleNodeTest")
 public class MarshalledValueSingleNodeTest extends SingleCacheManagerTest {

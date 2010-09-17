@@ -5,7 +5,6 @@ import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
 import org.testng.TestException;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -33,37 +32,29 @@ public class UnknownCacheStartTest extends AbstractInfinispanTest {
 
    @Test (expectedExceptions = {CacheException.class, TestException.class}, timeOut = 60000, enabled = false)
    public void testStartingUnknownCaches() throws Throwable {
-      try {
-         cm1 = createCacheManager(configuration);
+      cm1 = createCacheManager(configuration);
 
-         cm1.defineConfiguration("new_1", configuration);
+      cm1.defineConfiguration("new_1", configuration);
 
-         Cache<String, String> c1 = cm1.getCache();
-         Cache<String, String> c1_new = cm1.getCache("new_1");
+      Cache<String, String> c1 = cm1.getCache();
+      Cache<String, String> c1_new = cm1.getCache("new_1");
 
-         c1.put("k", "v");
-         c1_new.put("k", "v");
+      c1.put("k", "v");
+      c1_new.put("k", "v");
 
-         assert "v".equals(c1.get("k"));
-         assert "v".equals(c1_new.get("k"));
+      assert "v".equals(c1.get("k"));
+      assert "v".equals(c1_new.get("k"));
 
-         cm2 = createCacheManager(configuration);
-         cm2.defineConfiguration("new_2", configuration);
+      cm2 = createCacheManager(configuration);
+      cm2.defineConfiguration("new_2", configuration);
 
-         Cache<String, String> c2 = cm2.getCache();
-         Cache<String, String> c2_new = cm2.getCache("new_AND_DEFINITELY_UNKNOWN_cache_2");
+      Cache<String, String> c2 = cm2.getCache();
+      Cache<String, String> c2_new = cm2.getCache("new_cache_2");
 
-         c2.put("k", "v");
-         c2_new.put("k", "v");
+      c2.put("k", "v");
+      c2_new.put("k", "v");
 
-         assert "v".equals(c2.get("k"));
-         assert "v".equals(c2_new.get("k"));
-
-         BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(c2, c2_new);
-
-         assert false : "Should have thrown an exception!";
-      } catch (CacheException expected) {
-         // this is good
-      }
+      assert "v".equals(c2.get("k"));
+      assert "v".equals(c2_new.get("k"));
    }
 }
