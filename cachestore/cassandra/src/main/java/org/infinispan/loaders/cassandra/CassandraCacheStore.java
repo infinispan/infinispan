@@ -147,7 +147,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 				}
 
 				for (KeySlice keySlice : keySlices) {
-					String key = keySlice.getKey();
+					String key = unhashKey(keySlice.getKey());
 					List<ColumnOrSuperColumn> columns = keySlice.getColumns();
 					if(columns.size()>0) {
 						byte[] value = columns.get(0).getColumn().getValue();
@@ -185,7 +185,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 				}
 
 				for (KeySlice keySlice : keySlices) {
-					String key = keySlice.getKey();
+					String key = unhashKey(keySlice.getKey());
 					if (keysToExclude == null || !keysToExclude.contains(key))
 						s.add(key);
 				}
@@ -320,15 +320,13 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	 */
 	public void toStream(ObjectOutput out) throws CacheLoaderException {
 		try {
-			Set<InternalCacheEntry> loadAll = loadAll();
-			log.debug("toStream() entries");
+			Set<InternalCacheEntry> loadAll = loadAll();		
 			int count = 0;
 			for (InternalCacheEntry entry : loadAll) {
 				getMarshaller().objectToObjectStream(entry, out);
 				count++;
 			}
 			getMarshaller().objectToObjectStream(null, out);
-			log.debug("wrote " + count + " entries");
 		} catch (IOException e) {
 			throw new CacheLoaderException(e);
 		}
@@ -340,7 +338,6 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	 */
 	public void fromStream(ObjectInput in) throws CacheLoaderException {
 		try {
-			log.debug("fromStream()");
 			int count = 0;
 			while (true) {
 				count++;
@@ -349,7 +346,6 @@ public class CassandraCacheStore extends AbstractCacheStore {
 					break;
 				store(entry);
 			}
-			log.debug("read " + count + " entries");
 		} catch (IOException e) {
 			throw new CacheLoaderException(e);
 		} catch (ClassNotFoundException e) {
@@ -410,6 +406,10 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		return ENTRY_KEY_PREFIX+key.toString();
 	}
 	
+	public static String unhashKey(String key) {
+		return key.substring(ENTRY_KEY_PREFIX.length());
+	}
+	
 	public static String expirationColumn(long timestamp) {
 		return String.format("expiration%013d", timestamp);
 	}
@@ -428,14 +428,12 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		}
 
 		if (value == null) { // Delete
-			log.debug("Delete '{0}'", key);
 			Deletion deletion = new Deletion(System.currentTimeMillis());
 			if (column != null) { // Single column delete
 				deletion.setPredicate(new SlicePredicate().setColumn_names(Arrays.asList(new byte[][] { column })));
 			} // else Delete entire column family
 			columnFamilyMutations.add(new Mutation().setDeletion(deletion));
-		} else { // Insert/update
-			log.debug("Insert/update '{0}', size={1}", key, value.length);
+		} else { // Insert/update			
 			ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
 			cosc.setColumn(new Column(column, value, System.currentTimeMillis()));
 			columnFamilyMutations.add(new Mutation().setColumn_or_supercolumn(cosc));
