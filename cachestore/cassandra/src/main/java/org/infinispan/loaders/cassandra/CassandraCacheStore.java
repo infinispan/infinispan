@@ -94,8 +94,9 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		super.start();
 	}
 
+	@Override
 	public InternalCacheEntry load(Object key) throws CacheLoaderException {
-		String hashKey = hashKey(key);
+		String hashKey = CassandraCacheStore.hashKey(key);
 		Cassandra.Iface cassandraClient = null;
 		try {
 			cassandraClient = pool.getConnection();
@@ -150,6 +151,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 					String key = unhashKey(keySlice.getKey());
 					List<ColumnOrSuperColumn> columns = keySlice.getColumns();
 					if(columns.size()>0) {
+						log.debug("COLUMN = "+new String(columns.get(0).getColumn().getName()));
 						byte[] value = columns.get(0).getColumn().getValue();
 						InternalCacheEntry ice = unmarshall(value, key);
 						s.add(ice);
@@ -207,6 +209,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		pool.close();
 	}
 
+	@Override
 	public void clear() throws CacheLoaderException {
 		if (trace)
 			log.trace("clear()");
@@ -230,10 +233,9 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
 				for (KeySlice keySlice : keySlices) {
 					String cassandraKey = keySlice.getKey();
-					addMutation(mutationMap, cassandraKey, config.entryColumnFamily, entryColumnPath.getColumn(), null);
-					addMutation(mutationMap, cassandraKey, config.expirationColumnFamily, null, null);
+					remove0(cassandraKey, mutationMap);
 				}
-				cassandraClient.batch_mutate(config.keySpace, mutationMap, ConsistencyLevel.ONE);
+				cassandraClient.batch_mutate(config.keySpace, mutationMap, ConsistencyLevel.ALL);
 			}
 		} catch (Exception e) {
 			throw new CacheLoaderException(e);
@@ -243,6 +245,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
 	}
 
+	@Override
 	public boolean remove(Object key) throws CacheLoaderException {
 		if (trace)
 			log.trace("remove() " + key);
@@ -250,7 +253,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		try {
 			cassandraClient = pool.getConnection();
 			Map<String, Map<String, List<Mutation>>> mutationMap = new HashMap<String, Map<String, List<Mutation>>>();
-			remove0(key, mutationMap);
+			remove0(CassandraCacheStore.hashKey(key), mutationMap);
 			cassandraClient.batch_mutate(config.keySpace, mutationMap, ConsistencyLevel.ONE);
 			return true;
 		} catch (Exception e) {
@@ -261,10 +264,9 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		}
 	}
 
-	private void remove0(Object key, Map<String, Map<String, List<Mutation>>> mutationMap) {
-		String cassandraKey = CassandraCacheStore.hashKey(key);
-		addMutation(mutationMap, cassandraKey, config.entryColumnFamily, entryColumnPath.getColumn(), null);
-		addMutation(mutationMap, cassandraKey, config.expirationColumnFamily, null, null);
+	private void remove0(String key, Map<String, Map<String, List<Mutation>>> mutationMap) {
+		addMutation(mutationMap, key, config.entryColumnFamily, null, null);
+		addMutation(mutationMap, key, config.expirationColumnFamily, null, null);
 	}
 
 	private byte[] marshall(InternalCacheEntry entry) throws IOException {
@@ -283,16 +285,10 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		Cassandra.Iface cassandraClient = null;
 		
 		try {
-			if (trace)
-				log.trace("storing " + entry.getKey());
-			
 			cassandraClient = pool.getConnection();
-			Map<String, Map<String, List<Mutation>>> mutationMap = new HashMap<String, Map<String, List<Mutation>>>();
+			Map<String, Map<String, List<Mutation>>> mutationMap = new HashMap<String, Map<String, List<Mutation>>>(2);
 			store0(entry, mutationMap);
-			cassandraClient.batch_mutate(config.keySpace, mutationMap, ConsistencyLevel.ONE);
-			
-			if (trace)
-				log.trace("stored " + entry.getKey());
+			cassandraClient.batch_mutate(config.keySpace, mutationMap, ConsistencyLevel.ONE);			
 		} catch (Exception e) {
 			throw new CacheLoaderException(e);
 		} finally {
@@ -302,16 +298,12 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
 	private void store0(InternalCacheEntry entry, Map<String, Map<String, List<Mutation>>> mutationMap) throws IOException  {
 		Object key = entry.getKey();
-				
 			
 		String cassandraKey = CassandraCacheStore.hashKey(key);
 		addMutation(mutationMap, cassandraKey, config.entryColumnFamily, entryColumnPath.getColumn(), marshall(entry));
 		if (entry.canExpire()) {
 			addMutation(mutationMap, cassandraKey, config.expirationColumnFamily, longToBytes(entry.getExpiryTime()), emptyByteArray);
 		}
-			
-		
-		
 	}
 
 	/**
@@ -380,7 +372,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 					clear();
 					break;
 				case REMOVE:
-					remove0(((Remove) m).getKey(), mutationMap);
+					remove0(hashKey(((Remove) m).getKey()), mutationMap);
 					break;
 				default:
 					throw new AssertionError();
@@ -421,6 +413,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 			keyMutations = new HashMap<String, List<Mutation>>();
 			mutationMap.put(key, keyMutations);
 		}
+		// If the columnfamily doesn't exist yet, create the mutation holder
 		List<Mutation> columnFamilyMutations = keyMutations.get(columnFamily);
 		if (columnFamilyMutations == null) {
 			columnFamilyMutations = new ArrayList<Mutation>();
