@@ -56,8 +56,8 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       if (cr == null) {
          // lets see if the cache is *defined* and perhaps just not started.
          if (isDefined(cacheName)) {
-            log.info("Will trya nd wait for the cache to start");
-            long giveupTime = System.currentTimeMillis() + 30000; // arbitraty (?) wait time for caches to start
+            log.info("Will try and wait for the cache to start");
+            long giveupTime = System.currentTimeMillis() + 30000; // arbitrary (?) wait time for caches to start
             while (cr == null && System.currentTimeMillis() < giveupTime) {
                Thread.sleep(100);
                cr = gcr.getNamedComponentRegistry(cacheName);
