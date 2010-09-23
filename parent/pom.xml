@@ -99,7 +99,7 @@
       <version.jbossjts>4.9.0.GA</version.jbossjts>
       <version.jbossts-common>4.6.1.GA</version.jbossts-common>
       <version.jcipannotations>1.0</version.jcipannotations>
-      <version.jclouds>1.0-beta-6</version.jclouds>
+      <version.jclouds>1.0-beta-7</version.jclouds>
       <version.jetty>6.1.15</version.jetty>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
       <version.jgroups>2.10.0.GA</version.jgroups>
