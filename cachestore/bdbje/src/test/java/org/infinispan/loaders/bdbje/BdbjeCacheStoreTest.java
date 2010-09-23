@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
+import java.util.Properties;
 
 /**
  * @author Adrian Cole
@@ -67,7 +68,7 @@ public class BdbjeCacheStoreTest {
       }
 
       @Override
-      public Environment createEnvironment(File envLocation) throws DatabaseException {
+      public Environment createEnvironment(File envLocation, Properties environmentProperties) throws DatabaseException {
          return env;
       }
 
