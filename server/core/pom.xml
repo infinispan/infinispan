@@ -60,6 +60,9 @@
                   </goals>
                </execution>
             </executions>
+            <configuration>
+               <scalaVersion>2.8.0</scalaVersion>
+            </configuration>
          </plugin>
          <plugin>
             <groupId>org.apache.felix</groupId>
