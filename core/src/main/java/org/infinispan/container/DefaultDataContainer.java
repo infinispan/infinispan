@@ -2,13 +2,12 @@ package org.infinispan.container;
 
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -24,30 +23,25 @@ import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.EvictionListener;
 
 /**
- * Simple data container that does not order entries for eviction, implemented using two ConcurrentHashMaps, one for
- * mortal and one for immortal entries.
- * <p/>
- * This container does not support eviction, in that entries are unsorted.
- * <p/>
- * This implementation offers O(1) performance for all operations.
- *
+ * DefaultDataContainer is both eviction and non-eviction based data container. 
+ *  
+ * 
  * @author Manik Surtani
  * @author Galder Zamarreño
  * @author Vladimir Blagojevic
+ * 
  * @since 4.0
  */
 @ThreadSafe
 public class DefaultDataContainer implements DataContainer {
-   final ConcurrentMap<Object, InternalCacheEntry> immortalEntries;
-   final ConcurrentMap<Object, InternalCacheEntry> mortalEntries;
-   final AtomicInteger numEntries = new AtomicInteger(0);
+   
+   final ConcurrentMap<Object, InternalCacheEntry> entries;
    final InternalEntryFactory entryFactory;
-   final DefaultEvictionListener evictionListener;   
-   private EvictionManager evictionManager;   
+   final DefaultEvictionListener evictionListener;
+   private EvictionManager evictionManager;
 
    protected DefaultDataContainer(int concurrencyLevel) {
-      immortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(128, 0.75f, concurrencyLevel);
-      mortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(64, 0.75f, concurrencyLevel);
+      entries = new ConcurrentHashMap<Object, InternalCacheEntry>(128, 0.75f,concurrencyLevel);
       entryFactory = new InternalEntryFactory();
       evictionListener = null;
    }
@@ -77,23 +71,18 @@ public class DefaultDataContainer implements DataContainer {
          default:
             throw new IllegalArgumentException("No such eviction strategy " + strategy);
       }
-      immortalEntries = new BoundedConcurrentHashMap<Object, InternalCacheEntry>(maxEntries, concurrencyLevel, eviction, evictionListener);
-      mortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(64, 0.75f, concurrencyLevel);
+      entries = new BoundedConcurrentHashMap<Object, InternalCacheEntry>(maxEntries, concurrencyLevel, eviction, evictionListener);      
       entryFactory = new InternalEntryFactory();
    }
 
    @Inject
    public void initialize(EvictionManager evictionManager) {
-      this.evictionManager = evictionManager;     
+      this.evictionManager = evictionManager;
    }
 
-   public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries, EvictionStrategy strategy, EvictionThreadPolicy policy) {
-      return new DefaultDataContainer(concurrencyLevel, maxEntries, strategy, policy) {
-         @Override
-         public int size() {
-            return immortalEntries.size() + mortalEntries.size();
-         }
-      };
+   public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries,
+            EvictionStrategy strategy, EvictionThreadPolicy policy) {
+      return new DefaultDataContainer(concurrencyLevel, maxEntries, strategy, policy);
    }
 
    public static DataContainer unBoundedDataContainer(int concurrencyLevel) {
@@ -101,8 +90,7 @@ public class DefaultDataContainer implements DataContainer {
    }
 
    public InternalCacheEntry peek(Object key) {
-      InternalCacheEntry e = immortalEntries.get(key);
-      if (e == null) e = mortalEntries.get(key);
+      InternalCacheEntry e = entries.get(key);
       return e;
    }
 
@@ -110,9 +98,7 @@ public class DefaultDataContainer implements DataContainer {
       InternalCacheEntry e = peek(k);
       if (e != null) {
          if (e.isExpired()) {
-            if (mortalEntries.remove(k) != null) {
-               numEntries.getAndDecrement();
-            }
+            entries.remove(k);
             e = null;
          } else {
             e.touch();
@@ -121,249 +107,159 @@ public class DefaultDataContainer implements DataContainer {
       return e;
    }
 
-   protected void successfulPut(InternalCacheEntry ice, boolean newEntry) {
-      // no-op
-   }
-
    public void put(Object k, Object v, long lifespan, long maxIdle) {
-      InternalCacheEntry e = immortalEntries.get(k);
+      InternalCacheEntry e = entries.get(k);
       if (e != null) {
          e.setValue(v);
-         e = entryFactory.update(e, lifespan, maxIdle);
-
-         if (e.canExpire()) {
-            immortalEntries.remove(k);
-            mortalEntries.put(k, e);
-         }
-         successfulPut(e, false);
+         InternalCacheEntry original = e;
+         e = entryFactory.update(e, lifespan, maxIdle);        
+         // we have the same instance. So we need to reincarnate.
+         if(original == e)
+            e.reincarnate();                 
       } else {
-         e = mortalEntries.get(k);
-         if (e != null) {
-            e.setValue(v);
-            InternalCacheEntry original = e;
-            e = entryFactory.update(e, lifespan, maxIdle);
-
-            if (!e.canExpire()) {
-               mortalEntries.remove(k);
-               immortalEntries.put(k, e);
-            } else if (e != original) {
-               // the entry has changed type, but still can expire!
-               mortalEntries.put(k, e);
-            } else {
-               // we have the same instance.  So we need to reincarnate.
-               e.reincarnate();
-            }
-            successfulPut(e, false);
-         } else {
-            // this is a brand-new entry
-            numEntries.getAndIncrement();
-            e = entryFactory.createNewEntry(k, v, lifespan, maxIdle);
-            if (e.canExpire())
-               mortalEntries.put(k, e);
-            else
-               immortalEntries.put(k, e);
-            successfulPut(e, true);
-         }
+         // this is a brand-new entry
+         e = entryFactory.createNewEntry(k, v, lifespan, maxIdle);                  
       }
+      entries.put(k, e);
    }
 
    public boolean containsKey(Object k) {
       InternalCacheEntry ice = peek(k);
       if (ice != null && ice.isExpired()) {
-         if (mortalEntries.remove(k) != null) {
-            numEntries.getAndDecrement();
-         }
+         entries.remove(k);
          ice = null;
       }
       return ice != null;
    }
 
    public InternalCacheEntry remove(Object k) {
-      InternalCacheEntry e = immortalEntries.remove(k);
-      if (e == null) e = mortalEntries.remove(k);
-      if (e != null) numEntries.getAndDecrement();
-
+      InternalCacheEntry e = entries.remove(k);
       return e == null || e.isExpired() ? null : e;
    }
 
    public int size() {
-      return numEntries.get();
+      return entries.size();
    }
 
    public void clear() {
-      immortalEntries.clear();
-      mortalEntries.clear();
-      numEntries.set(0);
+      entries.clear();
    }
 
    public Set<Object> keySet() {
-      return new KeySet();
+      return Collections.unmodifiableSet(entries.keySet());
    }
 
    public Collection<Object> values() {
       return new Values();
    }
 
-   public Set<InternalCacheEntry> entrySet() {
+   public Set<InternalCacheEntry> entrySet() {      
       return new EntrySet();
    }
 
    public void purgeExpired() {
-      for (Iterator<InternalCacheEntry> entries = mortalEntries.values().iterator(); entries.hasNext();) {
-         InternalCacheEntry e = entries.next();
+      for (Iterator<InternalCacheEntry> purgeCandidates = entries.values().iterator(); purgeCandidates.hasNext();) {
+         InternalCacheEntry e = purgeCandidates.next();
          if (e.isExpired()) {
-            entries.remove();
-            numEntries.getAndDecrement();
+            purgeCandidates.remove();
          }
       }
    }
-
-   public Iterator<InternalCacheEntry> iterator() {
-      return new EntryIterator(immortalEntries.values().iterator(), mortalEntries.values().iterator());
+   
+   public Iterator<InternalCacheEntry> iterator() {      
+      return new EntryIterator(entries.values().iterator());
    }
 
-   private class DefaultEvictionListener implements EvictionListener<Object, InternalCacheEntry> {      
+   private class DefaultEvictionListener implements EvictionListener<Object, InternalCacheEntry> {
       @Override
       public void preEvict(Object key) {
          evictionManager.preEvict(key);
       }
-      
+
       @Override
       public void postEvict(Object key, InternalCacheEntry value) {
          evictionManager.postEvict(key, value);
-      }      
-   }
-
-   private class KeySet extends AbstractSet<Object> {
-      final Set<Object> immortalKeys;
-      final Set<Object> mortalKeys;
-
-      public KeySet() {
-         immortalKeys = immortalEntries.keySet();
-         mortalKeys = mortalEntries.keySet();
-      }
-
-      public Iterator<Object> iterator() {
-         return new KeyIterator(immortalKeys.iterator(), mortalKeys.iterator());
-      }
-
-      public void clear() {
-         throw new UnsupportedOperationException();
-      }
-
-      public boolean contains(Object o) {
-         return immortalKeys.contains(o) || mortalKeys.contains(o);
-      }
-
-      public boolean remove(Object o) {
-         throw new UnsupportedOperationException();
-      }
-
-      public int size() {
-         return immortalKeys.size() + mortalKeys.size();
       }
    }
+   
+   private static class ImmutableEntryIterator extends EntryIterator {
+      ImmutableEntryIterator(Iterator<InternalCacheEntry> it){
+         super(it);
+      }
+      
+      public InternalCacheEntry next() {
+         return Immutables.immutableInternalCacheEntry(super.next());
+      }
+   }
+   
+   public static class EntryIterator implements Iterator<InternalCacheEntry> {
+      
+      
+      private final Iterator<InternalCacheEntry> it;
 
-   private static class KeyIterator implements Iterator<Object> {
-      Iterator<Iterator<Object>> metaIterator;
-      Iterator<Object> currentIterator;
-
-      private KeyIterator(Iterator<Object> immortalIterator, Iterator<Object> mortalIterator) {
-         metaIterator = Arrays.asList(immortalIterator, mortalIterator).iterator();
-         if (metaIterator.hasNext()) currentIterator = metaIterator.next();
+      EntryIterator(Iterator<InternalCacheEntry> it){this.it=it;}
+      
+      public InternalCacheEntry next() {
+         return it.next();
       }
 
+      @Override
       public boolean hasNext() {
-         boolean hasNext = currentIterator.hasNext();
-         while (!hasNext && metaIterator.hasNext()) {
-            currentIterator = metaIterator.next();
-            hasNext = currentIterator.hasNext();
-         }
-         return hasNext;
+         return it.hasNext();
       }
 
-      @SuppressWarnings("unchecked")
-      public Object next() {
-         return currentIterator.next();
-      }
-
+      @Override
       public void remove() {
          throw new UnsupportedOperationException();
       }
    }
-
+   
+   /**
+    * Minimal implementation needed for unmodifiable Set
+    *
+    */
    private class EntrySet extends AbstractSet<InternalCacheEntry> {
       public Iterator<InternalCacheEntry> iterator() {
-         return new ImmutableEntryIterator(immortalEntries.values().iterator(), mortalEntries.values().iterator());
+         return new ImmutableEntryIterator(entries.values().iterator());
       }
 
       @Override
       public int size() {
-         return immortalEntries.size() + mortalEntries.size();
+         return entries.size();
       }
    }
-
-   private static class MortalInmortalIterator {
-      Iterator<Iterator<InternalCacheEntry>> metaIterator;
-      Iterator<InternalCacheEntry> currentIterator;
-
-      private MortalInmortalIterator(Iterator<InternalCacheEntry> immortalIterator, Iterator<InternalCacheEntry> mortalIterator) {
-         metaIterator = Arrays.asList(immortalIterator, mortalIterator).iterator();
-         if (metaIterator.hasNext()) currentIterator = metaIterator.next();
-      }
-
-      public boolean hasNext() {
-         boolean hasNext = currentIterator.hasNext();
-         while (!hasNext && metaIterator.hasNext()) {
-            currentIterator = metaIterator.next();
-            hasNext = currentIterator.hasNext();
-         }
-         return hasNext;
-      }
-
-      public void remove() {
-         throw new UnsupportedOperationException();
-      }
-   }
-
-   private class EntryIterator extends MortalInmortalIterator implements Iterator<InternalCacheEntry> {
-      private EntryIterator(Iterator<InternalCacheEntry> immortalIterator, Iterator<InternalCacheEntry> mortalIterator) {
-         super(immortalIterator, mortalIterator);
-      }
-
-      @SuppressWarnings("unchecked")
-      public InternalCacheEntry next() {
-         return currentIterator.next();
-      }
-   }
-
-   private class ImmutableEntryIterator extends MortalInmortalIterator implements Iterator<InternalCacheEntry> {
-      private ImmutableEntryIterator(Iterator<InternalCacheEntry> immortalIterator, Iterator<InternalCacheEntry> mortalIterator) {
-         super(immortalIterator, mortalIterator);
-      }
-
-      public InternalCacheEntry next() {
-         return Immutables.immutableInternalCacheEntry(currentIterator.next());
-      }
-   }
-
+   
+   /**
+    * Minimal implementation needed for unmodifiable Collection
+    *
+    */
    private class Values extends AbstractCollection<Object> {
       @Override
       public Iterator<Object> iterator() {
-         return new ValueIterator(immortalEntries.values().iterator(), mortalEntries.values().iterator());
+         return new ValueIterator(entries.values().iterator());
       }
 
       @Override
       public int size() {
-         return immortalEntries.size() + mortalEntries.size();
+         return entries.size();
       }
    }
+   
+   private static class ValueIterator implements Iterator<Object> {      
+      Iterator<InternalCacheEntry> currentIterator;
 
-   private class ValueIterator extends MortalInmortalIterator implements Iterator<Object> {
-      private ValueIterator(Iterator<InternalCacheEntry> immortalIterator, Iterator<InternalCacheEntry> mortalIterator) {
-         super(immortalIterator, mortalIterator);
+      private ValueIterator(Iterator<InternalCacheEntry> it) {
+         currentIterator = it;
       }
 
+      public boolean hasNext() {
+         return currentIterator.hasNext();         
+      }
+
+      public void remove() {
+         throw new UnsupportedOperationException();
+      }
+    
       public Object next() {
          return currentIterator.next().getValue();
       }
