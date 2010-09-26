@@ -78,6 +78,7 @@
       <version.apacheds.jdbm>1.5.4</version.apacheds.jdbm>
       <version.bdbje>4.0.92</version.bdbje>
       <version.c3p0>0.9.1.2</version.c3p0>
+      <version.cassandra>0.6.5</version.cassandra>
       <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
       <version.commons.compress>1.0</version.commons.compress>
       <version.commons.pool>1.5.4</version.commons.pool>
@@ -357,7 +358,7 @@
             </executions>
          </plugin>
       </plugins>
-      <finalName>${artifactId}</finalName>
+      <finalName>${project.artifactId}</finalName>
    </build>
 
    <reporting>
