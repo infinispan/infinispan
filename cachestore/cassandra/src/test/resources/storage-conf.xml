@@ -79,7 +79,7 @@
       -->
 
       <ColumnFamily CompareWith="BytesType" Name="InfinispanEntries" KeysCached="10%" />
-      <ColumnFamily CompareWith="LongType" Name="InfinispanExpiration" KeysCached="10%" />
+      <ColumnFamily CompareWith="LongType" Name="InfinispanExpiration" KeysCached="10%" ColumnType="Super" CompareSubcolumnsWith="BytesType"/>
 
       <!--
        ~ Strategy: Setting this to the class that implements
@@ -343,5 +343,5 @@
    ~ elapsed, even in the face of hardware failures.  The default value is
    ~ ten days.
   -->
-  <GCGraceSeconds>864000</GCGraceSeconds>
+  <GCGraceSeconds>86400</GCGraceSeconds>
 </Storage>
