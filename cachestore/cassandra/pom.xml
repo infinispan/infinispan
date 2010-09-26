@@ -28,11 +28,6 @@
 			<version>${version.slf4j}</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.eaio.uuid</groupId>
-			<artifactId>uuid</artifactId>
-			<version>3.2</version>
-		</dependency>
 	</dependencies>
 
 	<build>
