@@ -143,13 +143,12 @@ public class InfinispanIndexOutput extends IndexOutput {
    }
 
    public void doFlush() throws IOException {
-      // create key for the current chunk
-      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentChunkNumber);
       // size changed, apply change to file header
       file.touch();
       resizeFileIfNeeded();
       byte[] bufferToFlush = buffer;
-      if (isWritingOnLastChunk()) {
+      boolean writingOnLastChunk = isWritingOnLastChunk();
+      if (writingOnLastChunk) {
          int newBufferSize = (int) (file.getSize() % bufferSize);
          if (newBufferSize != 0) {
             bufferToFlush = new byte[newBufferSize];
@@ -162,8 +161,12 @@ public class InfinispanIndexOutput extends IndexOutput {
          microbatch = cache.startBatch();
       }
       // add chunk to cache
-      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(key, bufferToFlush);
-      // override existing file header with new size and last time access
+      if (!writingOnLastChunk || this.positionInBuffer!=0) {
+         // create key for the current chunk
+         ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentChunkNumber);
+         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(key, bufferToFlush);
+      }
+      // override existing file header with new size and updated accesstime
       cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(fileKey, file);
       registerToFileListIfNeeded();
       if (microbatch) cache.endBatch(true);

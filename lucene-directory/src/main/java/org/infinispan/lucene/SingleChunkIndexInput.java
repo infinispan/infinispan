@@ -45,9 +45,12 @@ public class SingleChunkIndexInput extends IndexInput {
 
    public SingleChunkIndexInput(AdvancedCache cache, FileCacheKey fileKey, FileMetadata fileMetadata) throws FileNotFoundException {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), 0);
-      buffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
-      if (buffer == null) {
-         throw new FileNotFoundException("Chunk value could not be found for key " + key);
+      byte[] b = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
+      if (b == null) {
+         buffer = new byte[0];
+      }
+      else {
+         buffer = b;
       }
       bufferPosition = 0;
    }
@@ -77,7 +80,9 @@ public class SingleChunkIndexInput extends IndexInput {
 
    @Override
    public void readBytes(byte[] b, int offset, int len) throws IOException {
-      len = Math.min(len, buffer.length - bufferPosition);
+      if (buffer.length - bufferPosition < len) {
+         throw new IOException("Read past EOF");
+      }
       System.arraycopy(buffer, bufferPosition, b, offset, len);
       bufferPosition+=len;
    }
