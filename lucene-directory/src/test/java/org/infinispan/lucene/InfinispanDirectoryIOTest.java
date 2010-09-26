@@ -22,17 +22,22 @@
 package org.infinispan.lucene;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
+import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.testutils.RepeatableLongByteSequence;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.test.TestingUtil;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
@@ -51,6 +56,7 @@ public class InfinispanDirectoryIOTest {
    private static final String INDEXNAME = "index";
 
    private CacheContainer cacheManager;
+   private File indexDir = new File(new File("."), INDEXNAME);
 
    @BeforeTest
    public void prepareCacheManager() {
@@ -62,9 +68,10 @@ public class InfinispanDirectoryIOTest {
       cacheManager.stop();
    }
    
-   @AfterMethod
+   @AfterMethod(alwaysRun=true)
    public void clearCache() {
       cacheManager.getCache().clear();
+      TestingUtil.recursiveFileRemove(indexDir);
    }
 
    @Test
@@ -129,7 +136,6 @@ public class InfinispanDirectoryIOTest {
       dir.close();
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEXNAME);
    }
-   
 
    @Test
    public void testReadWholeFile() throws IOException {
@@ -540,6 +546,100 @@ public class InfinispanDirectoryIOTest {
 
       dir.close();
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEXNAME);
+   }
+   
+   @Test
+   public void testChunkBordersOnInfinispan() throws IOException {
+      Cache cache = cacheManager.getCache();
+      cache.clear();
+      InfinispanDirectory dir = new InfinispanDirectory(cache, INDEXNAME, 13);
+      testChunkBorders(dir);
+      cache.clear();
+   }
+   
+   @Test
+   public void testChunkBordersOnRAMDirectory() throws IOException {
+      RAMDirectory dir = new RAMDirectory();
+      testChunkBorders(dir);
+   }
+   
+   @Test
+   public void testChunkBordersOnFSDirectory() throws IOException {
+      boolean directoriesCreated = indexDir.mkdirs();
+      assert directoriesCreated : "couldn't create directory for FSDirectory test";
+      FSDirectory dir = FSDirectory.open(indexDir);
+      testChunkBorders(dir);
+   }
+   
+   /**
+    * Useful to verify the Infinispan Directory has similar behaviour
+    * to standard Lucene implementations regarding reads out of ranges.
+    */
+   private void testChunkBorders(Directory dir) throws IOException {
+      //numbers are chosen to be multiples of the chunksize set for the InfinispanDirectory
+      //so that we test the borders of it.
+      
+      testOn(dir, 0 ,0);
+      testOn(dir, 0 ,1);
+      testOn(dir, 1 ,1);
+      testOn(dir, 1 ,0);
+      
+      // all equal:
+      testOn(dir, 13 ,13);
+      
+      // one less:
+      testOn(dir, 12 ,13);
+      testOn(dir, 13 ,12);
+      testOn(dir, 12 ,12);
+      
+      // one higher
+      testOn(dir, 13 ,14);
+      testOn(dir, 14 ,13);
+      testOn(dir, 14 ,14);
+      
+      // now repeat in multi-chunk scenario:
+      // all equal:
+      testOn(dir, 39 ,39);
+      
+      // one less:
+      testOn(dir, 38 ,38);
+      testOn(dir, 38 ,39);
+      testOn(dir, 39 ,38);
+      
+      // one higher
+      testOn(dir, 40 ,40);
+      testOn(dir, 40 ,39);
+      testOn(dir, 39 ,40);
+   }
+
+   private void testOn(Directory dir, int writeSize, int readSize) throws IOException {
+      cacheManager.getCache().clear();//needed to make sure no chunks are left over in case of Infinispan implementation
+      final String filename = "chunkTest";
+      IndexOutput indexOutput = dir.createOutput(filename);
+      byte[] toWrite = fillBytes(writeSize);
+      indexOutput.writeBytes(toWrite, writeSize);
+      indexOutput.close();
+      byte[] results = new byte[readSize];
+      IndexInput openInput = dir.openInput(filename);
+      try {
+         openInput.readBytes(results, 0, readSize);
+         for (int i = 0; i < writeSize && i < readSize; i++) {
+            assert toWrite[i] == results[i];
+         }
+         if (readSize > writeSize)
+            assert false : "should have thrown an IOException for reading past EOF";
+      } catch (IOException ioe) {
+         if (readSize <= writeSize)
+            assert false :"should not have thrown an IOException" + ioe.getMessage();
+      }
+   }
+
+   private byte[] fillBytes(int size) {
+      byte[] b = new byte[size];
+      for (int i=0; i<size; i++) {
+         b[i]=(byte)i;
+      }
+      return b;
    }
 
 }

@@ -136,7 +136,7 @@ public class InfinispanIndexInput extends IndexInput {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), filename, currentLoadedChunk);
       buffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
       if (buffer == null) {
-         throw new IOException("Chunk value could not be found for key " + key);
+         throw new IOException("Read past EOF: Chunk value could not be found for key " + key);
       }
       currentBufferSize = buffer.length;
    }
