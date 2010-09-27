@@ -21,6 +21,7 @@ import static org.testng.AssertJUnit.*;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,9 +41,8 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
       Configuration c = new Configuration();
-      c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
       c.setInvocationBatchingEnabled(true);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
 
       Cache flatcache = cm.getCache();
       cache = new TreeCacheImpl(flatcache);
