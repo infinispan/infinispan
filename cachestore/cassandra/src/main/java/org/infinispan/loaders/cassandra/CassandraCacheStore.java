@@ -147,6 +147,8 @@ public class CassandraCacheStore extends AbstractCacheStore {
 				// Cycle through all the keys
 				for (KeySlice keySlice : keySlices) {
 					String key = unhashKey(keySlice.getKey());
+					if(key==null) // Skip invalid keys
+						continue;
 					List<ColumnOrSuperColumn> columns = keySlice.getColumns();
 					if (columns.size() > 0) {
 						if (log.isDebugEnabled()) {
@@ -210,7 +212,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 				for (KeySlice keySlice : keySlices) {
 					if(keySlice.getColumnsSize()>0) {
 						String key = unhashKey(keySlice.getKey());
-						if (keysToExclude == null || !keysToExclude.contains(key))
+						if (key!=null && (keysToExclude == null || !keysToExclude.contains(key)))
 							s.add(key);
 					}
 				}
@@ -234,8 +236,6 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
 	@Override
 	public void clear() throws CacheLoaderException {
-		if (trace)
-			log.trace("clear()");
 		Cassandra.Iface cassandraClient = null;
 		try {
 			cassandraClient = pool.getConnection();
@@ -458,12 +458,15 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		return "CassandraCacheStore";
 	}
 
-	public static String hashKey(Object key) {
+	private static String hashKey(Object key) {
 		return ENTRY_KEY_PREFIX + key.toString();
 	}
 
-	public static String unhashKey(String key) {
-		return key.substring(ENTRY_KEY_PREFIX.length());
+	private static String unhashKey(String key) {
+		if(key.startsWith(ENTRY_KEY_PREFIX))
+			return key.substring(ENTRY_KEY_PREFIX.length());
+		else
+			return null;
 	}
 
 	private static void addMutation(Map<String, Map<String, List<Mutation>>> mutationMap, String key, String columnFamily, byte[] column, byte[] value) {
