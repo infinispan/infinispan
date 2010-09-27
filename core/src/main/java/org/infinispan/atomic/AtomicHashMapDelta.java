@@ -54,8 +54,9 @@ public class AtomicHashMapDelta implements Delta {
          other = (AtomicHashMap) d;
       else
          other = new AtomicHashMap();
-
-      for (Operation o : changeLog) o.replay(other.delegate);
+      if (changeLog != null) {
+         for (Operation o : changeLog) o.replay(other.delegate);
+      }
       other.commit();
       return other;
    }

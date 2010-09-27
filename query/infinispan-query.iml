@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_6" inherit-compiler-output="false">
+    <output url="file:$os$/$MODULE_DIR$/target/classes" />
+    <output-test url="file:$os$/$MODULE_DIR$/target/test-classes" />
+    <exclude-output />
+    <content url="file:$os$/$MODULE_DIR$">
+      <sourceFolder url="file:$os$/$MODULE_DIR$/src/main/java" isTestSource="false" />
+      <sourceFolder url="file:$os$/$MODULE_DIR$/src/main/resources" isTestSource="false" />
+      <sourceFolder url="file:$os$/$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <excludeFolder url="file:$os$/$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="infinispan-core" />
+    <orderEntry type="library" name="Maven: org.jgroups:jgroups:2.10.0.GA" level="project" />
+    <orderEntry type="library" name="Maven: org.jboss.javaee:jboss-transaction-api:1.0.1.GA" level="project" />
+    <orderEntry type="library" name="Maven: org.jboss.marshalling:river:1.2.3.GA" level="project" />
+    <orderEntry type="library" name="Maven: org.jboss.marshalling:marshalling-api:1.2.3.GA" level="project" />
+    <orderEntry type="library" name="Maven: org.jboss:jboss-common-core:2.2.14.GA" level="project" />
+    <orderEntry type="library" name="Maven: org.jboss.logging:jboss-logging-spi:2.0.5.GA" level="project" />
+    <orderEntry type="library" name="Maven: org.rhq.helpers:rhq-pluginAnnotations:1.4.0.B01" level="project" />
+    <orderEntry type="library" name="Maven: i18nlog:i18nlog:1.0.9" level="project" />
+    <orderEntry type="library" name="Maven: log4j:log4j:1.2.16" level="project" />
+    <orderEntry type="library" name="Maven: org.hibernate:hibernate-search:3.3.0.Beta1" level="project" />
+    <orderEntry type="library" name="Maven: org.hibernate:hibernate-core:3.6.0.Beta3" level="project" />
+    <orderEntry type="library" name="Maven: antlr:antlr:2.7.6" level="project" />
+    <orderEntry type="library" name="Maven: commons-collections:commons-collections:3.1" level="project" />
+    <orderEntry type="library" name="Maven: dom4j:dom4j:1.6.1" level="project" />
+    <orderEntry type="library" name="Maven: org.hibernate:hibernate-commons-annotations:3.2.0.Final" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.6.1" level="project" />
+    <orderEntry type="library" name="Maven: org.hibernate.javax.persistence:hibernate-jpa-2.0-api:1.0.0.Final" level="project" />
+    <orderEntry type="library" name="Maven: javax.transaction:jta:1.1" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.lucene:lucene-core:2.9.2" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.solr:solr-core:1.4.0" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.solr:solr-solrj:1.4.0" level="project" />
+    <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.3" level="project" />
+    <orderEntry type="library" name="Maven: commons-io:commons-io:1.4" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.lucene:lucene-snowball:2.9.2" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.lucene:lucene-analyzers:2.9.2" level="project" />
+    <orderEntry type="module" module-name="infinispan-core" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.testng:testng:jdk15:5.11" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: junit:junit:3.8.1" level="project" />
+    <orderEntry type="library" name="Maven: net.jcip:jcip-annotations:1.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.easymock:easymockclassextension:2.4" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.easymock:easymock:2.4" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: cglib:cglib-nodep:2.1_3" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jboss.jbossts:jbossjta:4.9.0.GA" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jboss.jbossts:jbossjts:4.9.0.GA" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: commons-logging:commons-logging:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: logkit:logkit:1.0.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: avalon-framework:avalon-framework:4.1.3" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: javax.servlet:servlet-api:2.3" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jboss.jbossts:jbossts-common:4.6.1.GA" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.thoughtworks.xstream:xstream:1.3.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xpp3:xpp3_min:1.1.4c" level="project" />
+  </component>
+</module>
+
