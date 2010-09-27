@@ -164,7 +164,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
             blobStore.createContainerInLocation(chosenLoc, containerName);
          }
          pollFutures = !cfg.getAsyncStoreConfig().isEnabled();
-      } catch (IOException ioe) {
+      } catch (RuntimeException ioe) {
          throw new CacheLoaderException("Unable to create context", ioe);
       }
    }
@@ -372,7 +372,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          return null;
       try {
          Bucket bucket;
-         final InputStream content = blob.getContent();
+         final InputStream content = blob.getPayload().getInput();
          if (cfg.isCompress()) {
             bucket = uncompress(blob, bucketName, content);
          } else
@@ -404,12 +404,14 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       Streams.copy(is, bos2);
       final byte[] uncompressedByteArray = bos2.toByteArray();
 
-      byte[] md5FromStoredBlob = blob.getMetadata().getContentMD5();
-
-      byte[] hash = getMd5Digest(compressedByteArray);
-
-      if (!Arrays.equals(hash, md5FromStoredBlob))
-         throw new CacheLoaderException("MD5 hash failed when reading (transfer error) for entry " + bucketName);
+      byte[] md5FromStoredBlob = blob.getMetadata().getContentMetadata().getContentMD5();
+      
+      // not all blobstores support md5 on GET request
+      if (md5FromStoredBlob != null){
+         byte[] hash = getMd5Digest(compressedByteArray);
+         if (!Arrays.equals(hash, md5FromStoredBlob))
+            throw new CacheLoaderException("MD5 hash failed when reading (transfer error) for entry " + bucketName);
+      }
 
       is.close();
       bis.close();
@@ -435,7 +437,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
 
       final byte[] compressedByteArray = baos.toByteArray();
 
-      blob.getMetadata().setContentMD5(getMd5Digest(compressedByteArray));
+      blob.getMetadata().getContentMetadata().setContentMD5(getMd5Digest(compressedByteArray));
 
       baos.close();
 

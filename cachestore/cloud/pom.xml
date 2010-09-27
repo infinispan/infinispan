@@ -39,19 +39,7 @@
       <!-- optional cloud provider plug-ins.  You'd need at least one! -->
       <dependency>
          <groupId>org.jclouds</groupId>
-         <artifactId>jclouds-aws</artifactId>
-         <version>${version.jclouds}</version>
-         <scope>optional</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jclouds</groupId>
-         <artifactId>jclouds-azure</artifactId>
-         <version>${version.jclouds}</version>
-         <scope>optional</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jclouds</groupId>
-         <artifactId>jclouds-rackspace</artifactId>
+         <artifactId>jclouds-allblobstore</artifactId>
          <version>${version.jclouds}</version>
          <scope>optional</scope>
       </dependency>
@@ -64,18 +52,6 @@
          <version>${version.commons.compress}</version>
       </dependency>
 
-      <dependency>
-         <groupId>com.google.guava</groupId>
-         <artifactId>guava-collections</artifactId>
-         <version>${version.guava}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>com.google.guava</groupId>
-         <artifactId>guava-base</artifactId>
-         <version>${version.guava}</version>
-      </dependency>
-      
    </dependencies>
 
    <build>
