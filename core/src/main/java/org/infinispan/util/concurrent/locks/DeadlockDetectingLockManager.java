@@ -160,7 +160,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
       return localTxStopped.get();
    }
 
-   @ManagedAttribute(description = "Number of situtations when we try to determine a deadlock and the other lock owner is NOT a transaction. In this scenario we cannot run the deadlock detection mechanism")
+   @ManagedAttribute(description = "Number of situations when we try to determine a deadlock and the other lock owner is NOT a transaction. In this scenario we cannot run the deadlock detection mechanism")
    @Metric(displayName = "Number of unsolvable deadlock situations", measurementType = MeasurementType.TRENDSUP)
    public long getOverlapWithNotDeadlockAwareLockOwners() {
       return cannotRunDld.get();

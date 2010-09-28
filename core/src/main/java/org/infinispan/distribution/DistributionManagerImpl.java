@@ -306,7 +306,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @ManagedOperation(description = "Determines whether a given key is affected by an ongoing rehash, if any.")
-   @Operation(displayName = "Could key be affected by reshah?")
+   @Operation(displayName = "Could key be affected by rehash?")
    public boolean isAffectedByRehash(@Parameter(name = "key", description = "Key to check") Object key) {
       return transactionLogger.isEnabled() && oldConsistentHash != null && !oldConsistentHash.locate(key, replCount).contains(self);
    }
