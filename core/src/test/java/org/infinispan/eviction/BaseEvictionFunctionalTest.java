@@ -2,9 +2,14 @@ package org.infinispan.eviction;
 
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryEvicted;
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvictedEvent;
+import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -28,7 +33,25 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
       cfg.setUseLockStriping(false); // to minimize chances of deadlock in the unit test
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
+      cache.addListener(new EvictionListener());
       return cm;
+   }
+
+   public void testSimpleEvictionMaxEntries() throws Exception {
+      for (int i = 0; i < 512; i++) {
+         cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MINUTES);
+      }
+      Thread.sleep(1000); // sleep long enough to allow the thread to wake-up
+      assert CACHE_SIZE >= cache.size() : "cache size too big: " + cache.size();
+   }
+
+   public void testSimpleExpirationMaxIdle() throws Exception {
+
+      for (int i = 0; i < 512; i++) {
+         cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MILLISECONDS);
+      }
+      Thread.sleep(1000); // sleep long enough to allow the thread to wake-up and purge all expired entries
+      assert 0 == cache.size() : "cache size should be zero: " + cache.size();
    }
 
    public void testMultiThreaded() throws InterruptedException {
@@ -82,8 +105,26 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
             } catch (InterruptedException e) {
                // ignore
             }
-            cache.put("key" + r.nextInt(), "value");
+            
+            //mix mortal and immortal entries 
+            if (Math.random() < 0.5) {
+               cache.put("key" + r.nextInt(), "value");
+            } else {
+               cache.put("key" + r.nextInt(), "value", 10, TimeUnit.SECONDS);
+            }
          }
+      }
+   }
+   
+   @Listener
+   public class EvictionListener {
+      
+      @CacheEntryEvicted
+      public void nodeEvicted(CacheEntryEvictedEvent e){
+         assert e.isPre() || !e.isPre();
+         assert e.getKey() != null;
+         assert e.getCache() != null;
+         assert e.getType() == Event.Type.CACHE_ENTRY_EVICTED;         
       }
    }
 }
