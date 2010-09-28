@@ -293,7 +293,7 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    @ManagedAttribute(description = "Number of successful replications")
-   @Metric(displayName = "Number of successfull replications", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @Metric(displayName = "Number of successful replications", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public long getReplicationCount() {
       if (!isStatisticsEnabled()) {
          return -1;
