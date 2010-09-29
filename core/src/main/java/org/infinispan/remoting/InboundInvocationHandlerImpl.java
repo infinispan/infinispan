@@ -54,18 +54,19 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
 
       if (cr == null) {
-         // lets see if the cache is *defined* and perhaps just not started.
-         if (isDefined(cacheName)) {
-            log.info("Will try and wait for the cache to start");
-            long giveupTime = System.currentTimeMillis() + 30000; // arbitrary (?) wait time for caches to start
-            while (cr == null && System.currentTimeMillis() < giveupTime) {
-               Thread.sleep(100);
-               cr = gcr.getNamedComponentRegistry(cacheName);
+         if (embeddedCacheManager.getGlobalConfiguration().isStrictPeerToPeer()) {
+            // lets see if the cache is *defined* and perhaps just not started.
+            if (isDefined(cacheName)) {
+               log.info("Will try and wait for the cache to start");
+               long giveupTime = System.currentTimeMillis() + 30000; // arbitrary (?) wait time for caches to start
+               while (cr == null && System.currentTimeMillis() < giveupTime) {
+                  Thread.sleep(100);
+                  cr = gcr.getNamedComponentRegistry(cacheName);
+               }
+            } else {
+               log.info("Cache {0} is not defined.  No point in waiting.", cacheName);
             }
-         } else {
-            log.info("Cache {0} is not defined.  No point in waiting.", cacheName);
          }
-
          if (cr == null) {
             if (log.isInfoEnabled()) log.info("Cache named {0} does not exist on this cache manager!", cacheName);
             return new ExceptionResponse(new NamedCacheNotFoundException(cacheName));
