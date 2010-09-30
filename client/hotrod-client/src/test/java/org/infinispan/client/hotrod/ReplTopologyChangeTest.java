@@ -132,7 +132,10 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       } finally {
          log.info("Members are: " + manager(0).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
          log.info("Members are: " + manager(1).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
-         log.info("Members are: " + manager(2).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
+         if (manager(2).getStatus() != ComponentStatus.RUNNING)
+            log.info("Members are: 0");
+         else
+            log.info("Members are: " + manager(2).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
       }
    }
 
