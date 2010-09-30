@@ -13,7 +13,8 @@ import org.infinispan.remoting.transport.Address
 import org.infinispan.manager.EmbeddedCacheManager
 import java.util.{Properties, Random}
 import org.infinispan.server.core.{CacheValue, Logging, AbstractProtocolServer}
-import org.infinispan.util.{ByteArrayKey, Util};
+import org.infinispan.util.{ByteArrayKey, Util}
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.server.core.Main._
 
 /**
@@ -39,8 +40,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 
    override def start(p: Properties, cacheManager: EmbeddedCacheManager) {
       val properties = if (p == null) new Properties else p
-      super.start(properties, cacheManager, 11311)
-      
+
       // Start defined caches to avoid issues with lazily started caches
       for (cacheName <- asIterator(cacheManager.getCacheNames.iterator))
          cacheManager.getCache(cacheName)
@@ -52,6 +52,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
          val externalPort = properties.getProperty(PROP_KEY_PROXY_PORT, getPort.toString).toInt
          addSelfToTopologyView(externalHost, externalPort, cacheManager)
       }
+
+      super.start(properties, cacheManager, 11311)
    }
 
    private def addSelfToTopologyView(host: String, port: Int, cacheManager: EmbeddedCacheManager) {
@@ -132,6 +134,9 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
       topologyCacheConfig.setCacheMode(CacheMode.REPL_SYNC)
       topologyCacheConfig.setSyncReplTimeout(10000) // Milliseconds
       topologyCacheConfig.setFetchInMemoryState(true) // State transfer required
+      topologyCacheConfig.setEvictionStrategy(EvictionStrategy.NONE); // No eviction
+      topologyCacheConfig.setExpirationLifespan(-1); // No maximum lifespan
+      topologyCacheConfig.setExpirationMaxIdle(-1); // No maximum idle time
       cacheManager.defineConfiguration(TopologyCacheName, topologyCacheConfig)
    }
 
