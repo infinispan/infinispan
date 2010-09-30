@@ -67,8 +67,8 @@ public class ComponentsJmxRegistration {
    public ComponentsJmxRegistration(MBeanServer mBeanServer, Set<AbstractComponentRegistry.Component> components, String groupName) {
       this.mBeanServer = mBeanServer;
       this.components = components;
-      // Replace any malforming characters out of the group name
-      this.groupName = groupName.replace(':', '_').replace('=','_');
+      // Quote group name, to handle invalid ObjectName characters
+      this.groupName = ObjectName.quote(groupName);
    }
 
    public void setJmxDomain(String jmxDomain) {
