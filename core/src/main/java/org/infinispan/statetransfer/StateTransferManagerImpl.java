@@ -84,6 +84,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private static final Byte DELIMITER = (byte) 123;
 
    boolean transientState, persistentState, alwaysProvideTransientState;
+   int maxNonProgressingLogWrites;
+   long flushTimeout;
    volatile boolean needToUnblockRPC = false;
    volatile Address stateSender;
 
@@ -114,6 +116,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
       transientState = configuration.isFetchInMemoryState();
       alwaysProvideTransientState = configuration.isAlwaysProvideInMemoryState();
       persistentState = cs != null && clm.isEnabled() && clm.isFetchPersistentState() && !clm.isShared();
+      maxNonProgressingLogWrites = configuration.getStateRetrievalMaxNonProgressingLogWrites();
+      flushTimeout = configuration.getStateRetrievalLogFlushTimeout();
 
       if (transientState || persistentState) {
          long startTime = 0;
@@ -176,10 +180,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    private void generateTransactionLog(ObjectOutput oo) throws Exception {
-      // todo this should be configurable
-      int maxNonProgressingLogWrites = 100;
-      int flushTimeout = 60000;
-
       DistributedSync distributedSync = rpcManager.getTransport().getDistributedSync();
 
       try {

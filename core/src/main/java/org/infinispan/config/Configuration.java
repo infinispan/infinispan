@@ -458,6 +458,18 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       setStateRetrievalTimeout(timeUnit.toMillis(stateRetrievalTimeout));
    }
 
+   public void setStateRetrievalLogFlushTimeout(long logFlushTimeout) {
+      this.clustering.stateRetrieval.setLogFlushTimeout(logFlushTimeout);
+   }
+
+   public void setStateRetrievalLogFlushTimeout(long logFlushTimeout, TimeUnit timeUnit) {
+      this.clustering.stateRetrieval.setLogFlushTimeout(timeUnit.toMillis(logFlushTimeout));
+   }
+
+   public void setStateRetrievalMaxNonProgressingLogWrites(int maxNonProgressingLogWrites) {
+      this.clustering.stateRetrieval.setMaxNonProgressingLogWrites(maxNonProgressingLogWrites);
+   }
+
    public void setStateRetrievalInitialRetryWaitTime(long initialRetryWaitTime) {
       clustering.stateRetrieval.setInitialRetryWaitTime(initialRetryWaitTime);
    }
@@ -638,6 +650,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public int getStateRetrievalNumRetries() {
       return clustering.stateRetrieval.numRetries;
+   }
+
+   public int getStateRetrievalMaxNonProgressingLogWrites() {
+      return clustering.stateRetrieval.maxNonProgressingLogWrites;
+   }
+
+   public long getStateRetrievalLogFlushTimeout() {
+      return clustering.stateRetrieval.logFlushTimeout;
    }
 
    public boolean isUseLazyDeserialization() {
@@ -1477,6 +1497,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** @configRef desc="Number of state retrieval retries before giving up and aborting startup."*/
       protected Integer numRetries = 5;
 
+      /** @configRef desc="This is the maximum amount of time to run a cluster-wide flush, to allow for syncing of transaction logs." **/
+      protected Long logFlushTimeout = 60000L;
+
+      /** @configRef desc="This is the maximum number of non-progressing transaction log writes after which a brute-force flush approach is resorted to, to synchronize transaction logs." **/
+      protected Integer maxNonProgressingLogWrites = 100;
+
       @XmlAttribute
       public void setFetchInMemoryState(Boolean fetchInMemoryState) {
          testImmutability("fetchInMemoryState");
@@ -1511,6 +1537,18 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setTimeout(Long timeout) {
          testImmutability("timeout");
          this.timeout = timeout;
+      }
+
+      @XmlAttribute
+      public void setLogFlushTimeout(Long logFlushTimeout) {
+         testImmutability("logFlushTimeout");
+         this.logFlushTimeout = logFlushTimeout;
+      }
+
+      @XmlAttribute
+      public void setMaxNonProgressingLogWrites(Integer maxNonProgressingLogWrites) {
+         testImmutability("maxNonProgressingLogWrites");
+         this.maxNonProgressingLogWrites = maxNonProgressingLogWrites;
       }
 
       public void accept(ConfigurationBeanVisitor v) {
