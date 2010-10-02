@@ -926,7 +926,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @XmlAttribute
       public void setEagerLockSingleNode(Boolean eagerLockSingleNode) {
-         testImmutability("useEagerLocking");
+         testImmutability("eagerLockSingleNode");
          this.eagerLockSingleNode = eagerLockSingleNode;
       }
 

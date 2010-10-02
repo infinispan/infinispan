@@ -32,7 +32,7 @@ import java.util.Set;
 public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
 
    private MBeanServer mBeanServer;
-   private List<CacheContainer> cacheContainers = new ArrayList<CacheContainer>();
+   private List<EmbeddedCacheManager> cacheContainers = new ArrayList<EmbeddedCacheManager>();
 
    @BeforeMethod
    public void setUp() {
@@ -43,9 +43,7 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
    @AfterMethod
    public void tearDown() {
       MBeanServerFactory.releaseMBeanServer(mBeanServer);
-      for (CacheContainer cacheContainer : cacheContainers) {
-         TestingUtil.killCacheManagers(cacheContainer);
-      }
+      TestingUtil.killCacheManagers(cacheContainers);
       cacheContainers.clear();
    }
 

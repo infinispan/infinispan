@@ -90,11 +90,11 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
       return this;
    }
 
-   public void lock(K key) {
-      cache.lock(key);
+   public boolean lock(K key) {
+      return cache.lock(key);
    }
 
-   public void lock(Collection<? extends K> keys) {
-      cache.lock(keys);
+   public boolean lock(Collection<? extends K> keys) {
+      return cache.lock(keys);
    }
 }

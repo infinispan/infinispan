@@ -54,7 +54,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    @BeforeClass (alwaysRun = true)
    public void createBeforeClass() throws Throwable {
-      if (cleanup == CleanupPhase.AFTER_TEST) callCreateCacheManagers();
+      if (cleanupAfterTest()) callCreateCacheManagers();
    }
 
    private void callCreateCacheManagers() throws Throwable {
@@ -69,19 +69,19 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    @BeforeMethod
    public void createBeforeMethod() throws Throwable {
-      if (cleanup == CleanupPhase.AFTER_METHOD) callCreateCacheManagers();
+      if (cleanupAfterMethod()) callCreateCacheManagers();
    }
 
    @AfterClass(alwaysRun = true)
    protected void destroy() {
-      if (cleanup == CleanupPhase.AFTER_TEST) TestingUtil.killCacheManagers(cacheManagers);
+      if (cleanupAfterTest()) TestingUtil.killCacheManagers(cacheManagers);
       cacheManagers.clear();
       listeners.clear();
    }
 
    @AfterMethod(alwaysRun=true)
    protected void clearContent() throws Throwable {
-      if (cleanup == CleanupPhase.AFTER_TEST) {
+      if (cleanupAfterTest()) {
 //         assertSupportedConfig();
          log.debug("*** Test method complete; clearing contents on all caches.");
          if (cacheManagers.isEmpty())
@@ -260,7 +260,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    /**
     * Returns the default cache from that manager.
     */
-   protected Cache cache(int index) {
+   protected <A, B> Cache<A, B> cache(int index) {
       return manager(index).getCache();
    }
 

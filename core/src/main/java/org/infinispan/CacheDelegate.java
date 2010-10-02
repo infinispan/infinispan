@@ -285,16 +285,16 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       return ctx;
    }
 
-   public void lock(K key) {
+   public boolean lock(K key) {
       assertKeyNotNull(key);
-      lock(Collections.singletonList(key));
+      return lock(Collections.singletonList(key));
    }
 
-   public void lock(Collection<? extends K> keys) {
+   public boolean lock(Collection<? extends K> keys) {
       if (keys == null || keys.isEmpty())
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       LockControlCommand command = commandsFactory.buildLockControlCommand(keys, false);
-      invoker.invoke(getInvocationContext(false), command);
+      return (Boolean) invoker.invoke(getInvocationContext(false), command);
    }
 
    @ManagedOperation(description = "Starts the cache.")

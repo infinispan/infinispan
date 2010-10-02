@@ -41,7 +41,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    @BeforeClass()
    protected void createBeforeClass() throws Exception {
       try {
-         if (cleanup == CleanupPhase.AFTER_TEST) setup();
+         if (cleanupAfterTest()) setup();
       } catch (Exception e) {
          log.error("Unexpected!", e);
          throw e;
@@ -51,7 +51,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    @BeforeMethod
    protected void createBeforeMethod() throws Exception {
       try {
-         if (cleanup == CleanupPhase.AFTER_METHOD) setup();
+         if (cleanupAfterMethod()) setup();
       } catch (Exception e) {
          log.error("Unexpected!", e);
          throw e;
@@ -61,7 +61,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    @AfterClass(alwaysRun=true)
    protected void destroyAfterClass() {
       try {
-         if (cleanup == CleanupPhase.AFTER_TEST) teardown();
+         if (cleanupAfterTest()) teardown();
       } catch (Exception e) {
          log.error("Unexpected!", e);
       }
@@ -69,12 +69,12 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
    @AfterMethod(alwaysRun=true)
    protected void destroyAfterMethod() {
-      if (cleanup == CleanupPhase.AFTER_METHOD) teardown();
+      if (cleanupAfterMethod()) teardown();
    }
 
    @AfterMethod(alwaysRun=true)
    protected void clearContent() {
-      if (cleanup == CleanupPhase.AFTER_TEST) TestingUtil.clearContent(cacheManager);
+      if (cleanupAfterTest()) TestingUtil.clearContent(cacheManager);
    }
 
    protected Configuration getDefaultStandaloneConfig(boolean transactional) {

@@ -42,7 +42,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
 
-      assert cleanup == CleanupPhase.AFTER_METHOD;
+      assert cleanupAfterMethod();
 
 
       config = getCacheConfig();

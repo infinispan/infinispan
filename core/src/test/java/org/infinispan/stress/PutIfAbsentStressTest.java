@@ -102,12 +102,12 @@ public class PutIfAbsentStressTest {
     * Adapter to run the test on any configuration
     */
    private void testConcurrentLockingOnMultipleManagers(Configuration cfg) throws IOException, InterruptedException {
-      List<CacheContainer> cacheContainers = new ArrayList<CacheContainer>(NODES_NUM);
+      List<EmbeddedCacheManager> cacheContainers = new ArrayList<EmbeddedCacheManager>(NODES_NUM);
       List<Cache<String, String>> caches = new ArrayList<Cache<String, String>>();
       List<ConcurrentMap<String, String>> maps = new ArrayList<ConcurrentMap<String, String>>(NODES_NUM
                * THREAD_PER_NODE);
       for (int nodeNum = 0; nodeNum < NODES_NUM; nodeNum++) {
-         CacheContainer cm = TestCacheManagerFactory.createClusteredCacheManager(cfg);
+         EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(cfg);
          cacheContainers.add(cm);
          Cache<String, String> cache = cm.getCache();
          caches.add(cache);
@@ -119,13 +119,7 @@ public class PutIfAbsentStressTest {
       try {
          testConcurrentLocking(maps);
       } finally {
-         for (CacheContainer cm : cacheContainers) {
-            try {
-               TestingUtil.killCacheManagers(cm);
-            } catch (Exception e) {
-               // try cleaning up the other cacheManagers too
-            }
-         }
+         TestingUtil.killCacheManagers(cacheContainers);
       }
    }
 

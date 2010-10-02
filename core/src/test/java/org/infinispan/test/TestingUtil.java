@@ -415,16 +415,24 @@ public class TestingUtil {
    }
 
    public static void killCacheManagers(CacheContainer... cacheContainers) {
+      EmbeddedCacheManager[] ecms = new EmbeddedCacheManager[cacheContainers.length];
+      int i=0;
+      for (CacheContainer cc: cacheContainers) ecms[i++] = (EmbeddedCacheManager) cc;
+      killCacheManagers(ecms);
+   }
+
+   public static void killCacheManagers(EmbeddedCacheManager... cacheContainers) {
       if (cacheContainers != null) {
-         for (CacheContainer cm : cacheContainers) {
+         for (EmbeddedCacheManager cm : cacheContainers) {
+            clearContent(cm);
             if (cm != null) 
                cm.stop();
          }
       }
    }
 
-   public static void killCacheManagers(Collection<? extends CacheContainer> cacheManagers) {
-      killCacheManagers(cacheManagers.toArray(new CacheContainer[cacheManagers.size()]));
+   public static void killCacheManagers(Collection<? extends EmbeddedCacheManager> cacheManagers) {
+      killCacheManagers(cacheManagers.toArray(new EmbeddedCacheManager[cacheManagers.size()]));
    }
    
    public static void clearContent(EmbeddedCacheManager cacheContainer) {

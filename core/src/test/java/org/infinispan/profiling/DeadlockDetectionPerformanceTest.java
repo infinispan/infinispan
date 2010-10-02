@@ -125,7 +125,7 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
 
    private void runDistributedTest() throws Exception {
       EmbeddedCacheManager cm = null;
-      List<CacheContainer> containers = new ArrayList<CacheContainer>();
+      List<EmbeddedCacheManager> containers = new ArrayList<EmbeddedCacheManager>();
       try {
          CountDownLatch startLatch = new CountDownLatch(1);
          List<ExecutorThread> executorThreads = new ArrayList<ExecutorThread>();
