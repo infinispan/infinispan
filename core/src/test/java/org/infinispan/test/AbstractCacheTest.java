@@ -4,6 +4,8 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -25,6 +27,21 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
    }
 
    protected CleanupPhase cleanup = CleanupPhase.AFTER_TEST;
+
+   protected boolean cleanupAfterTest() {
+      return getClass().getAnnotation(CleanupAfterTest.class) != null || (
+              getClass().getAnnotation(CleanupAfterMethod.class) == null &&
+                      cleanup == CleanupPhase.AFTER_TEST
+      );
+   }
+
+   protected boolean cleanupAfterMethod() {
+      return getClass().getAnnotation(CleanupAfterMethod.class) != null || (
+              getClass().getAnnotation(CleanupAfterTest.class) == null &&
+                      cleanup == CleanupPhase.AFTER_METHOD
+      );
+   }
+
 
    /**
     * use TestingUtil.clearContent(cacheManager);

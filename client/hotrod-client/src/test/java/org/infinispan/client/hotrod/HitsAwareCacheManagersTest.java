@@ -26,7 +26,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
 
    @BeforeMethod
    public void createBeforeMethod() throws Throwable {
-      if (cleanup == CleanupPhase.AFTER_METHOD) {
+      if (cleanupAfterMethod()) {
          hrServ2CacheManager.clear();
          addr2hrServer.clear();
       }

@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -18,7 +19,7 @@ import java.util.List;
 @Test(groups = "functional", testName = "tx.OnePhaseXATest", description = "See ISPN-156 for details.", enabled = false)
 public class OnePhaseXATest extends AbstractInfinispanTest {
    private List<Cache> caches;
-   private List<CacheContainer> cacheContainers;
+   private List<EmbeddedCacheManager> cacheContainers;
    public static final int CACHES_NUM = 2;
 
    public void testMultipleCaches() throws Exception {
@@ -45,7 +46,7 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
    @BeforeTest
    public void setUp() throws Exception {
       caches = new ArrayList<Cache>();
-      cacheContainers = new ArrayList<CacheContainer>();
+      cacheContainers = new ArrayList<EmbeddedCacheManager>();
       for (int i = 0; i < CACHES_NUM; i++) caches.add(getCache());
    }
 
@@ -64,7 +65,7 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
       c.setLockAcquisitionTimeout(60000);
       c.setUseLockStriping(false);
       c.setSyncCommitPhase(true);
-      CacheContainer container = TestCacheManagerFactory.createCacheManager(gc, c, true);
+      EmbeddedCacheManager container = TestCacheManagerFactory.createCacheManager(gc, c, true);
       cacheContainers.add(container);
       return container.getCache("TestCache");
    }
