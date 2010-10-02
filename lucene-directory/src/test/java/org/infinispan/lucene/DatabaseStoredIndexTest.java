@@ -25,8 +25,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
 import static org.infinispan.lucene.CacheTestSupport.removeByTerm;
@@ -105,15 +103,11 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
    public void indexWasStored() throws IOException {
       cache = cacheManager.getCache();
       assert cache.isEmpty();
-      Directory dir = new InfinispanDirectory(cache, INDEX_NAME);
-      assertTextIsFoundInIds(dir, "index", 1);
-      dir.close();
       boolean failed = false;
-      Set<FileReadLockKey> keysToRemove = new HashSet<FileReadLockKey>();
       for (Object key : cacheCopy.keySet()) {
          if (key instanceof FileReadLockKey) {
-            // ignore until ISPN-581 defines a behaviour
-            keysToRemove.add((FileReadLockKey) key);
+            System.out.println("Key found in store, shouldn't have persisted this or should have cleaned up all readlocks on directory close:" + key);
+            failed = true;
          }
          else {
             Object expected = cacheCopy.get(key);
@@ -124,17 +118,17 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
                expected = Arrays.toString((byte[]) expected);
                actual = Arrays.toString((byte[]) actual);
             }
-            if (!expected.equals(actual)) {
-               System.out.println("Failure on key["+key.toString()+"] expected value:\n"+expected+"\nactual value:\n"+actual);
+            if (expected == null || ! expected.equals(actual)) {
+               System.out.println("Failure on key["+key.toString()+"] expected value:\n\t"+expected+"\tactual value:\n\t"+actual);
                failed = true;
             }
          }
       }
       Assert.assertFalse(failed);
-      for (FileReadLockKey key : keysToRemove){
-         Assert.assertNotNull(cacheCopy.remove(key));
-      }
       Assert.assertEquals(cacheCopy.keySet().size(), cache.keySet().size(), "have a different number of keys");
+      Directory dir = new InfinispanDirectory(cache, INDEX_NAME);
+      assertTextIsFoundInIds(dir, "index", 1);
+      dir.close();
    }
    
 }

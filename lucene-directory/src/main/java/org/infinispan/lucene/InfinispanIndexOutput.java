@@ -97,7 +97,7 @@ public class InfinispanIndexOutput extends IndexOutput {
    }
 
    private void newChunk() throws IOException {
-      doFlush();// save data first
+      storeCurrentBuffer();// save data first
       currentChunkNumber++;
       // check if we have to create new chunk, or get already existing in cache for modification
       buffer = getChunkById(cache, fileKey, currentChunkNumber, bufferSize);
@@ -105,7 +105,7 @@ public class InfinispanIndexOutput extends IndexOutput {
    }
 
    @Override
-   public void writeByte(byte b) throws IOException {
+   public final void writeByte(byte b) throws IOException {
       if (isNewChunkNeeded()) {
          newChunk();
       }
@@ -114,17 +114,17 @@ public class InfinispanIndexOutput extends IndexOutput {
    }
 
    @Override
-   public void writeBytes(byte[] b, int offset, int length) throws IOException {
+   public final void writeBytes(final byte[] b, final int offset, int length) throws IOException {
       int writtenBytes = 0;
       while (writtenBytes < length) {
+         if (isNewChunkNeeded()) {
+            newChunk();
+         }
          int pieceLength = Math.min(bufferSize - positionInBuffer, length - writtenBytes);
          System.arraycopy(b, offset + writtenBytes, buffer, positionInBuffer, pieceLength);
          positionInBuffer += pieceLength;
          filePosition += pieceLength;
          writtenBytes += pieceLength;
-         if (isNewChunkNeeded()) {
-            newChunk();
-         }
       }
    }
 
@@ -139,12 +139,11 @@ public class InfinispanIndexOutput extends IndexOutput {
       if ( ! transactionRunning) {
          transactionRunning = cache.startBatch();
       }
-      doFlush();
+      storeCurrentBuffer();
    }
 
-   public void doFlush() throws IOException {
+   protected void storeCurrentBuffer() throws IOException {
       // size changed, apply change to file header
-      file.touch();
       resizeFileIfNeeded();
       byte[] bufferToFlush = buffer;
       boolean writingOnLastChunk = isWritingOnLastChunk();
@@ -161,7 +160,7 @@ public class InfinispanIndexOutput extends IndexOutput {
          microbatch = cache.startBatch();
       }
       // add chunk to cache
-      if (!writingOnLastChunk || this.positionInBuffer!=0) {
+      if ( ! writingOnLastChunk || this.positionInBuffer != 0) {
          // create key for the current chunk
          ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentChunkNumber);
          cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(key, bufferToFlush);
@@ -187,7 +186,7 @@ public class InfinispanIndexOutput extends IndexOutput {
 
    @Override
    public void close() throws IOException {
-      doFlush();
+      storeCurrentBuffer();
       if (transactionRunning) {
          //commit
          cache.endBatch(true);
@@ -212,10 +211,10 @@ public class InfinispanIndexOutput extends IndexOutput {
       if (pos > file.getSize()) {
          resizeFileIfNeeded();
          if (pos > file.getSize()) // check again, might be fixed by the resize
-            throw new IOException(fileKey.getFileName() + ": seeking past of the file");
+            throw new IOException(fileKey.getFileName() + ": seeking past end of file");
       }
       if (requestedChunkNumber != currentChunkNumber) {
-         doFlush();
+         storeCurrentBuffer();
          buffer = getChunkById(cache, fileKey, requestedChunkNumber, bufferSize);
          currentChunkNumber = requestedChunkNumber;
       }
@@ -229,8 +228,8 @@ public class InfinispanIndexOutput extends IndexOutput {
    }
    
    private boolean isWritingOnLastChunk() {
-      int lastChunkNumber = (int) (file.getSize() / bufferSize);
-      return currentChunkNumber == lastChunkNumber;
+      int lastChunkNumber = file.getNumberOfChunks() - 1;
+      return currentChunkNumber >= lastChunkNumber;
    }
    
 }
