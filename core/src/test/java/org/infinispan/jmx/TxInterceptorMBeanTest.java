@@ -40,7 +40,7 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
       cacheManager2.defineConfiguration("test", configuration.clone());
       cache1 = cacheManager1.getCache("test");
       cache2 = cacheManager2.getCache("test");
-      txInterceptor = new ObjectName("TxInterceptorMBeanTest:cache-name=test(repl_sync),jmx-resource=Transactions");
+      txInterceptor = new ObjectName("TxInterceptorMBeanTest:cache-name=\"test(repl_sync)\",jmx-resource=Transactions");
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       tm = TestingUtil.getTransactionManager(cache1);

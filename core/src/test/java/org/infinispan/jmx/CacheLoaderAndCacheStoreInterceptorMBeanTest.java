@@ -48,8 +48,8 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
 
       cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
-      loaderInterceptorObjName = new ObjectName(JMX_DOMAIN + ":cache-name=test(local),jmx-resource=CacheLoader");
-      storeInterceptorObjName = new ObjectName(JMX_DOMAIN + ":cache-name=test(local),jmx-resource=CacheStore");
+      loaderInterceptorObjName = new ObjectName(JMX_DOMAIN + ":cache-name=\"test(local)\",jmx-resource=CacheLoader");
+      storeInterceptorObjName = new ObjectName(JMX_DOMAIN + ":cache-name=\"test(local)\",jmx-resource=CacheStore");
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       cacheStore = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();

@@ -132,7 +132,7 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
    }
 
    private void assertCorrectJmxName(ObjectName objectName, Cache cache) {
-      assert objectName.getKeyProperty(ComponentsJmxRegistration.CACHE_NAME_KEY).startsWith(cache.getName());
+      assert ObjectName.unquote(objectName.getKeyProperty(ComponentsJmxRegistration.CACHE_NAME_KEY)).startsWith(cache.getName());
       assert objectName.getKeyProperty(ComponentsJmxRegistration.JMX_RESOURCE_KEY) != null;
    }
 
