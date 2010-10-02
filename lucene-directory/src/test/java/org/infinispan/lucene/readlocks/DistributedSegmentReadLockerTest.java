@@ -76,7 +76,7 @@ public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest 
    
    @Test
    @SuppressWarnings("unchecked")
-   public void testIndexWritingAndFinding() throws IOException {
+   public void testIndexWritingAndFinding() throws IOException, InterruptedException {
       verifyBoth(cache0,cache1);
       IndexOutput indexOutput = dirA.createOutput(filename);
       indexOutput.writeString("no need to write, nobody ever will read this");
@@ -100,9 +100,9 @@ public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest 
       verifyBoth(cache0, cache1);
    }
 
-   void assertFileNotExists(String fileName) {
-      DirectoryIntegrityCheck.assertFileNotExists(cache0, INDEX_NAME, fileName);
-      DirectoryIntegrityCheck.assertFileNotExists(cache1, INDEX_NAME, fileName);
+   void assertFileNotExists(String fileName) throws InterruptedException {
+      DirectoryIntegrityCheck.assertFileNotExists(cache0, INDEX_NAME, fileName, 10000L);
+      DirectoryIntegrityCheck.assertFileNotExists(cache1, INDEX_NAME, fileName, 10000L);
    }
 
    void assertFileExistsHavingRLCount(String fileName, int expectedReadcount, boolean expectRegisteredInFat) {
