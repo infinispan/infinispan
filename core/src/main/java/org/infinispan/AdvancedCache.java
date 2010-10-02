@@ -108,8 +108,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * A key can be locked eagerly in the context of a transaction only
     *
     * @param key the key to lock
+    * @return true if the lock acquisition attempt was successful; false otherwise.
     */
-   void lock(K key);
+   boolean lock(K key);
 
    /**
     * Locks collections of keys eagerly across cache nodes in a cluster.
@@ -118,8 +119,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * 
     * 
     * @param keys collection of keys to lock
+    * @return true if the lock acquisition attempt was successful for <i>all</i> keys; false otherwise. 
     */
-   void lock(Collection<? extends K> keys);
+   boolean lock(Collection<? extends K> keys);
 
    RpcManager getRpcManager();
 

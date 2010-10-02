@@ -153,7 +153,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
       if (transaction == null) {
          if (unlock) {
             if (log.isTraceEnabled()) {
-               log.trace("Unlock for in-existing transaction: " + globalTx + ". Not doing anything.");
+               log.trace("Unlock for non-existant transaction " + globalTx + ". Not doing anything.");
             }
             return null;
          }
@@ -209,6 +209,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
       this.unlock = unlock;
    }
 
+   @Override
    public boolean equals(Object o) {
       if (this == o)
          return true;
@@ -221,6 +222,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
       return keys.equals(that.keys) && Util.safeEquals(singleKey, that.singleKey) && (unlock == that.unlock);
    }
 
+   @Override
    public int hashCode() {
       int result = super.hashCode();
       result = 31 * result + (keys != null ? keys.hashCode() : 0);

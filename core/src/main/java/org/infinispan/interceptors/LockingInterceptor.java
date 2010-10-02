@@ -143,7 +143,7 @@ public class LockingInterceptor extends CommandInterceptor {
          if (c.isUnlock()) {
             lockManager.releaseLocks(ctx);
             if (log.isTraceEnabled()) log.trace("Lock released for: " + ctx.getLockOwner());
-            return null;
+            return false;
          }
 
          for (Object key : c.getKeys()) {
@@ -158,7 +158,9 @@ public class LockingInterceptor extends CommandInterceptor {
             Object result = invokeNextInterceptor(ctx, c);
             try {
                lockKeysForRemoteTx(ctx, c);
+               result = true;
             } catch (Throwable e) {
+               result = false;
                //if anything happen during locking then unlock remote
                c.setUnlock(true);
                invokeNextInterceptor(ctx, c);
@@ -167,13 +169,16 @@ public class LockingInterceptor extends CommandInterceptor {
             return result;
          } else {
             lockKeysForRemoteTx(ctx, c);
-            if (shouldInvokeOnCluster || c.isExplicit())
-               return invokeNextInterceptor(ctx, c);
-            else
-               return null;
+            if (shouldInvokeOnCluster || c.isExplicit()) {
+               invokeNextInterceptor(ctx, c);
+               return true;
+            } else {
+               return true;
+            }
          }
       } catch (Throwable te) {
-            return cleanLocksAndRethrow(ctx, te);
+         cleanLocksAndRethrow(ctx, te);
+         return false;
       } finally {
          if (ctx.isInTxScope()) {
             doAfterCall(ctx);

@@ -24,8 +24,10 @@ package org.infinispan.interceptors;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -54,6 +56,12 @@ public class InvocationContextInterceptor extends CommandInterceptor {
    @Override
    public Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       return handleAll(ctx, command);
+   }
+
+   @Override
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand lcc) throws Throwable {
+      Object retval = handleAll(ctx, lcc);
+      return retval == null ? false : retval;
    }
 
    private Object handleAll(InvocationContext ctx, VisitableCommand command) throws Throwable {
