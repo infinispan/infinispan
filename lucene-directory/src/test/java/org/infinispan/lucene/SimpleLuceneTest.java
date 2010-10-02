@@ -50,7 +50,6 @@ public class SimpleLuceneTest extends MultipleCacheManagersTest {
    }
    
    @Test
-   @SuppressWarnings("unchecked")
    public void testIndexWritingAndFinding() throws IOException {
       Directory dirA = new InfinispanDirectory(cache(0, "lucene"), "indexName");
       Directory dirB = new InfinispanDirectory(cache(1, "lucene"), "indexName");
@@ -71,7 +70,6 @@ public class SimpleLuceneTest extends MultipleCacheManagersTest {
    }
    
    @Test(description="Verifies the caches can be reused after a Directory close")
-   @SuppressWarnings("unchecked")
    public void testCacheReuse() throws IOException {
       testIndexWritingAndFinding();
       cache(0, "lucene").clear();

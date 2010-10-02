@@ -41,7 +41,7 @@ import org.testng.annotations.Test;
 public class LocalLockMergingSegmentReadLockerTest extends DistributedSegmentReadLockerTest {
    
    @Test @Override
-   public void testIndexWritingAndFinding() throws IOException {
+   public void testIndexWritingAndFinding() throws IOException, InterruptedException {
       verifyBoth(cache0,cache1);
       IndexOutput indexOutput = dirA.createOutput(filename);
       indexOutput.writeString("no need to write, nobody ever will read this");
