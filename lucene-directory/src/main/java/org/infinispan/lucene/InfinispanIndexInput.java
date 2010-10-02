@@ -73,7 +73,7 @@ public class InfinispanIndexInput extends IndexInput {
    }
 
    @Override
-   public byte readByte() throws IOException {
+   public final byte readByte() throws IOException {
       if (bufferPosition >= currentBufferSize) {
          nextChunk();
          bufferPosition = 0;
@@ -82,8 +82,7 @@ public class InfinispanIndexInput extends IndexInput {
     }
    
    @Override
-   public void readBytes(byte[] b, int offset, int len) throws IOException {
-      int bytesToRead = len;
+   public final void readBytes(final byte[] b, int offset, int bytesToRead) throws IOException {
       if (buffer == null) {
          nextChunk();
       }

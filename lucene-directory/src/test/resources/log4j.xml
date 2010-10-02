@@ -48,6 +48,14 @@
    <category name="org.infinispan.factories">
       <priority value="WARN"/>
    </category>
+   
+   <category name="org.jgroups">
+      <priority value="WARN"/>
+   </category>
+   
+   <category name="com.mchange">
+      <priority value="WARN"/>
+   </category>
 
    <!-- ======================= -->
    <!-- Setup the Root category -->

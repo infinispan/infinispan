@@ -57,6 +57,7 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
    public void roundingTest() {
       FileMetadata m = new FileMetadata();
       m.setBufferSize(10);
+      Assert.assertEquals(0, m.getNumberOfChunks());
       m.setSize(10);
       Assert.assertEquals(1, m.getNumberOfChunks());
       m.setSize(11);
@@ -65,10 +66,12 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
       Assert.assertEquals(1, m.getNumberOfChunks());
       m.setSize(22);
       Assert.assertEquals(2, m.getNumberOfChunks());
+      m.setSize(31);
+      m.setBufferSize(10);
+      Assert.assertEquals(4, m.getNumberOfChunks());
    }
    
    @Test
-   @SuppressWarnings("unchecked")
    public void testReadingFromDifferentlySizedBuffers() throws IOException {
       cache = cacheManager.getCache();
       Directory dirA = new InfinispanDirectory(cache, "indexName", 7);

@@ -135,8 +135,10 @@ public class DirectoryIntegrityCheck {
          ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, fileName, i);
          byte[] buffer = (byte[]) cache.get(chunkKey);
          if (buffer == null) {
+            assert cache.containsKey(chunkKey)==false;
             return accumulator;
          } else {
+            assert buffer.length > 0; //check we don't store useless data
             accumulator += buffer.length;
          }
       }
