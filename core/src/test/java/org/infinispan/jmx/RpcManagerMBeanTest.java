@@ -80,8 +80,8 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       Cache cache1 = manager(0).getCache(cachename);
       Cache cache2 = manager(1).getCache(cachename);
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
-      ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
+      ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=\"" + cachename + "(repl_sync)\",jmx-resource=RpcManager");
+      ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=\"" + cachename + "(repl_sync)\",jmx-resource=RpcManager");
       assert mBeanServer.isRegistered(rpcManager1);
       assert mBeanServer.isRegistered(rpcManager2);
 
@@ -119,8 +119,8 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       Cache cache1 = manager(0).getCache(cachename);
       Cache cache2 = manager(1).getCache(cachename);
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
-      ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
+      ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=\"" + cachename + "(repl_sync)\",jmx-resource=RpcManager");
+      ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=\"" + cachename + "(repl_sync)\",jmx-resource=RpcManager");
       
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 0);
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
@@ -205,8 +205,8 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
    @Test(dependsOnMethods = "testSuccessRatio")
    public void testAddressInformation() throws Exception {
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
-      ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
+      ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=\"" + cachename + "(repl_sync)\",jmx-resource=RpcManager");
+      ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=\"" + cachename + "(repl_sync)\",jmx-resource=RpcManager");
       String cm1Address = manager(0).getAddress().toString();
       String cm2Address = manager(1).getAddress().toString();
       assert mBeanServer.getAttribute(rpcManager1, "NodeAddress").equals(cm1Address);
