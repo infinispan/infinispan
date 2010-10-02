@@ -164,7 +164,6 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
             ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, filename, i);
             cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(chunkKey);
          }
-         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(key);
       }
       // last operation, as being set as value==0 it prevents others from using it during the
       // deletion process:
