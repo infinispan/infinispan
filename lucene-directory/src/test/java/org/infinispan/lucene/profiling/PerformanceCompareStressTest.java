@@ -68,6 +68,8 @@ public class PerformanceCompareStressTest {
    /** Concurrent Threads in tests */
    private static final int READER_THREADS = 5;
    private static final int WRITER_THREADS = 1;
+   
+   private static final int CHUNK_SIZE = 512 * 1024;
 
    private static final String indexName = "tempIndexName";
 
@@ -95,7 +97,7 @@ public class PerformanceCompareStressTest {
    @Test
    public void profileTestInfinispanDirectoryWithNetworkDelayZero() throws Exception {
       // TestingUtil.setDelayForCache(cache, 0, 0);
-      InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
+      InfinispanDirectory dir = new InfinispanDirectory(cache, indexName, CHUNK_SIZE);
       stressTestDirectory(dir, "InfinispanClustered-delayedIO:0");
       verifyDirectoryState();
    }
@@ -103,7 +105,7 @@ public class PerformanceCompareStressTest {
    @Test
    public void profileTestInfinispanDirectoryWithNetworkDelay4() throws Exception {
       TestingUtil.setDelayForCache(cache, 4, 4);
-      InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
+      InfinispanDirectory dir = new InfinispanDirectory(cache, indexName, CHUNK_SIZE);
       stressTestDirectory(dir, "InfinispanClustered-delayedIO:4");
       verifyDirectoryState();
    }
@@ -111,7 +113,7 @@ public class PerformanceCompareStressTest {
    @Test
    public void profileTestInfinispanDirectoryWithHighNetworkDelay40() throws Exception {
       TestingUtil.setDelayForCache(cache, 40, 40);
-      InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
+      InfinispanDirectory dir = new InfinispanDirectory(cache, indexName, CHUNK_SIZE);
       stressTestDirectory(dir, "InfinispanClustered-delayedIO:40");
       verifyDirectoryState();
    }
@@ -121,7 +123,7 @@ public class PerformanceCompareStressTest {
       CacheContainer cacheContainer = CacheTestSupport.createLocalCacheManager();
       try {
          cache = cacheContainer.getCache();
-         InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
+         InfinispanDirectory dir = new InfinispanDirectory(cache, indexName, CHUNK_SIZE);
          stressTestDirectory(dir, "InfinispanLocal");
          verifyDirectoryState();
       } finally {

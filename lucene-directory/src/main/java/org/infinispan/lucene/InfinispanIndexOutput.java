@@ -56,8 +56,6 @@ public class InfinispanIndexOutput extends IndexOutput {
    private int currentChunkNumber = 0;
    private boolean needsAddingToFileList = true;
 
-   private boolean transactionRunning = false;
-
    public InfinispanIndexOutput(AdvancedCache cache, FileCacheKey fileKey, int bufferSize, FileListOperations fileList) throws IOException {
       this.cache = cache;
       this.fileKey = fileKey;
@@ -134,11 +132,6 @@ public class InfinispanIndexOutput extends IndexOutput {
 
    @Override
    public void flush() throws IOException {
-      //flush is invoked by Lucene directly only in the before-commit phase,
-      //so that's what we begin here:
-      if ( ! transactionRunning) {
-         transactionRunning = cache.startBatch();
-      }
       storeCurrentBuffer();
    }
 
@@ -154,18 +147,16 @@ public class InfinispanIndexOutput extends IndexOutput {
             System.arraycopy(buffer, 0, bufferToFlush, 0, newBufferSize);
          }
       }
-      boolean microbatch = false;
-      // we don't want to spawn a nested transaction, just to write in batch:
-      if ( ! transactionRunning) {
-         microbatch = cache.startBatch();
-      }
+      boolean microbatch = cache.startBatch();
       // add chunk to cache
       if ( ! writingOnLastChunk || this.positionInBuffer != 0) {
          // create key for the current chunk
          ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentChunkNumber);
+         if (trace) log.trace("Storing segment chunk: " + key);
          cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(key, bufferToFlush);
       }
       // override existing file header with new size and updated accesstime
+      file.touch();
       cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(fileKey, file);
       registerToFileListIfNeeded();
       if (microbatch) cache.endBatch(true);
@@ -187,11 +178,6 @@ public class InfinispanIndexOutput extends IndexOutput {
    @Override
    public void close() throws IOException {
       storeCurrentBuffer();
-      if (transactionRunning) {
-         //commit
-         cache.endBatch(true);
-         transactionRunning = false;
-      }
       positionInBuffer = 0;
       filePosition = 0;
       buffer = null;
