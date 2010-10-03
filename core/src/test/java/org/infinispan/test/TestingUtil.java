@@ -58,20 +58,20 @@ import java.util.concurrent.ConcurrentMap;
 import static java.io.File.separator;
 
 public class TestingUtil {
-   
+
    private static final Log log = LogFactory.getLog(TestingUtil.class);
    private static final Random random = new Random();
    public static final String TEST_PATH = "target" + separator + "tempFiles";
    public static final String INFINISPAN_START_TAG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
-         "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-         "      xsi:schemaLocation=\"urn:infinispan:config:4.1 http://www.infinispan.org/schemas/infinispan-config-4.1.xsd\"\n" +
-         "      xmlns=\"urn:infinispan:config:4.1\">";
+           "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+           "      xsi:schemaLocation=\"urn:infinispan:config:4.1 http://www.infinispan.org/schemas/infinispan-config-4.1.xsd\"\n" +
+           "      xmlns=\"urn:infinispan:config:4.1\">";
    public static final String INFINISPAN_START_TAG_40 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
-   "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-   "      xsi:schemaLocation=\"urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd\"\n" +
-   "      xmlns=\"urn:infinispan:config:4.0\">";
-   public static final String INFINISPAN_END_TAG="</infinispan>";
-   public static final String INFINISPAN_START_TAG_NO_SCHEMA="<infinispan>";
+           "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+           "      xsi:schemaLocation=\"urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd\"\n" +
+           "      xmlns=\"urn:infinispan:config:4.0\">";
+   public static final String INFINISPAN_END_TAG = "</infinispan>";
+   public static final String INFINISPAN_START_TAG_NO_SCHEMA = "<infinispan>";
 
 
    /**
@@ -80,6 +80,7 @@ public class TestingUtil {
     *
     * @param target    object to extract field from
     * @param fieldName name of field to extract
+    *
     * @return field value
     */
    public static Object extractField(Object target, String fieldName) {
@@ -132,6 +133,7 @@ public class TestingUtil {
     *
     * @param caches  caches which must all have consistent views
     * @param timeout max number of ms to loop
+    *
     * @throws RuntimeException if <code>timeout</code> ms have elapse without all caches having the same number of
     *                          members.
     */
@@ -166,8 +168,8 @@ public class TestingUtil {
     * Waits for the given memebrs to be removed from the cluster. The difference between this and {@link
     * #blockUntilViewsReceived(long, org.infinispan.manager.CacheContainer...)} methods(s) is that it does not barf if
     * more than expected memebers is in the cluster - this is because we expect to start with a grater number fo
-    * memebers than we eventually expect. It will barf though, if the number of members is not the one expected but
-    * only after the timeout expieres.
+    * memebers than we eventually expect. It will barf though, if the number of members is not the one expected but only
+    * after the timeout expieres.
     */
    public static void blockForMemberToFail(long timeout, CacheContainer... cacheContainers) {
       blockUntilViewsReceived(timeout, false, cacheContainers);
@@ -239,6 +241,7 @@ public class TestingUtil {
     *
     * @param groupSize number of caches expected in the group
     * @param timeout   max number of ms to loop
+    *
     * @throws RuntimeException if <code>timeout</code> ms have elapse without all caches having the same number of
     *                          members.
     */
@@ -261,11 +264,13 @@ public class TestingUtil {
    }
 
    /**
-    * Checks each cache to see if the number of elements in the array returned by {@link EmbeddedCacheManager#getMembers()}
-    * matches the size of the <code>caches</code> parameter.
+    * Checks each cache to see if the number of elements in the array returned by {@link
+    * EmbeddedCacheManager#getMembers()} matches the size of the <code>caches</code> parameter.
     *
     * @param caches caches that should form a View
+    *
     * @return <code>true</code> if all caches have <code>caches.length</code> members; false otherwise
+    *
     * @throws IllegalStateException if any of the caches have MORE view members than caches.length
     */
    public static boolean areCacheViewsComplete(Cache[] caches) {
@@ -376,7 +381,7 @@ public class TestingUtil {
    public static void sleepThread(long sleeptime) {
       sleepThread(sleeptime, null);
    }
-   
+
    public static void sleepThread(long sleeptime, String messageOnInterrupt) {
       try {
          Thread.sleep(sleeptime);
@@ -416,17 +421,20 @@ public class TestingUtil {
 
    public static void killCacheManagers(CacheContainer... cacheContainers) {
       EmbeddedCacheManager[] ecms = new EmbeddedCacheManager[cacheContainers.length];
-      int i=0;
-      for (CacheContainer cc: cacheContainers) ecms[i++] = (EmbeddedCacheManager) cc;
+      int i = 0;
+      for (CacheContainer cc : cacheContainers) ecms[i++] = (EmbeddedCacheManager) cc;
       killCacheManagers(ecms);
    }
 
    public static void killCacheManagers(EmbeddedCacheManager... cacheContainers) {
       if (cacheContainers != null) {
          for (EmbeddedCacheManager cm : cacheContainers) {
-            clearContent(cm);
-            if (cm != null) 
-               cm.stop();
+            try {
+               clearContent(cm);
+            } finally {
+               if (cm != null)
+                  cm.stop();
+            }
          }
       }
    }
@@ -434,7 +442,7 @@ public class TestingUtil {
    public static void killCacheManagers(Collection<? extends EmbeddedCacheManager> cacheManagers) {
       killCacheManagers(cacheManagers.toArray(new EmbeddedCacheManager[cacheManagers.size()]));
    }
-   
+
    public static void clearContent(EmbeddedCacheManager cacheContainer) {
       if (cacheContainer != null && cacheContainer.getStatus().allowInvocations()) {
          Set<Cache> runningCaches = getRunningCaches(cacheContainer);
@@ -452,10 +460,10 @@ public class TestingUtil {
          }
       }
    }
-   
+
    protected static Set<Cache> getRunningCaches(EmbeddedCacheManager cacheContainer) {
       Set<Cache> running = new HashSet<Cache>();
-      for (String cacheName: cacheContainer.getCacheNames()) {
+      for (String cacheName : cacheContainer.getCacheNames()) {
          Cache c = cacheContainer.getCache(cacheName);
          if (c.getStatus().allowInvocations()) running.add(c);
       }
@@ -465,7 +473,7 @@ public class TestingUtil {
 
       return running;
    }
-   
+
    private static void clearRunningTx(Cache cache) {
       if (cache != null) {
          TransactionManager txm = TestingUtil.getTransactionManager(cache);
@@ -478,12 +486,12 @@ public class TestingUtil {
          }
       }
    }
-   
+
    private static void clearReplicationQueues(Cache cache) {
       ReplicationQueue queue = TestingUtil.extractComponent(cache, ReplicationQueue.class);
       if (queue != null) queue.reset();
    }
-   
+
    private static void clearCacheLoader(Cache cache) {
       CacheLoaderManager cacheLoaderManager = TestingUtil.extractComponent(cache, CacheLoaderManager.class);
       if (cacheLoaderManager != null && cacheLoaderManager.getCacheStore() != null) {
@@ -494,7 +502,7 @@ public class TestingUtil {
          }
       }
    }
-   
+
    private static void removeInMemoryData(Cache cache) {
       EmbeddedCacheManager mgr = (EmbeddedCacheManager) cache.getCacheManager();
       Address a = mgr.getAddress();
@@ -575,6 +583,7 @@ public class TestingUtil {
     * For testing only - introspects a cache and extracts the ComponentRegistry
     *
     * @param cache cache to introspect
+    *
     * @return component registry
     */
    public static ComponentRegistry extractComponentRegistry(Cache cache) {
@@ -593,6 +602,7 @@ public class TestingUtil {
     * For testing only - introspects a cache and extracts the ComponentRegistry
     *
     * @param ci interceptor chain to introspect
+    *
     * @return component registry
     */
    public static ComponentRegistry extractComponentRegistry(InterceptorChain ci) {
@@ -621,10 +631,12 @@ public class TestingUtil {
    }
 
    /**
-    * Replaces an existing interceptor of the given type in the interceptor chain with a new interceptor instance passed as parameter.
-    * 
-    * @param replacingInterceptor the interceptor to add to the interceptor chain
+    * Replaces an existing interceptor of the given type in the interceptor chain with a new interceptor instance passed
+    * as parameter.
+    *
+    * @param replacingInterceptor        the interceptor to add to the interceptor chain
     * @param toBeReplacedInterceptorType the type of interceptor that should be swapped with the new one
+    *
     * @return true if the interceptor was replaced
     */
    public static boolean replaceInterceptor(Cache cache, CommandInterceptor replacingInterceptor, Class<? extends CommandInterceptor> toBeReplacedInterceptorType) {
@@ -644,6 +656,7 @@ public class TestingUtil {
     * invokes remote methods.
     *
     * @param cache cache instance for which a remote delegate is to be retrieved
+    *
     * @return remote delegate, or null if the cacge is not configured for replication.
     */
    public static CacheDelegate getInvocationDelegate(Cache cache) {
@@ -730,6 +743,7 @@ public class TestingUtil {
     * @param componentType        component type of which to replace
     * @param replacementComponent new instance
     * @param rewire               if true, ComponentRegistry.rewire() is called after replacing.
+    *
     * @return the original component that was replaced
     */
    public static <T> T replaceComponent(Cache<?, ?> cache, Class<T> componentType, T replacementComponent, boolean rewire) {
@@ -743,10 +757,11 @@ public class TestingUtil {
    /**
     * Replaces a component in a running cache manager (global component registry)
     *
-    * @param cacheContainer         cache in which to replace component
+    * @param cacheContainer       cache in which to replace component
     * @param componentType        component type of which to replace
     * @param replacementComponent new instance
     * @param rewire               if true, ComponentRegistry.rewire() is called after replacing.
+    *
     * @return the original component that was replaced
     */
    public static <T> T replaceComponent(CacheContainer cacheContainer, Class<T> componentType, T replacementComponent, boolean rewire) {
@@ -780,7 +795,7 @@ public class TestingUtil {
       builder.append("]");
       return builder.toString();
    }
-   
+
    public static Set getInternalKeys(Cache cache) {
       DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
       Set keys = new HashSet();
@@ -789,7 +804,7 @@ public class TestingUtil {
       }
       return keys;
    }
-   
+
    public static Collection getInternalValues(Cache cache) {
       DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
       Collection values = new ArrayList();
@@ -798,7 +813,7 @@ public class TestingUtil {
       }
       return values;
    }
-   
+
    public static DISCARD getDiscardForCache(Cache<?, ?> c) throws Exception {
       JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(c, Transport.class);
       Channel ch = jgt.getChannel();
@@ -807,7 +822,7 @@ public class TestingUtil {
       ps.insertProtocol(discard, ProtocolStack.ABOVE, TP.class);
       return discard;
    }
-   
+
    public static DELAY setDelayForCache(Cache<?, ?> c, int in_delay, int out_delay) throws Exception {
       JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(c, Transport.class);
       Channel ch = jgt.getChannel();
@@ -821,8 +836,10 @@ public class TestingUtil {
 
    /**
     * Creates a path to a temp directory based on a base directory and a test.
+    *
     * @param basedir may be null, if relative directories are to be used.
-    * @param test test that requires this directory.
+    * @param test    test that requires this directory.
+    *
     * @return a path, relative or absolute.
     */
    public static String tmpDirectory(String basedir, AbstractInfinispanTest test) {
@@ -836,12 +853,12 @@ public class TestingUtil {
 
    public static String k(Method method, String index) {
       return new StringBuilder().append("k").append(index).append('-')
-         .append(method.getName()).toString();
+              .append(method.getName()).toString();
    }
 
    public static String v(Method method, String index) {
       return new StringBuilder().append("v").append(index).append('-')
-         .append(method.getName()).toString();
+              .append(method.getName()).toString();
    }
 
    public static String k(Method method) {
