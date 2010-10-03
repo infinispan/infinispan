@@ -84,6 +84,7 @@ public class InfinispanDemo {
    private Random r = new Random();
    private ClusterTableModel clusterTableModel;
    private CachedDataTableModel cachedDataTableModel;
+   private DefaultCacheManager cacheManager;
 
    public static void main(String[] args) {
       String cfgFileName = LegacyKeySupportSystemProperties.getProperty("infinispan.configuration", "infinispan.demo.cfg", "config-samples/gui-demo-cache-config.xml");
@@ -317,12 +318,12 @@ public class InfinispanDemo {
                URL resource = getClass().getClassLoader().getResource(cacheConfigFile);
                if (resource == null) resource = new URL(cacheConfigFile);
 
-               if (cache == null) {
+               if (cacheManager == null) {
                   // update config file display
-                  cache = new DefaultCacheManager(resource.openStream()).getCache();
-               } else {
-                  cache.start();
-               }
+                  cacheManager = new DefaultCacheManager(resource.openStream());                                    
+               } 
+               cache = cacheManager.getCache();    
+               cache.start();
 
                // repaint the cfg file display
                configFileName.setText(resource.toString());
@@ -362,7 +363,14 @@ public class InfinispanDemo {
       // actually stop the cache asynchronously
       asyncExecutor.execute(new Runnable() {
          public void run() {
-            if (cache != null) cache.stop();
+            if (cache != null) {
+               cache.stop();
+               cache = null;
+            }
+            if (cacheManager != null) {
+               cacheManager.stop();
+               cacheManager = null;
+            }
             cachedDataTableModel.reset();
             configFileContents.setText("");
             configFileContents.repaint();
