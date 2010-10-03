@@ -30,6 +30,8 @@ import org.infinispan.lucene.FileMetadata;
 import org.infinispan.lucene.FileReadLockKey;
 import org.infinispan.lucene.InfinispanDirectory;
 import org.infinispan.lucene.InfinispanIndexInput;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * <p>DistributedSegmentReadLocker stores reference counters in the cache
@@ -44,6 +46,8 @@ import org.infinispan.lucene.InfinispanIndexInput;
  * @since 4.1
  */
 public class DistributedSegmentReadLocker implements SegmentReadLocker {
+   
+   private static final Log log = LogFactory.getLog(DistributedSegmentReadLocker.class);
    
    private final AdvancedCache cache;
    private final String indexName;
@@ -154,18 +158,22 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     * @param cache the cache containing the elements to be deleted
     */
    static void realFileDelete(FileReadLockKey readLockKey, AdvancedCache cache) {
+      final boolean trace = log.isTraceEnabled();
       final String indexName = readLockKey.getIndexName();
       final String filename = readLockKey.getFileName();
       FileCacheKey key = new FileCacheKey(indexName, filename);
+      if (trace) log.trace("deleting metadata: " + key);
       FileMetadata file = (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).remove(key);
       if (file != null) { //during optimization of index a same file could be deleted twice, so you could see a null here
          for (int i = 0; i < file.getNumberOfChunks(); i++) {
             ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, filename, i);
+            if (trace) log.trace("deleting chunk: " + chunkKey);
             cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).removeAsync(chunkKey);
          }
       }
       // last operation, as being set as value==0 it prevents others from using it during the
       // deletion process:
+      if (trace) log.trace("deleting readlock: " + readLockKey);
       cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(readLockKey);
    }
 

@@ -613,6 +613,9 @@ public class InfinispanDirectoryIOTest {
       testOn(dir, 40 ,40, cache);
       testOn(dir, 40 ,39, cache);
       testOn(dir, 39 ,40, cache);
+      
+      // quite bigger
+      testOn(dir, 600, 600, cache);
    }
 
    private void testOn(Directory dir, int writeSize, int readSize, Cache cache) throws IOException {
@@ -639,6 +642,31 @@ public class InfinispanDirectoryIOTest {
          if (readSize <= writeSize)
             assert false :"should not have thrown an IOException" + ioe.getMessage();
       }
+   }
+   
+   public void multipleFlushTest() throws IOException {
+      final String filename = "longFile.writtenInMultipleFlushes";
+      final int bufferSize = 300;
+      Cache cache = cacheManager.getCache();
+      cache.clear();
+      InfinispanDirectory dir = new InfinispanDirectory(cache, INDEXNAME, 13);
+      byte[] manyBytes = fillBytes(bufferSize);
+      IndexOutput indexOutput = dir.createOutput(filename);
+      for (int i = 0; i < 10; i++) {
+         indexOutput.writeBytes(manyBytes, bufferSize);
+         indexOutput.flush();
+      }
+      IndexInput input = dir.openInput(filename);
+      final int finalSize = (10 * bufferSize);
+      assert input.length() == finalSize;
+      final byte[] resultingBuffer = new byte[finalSize];
+      input.readBytes(resultingBuffer, 0, finalSize);
+      int index = 0;
+      for (int i = 0; i < 10; i++) {
+         for (int j = 0; j < bufferSize; j++)
+            assert resultingBuffer[index++] == manyBytes[j];
+      }
+      indexOutput.close();
    }
 
    private byte[] fillBytes(int size) {
