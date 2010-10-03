@@ -50,8 +50,7 @@ public class JoinTask extends RehashTask {
 
    public JoinTask(RpcManager rpcManager, CommandsFactory commandsFactory, Configuration conf,
             DataContainer dataContainer, DistributionManagerImpl dmi) {
-      super(dmi, rpcManager, conf, commandsFactory, dataContainer);
-      this.dataContainer = dataContainer;
+      super(dmi, rpcManager, conf, commandsFactory, dataContainer);      
       this.self = rpcManager.getTransport().getAddress();
    }
 
@@ -91,50 +90,47 @@ public class JoinTask extends RehashTask {
             chNew = createConsistentHash(configuration, chOld.getCaches(), self);
          
          dmi.setConsistentHash(chNew);
-
-         if (configuration.isRehashEnabled()) {
-            // 3.  Enable TX logging
-            transactionLogger.enable();
-
-            // 4.  Broadcast new temp CH
-            rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);
-
-            // 5.  txLogger being enabled will cause ClusteredGetCommands to return uncertain responses.
-
-            // 6.  pull state from everyone.
-            Address myAddress = rpcManager.getTransport().getAddress();
-            
-            RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE_JOIN, myAddress, null, chOld, chNew,null);
-            // TODO I should be able to process state chunks from different nodes simultaneously!!
-            List<Address> addressesWhoMaySendStuff = getAddressesWhoMaySendStuff(chNew, configuration.getNumOwners());
-            List<Response> resps = rpcManager.invokeRemotely(addressesWhoMaySendStuff, cmd, SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
-
-            // 7.  Apply state
-            for (Response r : resps) {
-               if (r instanceof SuccessfulResponse) {
-                  Map<Object, InternalCacheValue> state = getStateFromResponse((SuccessfulResponse) r);
-                  dmi.applyState(chNew, state);
+         try {
+            if (configuration.isRehashEnabled()) {
+               // 3.  Enable TX logging
+               transactionLogger.enable();
+   
+               // 4.  Broadcast new temp CH
+               rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);
+   
+               // 5.  txLogger being enabled will cause ClusteredGetCommands to return uncertain responses.
+   
+               // 6.  pull state from everyone.
+               Address myAddress = rpcManager.getTransport().getAddress();
+               
+               RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE_JOIN, myAddress, null, chOld, chNew,null);
+               // TODO I should be able to process state chunks from different nodes simultaneously!!
+               List<Address> addressesWhoMaySendStuff = getAddressesWhoMaySendStuff(chNew, configuration.getNumOwners());
+               List<Response> resps = rpcManager.invokeRemotely(addressesWhoMaySendStuff, cmd, SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
+   
+               // 7.  Apply state
+               for (Response r : resps) {
+                  if (r instanceof SuccessfulResponse) {
+                     Map<Object, InternalCacheValue> state = getStateFromResponse((SuccessfulResponse) r);
+                     dmi.applyState(chNew, state);
+                  }
                }
+   
+               // 8.  Drain logs
+               dmi.drainLocalTransactionLog();
+               unlocked = true;
+            } else {
+               rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);
+               if (trace) log.trace("Rehash not enabled, so not pulling state.");
+            }                                 
+         } finally {
+            // 10.
+            rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_END, self), true, true);
+            
+            if (configuration.isRehashEnabled()) {
+               // 11.
+               invalidateInvalidHolders(chOld, chNew);
             }
-
-            // 8.  Drain logs
-            dmi.drainLocalTransactionLog();
-         } else {
-            if (trace) log.trace("Rehash not enabled, so not pulling state.");
-         }
-         unlocked = true;
-
-         if (!configuration.isRehashEnabled()) {
-            rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);
-         }
-         // 10.
-         rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_END, self), true, true);
-         rpcManager.invokeRemotely(coordinator(), cf.buildRehashControlCommand(JOIN_COMPLETE, self), SYNCHRONOUS,
-                                   configuration.getRehashRpcTimeout(), true);
-
-         if (configuration.isRehashEnabled()) {
-            // 11.
-            invalidateInvalidHolders(chOld, chNew);
          }
 
       } catch (Exception e) {

@@ -45,7 +45,7 @@ public class RehashControlCommand extends BaseRpcCommand {
    public static final int COMMAND_ID = 17;
 
    public enum Type {
-      JOIN_REQ, JOIN_REHASH_START, JOIN_REHASH_END, JOIN_COMPLETE, JOIN_ABORT, PULL_STATE_JOIN, PULL_STATE_LEAVE, PUSH_STATE, DRAIN_TX, DRAIN_TX_PREPARES
+      JOIN_REQ, JOIN_REHASH_START, JOIN_REHASH_END, JOIN_ABORT, PULL_STATE_JOIN, PULL_STATE_LEAVE, PUSH_STATE, DRAIN_TX, DRAIN_TX_PREPARES
    }
 
    Type type;
@@ -119,9 +119,6 @@ public class RehashControlCommand extends BaseRpcCommand {
             return null;
          case JOIN_REHASH_END:
             distributionManager.informRehashOnJoin(sender, false);
-            return null;
-         case JOIN_COMPLETE:
-            distributionManager.notifyJoinComplete(sender);
             return null;
          case PULL_STATE_JOIN:
             return pullStateForJoin();             
