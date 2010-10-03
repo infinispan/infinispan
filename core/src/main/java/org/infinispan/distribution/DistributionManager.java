@@ -110,13 +110,6 @@ public interface DistributionManager {
    List<Address> requestPermissionToJoin(Address joiner);
 
    /**
-    * Notifies a coordinator when a join completes
-    *
-    * @param joiner joiner who has completed.
-    */
-   void notifyJoinComplete(Address joiner);
-
-   /**
     * This will cause all nodes to add the joiner to their consistent hash instance (usually by creating a {@link org.infinispan.distribution.UnionConsistentHash}
     *
     * @param joiner address of joiner
