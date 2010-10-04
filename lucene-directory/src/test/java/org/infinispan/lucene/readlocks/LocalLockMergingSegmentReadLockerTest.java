@@ -37,6 +37,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.1
  */
+@SuppressWarnings("unchecked")
 @Test(groups = "functional", testName = "lucene.readlocks.LocalLockMergingSegmentReadLockerTest")
 public class LocalLockMergingSegmentReadLockerTest extends DistributedSegmentReadLockerTest {
    

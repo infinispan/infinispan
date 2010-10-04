@@ -74,9 +74,9 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
    @Test
    public void testReadingFromDifferentlySizedBuffers() throws IOException {
       cache = cacheManager.getCache();
-      Directory dirA = new InfinispanDirectory(cache, "indexName", 7);
+      Directory dirA = new InfinispanDirectory(cache, cache, cache, "indexName", 7);
       writeTextToIndex(dirA, 0, "hi from node A");
-      Directory dirB = new InfinispanDirectory(cache, "indexName", 8);
+      Directory dirB = new InfinispanDirectory(cache, cache, cache, "indexName", 8);
       assertTextIsFoundInIds(dirB, "hi", 0);
       writeTextToIndex(dirB, 1, "index B is sharing the same index but using a differently sized chunk size");
       assertTextIsFoundInIds(dirA, "size", 1);

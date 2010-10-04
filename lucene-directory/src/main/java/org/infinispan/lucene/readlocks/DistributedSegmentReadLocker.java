@@ -45,6 +45,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Sanne Grinovero
  * @since 4.1
  */
+@SuppressWarnings("unchecked")
 public class DistributedSegmentReadLocker implements SegmentReadLocker {
    
    private static final Log log = LogFactory.getLog(DistributedSegmentReadLocker.class);

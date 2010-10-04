@@ -46,6 +46,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  */
 @Test(groups = "profiling", testName = "lucene.InfinispanDirectoryStressTest")
+@SuppressWarnings("unchecked")
 public class InfinispanDirectoryStressTest {
 
    private static final Log log = LogFactory.getLog(InfinispanDirectoryStressTest.class);

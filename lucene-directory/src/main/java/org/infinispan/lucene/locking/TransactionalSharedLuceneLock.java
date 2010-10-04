@@ -45,6 +45,7 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.infinispan.lucene.locking.TransactionalLockFactory
  * @see org.apache.lucene.store.Lock
  */
+@SuppressWarnings("unchecked")
 class TransactionalSharedLuceneLock extends Lock {
 
    private static final Log log = LogFactory.getLog(TransactionalSharedLuceneLock.class);

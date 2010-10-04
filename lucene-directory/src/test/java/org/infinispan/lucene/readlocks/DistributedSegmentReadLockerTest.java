@@ -42,6 +42,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.1
  */
+@SuppressWarnings("unchecked")
 @Test(groups = "functional", testName = "lucene.readlocks.DistributedSegmentReadLockerTest")
 public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest {
    
@@ -75,7 +76,6 @@ public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest 
    }
    
    @Test
-   @SuppressWarnings("unchecked")
    public void testIndexWritingAndFinding() throws IOException, InterruptedException {
       verifyBoth(cache0,cache1);
       IndexOutput indexOutput = dirA.createOutput(filename);

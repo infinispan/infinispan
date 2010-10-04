@@ -31,6 +31,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.0
  */
+@SuppressWarnings("unchecked")
 @Test(groups = "functional", testName = "lucene.locking.TransactionalLockManagerFunctionalTest", enabled = true)
 public class TransactionalLockManagerFunctionalTest extends LockManagerFunctionalTest {
    

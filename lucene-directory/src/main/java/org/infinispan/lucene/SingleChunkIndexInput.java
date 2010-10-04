@@ -38,6 +38,7 @@ import org.infinispan.context.Flag;
  * @author Sanne Grinovero
  * @since 4.0
  */
+@SuppressWarnings("unchecked")
 public class SingleChunkIndexInput extends IndexInput {
 
    private final byte[] buffer;

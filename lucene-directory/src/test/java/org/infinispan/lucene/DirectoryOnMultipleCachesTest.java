@@ -42,6 +42,7 @@ import org.testng.annotations.Test;
  * 
  * @author Sanne Grinovero
  */
+@SuppressWarnings("unchecked")
 @Test(groups = "functional", testName = "lucene.DirectoryOnMultipleCachesTest")
 public class DirectoryOnMultipleCachesTest {
    

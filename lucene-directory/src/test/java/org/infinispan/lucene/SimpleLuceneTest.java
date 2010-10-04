@@ -30,7 +30,6 @@ import java.io.IOException;
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -43,6 +42,7 @@ import org.testng.annotations.Test;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "lucene.SimpleLuceneTest")
+@SuppressWarnings("unchecked")
 public class SimpleLuceneTest extends MultipleCacheManagersTest {
    
    @Override

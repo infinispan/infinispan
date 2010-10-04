@@ -64,6 +64,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.0
  */
+@SuppressWarnings("unchecked")
 @Test(groups = "profiling", testName = "lucene.profiling.IndexReadingStressTest", sequential = true)
 public class IndexReadingStressTest {
 

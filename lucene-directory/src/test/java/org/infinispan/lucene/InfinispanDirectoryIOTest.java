@@ -30,7 +30,6 @@ import java.util.Random;
 import java.util.Set;
 
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.RAMDirectory;
@@ -49,6 +48,7 @@ import org.testng.annotations.Test;
  * @author Davide Di Somma
  * @author Sanne Grinovero
  */
+@SuppressWarnings("unchecked")
 @Test(groups = "functional", testName = "lucene.InfinispanDirectoryIOTest", sequential = true)
 public class InfinispanDirectoryIOTest {
    
@@ -79,7 +79,7 @@ public class InfinispanDirectoryIOTest {
       final int BUFFER_SIZE = 64;
       
       Cache cache = cacheManager.getCache();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, INDEXNAME, BUFFER_SIZE);
+      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, BUFFER_SIZE);
       
       String fileName = "SomeText.txt";
       IndexOutput io = dir.createOutput(fileName);
@@ -146,7 +146,7 @@ public class InfinispanDirectoryIOTest {
       final int BUFFER_SIZE = 64;
 
       Cache cache = cacheManager.getCache();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, INDEXNAME, BUFFER_SIZE);
+      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, BUFFER_SIZE);
 
       verifyOnBuffer("SingleChunk.txt", 61, BUFFER_SIZE, cache, dir, 15);
 
@@ -193,7 +193,7 @@ public class InfinispanDirectoryIOTest {
       final int BUFFER_SIZE = 64;
 
       Cache cache = cacheManager.getCache();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, INDEXNAME, BUFFER_SIZE);
+      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, BUFFER_SIZE);
 
       final int FILE_SIZE = 1000;
       assert BUFFER_SIZE < FILE_SIZE;
@@ -328,7 +328,7 @@ public class InfinispanDirectoryIOTest {
       final int BUFFER_SIZE = 64;
 
       Cache cache = cacheManager.getCache();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, INDEXNAME, BUFFER_SIZE);
+      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, BUFFER_SIZE);
 
       // create file headers
       FileMetadata file1 = new FileMetadata();
@@ -474,7 +474,7 @@ public class InfinispanDirectoryIOTest {
       final int BUFFER_SIZE = 64;
 
       Cache cache = cacheManager.getCache();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, INDEXNAME, BUFFER_SIZE);
+      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, BUFFER_SIZE);
 
       IndexOutput io = dir.createOutput("MyNewFile.txt");
 
@@ -555,7 +555,7 @@ public class InfinispanDirectoryIOTest {
    public void testChunkBordersOnInfinispan() throws IOException {
       Cache cache = cacheManager.getCache();
       cache.clear();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, INDEXNAME, 13);
+      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, 13);
       testChunkBorders(dir, cache);
       cache.clear();
    }
@@ -641,7 +641,7 @@ public class InfinispanDirectoryIOTest {
       final int bufferSize = 300;
       Cache cache = cacheManager.getCache();
       cache.clear();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, INDEXNAME, 13);
+      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, 13);
       byte[] manyBytes = fillBytes(bufferSize);
       IndexOutput indexOutput = dir.createOutput(filename);
       for (int i = 0; i < 10; i++) {
