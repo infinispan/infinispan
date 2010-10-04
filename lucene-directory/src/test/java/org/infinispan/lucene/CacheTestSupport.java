@@ -215,6 +215,12 @@ public abstract class CacheTestSupport {
       iw.close();
    }
    
+   public static void optimizeIndex(Directory dir) throws IOException {
+      IndexWriter iw = new IndexWriter(dir, LuceneSettings.analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+      iw.optimize();
+      iw.close();
+   }
+   
    /**
     * Useful tool to debug the Lucene invocations into the directory;
     * it prints a thread dump to standard output of only seven lines

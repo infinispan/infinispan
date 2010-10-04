@@ -44,7 +44,7 @@ public class InfinispanIndexInput extends IndexInput {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexInput.class);
 
-   private final AdvancedCache cache;
+   private final AdvancedCache chunksCache;
    private final FileCacheKey fileKey;
    private final int chunkSize;
    private final SegmentReadLocker readLocks;
@@ -59,8 +59,8 @@ public class InfinispanIndexInput extends IndexInput {
 
    private boolean isClone;
 
-   public InfinispanIndexInput(AdvancedCache cache, FileCacheKey fileKey, FileMetadata fileMetadata, SegmentReadLocker readLocks) throws FileNotFoundException {
-      this.cache = cache;
+   public InfinispanIndexInput(AdvancedCache chunksCache, FileCacheKey fileKey, FileMetadata fileMetadata, SegmentReadLocker readLocks) throws FileNotFoundException {
+      this.chunksCache = chunksCache;
       this.fileKey = fileKey;
       this.chunkSize = fileMetadata.getBufferSize();
       this.fileLength = fileMetadata.getSize();
@@ -133,7 +133,7 @@ public class InfinispanIndexInput extends IndexInput {
 
    private void setBufferToCurrentChunk() throws IOException {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), filename, currentLoadedChunk);
-      buffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
+      buffer = (byte[]) chunksCache.withFlags(Flag.SKIP_LOCKING).get(key);
       if (buffer == null) {
          throw new IOException("Read past EOF: Chunk value could not be found for key " + key);
       }
@@ -144,7 +144,7 @@ public class InfinispanIndexInput extends IndexInput {
    // RAMDirectory teaches to position the cursor to the end of previous chunk in this case
    private void setBufferToCurrentChunkIfPossible() throws IOException {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), filename, currentLoadedChunk);
-      buffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
+      buffer = (byte[]) chunksCache.withFlags(Flag.SKIP_LOCKING).get(key);
       if (buffer == null) {
          currentLoadedChunk--;
          bufferPosition = chunkSize;

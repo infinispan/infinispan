@@ -28,7 +28,9 @@ import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
 import java.io.IOException;
 
 import org.apache.lucene.store.Directory;
+import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
+import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -51,8 +53,11 @@ public class SimpleLuceneTest extends MultipleCacheManagersTest {
    
    @Test
    public void testIndexWritingAndFinding() throws IOException {
-      Directory dirA = new InfinispanDirectory(cache(0, "lucene"), "indexName");
-      Directory dirB = new InfinispanDirectory(cache(1, "lucene"), "indexName");
+      final String indexName = "indexName";
+      final Cache cache0 = cache(0, "lucene");
+      final Cache cache1 = cache(1, "lucene");
+      Directory dirA = new InfinispanDirectory(cache0, indexName);
+      Directory dirB = new InfinispanDirectory(cache1, indexName);
       writeTextToIndex(dirA, 0, "hi from node A");
       assertTextIsFoundInIds(dirA, "hi", 0);
       assertTextIsFoundInIds(dirB, "hi", 0);
@@ -65,8 +70,8 @@ public class SimpleLuceneTest extends MultipleCacheManagersTest {
       assertTextIsFoundInIds(dirB, "node", 1);
       dirA.close();
       dirB.close();
-      DirectoryIntegrityCheck.verifyDirectoryStructure(cache(0, "lucene"), "indexName");
-      DirectoryIntegrityCheck.verifyDirectoryStructure(cache(1, "lucene"), "indexName");
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache0, "indexName");
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache1, "indexName");
    }
    
    @Test(description="Verifies the caches can be reused after a Directory close")

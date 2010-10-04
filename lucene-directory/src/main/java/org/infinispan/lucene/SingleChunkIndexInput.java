@@ -43,9 +43,9 @@ public class SingleChunkIndexInput extends IndexInput {
    private final byte[] buffer;
    private int bufferPosition;
 
-   public SingleChunkIndexInput(AdvancedCache cache, FileCacheKey fileKey, FileMetadata fileMetadata) throws FileNotFoundException {
+   public SingleChunkIndexInput(AdvancedCache chunksCache, FileCacheKey fileKey, FileMetadata fileMetadata) throws FileNotFoundException {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), 0);
-      byte[] b = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
+      byte[] b = (byte[]) chunksCache.withFlags(Flag.SKIP_LOCKING).get(key);
       if (b == null) {
          buffer = new byte[0];
       }
