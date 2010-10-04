@@ -38,6 +38,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.0
  */
+@SuppressWarnings("unchecked")
 @Test(groups = "functional", testName = "lucene.locking.LockManagerFunctionalTest", enabled = true)
 public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
    

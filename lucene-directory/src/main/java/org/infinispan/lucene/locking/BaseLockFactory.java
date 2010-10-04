@@ -38,6 +38,7 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.infinispan.lucene.InfinispanDirectory
  * @see org.infinispan.lucene.locking.BaseLuceneLock
  */
+@SuppressWarnings("unchecked")
 public class BaseLockFactory extends LockFactory {
 
    private static final Log log = LogFactory.getLog(BaseLockFactory.class);

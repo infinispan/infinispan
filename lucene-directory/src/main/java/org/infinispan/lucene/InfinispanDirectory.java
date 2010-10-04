@@ -71,6 +71,7 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.infinispan.lucene.locking.BaseLockFactory
  * @see org.infinispan.lucene.locking.TransactionalLockFactory
  */
+@SuppressWarnings("unchecked")
 public class InfinispanDirectory extends Directory {
    
    /**
@@ -131,9 +132,8 @@ public class InfinispanDirectory extends Directory {
       this(cache, indexName, lf, chunkSize, makeDefaultSegmentReadLocker(cache, cache, cache, indexName));
    }
    
-   @Deprecated//too many constructors, this will be removed
    public InfinispanDirectory(Cache cache, String indexName, int chunkSize, SegmentReadLocker readLocker) {
-      this(cache, indexName, makeDefaultLockFactory(cache, indexName), chunkSize, readLocker);
+      this(cache, cache, indexName, makeDefaultLockFactory(cache, indexName), chunkSize, readLocker);
    }
 
    /**

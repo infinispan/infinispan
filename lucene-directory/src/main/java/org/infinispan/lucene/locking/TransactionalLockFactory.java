@@ -52,6 +52,7 @@ import java.io.IOException;
  * @see org.infinispan.lucene.locking.TransactionalSharedLuceneLock
  * @see org.apache.lucene.index.SerialMergeScheduler
  */
+@SuppressWarnings("unchecked")
 public class TransactionalLockFactory extends LockFactory {
 
    private static final Log log = LogFactory.getLog(TransactionalLockFactory.class);

@@ -37,6 +37,7 @@ import org.testng.Assert;
  * @author Sanne Grinovero
  * @since 4.1
  */
+@SuppressWarnings("unchecked")
 public class DirectoryIntegrityCheck {
 
    /**

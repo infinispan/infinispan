@@ -35,6 +35,7 @@ import org.infinispan.lucene.InfinispanDirectory;
  * @author Sanne Grinovero
  * @since 4.1
  */
+@SuppressWarnings("unchecked")
 public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
 
    private final ConcurrentHashMap<String, LocalReadLock> localLocks = new ConcurrentHashMap<String, LocalReadLock>();

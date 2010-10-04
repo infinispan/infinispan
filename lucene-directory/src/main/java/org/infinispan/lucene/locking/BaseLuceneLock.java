@@ -40,6 +40,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Sanne Grinovero
  * @see org.apache.lucene.store.Lock
  */
+@SuppressWarnings("unchecked")
 class BaseLuceneLock extends Lock {
 
    private static final Log log = LogFactory.getLog(BaseLuceneLock.class);

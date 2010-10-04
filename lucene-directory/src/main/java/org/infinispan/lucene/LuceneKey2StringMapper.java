@@ -35,6 +35,7 @@ import org.infinispan.loaders.jdbc.stringbased.TwoWayKey2StringMapper;
  * @author Sanne Grinovero
  * @since 4.1
  */
+@SuppressWarnings("unchecked")
 public class LuceneKey2StringMapper implements TwoWayKey2StringMapper {
 
    /**

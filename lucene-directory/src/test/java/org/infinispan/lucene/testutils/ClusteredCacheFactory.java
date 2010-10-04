@@ -44,6 +44,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
  * @since 4.0
  */
 @ThreadSafe
+@SuppressWarnings("unchecked")
 public class ClusteredCacheFactory {
 
    private final BlockingQueue<Configuration> requests = new SynchronousQueue<Configuration>();
