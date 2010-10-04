@@ -486,7 +486,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        private final static int MIN_HIR_SIZE = 2;
        private final Segment<K,V> segment;
        private final ConcurrentLinkedQueue<HashEntry<K, V>> accessQueue;
-       private final LinkedHashMap<Integer, HashEntry<K, V>> stack;
+       private final LinkedHashMap<K, HashEntry<K, V>> stack;
        private final LinkedList<HashEntry<K, V>> queue;
        private final int maxBatchQueueSize;
        private final int lirSizeLimit;
@@ -508,7 +508,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
            this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
            this.batchThresholdFactor = batchThresholdFactor;
            this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
-           this.stack = new LinkedHashMap<Integer, HashEntry<K, V>>();
+           this.stack = new LinkedHashMap<K, HashEntry<K, V>>();
            this.queue = new LinkedList<HashEntry<K, V>>();
        }
 
@@ -533,12 +533,12 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        }
 
        private void handleHIRHit(HashEntry<K, V> e, Set<HashEntry<K, V>> evicted) {
-           boolean inStack = stack.containsKey(e.hashCode());
+           boolean inStack = stack.containsKey(e.key);
            if (inStack)
-               stack.remove(e.hashCode());
+               stack.remove(e.key);
 
            // first put on top of the stack
-           stack.put(e.hashCode(), e);
+           stack.put(e.key, e);
 
            if (inStack) {                
                queue.remove(e);
@@ -551,8 +551,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        }
 
        private void handleLIRHit(HashEntry<K, V> e, Set<HashEntry<K, V>> evicted) {
-           stack.remove(e.hashCode());
-           stack.put(e.hashCode(), e);
+           stack.remove(e.key);
+           stack.put(e.key, e);
            for (Iterator<HashEntry<K, V>> i = stack.values().iterator(); i.hasNext();) {
                HashEntry<K, V> next = i.next();
                if (next.recency() == Recency.LIR_RESIDENT) {
@@ -565,7 +565,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        }
 
        private boolean present(HashEntry<K, V> e) {
-           return stack.containsKey(e.hashCode()) || queue.contains(e);
+           return stack.containsKey(e.key) || queue.contains(e);
        }
 
        @Override
@@ -575,16 +575,16 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
            if (currentLIRSize + 1 < lirSizeLimit) {
                currentLIRSize++;
                e.transitionToLIRResident();
-               stack.put(e.hashCode(), e);
+               stack.put(e.key, e);
            } else {
                if (queue.size() < hirSizeLimit) {                    
                    queue.addLast(e);
                } else {
-                   boolean inStack = stack.containsKey(e.hashCode());
+                   boolean inStack = stack.containsKey(e.key);
                    HashEntry<K, V> first = queue.removeFirst();                    
                    first.transitionHIRResidentToHIRNonResident();
 
-                   stack.put(e.hashCode(), e);
+                   stack.put(e.key, e);
 
                    evicted = new HashSet<HashEntry<K, V>>();
                    if (inStack) {
@@ -647,7 +647,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
        @Override
        public void onEntryRemove(HashEntry<K, V> e) {
-           HashEntry<K, V> removed = stack.remove(e.hashCode());
+           HashEntry<K, V> removed = stack.remove(e.key);
            if (removed != null && removed.recency() == Recency.LIR_RESIDENT) {
                currentLIRSize--;
            }
