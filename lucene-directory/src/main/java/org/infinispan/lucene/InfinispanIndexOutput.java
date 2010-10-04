@@ -44,7 +44,8 @@ public class InfinispanIndexOutput extends IndexOutput {
    private static final Log log = LogFactory.getLog(InfinispanIndexOutput.class);
 
    private final int bufferSize;
-   private final AdvancedCache cache;
+   private final AdvancedCache chunksCache;
+   private final AdvancedCache metadataCache;
    private final FileMetadata file;
    private final FileCacheKey fileKey;
    private final FileListOperations fileOps;
@@ -56,8 +57,9 @@ public class InfinispanIndexOutput extends IndexOutput {
    private int currentChunkNumber = 0;
    private boolean needsAddingToFileList = true;
 
-   public InfinispanIndexOutput(AdvancedCache cache, FileCacheKey fileKey, int bufferSize, FileListOperations fileList) throws IOException {
-      this.cache = cache;
+   public InfinispanIndexOutput(AdvancedCache metadataCache, AdvancedCache chunksCache, FileCacheKey fileKey, int bufferSize, FileListOperations fileList) throws IOException {
+      this.metadataCache = metadataCache;
+      this.chunksCache = chunksCache;
       this.fileKey = fileKey;
       this.bufferSize = bufferSize;
       this.fileOps = fileList;
@@ -98,7 +100,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       storeCurrentBuffer();// save data first
       currentChunkNumber++;
       // check if we have to create new chunk, or get already existing in cache for modification
-      buffer = getChunkById(cache, fileKey, currentChunkNumber, bufferSize);
+      buffer = getChunkById(chunksCache, fileKey, currentChunkNumber, bufferSize);
       positionInBuffer = 0;
    }
 
@@ -147,19 +149,23 @@ public class InfinispanIndexOutput extends IndexOutput {
             System.arraycopy(buffer, 0, bufferToFlush, 0, newBufferSize);
          }
       }
-      boolean microbatch = cache.startBatch();
+      boolean microbatch = false;
       // add chunk to cache
       if ( ! writingOnLastChunk || this.positionInBuffer != 0) {
+         if (chunksCache == metadataCache) {
+            //as we do an operation on chunks and one on metadata, it's not useful to start a batch unless it's the same cache
+            microbatch = chunksCache.startBatch();
+         }
          // create key for the current chunk
          ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentChunkNumber);
          if (trace) log.trace("Storing segment chunk: " + key);
-         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(key, bufferToFlush);
+         chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(key, bufferToFlush);
       }
       // override existing file header with new size and updated accesstime
       file.touch();
-      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(fileKey, file);
+      metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(fileKey, file);
       registerToFileListIfNeeded();
-      if (microbatch) cache.endBatch(true);
+      if (microbatch) chunksCache.endBatch(true);
    }
 
    private void registerToFileListIfNeeded() {
@@ -201,7 +207,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       }
       if (requestedChunkNumber != currentChunkNumber) {
          storeCurrentBuffer();
-         buffer = getChunkById(cache, fileKey, requestedChunkNumber, bufferSize);
+         buffer = getChunkById(chunksCache, fileKey, requestedChunkNumber, bufferSize);
          currentChunkNumber = requestedChunkNumber;
       }
       positionInBuffer = getPositionInBuffer(pos, bufferSize);

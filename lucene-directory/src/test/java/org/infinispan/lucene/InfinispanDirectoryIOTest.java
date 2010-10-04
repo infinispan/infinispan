@@ -566,14 +566,6 @@ public class InfinispanDirectoryIOTest {
       testChunkBorders(dir, null);
    }
    
-   @Test
-   public void testChunkBordersOnFSDirectory() throws IOException {
-      boolean directoriesCreated = indexDir.mkdirs();
-      assert directoriesCreated : "couldn't create directory for FSDirectory test";
-      FSDirectory dir = FSDirectory.open(indexDir);
-      testChunkBorders(dir, null);
-   }
-   
    /**
     * Useful to verify the Infinispan Directory has similar behaviour
     * to standard Lucene implementations regarding reads out of ranges.

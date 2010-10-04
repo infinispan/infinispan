@@ -85,7 +85,8 @@ public class InfinispanDirectory extends Directory {
    // access type will be changed in the next Lucene version
    volatile boolean isOpen = true;
 
-   private final AdvancedCache cache;
+   private final AdvancedCache metadataCache;
+   private final AdvancedCache chunksCache;
    // indexName is required when one common cache is used
    private final String indexName;
    // chunk size used in this directory, static filed not used as we want to have different chunk
@@ -95,44 +96,81 @@ public class InfinispanDirectory extends Directory {
    private final FileListOperations fileOps;
    private final SegmentReadLocker readLocks;
 
-   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker) {
-      checkNotNull(cache, "cache");
+   /**
+    * @param metadataCache the cache to be used for all smaller metadata: prefer replication over distribution, avoid eviction
+    * @param chunksCache the cache to use for the space consuming segments: prefer distribution, enable eviction if needed
+    * @param indexName the unique index name, useful to store multiple indexes in the same caches
+    * @param lf the LockFactory to be used by IndexWriters. @see org.infinispan.lucene.locking
+    * @param chunkSize segments are fragmented in chunkSize bytes; larger values are more efficient for searching but less for distribution and network replication
+    * @param readLocker @see org.infinispan.lucene.readlocks for some implementations; you might be able to provide more efficient implementations by controlling the IndexReader's lifecycle.
+    */
+   public InfinispanDirectory(Cache metadataCache, Cache chunksCache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker) {
+      checkNotNull(metadataCache, "metadataCache");
+      checkNotNull(chunksCache, "chunksCache");
       checkNotNull(indexName, "indexName");
       checkNotNull(lf, "LockFactory");
       checkNotNull(readLocker, "SegmentReadLocker");
       if (chunkSize <= 0)
          throw new IllegalArgumentException("chunkSize must be a positive integer");
-      this.cache = cache.getAdvancedCache();
+      this.metadataCache = metadataCache.getAdvancedCache();
+      this.chunksCache = chunksCache.getAdvancedCache();
       this.indexName = indexName;
       this.setLockFactory(lf);
       this.chunkSize = chunkSize;
-      this.fileOps = new FileListOperations(this.cache, indexName);
+      this.fileOps = new FileListOperations(this.metadataCache, indexName);
       this.readLocks = readLocker;
    }
    
-   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize) {
-      this(cache, indexName, lf, chunkSize,
-               new DistributedSegmentReadLocker(cache, indexName));
+   @Deprecated//too many constructors, this will be removed
+   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker) {
+      this(cache, cache, indexName, lf, chunkSize, readLocker);
    }
-
+   
+   @Deprecated//too many constructors, this will be removed
+   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize) {
+      this(cache, indexName, lf, chunkSize, makeDefaultSegmentReadLocker(cache, cache, cache, indexName));
+   }
+   
+   @Deprecated//too many constructors, this will be removed
    public InfinispanDirectory(Cache cache, String indexName, int chunkSize, SegmentReadLocker readLocker) {
       this(cache, indexName, makeDefaultLockFactory(cache, indexName), chunkSize, readLocker);
    }
+
+   /**
+    * This constructor assumes that three different caches are being used with specialized configurations for each
+    * cache usage
+    * @param metadataCache contains the metadata of stored elements
+    * @param chunksCache cache containing the bulk of the index; this is the larger part of data
+    * @param distLocksCache cache to store locks; should be replicated and not using a persistent CacheStore
+    * @param indexName identifies the index; you can store different indexes in the same set of caches using different identifiers
+    * @param chunkSize the maximum size in bytes for each chunk of data: larger sizes offer better search performance
+    * but might be problematic to handle during network replication or storage
+    */
+   public InfinispanDirectory(Cache metadataCache, Cache chunksCache, Cache distLocksCache, String indexName, int chunkSize) {
+      this(metadataCache, chunksCache, indexName, makeDefaultLockFactory(distLocksCache, indexName),
+               chunkSize, makeDefaultSegmentReadLocker(metadataCache, chunksCache, distLocksCache, indexName));
+   }
    
+   @Deprecated//too many constructors, this will be removed
    public InfinispanDirectory(Cache cache, String indexName, LockFactory lf) {
       this(cache, indexName, lf, DEFAULT_BUFFER_SIZE);
    }
 
+   @Deprecated//too many constructors, this will be removed
    public InfinispanDirectory(Cache cache, String indexName, int chunkSize) {
       this(cache, indexName, makeDefaultLockFactory(cache, indexName), chunkSize);
    }
 
+   /**
+    * @param cache the cache to use to store the index
+    * @param indexName identifies the index; you can store different indexes in the same set of caches using different identifiers
+    */
    public InfinispanDirectory(Cache cache, String indexName) {
-      this(cache, indexName, makeDefaultLockFactory(cache, indexName), DEFAULT_BUFFER_SIZE);
+      this(cache, cache, cache, indexName, DEFAULT_BUFFER_SIZE);
    }
 
    public InfinispanDirectory(Cache cache) {
-      this(cache, "");
+      this(cache, cache, cache, "", DEFAULT_BUFFER_SIZE);
    }
 
    /**
@@ -179,7 +217,7 @@ public class InfinispanDirectory extends Directory {
       else {
          FileCacheKey key = new FileCacheKey(indexName, fileName);
          file.touch();
-         cache.put(key, file);
+         metadataCache.put(key, file);
       }
    }
 
@@ -206,21 +244,21 @@ public class InfinispanDirectory extends Directory {
       Object ob;
       do {
          ChunkCacheKey fromChunkKey = new ChunkCacheKey(indexName, from, ++i);
-         ob = cache.get(fromChunkKey);
+         ob = chunksCache.get(fromChunkKey);
          if (ob == null) {
             break;
          }
          ChunkCacheKey toChunkKey = new ChunkCacheKey(indexName, to, i);
-         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(toChunkKey, ob);
+         chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(toChunkKey, ob);
       } while (true);
       
       // rename metadata first
-      boolean batching = cache.startBatch();
+      boolean batching = metadataCache.startBatch();
       FileCacheKey fromKey = new FileCacheKey(indexName, from);
-      FileMetadata metadata = (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).get(fromKey);
-      cache.put(new FileCacheKey(indexName, to), metadata);
+      FileMetadata metadata = (FileMetadata) metadataCache.withFlags(Flag.SKIP_LOCKING).get(fromKey);
+      metadataCache.put(new FileCacheKey(indexName, to), metadata);
       fileOps.removeAndAdd(from, to);
-      if (batching) cache.endBatch(true);
+      if (batching) metadataCache.endBatch(true);
       
       // now trigger deletion of old file chunks:
       readLocks.deleteOrReleaseReadLock(from);
@@ -249,7 +287,7 @@ public class InfinispanDirectory extends Directory {
    public IndexOutput createOutput(String name) throws IOException {
       final FileCacheKey key = new FileCacheKey(indexName, name);
       // creating new file, metadata is added on flush() or close() of IndexOutPut
-      return new InfinispanIndexOutput(cache, key, chunkSize, fileOps);
+      return new InfinispanIndexOutput(metadataCache, chunksCache, key, chunkSize, fileOps);
    }
 
    /**
@@ -257,13 +295,13 @@ public class InfinispanDirectory extends Directory {
     */
    public IndexInput openInput(String name) throws IOException {
       final FileCacheKey fileKey = new FileCacheKey(indexName, name);
-      FileMetadata fileMetadata = (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).get(fileKey);
+      FileMetadata fileMetadata = (FileMetadata) metadataCache.withFlags(Flag.SKIP_LOCKING).get(fileKey);
       if (fileMetadata == null) {
          throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
       }
       else if (fileMetadata.getSize() <= fileMetadata.getBufferSize()) {
          //files smaller than chunkSize don't need a readLock
-         return new SingleChunkIndexInput(cache, fileKey, fileMetadata);
+         return new SingleChunkIndexInput(chunksCache, fileKey, fileMetadata);
       }
       else {
          boolean locked = readLocks.aquireReadLock(name);
@@ -271,7 +309,7 @@ public class InfinispanDirectory extends Directory {
             // safest reaction is to tell this file doesn't exist anymore.
             throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
          }
-         return new InfinispanIndexInput(cache, fileKey, fileMetadata, readLocks);
+         return new InfinispanIndexInput(chunksCache, fileKey, fileMetadata, readLocks);
       }
    }
 
@@ -293,10 +331,6 @@ public class InfinispanDirectory extends Directory {
       return "InfinispanDirectory{" + "indexName='" + indexName + '\'' + '}';
    }
 
-   public Cache getCache() {
-      return cache;
-   }
-
    /** new name for list() in Lucene 3.0 **/
    public String[] listAll() throws IOException {
       return list();
@@ -306,6 +340,12 @@ public class InfinispanDirectory extends Directory {
       checkNotNull(cache, "cache");
       checkNotNull(indexName, "indexName");
       return new BaseLockFactory(cache, indexName);
+   }
+   
+   private static SegmentReadLocker makeDefaultSegmentReadLocker(Cache metadataCache, Cache chunksCache, Cache distLocksCache, String indexName) {
+      checkNotNull(distLocksCache, "distLocksCache");
+      checkNotNull(indexName, "indexName");
+      return new DistributedSegmentReadLocker(distLocksCache, chunksCache, metadataCache, indexName);
    }
    
    private static void checkNotNull(Object v, String objectname) {

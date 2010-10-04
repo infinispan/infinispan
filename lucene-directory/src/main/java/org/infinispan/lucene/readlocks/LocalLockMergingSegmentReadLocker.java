@@ -47,7 +47,18 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
     * @param indexName
     */
    public LocalLockMergingSegmentReadLocker(Cache cache, String indexName) {
-      this.delegate = new DistributedSegmentReadLocker(cache, indexName);
+      this.delegate = new DistributedSegmentReadLocker(cache, cache, cache, indexName);
+   }
+   
+   /**
+    * Create a new LocalLockMergingSegmentReadLocker with special purpose caches
+    * @param locksCache the cache to be used to store ditributed locks
+    * @param chunksCache the cache containing the chunks, this is where the bulk of data is stored
+    * @param metadataCache smaller cache for the metadata of stored elements
+    * @param indexName
+    */
+   public LocalLockMergingSegmentReadLocker(Cache locksCache, Cache chunksCache, Cache metadataCache, String indexName) {
+      this.delegate = new DistributedSegmentReadLocker(locksCache, chunksCache, metadataCache, indexName);
    }
 
    /**
