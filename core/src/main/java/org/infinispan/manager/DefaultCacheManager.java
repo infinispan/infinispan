@@ -485,13 +485,15 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       c.assertValid();
       Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName);
       CacheWrapper cw = new CacheWrapper(cache);
-      existingCache = caches.putIfAbsent(cacheName, cw);
-      if (existingCache != null) {
-         throw new IllegalStateException("attempt to initialize the cache twice");
+      try {
+         existingCache = caches.putIfAbsent(cacheName, cw);
+         if (existingCache != null) {
+            throw new IllegalStateException("attempt to initialize the cache twice");
+         }
+         cache.start();
+      } finally {
+         cw.latch.countDown();
       }
-
-      cache.start();
-      cw.latch.countDown();
       return cache;
    }
 
