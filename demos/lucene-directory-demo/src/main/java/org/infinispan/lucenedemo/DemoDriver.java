@@ -44,8 +44,8 @@ public class DemoDriver implements Runnable {
    
    private final DemoActions actions;
 
-   public DemoDriver(InfinispanDirectory infinispanDirectory) {
-      actions = new DemoActions(infinispanDirectory);
+   public DemoDriver(InfinispanDirectory infinispanDirectory, Cache cache) {
+      actions = new DemoActions(infinispanDirectory, cache);
    }
 
    public static void main(String[] args) throws IOException {
@@ -54,7 +54,7 @@ public class DemoDriver implements Runnable {
       try {
          Cache cache = cacheManager.getCache();
          InfinispanDirectory directory = new InfinispanDirectory(cache);
-         DemoDriver driver = new DemoDriver(directory);
+         DemoDriver driver = new DemoDriver(directory, cache);
          driver.run();
       }
       finally {
