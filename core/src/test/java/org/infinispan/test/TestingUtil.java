@@ -430,10 +430,13 @@ public class TestingUtil {
       if (cacheContainers != null) {
          for (EmbeddedCacheManager cm : cacheContainers) {
             try {
-               clearContent(cm);
-            } finally {
-               if (cm != null)
+               try {
+                  clearContent(cm);
+               } finally {
                   cm.stop();
+               }
+            } catch (Throwable e) {
+               log.warn("Problems killing cache manager " + cm, e);
             }
          }
       }
