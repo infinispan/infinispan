@@ -73,7 +73,10 @@ public class InfinispanIndexOutput extends IndexOutput {
       }
    }
    
-   private static byte[] getChunkById(AdvancedCache cache, FileCacheKey fileKey, int chunkNumber, int bufferSize) {
+   private static byte[] getChunkById(AdvancedCache cache, FileCacheKey fileKey, int chunkNumber, int bufferSize, FileMetadata file) {
+      if (file.getNumberOfChunks() <= chunkNumber) {
+         return new byte[bufferSize];
+      }
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
       byte[] readBuffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
       if (readBuffer==null) {
@@ -101,7 +104,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       storeCurrentBuffer();// save data first
       currentChunkNumber++;
       // check if we have to create new chunk, or get already existing in cache for modification
-      buffer = getChunkById(chunksCache, fileKey, currentChunkNumber, bufferSize);
+      buffer = getChunkById(chunksCache, fileKey, currentChunkNumber, bufferSize, file);
       positionInBuffer = 0;
    }
 
@@ -208,7 +211,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       }
       if (requestedChunkNumber != currentChunkNumber) {
          storeCurrentBuffer();
-         buffer = getChunkById(chunksCache, fileKey, requestedChunkNumber, bufferSize);
+         buffer = getChunkById(chunksCache, fileKey, requestedChunkNumber, bufferSize, file);
          currentChunkNumber = requestedChunkNumber;
       }
       positionInBuffer = getPositionInBuffer(pos, bufferSize);
