@@ -46,17 +46,19 @@ public class CacheConfigurationTest {
    private DefaultCacheManager cacheManager2;
    private InfinispanDirectory directoryNodeOne;
    private InfinispanDirectory directoryNodeTwo;
+   private Cache cache1;
+   private Cache cache2;
 
    @BeforeClass
    public void init() throws IOException {
       cacheManager1 = new DefaultCacheManager("config-samples/lucene-demo-cache-config.xml");
       cacheManager1.start();
-      Cache cache1 = cacheManager1.getCache();
+      cache1 = cacheManager1.getCache();
       cache1.clear();
       directoryNodeOne = new InfinispanDirectory(cache1);
       cacheManager2 = new DefaultCacheManager("config-samples/lucene-demo-cache-config.xml");
       cacheManager2.start();
-      Cache cache2 = cacheManager2.getCache();
+      cache2 = cacheManager2.getCache();
       cache2.clear();
       directoryNodeTwo = new InfinispanDirectory(cache2);
    }
@@ -71,8 +73,8 @@ public class CacheConfigurationTest {
 
    @Test
    public void inserting() throws IOException, ParseException {
-      DemoActions node1 = new DemoActions(directoryNodeOne);
-      DemoActions node2 = new DemoActions(directoryNodeTwo);
+      DemoActions node1 = new DemoActions(directoryNodeOne, cache1);
+      DemoActions node2 = new DemoActions(directoryNodeTwo, cache2);
       node1.addNewDocument("hello?");
       assert node1.listAllDocuments().size() == 1;
       node1.addNewDocument("anybody there?");
