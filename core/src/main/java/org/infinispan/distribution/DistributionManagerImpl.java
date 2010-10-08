@@ -27,6 +27,7 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
@@ -391,7 +392,9 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Listener
    public class ViewChangeListener {
+      
       @ViewChanged
+      @Merged
       public void handleViewChange(ViewChangedEvent e) {
          log.trace("view change received. Needs to re-join? " + e.isNeedsToRejoin());         
          boolean started;

@@ -9,6 +9,7 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
+import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
@@ -326,6 +327,7 @@ public class SingletonStore extends AbstractDelegatingStore {
        * became the coordinator. This method will report any issues that could potentially arise from this push.
        */
       @ViewChanged
+      @Merged
       public void viewChange(ViewChangedEvent event) {
          boolean tmp = isCoordinator(event.getNewMembers(), event.getLocalAddress());
 

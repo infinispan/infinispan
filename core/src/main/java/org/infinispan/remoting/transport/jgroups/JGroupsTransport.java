@@ -475,14 +475,20 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
    public void viewAccepted(View newView) {
       Vector<org.jgroups.Address> newMembers = newView.getMembers();
-      List<Address> oldMembers = null;
+      List<Address> oldMembers = null;      
+      boolean hasNotifier = notifier != null;
       Notify n = null;
-      if (newView instanceof MergeView) {
-         if (log.isInfoEnabled()) log.info("Received new, MERGED cluster view: {0}", newView);
-         if (notifier != null) n = new NotifyMerge();
-      } else {
-         if (log.isInfoEnabled()) log.info("Received new cluster view: {0}", newView);
-         if (notifier != null) n = new NotifyViewChange();
+      
+      if (hasNotifier) {
+         if (newView instanceof MergeView) {
+            if (log.isInfoEnabled())
+               log.info("Received new, MERGED cluster view: {0}", newView);
+            n = new NotifyMerge();
+         } else {
+            if (log.isInfoEnabled())
+               log.info("Received new cluster view: {0}", newView);
+            n = new NotifyViewChange();
+         }
       }
 
       synchronized (membersListLock) {
@@ -497,7 +503,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          coordinator = (members != null && !members.isEmpty() && members.get(0).equals(getAddress()));
 
          // now notify listeners - *after* updating the coordinator. - JBCACHE-662
-         if (needNotification && n != null) n.emitNotification(oldMembers, newView);
+         if (needNotification && hasNotifier) n.emitNotification(oldMembers, newView);
 
          // Wake up any threads that are waiting to know about who the coordinator is
          membersListLock.notifyAll();
