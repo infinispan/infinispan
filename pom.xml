@@ -26,6 +26,7 @@
       <module>cachestore/jdbc</module>
       <module>cachestore/jdbm</module>
       <module>cachestore/bdbje</module>
+      <module>cachestore/cassandra</module>
       <module>cachestore/cloud</module>
       <module>cachestore/remote</module>
       <module>server</module>
