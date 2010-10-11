@@ -6,8 +6,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.data.Address;
-import org.infinispan.test.data.Person;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -17,6 +15,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Method;
 
 @Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest", enabled = true)
 public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
@@ -135,9 +134,9 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       }
    }
 
-   public void testInitialStateTransfer() throws Exception {
+   public void testInitialStateTransfer(Method m) throws Exception {
       testCount++;
-      log.info("testInitialStateTransfer start - " + testCount);
+      logTestStart(m);
       Cache<Object, Object> cache1, cache2;
       cache1 = createCacheManager().getCache(cacheName);
       writeInitialData(cache1);
@@ -148,12 +147,12 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
 
       verifyInitialData(cache2);
-      log.info("testInitialStateTransfer end - " + testCount);
+      logTestEnd(m);
    }
 
-   public void testInitialStateTransferCacheNotPresent() throws Exception {
+   public void testInitialStateTransferCacheNotPresent(Method m) throws Exception {
       testCount++;
-      log.info("testInitialStateTransferCacheNotPresent start - " + testCount);
+      logTestStart(m);
       Cache<Object, Object> cache1, cache2;
       EmbeddedCacheManager cacheManager1 = createCacheManager();
       cache1 = cacheManager1.getCache(cacheName);
@@ -166,13 +165,13 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       cacheManager1.defineConfiguration("otherCache", config.clone());
       cacheManager1.getCache("otherCache");
-      log.info("testInitialStateTransferCacheNotPresent end - " + testCount);
+      logTestEnd(m);
    }
 
-   public void testConcurrentStateTransfer() throws Exception {
+   public void testConcurrentStateTransfer(Method m) throws Exception {
       testCount++;
-      log.info("testConcurrentStateTransfer start - " + testCount);
-      Cache<Object, Object> cache1 = null, cache2 = null, cache3 = null, cache4 = null;
+      logTestStart(m);
+      Cache<Object, Object> cache1, cache2, cache3, cache4;
       cache1 = createCacheManager().getCache(cacheName);
       writeInitialData(cache1);
 
@@ -212,37 +211,70 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilViewsReceived(120000, cache1, cache2, cache3, cache4);
       verifyInitialData(cache3);
       verifyInitialData(cache4);
-      log.info("testConcurrentStateTransfer end - " + testCount);
+      logTestEnd(m);
    }
 
-   public void testSTWithThirdWritingNonTxCache() throws Exception {
+   public void testSTWithThirdWritingNonTxCache(Method m) throws Exception {
       testCount++;
-      log.info("testSTWithThirdWritingNonTxCache start - " + testCount);
+      logTestStart(m);
       thirdWritingCacheTest(false);
-      log.info("testSTWithThirdWritingNonTxCache end - " + testCount);
+      logTestEnd(m);
    }
 
-   public void testSTWithThirdWritingTxCache() throws Exception {
+   public void testSTWithThirdWritingTxCache(Method m) throws Exception {
       testCount++;
-      log.info("testSTWithThirdWritingTxCache start - " + testCount);
+      logTestStart(m);
       thirdWritingCacheTest(true);
-      log.info("testSTWithThirdWritingTxCache end - " + testCount);
+      logTestEnd(m);
    }
 
    @Test (timeOut = 120000)
-   public void testSTWithWritingNonTxThread() throws Exception {
+   public void testSTWithWritingNonTxThread(Method m) throws Exception {
       testCount++;
-      log.info("testSTWithWritingNonTxThread start - " + testCount);
+      logTestStart(m);
       writingThreadTest(false);
-      log.info("testSTWithWritingNonTxThread end - " + testCount);
+      logTestEnd(m);
    }
 
    @Test (timeOut = 120000)
-   public void testSTWithWritingTxThread() throws Exception {
+   public void testSTWithWritingTxThread(Method m) throws Exception {
       testCount++;
-      log.info("testSTWithWritingTxThread start - " + testCount);
+      logTestStart(m);
       writingThreadTest(true);
-      log.info("testSTWithWritingTxThread end - " + testCount);
+      logTestEnd(m);
+   }
+
+   public void testInitialStateTransferAfterRestart(Method m) throws Exception {
+      testCount++;
+      logTestStart(m);
+      Cache<Object, Object> cache1, cache2;
+      cache1 = createCacheManager().getCache(cacheName);
+      writeInitialData(cache1);
+
+      cache2 = createCacheManager().getCache(cacheName);
+
+      // Pause to give caches time to see each other
+      TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
+
+      verifyInitialData(cache2);
+
+      cache2.stop();
+      cache2.start();
+
+      verifyInitialData(cache2);
+      logTestEnd(m);
+   }
+
+   private void logTestStart(Method m) {
+      logTestLifecycle(m, "start");
+   }
+
+   private void logTestEnd(Method m) {
+      logTestLifecycle(m, "end");
+   }
+
+   private void logTestLifecycle(Method m, String lifecycle) {
+      log.info("{0} {1} - {2}", m.getName(), lifecycle, testCount);
    }
 
    private void thirdWritingCacheTest(boolean tx) throws InterruptedException {
