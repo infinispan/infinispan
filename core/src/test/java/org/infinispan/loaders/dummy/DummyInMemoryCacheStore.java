@@ -65,8 +65,13 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    public boolean remove(Object key) {
-      if (trace) log.trace("Remove {0} from dummy store", key);
-      return store.remove(key) != null;
+      if (store.remove(key) != null) {
+         if (trace) log.trace("Removed {0} from dummy store", key);
+         return true;
+      }
+
+      if (trace) log.trace("Key {0} not present in store, so don't remove", key);
+      return false;
    }
 
    protected void purgeInternal() throws CacheLoaderException {
@@ -150,6 +155,10 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       if (config.isCleanBetweenRestarts()) {
          stores.remove(config.getStore());
       }
+   }
+
+   public boolean isEmpty() {
+      return store.isEmpty();
    }
 
    public static class Cfg extends AbstractCacheStoreConfig {

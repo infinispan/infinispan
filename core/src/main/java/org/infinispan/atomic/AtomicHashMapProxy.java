@@ -28,6 +28,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -68,15 +69,20 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       this.icc = icc;
    }
 
+   private AtomicHashMap<K, V> toMap(Object object) {
+      Object map = (object instanceof MarshalledValue) ? ((MarshalledValue) object).get() : object;
+      return (AtomicHashMap<K, V>) map;
+   }
+
    // internal helper, reduces lots of casts.
    private AtomicHashMap<K, V> getDeltaMapForRead() {
-      return (AtomicHashMap<K, V>) cache.get(deltaMapKey);
+      return toMap(cache.get(deltaMapKey));
    }
 
    private AtomicHashMap<K, V> getDeltaMapForWrite(InvocationContext ctx) {
       CacheEntry lookedUpEntry = ctx.lookupEntry(deltaMapKey);
       boolean lockedAndCopied = lookedUpEntry != null && lookedUpEntry.isChanged() &&
-            ((AtomicHashMap) lookedUpEntry.getValue()).copied;
+            toMap(lookedUpEntry.getValue()).copied;
 
       if (lockedAndCopied) {
          return getDeltaMapForRead();
