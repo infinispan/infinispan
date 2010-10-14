@@ -24,15 +24,20 @@ package org.infinispan.commands.read;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.Immutables;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * ValuesCommand.
  *
  * @author Galder Zamarreño
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public class ValuesCommand extends AbstractLocalCommand implements VisitableCommand {
@@ -47,7 +52,24 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
    }
 
    public Collection perform(InvocationContext ctx) throws Throwable {
-      return Immutables.immutableCollectionWrap(container.values());
+      if (noTxModifications(ctx)) {
+         return Immutables.immutableCollectionWrap(container.values());
+      }
+      Map result = new HashMap();
+      for (InternalCacheEntry ice : container.entrySet()) {
+         result.put(ice.getKey(), ice.getValue());
+      }      
+      for (CacheEntry ce : ctx.getLookedUpEntries().values()) {
+         if (ce.isRemoved()) {
+            result.remove(ce.getKey());
+         } else {
+            if (ce.isCreated() || ce.isChanged()) {
+               result.put(ce.getKey(), ce.getValue());
+            }
+         }
+      }
+      return Immutables.immutableCollectionWrap(result.values());
+
    }
 
    @Override

@@ -43,7 +43,7 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    public List<WriteCommand> getModifications() {
-      return xaAdapter.getModifications();
+      return xaAdapter == null ? null : xaAdapter.getModifications();
    }
 
    public void setXaCache(TransactionXaAdapter xaAdapter) {
