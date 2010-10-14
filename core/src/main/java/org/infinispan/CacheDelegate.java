@@ -217,13 +217,13 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    @SuppressWarnings("unchecked")
    public Set<K> keySet() {
       KeySetCommand command = commandsFactory.buildKeySetCommand();
-      return (Set<K>) invoker.invoke(icc.createNonTxInvocationContext(), command);
+      return (Set<K>) invoker.invoke(getInvocationContext(false), command);
    }
 
    @SuppressWarnings("unchecked")
    public Collection<V> values() {
       ValuesCommand command = commandsFactory.buildValuesCommand();
-      return (Collection<V>) invoker.invoke(icc.createNonTxInvocationContext(), command);
+      return (Collection<V>) invoker.invoke(getInvocationContext(false), command);
    }
 
    @SuppressWarnings("unchecked")
