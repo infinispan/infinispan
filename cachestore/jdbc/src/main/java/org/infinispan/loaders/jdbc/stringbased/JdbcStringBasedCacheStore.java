@@ -184,7 +184,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
 
    @Override
    public void storeLockSafe(InternalCacheEntry ed, String lockingKey) throws CacheLoaderException {
-      InternalCacheEntry existingOne = loadLockSafe(ed, lockingKey);
+      InternalCacheEntry existingOne = readStoredEntry(ed, lockingKey);
       String sql;
       if (existingOne == null) {
          sql = tableManipulation.getInsertRowSql();
@@ -284,39 +284,16 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
 
    @Override
    protected InternalCacheEntry loadLockSafe(Object key, String lockingKey) throws CacheLoaderException {
-      Connection conn = null;
-      PreparedStatement ps = null;
-      ResultSet rs = null;
-      try {
-         String sql = tableManipulation.getSelectRowSql();
-         conn = connectionFactory.getConnection();
-         ps = conn.prepareStatement(sql);
-         ps.setString(1, lockingKey);
-         rs = ps.executeQuery();
-         if (rs.next()) {
-            InputStream inputStream = rs.getBinaryStream(2);
-            InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), inputStream);
-            InternalCacheEntry storedEntry = icv.toInternalCacheEntry(key);
-            if (storedEntry.isExpired()) {
-               if (log.isTraceEnabled()) {
-                  log.trace("Not returning '" + storedEntry + "' as it is expired. It will be removed from DB by purging thread!");
-               }
-               return null;
-            }
-            return storedEntry;
+      InternalCacheEntry storedEntry = null;
+      storedEntry = readStoredEntry(key, lockingKey);
+      if (storedEntry != null && storedEntry.isExpired()) {
+         if (log.isTraceEnabled()) {
+            log.trace("Not returning '" + storedEntry + "' as it is expired. It will be removed from DB by purging thread!");
          }
          return null;
-      } catch (SQLException e) {
-         String message = "SQL error while fetching stored entry with key:" + key + " lockingKey: " + lockingKey;
-         log.error(message, e);
-         throw new CacheLoaderException(message, e);
-      } finally {
-         JdbcUtil.safeClose(rs);
-         JdbcUtil.safeClose(ps);
-         connectionFactory.releaseConnection(conn);
       }
+      return storedEntry;
    }
-
 
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return JdbcStringBasedCacheStoreConfig.class;
@@ -370,4 +347,32 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
    public boolean isDistributed() {
       return cache.getConfiguration() != null && cache.getConfiguration().getCacheMode().isDistributed();
    }
+
+   private InternalCacheEntry readStoredEntry(Object key, String lockingKey) throws CacheLoaderException {
+      Connection conn = null;
+      PreparedStatement ps = null;
+      ResultSet rs = null;
+      InternalCacheEntry storedEntry = null;
+      try {
+         String sql = tableManipulation.getSelectRowSql();
+         conn = connectionFactory.getConnection();
+         ps = conn.prepareStatement(sql);
+         ps.setString(1, lockingKey);
+         rs = ps.executeQuery();
+         if (rs.next()) {
+            InputStream inputStream = rs.getBinaryStream(2);
+            InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), inputStream);
+            storedEntry = icv.toInternalCacheEntry(key);
+         }
+      } catch (SQLException e) {
+         String message = "SQL error while fetching stored entry with key:" + key + " lockingKey: " + lockingKey;
+         log.error(message, e);
+         throw new CacheLoaderException(message, e);
+      } finally {
+         JdbcUtil.safeClose(rs);
+         JdbcUtil.safeClose(ps);
+         connectionFactory.releaseConnection(conn);
+      }
+      return storedEntry;
+   }   
 }

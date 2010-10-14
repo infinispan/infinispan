@@ -654,4 +654,11 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       if (!exceptions.isEmpty()) throw exceptions.get(0);
    }
 
+   public void testReplaceExpiredEntry() throws Exception {
+      cs.store(InternalEntryFactory.create("k1", "v1", 100));
+      Thread.sleep(200);
+      assert null == cs.load("k1");
+      cs.store(InternalEntryFactory.create("k1", "v2", 100));
+      assert cs.load("k1").getValue().equals("v2");
+   }
 }
