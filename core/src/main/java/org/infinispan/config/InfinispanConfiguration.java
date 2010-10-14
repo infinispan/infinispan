@@ -87,7 +87,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
 
    public static final String SCHEMA_URL_SYSTEM_PROPERTY = "infinispan.config.schema.url";
 
-   private static final String DEFAULT_SCHEMA_URL = "http://www.jboss.org/infinispan/infinispan-config-" + Version.getMajorVersion() + ".xsd";
+   private static final String DEFAULT_SCHEMA_URL = "http://infinispan.org/schemas/infinispan-config-" + Version.getMajorVersion() + ".xsd";
 
    @XmlElement
    private final GlobalConfiguration global = new GlobalConfiguration();
