@@ -1,5 +1,6 @@
 package org.infinispan.test;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.BaseDistFunctionalTest;
@@ -159,6 +160,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected void addClusterEnabledCacheManagers(Configuration.CacheMode mode, boolean transactional, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, transactional);
    }
+   
+   protected void addClusterEnabledCacheManagers(Configuration config, int count) {
+      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(config);
+   }
 
    protected void addClusterEnabledCacheManagers(Configuration.CacheMode mode, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, true);
@@ -272,5 +277,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    public Address address(int cacheIndex) {
       return cache(cacheIndex).getAdvancedCache().getRpcManager().getAddress();
+   }
+
+   public AdvancedCache advancedCache(int i) {
+      return cache(i).getAdvancedCache();
+   }
+
+   public AdvancedCache advancedCache(int i, String cacheName) {
+      return cache(i, cacheName).getAdvancedCache();
    }
 }
