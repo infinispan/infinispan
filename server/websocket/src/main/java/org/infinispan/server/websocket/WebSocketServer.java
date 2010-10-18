@@ -41,6 +41,7 @@ import org.infinispan.server.websocket.handlers.GetHandler;
 import org.infinispan.server.websocket.handlers.NotifyHandler;
 import org.infinispan.server.websocket.handlers.PutHandler;
 import org.infinispan.server.websocket.handlers.RemoveHandler;
+import org.infinispan.util.TypedProperties;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -84,7 +85,7 @@ public class WebSocketServer extends AbstractProtocolServer {
    }
 
    @Override
-   public void startTransport(int idleTimeout, boolean tcpNoDelay, int sendBufSize, int recvBufSize) {
+   public void startTransport(int idleTimeout, boolean tcpNoDelay, int sendBufSize, int recvBufSize, TypedProperties typedProps) {
       InetSocketAddress address = new InetSocketAddress(getHost(), getPort());
       Executor masterExecutor =
          masterThreads() == 0 ?
