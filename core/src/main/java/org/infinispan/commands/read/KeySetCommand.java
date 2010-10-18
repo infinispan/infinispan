@@ -24,12 +24,9 @@ package org.infinispan.commands.read;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.util.Immutables;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -55,17 +52,7 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
       if (noTxModifications(ctx)) {
          return Immutables.immutableSetWrap(objects);
       }
-      Set<Object> result = new HashSet<Object>();
-      result.addAll(objects);
-      for (CacheEntry ce : ctx.getLookedUpEntries().values()) {
-         if (ce.isRemoved()) {
-            result.remove(ce.getKey());
-         } else {
-            if (ce.isCreated()) {
-               result.add(ce.getKey());
-            }
-         }
-      }
+      Set<Object> result = ketKeySetWithinTransaction(ctx, container);
       return Immutables.immutableSetWrap(result);
    }
 
