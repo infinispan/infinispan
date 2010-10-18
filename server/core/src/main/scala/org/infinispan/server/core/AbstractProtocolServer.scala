@@ -62,11 +62,11 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
          cacheManager.addListener(getRankCalculatorListener)
          // Start default cache
          startDefaultCache
-         startTransport(idleTimeout, tcpNoDelay, sendBufSize, recvBufSize)
+         startTransport(idleTimeout, tcpNoDelay, sendBufSize, recvBufSize, typedProps)
       }
    }
 
-   def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int) {
+   def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {
       val address = new InetSocketAddress(host, port)
       val encoder = getEncoder
       val nettyEncoder = if (encoder != null) new EncoderAdapter(encoder) else null
@@ -74,7 +74,6 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
          threadNamePrefix, tcpNoDelay, sendBufSize, recvBufSize)
       transport.start
    }
-
 
    def start(propertiesFileName: String, cacheManager: EmbeddedCacheManager) {
       val propsObject = new TypedProperties()

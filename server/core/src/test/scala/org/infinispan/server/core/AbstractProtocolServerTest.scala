@@ -8,6 +8,7 @@ import org.infinispan.manager.{DefaultCacheManager, EmbeddedCacheManager}
 import org.testng.Assert._
 import java.net.InetSocketAddress
 import java.lang.reflect.Method
+import org.infinispan.util.TypedProperties
 
 /**
  * Abstract protocol server test.
@@ -183,7 +184,8 @@ class AbstractProtocolServerTest {
 
       override def getDecoder: Decoder = null
 
-      override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int) {
+      override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int,
+                                  typedProps: TypedProperties) {
          this.tcpNoDelay = tcpNoDelay
       }
    }

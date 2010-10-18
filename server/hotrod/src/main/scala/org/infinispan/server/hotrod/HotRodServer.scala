@@ -13,8 +13,8 @@ import org.infinispan.remoting.transport.Address
 import org.infinispan.manager.EmbeddedCacheManager
 import java.util.{Properties, Random}
 import org.infinispan.server.core.{CacheValue, Logging, AbstractProtocolServer}
-import org.infinispan.util.{ByteArrayKey, Util}
-import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionStrategy
+import org.infinispan.util.{TypedProperties, ByteArrayKey, Util};
 import org.infinispan.server.core.Main._
 
 /**
@@ -40,6 +40,12 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 
    override def start(p: Properties, cacheManager: EmbeddedCacheManager) {
       val properties = if (p == null) new Properties else p
+      super.start(properties, cacheManager, 11311)
+   }
+
+   override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {
+      // Start rest of the caches and self to view once we know for sure that we need to start
+      // and we know that the rank calculator listener is registered
 
       // Start defined caches to avoid issues with lazily started caches
       for (cacheName <- asIterator(cacheManager.getCacheNames.iterator))
@@ -48,12 +54,12 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
       isClustered = cacheManager.getGlobalConfiguration.getTransportClass != null
       // If clustered, set up a cache for topology information
       if (isClustered) {
-         val externalHost = properties.getProperty(PROP_KEY_PROXY_HOST, getHost)
-         val externalPort = properties.getProperty(PROP_KEY_PROXY_PORT, getPort.toString).toInt
+         val externalHost = typedProps.getProperty(PROP_KEY_PROXY_HOST, getHost)
+         val externalPort = typedProps.getIntProperty(PROP_KEY_PROXY_PORT, getPort)
          addSelfToTopologyView(externalHost, externalPort, cacheManager)
       }
 
-      super.start(properties, cacheManager, 11311)
+      super.startTransport(idleTimeout, tcpNoDelay, sendBufSize, recvBufSize, typedProps)
    }
 
    private def addSelfToTopologyView(host: String, port: Int, cacheManager: EmbeddedCacheManager) {
