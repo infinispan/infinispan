@@ -628,6 +628,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
        */
       protected String nodeName = null;
 
+      @XmlElement(name = "properties")
       protected TypedProperties properties = EMPTY_PROPERTIES;
 
       public TransportType() {
@@ -667,14 +668,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          testImmutability("nodeName");
          this.nodeName = nodeName;
       }
-
-      @XmlElement
+      
       public void setProperties(TypedProperties properties) {
          testImmutability("properties");
          this.properties = properties;
       }
 
-      @XmlElement
+      @XmlAttribute
       public void setStrictPeerToPeer(Boolean strictPeerToPeer) {
          testImmutability("strictPeerToPeer");
          this.strictPeerToPeer = strictPeerToPeer;
