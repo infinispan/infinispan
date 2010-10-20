@@ -66,9 +66,10 @@ public interface ReplicationQueue extends Lifecycle {
    void add(ReplicableCommand job);
 
    /**
-    * Flushes existing jobs in the replication queue.
+    * Flushes existing jobs in the replication queue, and returns the number of jobs flushed.
+    * @return the number of jobs flushed
     */
-   void flush();
+   int flush();
 
    /**
     * @return the number of elements in the replication queue.
