@@ -21,35 +21,40 @@ import org.infinispan.{CacheException, Cache}
  */
 @Path("/rest")
 class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: Boolean) {
-
    @GET
    @Path("/{cacheName}/{cacheKey}")
    def getEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String) = {
-      ManagerInstance.getEntry(cacheName, key) match {
-         case b: MIMECacheEntry => {
-            val lastMod = new Date(b.lastModified)
-            request.evaluatePreconditions(lastMod, calcETAG(b)) match {
-               case bldr: ResponseBuilder => bldr.build
-               case null => Response.ok(b.data, b.contentType).lastModified(lastMod).tag(calcETAG(b)).build
+      try {
+         ManagerInstance.getEntry(cacheName, key) match {
+            case b: MIMECacheEntry => {
+               val lastMod = new Date(b.lastModified)
+               request.evaluatePreconditions(lastMod, calcETAG(b)) match {
+                  case bldr: ResponseBuilder => bldr.build
+                  case null => Response.ok(b.data, b.contentType).lastModified(lastMod).tag(calcETAG(b)).build
+               }
             }
-         }
-         case s: String => Response.ok(s, "text/plain").build
-         case obj: Any => {
-            val variant = request.selectVariant(variantList)
-            val selectedMediaType = if (variant != null) variant.getMediaType.toString else "application/x-java-serialized-object"
-            selectedMediaType match {
-               case MediaType.APPLICATION_JSON => Response.ok.`type`(selectedMediaType).entity(streamIt(jsonMapper.writeValue(_, obj))).build
-               case MediaType.APPLICATION_XML => Response.ok.`type`(selectedMediaType).entity(streamIt(xstream.toXML(obj, _))).build
-               case _ =>
-                  obj match {
-                     case ser: Serializable =>
-                        Response.ok.`type`("application/x-java-serialized-object").entity(streamIt(new ObjectOutputStream(_).writeObject(ser))).build
-                     case _ => Response.notAcceptable(variantList).build
-                  }
+            case s: String => Response.ok(s, "text/plain").build
+            case obj: Any => {
+               val variant = request.selectVariant(variantList)
+               val selectedMediaType = if (variant != null) variant.getMediaType.toString else "application/x-java-serialized-object"
+               selectedMediaType match {
+                  case MediaType.APPLICATION_JSON => Response.ok.`type`(selectedMediaType).entity(streamIt(jsonMapper.writeValue(_, obj))).build
+                  case MediaType.APPLICATION_XML => Response.ok.`type`(selectedMediaType).entity(streamIt(xstream.toXML(obj, _))).build
+                  case _ =>
+                     obj match {
+                        case ser: Serializable =>
+                           Response.ok.`type`("application/x-java-serialized-object").entity(streamIt(new ObjectOutputStream(_).writeObject(ser))).build
+                        case _ => Response.notAcceptable(variantList).build
+                     }
 
+               }
             }
+            case null => Response status (Status.NOT_FOUND) build
          }
-         case null => Response status (Status.NOT_FOUND) build
+      } catch {
+         case e: CacheNotFoundException => {
+            Response status (Status.NOT_FOUND) build
+         }
       }
    }
 

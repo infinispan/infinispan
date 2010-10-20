@@ -131,6 +131,32 @@ class IntegrationTest {
       assertNull(get.getResponseBodyAsString)
    }
 
+   def testGetIfUnmodified(m: Method) = {
+      val fullPathKey = fullPath + "/" + m.getName
+      val post = new PostMethod(fullPathKey)
+      post.setRequestHeader("Content-Type", "application/text")
+      post.setRequestBody("data")
+      Client.call(post)
+
+      var get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
+      assertNotNull(get.getResponseHeader("ETag").getValue)
+      var lastMod = get.getResponseHeader("Last-Modified").getValue
+      assertNotNull(lastMod)
+      assertEquals("application/text", get.getResponseHeader("Content-Type").getValue)
+      assertEquals("data", get.getResponseBodyAsString)
+
+      // now get again
+      val getAgain = new GetMethod(fullPathKey)
+      getAgain.addRequestHeader("If-Unmodified-Since", lastMod)
+      get = Client.call(getAgain)
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
+      assertNotNull(get.getResponseHeader("ETag").getValue)
+      assertNotNull(get.getResponseHeader("Last-Modified").getValue)
+      assertEquals("application/text", get.getResponseHeader("Content-Type").getValue)
+      assertEquals("data", get.getResponseBodyAsString)
+   }
+
    def testPostDuplicate(m: Method) = {
       val fullPathKey = fullPath + "/" + m.getName
       val post = new PostMethod(fullPathKey)
@@ -272,6 +298,12 @@ class IntegrationTest {
       assertTrue(x.name == "mic")
    }
 
+   def testNonexistentCache(m: Method) = {
+      val fullPathKey = HOST + "rest/nonexistent/" + m.getName
+      val get = new GetMethod(fullPathKey)
+      Client call get
+      assertEquals(HttpServletResponse.SC_NOT_FOUND, get.getStatusCode)
+   }
 }
 
 
