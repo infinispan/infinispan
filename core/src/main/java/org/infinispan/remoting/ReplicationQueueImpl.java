@@ -112,7 +112,7 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    }
 
    @Override
-   public void flush() {
+   public int flush() {
       List<ReplicableCommand> toReplicate = new LinkedList<ReplicableCommand>();
       elements.drainTo(toReplicate);
       if (log.isTraceEnabled()) log.trace("flush(): flushing repl queue (num elements={0})", toReplicate.size());
@@ -129,6 +129,8 @@ public class ReplicationQueueImpl implements ReplicationQueue {
             log.error("failed replicating " + toReplicate.size() + " elements in replication queue", t);
          }
       }
+
+      return toReplicateSize;
    }
 
    @Override
