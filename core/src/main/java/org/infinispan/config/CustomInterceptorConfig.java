@@ -36,14 +36,6 @@ import java.util.Properties;
 /**
  * Holds information about the custom interceptors defined in the configuration file.
  *
- * <p>
- * Note that class CustomInterceptorConfig contains JAXB annotations. These annotations determine how XML
- * configuration files are read into instances of configuration class hierarchy as well as they
- * provide meta data for configuration file XML schema generation. Please modify these annotations
- * and Java element types they annotate with utmost understanding and care.
- *
- * @configRef name="interceptor",desc=" This element allows you configure and inject a custom interceptor.
- * This tag may appear multiple times."
  *
  * @author Mircea.Markus@jboss.com
  * @author Vladimir Blagojevic
@@ -51,6 +43,7 @@ import java.util.Properties;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name="interceptor")
+@ConfigurationDoc(name="interceptor")
 public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean {
 
    /** The serialVersionUID */
@@ -65,32 +58,24 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    @XmlTransient
    protected boolean isLast;
 
-   /** @configRef desc="A position at which to place this interceptor in the chain, with 0 being the first position. 
-    *             Note that this attribute is mutually exclusive with 'position', 'before' and 'after'." */
    @XmlAttribute
+   @ConfigurationDocRef(name="class", bean=CustomInterceptorConfig.class,targetElement="setIndex")
    protected Integer index = -1;
-
-   /** @configRef desc="Will place the new interceptor directly after the instance of the named interceptor which is 
-    *             specified via its fully qualified class name. Note that this attribute is mutually exclusive with 
-    *             'position', 'before' and 'index'." */
+   
    @XmlAttribute
+   @ConfigurationDocRef(name="class", bean=CustomInterceptorConfig.class,targetElement="setAfterInterceptor")
    protected String after;
 
-   /** @configRef desc="Will place the new interceptor directly before the instance of the named interceptor which is 
-    *             specified via its fully qualified class name.. Note that this attribute is mutually exclusive with 
-    *             'position', 'after' and 'index'." */
    @XmlAttribute
+   @ConfigurationDocRef(name="class", bean=CustomInterceptorConfig.class,targetElement="setBeforeInterceptor")
    protected String before;
 
-   /** @configRef desc="A position at which to place this interceptor in the chain. FIRST is the first interceptor
-    *             encountered when an invocation is made on the cache, LAST is the last interceptor before the call is
-    *             passed on to the data structure. Note that this attribute is mutually exclusive with 'before', 'after'
-    *             and 'index'." */
    @XmlAttribute
+   @ConfigurationDocRef(name="class", bean=CustomInterceptorConfig.class,targetElement="setPosition")
    protected Position position;   
-
-   /** @configRef name="class",desc="Fully qualified interceptor class name which must extend org.infinispan.interceptors.base.CommandInterceptor." */
+   
    @XmlAttribute(name="class")
+   @ConfigurationDocRef(name="class", bean=CustomInterceptorConfig.class,targetElement="setClassName")
    protected String className;
 
    @XmlElement
@@ -181,6 +166,14 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       return position;
    }
 
+   /**
+    * A position at which to place this interceptor in the chain. FIRST is the first interceptor
+    * encountered when an invocation is made on the cache, LAST is the last interceptor before the
+    * call is passed on to the data structure. Note that this attribute is mutually exclusive with
+    * 'before', 'after' and 'index'.
+    * 
+    * @param position
+    */
    public void setPosition(Position position) {
       this.position = position;
       testImmutability("position");
@@ -190,6 +183,10 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       return className;
    }
 
+   /**
+    * Fully qualified interceptor class name which must extend org.infinispan.interceptors.base.CommandInterceptor.
+    * @param className
+    */
    public void setClassName(String className) {
       this.className = className;
       testImmutability("className");
@@ -212,22 +209,37 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       isLast = last;
    }
    
+   /**
+    * A position at which to place this interceptor in the chain. FIRST is the first interceptor
+    * encountered when an invocation is made on the cache, LAST is the last interceptor before the
+    * call is passed on to the data structure. Note that this attribute is mutually exclusive with
+    * 'before', 'after' and 'index'.
+    * 
+    * @param pos
+    */
    public void setPosition(String pos) {
       setPosition(Position.valueOf(uc(pos)));
    }
 
+   
    /**
-    * Put this interceptor at the specified index, after the default chain is built. If the index is not valid (negative
-    * or grater than the size of the chain) an {@link ConfigurationException} is thrown at construction time.
+    * A position at which to place this interceptor in the chain, with 0 being the first position.
+    * Note that this attribute is mutually exclusive with 'position', 'before' and 'after'."
+    * 
+    * @param index
     */
    public void setIndex(int index) {
       testImmutability("index");
       this.index = index;
    }
 
+   
    /**
-    * Adds the interceptor immediately after the first occurrence of an interceptor having the given class. If the chain
-    * does not contain such an interceptor then this interceptor definition is ignored.
+    * Places the new interceptor directly after the instance of the named interceptor which is
+    * specified via its fully qualified class name. Note that this attribute is mutually exclusive
+    * with 'position', 'before' and 'index'.
+    * 
+    * @param afterClass
     */
    public void setAfterInterceptor(String afterClass) {
       testImmutability("after");
@@ -235,16 +247,22 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    }
 
    /**
-    * Adds the interceptor immediately after the first occurrence of an interceptor having the given class. If the chain
-    * does not contain such an interceptor then this interceptor definition is ignored.
+    * Places the new interceptor directly after the instance of the named interceptor which is
+    * specified via its fully qualified class name. Note that this attribute is mutually exclusive
+    * with 'position', 'before' and 'index'.
+    * 
+    * @param interceptorClass
     */
    public void setAfterInterceptor(Class<? extends CommandInterceptor> interceptorClass) {
       setAfterInterceptor(interceptorClass.getName());
    }
 
    /**
-    * Adds the interceptor immediately before the first occurrence of an interceptor having the given class. If the chain
-    * does not contain such an interceptor then this interceptor definition is ignored.
+    * Places the new interceptor directly before the instance of the named interceptor which is
+    * specified via its fully qualified class name.. Note that this attribute is mutually exclusive
+    * with 'position', 'after' and 'index'."
+    * 
+    * @param beforeClass
     */
    public void setBeforeInterceptor(String beforeClass) {
       testImmutability("before");
@@ -252,8 +270,11 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    }
 
    /**
-    * Adds the interceptor immediately before the first occurrence of an interceptor having the given class. If the chain
-    * does not contain such an interceptor then this interceptor definition is ignored.
+    * Places the new interceptor directly before the instance of the named interceptor which is
+    * specified via its fully qualified class name.. Note that this attribute is mutually exclusive
+    * with 'position', 'after' and 'index'."
+    * 
+    * @param interceptorClass
     */
    public void setBeforeInterceptor(Class<? extends CommandInterceptor> interceptorClass) {
       setBeforeInterceptor(interceptorClass.getName());
