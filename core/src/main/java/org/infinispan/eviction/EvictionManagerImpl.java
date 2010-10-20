@@ -45,9 +45,9 @@ public class EvictionManagerImpl implements EvictionManager {
    private LockManager lockManager;
    private PassivationManager passivator;
    private InvocationContextContainer ctxContainer;
-   
-   
-   private boolean enabled;   
+
+
+   private boolean enabled;
    volatile CountDownLatch startLatch = new CountDownLatch(1);
 
    @Inject
@@ -70,9 +70,10 @@ public class EvictionManagerImpl implements EvictionManager {
    public void start() {
       // first check if eviction is enabled!
       enabled = configuration.getEvictionStrategy() != EvictionStrategy.NONE;
-      if (enabled) {        
-         if (cacheLoaderManager != null && cacheLoaderManager.isEnabled())
+      if (enabled) {
+         if (cacheLoaderManager != null && cacheLoaderManager.isEnabled()) {
             cacheStore = cacheLoaderManager.getCacheStore();
+         }
          // Set up the eviction timer task
          if (configuration.getEvictionWakeUpInterval() <= 0) {
             log.info("wakeUpInterval is <= 0, not starting eviction thread");
@@ -91,7 +92,9 @@ public class EvictionManagerImpl implements EvictionManager {
          Thread.currentThread().interrupt();
       }
 
-      if (!enabled) return;
+      if (!enabled) {
+         return;
+      }
 
       long start = 0;
       try {
@@ -100,8 +103,9 @@ public class EvictionManagerImpl implements EvictionManager {
             start = System.currentTimeMillis();
          }
          dataContainer.purgeExpired();
-         if (trace)
+         if (trace) {
             log.trace("Purging data container completed in {0}", Util.prettyPrintTime(System.currentTimeMillis() - start));
+         }
       } catch (Exception e) {
          log.warn("Caught exception purging data container!", e);
       }
@@ -113,12 +117,13 @@ public class EvictionManagerImpl implements EvictionManager {
                start = System.currentTimeMillis();
             }
             cacheStore.purgeExpired();
-            if (trace)
+            if (trace) {
                log.trace("Purging cache store completed in {0}", Util.prettyPrintTime(System.currentTimeMillis() - start));
+            }
          } catch (Exception e) {
             log.warn("Caught exception purging cache store!", e);
          }
-      }    
+      }
    }
 
    public boolean isEnabled() {
@@ -128,7 +133,9 @@ public class EvictionManagerImpl implements EvictionManager {
    @Stop(priority = 5)
    public void stop() {
       startLatch = new CountDownLatch(1);
-      if (evictionTask != null) evictionTask.cancel(true);
+      if (evictionTask != null) {
+         evictionTask.cancel(true);
+      }
    }
 
    class ScheduledTask implements Runnable {
@@ -136,9 +143,9 @@ public class EvictionManagerImpl implements EvictionManager {
          processEviction();
       }
    }
-   
+
    @Override
-   public void preEvict(Object key) {
+   public void onEntryEviction(Object key, InternalCacheEntry value) {
       InvocationContext context = getInvocationContext();
       try {
          acquireLock(context, key);
@@ -146,10 +153,7 @@ public class EvictionManagerImpl implements EvictionManager {
          log.warn("Could not acquire lock for eviction of {0}", key, e);
       }
       cacheNotifier.notifyCacheEntryEvicted(key, true, context);
-   }
 
-   @Override
-   public void postEvict(Object key, InternalCacheEntry value) {
       try {
          passivator.passivate(key, value, null);
       } catch (CacheLoaderException e) {
@@ -158,11 +162,11 @@ public class EvictionManagerImpl implements EvictionManager {
       cacheNotifier.notifyCacheEntryEvicted(key, false, getInvocationContext());
       releaseLock(key);
    }
-   
+
    private InvocationContext getInvocationContext(){
       return ctxContainer.getInvocationContext();
    }
-   
+
    /**
     * Attempts to lock an entry if the lock isn't already held in the current scope, and records the lock in the
     * context.
@@ -197,20 +201,21 @@ public class EvictionManagerImpl implements EvictionManager {
          }
       } else {
          if (trace) {
-            if (shouldSkipLocking)
+            if (shouldSkipLocking) {
                log.trace("SKIP_LOCKING flag used!");
-            else
+            } else {
                log.trace("Already own lock for entry");
+            }
          }
       }
 
       return false;
    }
-   
+
    public final void releaseLock(Object key) {
       lockManager.unlock(key);
    }
-   
+
    private long getLockAcquisitionTimeout(InvocationContext ctx) {
       return ctx.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
             0 : configuration.getLockAcquisitionTimeout();

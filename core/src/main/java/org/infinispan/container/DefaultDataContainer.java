@@ -23,18 +23,18 @@ import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.EvictionListener;
 
 /**
- * DefaultDataContainer is both eviction and non-eviction based data container. 
- *  
- * 
+ * DefaultDataContainer is both eviction and non-eviction based data container.
+ *
+ *
  * @author Manik Surtani
  * @author Galder Zamarreño
  * @author Vladimir Blagojevic
- * 
+ *
  * @since 4.0
  */
 @ThreadSafe
 public class DefaultDataContainer implements DataContainer {
-   
+
    final ConcurrentMap<Object, InternalCacheEntry> entries;
    final InternalEntryFactory entryFactory;
    final DefaultEvictionListener evictionListener;
@@ -71,7 +71,7 @@ public class DefaultDataContainer implements DataContainer {
          default:
             throw new IllegalArgumentException("No such eviction strategy " + strategy);
       }
-      entries = new BoundedConcurrentHashMap<Object, InternalCacheEntry>(maxEntries, concurrencyLevel, eviction, evictionListener);      
+      entries = new BoundedConcurrentHashMap<Object, InternalCacheEntry>(maxEntries, concurrencyLevel, eviction, evictionListener);
       entryFactory = new InternalEntryFactory();
    }
 
@@ -112,13 +112,14 @@ public class DefaultDataContainer implements DataContainer {
       if (e != null) {
          e.setValue(v);
          InternalCacheEntry original = e;
-         e = entryFactory.update(e, lifespan, maxIdle);        
+         e = entryFactory.update(e, lifespan, maxIdle);
          // we have the same instance. So we need to reincarnate.
-         if(original == e)
-            e.reincarnate();                 
+         if(original == e) {
+            e.reincarnate();
+         }
       } else {
          // this is a brand-new entry
-         e = entryFactory.createNewEntry(k, v, lifespan, maxIdle);                  
+         e = entryFactory.createNewEntry(k, v, lifespan, maxIdle);
       }
       entries.put(k, e);
    }
@@ -153,7 +154,7 @@ public class DefaultDataContainer implements DataContainer {
       return new Values();
    }
 
-   public Set<InternalCacheEntry> entrySet() {      
+   public Set<InternalCacheEntry> entrySet() {
       return new EntrySet();
    }
 
@@ -165,40 +166,36 @@ public class DefaultDataContainer implements DataContainer {
          }
       }
    }
-   
-   public Iterator<InternalCacheEntry> iterator() {      
+
+   public Iterator<InternalCacheEntry> iterator() {
       return new EntryIterator(entries.values().iterator());
    }
 
    private class DefaultEvictionListener implements EvictionListener<Object, InternalCacheEntry> {
       @Override
-      public void preEvict(Object key) {
-         evictionManager.preEvict(key);
-      }
-
-      @Override
-      public void postEvict(Object key, InternalCacheEntry value) {
-         evictionManager.postEvict(key, value);
+      public void onEntryEviction(Object key, InternalCacheEntry value) {
+         evictionManager.onEntryEviction(key, value);
       }
    }
-   
+
    private static class ImmutableEntryIterator extends EntryIterator {
       ImmutableEntryIterator(Iterator<InternalCacheEntry> it){
          super(it);
       }
-      
+
+      @Override
       public InternalCacheEntry next() {
          return Immutables.immutableInternalCacheEntry(super.next());
       }
    }
-   
+
    public static class EntryIterator implements Iterator<InternalCacheEntry> {
-      
-      
+
+
       private final Iterator<InternalCacheEntry> it;
 
       EntryIterator(Iterator<InternalCacheEntry> it){this.it=it;}
-      
+
       public InternalCacheEntry next() {
          return it.next();
       }
@@ -213,12 +210,13 @@ public class DefaultDataContainer implements DataContainer {
          throw new UnsupportedOperationException();
       }
    }
-   
+
    /**
     * Minimal implementation needed for unmodifiable Set
     *
     */
    private class EntrySet extends AbstractSet<InternalCacheEntry> {
+      @Override
       public Iterator<InternalCacheEntry> iterator() {
          return new ImmutableEntryIterator(entries.values().iterator());
       }
@@ -228,7 +226,7 @@ public class DefaultDataContainer implements DataContainer {
          return entries.size();
       }
    }
-   
+
    /**
     * Minimal implementation needed for unmodifiable Collection
     *
@@ -244,8 +242,8 @@ public class DefaultDataContainer implements DataContainer {
          return entries.size();
       }
    }
-   
-   private static class ValueIterator implements Iterator<Object> {      
+
+   private static class ValueIterator implements Iterator<Object> {
       Iterator<InternalCacheEntry> currentIterator;
 
       private ValueIterator(Iterator<InternalCacheEntry> it) {
@@ -253,13 +251,13 @@ public class DefaultDataContainer implements DataContainer {
       }
 
       public boolean hasNext() {
-         return currentIterator.hasNext();         
+         return currentIterator.hasNext();
       }
 
       public void remove() {
          throw new UnsupportedOperationException();
       }
-    
+
       public Object next() {
          return currentIterator.next().getValue();
       }
