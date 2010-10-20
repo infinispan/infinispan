@@ -26,29 +26,23 @@ import java.util.Properties;
 /**
  * Configuration component that encapsulates the global configuration.
  * <p/>
+ * 
  * A default instance of this bean takes default values for each attribute.  Please see the individual setters for
  * details of what these defaults are.
  * <p/>
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
- * @configRef name="global",desc="Defines global settings shared among all cache instances created by a single
- * CacheManager."
  * @since 4.0
  * 
  * @see <a href="../../../config.html#ce_infinispan_global">Configuration reference</a>
  * 
  */
-
-// Note that class GlobalConfiguration contains JAXB annotations. These annotations determine how XML configuration
-// files are read into instances of configuration class hierarchy as well as they provide meta data for configuration
-// file XML schema generation. Please modify these annotations and Java element types they annotate with utmost
-// understanding and care.
-
 @SurvivesRestarts
 @Scope(Scopes.GLOBAL)
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder = {})
+@ConfigurationDoc(name="global",desc="Defines global settings shared among all cache instances created by a single CacheManager.")
 public class GlobalConfiguration extends AbstractConfigurationBean {
 
    /**
@@ -96,14 +90,21 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return globalJmxStatistics.enabled;
    }
 
+   /**
+    * Toggle to enable/disable global statistics being exported via JMX
+    * 
+    * @param exposeGlobalJmxStatistics
+    */
    public void setExposeGlobalJmxStatistics(boolean exposeGlobalJmxStatistics) {
       testImmutability("exposeGlobalManagementStatistics");
       globalJmxStatistics.setEnabled(exposeGlobalJmxStatistics);
    }
 
    /**
-    * If JMX statistics are enabled then all 'published' JMX objects will appear under this name. This is optional, if
-    * not specified an object name will be created for you by default.
+    * If JMX statistics are enabled then all 'published' JMX objects will appear under this name.
+    * This is optional, if not specified an object name will be created for you by default.
+    * 
+    * @param jmxObjectName
     */
    public void setJmxDomain(String jmxObjectName) {
       globalJmxStatistics.setJmxDomain(jmxObjectName);
@@ -120,6 +121,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return globalJmxStatistics.mBeanServerLookup;
    }
 
+   /**
+    * Fully qualified name of class that will attempt to locate a JMX MBean server to bind to
+    * 
+    * @param mBeanServerLookup
+    */
    public void setMBeanServerLookup(String mBeanServerLookup) {
       globalJmxStatistics.setMBeanServerLookup(mBeanServerLookup);
    }
@@ -128,6 +134,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return globalJmxStatistics.allowDuplicateDomains;
    }
 
+   /**
+    * If true, multiple cache manager instances could be configured under the same configured JMX
+    * domain. Each cache manager will in practice use a different JMX domain that has been
+    * calculated based on the configured one by adding an incrementing index to it.
+    * 
+    * @param allowDuplicateDomains
+    */
    public void setAllowDuplicateDomains(boolean allowDuplicateDomains) {
       globalJmxStatistics.setAllowDuplicateDomains(allowDuplicateDomains);
    }
@@ -141,6 +154,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * with a NamedCacheNotFoundException.  Otherwise, operations will succeed but it will be
     * logged on the caller that the RPC did not succeed on certain nodes due to the named cache
     * not being available.
+    * 
     * @param strictPeerToPeer flag controlling this behavior
     */
    public void setStrictPeerToPeer(boolean strictPeerToPeer) {
@@ -220,6 +234,12 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return serialization.marshallerClass;
    }
 
+   /**
+    * Fully qualified name of the marshaller to use. It must implement
+    * org.infinispan.marshall.StreamingMarshaller
+    * 
+    * @param marshallerClass
+    */
    public void setMarshallerClass(String marshallerClass) {
       serialization.setMarshallerClass(marshallerClass);
    }
@@ -228,6 +248,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return transport.nodeName;
    }
 
+   /**
+    * Name of the current node. This is a friendly name to make logs, etc. make more sense. Defaults
+    * to a combination of host name and a random number (to differentiate multiple nodes on the same
+    * host)
+    * 
+    * @param nodeName
+    */
    public void setTransportNodeName(String nodeName) {
       transport.setNodeName(nodeName);
    }
@@ -237,6 +264,12 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
 
+   /**
+    * Fully qualified name of a class that represents a network transport. Must implement
+    * org.infinispan.remoting.transport.Transport
+    * 
+    * @param transportClass
+    */
    public void setTransportClass(String transportClass) {
       transport.setTransportClass(transportClass);
    }
@@ -257,6 +290,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return transport.clusterName;
    }
 
+   /**
+    * Defines the name of the cluster. Nodes only connect to clusters sharing the same name.
+    * 
+    * @param clusterName
+    */
    public void setClusterName(String clusterName) {
       transport.setClusterName(clusterName);
    }
@@ -265,6 +303,15 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return shutdown.hookBehavior;
    }
 
+   /**
+    * Behavior of the JVM shutdown hook registered by the cache. The options available are: DEFAULT
+    * - A shutdown hook is registered even if no MBean server (apart from the JDK default) is
+    * detected. REGISTER - Forces the cache to register a shutdown hook even if an MBean server is
+    * detected. DONT_REGISTER - Forces the cache NOT to register a shutdown hook, even if no MBean
+    * server is detected.
+    * 
+    * @param shutdownHookBehavior
+    */
    public void setShutdownHookBehavior(ShutdownHookBehavior shutdownHookBehavior) {
       shutdown.setHookBehavior(shutdownHookBehavior);
    }
@@ -337,11 +384,27 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return serialization.version;
    }
 
+   /**
+    * Largest allowable version to use when marshalling internal state. Set this to the lowest
+    * version cache instance in your cluster to ensure compatibility of communications. However,
+    * setting this too low will mean you lose out on the benefit of improvements in newer versions
+    * of the marshaller.
+    * 
+    * @param marshallVersion
+    */
    public void setMarshallVersion(short marshallVersion) {
       testImmutability("marshallVersion");
       serialization.version = Version.decodeVersionForSerialization(marshallVersion);
    }
 
+   /**
+    * Largest allowable version to use when marshalling internal state. Set this to the lowest
+    * version cache instance in your cluster to ensure compatibility of communications. However,
+    * setting this too low will mean you lose out on the benefit of improvements in newer versions
+    * of the marshaller.
+    * 
+    * @param marshallVersion
+    */
    public void setMarshallVersion(String marshallVersion) {
       serialization.setVersion(marshallVersion);
    }
@@ -479,12 +542,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
        * The serialVersionUID
        */
       private static final long serialVersionUID = 7625606997888180254L;
-
-      /**
-       * @configPropertyRef name="maxThreads",desc="Maximum number of threads for this executor. Default values can be found <a href=&quot;http://community.jboss.org/docs/DOC-15540&quot;>here</a>"
-       * @configPropertyRef name="threadNamePrefix",desc="Thread name prefix for threads created by this executor. Default values can be found <a href=&quot;http://community.jboss.org/docs/DOC-15540&quot;>here</a>"
-       */
+      
       @XmlElement(name = "properties")
+      @ConfigurationDocs( {
+               @ConfigurationDoc(name = "maxThreads", 
+                        desc = "Maximum number of threads for this executor. Default values can be found <a href=&quot;http://community.jboss.org/docs/DOC-15540&quot;>here</a>"),
+               @ConfigurationDoc(name = "threadNamePrefix", 
+                        desc = "Thread name prefix for threads created by this executor. Default values can be found <a href=&quot;http://community.jboss.org/docs/DOC-15540&quot;>here</a>") })
       protected TypedProperties properties = EMPTY_PROPERTIES;
 
       public void accept(ConfigurationBeanVisitor v) {
@@ -505,24 +569,22 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    /**
-    * @configRef name="asyncListenerExecutor",desc="Configuration for the executor service used to emit notifications to
-    * asynchronous listeners."
-    * @configRef name="asyncTransportExecutor",desc="Configuration for the executor service used for asynchronous work
-    * on the Transport, including asynchronous marshalling and Cache 'async operations' such as Cache.putAsync()."
     * 
     * @see <a href="../../../config.html#ce_global_asyncListenerExecutor">Configuration reference</a>
     * 
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
+   @ConfigurationDocs( {
+            @ConfigurationDoc(name = "asyncListenerExecutor", 
+                     desc = "Configuration for the executor service used to emit notifications to asynchronous listeners"),
+            @ConfigurationDoc(name = "asyncTransportExecutor",
+                     desc = "Configuration for the executor service used for asynchronous work on the Transport, including asynchronous marshalling and Cache 'async operations' such as Cache.putAsync().") })
    public static class ExecutorFactoryType extends FactoryClassWithPropertiesType {
 
       private static final long serialVersionUID = 6895901500645539386L;
-      
-      /**
-       * @configRef desc="Fully qualified class name of the ExecutorFactory to use.  Must
-       * implement org.infinispan.executors.ExecutorFactory"
-       */
+            
       @XmlAttribute
+      @ConfigurationDoc(name="factory", desc="Fully qualified class name of the ExecutorFactory to use.  Must implement org.infinispan.executors.ExecutorFactory")
       protected String factory = DefaultExecutorFactory.class.getName();
 
       public ExecutorFactoryType(String factory) {
@@ -544,25 +606,23 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    /**
-    * @configRef name="evictionScheduledExecutor",desc="Configuration for the scheduled executor service used to
-    * periodically run eviction cleanup tasks."
-    * @configRef name="replicationQueueScheduledExecutor",desc="Configuration for the scheduled executor service used to
-    * periodically flush replication queues, used if asynchronous clustering is enabled along with useReplQueue being
-    * set to true."
+    * 
     * 
     * @see <a href="../../../config.html#ce_global_evictionScheduledExecutor">Configuration reference</a>
     * 
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
+   @ConfigurationDocs( {
+            @ConfigurationDoc(name = "evictionScheduledExecutor", 
+                     desc = "Configuration for the scheduled executor service used to periodically run eviction cleanup tasks."),
+            @ConfigurationDoc(name = "replicationQueueScheduledExecutor", 
+                     desc = "Configuration for the scheduled executor service used to periodically flush replication queues, used if asynchronous clustering is enabled along with useReplQueue being set to true.") })
    public static class ScheduledExecutorFactoryType extends FactoryClassWithPropertiesType {
 
       private static final long serialVersionUID = 7806391452092647488L;
       
-      /**
-       * @configRef desc="Fully qualified class name of the ScheduledExecutorFactory to use.  Must
-       * implement org.infinispan.executors.ScheduledExecutorFactory"
-       */
       @XmlAttribute
+      @ConfigurationDoc(name="factory",desc="Fully qualified class name of the ScheduledExecutorFactory to use.  Must implement org.infinispan.executors.ScheduledExecutorFactory")
       protected String factory = DefaultScheduledExecutorFactory.class.getName();
 
       public ScheduledExecutorFactoryType(String factory) {
@@ -584,48 +644,33 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    /**
-    * @configRef name="transport",desc="This element configures the transport used for network communications across the
-    * cluster."
+    * This element configures the transport used for network communications across the cluster.
     * 
     * @see <a href="../../../config.html#ce_global_transport">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
+   @ConfigurationDoc(name="transport")
    public static class TransportType extends AbstractConfigurationBeanWithGCR {
 
       /**
        * The serialVersionUID
        */
       private static final long serialVersionUID = -4739815717370060368L;
-
-      /**
-       * @configRef desc="This defines the name of the cluster.  Nodes only connect to clusters sharing the same name."
-       */
+     
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setClusterName")
       protected String clusterName = "Infinispan-Cluster";
-
-      /**
-       * @configRef desc = "If set to true, RPC operations will fail if the named cache does not exist on remote nodes
-       *                    with a NamedCacheNotFoundException.  Otherwise, operations will succeed but it will be
-       *                    logged on the caller that the RPC did not succeed on certain nodes due to the named cache
-       *                    not being available."
-       */
+     
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setStrictPeerToPeer")
       protected Boolean strictPeerToPeer = true;      
-
-      /**
-       * @configRef desc="Cluster-wide synchronization timeout for locks.  Used to coordinate changes in cluster
-       * membership."
-       */
+      
+      @ConfigurationDoc(name="distributedSyncTimeout",desc="Cluster-wide synchronization timeout for locks.  Used to coordinate changes in cluster membership.")
       protected Long distributedSyncTimeout = 60000L; // default
-
-      /**
-       * @configRef desc="Fully qualified name of a class that represents a network transport.  Must implement
-       * org.infinispan.remoting.transport.Transport"
-       */
+      
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setTransportClass")
       protected String transportClass = null; // The default constructor sets default to JGroupsTransport
 
-      /**
-       * @configRef desc="Name of the current node.  This is a friendly name to make logs, etc. make more sense.
-       * Defaults to a combination of host name and a random number (to differentiate multiple nodes on the same host)"
-       */
+      
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setTransportNodeName")
       protected String nodeName = null;
 
       @XmlElement(name = "properties")
@@ -689,11 +734,12 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    /**
-    * @configRef name="serialization",desc="Serialization and marshalling settings."
+    * Serialization and marshalling settings.
     * 
     * @see <a href="../../../config.html#ce_global_serialization">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
+   @ConfigurationDoc(name="serialization")
    public static class SerializationType extends AbstractConfigurationBeanWithGCR {
 
       /**
@@ -701,17 +747,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
        */
       private static final long serialVersionUID = -925947118621507282L;
 
-      /**
-       * @configRef desc="Fully qualified name of the marshaller to use. It must implement
-       * org.infinispan.marshall.StreamingMarshaller."
-       */
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setMarshallerClass")
       protected String marshallerClass = VersionAwareMarshaller.class.getName(); // the default
-
-      /**
-       * @configRef desc="Largest allowable version to use when marshalling internal state.  Set this to the lowest
-       * version cache instance in your cluster to ensure compatibility of communications.  However, setting this too
-       * low will mean you lose out on the benefit of improvements in newer versions of the marshaller."
-       */
+      
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setMarshallVersion")
       protected String version = Version.getMajorVersion();
 
       public SerializationType() {
@@ -736,12 +775,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    /**
-    * @configRef name="globalJmxStatistics",desc="This element specifies whether global statistics are gathered and
-    * reported via JMX for all caches under this cache manager."
+    * This element specifies whether global statistics are gathered and reported via JMX for all
+    * caches under this cache manager.
     * 
     * @see <a href="../../../config.html#ce_global_globalJmxStatistics">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
+   @ConfigurationDoc(name="globalJmxStatistics")
    public static class GlobalJmxStatisticsType extends AbstractConfigurationBeanWithGCR {
 
       /**
@@ -749,26 +789,16 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
        */
       private static final long serialVersionUID = 6639689526822921024L;
 
-      /**
-       * @configRef desc="Toggle to enable/disable global statistics being exported via JMX."
-       */
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setExposeGlobalJmxStatistics")
       protected Boolean enabled = false;
-
-      /**
-       * @configRef desc="JMX domain name where all relevant JMX exposed objects will be bound"
-       */
+      
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setJmxDomain")
       protected String jmxDomain = "infinispan";
 
-      /**
-       * @configRef desc="Fully qualified name of class that will attempt to locate a JMX MBean server to bind to"
-       */
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setMBeanServerLookup")
       protected String mBeanServerLookup = PlatformMBeanServerLookup.class.getName();
 
-      /**
-       * @configRef desc="If true, multiple cache manager instances could be configured under the same configured JMX
-       * domain. Each cache manager will in practice use a different JMX domain that has been calculated based on the
-       * configured one by adding an incrementing index to it."
-       */
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setAllowDuplicateDomains")
       protected Boolean allowDuplicateDomains = false;
 
       @XmlAttribute
@@ -801,12 +831,12 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    /**
-    * @configRef name="shutdown",desc=" This element specifies behavior when the JVM running the cache instance shuts
-    * down."
+    * This element specifies behavior when the JVM running the cache instance shuts down.
     * 
     * @see <a href="../../../config.html#ce_global_shutdown">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
+   @ConfigurationDoc(name="shutdown")
    public static class ShutdownType extends AbstractConfigurationBeanWithGCR {
 
       /**
@@ -814,12 +844,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
        */
       private static final long serialVersionUID = 3427920991221031456L;
 
-      /**
-       * @configRef desc="Behavior of the JVM shutdown hook registered by the cache. The options available are: DEFAULT
-       * - A shutdown hook is registered even if no MBean server (apart from the JDK default) is detected. REGISTER -
-       * Forces the cache to register a shutdown hook even if an MBean server is detected. DONT_REGISTER - Forces the
-       * cache NOT to register a shutdown hook, even if no MBean server is detected.
-       */
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setShutdownHookBehavior")
       protected ShutdownHookBehavior hookBehavior = ShutdownHookBehavior.DEFAULT;
 
       @XmlAttribute

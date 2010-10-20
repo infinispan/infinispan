@@ -2,24 +2,18 @@ package org.infinispan.loaders.decorators;
 
 import org.infinispan.config.AbstractNamedCacheConfigurationBean;
 import org.infinispan.config.ConfigurationBeanVisitor;
+import org.infinispan.config.ConfigurationDoc;
+import org.infinispan.config.ConfigurationDocRef;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 
 /**
- * Configuration for a singleton store
- * 
- *<p>
- * Note that class SingletonStoreConfig contains JAXB annotations. These annotations determine how XML
- * configuration files are read into instances of configuration class hierarchy as well as they
- * provide meta data for configuration file XML schema generation. Please modify these annotations
- * and Java element types they annotate with utmost understanding and care.
- *
- * @configRef name="singletonStore",desc="SingletonStore is a delegating cache store used for situations when only one 
+ * SingletonStore is a delegating cache store used for situations when only one 
  * instance in a cluster should interact with the underlying store. The coordinator of the cluster will be responsible for
  * the underlying CacheStore. SingletonStore is a simply facade to a real CacheStore implementation. It always 
- * delegates reads to the real CacheStore."
+ * delegates reads to the real CacheStore.
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
@@ -28,20 +22,18 @@ import javax.xml.bind.annotation.XmlAttribute;
  * @see <a href="../../../../config.html#ce_loader_singletonStore">Configuration reference</a>
  */
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
+@ConfigurationDoc(name="singletonStore")
 public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
 
    private static final long serialVersionUID = 824251894176131850L;
-
-   /** @configRef desc="If true, the singleton store cache store is enabled. "*/
+   
+   @ConfigurationDocRef(bean=SingletonStoreConfig.class,targetElement="setSingletonStoreEnabled")
    protected Boolean enabled = false;
    
-   /** @configRef desc="If true, when a node becomes the coordinator, it will transfer in-memory state to the 
-    *             underlying cache store. This can be very useful in situations where the coordinator crashes and 
-    *             there's a gap in time until the new coordinator is elected." */
+   @ConfigurationDocRef(bean=SingletonStoreConfig.class,targetElement="setPushStateWhenCoordinator")
    protected Boolean pushStateWhenCoordinator = true;
    
-   /** @configRef desc="If pushStateWhenCoordinator is true, this property sets the maximum number of milliseconds that 
-    *             the process of pushing the in-memory state to the underlying cache loader should take." */
+   @ConfigurationDocRef(bean=SingletonStoreConfig.class,targetElement="setPushStateTimeout")
    protected Long pushStateTimeout = 10000L;
 
    @XmlAttribute(name="enabled")
@@ -49,6 +41,11 @@ public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
       return enabled;
    }
 
+   /**
+    * If true, the singleton store cache store is enabled.
+    * 
+    * @param singletonStoreEnabled
+    */
    public void setSingletonStoreEnabled(Boolean singletonStoreEnabled) {
       testImmutability("enabled");
       this.enabled = singletonStoreEnabled;
@@ -59,6 +56,13 @@ public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
       return pushStateWhenCoordinator;
    }
 
+   /**
+    * If true, when a node becomes the coordinator, it will transfer in-memory state to the
+    * underlying cache store. This can be very useful in situations where the coordinator crashes
+    * and there's a gap in time until the new coordinator is elected.
+    * 
+    * @param pushStateWhenCoordinator
+    */
    public void setPushStateWhenCoordinator(Boolean pushStateWhenCoordinator) {
       testImmutability("pushStateWhenCoordinator");
       this.pushStateWhenCoordinator = pushStateWhenCoordinator;
@@ -69,6 +73,12 @@ public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
       return pushStateTimeout;
    }
 
+   /**
+    * If pushStateWhenCoordinator is true, this property sets the maximum number of milliseconds
+    * that the process of pushing the in-memory state to the underlying cache loader should take.
+    * 
+    * @param pushStateTimeout
+    */
    public void setPushStateTimeout(Long pushStateTimeout) {
       testImmutability("pushStateTimeout");
       this.pushStateTimeout = pushStateTimeout;

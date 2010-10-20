@@ -59,20 +59,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * InfinispanConfiguration encapsulates root component of Infinispan XML configuration
- * <p/>
- * <p/>
- * Note that class InfinispanConfiguration contains JAXB annotations. These annotations determine how XML configuration
- * files are read into instances of configuration class hierarchy as well as they provide meta data for configuration
- * file XML schema generation. Please modify these annotations and Java element types they annotate with utmost
- * understanding and care.
- *
+ * InfinispanConfiguration encapsulates root component of Infinispan XML configuration. Can be empty
+ * for sensible defaults throughout, however that would only give you the most basic of local,
+ * non-clustered caches.
+ * 
  * @author Vladimir Blagojevic
- * @configRef name="infinispan",desc="The root element of an Infinispan configuration.  This element can be empty for sensible defaults throughout, however that would only give you the most basic of local, non-clustered caches."
  * @since 4.0
  */
 @XmlRootElement(name = "infinispan")
 @XmlAccessorType(XmlAccessType.FIELD)
+@ConfigurationDoc(name="infinispan")
 public class InfinispanConfiguration implements XmlConfigurationParser {
 
    private static final Log log = LogFactory.getLog(InfinispanConfiguration.class);

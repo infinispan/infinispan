@@ -15,11 +15,6 @@ import java.util.Properties;
 /**
  * Configures individual cache loaders
  * 
- * <p>
- * Note that class CacheLoaderConfig contains JAXB annotations. These annotations determine how XML
- * configuration files are read into instances of configuration class hierarchy as well as they
- * provide meta data for configuration file XML schema generation. Please modify these annotations
- * and Java element types they annotate with utmost understanding and care.
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic

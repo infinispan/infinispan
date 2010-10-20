@@ -33,17 +33,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Holds the configuration of the cache loader chain. ALL cache loaders should be defined using this
+ * Holds the configuration of the cache loader chain. All cache loaders should be defined using this
  * class, adding individual cache loaders to the chain by calling
  * {@link CacheLoaderManagerConfig#addCacheLoaderConfig}
  * 
- * <p>
- * Note that class CacheLoaderManagerConfig contains JAXB annotations. These annotations determine
- * how XML configuration files are read into instances of configuration class hierarchy as well as
- * they provide meta data for configuration file XML schema generation. Please modify these
- * annotations and Java element types they annotate with utmost understanding and care.
- * 
- * @configRef name="loaders",desc="Holds the configuration for cache loaders and stores."
+ *
  * 
  * @see <a href="../../../config.html#ce_default_loaders">Configuration reference</a>
  * 
@@ -54,40 +48,18 @@ import java.util.List;
  * @since 4.0
  */
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
+@ConfigurationDoc(name="loaders",desc="Holds the configuration for cache loaders and stores")
 public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBean {
    
    private static final long serialVersionUID = 2210349340378984424L;
 
-   /**
-    * @configRef desc="If true, data is only written to the cache store when it is evicted from memory,
-    *            a phenomenon known as 'passivation'. Next time the data is requested, it will be 'activated' which
-    *            means that data will be brought back to memory and removed from the persistent store.  This gives you
-    *            the ability to 'overflow' to disk, similar to swapping in an operating system.
-    *            <br /><br />
-    *            If false, the cache store contains a copy of the contents in memory, so writes to cache 
-    *            result in cache store writes.  This essentially gives you a 'write-through' configuration."
-    * */
+   @ConfigurationDocRef(bean=CacheLoaderManagerConfig.class,targetElement="setPassivation")
    protected Boolean passivation = false;
 
-   /**
-    * @configRef desc= "If true, when the cache starts, data stored in the cache store will be pre-loaded into 
-    *            memory. This is particularly useful when data in the cache store will be needed immediately 
-    *            after startup and you want to avoid cache operations being delayed as a result of loading this
-    *            data lazily.  Can be used to provide a 'warm-cache' on startup, however there is a performance
-    *            penalty as startup time is affected by this process."
-    * */
+   @ConfigurationDocRef(bean=CacheLoaderManagerConfig.class,targetElement="setPreload")
    protected Boolean preload = false;
 
-   /**
-    * @configRef desc="This setting should be set to true when multiple cache instances share the same cache store
-    *            (e.g., multiple nodes in a cluster using a JDBC-based CacheStore pointing to the same, shared
-    *            database.)  Setting this to true avoids multiple cache instances writing the same modification multiple
-    *            times. If enabled, only the node where the modification originated will write to the cache store.
-    *            <br /><br />
-    *            If disabled, each individual cache reacts to a potential remote update by storing the data to the cache
-    *            store. Note that this could be useful if each individual node has its own cache store - perhaps local
-    *            on-disk.
-    * */
+   @ConfigurationDocRef(bean=CacheLoaderManagerConfig.class,targetElement="setShared")
    protected Boolean shared = false;
 
    protected List<CacheLoaderConfig> cacheLoaderConfigs = new LinkedList<CacheLoaderConfig>();
@@ -96,12 +68,32 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
       return preload;
    }
 
+   /**
+    * If true, when the cache starts, data stored in the cache store will be pre-loaded into memory.
+    * This is particularly useful when data in the cache store will be needed immediately after
+    * startup and you want to avoid cache operations being delayed as a result of loading this data
+    * lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance
+    * penalty as startup time is affected by this process.
+    * 
+    * @param preload
+    */
    @XmlAttribute
    public void setPreload(Boolean preload) {
       testImmutability("preload");
       this.preload = preload;
    }
 
+   /**
+    * If true, data is only written to the cache store when it is evicted from memory, a phenomenon
+    * known as 'passivation'. Next time the data is requested, it will be 'activated' which means
+    * that data will be brought back to memory and removed from the persistent store. This gives you
+    * the ability to 'overflow' to disk, similar to swapping in an operating system. <br />
+    * <br />
+    * If false, the cache store contains a copy of the contents in memory, so writes to cache result
+    * in cache store writes. This essentially gives you a 'write-through' configuration.
+    * 
+    * @param passivation
+    */
    @XmlAttribute
    public void setPassivation(Boolean passivation) {
       testImmutability("passivation");
@@ -112,6 +104,19 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
       return passivation;
    }
 
+   /**
+    * This setting should be set to true when multiple cache instances share the same cache store
+    * (e.g., multiple nodes in a cluster using a JDBC-based CacheStore pointing to the same, shared
+    * database.) Setting this to true avoids multiple cache instances writing the same modification
+    * multiple times. If enabled, only the node where the modification originated will write to the
+    * cache store. <br />
+    * <br />
+    * If disabled, each individual cache reacts to a potential remote update by storing the data to
+    * the cache store. Note that this could be useful if each individual node has its own cache
+    * store - perhaps local on-disk.
+    * 
+    * @param shared
+    */
    @XmlAttribute
    public void setShared(Boolean shared) {
       testImmutability("shared");

@@ -1,34 +1,28 @@
 package org.infinispan.loaders;
 
 import org.infinispan.config.ConfigurationBeanVisitor;
+import org.infinispan.config.ConfigurationDoc;
+import org.infinispan.config.ConfigurationDocRef;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.util.Util;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.*;
-import javax.xml.bind.annotation.XmlType;
 
 /**
- * Configures {@link AbstractCacheStore}.  This allows you to tune a number of characteristics of the {@link
- * AbstractCacheStore}.
+ * Configures {@link AbstractCacheStore}. This allows you to tune a number of characteristics of the
+ * {@link AbstractCacheStore}.
  * <p/>
- * <ul> <li><tt>purgeSynchronously</tt> - whether {@link org.infinispan.loaders.CacheStore#purgeExpired()} calls happen
- * synchronously or not.  By default, this is set to <tt>false</tt>.</li>
- * <li><tt>purgerThreads</tt> - number of threads to use when purging.  Defaults to <tt>1</tt> if <tt>purgeSynchronously</tt>
- * is <tt>true</tt>, ignored if <tt>false</tt>.</li>
+ * <ul>
+ * <li><tt>purgeSynchronously</tt> - whether
+ * {@link org.infinispan.loaders.CacheStore#purgeExpired()} calls happen synchronously or not. By
+ * default, this is set to <tt>false</tt>.</li>
+ * <li><tt>purgerThreads</tt> - number of threads to use when purging. Defaults to <tt>1</tt> if
+ * <tt>purgeSynchronously</tt> is <tt>true</tt>, ignored if <tt>false</tt>.</li>
  * </ul>
  * 
- * <p>
- * Note that class AbstractCacheStoreConfig contains JAXB annotations. These annotations determine how XML
- * configuration files are read into instances of configuration class hierarchy as well as they
- * provide meta data for configuration file XML schema generation. Please modify these annotations
- * and Java element types they annotate with utmost understanding and care.
  * 
- * @configRef name="loader",desc="Responsible for loading/storing cache data from/to an external source." 
- *
+ * 
  * @author Mircea.Markus@jboss.com
  * @author Vladimir Blagojevic
  * @since 4.0
@@ -37,30 +31,25 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 @XmlType(propOrder= {"singletonStoreConfig", "asyncStoreConfig"})
+@ConfigurationDoc(name="loader",desc="Responsible for loading/storing cache data from/to an external source.")
 public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implements CacheStoreConfig {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = 4607371052771122893L;
-
-   /** @configRef desc="If true, any operation that modifies the cache (put, remove, clear, store...etc) won't be 
-    *             applied to the cache store.  This means that the cache store could become out of sync with the cache." */
+   
+   @ConfigurationDocRef(bean=AbstractCacheStoreConfig.class,targetElement="setIgnoreModifications")
    protected Boolean ignoreModifications = false;
 
-   /** @configRef desc="If true, fetch persistent state when joining a cluster. If multiple cache stores are chained, 
-    *             only one of them can have this property enabled. Persistent state transfer with a shared cache
-    *             store does not make sense, as the same persistent store that provides the data will just end up 
-    *             receiving it. Therefore, if a shared cache store is used, the cache will not allow a persistent 
-    *             state transfer even if a cache store has this property set to true. Finally, setting it to true only 
-    *             makes sense if in a clustered environment, and only 'replication' and 'invalidation' cluster modes are supported." */
+   @ConfigurationDocRef(bean=AbstractCacheStoreConfig.class,targetElement="setFetchPersistentState")
    protected Boolean fetchPersistentState = false;
 
-   /** @configRef desc="If true, purges this cache store when it starts up." */
+   @ConfigurationDocRef(bean=AbstractCacheStoreConfig.class,targetElement="setPurgeOnStartup")
    protected Boolean purgeOnStartup = false;
 
-   /** @configRef desc="If true, CacheStore#purgeExpired() call will be done synchronously" */
+   @ConfigurationDocRef(bean=AbstractCacheStoreConfig.class,targetElement="setPurgeSynchronously")
    protected Boolean purgeSynchronously = false;
 
-   /** @configRef desc="The number of threads to use when purging asynchronously." */
+   @ConfigurationDocRef(bean=AbstractCacheStoreConfig.class,targetElement="setPurgerThreads")
    protected Integer purgerThreads = 1;
 
    protected SingletonStoreConfig singletonStore = new SingletonStoreConfig();
@@ -77,11 +66,21 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       return purgerThreads;
    }
 
+   /**
+    * If true, CacheStore#purgeExpired() call will be done synchronously
+    * 
+    * @param purgeSynchronously
+    */
    public void setPurgeSynchronously(Boolean purgeSynchronously) {
       testImmutability("purgeSynchronously");
       this.purgeSynchronously = purgeSynchronously;
    }
 
+   /**
+    * The number of threads to use when purging asynchronously.
+    * 
+    * @param purgerThreads
+    */
    public void setPurgerThreads(Integer purgerThreads) {
       testImmutability("purgerThreads");
       this.purgerThreads = purgerThreads;
@@ -92,11 +91,30 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       return fetchPersistentState;
    }
 
+   /**
+    * If true, fetch persistent state when joining a cluster. If multiple cache stores are chained,
+    * only one of them can have this property enabled. Persistent state transfer with a shared cache
+    * store does not make sense, as the same persistent store that provides the data will just end
+    * up receiving it. Therefore, if a shared cache store is used, the cache will not allow a
+    * persistent state transfer even if a cache store has this property set to true. Finally,
+    * setting it to true only makes sense if in a clustered environment, and only 'replication' and
+    * 'invalidation' cluster modes are supported.
+    * 
+    * 
+    * @param fetchPersistentState
+    */
    public void setFetchPersistentState(Boolean fetchPersistentState) {
       testImmutability("fetchPersistentState");
       this.fetchPersistentState = fetchPersistentState;
    }
 
+   /**
+    * If true, any operation that modifies the cache (put, remove, clear, store...etc) won't be
+    * applied to the cache store. This means that the cache store could become out of sync with the
+    * cache.
+    * 
+    * @param ignoreModifications
+    */
    public void setIgnoreModifications(Boolean ignoreModifications) {
       testImmutability("ignoreModifications");
       this.ignoreModifications = ignoreModifications;
@@ -112,6 +130,12 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       return purgeOnStartup;
    }
 
+   /**
+    * 
+    * If true, purges this cache store when it starts up.
+    * 
+    * @param purgeOnStartup
+    */
    public void setPurgeOnStartup(Boolean purgeOnStartup) {
       testImmutability("purgeOnStartup");
       this.purgeOnStartup = purgeOnStartup;
