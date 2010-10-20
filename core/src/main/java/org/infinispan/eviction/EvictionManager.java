@@ -33,8 +33,6 @@ public interface EvictionManager {
     * @return true if eviction is enabled, false otherwise
     */
    boolean isEnabled();
-   
-   void preEvict(Object key);
-   
-   void postEvict(Object key, InternalCacheEntry value);
+
+   void onEntryEviction(Object key, InternalCacheEntry value);
 }
