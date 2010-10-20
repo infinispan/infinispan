@@ -37,6 +37,7 @@ public class MIMECacheEntry implements Serializable {
         this.contentType = contentType;
         this.data = data;
         this.lastModified = System.currentTimeMillis();
+        this.lastModified = (this.lastModified / 1000) * 1000;
     }
 
 
