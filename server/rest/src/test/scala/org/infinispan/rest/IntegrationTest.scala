@@ -304,6 +304,29 @@ class IntegrationTest {
       Client call get
       assertEquals(HttpServletResponse.SC_NOT_FOUND, get.getStatusCode)
    }
+
+   def testSerializedObjects(m: Method) = {
+      // assume this has been serialized on the client.  So it is a byte array.
+      val serializedOnClient: Array[Byte] = Array(0x65, 0x66, 0x67)
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestHeader("Content-Type", "application/x-java-serialized-object")
+      put.setRequestBody(new ByteArrayInputStream(serializedOnClient))
+      Client call put
+      assertEquals(HttpServletResponse.SC_OK, put.getStatusCode)
+
+      val get = new GetMethod(fullPathKey)
+      get.setRequestHeader("Accept", "application/x-java-serialized-object")
+      Client call get
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
+
+      // lets assert that the byte array received is the same as what we put in
+      val dataRead = new BufferedInputStream(get.getResponseBodyAsStream)
+      val bytesRead = new Array[Byte](3)
+      dataRead.read(bytesRead)
+
+      assertEquals(serializedOnClient, bytesRead)
+   }
 }
 
 
