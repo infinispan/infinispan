@@ -1,5 +1,7 @@
 package org.infinispan.interceptors;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -17,19 +19,18 @@ import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 @MBean(objectName = "Activation", description = "Component that handles activating entries that have been passivated to a CacheStore by loading them into memory.")
 public class ActivationInterceptor extends CacheLoaderInterceptor {
 
-   private AtomicLong activations = new AtomicLong(0);
+   private final AtomicLong activations = new AtomicLong(0);
    private CacheStore store;
 
    @Start(priority = 15)
    public void setCacheStore() {
       store = clm == null ? null : clm.getCacheStore();
-      if (store == null)
+      if (store == null) {
          throw new ConfigurationException("passivation can only be used with a CacheLoader that implements CacheStore!");
+      }
    }
 
    @Override
@@ -79,18 +80,21 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    }
 
    @Override
-   protected void sendNotification(Object key, boolean pre, InvocationContext ctx) {
-      super.sendNotification(key, pre, ctx);
-      notifier.notifyCacheEntryActivated(key, pre, ctx);
+   protected void sendNotification(Object key, Object value, boolean pre, InvocationContext ctx) {
+      super.sendNotification(key, value, pre, ctx);
+      notifier.notifyCacheEntryActivated(key, value, pre, ctx);
    }
 
    @ManagedAttribute(description = "Number of activation events")
    @Metric(displayName = "Number of cache entries activated", measurementType = MeasurementType.TRENDSUP)
    public String getActivations() {
-      if (!getStatisticsEnabled()) return "N/A";
+      if (!getStatisticsEnabled()) {
+         return "N/A";
+      }
       return String.valueOf(activations.get());
    }
 
+   @Override
    @ManagedOperation(description = "Resets statistics gathered by this component")
    @Operation(displayName = "Reset statistics")
    public void resetStatistics() {

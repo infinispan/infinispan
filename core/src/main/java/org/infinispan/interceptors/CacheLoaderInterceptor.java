@@ -21,6 +21,8 @@
  */
 package org.infinispan.interceptors;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -45,8 +47,6 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
 public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
@@ -75,7 +75,9 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       Object key;
-      if ((key = command.getKey()) != null) loadIfNeeded(ctx, key);
+      if ((key = command.getKey()) != null) {
+         loadIfNeeded(ctx, key);
+      }
       return invokeNextInterceptor(ctx, command);
    }
 
@@ -92,22 +94,29 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
       Object[] keys;
-      if ((keys = command.getKeys()) != null && keys.length > 0)
-         for (Object key : command.getKeys()) loadIfNeeded(ctx, key);
+      if ((keys = command.getKeys()) != null && keys.length > 0) {
+         for (Object key : command.getKeys()) {
+            loadIfNeeded(ctx, key);
+         }
+      }
       return invokeNextInterceptor(ctx, command);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       Object key;
-      if ((key = command.getKey()) != null) loadIfNeededAndUpdateStats(ctx, key);
+      if ((key = command.getKey()) != null) {
+         loadIfNeededAndUpdateStats(ctx, key);
+      }
       return invokeNextInterceptor(ctx, command);
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object key;
-      if ((key = command.getKey()) != null) loadIfNeededAndUpdateStats(ctx, key);
+      if ((key = command.getKey()) != null) {
+         loadIfNeededAndUpdateStats(ctx, key);
+      }
       return invokeNextInterceptor(ctx, command);
    }
 
@@ -131,14 +140,20 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
                return true;
             }
          } finally {
-            if (keyLocked && unlockOnWayOut) entryFactory.releaseLock(key);
+            if (keyLocked && unlockOnWayOut) {
+               entryFactory.releaseLock(key);
+            }
          }
 
          // we *may* need to load this.
          InternalCacheEntry loaded = loader.load(key);
          if (loaded == null) {
-            if (log.isTraceEnabled()) log.trace("No need to load.  Key doesn't exist in the loader.");
-            if (keyLocked) entryFactory.releaseLock(key);
+            if (log.isTraceEnabled()) {
+               log.trace("No need to load.  Key doesn't exist in the loader.");
+            }
+            if (keyLocked) {
+               entryFactory.releaseLock(key);
+            }
             return false;
          }
 
@@ -163,11 +178,13 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
     * @param ctx the current invocation's context
     * @param key key to record
     * @param entry the appropriately locked entry in the caller's context
-    * @param loadedEntry the internal entry loaded from the cache store. 
+    * @param loadedEntry the internal entry loaded from the cache store.
     */
    private MVCCEntry recordLoadedEntry(InvocationContext ctx, Object key, MVCCEntry entry, InternalCacheEntry loadedEntry) throws Exception {
-      boolean entryExists = (loadedEntry != null);
-      if (log.isTraceEnabled()) log.trace("Entry exists in loader? " + entryExists);
+      boolean entryExists = loadedEntry != null;
+      if (log.isTraceEnabled()) {
+         log.trace("Entry exists in loader? " + entryExists);
+      }
 
       if (getStatisticsEnabled()) {
          if (entryExists) {
@@ -178,22 +195,23 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       }
 
       if (entryExists) {
-         sendNotification(key, true, ctx);
-         entry.setValue(loadedEntry.getValue());
+         final Object value = loadedEntry.getValue();
+         // FIXME: There's no point to trigger the entryLoaded/Activated event twice.
+         sendNotification(key, value, true, ctx);
+         entry.setValue(value);
          entry.setLifespan(loadedEntry.getLifespan());
          entry.setMaxIdle(loadedEntry.getMaxIdle());
          // TODO shouldn't we also be setting last used and created timestamps?
          entry.setValid(true);
 
-         notifier.notifyCacheEntryLoaded(key, false, ctx);
-         sendNotification(key, false, ctx);
+         sendNotification(key, value, false, ctx);
       }
 
       return entry;
    }
 
-   protected void sendNotification(Object key, boolean pre, InvocationContext ctx) {
-      notifier.notifyCacheEntryLoaded(key, pre, ctx);
+   protected void sendNotification(Object key, Object value, boolean pre, InvocationContext ctx) {
+      notifier.notifyCacheEntryLoaded(key, value, pre, ctx);
    }
 
    private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key) throws Throwable {
@@ -215,6 +233,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       return cacheMisses.get();
    }
 
+   @Override
    @ManagedOperation(description = "Resets statistics gathered by this component")
    @Operation(displayName = "Reset Statistics")
    public void resetStatistics() {

@@ -1,6 +1,13 @@
 package org.infinispan.notifications.cachelistener;
 
 import static org.easymock.EasyMock.*;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
@@ -14,11 +21,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 @Test(groups = "functional", testName = "notifications.cachelistener.CacheNotifierTest")
 public class CacheNotifierTest extends AbstractInfinispanTest {
@@ -120,9 +122,9 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
    public void testVisit() throws Exception {
       initCacheData("key", "value");
 
-      mockNotifier.notifyCacheEntryVisited(eq("key"), eq(true), isA(InvocationContext.class));
+      mockNotifier.notifyCacheEntryVisited(eq("key"), eq("value"), eq(true), isA(InvocationContext.class));
       expectLastCall().once();
-      mockNotifier.notifyCacheEntryVisited(eq("key"), eq(false), isA(InvocationContext.class));
+      mockNotifier.notifyCacheEntryVisited(eq("key"), eq("value"), eq(false), isA(InvocationContext.class));
       expectLastCall().once();
       replay(mockNotifier);
       cache.get("key");

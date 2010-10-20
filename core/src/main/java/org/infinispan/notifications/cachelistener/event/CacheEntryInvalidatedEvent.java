@@ -28,4 +28,10 @@ package org.infinispan.notifications.cachelistener.event;
  * @since 4.0
  */
 public interface CacheEntryInvalidatedEvent extends CacheEntryEvent {
+   /**
+    * Retrieves the value of the entry being activated.
+    *
+    * @return the value of the invalidated entry
+    */
+   Object getValue();
 }

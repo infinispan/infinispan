@@ -28,4 +28,10 @@ package org.infinispan.notifications.cachelistener.event;
  * @since 4.0
  */
 public interface CacheEntryEvictedEvent extends CacheEntryEvent {
+   /**
+    * Retrieves the value of the entry being evicted.
+    *
+    * @return the value of the evicted entry
+    */
+   Object getValue();
 }

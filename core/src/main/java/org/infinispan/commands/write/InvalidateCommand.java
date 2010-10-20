@@ -21,6 +21,8 @@
  */
 package org.infinispan.commands.write;
 
+import java.util.Arrays;
+
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.Ids;
@@ -29,8 +31,6 @@ import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Arrays;
 
 
 /**
@@ -62,19 +62,23 @@ public class InvalidateCommand extends RemoveCommand {
     */
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      if (trace) log.trace("Invalidating keys {0}", Arrays.toString(keys));
-      for (Object k : keys) invalidate(ctx, k);
+      if (trace) {
+         log.trace("Invalidating keys {0}", Arrays.toString(keys));
+      }
+      for (Object k : keys) {
+         invalidate(ctx, k);
+      }
       return null;
    }
 
    protected void invalidate(InvocationContext ctx, Object keyToInvalidate) throws Throwable {
-      this.key = keyToInvalidate; // so that the superclass can see it
+      key = keyToInvalidate; // so that the superclass can see it
       super.perform(ctx);
    }
 
    @Override
    protected void notify(InvocationContext ctx, Object value, boolean isPre) {
-      notifier.notifyCacheEntryInvalidated(key, isPre, ctx);
+      notifier.notifyCacheEntryInvalidated(key, value, isPre, ctx);
    }
 
    @Override
@@ -130,13 +134,21 @@ public class InvalidateCommand extends RemoveCommand {
 
    @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof InvalidateCommand)) return false;
-      if (!super.equals(o)) return false;
+      if (this == o) {
+         return true;
+      }
+      if (!(o instanceof InvalidateCommand)) {
+         return false;
+      }
+      if (!super.equals(o)) {
+         return false;
+      }
 
       InvalidateCommand that = (InvalidateCommand) o;
 
-      if (!Arrays.equals(keys, that.keys)) return false;
+      if (!Arrays.equals(keys, that.keys)) {
+         return false;
+      }
       return true;
    }
 

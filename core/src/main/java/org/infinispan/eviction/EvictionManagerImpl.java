@@ -146,20 +146,21 @@ public class EvictionManagerImpl implements EvictionManager {
 
    @Override
    public void onEntryEviction(Object key, InternalCacheEntry value) {
+      final Object entryValue = value.getValue();
       InvocationContext context = getInvocationContext();
       try {
          acquireLock(context, key);
       } catch (Exception e) {
          log.warn("Could not acquire lock for eviction of {0}", key, e);
       }
-      cacheNotifier.notifyCacheEntryEvicted(key, true, context);
+      cacheNotifier.notifyCacheEntryEvicted(key, entryValue, true, context);
 
       try {
          passivator.passivate(key, value, null);
       } catch (CacheLoaderException e) {
          log.warn("Unable to passivate entry under {0}", key, e);
       }
-      cacheNotifier.notifyCacheEntryEvicted(key, false, getInvocationContext());
+      cacheNotifier.notifyCacheEntryEvicted(key, entryValue, false, getInvocationContext());
       releaseLock(key);
    }
 
