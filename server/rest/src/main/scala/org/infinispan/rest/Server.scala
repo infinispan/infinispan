@@ -42,6 +42,8 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
                   case MediaType.APPLICATION_XML => Response.ok.`type`(selectedMediaType).entity(streamIt(xstream.toXML(obj, _))).build
                   case _ =>
                      obj match {
+                        case ba: Array[Byte] =>
+                           Response.ok.`type`("application/x-java-serialized-object").entity(streamIt(_.write(ba))).build
                         case ser: Serializable =>
                            Response.ok.`type`("application/x-java-serialized-object").entity(streamIt(new ObjectOutputStream(_).writeObject(ser))).build
                         case _ => Response.notAcceptable(variantList).build
@@ -90,9 +92,13 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
       if (request.getMethod == "POST" && cache.containsKey(key)) {
          Response.status(Status.CONFLICT).build()
       } else {
-         val obj = if (mediaType == "application/x-java-serialized-object")
-            new ObjectInputStream(new ByteArrayInputStream(data)).readObject
-         else new MIMECacheEntry(mediaType, data)
+         val obj = if (mediaType == "application/x-java-serialized-object") {
+            try {
+               new ObjectInputStream(new ByteArrayInputStream(data)).readObject
+            } catch {
+               case e: Exception => data
+            }
+         } else new MIMECacheEntry(mediaType, data)
          (ttl, idleTime, useAsync) match {
             case (0, 0, false) => cache.put(key, obj)
             case (x, 0, false) => cache.put(key, obj, ttl, TimeUnit.SECONDS)
