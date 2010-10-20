@@ -28,4 +28,10 @@ package org.infinispan.notifications.cachelistener.event;
  * @since 4.0
  */
 public interface CacheEntryVisitedEvent extends CacheEntryEvent {
+   /**
+    * Retrieves the value of the entry being visited.
+    *
+    * @return the value of the visited entry
+    */
+   Object getValue();
 }

@@ -52,14 +52,16 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      if (key == null) throw new NullPointerException("Key is null!!");
+      if (key == null) {
+         throw new NullPointerException("Key is null!!");
+      }
       super.perform(ctx);
       return null;
    }
 
    @Override
    public void notify(InvocationContext ctx, Object value, boolean isPre) {
-      notifier.notifyCacheEntryEvicted(key, isPre, ctx);
+      notifier.notifyCacheEntryEvicted(key, value, isPre, ctx);
    }
 
    @Override

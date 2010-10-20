@@ -53,32 +53,32 @@ public interface CacheNotifier extends Listenable {
    /**
     * Notifies all registered listeners of a CacheEntryVisited event.
     */
-   void notifyCacheEntryVisited(Object key, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryVisited(Object key, Object value, boolean pre, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a CacheEntryEvicted event.
     */
-   void notifyCacheEntryEvicted(Object key, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryEvicted(Object key, Object value, boolean pre, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a CacheEntryInvalidated event.
     */
-   void notifyCacheEntryInvalidated(Object key, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryInvalidated(Object key, Object value, boolean pre, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a CacheEntryLoaded event.
     */
-   void notifyCacheEntryLoaded(Object key, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryLoaded(Object key, Object value, boolean pre, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a CacheEntryActivated event.
     */
-   void notifyCacheEntryActivated(Object key, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryActivated(Object key, Object value, boolean pre, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a CacheEntryPassivated event.
     */
-   void notifyCacheEntryPassivated(Object key, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryPassivated(Object key, Object value, boolean pre, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a transaction completion event.

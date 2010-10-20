@@ -1,5 +1,7 @@
 package org.infinispan.eviction;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -12,8 +14,6 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 public class PassivationManagerImpl implements PassivationManager {
 
@@ -39,8 +39,9 @@ public class PassivationManagerImpl implements PassivationManager {
       enabled = cfg.getCacheLoaderManagerConfig().isPassivation();
       if (enabled) {
          cacheStore = cacheLoaderManager == null ? null : cacheLoaderManager.getCacheStore();
-         if (cacheStore == null)
+         if (cacheStore == null) {
             throw new ConfigurationException("passivation can only be used with a CacheLoader that implements CacheStore!");
+         }
 
          enabled = cacheLoaderManager.isEnabled() && cacheLoaderManager.isUsingPassivation();
          statsEnabled = cfg.isExposeJmxStatistics();
@@ -55,12 +56,15 @@ public class PassivationManagerImpl implements PassivationManager {
    @Override
    public void passivate(Object key, InternalCacheEntry entry, InvocationContext ctx) throws CacheLoaderException {
       if (enabled) {
+         final Object value = entry != null ? entry.getValue() : null;
          // notify listeners that this entry is about to be passivated
-         notifier.notifyCacheEntryPassivated(key, true, ctx);
+         notifier.notifyCacheEntryPassivated(key, value, true, ctx);
          log.trace("Passivating entry {0}", key);
          cacheStore.store(entry);
-         notifier.notifyCacheEntryPassivated(key, false, ctx);
-         if (statsEnabled && entry != null) passivations.getAndIncrement();
+         notifier.notifyCacheEntryPassivated(key, value, false, ctx);
+         if (statsEnabled && entry != null) {
+            passivations.getAndIncrement();
+         }
       }
    }
 

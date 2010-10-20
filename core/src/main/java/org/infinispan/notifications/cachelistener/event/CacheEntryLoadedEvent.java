@@ -28,4 +28,10 @@ package org.infinispan.notifications.cachelistener.event;
  * @since 4.0
  */
 public interface CacheEntryLoadedEvent extends CacheEntryEvent {
+   /**
+    * Retrieves the value of the entry being loaded.
+    *
+    * @return the value of the loaded entry
+    */
+   Object getValue();
 }

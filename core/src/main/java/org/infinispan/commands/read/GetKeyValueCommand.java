@@ -32,7 +32,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Implements functionality defined by {@link org.infinispan.Cache#get(Object)} and 
+ * Implements functionality defined by {@link org.infinispan.Cache#get(Object)} and
  * {@link org.infinispan.Cache#containsKey(Object)} operations
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
@@ -54,6 +54,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    public GetKeyValueCommand() {
    }
 
+   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitGetKeyValueCommand(ctx, this);
    }
@@ -65,23 +66,33 @@ public class GetKeyValueCommand extends AbstractDataCommand {
       this.returnCacheEntry = returnCacheEntry;
    }
 
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       CacheEntry entry = ctx.lookupEntry(key);
       if (entry == null || entry.isNull()) {
-         if (trace) log.trace("Entry not found");
+         if (trace) {
+            log.trace("Entry not found");
+         }
          return null;
       }
       if (entry.isRemoved()) {
-         if (trace) log.trace("Entry has been deleted and is of type " + entry.getClass().getSimpleName());
+         if (trace) {
+            log.trace("Entry has been deleted and is of type " + entry.getClass().getSimpleName());
+         }
          return null;
       }
-      notifier.notifyCacheEntryVisited(key, true, ctx);
-      Object result = returnCacheEntry ? entry : entry.getValue();
-      if (trace) log.trace("Found value " + result);
-      notifier.notifyCacheEntryVisited(key, false, ctx);
+      final Object value = entry.getValue();
+      // FIXME: There's no point in notifying twice.
+      notifier.notifyCacheEntryVisited(key, value, true, ctx);
+      final Object result = returnCacheEntry ? entry : value;
+      if (trace) {
+         log.trace("Found value " + result);
+      }
+      notifier.notifyCacheEntryVisited(key, value, false, ctx);
       return result;
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }

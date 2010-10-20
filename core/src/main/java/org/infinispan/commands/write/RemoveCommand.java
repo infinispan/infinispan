@@ -86,11 +86,21 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          return false;
       }
 
-      notify(ctx, e.getValue(), true);
+      final Object removedValue = e.getValue();
+      notify(ctx, removedValue, true);
       e.setRemoved(true);
       e.setValid(false);
-      notify(ctx, null, false);
-      return value == null ? e.getValue() : true;
+
+      // Eviction has no notion of pre/post event since 4.2.0.ALPHA4.
+      // EvictionManagerImpl.onEntryEviction() triggers both pre and post events
+      // with non-null values, so we should do the same here as an ugly workaround.
+      if (this instanceof EvictCommand) {
+         notify(ctx, removedValue, false);
+      } else {
+         // FIXME: Do we really need to notify with null when a user can be given with more information?
+         notify(ctx, null, false);
+      }
+      return value == null ? removedValue : true;
    }
 
    protected void notify(InvocationContext ctx, Object value, boolean isPre) {
@@ -101,18 +111,28 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       return COMMAND_ID;
    }
 
+   @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof RemoveCommand)) return false;
-      if (!super.equals(o)) return false;
+      if (this == o) {
+         return true;
+      }
+      if (!(o instanceof RemoveCommand)) {
+         return false;
+      }
+      if (!super.equals(o)) {
+         return false;
+      }
 
       RemoveCommand that = (RemoveCommand) o;
 
-      if (value != null ? !value.equals(that.value) : that.value != null) return false;
+      if (value != null ? !value.equals(that.value) : that.value != null) {
+         return false;
+      }
 
       return true;
    }
 
+   @Override
    public int hashCode() {
       int result = super.hashCode();
       result = 31 * result + (value != null ? value.hashCode() : 0);
@@ -120,6 +140,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    }
 
 
+   @Override
    public String toString() {
       return getClass().getSimpleName() + "{" +
             "key=" + key +
