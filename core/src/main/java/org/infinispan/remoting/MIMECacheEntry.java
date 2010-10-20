@@ -1,6 +1,6 @@
 package org.infinispan.remoting;
 
-import java.io.*;
+import java.io.Serializable;
 
 /**
  * Wrapper object for entries that arrive via RESTful PUT/POST interface.
@@ -36,9 +36,6 @@ public class MIMECacheEntry implements Serializable {
     public MIMECacheEntry(String contentType, byte[] data) {
         this.contentType = contentType;
         this.data = data;
-        this.lastModified = System.currentTimeMillis();
-        this.lastModified = (this.lastModified / 1000) * 1000;
+        lastModified = System.currentTimeMillis() / 1000 * 1000;
     }
-
-
 }
