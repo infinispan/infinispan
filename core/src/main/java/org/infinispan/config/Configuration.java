@@ -375,7 +375,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    
    /**
     * 
-    * This is the timeout used to wait for an acknowledgment when making a remote call, after which
+    * This is the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which
     * the call is aborted and an exception is thrown.
     * 
     * @param syncReplTimeout
@@ -1452,7 +1452,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * If this element is present, all communications are asynchronous, in that whenever a thread
     * sends a message sent over the wire, it does not wait for an acknowledgment before returning.
-    * This element is mutually exclusive with the <sync /> element.<br />
+    * This element is mutually exclusive with the  <code> &lt;sync /&gt;</code> element.<br />
     * <br />
     * Characteristics of this can be tuned here.
     * 
@@ -1816,7 +1816,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * If this element is present, all communications are synchronous, in that whenever a thread
     * sends a message sent over the wire, it blocks until it receives an acknowledgment from the
-    * recipient. This element is mutually exclusive with the <async /> element. <br />
+    * recipient. This element is mutually exclusive with the <code> &lt;async /&gt;</code> element. <br />
     * <br />
     * Characteristics of this can be tuned here.
     * 

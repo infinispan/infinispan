@@ -15,7 +15,7 @@ import org.infinispan.loaders.CacheStore;
  *                                                 configuration setting by ensuring lock managers use a 0-millisecond
  *                                                 lock acquisition timeout.  Useful if you only want to acquire a lock
  *                                                 on an entry <i>if and only if</i> the lock is uncontended.</li>
- *    <li>{@link #CACHE_MODE_LOCAL} - forces LOCAL mode opersation, even if the cache is configured to use a clustered
+ *    <li>{@link #CACHE_MODE_LOCAL} - forces LOCAL mode operation, even if the cache is configured to use a clustered
  *                                    mode like replication, invalidation or distribution.  Applying this flag will
  *                                    suppress any RPC messages otherwise associated with this invocation.</li>
  *    <li>{@link #SKIP_LOCKING} - bypasses lock acquisition for this invocation altogether.  A potentially dangerous
@@ -52,7 +52,7 @@ public enum Flag {
     */
    ZERO_LOCK_ACQUISITION_TIMEOUT,
    /**
-    * Forces LOCAL mode opersation, even if the cache is configured to use a clustered mode like replication,
+    * Forces LOCAL mode operation, even if the cache is configured to use a clustered mode like replication,
     * invalidation or distribution.  Applying this flag will suppress any RPC messages otherwise associated with this
     * invocation.
     */

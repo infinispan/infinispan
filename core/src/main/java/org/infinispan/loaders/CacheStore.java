@@ -118,7 +118,7 @@ public interface CacheStore extends CacheLoader {
     * <p/>
     * This method <i>may</b> be invoked on a transaction for which there is <i>no</i> prior {@link
     * #prepare(java.util.List, org.infinispan.transaction.xa.GlobalTransaction, boolean)}.  The implementation would
-    * need to deal with this case acordingly.  Typically, this would be a no-op, after ensuring any resources attached
+    * need to deal with this case accordingly.  Typically, this would be a no-op, after ensuring any resources attached
     * to the transaction are cleared up.
     * <p/>
     * Also note that this method <i>may</i> be invoked on a thread which is different from the {@link
@@ -136,7 +136,7 @@ public interface CacheStore extends CacheLoader {
     * <p/>
     * This method <i>may</b> be invoked on a transaction for which there is <i>no</i> prior {@link
     * #prepare(java.util.List, org.infinispan.transaction.xa.GlobalTransaction, boolean)}.  The implementation would
-    * need to deal with this case acordingly.  Typically, this would be a no-op, after ensuring any resources attached
+    * need to deal with this case accordingly.  Typically, this would be a no-op, after ensuring any resources attached
     * to the transaction are cleared up.
     * <p/>
     * Also note that this method <i>may</i> be invoked on a thread which is different from the {@link
