@@ -43,7 +43,7 @@ import java.util.List;
  * <p/>
  * </pre>
  * <p/>
- * Note that this will cuse {@link #createCacheManagers()}  to be called befpre each method.
+ * Note that this will cuse {@link #createCacheManagers()}  to be called before each method.
  *
  * @author Mircea.Markus@jboss.com
  */
