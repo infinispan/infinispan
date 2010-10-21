@@ -93,7 +93,7 @@
       <!--
          Used to enable invocation batching and allow the use of Cache.startBatch()/endBatch() methods.
       -->
-      <invocationBatching enabled="false"/>
+      <invocationBatching enabled="true"/>
 
       <!--
          This element specifies that the cache is clustered.
