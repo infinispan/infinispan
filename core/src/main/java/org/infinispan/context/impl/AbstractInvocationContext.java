@@ -143,8 +143,8 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       }
    }
 
-   public Set getLockedKeys() {
-      Set result = new HashSet();
+   public Set<Object> getLockedKeys() {
+      Set<Object> result = new HashSet<Object>();
       for (Object key : getLookedUpEntries().keySet()) {
          if (hasLockedKey(key))
             result.add(key);

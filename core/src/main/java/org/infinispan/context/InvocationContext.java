@@ -57,6 +57,6 @@ public interface InvocationContext extends EntryLookup, FlagContainer, Cloneable
    /**
     * Returns the set of keys that are locked for writing.
     */
-   public Set getLockedKeys();
+   public Set<Object> getLockedKeys();
 
 }
