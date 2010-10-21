@@ -252,6 +252,18 @@ public class TestCacheManagerFactory {
       return c;
    }
 
+   public static Configuration getDefaultConfiguration(boolean transactional, Configuration.CacheMode cacheMode) {
+      Configuration c = new Configuration();
+      if (transactional) amendJTA(c);
+      c.setCacheMode(cacheMode);
+      if (cacheMode.isClustered()) {
+         c.setSyncRollbackPhase(true);
+         c.setSyncCommitPhase(true);
+      }
+      return c;
+   }
+
+
    private static void amendTransport(GlobalConfiguration configuration) {
       if (configuration.getTransportClass() != null) { //this is local
          Properties newTransportProps = new Properties();

@@ -198,6 +198,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       waitForClusterToForm(null);
    }
 
+   protected TransactionManager tm(Cache<?, ?> c) {
+      return c.getAdvancedCache().getTransactionManager();
+   }
+
    protected TransactionManager tm(int i) {
       return cache(i).getAdvancedCache().getTransactionManager();
    }
