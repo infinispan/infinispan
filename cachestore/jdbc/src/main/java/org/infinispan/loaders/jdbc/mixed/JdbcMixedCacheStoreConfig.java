@@ -53,7 +53,7 @@ public class JdbcMixedCacheStoreConfig extends AbstractJdbcCacheStoreConfig {
    }
 
    public JdbcMixedCacheStoreConfig() {
-      this.cacheLoaderClassName = JdbcMixedCacheStore.class.getName();
+      cacheLoaderClassName = JdbcMixedCacheStore.class.getName();
    }
 
    public void setConnectionFactoryConfig(ConnectionFactoryConfig connectionFactoryConfig) {
@@ -86,119 +86,125 @@ public class JdbcMixedCacheStoreConfig extends AbstractJdbcCacheStoreConfig {
       config.setPurgeSynchronously(true); //just to make sure we don't create another thread
       config.setLockConcurrencyLevel(stringsConcurrencyLevel);
       config.setLockAcquistionTimeout(lockAcquistionTimeout);
-      if (key2StringMapper != null) config.setKey2StringMapperClass(key2StringMapper);
+      if (key2StringMapper != null) {
+         config.setKey2StringMapperClass(key2StringMapper);
+      }
       return config;
    }
 
    public void setIdColumnNameForStrings(String idColumnNameForStrings) {
       testImmutability("stringsTableManipulation");
-      this.stringsTableManipulation.setIdColumnName(idColumnNameForStrings);
+      stringsTableManipulation.setIdColumnName(idColumnNameForStrings);
    }
 
    public void setIdColumnTypeForStrings(String idColumnTypeForStrings) {
       testImmutability("stringsTableManipulation");
-      this.stringsTableManipulation.setIdColumnType(idColumnTypeForStrings);
+      stringsTableManipulation.setIdColumnType(idColumnTypeForStrings);
    }
 
    public void setTableNamePrefixForStrings(String tableNameForStrings) {
       testImmutability("stringsTableManipulation");
-      if (tableNameForStrings == null) throw new IllegalArgumentException("Null table name not allowed.");
-      if (tableNameForStrings.equals(this.binaryTableManipulation.getTableNamePrefix())) {
+      if (tableNameForStrings == null) {
+         throw new IllegalArgumentException("Null table name not allowed.");
+      }
+      if (tableNameForStrings.equals(binaryTableManipulation.getTableNamePrefix())) {
          throw new IllegalArgumentException("Same table name is used for both cache loaders, this is not allowed!");
       }
-      this.stringsTableManipulation.setTableNamePrefix(tableNameForStrings);
+      stringsTableManipulation.setTableNamePrefix(tableNameForStrings);
    }
 
    public void setDataColumnNameForStrings(String dataColumnNameForStrings) {
       testImmutability("stringsTableManipulation");
-      this.stringsTableManipulation.setDataColumnName(dataColumnNameForStrings);
+      stringsTableManipulation.setDataColumnName(dataColumnNameForStrings);
    }
 
    public void setDataColumnTypeForStrings(String dataColumnTypeForStrings) {
       testImmutability("stringsTableManipulation");
-      this.stringsTableManipulation.setDataColumnType(dataColumnTypeForStrings);
+      stringsTableManipulation.setDataColumnType(dataColumnTypeForStrings);
    }
 
    public void setTimestampColumnNameForStrings(String timestampColumnNameForStrings) {
       testImmutability("stringsTableManipulation");
-      this.stringsTableManipulation.setTimestampColumnName(timestampColumnNameForStrings);
+      stringsTableManipulation.setTimestampColumnName(timestampColumnNameForStrings);
    }
 
    public void setTimestampColumnTypeForStrings(String timestampColumnTypeForStrings) {
       testImmutability("stringsTableManipulation");
-      this.stringsTableManipulation.setTimestampColumnType(timestampColumnTypeForStrings);
+      stringsTableManipulation.setTimestampColumnType(timestampColumnTypeForStrings);
    }
 
    public void setCreateTableOnStartForStrings(boolean createTableOnStartForStrings) {
       testImmutability("stringsTableManipulation");
-      this.stringsTableManipulation.setCreateTableOnStart(createTableOnStartForStrings);
+      stringsTableManipulation.setCreateTableOnStart(createTableOnStartForStrings);
    }
 
    public void setDropTableOnExitForStrings(boolean dropTableOnExitForStrings) {
       testImmutability("stringsTableManipulation");
-      this.stringsTableManipulation.setDropTableOnExit(dropTableOnExitForStrings);
+      stringsTableManipulation.setDropTableOnExit(dropTableOnExitForStrings);
    }
 
    public void setIdColumnNameForBinary(String idColumnNameForBinary) {
-      this.binaryTableManipulation.setIdColumnName(idColumnNameForBinary);
+      binaryTableManipulation.setIdColumnName(idColumnNameForBinary);
    }
 
    public void setIdColumnTypeForBinary(String idColumnTypeForBinary) {
       testImmutability("stringsTableManipulation");
-      this.binaryTableManipulation.setIdColumnType(idColumnTypeForBinary);
+      binaryTableManipulation.setIdColumnType(idColumnTypeForBinary);
    }
 
    public void setTableNamePrefixForBinary(String tableNameForBinary) {
       testImmutability("binaryTableManipulation");
-      if (tableNameForBinary == null) throw new IllegalArgumentException("Null table name not allowed.");
-      if (tableNameForBinary.equals(this.stringsTableManipulation.getTableNamePrefix())) {
+      if (tableNameForBinary == null) {
+         throw new IllegalArgumentException("Null table name not allowed.");
+      }
+      if (tableNameForBinary.equals(stringsTableManipulation.getTableNamePrefix())) {
          throw new IllegalArgumentException("Same table name is used for both cache loaders, this is not allowed!");
       }
-      this.binaryTableManipulation.setTableNamePrefix(tableNameForBinary);
+      binaryTableManipulation.setTableNamePrefix(tableNameForBinary);
    }
 
    public void setDataColumnNameForBinary(String dataColumnNameForBinary) {
       testImmutability("binaryTableManipulation");
-      this.binaryTableManipulation.setDataColumnName(dataColumnNameForBinary);
+      binaryTableManipulation.setDataColumnName(dataColumnNameForBinary);
    }
 
    public void setDataColumnTypeForBinary(String dataColumnTypeForBinary) {
       testImmutability("binaryTableManipulation");
-      this.binaryTableManipulation.setDataColumnType(dataColumnTypeForBinary);
+      binaryTableManipulation.setDataColumnType(dataColumnTypeForBinary);
    }
 
    public void setTimestampColumnNameForBinary(String timestampColumnNameForBinary) {
       testImmutability("binaryTableManipulation");
-      this.binaryTableManipulation.setTimestampColumnName(timestampColumnNameForBinary);
+      binaryTableManipulation.setTimestampColumnName(timestampColumnNameForBinary);
    }
 
    public void setTimestampColumnTypeForBinary(String timestampColumnTypeForBinary) {
-      this.binaryTableManipulation.setTimestampColumnType(timestampColumnTypeForBinary);
+      binaryTableManipulation.setTimestampColumnType(timestampColumnTypeForBinary);
    }
 
    public void setCreateTableOnStartForBinary(boolean createTableOnStartForBinary) {
       testImmutability("binaryTableManipulation");
-      this.binaryTableManipulation.setCreateTableOnStart(createTableOnStartForBinary);
+      binaryTableManipulation.setCreateTableOnStart(createTableOnStartForBinary);
    }
 
    public void setDropTableOnExitForBinary(boolean dropTableOnExitForBinary) {
       testImmutability("binaryTableManipulation");
-      this.binaryTableManipulation.setDropTableOnExit(dropTableOnExitForBinary);
+      binaryTableManipulation.setDropTableOnExit(dropTableOnExitForBinary);
    }
 
    public void setKey2StringMapperClass(String name) {
       testImmutability("key2StringMapper");
-      this.key2StringMapper = name;
+      key2StringMapper = name;
    }
 
    public void setLockConcurrencyLevelForStrings(int concurrencyLevel) {
       testImmutability("stringsConcurrencyLevel");
-      this.stringsConcurrencyLevel = concurrencyLevel;
+      stringsConcurrencyLevel = concurrencyLevel;
    }
 
    public void setLockConcurrencyLevelForBinary(int concurrencyLevel) {
       testImmutability("binaryConcurrencyLevel");
-      this.binaryConcurrencyLevel = concurrencyLevel;
+      binaryConcurrencyLevel = concurrencyLevel;
    }
 
    public void setLockAcquistionTimeout(int lockAcquistionTimeout) {
@@ -211,8 +217,8 @@ public class JdbcMixedCacheStoreConfig extends AbstractJdbcCacheStoreConfig {
     */
    public void setFetchSize(int fetchSize) {
       testImmutability("tableManipulation");
-      this.binaryTableManipulation.setFetchSize(fetchSize);
-      this.stringsTableManipulation.setFetchSize(fetchSize);
+      binaryTableManipulation.setFetchSize(fetchSize);
+      stringsTableManipulation.setFetchSize(fetchSize);
    }
 
    /**
@@ -220,12 +226,12 @@ public class JdbcMixedCacheStoreConfig extends AbstractJdbcCacheStoreConfig {
     */
    public void setBatchSize(int batchSize) {
       testImmutability("tableManipulation");
-      this.binaryTableManipulation.setBatchSize(batchSize);
-      this.stringsTableManipulation.setBatchSize(batchSize);
+      binaryTableManipulation.setBatchSize(batchSize);
+      stringsTableManipulation.setBatchSize(batchSize);
    }
 
    public String getDatabaseType() {
-      return this.binaryTableManipulation.databaseType == null ? "" : this.binaryTableManipulation.databaseType.toString();
+      return binaryTableManipulation.databaseType == null ? "" : binaryTableManipulation.databaseType.toString();
    }
 
    /**
@@ -235,15 +241,18 @@ public class JdbcMixedCacheStoreConfig extends AbstractJdbcCacheStoreConfig {
     * @param dbType
     */
    public void setDatabaseType(String dbType) {
-      if (dbType != null)
-         this.binaryTableManipulation.databaseType = DatabaseType.valueOf(dbType.toUpperCase().trim());
+      if (dbType != null) {
+         DatabaseType type = DatabaseType.valueOf(dbType.toUpperCase().trim());
+         binaryTableManipulation.databaseType = type;
+         stringsTableManipulation.databaseType = type;
+      }
    }
 
    @Override
    public JdbcMixedCacheStoreConfig clone() {
       JdbcMixedCacheStoreConfig dolly = (JdbcMixedCacheStoreConfig) super.clone();
-      dolly.binaryTableManipulation = this.binaryTableManipulation.clone();
-      dolly.stringsTableManipulation = this.stringsTableManipulation.clone();
+      dolly.binaryTableManipulation = binaryTableManipulation.clone();
+      dolly.stringsTableManipulation = stringsTableManipulation.clone();
       return dolly;
    }
 }
