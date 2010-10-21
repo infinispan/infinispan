@@ -97,7 +97,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
           * @see LockControlCommand.java 
           * https://jira.jboss.org/jira/browse/ISPN-48
           */
-         remoteTransaction.setModifications(modifications);
+         remoteTransaction.setModifications(getModifications());
       }
 
       // 2. then set it on the invocation context
@@ -121,7 +121,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public WriteCommand[] getModifications() {
-      return modifications;
+      return modifications == null ? new WriteCommand[]{} : modifications;
    }
 
    public boolean isOnePhaseCommit() {
