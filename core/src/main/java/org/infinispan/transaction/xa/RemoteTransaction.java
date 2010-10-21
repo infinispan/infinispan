@@ -9,6 +9,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,8 +33,8 @@ public class RemoteTransaction implements CacheTransaction, Cloneable {
 
 
    public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
-      this.modifications = Arrays.asList(modifications);
-      lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(modifications.length);
+      this.modifications = modifications == null || modifications.length == 0 ? Collections.<WriteCommand>emptyList(): Arrays.asList(modifications);
+      lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(this.modifications.size());
       this.tx = tx;
    }
 
