@@ -13,6 +13,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * Invalidates an entry in a L1 cache (used with DIST mode)
@@ -34,6 +35,15 @@ public class InvalidateL1Command extends InvalidateCommand {
 
    public InvalidateL1Command(boolean forRehash, DataContainer dc, Configuration config, DistributionManager dm,
                               CacheNotifier notifier, Object... keys) {
+      super(notifier, keys);
+      this.dm = dm;
+      this.forRehash = forRehash;
+      this.dataContainer = dc;
+      this.config = config;
+   }
+
+   public InvalidateL1Command(boolean forRehash, DataContainer dc, Configuration config, DistributionManager dm,
+                              CacheNotifier notifier, Collection<Object> keys) {
       super(notifier, keys);
       this.dm = dm;
       this.forRehash = forRehash;

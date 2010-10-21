@@ -53,6 +53,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A factory to build commands, initializing and injecting dependencies accordingly.  Commands built for a specific,
@@ -99,6 +100,14 @@ public interface CommandsFactory {
     * @return an InvalidateFromL1Command
     */
    InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Object... keys);
+
+   /**
+    * Builds an InvalidateFromL1Command
+    * @param forRehash set to true if the invalidation is happening due to a new node taking ownership.  False if it is due to a write, changing the state of the entry.
+    * @param keys keys to invalidate
+    * @return an InvalidateFromL1Command
+    */
+   InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Collection<Object> keys);
 
    /**
     * Builds a ReplaceCommand

@@ -134,6 +134,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, keys);
    }
 
+   public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Collection<Object> keys) {
+      return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, keys);
+   }
+
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespan, long maxIdleTimeMillis) {
       return new ReplaceCommand(key, oldValue, newValue, lifespan, maxIdleTimeMillis);
    }
