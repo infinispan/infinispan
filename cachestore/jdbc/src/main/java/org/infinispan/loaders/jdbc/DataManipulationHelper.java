@@ -21,13 +21,6 @@
  */
 package org.infinispan.loaders.jdbc;
 
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
@@ -39,6 +32,13 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 /**
  * The purpose of this class is to factorize the repeating code between {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore}
  * and {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore}. This class implements GOF's template method pattern.
@@ -49,8 +49,8 @@ public abstract class DataManipulationHelper {
 
    private static final Log log = LogFactory.getLog(DataManipulationHelper.class);
 
-   private ConnectionFactory connectionFactory;
-   private TableManipulation tableManipulation;
+   private final ConnectionFactory connectionFactory;
+   private final TableManipulation tableManipulation;
    protected StreamingMarshaller marshaller;
 
 
@@ -68,8 +68,9 @@ public abstract class DataManipulationHelper {
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
          int result = ps.executeUpdate();
-         if (log.isTraceEnabled())
+         if (log.isTraceEnabled()) {
             log.trace("Successfully removed " + result + " rows.");
+         }
       } catch (SQLException ex) {
          logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
       } finally {
@@ -96,15 +97,18 @@ public abstract class DataManipulationHelper {
             readCount++;
             if (readCount % batchSize == 0) {
                ps.executeBatch();
-               if (log.isTraceEnabled())
-                  log.trace("Executing batch " + (readCount / batchSize) + ", batch size is " + batchSize);
+               if (log.isTraceEnabled()) {
+                  log.trace("Executing batch " + readCount / batchSize + ", batch size is " + batchSize);
+               }
             }
             objFromStream = marshaller.objectFromObjectStream(objectInput);
          }
-         if (readCount % batchSize != 0)
+         if (readCount % batchSize != 0) {
             ps.executeBatch();//flush the batch
-         if (log.isTraceEnabled())
+         }
+         if (log.isTraceEnabled()) {
             log.trace("Successfully inserted " + readCount + " buckets into the database, batch size is " + batchSize);
+         }
       } catch (IOException ex) {
          logAndThrow(ex, "I/O failure while integrating state into store");
       } catch (SQLException e) {
@@ -125,10 +129,14 @@ public abstract class DataManipulationHelper {
       ResultSet rs = null;
       try {
          String sql = filterExpired ? tableManipulation.getLoadNonExpiredAllRowsSql() : tableManipulation.getLoadAllRowsSql();
-         if (log.isTraceEnabled()) log.trace("Running sql '" + sql);
+         if (log.isTraceEnabled()) {
+            log.trace("Running sql '" + sql);
+         }
          connection = connectionFactory.getConnection();
          ps = connection.prepareStatement(sql);
-         if (filterExpired) ps.setLong(1, System.currentTimeMillis());
+         if (filterExpired) {
+            ps.setLong(1, System.currentTimeMillis());
+         }
          rs = ps.executeQuery();
          rs.setFetchSize(tableManipulation.getFetchSize());
          while (rs.next()) {
@@ -154,10 +162,14 @@ public abstract class DataManipulationHelper {
       ResultSet rs = null;
       try {
          String sql = filterExpired ? tableManipulation.getLoadNonExpiredAllRowsSql() : tableManipulation.getLoadAllRowsSql();
-         if (log.isTraceEnabled()) log.trace("Running sql '" + sql);
+         if (log.isTraceEnabled()) {
+            log.trace("Running sql '" + sql);
+         }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
-         if (filterExpired) ps.setLong(1, System.currentTimeMillis());
+         if (filterExpired) {
+            ps.setLong(1, System.currentTimeMillis());
+         }
          rs = ps.executeQuery();
          rs.setFetchSize(tableManipulation.getFetchSize());
          Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>(tableManipulation.getFetchSize());
@@ -183,13 +195,17 @@ public abstract class DataManipulationHelper {
       try {
 
          String sql = getLoadAllKeysSql();
-         if (log.isTraceEnabled()) log.trace("Running sql '" + sql);
+         if (log.isTraceEnabled()) {
+            log.trace("Running sql '" + sql);
+         }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
          rs = ps.executeQuery();
          rs.setFetchSize(tableManipulation.getFetchSize());
          Set<Object> result = new HashSet<Object>(tableManipulation.getFetchSize());
-         while (rs.next()) loadAllKeysProcess(rs, result, keysToExclude);
+         while (rs.next()) {
+            loadAllKeysProcess(rs, result, keysToExclude);
+         }
          return result;
       } catch (SQLException e) {
          String message = "SQL error while fetching all StoredEntries";
@@ -208,10 +224,16 @@ public abstract class DataManipulationHelper {
       ResultSet rs = null;
       try {
          String sql = tableManipulation.getLoadSomeRowsSql();
-         if (log.isTraceEnabled()) log.trace("Running sql '" + sql);
+         if (log.isTraceEnabled()) {
+            log.trace("Running sql '" + sql);
+         }
          conn = connectionFactory.getConnection();
-         ps = conn.prepareStatement(sql);
-         ps.setInt(1, maxEntries);
+         if (tableManipulation.isVariableLimitSupported()) {
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, maxEntries);
+         } else {
+            ps = conn.prepareStatement(sql.replace("?", String.valueOf(maxEntries)));
+         }
          rs = ps.executeQuery();
          rs.setFetchSize(tableManipulation.getFetchSize());
          Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>(maxEntries);
