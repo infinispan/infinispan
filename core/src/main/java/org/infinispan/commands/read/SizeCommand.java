@@ -30,6 +30,7 @@ import org.infinispan.context.InvocationContext;
  * Command to calculate the size of the cache
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public class SizeCommand extends AbstractLocalCommand implements VisitableCommand {
@@ -44,7 +45,10 @@ public class SizeCommand extends AbstractLocalCommand implements VisitableComman
    }
 
    public Integer perform(InvocationContext ctx) throws Throwable {
-      return container.size();
+      if (noTxModifications(ctx)) {
+         return container.size();
+      }
+      return super.ketKeySetWithinTransaction(ctx, container).size();
    }
 
    @Override

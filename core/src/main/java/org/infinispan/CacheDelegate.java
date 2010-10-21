@@ -173,7 +173,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
 
    public final int size() {
       SizeCommand command = commandsFactory.buildSizeCommand();
-      return (Integer) invoker.invoke(icc.createNonTxInvocationContext(), command);
+      return (Integer) invoker.invoke(getInvocationContext(false), command);
    }
 
    public final boolean isEmpty() {
