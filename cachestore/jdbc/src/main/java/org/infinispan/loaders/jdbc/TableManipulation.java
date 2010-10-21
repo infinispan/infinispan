@@ -21,12 +21,6 @@
  */
 package org.infinispan.loaders.jdbc;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -34,6 +28,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Locale;
+
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Contains all the logic of manipulating the table, including creating it if needed and access operations like
@@ -153,8 +153,9 @@ public class TableManipulation implements Cloneable {
             + " NOT NULL, " + dataColumnName + " " + dataColumnType + ", "
             + timestampColumnName + " " + timestampColumnType +
             ", PRIMARY KEY (" + idColumnName + "))";
-      if (log.isTraceEnabled())
+      if (log.isTraceEnabled()) {
          log.trace("Creating table with following DDL: '" + createTableDdl + "'.");
+      }
       executeUpdateSql(conn, createTableDdl);
    }
 
@@ -170,7 +171,9 @@ public class TableManipulation implements Cloneable {
    }
 
    private void assertNotNull(String keyColumnType, String message) throws CacheLoaderException {
-      if (keyColumnType == null || keyColumnType.trim().length() == 0) throw new CacheLoaderException(message);
+      if (keyColumnType == null || keyColumnType.trim().length() == 0) {
+         throw new CacheLoaderException(message);
+      }
    }
 
    private void executeUpdateSql(Connection conn, String sql) throws CacheLoaderException {
@@ -190,13 +193,14 @@ public class TableManipulation implements Cloneable {
       String dropTableDdl = "DROP TABLE " + getTableName();
       String clearTable = "DELETE FROM " + getTableName();
       executeUpdateSql(conn, clearTable);
-      if (log.isTraceEnabled())
+      if (log.isTraceEnabled()) {
          log.trace("Dropping table with following DDL '" + dropTableDdl + "\'");
+      }
       executeUpdateSql(conn, dropTableDdl);
    }
 
    private static String toLowerCase(String s) {
-      return s.toLowerCase((Locale.ENGLISH));
+      return s.toLowerCase(Locale.ENGLISH);
    }
 
    private static String toUpperCase(String s) {
@@ -421,7 +425,12 @@ public class TableManipulation implements Cloneable {
 
    public void setCacheName(String cacheName) {
       this.cacheName = cacheName;
-      this.tableName = null;
+      tableName = null;
+   }
+
+   public boolean isVariableLimitSupported() {
+      DatabaseType type = getDatabaseType();
+      return type != DatabaseType.DB2_390;
    }
 
    public String getLoadSomeRowsSql() {
@@ -434,6 +443,7 @@ public class TableManipulation implements Cloneable {
                loadSomeRowsSql = String.format("SELECT %s, %s FROM (SELECT %s, %s FROM %s) WHERE ROWNUM <= ?", dataColumnName, idColumnName, dataColumnName, idColumnName, getTableName());
                break;
             case DB2:
+            case DB2_390:
                loadSomeRowsSql = String.format("SELECT %s, %s FROM %s FETCH FIRST ? ROWS ONLY", dataColumnName, idColumnName, getTableName());
                break;
             case INFORMIX:
@@ -456,12 +466,16 @@ public class TableManipulation implements Cloneable {
    }
 
    public String getLoadAllKeysBinarySql() {
-      if (loadAllKeysBinarySql == null) loadAllKeysBinarySql = String.format("SELECT %s FROM %s", dataColumnName, getTableName());
+      if (loadAllKeysBinarySql == null) {
+         loadAllKeysBinarySql = String.format("SELECT %s FROM %s", dataColumnName, getTableName());
+      }
       return loadAllKeysBinarySql;
    }
 
    public String getLoadAllKeysStringSql() {
-      if (loadAllKeysStringSql == null) loadAllKeysStringSql = String.format("SELECT %s FROM %s", idColumnName, getTableName());
+      if (loadAllKeysStringSql == null) {
+         loadAllKeysStringSql = String.format("SELECT %s FROM %s", idColumnName, getTableName());
+      }
       return loadAllKeysStringSql;
    }
 
@@ -474,7 +488,9 @@ public class TableManipulation implements Cloneable {
          } catch (Exception e) {
             log.debug("Unable to guess database type from JDBC metadata.", e);
          }
-         if (databaseType == null) log.info("Unable to detect database type using connection metadata.  Attempting to guess on driver name.");
+         if (databaseType == null) {
+            log.info("Unable to detect database type using connection metadata.  Attempting to guess on driver name.");
+         }
          try {
             String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
             databaseType = guessDatabaseType(dbProduct);
@@ -482,10 +498,11 @@ public class TableManipulation implements Cloneable {
             log.debug("Unable to guess database type from JDBC driver name.", e);
          }
 
-         if (databaseType == null)
+         if (databaseType == null) {
             throw new ConfigurationException("Unable to detect database type from JDBC driver name or connection metadata.  Please provide this manually using the 'databaseType' property in your configuration.  Supported database type strings are " + Arrays.toString(DatabaseType.values()));
-         else
+         } else {
             log.info("Guessing database type as '" + databaseType + "'.  If this is incorrect, please specify the correct type using the 'databaseType' property in your configuration.  Supported database type strings are " + Arrays.toString(DatabaseType.values()));
+         }
       }
       return databaseType;
    }
@@ -493,32 +510,33 @@ public class TableManipulation implements Cloneable {
    private DatabaseType guessDatabaseType(String name) {
       DatabaseType type = null;
       if (name != null) {
-         if (name.toLowerCase().contains("mysql"))
+         if (name.toLowerCase().contains("mysql")) {
             type = DatabaseType.MYSQL;
-         else if (name.toLowerCase().contains("postgres"))
+         } else if (name.toLowerCase().contains("postgres")) {
             type = DatabaseType.POSTGRES;
-         else if (name.toLowerCase().contains("derby"))
+         } else if (name.toLowerCase().contains("derby")) {
             type = DatabaseType.DERBY;
-         else if (name.toLowerCase().contains("hsql") || name.toLowerCase().contains("hypersonic"))
+         } else if (name.toLowerCase().contains("hsql") || name.toLowerCase().contains("hypersonic")) {
             type = DatabaseType.HSQL;
-         else if (name.toLowerCase().contains("h2"))
+         } else if (name.toLowerCase().contains("h2")) {
             type = DatabaseType.H2;
-         else if (name.toLowerCase().contains("sqlite"))
+         } else if (name.toLowerCase().contains("sqlite")) {
             type = DatabaseType.SQLITE;
-         else if (name.toLowerCase().contains("db2"))
+         } else if (name.toLowerCase().contains("db2")) {
             type = DatabaseType.DB2;
-         else if (name.toLowerCase().contains("informix"))
+         } else if (name.toLowerCase().contains("informix")) {
             type = DatabaseType.INFORMIX;
-         else if (name.toLowerCase().contains("interbase"))
+         } else if (name.toLowerCase().contains("interbase")) {
             type = DatabaseType.INTERBASE;
-         else if (name.toLowerCase().contains("firebird"))
+         } else if (name.toLowerCase().contains("firebird")) {
             type = DatabaseType.FIREBIRD;
-         else if (name.toLowerCase().contains("sqlserver") || name.toLowerCase().contains("microsoft"))
+         } else if (name.toLowerCase().contains("sqlserver") || name.toLowerCase().contains("microsoft")) {
             type = DatabaseType.SQL_SERVER;
-         else if (name.toLowerCase().contains("access"))
+         } else if (name.toLowerCase().contains("access")) {
             type = DatabaseType.ACCESS;
-         else if (name.toLowerCase().contains("oracle"))
+         } else if (name.toLowerCase().contains("oracle")) {
             type = DatabaseType.ORACLE;
+         }
       }
       return type;
    }

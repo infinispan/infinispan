@@ -8,7 +8,7 @@ package org.infinispan.loaders.jdbc;
  */
 public enum DatabaseType {
    MYSQL, POSTGRES, DERBY, HSQL, H2, SQLITE,
-   DB2,
+   DB2, DB2_390,
    INFORMIX, INTERBASE, FIREBIRD,
    SQL_SERVER, ACCESS,
    ORACLE;
