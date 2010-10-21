@@ -39,7 +39,7 @@ public class AbstractLocalCommand implements LocalCommand {
       return !ctx.isInTxScope() || !((TxInvocationContext)ctx).hasModifications();
    }
 
-   protected Set<Object> ketKeySetWithinTransaction(InvocationContext ctx, DataContainer container) {
+   protected Set<Object> getKeySetWithinTransaction(InvocationContext ctx, DataContainer container) {
       Set<Object> objects = container.keySet();
       Set<Object> result = new HashSet<Object>();
       result.addAll(objects);

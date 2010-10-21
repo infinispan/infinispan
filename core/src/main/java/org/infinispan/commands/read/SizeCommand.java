@@ -48,7 +48,7 @@ public class SizeCommand extends AbstractLocalCommand implements VisitableComman
       if (noTxModifications(ctx)) {
          return container.size();
       }
-      return super.ketKeySetWithinTransaction(ctx, container).size();
+      return super.getKeySetWithinTransaction(ctx, container).size();
    }
 
    @Override
