@@ -101,16 +101,15 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     */
    DistributionManager getDistributionManager();
 
-
    /**
-    * Locks a given key eagerly across cache nodes in a cluster.
+    * Locks a given key or keys eagerly across cache nodes in a cluster.
     * <p>
-    * A key can be locked eagerly in the context of a transaction only
+    * Keys can be locked eagerly in the context of a transaction only
     *
-    * @param key the key to lock
-    * @return true if the lock acquisition attempt was successful; false otherwise.
-    */
-   boolean lock(K key);
+    * @param keys the keys to lock
+    * @return true if the lock acquisition attempt was successful for <i>all</i> keys; false otherwise.
+    */   
+   boolean lock(K... keys);
 
    /**
     * Locks collections of keys eagerly across cache nodes in a cluster.
