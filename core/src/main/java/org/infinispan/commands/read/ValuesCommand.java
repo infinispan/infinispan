@@ -41,6 +41,7 @@ import org.infinispan.util.Immutables;
  *
  * @author Galder Zamarreño
  * @author Mircea.Markus@jboss.com
+ * @author <a href="http://gleamynode.net/">Trustin Lee</a>
  * @since 4.0
  */
 public class ValuesCommand extends AbstractLocalCommand implements VisitableCommand {
