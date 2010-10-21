@@ -92,7 +92,7 @@ public class ExplicitLockingAndTimeoutTest extends MultipleCacheManagersTest {
       tm.rollback();
       assertEquals(0, txTable0.getLocalTxCount());
       assertEquals(1, txTable1.getLocalTxCount());
-      assertEquals(0, txTable1.getRemoteTxCount());
+      assertEquals(1, txTable1.getRemoteTxCount());
 
 
       tm.resume(k1LockOwner);
