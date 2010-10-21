@@ -5,6 +5,7 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -216,6 +217,22 @@ public class DefaultDataContainer implements DataContainer {
     *
     */
    private class EntrySet extends AbstractSet<InternalCacheEntry> {
+
+      @Override
+      public boolean contains(Object o) {
+         if (!(o instanceof Map.Entry)) {
+            return false;
+         }
+
+         @SuppressWarnings("rawtypes")
+         Map.Entry e = (Map.Entry) o;
+         InternalCacheEntry ice = entries.get(e.getKey());
+         if (ice == null) {
+            return false;
+         }
+         return ice.getValue().equals(e.getValue());
+      }
+
       @Override
       public Iterator<InternalCacheEntry> iterator() {
          return new ImmutableEntryIterator(entries.values().iterator());

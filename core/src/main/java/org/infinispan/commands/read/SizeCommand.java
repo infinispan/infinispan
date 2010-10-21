@@ -24,6 +24,7 @@ package org.infinispan.commands.read;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 
 /**
@@ -40,15 +41,27 @@ public class SizeCommand extends AbstractLocalCommand implements VisitableComman
       this.container = container;
    }
 
+   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitSizeCommand(ctx, this);
    }
 
+   @Override
    public Integer perform(InvocationContext ctx) throws Throwable {
       if (noTxModifications(ctx)) {
          return container.size();
       }
-      return super.getKeySetWithinTransaction(ctx, container).size();
+
+      int size = container.size();
+      for (CacheEntry e: ctx.getLookedUpEntries().values()) {
+         if (e.isCreated()) {
+            size ++;
+         } else  if (e.isRemoved()) {
+            size --;
+         }
+      }
+
+      return Math.max(size, 0);
    }
 
    @Override

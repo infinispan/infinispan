@@ -21,6 +21,21 @@
  */
 package org.infinispan;
 
+import static org.infinispan.context.Flag.*;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
@@ -37,7 +52,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.config.ConfigurationValidatingVisitor;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -73,20 +87,6 @@ import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.context.Flag.*;
-
 /**
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
@@ -106,7 +106,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    protected TransactionManager transactionManager;
    protected RpcManager rpcManager;
    protected StreamingMarshaller marshaller;
-   private String name;
+   private final String name;
    private EvictionManager evictionManager;
    private DataContainer dataContainer;
    private static final Log log = LogFactory.getLog(CacheDelegate.class);
@@ -116,7 +116,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    // as above for ResponseGenerator
    private ResponseGenerator responseGenerator;
    private DistributionManager distributionManager;
-   private ThreadLocal<PreInvocationContext> flagHolder = new ThreadLocal<PreInvocationContext>();
+   private final ThreadLocal<PreInvocationContext> flagHolder = new ThreadLocal<PreInvocationContext>();
 
    public CacheDelegate(String name) {
       this.name = name;
@@ -151,17 +151,24 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       this.responseGenerator = responseGenerator;
       this.stateTransferManager = stateTransferManager;
       this.icc = icc;
-      this.distributionManager = distributionManager; 
+      this.distributionManager = distributionManager;
    }
 
    private void assertKeyNotNull(Object key) {
-      if (key == null) throw new NullPointerException("Null keys are not supported!");
+      if (key == null) {
+         throw new NullPointerException("Null keys are not supported!");
+      }
    }
 
    private void assertKeysNotNull(Map<?, ?> data) {
-      if (data == null) throw new NullPointerException("Expected map cannot be null");
-      for (Object key: data.keySet())
-         if (key == null) throw new NullPointerException("Null keys are not supported!");
+      if (data == null) {
+         throw new NullPointerException("Expected map cannot be null");
+      }
+      for (Object key: data.keySet()) {
+         if (key == null) {
+            throw new NullPointerException("Null keys are not supported!");
+         }
+      }
    }
 
    public final boolean remove(Object key, Object value) {
@@ -229,7 +236,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    @SuppressWarnings("unchecked")
    public Set<Map.Entry<K, V>> entrySet() {
       EntrySetCommand command = commandsFactory.buildEntrySetCommand();
-      return (Set<Map.Entry<K, V>>) invoker.invoke(icc.createNonTxInvocationContext(), command);
+      return (Set<Map.Entry<K, V>>) invoker.invoke(getInvocationContext(false), command);
    }
 
    public final void putForExternalRead(K key, V value) {
@@ -242,11 +249,15 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
          withFlags(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ).putIfAbsent(key, value);
       }
       catch (Exception e) {
-         if (log.isDebugEnabled()) log.debug("Caught exception while doing putForExternalRead()", e);
+         if (log.isDebugEnabled()) {
+            log.debug("Caught exception while doing putForExternalRead()", e);
+         }
       }
       finally {
          try {
-            if (ongoingTransaction != null) transactionManager.resume(ongoingTransaction);
+            if (ongoingTransaction != null) {
+               transactionManager.resume(ongoingTransaction);
+            }
          }
          catch (Exception e) {
             log.debug("Had problems trying to resume a transaction after putForExternalRead()", e);
@@ -280,7 +291,9 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    private InvocationContext getInvocationContext(boolean forceNonTransactional) {
       InvocationContext ctx = forceNonTransactional ? icc.createNonTxInvocationContext() : icc.createInvocationContext();
       PreInvocationContext pic = flagHolder.get();
-      if (pic != null && !pic.flags.isEmpty()) ctx.setFlags(pic.flags);
+      if (pic != null && !pic.flags.isEmpty()) {
+         ctx.setFlags(pic.flags);
+      }
       flagHolder.remove();
       return ctx;
    }
@@ -291,8 +304,9 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    }
 
    public boolean lock(Collection<? extends K> keys) {
-      if (keys == null || keys.isEmpty())
+      if (keys == null || keys.isEmpty()) {
          throw new IllegalArgumentException("Cannot lock empty list of keys");
+      }
       LockControlCommand command = commandsFactory.buildLockControlCommand(keys, false);
       return (Boolean) invoker.invoke(getInvocationContext(false), command);
    }
@@ -362,14 +376,16 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    }
 
    public boolean startBatch() {
-      if (!config.isInvocationBatchingEnabled())
+      if (!config.isInvocationBatchingEnabled()) {
          throw new ConfigurationException("Invocation batching not enabled in current configuration!  Please use the <invocationBatching /> element.");
+      }
       return batchContainer.startBatch();
    }
 
    public void endBatch(boolean successful) {
-      if (!config.isInvocationBatchingEnabled())
+      if (!config.isInvocationBatchingEnabled()) {
          throw new ConfigurationException("Invocation batching not enabled in current configuration!  Please use the <invocationBatching /> element.");
+      }
       batchContainer.endBatch(successful);
    }
 
@@ -554,8 +570,12 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
 
    public void compact() {
       for (InternalCacheEntry e : dataContainer) {
-         if (e.getKey() instanceof MarshalledValue) ((MarshalledValue) e.getKey()).compact(true, true);
-         if (e.getValue() instanceof MarshalledValue) ((MarshalledValue) e.getValue()).compact(true, true);
+         if (e.getKey() instanceof MarshalledValue) {
+            ((MarshalledValue) e.getKey()).compact(true, true);
+         }
+         if (e.getValue() instanceof MarshalledValue) {
+            ((MarshalledValue) e.getValue()).compact(true, true);
+         }
       }
    }
 
@@ -566,10 +586,11 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    public AdvancedCache<K, V> withFlags(Flag... flags) {
       if (flags != null && flags.length > 0) {
          PreInvocationContext pic = flagHolder.get();
-         if (pic == null)
+         if (pic == null) {
             flagHolder.set(new PreInvocationContext(flags));
-         else
+         } else {
             flagHolder.set(pic.add(flags));
+         }
       }
       return this;
    }
@@ -582,7 +603,9 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       }
 
       private PreInvocationContext add(Flag[] newFlags) {
-         if (newFlags != null && newFlags.length > 0) flags.addAll(Arrays.asList(newFlags));
+         if (newFlags != null && newFlags.length > 0) {
+            flags.addAll(Arrays.asList(newFlags));
+         }
          return this;
       }
    }
