@@ -285,9 +285,9 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       return ctx;
    }
 
-   public boolean lock(K key) {
-      assertKeyNotNull(key);
-      return lock(Collections.singletonList(key));
+   public boolean lock(K... keys) {
+      assertKeyNotNull(keys);
+      return lock(Arrays.asList(keys));
    }
 
    public boolean lock(Collection<? extends K> keys) {
