@@ -49,7 +49,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!ctx.isInTxScope()) throw new IllegalStateException("This should not be possible!");
-      if (ctx.isOriginLocal()) {
+      if (shouldInvokeRemoteTxCommand(ctx)) {
          rpcManager.broadcastRpcCommand(command, configuration.isSyncCommitPhase(), true);
       }
       return invokeNextInterceptor(ctx, command);
@@ -58,7 +58,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
-      if (ctx.isOriginLocal() && command.hasModifications()) {
+      if (shouldInvokeRemoteTxCommand(ctx)) {
          boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
          rpcManager.broadcastRpcCommand(command, !async, false);
       }
@@ -67,7 +67,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (ctx.isOriginLocal() && !configuration.isOnePhaseCommit()) {
+      if (shouldInvokeRemoteTxCommand(ctx) && !configuration.isOnePhaseCommit()) {
          rpcManager.broadcastRpcCommand(command, configuration.isSyncRollbackPhase(), true);
       }
       return invokeNextInterceptor(ctx, command);
