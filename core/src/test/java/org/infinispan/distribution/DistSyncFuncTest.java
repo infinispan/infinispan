@@ -117,7 +117,6 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       assertOnAllCachesAndOwnership("k1", "value2");
    }
 
-   @Test(invocationCount = 20)
    public void testRemoveFromNonOwner() {
       initAndTest();
       Object retval = getFirstNonOwner("k1").remove("k1");
