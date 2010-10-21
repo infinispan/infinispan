@@ -4,6 +4,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -17,7 +18,7 @@ import java.util.List;
  */
 public class ConsistentHashHelper {
 
-   /**
+   /**                                 
     * Returns a new consistent hash of the same type with the given address removed.
     *
     * @param ch       consistent hash to start with
@@ -30,7 +31,7 @@ public class ConsistentHashHelper {
          return removeAddressFromUnionConsistentHash((UnionConsistentHash) ch, toRemove, c);
       else {
          ConsistentHash newCH = (ConsistentHash) Util.getInstance(c.getConsistentHashClass());
-         List<Address> caches = ch.getCaches();
+         List<Address> caches = new ArrayList<Address>(ch.getCaches());
          caches.remove(toRemove);
          newCH.setCaches(caches);
          return newCH;
