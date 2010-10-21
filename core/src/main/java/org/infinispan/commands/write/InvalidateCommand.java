@@ -22,6 +22,7 @@
 package org.infinispan.commands.write;
 
 import java.util.Arrays;
+import java.util.Collection;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
@@ -51,6 +52,14 @@ public class InvalidateCommand extends RemoveCommand {
 
    public InvalidateCommand(CacheNotifier notifier, Object... keys) {
       this.keys = keys;
+      this.notifier = notifier;
+   }
+
+   public InvalidateCommand(CacheNotifier notifier, Collection<Object> keys) {
+      if (keys == null || keys.isEmpty())
+         this.keys = new Object[]{};
+      else
+         this.keys = keys.toArray(new Object[keys.size()]);
       this.notifier = notifier;
    }
 
