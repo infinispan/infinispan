@@ -31,6 +31,9 @@ class InternalCacheEntryBinding implements EntryBinding<InternalCacheEntry> {
          b = m.objectToByteBuffer(object);
       } catch (IOException e) {
          throw new RuntimeExceptionWrapper(e);
+      } catch (InterruptedException ie) {
+         Thread.currentThread().interrupt();
+         throw new RuntimeExceptionWrapper(ie);
       }
       entry.setData(b);
    }

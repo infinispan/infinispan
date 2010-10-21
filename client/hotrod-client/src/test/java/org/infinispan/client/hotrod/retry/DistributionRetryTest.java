@@ -42,7 +42,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
       BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0), cache(1), cache(2));
    }
 
-   public void testGet() throws ClassNotFoundException, IOException {
+   public void testGet() throws Exception {
       log.info("Starting actual test");
       Object key = generateKeyAndShutdownServer();
       //now make sure that next call won't fail
@@ -50,60 +50,60 @@ public class DistributionRetryTest extends AbstractRetryTest {
       assertEquals(remoteCache.get(key), "v");
    }
 
-   public void testPut() throws ClassNotFoundException, IOException {
+   public void testPut() throws Exception {
       Object key = generateKeyAndShutdownServer();
       log.info("Here it starts");
       assertEquals(remoteCache.put(key, "v0"), "v");
    }
 
-   public void testRemove() throws ClassNotFoundException, IOException {
+   public void testRemove() throws Exception {
       Object key = generateKeyAndShutdownServer();
       assertEquals("v", remoteCache.remove(key));
    }
 
-   public void testContains() throws ClassNotFoundException, IOException {
+   public void testContains() throws Exception {
       Object key = generateKeyAndShutdownServer();
       resetStats();
       assertEquals(true, remoteCache.containsKey(key));
    }
 
-   public void testGetWithVersion() throws ClassNotFoundException, IOException {
+   public void testGetWithVersion() throws Exception {
       Object key = generateKeyAndShutdownServer();
       resetStats();
       VersionedValue value = remoteCache.getVersioned(key);
       assertEquals("v", value.getValue());
    }
 
-   public void testPutIfAbsent() throws ClassNotFoundException, IOException {
+   public void testPutIfAbsent() throws Exception {
       Object key = generateKeyAndShutdownServer();
       assertEquals(null, remoteCache.putIfAbsent("noSuchKey", "someValue"));
       assertEquals("someValue", remoteCache.get("noSuchKey"));
    }
 
-   public void testReplace() throws ClassNotFoundException, IOException {
+   public void testReplace() throws Exception {
       Object key = generateKeyAndShutdownServer();
       assertEquals("v", remoteCache.replace(key, "v2"));
    }
 
-   public void testReplaceIfUnmodified() throws ClassNotFoundException, IOException {
+   public void testReplaceIfUnmodified() throws Exception {
       Object key = generateKeyAndShutdownServer();
       assertEquals(false, remoteCache.replaceWithVersion(key, "v2", 12));
    }
 
-   public void testRemoveIfUnmodified() throws ClassNotFoundException, IOException {
+   public void testRemoveIfUnmodified() throws Exception {
       Object key = generateKeyAndShutdownServer();
       resetStats();
       assertEquals(false, remoteCache.removeWithVersion(key, 12));
    }
 
-   public void testClear() throws ClassNotFoundException, IOException {
+   public void testClear() throws Exception {
       Object key = generateKeyAndShutdownServer();
       resetStats();
       remoteCache.clear();
       assertEquals(false, remoteCache.containsKey(key));
    }
 
-   private Object generateKeyAndShutdownServer() throws IOException, ClassNotFoundException {
+   private Object generateKeyAndShutdownServer() throws IOException, ClassNotFoundException, InterruptedException {
       resetStats();
       Cache<Object,Object> cache = manager(1).getCache();
       KeyAffinityService kaf = KeyAffinityServiceFactory.newKeyAffinityService(cache, Executors.newSingleThreadExecutor(), new ByteKeyGenerator(), 2, true);
@@ -141,6 +141,8 @@ public class DistributionRetryTest extends AbstractRetryTest {
          try {
             return sm.objectToByteBuffer(result, 64);
          } catch (IOException e) {
+            throw new RuntimeException(e);
+         } catch (InterruptedException e) {
             throw new RuntimeException(e);
          }
       }

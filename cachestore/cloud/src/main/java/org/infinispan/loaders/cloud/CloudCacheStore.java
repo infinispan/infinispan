@@ -361,9 +361,11 @@ public class CloudCacheStore extends BucketBasedCacheStore {
                   .valueOf(earliestExpiryTime));
             blob.getMetadata().setUserMetadata(md);
          }
-
       } catch (IOException e) {
          throw new CacheLoaderException(e);
+      } catch (InterruptedException ie) {
+         if (log.isTraceEnabled()) log.trace("Interrupted while writing blob");
+         Thread.currentThread().interrupt();
       }
    }
 

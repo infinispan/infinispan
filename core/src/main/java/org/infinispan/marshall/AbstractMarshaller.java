@@ -24,20 +24,20 @@ public abstract class AbstractMarshaller implements Marshaller {
     * @return a ByteBuffer
     * @throws Exception
     */
-   protected abstract ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException;
+   protected abstract ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException, InterruptedException;
 
    @Override
-   public ByteBuffer objectToBuffer(Object obj) throws IOException {
+   public ByteBuffer objectToBuffer(Object obj) throws IOException, InterruptedException {
       return objectToBuffer(obj, DEFAULT_BUF_SIZE);
    }
 
    @Override
-   public byte[] objectToByteBuffer(Object o) throws IOException {
+   public byte[] objectToByteBuffer(Object o) throws IOException, InterruptedException {
       return objectToByteBuffer(o, DEFAULT_BUF_SIZE);
    }
 
    @Override
-   public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException {
+   public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
       ByteBuffer b = objectToBuffer(obj, estimatedSize);
       byte[] bytes = new byte[b.getLength()];
       System.arraycopy(b.getBuf(), b.getOffset(), bytes, 0, b.getLength());

@@ -73,7 +73,7 @@ public class JdbcUtil {
       }
    }
 
-   public static ByteBuffer marshall(StreamingMarshaller marshaller, Object bucket) throws CacheLoaderException {
+   public static ByteBuffer marshall(StreamingMarshaller marshaller, Object bucket) throws CacheLoaderException, InterruptedException {
       try {
          return marshaller.objectToBuffer(bucket);
       } catch (IOException e) {
