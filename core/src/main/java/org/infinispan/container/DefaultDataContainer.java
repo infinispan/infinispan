@@ -30,6 +30,7 @@ import org.infinispan.util.concurrent.BoundedConcurrentHashMap.EvictionListener;
  * @author Manik Surtani
  * @author Galder Zamarreño
  * @author Vladimir Blagojevic
+ * @author <a href="http://gleamynode.net/">Trustin Lee</a>
  *
  * @since 4.0
  */

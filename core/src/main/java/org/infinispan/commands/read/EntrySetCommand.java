@@ -42,6 +42,7 @@ import org.infinispan.util.Immutables;
  * EntrySetCommand.
  *
  * @author Galder Zamarreño
+ * @author <a href="http://gleamynode.net/">Trustin Lee</a>
  * @since 4.0
  */
 public class EntrySetCommand extends AbstractLocalCommand implements VisitableCommand {
