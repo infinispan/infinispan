@@ -52,7 +52,7 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
       if (noTxModifications(ctx)) {
          return Immutables.immutableSetWrap(objects);
       }
-      Set<Object> result = ketKeySetWithinTransaction(ctx, container);
+      Set<Object> result = getKeySetWithinTransaction(ctx, container);
       return Immutables.immutableSetWrap(result);
    }
 
