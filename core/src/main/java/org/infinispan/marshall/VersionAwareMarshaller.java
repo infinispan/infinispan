@@ -92,7 +92,7 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
       try {
          defaultMarshaller.objectToObjectStream(obj, out);
       } catch (java.io.NotSerializableException nse) {
-         if (log.isTraceEnabled()) log.trace("Object is not serializable", nse);
+         if (log.isDebugEnabled()) log.debug("Object is not serializable", nse);
          throw new org.infinispan.marshall.NotSerializableException(nse.getMessage(), nse.getCause());
       } catch (IOException ioe) {
          if (log.isTraceEnabled()) log.trace("Exception while marshalling object", ioe);
