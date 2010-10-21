@@ -127,7 +127,8 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
             marshaller.objectToObjectStream(bucket, objectOutput);
          }
 
-         public boolean fromStreamProcess(Object bucketName, PreparedStatement ps, ObjectInput objectInput) throws SQLException, CacheLoaderException, IOException, ClassNotFoundException {
+         public boolean fromStreamProcess(Object bucketName, PreparedStatement ps, ObjectInput objectInput)
+               throws SQLException, CacheLoaderException, IOException, ClassNotFoundException, InterruptedException {
             if (bucketName instanceof String) {
                Bucket bucket = (Bucket) marshaller.objectFromObjectStream(objectInput);
                ByteBuffer buffer = JdbcUtil.marshall(getMarshaller(), bucket);
@@ -169,6 +170,9 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          }
       } catch (SQLException ex) {
          logAndThrow(ex, "sql failure while inserting bucket: " + bucket);
+      } catch (InterruptedException ie) {
+         if (log.isTraceEnabled()) log.trace("Interrupted while marshalling to insert a bucket");
+         Thread.currentThread().interrupt();
       } finally {
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(conn);
@@ -195,6 +199,9 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          }
       } catch (SQLException e) {
          logAndThrow(e, "sql failure while updating bucket: " + bucket);
+      } catch (InterruptedException ie) {
+         if (log.isTraceEnabled()) log.trace("Interrupted while marshalling to update a bucket");
+         Thread.currentThread().interrupt();
       } finally {
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(conn);
@@ -342,6 +349,9 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          releaseLocks(emptyBuckets);
          connectionFactory.releaseConnection(conn);
          logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
+      } catch (InterruptedException ie) {
+         if (log.isTraceEnabled()) log.trace("Interrupted while marshalling to purge expired entries");
+         Thread.currentThread().interrupt();
       } finally {
          //release locks for the updated buckets.This won't include empty buckets, as these were migrated to emptyBuckets
          releaseLocks(expiredBuckets);

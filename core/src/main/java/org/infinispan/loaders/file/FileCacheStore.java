@@ -47,9 +47,14 @@ public class FileCacheStore extends BucketBasedCacheStore {
    }
    
    protected void loopOverBuckets(BucketHandler handler) throws CacheLoaderException {
-      for (File bucketFile : root.listFiles()) {
-         Bucket bucket = loadBucket(bucketFile);
-         if (handler.handle(bucket)) break;
+      try {
+         for (File bucketFile : root.listFiles()) {
+            Bucket bucket = loadBucket(bucketFile);
+            if (handler.handle(bucket)) break;
+         }
+      } catch (InterruptedException ie) {
+         if (log.isDebugEnabled()) log.debug("Interrupted, so stop looping over buckets.");
+         Thread.currentThread().interrupt();
       }
    }
 
@@ -140,38 +145,52 @@ public class FileCacheStore extends BucketBasedCacheStore {
 
    protected void purgeInternal() throws CacheLoaderException {
       if (trace) log.trace("purgeInternal()");
-      acquireGlobalLock(false);
-      try {
-         for (final File bucketFile : root.listFiles()) {
-            if (multiThreadedPurge) {
-               purgerService.execute(new Runnable() {
-                  @Override
-                  public void run() {
-                     Bucket bucket;
-                     try {
-                        if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries())
-                           updateBucket(bucket);
-                     } catch (CacheLoaderException e) {
-                        log.warn("Problems purging file " + bucketFile, e);
+      if (acquireGlobalLock(false)) {
+         try {
+            for (final File bucketFile : root.listFiles()) {
+               if (multiThreadedPurge) {
+                  purgerService.execute(new Runnable() {
+                     @Override
+                     public void run() {
+                        Bucket bucket;
+                        try {
+                           if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries())
+                              updateBucket(bucket);
+                        } catch (InterruptedException ie) {
+                           if (log.isDebugEnabled()) log.debug("Interrupted, so finish work.");
+                        } catch (CacheLoaderException e) {
+                           log.warn("Problems purging file " + bucketFile, e);
+                        }
                      }
-                  }
-               });
-            } else {
-               Bucket bucket;
-               if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries()) updateBucket(bucket);
+                  });
+               } else {
+                  Bucket bucket;
+                  if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries()) updateBucket(bucket);
+               }
             }
+         } catch (InterruptedException ie) {
+            if (log.isDebugEnabled()) log.debug("Interrupted, so stop loading and finish with purging.");
+            Thread.currentThread().interrupt();
+         } finally {
+            releaseGlobalLock(false);
+            if (trace) log.trace("Exit purgeInternal()");
          }
-      } finally {
-         releaseGlobalLock(false);
-         if (trace) log.trace("Exit purgeInternal()");
+      } else {
+         log.warn("Unable to acquire global lock to purge cache store");
       }
    }
 
    protected Bucket loadBucket(String bucketName) throws CacheLoaderException {
-      return loadBucket(new File(root, bucketName));
+      try {
+         return loadBucket(new File(root, bucketName));
+      } catch (InterruptedException ie) {
+         if (log.isDebugEnabled()) log.debug("Interrupted, so stop loading bucket and return null.");
+         Thread.currentThread().interrupt();
+         return null;
+      }
    }
 
-   protected Bucket loadBucket(File bucketFile) throws CacheLoaderException {
+   protected Bucket loadBucket(File bucketFile) throws CacheLoaderException, InterruptedException {
       Bucket bucket = null;
       if (bucketFile.exists()) {
          if (log.isTraceEnabled()) log.trace("Found bucket file: '" + bucketFile + "'");
@@ -179,6 +198,8 @@ public class FileCacheStore extends BucketBasedCacheStore {
          try {
             is = new FileInputStream(bucketFile);
             bucket = (Bucket) objectFromInputStreamInReentrantMode(is);
+         } catch (InterruptedException ie) {
+            throw ie;
          } catch (Exception e) {
             String message = "Error while reading from file: " + bucketFile.getAbsoluteFile();
             log.error(message, e);
@@ -211,6 +232,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
          } catch (IOException ex) {
             log.error("Exception while saving bucket " + b, ex);
             throw new CacheLoaderException(ex);
+         } catch (InterruptedException ie) {
+            if (trace) log.trace("Interrupted while marshalling a bucket");
+            Thread.currentThread().interrupt(); // Restore interrupted status
          }
          finally {
             safeClose(fos);
@@ -249,7 +273,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       return f.delete();
    }
 
-   private Object objectFromInputStreamInReentrantMode(InputStream is) throws IOException, ClassNotFoundException {
+   private Object objectFromInputStreamInReentrantMode(InputStream is) throws IOException, ClassNotFoundException, InterruptedException {
       int len = is.available();
       ExposedByteArrayOutputStream bytes = new ExposedByteArrayOutputStream(len);
       byte[] buf = new byte[Math.min(len, 1024)];

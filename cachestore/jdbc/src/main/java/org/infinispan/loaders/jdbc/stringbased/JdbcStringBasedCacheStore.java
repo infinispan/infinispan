@@ -150,7 +150,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
             marshaller.objectToObjectStream(icv.toInternalCacheEntry(key), objectOutput);
          }
 
-         public boolean fromStreamProcess(Object objFromStream, PreparedStatement ps, ObjectInput objectInput) throws SQLException, CacheLoaderException {
+         public boolean fromStreamProcess(Object objFromStream, PreparedStatement ps, ObjectInput objectInput) throws SQLException, CacheLoaderException, InterruptedException {
             if (objFromStream instanceof InternalCacheEntry) {
                InternalCacheEntry se = (InternalCacheEntry) objFromStream;
                ByteBuffer buffer = JdbcUtil.marshall(getMarshaller(), se.toInternalCacheValue());
@@ -195,8 +195,9 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          log.trace("Running sql '" + sql + "' on " + ed + ". Key string is '" + lockingKey + "'");
       Connection connection = null;
       PreparedStatement ps = null;
-      ByteBuffer byteBuffer = JdbcUtil.marshall(getMarshaller(), ed.toInternalCacheValue());
+      ByteBuffer byteBuffer = null;
       try {
+         byteBuffer = JdbcUtil.marshall(getMarshaller(), ed.toInternalCacheValue());
          connection = connectionFactory.getConnection();
          ps = connection.prepareStatement(sql);
          ps.setBinaryStream(1, byteBuffer.getStream(), byteBuffer.getLength());
@@ -204,7 +205,10 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          ps.setString(3, lockingKey);
          ps.executeUpdate();
       } catch (SQLException ex) {
-         logAndThrow(ex, "Error while storing string key to database; key: '"+lockingKey+"', buffer size of value: " + byteBuffer.getLength() + " bytes");
+         logAndThrow(ex, "Error while storing string key to database; key: '" + lockingKey + "', buffer size of value: " + byteBuffer.getLength() + " bytes");
+      } catch (InterruptedException e) {
+         if (log.isTraceEnabled()) log.trace("Interrupted while marshalling to store");
+         Thread.currentThread().interrupt();
       } finally {
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(connection);

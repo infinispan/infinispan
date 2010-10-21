@@ -5,6 +5,8 @@ import java.io.IOException;
 import org.infinispan.marshall.StreamingMarshaller;
 
 import jdbm.helper.Serializer;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Uses the configured (runtime) {@link org.infinispan.marshall.StreamingMarshaller} of the cache.
@@ -14,6 +16,7 @@ import jdbm.helper.Serializer;
  */
 @SuppressWarnings("serial")
 public class JdbmSerializer implements Serializer {
+    private static final Log log = LogFactory.getLog(JdbmSerializer.class);
     
     private transient StreamingMarshaller marshaller;
 
@@ -35,7 +38,13 @@ public class JdbmSerializer implements Serializer {
     }
 
     public byte[] serialize(Object obj) throws IOException {
-        return marshaller.objectToByteBuffer(obj);
+       try {
+          return marshaller.objectToByteBuffer(obj);
+       } catch (InterruptedException e) {
+          if (log.isTraceEnabled()) log.trace("Interrupted while serializing object"); 
+          Thread.currentThread().interrupt();
+          throw new IOException(e);
+       }
     }
 
 }

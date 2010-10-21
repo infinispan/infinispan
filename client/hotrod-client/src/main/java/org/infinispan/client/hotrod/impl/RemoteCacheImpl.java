@@ -358,6 +358,9 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
          return marshaller.objectToByteBuffer(o, isKey ? estimateKeySize : estimateValueSize);
       } catch (IOException ioe) {
          throw new TransportException("Unable to marshall object of type [" + o.getClass().getName() + "]", ioe);
+      } catch (InterruptedException ie) {
+         Thread.currentThread().interrupt();
+         return null;
       }
    }
 

@@ -86,7 +86,7 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
    }
 
    @Override
-   protected ByteBuffer objectToBuffer(Object obj, int estimatedSize) throws IOException {
+   protected ByteBuffer objectToBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
       ObjectOutput out = startObjectOutput(baos, false);
       try {
@@ -96,7 +96,10 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
          throw new org.infinispan.marshall.NotSerializableException(nse.getMessage(), nse.getCause());
       } catch (IOException ioe) {
          if (log.isTraceEnabled()) log.trace("Exception while marshalling object", ioe);
-         throw ioe;
+         if (ioe.getCause() instanceof InterruptedException)
+            throw (InterruptedException) ioe.getCause();
+         else
+            throw ioe;
       } finally {
          finishObjectOutput(out);
       }
@@ -169,7 +172,7 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
    }
 
    @Override   
-   public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException {
+   public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException, InterruptedException {
       /* No need to read version here. Clients should either be calling either:
        * - startObjectInput() -> objectFromObjectStream() -> finishObjectInput()
        * or
@@ -177,7 +180,15 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
        * So, there's only need to read version during the start. 
        * First option is preferred when multiple objects are gonna be written.
        */
-      return defaultMarshaller.objectFromObjectStream(in);
+      try {
+         return defaultMarshaller.objectFromObjectStream(in);
+      } catch (IOException ioe) {
+         if (trace) log.trace("Log exception reported", ioe); 
+         if (ioe.getCause() instanceof InterruptedException)
+            throw (InterruptedException) ioe.getCause();
+         else
+            throw ioe;
+      }
    }
 
    @Override

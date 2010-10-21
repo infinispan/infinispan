@@ -84,6 +84,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.ObjectTable;
 import org.jboss.marshalling.Unmarshaller;
+import org.jboss.marshalling.river.RiverUnmarshaller;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -189,6 +190,8 @@ public class ConstantObjectTable implements ObjectTable {
     */
    private final Map<Integer, ExternalizerAdapter> readers = new HashMap<Integer, ExternalizerAdapter>();
 
+   private volatile boolean started;
+
    public void start(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller) {
       HashSet<Integer> ids = new HashSet<Integer>();
 
@@ -237,19 +240,64 @@ public class ConstantObjectTable implements ObjectTable {
             }
          }
       }
+
+      started = true;
+
+      if (log.isTraceEnabled())
+         log.trace("Constant object table was started and contains these externalizer readers: {0}", readers);
    }
 
    public void stop() {
       writers.clear();
       readers.clear();
+      started = false;
+      if (log.isTraceEnabled())
+         log.trace("Externalizer reader and writer maps have been cleared and constant object table was stopped");
    }
 
    public Writer getObjectWriter(Object o) throws IOException {
-      return writers.get(o.getClass());
+      Class clazz = o.getClass();
+      Writer writer = writers.get(clazz);
+      if (writer == null && (MARSHALLABLES.contains(clazz.getName()) || JDK_EXTERNALIZERS.containsKey(clazz.getName()))) {
+         if (log.isTraceEnabled())
+            log.trace("Either the marshaller has stopped or hasn't started. Write externalizers are not propery populated: {0}", writers);
+
+         if (Thread.currentThread().isInterrupted())
+            throw new IOException("Cache manager is shutting down, " +
+                  "so type write externalizer for type=" + clazz.getName() + " cannot be resolved. " +
+                  "Interruption being pushed up.", new InterruptedException());
+         else
+            throw new IllegalStateException("No write externalizer available for: " + clazz.getName() +
+                  ", either marshaller is stopped or has not started up yet.");
+      }
+      return writer;
    }
 
    public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
-      ExternalizerAdapter adapter = readers.get(input.readUnsignedByte());
+      int readerIndex = input.readUnsignedByte();
+      ExternalizerAdapter adapter = readers.get(readerIndex);
+      if (adapter == null) {
+         if (!started) {
+            if (log.isTraceEnabled())
+               log.trace("Either the marshaller has stopped or hasn't started. Read externalizers are not propery populated: {0}", readers);
+
+            if (Thread.currentThread().isInterrupted())
+               throw new IOException("Cache manager is shutting down, " +
+                     "so type (id=" + readerIndex + ") cannot be resolved. Interruption being pushed up.", new InterruptedException());
+            else
+               throw new CacheException("Cache manager is either starting up or shutting down but it's not interrupted, " +
+                     "so type (id=" + readerIndex + ") cannot be resolved.");
+         } else {
+            if (log.isTraceEnabled()) {
+               log.trace("Unknown type. Input stream has {0} to read", input.available());
+               log.trace("Check contents of read externalizers: {0}", readers);
+            }
+
+            throw new CacheException("Type of data read is unknown. Id=" + readerIndex + " " +
+                  "is not amongst known reader indexes.");
+         }
+      }
+
       return adapter.readObject(input);
    }
 
@@ -269,6 +317,12 @@ public class ConstantObjectTable implements ObjectTable {
       public void writeObject(Marshaller output, Object object) throws IOException {
          output.write(id);
          externalizer.writeObject(output, object);
+      }
+
+      @Override
+      public String toString() {
+         // Each adapter is represented by the externalizer it delegates to, so just return the class name
+         return externalizer.getClass().getName();
       }
    }
 }

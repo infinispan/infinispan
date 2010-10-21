@@ -197,6 +197,7 @@ public class StripedLock {
          } catch (InterruptedException e) {
             if (log.isTraceEnabled()) log.trace("Cought InterruptedException while trying to aquire global lock", e);
             success = false;
+            Thread.currentThread().interrupt(); // Restore interrupted status
          } finally {
             if (!success) {
                for (int j = 0; j < i; j++) {

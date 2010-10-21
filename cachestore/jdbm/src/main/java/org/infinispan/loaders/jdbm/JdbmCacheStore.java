@@ -269,7 +269,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       commit();
    }
 
-   private byte[] marshall(InternalCacheEntry entry) throws IOException {
+   private byte[] marshall(InternalCacheEntry entry) throws IOException, InterruptedException {
       return getMarshaller().objectToByteBuffer(entry.toInternalCacheValue());
    }
 
@@ -291,6 +291,9 @@ public class JdbmCacheStore extends AbstractCacheStore {
             addNewExpiry(entry);
       } catch (IOException e) {
          throw new CacheLoaderException(e);
+      } catch (InterruptedException ie) {
+         if (trace) log.trace("Interrupted while marshalling entry");
+         Thread.currentThread().interrupt();
       }
    }
 
@@ -350,6 +353,9 @@ public class JdbmCacheStore extends AbstractCacheStore {
          throw new CacheLoaderException(e);
       } catch (ClassNotFoundException e) {
          throw new CacheLoaderException(e);
+      } catch (InterruptedException ie) {
+         if (log.isTraceEnabled()) log.trace("Interrupted while reading from stream"); 
+         Thread.currentThread().interrupt();
       }
    }
 

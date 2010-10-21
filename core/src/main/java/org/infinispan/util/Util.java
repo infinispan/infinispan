@@ -27,11 +27,19 @@ import java.io.Closeable;
 import java.io.InputStream;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+import java.lang.management.LockInfo;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MonitorInfo;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -363,4 +371,102 @@ public final class Util {
          }
       }
    }
+
+   private static String INDENT = "    ";
+
+   public static String threadDump() {
+      StringBuilder threadDump = new StringBuilder();
+      ThreadMXBean threadMx = ManagementFactory.getThreadMXBean();
+      if (threadMx.isObjectMonitorUsageSupported() && threadMx.isSynchronizerUsageSupported()) {
+         // Print lock info if, and only if, both object monitor usage and synchronizer usage are supported.
+          dumpThreadInfo(threadDump, true, threadMx);
+      } else {
+         dumpThreadInfo(threadDump, false, threadMx);
+      }
+      return threadDump.toString();
+   }
+
+   private static void dumpThreadInfo(StringBuilder threadDump, boolean withLocks, ThreadMXBean threadMx) {
+      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+      String timestamp = dateFormat.format(new Date());
+      threadDump.append(timestamp);
+      threadDump.append("\nFull thread dump ");
+      threadDump.append("\n");
+
+      if (withLocks) {
+         ThreadInfo[] threadInfos = threadMx.dumpAllThreads(true, true);
+         for (ThreadInfo threadInfo : threadInfos) {
+            printThreadInfo(threadInfo, threadDump);
+            LockInfo[] syncs = threadInfo.getLockedSynchronizers();
+            printLockInfo(syncs, threadDump);
+         }
+         threadDump.append("\n");
+      } else {
+         long[] threadIds= threadMx.getAllThreadIds();
+         ThreadInfo[] threadInfos = threadMx.getThreadInfo(threadIds, Integer.MAX_VALUE);
+         for (ThreadInfo threadInfo : threadInfos)
+            printThreadInfo(threadInfo, threadDump);
+      }
+   }
+
+   private static void printThreadInfo(ThreadInfo threadInfo, StringBuilder threadDump) {
+      // Print thread information
+      printThread(threadInfo, threadDump);
+      // print stack trace with locks
+      StackTraceElement[] stacktrace = threadInfo.getStackTrace();
+      MonitorInfo[] monitors = threadInfo.getLockedMonitors();
+      for (int i = 0; i < stacktrace.length; i++) {
+          StackTraceElement ste = stacktrace[i];
+          threadDump.append(INDENT + "at " + ste.toString());
+          threadDump.append("\n");
+          for (int j = 1; j < monitors.length; j++) {
+              MonitorInfo mi = monitors[j];
+              if (mi.getLockedStackDepth() == i) {
+                  threadDump.append(INDENT + "  - locked " + mi);
+                  threadDump.append("\n");
+              }
+          }
+      }
+      threadDump.append("\n");
+   }
+
+   private static void printLockInfo(LockInfo[] locks, StringBuilder threadDump) {
+      threadDump.append(INDENT + "Locked synchronizers: count = " + locks.length);
+      threadDump.append("\n");
+      for (int i = 0; i < locks.length; i++) {
+          LockInfo li = locks[i];
+          threadDump.append(INDENT + "  - " + li);
+          threadDump.append("\n");
+      }
+      threadDump.append("\n");
+   }
+
+   private static void printThread(ThreadInfo threadInfo, StringBuilder threadDump) {
+      StringBuilder sb = new StringBuilder(
+            "\"" + threadInfo.getThreadName() + "\"" +
+            " nid=" + threadInfo.getThreadId() + " state=" +
+            threadInfo.getThreadState());
+      if (threadInfo.getLockName() != null && threadInfo.getThreadState() != Thread.State.BLOCKED) {
+          String[] lockInfo = threadInfo.getLockName().split("@");
+          sb.append("\n" + INDENT +"- waiting on <0x" + lockInfo[1] + "> (a " + lockInfo[0] + ")");
+          sb.append("\n" + INDENT +"- locked <0x" + lockInfo[1] + "> (a " + lockInfo[0] + ")");
+      } else if (threadInfo.getLockName() != null && threadInfo.getThreadState() == Thread.State.BLOCKED) {
+          String[] lockInfo = threadInfo.getLockName().split("@");
+          sb.append("\n" + INDENT +"- waiting to lock <0x" + lockInfo[1] + "> (a " + lockInfo[0] + ")");
+      }
+      if (threadInfo.isSuspended())
+          sb.append(" (suspended)");
+
+      if (threadInfo.isInNative())
+          sb.append(" (running in native)");
+
+      threadDump.append(sb.toString());
+      threadDump.append("\n");
+      if (threadInfo.getLockOwnerName() != null) {
+           threadDump.append(INDENT + " owned by " + threadInfo.getLockOwnerName() +
+                              " id=" + threadInfo.getLockOwnerId());
+           threadDump.append("\n");
+      }
+   }
+
 }

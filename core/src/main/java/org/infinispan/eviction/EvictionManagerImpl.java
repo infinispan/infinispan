@@ -45,10 +45,7 @@ public class EvictionManagerImpl implements EvictionManager {
    private LockManager lockManager;
    private PassivationManager passivator;
    private InvocationContextContainer ctxContainer;
-
-
    private boolean enabled;
-   volatile CountDownLatch startLatch = new CountDownLatch(1);
 
    @Inject
    public void initialize(@ComponentName(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR) ScheduledExecutorService executor,
@@ -82,46 +79,39 @@ public class EvictionManagerImpl implements EvictionManager {
                                                            configuration.getEvictionWakeUpInterval(), TimeUnit.MILLISECONDS);
          }
       }
-      startLatch.countDown();
    }
 
    public void processEviction() {
-      try {
-         startLatch.await();
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-      }
-
-      if (!enabled) {
-         return;
-      }
-
       long start = 0;
-      try {
-         if (trace) {
-            log.trace("Purging data container of expired entries");
-            start = System.currentTimeMillis();
-         }
-         dataContainer.purgeExpired();
-         if (trace) {
-            log.trace("Purging data container completed in {0}", Util.prettyPrintTime(System.currentTimeMillis() - start));
-         }
-      } catch (Exception e) {
-         log.warn("Caught exception purging data container!", e);
-      }
-
-      if (cacheStore != null) {
+      if (!Thread.currentThread().isInterrupted()) {
          try {
             if (trace) {
-               log.trace("Purging cache store of expired entries");
+               log.trace("Purging data container of expired entries");
                start = System.currentTimeMillis();
             }
-            cacheStore.purgeExpired();
+            dataContainer.purgeExpired();
             if (trace) {
-               log.trace("Purging cache store completed in {0}", Util.prettyPrintTime(System.currentTimeMillis() - start));
+               log.trace("Purging data container completed in {0}", Util.prettyPrintTime(System.currentTimeMillis() - start));
             }
          } catch (Exception e) {
-            log.warn("Caught exception purging cache store!", e);
+            log.warn("Caught exception purging data container!", e);
+         }
+      }
+
+      if (!Thread.currentThread().isInterrupted()) {
+         if (cacheStore != null) {
+            try {
+               if (trace) {
+                  log.trace("Purging cache store of expired entries");
+                  start = System.currentTimeMillis();
+               }
+               cacheStore.purgeExpired();
+               if (trace) {
+                  log.trace("Purging cache store completed in {0}", Util.prettyPrintTime(System.currentTimeMillis() - start));
+               }
+            } catch (Exception e) {
+               log.warn("Caught exception purging cache store!", e);
+            }
          }
       }
    }
@@ -132,10 +122,8 @@ public class EvictionManagerImpl implements EvictionManager {
 
    @Stop(priority = 5)
    public void stop() {
-      startLatch = new CountDownLatch(1);
-      if (evictionTask != null) {
+      if (evictionTask != null)
          evictionTask.cancel(true);
-      }
    }
 
    class ScheduledTask implements Runnable {

@@ -115,6 +115,9 @@ public abstract class DataManipulationHelper {
          logAndThrow(e, "SQL failure while integrating state into store");
       } catch (ClassNotFoundException e) {
          logAndThrow(e, "Unexpected failure while integrating state into store");
+      } catch (InterruptedException ie) {
+         if (log.isTraceEnabled()) log.trace("Interrupted while reading from stream"); 
+         Thread.currentThread().interrupt();
       } finally {
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(conn);
@@ -264,7 +267,8 @@ public abstract class DataManipulationHelper {
 
    protected abstract void toStreamProcess(ResultSet rs, InputStream is, ObjectOutput objectOutput) throws CacheLoaderException, SQLException, IOException;
 
-   protected abstract boolean fromStreamProcess(Object objFromStream, PreparedStatement ps, ObjectInput objectInput) throws SQLException, CacheLoaderException, IOException, ClassNotFoundException;
+   protected abstract boolean fromStreamProcess(Object objFromStream, PreparedStatement ps, ObjectInput objectInput)
+         throws SQLException, CacheLoaderException, IOException, ClassNotFoundException, InterruptedException;
 
    public static void logAndThrow(Exception e, String message) throws CacheLoaderException {
       log.error(message, e);

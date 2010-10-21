@@ -74,7 +74,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       hotrodServer.stop();
    }
 
-   public void testPut() throws IOException {
+   public void testPut() throws Exception {
       assert null == remoteCache.put("aKey", "aValue");
       assertCacheContains(cache, "aKey", "aValue");
       assert null == defaultRemote.put("otherKey", "otherValue");
@@ -85,7 +85,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assert defaultRemote.get("otherKey").equals("otherValue");
    }
 
-   public void testRemove() throws IOException {
+   public void testRemove() throws Exception {
       assert null == remoteCache.put("aKey", "aValue");
       assertCacheContains(cache, "aKey", "aValue");
 
@@ -187,7 +187,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assert cache.isEmpty();
    }
 
-   private void assertCacheContains(Cache cache, String key, String value) throws IOException {
+   private void assertCacheContains(Cache cache, String key, String value) throws Exception {
       Marshaller marshaller = new JBossMarshaller();
       byte[] keyBytes = marshaller.objectToByteBuffer(key, 64);
       byte[] valueBytes = marshaller.objectToByteBuffer(value, 64);

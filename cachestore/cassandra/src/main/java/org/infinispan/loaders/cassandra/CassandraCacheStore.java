@@ -293,7 +293,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		addMutation(mutationMap, key, config.entryColumnFamily, null, null);
 	}
 
-	private byte[] marshall(InternalCacheEntry entry) throws IOException {
+	private byte[] marshall(InternalCacheEntry entry) throws IOException, InterruptedException {
 		return getMarshaller().objectToByteBuffer(entry.toInternalCacheValue());
 	}
 
@@ -326,10 +326,15 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		if (trace)
 			log.trace("store(\"{0}\") ", key);
 		String cassandraKey = CassandraCacheStore.hashKey(key);
-		addMutation(mutationMap, cassandraKey, config.entryColumnFamily, entryColumnPath.getColumn(), marshall(entry));
-		if (entry.canExpire()) {
-			addExpiryEntry(cassandraKey, entry.getExpiryTime(), mutationMap);
-		}
+      try {
+         addMutation(mutationMap, cassandraKey, config.entryColumnFamily, entryColumnPath.getColumn(), marshall(entry));
+         if (entry.canExpire()) {
+            addExpiryEntry(cassandraKey, entry.getExpiryTime(), mutationMap);
+         }
+      } catch (InterruptedException ie) {
+         if (trace) log.trace("Interrupted while trying to marshall entry");
+         Thread.currentThread().interrupt();
+      }
 	}
 	
 	private void addExpiryEntry(String cassandraKey, long expiryTime, Map<String, Map<String, List<Mutation>>> mutationMap) {		
@@ -376,7 +381,10 @@ public class CassandraCacheStore extends AbstractCacheStore {
 			throw new CacheLoaderException(e);
 		} catch (ClassNotFoundException e) {
 			throw new CacheLoaderException(e);
-		}
+		} catch (InterruptedException ie) {
+         if (log.isTraceEnabled()) log.trace("Interrupted while reading from stream");
+         Thread.currentThread().interrupt();
+      }
 	}
 
 	/**
