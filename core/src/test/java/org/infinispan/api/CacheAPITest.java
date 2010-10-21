@@ -1,5 +1,16 @@
 package org.infinispan.api;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
+
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -11,16 +22,6 @@ import org.infinispan.util.ObjectDuplicator;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * Tests the {@link org.infinispan.Cache} public API at a high level
  *
@@ -29,6 +30,7 @@ import java.util.Set;
 @Test(groups = "functional")
 public abstract class CacheAPITest extends SingleCacheManagerTest {
 
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
       Configuration c = getDefaultStandaloneConfig(true);
@@ -181,10 +183,14 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       TestingUtil.getTransactionManager(cache).begin();
       cache.put(key2, value2);
       assert cache.get(key2).equals(value2);
-      assert !cache.keySet().contains(key2);
-      size = 1;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert !cache.values().contains(value2);
+      assert cache.keySet().contains(key2);
+      size = 2;
+      System.out.println(cache.size());
+      assert size == cache.size();
+      assert size == cache.keySet().size();
+      assert size == cache.values().size();
+      assert size == cache.entrySet().size();
+      assert cache.values().contains(value2);
       TestingUtil.getTransactionManager(cache).rollback();
 
       assert cache.get(key).equals(value);
@@ -210,7 +216,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       size = 1;
       assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
       assert cache.keySet().contains(key);
-      assert !cache.values().contains(value2);
+      assert cache.values().contains(value2);
       TestingUtil.getTransactionManager(cache).rollback();
 
       assert cache.get(key).equals(value);
@@ -233,7 +239,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       TestingUtil.getTransactionManager(cache).begin();
       cache.remove(key);
       assert cache.get(key) == null;
-      size = 1;
+      size = 0;
       assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
       TestingUtil.getTransactionManager(cache).rollback();
 
@@ -257,7 +263,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       TestingUtil.getTransactionManager(cache).begin();
       cache.clear();
       assert cache.get(key) == null;
-      size = 1;
+      size = 0;
       assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
       TestingUtil.getTransactionManager(cache).rollback();
 
@@ -368,11 +374,15 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       Set expValueEntries = ObjectDuplicator.duplicateSet(expValues);
 
       Set<Object> keys = cache.keySet();
-      for (Object key : keys) assert expKeys.remove(key);
+      for (Object key : keys) {
+         assert expKeys.remove(key);
+      }
       assert expKeys.isEmpty() : "Did not see keys " + expKeys + " in iterator!";
 
       Collection<Object> values = cache.values();
-      for (Object value : values) assert expValues.remove(value);
+      for (Object value : values) {
+         assert expValues.remove(value);
+      }
       assert expValues.isEmpty() : "Did not see keys " + expValues + " in iterator!";
 
       Set<Map.Entry<Object, Object>> entries = cache.entrySet();

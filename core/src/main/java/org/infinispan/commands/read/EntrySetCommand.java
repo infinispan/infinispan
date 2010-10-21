@@ -21,13 +21,22 @@
  */
 package org.infinispan.commands.read;
 
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.BidirectionalMap;
 import org.infinispan.util.Immutables;
-
-import java.util.Set;
 
 /**
  * EntrySetCommand.
@@ -35,19 +44,26 @@ import java.util.Set;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class EntrySetCommand extends AbstractLocalCommand implements VisitableCommand {   
+public class EntrySetCommand extends AbstractLocalCommand implements VisitableCommand {
    private final DataContainer container;
 
    public EntrySetCommand(DataContainer container) {
       this.container = container;
    }
 
+   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitEntrySetCommand(ctx, this);
    }
 
-   public Set perform(InvocationContext ctx) throws Throwable {
-      return Immutables.immutableSetWrap(container.entrySet());
+   @Override
+   public Set<InternalCacheEntry> perform(InvocationContext ctx) throws Throwable {
+      Set<InternalCacheEntry> entries = container.entrySet();
+      if (noTxModifications(ctx)) {
+         return Immutables.immutableSetWrap(entries);
+      }
+
+      return new FilteredEntrySet(entries, ctx.getLookedUpEntries());
    }
 
    @Override
@@ -55,5 +71,166 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
       return "EntrySetCommand{" +
             "set=" + container.entrySet() +
             '}';
+   }
+
+   private static class FilteredEntrySet extends AbstractSet<InternalCacheEntry> {
+      final Set<InternalCacheEntry> entrySet;
+      final BidirectionalMap<Object, CacheEntry> lookedUpEntries;
+
+      FilteredEntrySet(Set<InternalCacheEntry> entrySet, BidirectionalMap<Object, CacheEntry> lookedUpEntries) {
+         this.entrySet = entrySet;
+         this.lookedUpEntries = lookedUpEntries;
+      }
+
+      @Override
+      public int size() {
+         int size = entrySet.size();
+         for (CacheEntry e: lookedUpEntries.values()) {
+            if (e.isCreated()) {
+               size ++;
+            } else if (e.isRemoved()) {
+               size --;
+            }
+         }
+         return Math.max(size, 0);
+      }
+
+      @Override
+      public boolean contains(Object o) {
+         if (!(o instanceof Map.Entry)) {
+            return false;
+         }
+
+         @SuppressWarnings("rawtypes")
+         Map.Entry e = (Map.Entry) o;
+         CacheEntry ce = lookedUpEntries.get(e.getKey());
+         if (ce.isRemoved()) {
+            return false;
+         }
+         if (ce.isChanged() || ce.isCreated()) {
+            return ce.getValue().equals(e.getValue());
+         }
+
+         return entrySet.contains(o);
+      }
+
+      @Override
+      public Iterator<InternalCacheEntry> iterator() {
+         return new Itr();
+      }
+
+      @Override
+      public boolean add(InternalCacheEntry e) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean addAll(Collection<? extends InternalCacheEntry> c) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean retainAll(Collection<?> c) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void clear() {
+         throw new UnsupportedOperationException();
+      }
+
+      private class Itr implements Iterator<InternalCacheEntry> {
+
+         private final Iterator<CacheEntry> it1 = lookedUpEntries.values().iterator();
+         private final Iterator<InternalCacheEntry> it2 = entrySet.iterator();
+         private boolean atIt1 = true;
+         private InternalCacheEntry next;
+
+         Itr() {
+            fetchNext();
+         }
+
+         private void fetchNext() {
+            if (atIt1) {
+               boolean found = false;
+               while (it1.hasNext()) {
+                  CacheEntry e = it1.next();
+                  if (e.isCreated()) {
+                     next = InternalEntryFactory.create(e.getKey(), e.getValue());
+                     found = true;
+                     break;
+                  }
+               }
+
+               if (!found) {
+                  atIt1 = false;
+               }
+            }
+
+            if (!atIt1) {
+               boolean found = false;
+               while (it2.hasNext()) {
+                  InternalCacheEntry ice = it2.next();
+                  Object key = ice.getKey();
+                  CacheEntry e = lookedUpEntries.get(key);
+                  if (e == null) {
+                     next = ice;
+                     found = true;
+                     break;
+                  }
+                  if (e.isChanged()) {
+                     next = InternalEntryFactory.create(key, e.getValue());
+                     found = true;
+                     break;
+                  }
+                  if (e.isRemoved()) {
+                     continue;
+                  }
+               }
+
+               if (!found) {
+                  next = null;
+               }
+            }
+         }
+
+         @Override
+         public boolean hasNext() {
+            if (next == null) {
+               fetchNext();
+            }
+            return next != null;
+         }
+
+         @Override
+         public InternalCacheEntry next() {
+            if (next == null) {
+               fetchNext();
+            }
+
+            if (next == null) {
+               throw new NoSuchElementException();
+            }
+
+            InternalCacheEntry ret = next;
+            next = null;
+            return ret;
+         }
+
+         @Override
+         public void remove() {
+            throw new UnsupportedOperationException();
+         }
+      }
    }
 }

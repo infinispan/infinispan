@@ -1,13 +1,8 @@
 package org.infinispan.commands.read;
 
 import org.infinispan.commands.LocalCommand;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Abstract class
@@ -18,7 +13,7 @@ import java.util.Set;
  */
 public class AbstractLocalCommand implements LocalCommand {
    private static final Object[] EMPTY_ARRAY = new Object[0];
-   
+
    public byte getCommandId() {
       return 0;  // no-op
    }
@@ -37,21 +32,5 @@ public class AbstractLocalCommand implements LocalCommand {
 
    protected boolean noTxModifications(InvocationContext ctx) {
       return !ctx.isInTxScope() || !((TxInvocationContext)ctx).hasModifications();
-   }
-
-   protected Set<Object> getKeySetWithinTransaction(InvocationContext ctx, DataContainer container) {
-      Set<Object> objects = container.keySet();
-      Set<Object> result = new HashSet<Object>();
-      result.addAll(objects);
-      for (CacheEntry ce : ctx.getLookedUpEntries().values()) {
-         if (ce.isRemoved()) {
-            result.remove(ce.getKey());
-         } else {
-            if (ce.isCreated()) {
-               result.add(ce.getKey());
-            }
-         }
-      }
-      return result;
    }
 }
