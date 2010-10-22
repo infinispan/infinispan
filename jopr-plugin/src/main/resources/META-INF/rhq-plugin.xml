@@ -61,14 +61,31 @@
           >
 
 
-           <operation name="Activation.resetStatistics" displayName="[Activation] Reset statistics" description="Resets statistics gathered by this component">
+           <operation name="Invalidation.resetStatistics" displayName="[Invalidation] Reset statistics" description="Resets statistics gathered by this component">
            </operation>
-           <operation name="RpcManager.resetStatistics" displayName="[RpcManager] Reset statistics" description="Resets statistics gathered by this component">
-           </operation>
-           <operation name="RpcManager.setStatisticsEnabled" displayName="[RpcManager] Enable/disable statistics" description="Enable/disable statistics">
+           <operation name="Invalidation.setStatisticsEnabled" displayName="[Invalidation] Enable/disable statistics" description="Enable/disable statistics">
               <parameters>
                  <c:simple-property name="enabled" description="Whether statistics should be enabled or disabled (true/false)"/>
               </parameters>
+           </operation>
+           <operation name="Activation.resetStatistics" displayName="[Activation] Reset statistics" description="Resets statistics gathered by this component">
+           </operation>
+           <operation name="DeadlockDetectingLockManager.resetStatistics" displayName="[DeadlockDetectingLockManager] Reset statistics" description="Resets statistics gathered by this component">
+           </operation>
+           <operation name="Cache.start" displayName="[Cache] Starts cache." description="Starts the cache.">
+           </operation>
+           <operation name="Cache.stop" displayName="[Cache] Stops cache." description="Stops the cache.">
+           </operation>
+           <operation name="Transactions.resetStatistics" displayName="[Transactions] Reset Statistics" description="Resets statistics gathered by this component">
+           </operation>
+           <operation name="Transactions.setStatisticsEnabled" displayName="[Transactions] Enable/disable statistics" description="Enable/disable statistics">
+              <parameters>
+                 <c:simple-property name="enabled" description="Whether statistics should be enabled or disabled (true/false)"/>
+              </parameters>
+           </operation>
+           <operation name="CacheStore.resetStatistics" displayName="[CacheStore] Reset statistics" description="Resets statistics gathered by this component">
+           </operation>
+           <operation name="CacheLoader.resetStatistics" displayName="[CacheLoader] Reset Statistics" description="Resets statistics gathered by this component">
            </operation>
            <operation name="DistributionManager.isAffectedByRehash" displayName="[DistributionManager] Could key be affected by rehash?" description="Determines whether a given key is affected by an ongoing rehash, if any.">
               <parameters>
@@ -94,41 +111,72 @@
                  <c:simple-property name="operationResult" />
               </results>
            </operation>
-           <operation name="CacheStore.resetStatistics" displayName="[CacheStore] Reset statistics" description="Resets statistics gathered by this component">
+           <operation name="RpcManager.resetStatistics" displayName="[RpcManager] Reset statistics" description="Resets statistics gathered by this component">
            </operation>
-           <operation name="Transactions.resetStatistics" displayName="[Transactions] Reset Statistics" description="Resets statistics gathered by this component">
-           </operation>
-           <operation name="Transactions.setStatisticsEnabled" displayName="[Transactions] Enable/disable statistics" description="Enable/disable statistics">
+           <operation name="RpcManager.setStatisticsEnabled" displayName="[RpcManager] Enable/disable statistics" description="Enable/disable statistics">
               <parameters>
                  <c:simple-property name="enabled" description="Whether statistics should be enabled or disabled (true/false)"/>
               </parameters>
-           </operation>
-           <operation name="CacheLoader.resetStatistics" displayName="[CacheLoader] Reset Statistics" description="Resets statistics gathered by this component">
-           </operation>
-           <operation name="Cache.start" displayName="[Cache] Starts cache." description="Starts the cache.">
-           </operation>
-           <operation name="Cache.stop" displayName="[Cache] Stops cache." description="Stops the cache.">
-           </operation>
-           <operation name="DeadlockDetectingLockManager.resetStatistics" displayName="[DeadlockDetectingLockManager] Reset statistics" description="Resets statistics gathered by this component">
-           </operation>
-           <operation name="Invalidation.resetStatistics" displayName="[Invalidation] Reset statistics" description="Resets statistics gathered by this component">
-           </operation>
-           <operation name="Invalidation.setStatisticsEnabled" displayName="[Invalidation] Enable/disable statistics" description="Enable/disable statistics">
-              <parameters>
-                 <c:simple-property name="enabled" description="Whether statistics should be enabled or disabled (true/false)"/>
-              </parameters>
-           </operation>
-           <operation name="Passivation.resetStatistics" displayName="[Passivation] Reset statistics" description="Resets statistics gathered by this component">
            </operation>
            <operation name="Statistics.resetStatistics" displayName="[Statistics] Reset Statistics (Statistics)" description="Resets statistics gathered by this component">
            </operation>
+           <operation name="Passivation.resetStatistics" displayName="[Passivation] Reset statistics" description="Resets statistics gathered by this component">
+           </operation>
 
+           <metric property="Invalidation.StatisticsEnabled" displayName="[Invalidation] Statistics enabled" displayType="detail" units="none" dataType="trait"
+                   description="Statistics enabled" />
+           <metric property="Invalidation.Invalidations" displayName="[Invalidation] Number of invalidations" displayType="detail" units="none" dataType="measurement"
+                   description="Number of invalidations" />
            <metric property="Activation.Activations" displayName="[Activation] Number of cache entries activated" displayType="detail" units="none" dataType="measurement"
                    description="Number of activation events" />
            <metric property="Activation.CacheLoaderLoads" displayName="[Activation] Number of cache store loads" displayType="detail" units="none" dataType="measurement"
                    description="Number of entries loaded from cache store" />
            <metric property="Activation.CacheLoaderMisses" displayName="[Activation] Number of cache store load misses" displayType="detail" units="none" dataType="measurement"
                    description="Number of entries that did not exist in cache store" />
+           <metric property="DeadlockDetectingLockManager.TotalNumberOfDetectedDeadlocks" displayName="[DeadlockDetectingLockManager] Number of total detected deadlocks" displayType="detail" units="none" dataType="measurement"
+                   description="Total number of local detected deadlocks" />
+           <metric property="DeadlockDetectingLockManager.DetectedRemoteDeadlocks" displayName="[DeadlockDetectingLockManager] Number of remote transaction that were roll backed due to deadlocks" displayType="detail" units="none" dataType="measurement"
+                   description="Number of remote transaction that were roll backed due to deadlocks" />
+           <metric property="DeadlockDetectingLockManager.DetectedLocalDeadlocks" displayName="[DeadlockDetectingLockManager] Number of local transaction that were roll backed due to deadlocks" displayType="detail" units="none" dataType="measurement"
+                   description="Number of local transaction that were roll backed due to deadlocks" />
+           <metric property="DeadlockDetectingLockManager.OverlapWithNotDeadlockAwareLockOwners" displayName="[DeadlockDetectingLockManager] Number of unsolvable deadlock situations" displayType="detail" units="none" dataType="measurement"
+                   description="Number of situations when we try to determine a deadlock and the other lock owner is NOT a transaction. In this scenario we cannot run the deadlock detection mechanism" />
+           <metric property="DeadlockDetectingLockManager.LocallyInterruptedTransactions" displayName="[DeadlockDetectingLockManager] Number of interrupted local transactions" displayType="detail" units="none" dataType="measurement"
+                   description="Number of locally originated transactions that were interrupted as a deadlock situation was detected" />
+           <metric property="DeadlockDetectingLockManager.ConcurrencyLevel" displayName="[DeadlockDetectingLockManager] Concurrency level" displayType="detail" units="none" dataType="trait"
+                   description="The concurrency level that the MVCC Lock Manager has been configured with." />
+           <metric property="DeadlockDetectingLockManager.NumberOfLocksHeld" displayName="[DeadlockDetectingLockManager] Number of locks held" displayType="detail" units="none" dataType="measurement"
+                   description="The number of exclusive locks that are held." />
+           <metric property="DeadlockDetectingLockManager.NumberOfLocksAvailable" displayName="[DeadlockDetectingLockManager] Number of locks available" displayType="detail" units="none" dataType="measurement"
+                   description="The number of exclusive locks that are available." />
+           <metric property="LockManager.ConcurrencyLevel" displayName="[LockManager] Concurrency level" displayType="detail" units="none" dataType="trait"
+                   description="The concurrency level that the MVCC Lock Manager has been configured with." />
+           <metric property="LockManager.NumberOfLocksHeld" displayName="[LockManager] Number of locks held" displayType="detail" units="none" dataType="measurement"
+                   description="The number of exclusive locks that are held." />
+           <metric property="LockManager.NumberOfLocksAvailable" displayName="[LockManager] Number of locks available" displayType="detail" units="none" dataType="measurement"
+                   description="The number of exclusive locks that are available." />
+           <metric property="Cache.CacheStatus" displayName="[Cache] Cache status" displayType="summary" units="none" dataType="trait"
+                   description="Returns the cache status" />
+           <metric property="Cache.CacheName" displayName="[Cache] Cache name" displayType="summary" units="none" dataType="trait"
+                   description="Returns the cache name" />
+           <metric property="Transactions.StatisticsEnabled" displayName="[Transactions] Statistics enabled" displayType="detail" units="none" dataType="trait"
+                   description="Statistics enabled" />
+           <metric property="Transactions.Prepares" displayName="[Transactions] Prepares" displayType="summary" units="none" dataType="measurement"
+                   description="Number of transaction prepares performed since last reset" />
+           <metric property="Transactions.Commits" displayName="[Transactions] Commits" displayType="summary" units="none" dataType="measurement"
+                   description="Number of transaction commits performed since last reset" />
+           <metric property="Transactions.Rollbacks" displayName="[Transactions] Rollbacks" displayType="summary" units="none" dataType="measurement"
+                   description="Number of transaction rollbacks performed since last reset" />
+           <metric property="CacheStore.CacheLoaderStores" displayName="[CacheStore] Number of cache stores" displayType="detail" units="none" dataType="measurement"
+                   description="number of cache loader stores" />
+           <metric property="CacheLoader.CacheLoaderLoads" displayName="[CacheLoader] Number of cache store loads" displayType="detail" units="none" dataType="measurement"
+                   description="Number of entries loaded from cache store" />
+           <metric property="CacheLoader.CacheLoaderMisses" displayName="[CacheLoader] Number of cache store load misses" displayType="detail" units="none" dataType="measurement"
+                   description="Number of entries that did not exist in cache store" />
+           <metric property="DistributionManager.RehashInProgress" displayName="[DistributionManager] Is rehash in progress?" displayType="detail" units="none" dataType="trait"
+                   description="Checks whether the node is involved in a rehash." />
+           <metric property="DistributionManager.JoinComplete" displayName="[DistributionManager] Is join completed?" displayType="detail" units="none" dataType="trait"
+                   description="If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress." />
            <metric property="RpcManager.Members" displayName="[RpcManager] Cluster members" displayType="summary" units="none" dataType="trait"
                    description="List of members in the cluster" />
            <metric property="RpcManager.StatisticsEnabled" displayName="[RpcManager] Statistics enabled" displayType="detail" units="none" dataType="trait"
@@ -147,56 +195,6 @@
                    description="Successful replications as a ratio of total replications in numeric double format" />
            <metric property="RpcManager.AverageReplicationTime" displayName="[RpcManager] Average time spent in the transport layer" displayType="summary" units="milliseconds" dataType="measurement"
                    description="The average time spent in the transport layer, in milliseconds" />
-           <metric property="LockManager.ConcurrencyLevel" displayName="[LockManager] Concurrency level" displayType="detail" units="none" dataType="trait"
-                   description="The concurrency level that the MVCC Lock Manager has been configured with." />
-           <metric property="LockManager.NumberOfLocksHeld" displayName="[LockManager] Number of locks held" displayType="detail" units="none" dataType="measurement"
-                   description="The number of exclusive locks that are held." />
-           <metric property="LockManager.NumberOfLocksAvailable" displayName="[LockManager] Number of locks available" displayType="detail" units="none" dataType="measurement"
-                   description="The number of exclusive locks that are available." />
-           <metric property="DistributionManager.RehashInProgress" displayName="[DistributionManager] Is rehash in progress?" displayType="detail" units="none" dataType="trait"
-                   description="Checks whether the node is involved in a rehash." />
-           <metric property="DistributionManager.JoinComplete" displayName="[DistributionManager] Is join completed?" displayType="detail" units="none" dataType="trait"
-                   description="If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress." />
-           <metric property="CacheStore.CacheLoaderStores" displayName="[CacheStore] Number of cache stores" displayType="detail" units="none" dataType="measurement"
-                   description="number of cache loader stores" />
-           <metric property="Transactions.StatisticsEnabled" displayName="[Transactions] Statistics enabled" displayType="detail" units="none" dataType="trait"
-                   description="Statistics enabled" />
-           <metric property="Transactions.Prepares" displayName="[Transactions] Prepares" displayType="summary" units="none" dataType="measurement"
-                   description="Number of transaction prepares performed since last reset" />
-           <metric property="Transactions.Commits" displayName="[Transactions] Commits" displayType="summary" units="none" dataType="measurement"
-                   description="Number of transaction commits performed since last reset" />
-           <metric property="Transactions.Rollbacks" displayName="[Transactions] Rollbacks" displayType="summary" units="none" dataType="measurement"
-                   description="Number of transaction rollbacks performed since last reset" />
-           <metric property="CacheLoader.CacheLoaderLoads" displayName="[CacheLoader] Number of cache store loads" displayType="detail" units="none" dataType="measurement"
-                   description="Number of entries loaded from cache store" />
-           <metric property="CacheLoader.CacheLoaderMisses" displayName="[CacheLoader] Number of cache store load misses" displayType="detail" units="none" dataType="measurement"
-                   description="Number of entries that did not exist in cache store" />
-           <metric property="Cache.CacheStatus" displayName="[Cache] Cache status" displayType="summary" units="none" dataType="trait"
-                   description="Returns the cache status" />
-           <metric property="Cache.CacheName" displayName="[Cache] Cache name" displayType="summary" units="none" dataType="trait"
-                   description="Returns the cache name" />
-           <metric property="DeadlockDetectingLockManager.TotalNumberOfDetectedDeadlocks" displayName="[DeadlockDetectingLockManager] Number of total detected deadlocks" displayType="detail" units="none" dataType="measurement"
-                   description="Total number of local detected deadlocks" />
-           <metric property="DeadlockDetectingLockManager.DetectedRemoteDeadlocks" displayName="[DeadlockDetectingLockManager] Number of remote transaction that were roll backed due to deadlocks" displayType="detail" units="none" dataType="measurement"
-                   description="Number of remote transaction that were roll backed due to deadlocks" />
-           <metric property="DeadlockDetectingLockManager.DetectedLocalDeadlocks" displayName="[DeadlockDetectingLockManager] Number of local transaction that were roll backed due to deadlocks" displayType="detail" units="none" dataType="measurement"
-                   description="Number of local transaction that were roll backed due to deadlocks" />
-           <metric property="DeadlockDetectingLockManager.OverlapWithNotDeadlockAwareLockOwners" displayName="[DeadlockDetectingLockManager] Number of unsolvable deadlock situations" displayType="detail" units="none" dataType="measurement"
-                   description="Number of situations when we try to determine a deadlock and the other lock owner is NOT a transaction. In this scenario we cannot run the deadlock detection mechanism" />
-           <metric property="DeadlockDetectingLockManager.LocallyInterruptedTransactions" displayName="[DeadlockDetectingLockManager] Number of interrupted local transactions" displayType="detail" units="none" dataType="measurement"
-                   description="Number of locally originated transactions that were interrupted as a deadlock situation was detected" />
-           <metric property="DeadlockDetectingLockManager.ConcurrencyLevel" displayName="[DeadlockDetectingLockManager] Concurrency level" displayType="detail" units="none" dataType="trait"
-                   description="The concurrency level that the MVCC Lock Manager has been configured with." />
-           <metric property="DeadlockDetectingLockManager.NumberOfLocksHeld" displayName="[DeadlockDetectingLockManager] Number of locks held" displayType="detail" units="none" dataType="measurement"
-                   description="The number of exclusive locks that are held." />
-           <metric property="DeadlockDetectingLockManager.NumberOfLocksAvailable" displayName="[DeadlockDetectingLockManager] Number of locks available" displayType="detail" units="none" dataType="measurement"
-                   description="The number of exclusive locks that are available." />
-           <metric property="Invalidation.StatisticsEnabled" displayName="[Invalidation] Statistics enabled" displayType="detail" units="none" dataType="trait"
-                   description="Statistics enabled" />
-           <metric property="Invalidation.Invalidations" displayName="[Invalidation] Number of invalidations" displayType="detail" units="none" dataType="measurement"
-                   description="Number of invalidations" />
-           <metric property="Passivation.Passivations" displayName="[Passivation] Number of cache passivations" displayType="detail" units="none" dataType="measurement"
-                   description="Number of passivation events" />
            <metric property="Statistics.Hits" displayName="[Statistics] Number of cache hits" displayType="summary" units="none" dataType="measurement"
                    description="Number of cache attribute hits" />
            <metric property="Statistics.Misses" displayName="[Statistics] Number of cache misses" displayType="summary" units="none" dataType="measurement"
@@ -223,6 +221,8 @@
                    description="Number of seconds since cache started" />
            <metric property="Statistics.TimeSinceReset" displayName="[Statistics] Seconds since cache statistics were reset" displayType="summary" units="seconds" dataType="measurement"
                    description="Number of seconds since the cache statistics were last reset" />
+           <metric property="Passivation.Passivations" displayName="[Passivation] Number of cache passivations" displayType="detail" units="none" dataType="measurement"
+                   description="Number of passivation events" />
 
 
        </service>
