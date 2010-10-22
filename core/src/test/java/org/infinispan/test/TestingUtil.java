@@ -433,7 +433,7 @@ public class TestingUtil {
                try {
                   clearContent(cm);
                } finally {
-                  cm.stop();
+                  if (cm != null) cm.stop();
                }
             } catch (Throwable e) {
                log.warn("Problems killing cache manager " + cm, e);

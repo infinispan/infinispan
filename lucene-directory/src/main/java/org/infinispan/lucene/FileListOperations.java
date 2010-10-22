@@ -71,7 +71,7 @@ class FileListOperations {
       Set<String> fileList = getFileList();
       boolean done = fileList.remove(fileName);
       if (done) {
-         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(fileListCacheKey, fileList);
+         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING, Flag.SKIP_CACHE_LOAD).put(fileListCacheKey, fileList);
       }
    }
    
@@ -83,7 +83,7 @@ class FileListOperations {
       Set<String> fileList = getFileList();
       boolean done = fileList.add(fileName);
       if (done) {
-         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(fileListCacheKey, fileList);
+         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(fileListCacheKey, fileList);
       }
    }
    
@@ -107,7 +107,7 @@ class FileListOperations {
       boolean doneAdd = fileList.add(toAdd);
       boolean doneRemove = fileList.remove(toRemove);
       if (doneAdd || doneRemove) {
-         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(fileListCacheKey, fileList);
+         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(fileListCacheKey, fileList);
       }
    }
 

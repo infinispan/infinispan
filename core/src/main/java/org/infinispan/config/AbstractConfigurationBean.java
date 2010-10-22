@@ -44,7 +44,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public abstract class AbstractConfigurationBean implements CloneableConfigurationComponent {
+public abstract class AbstractConfigurationBean implements CloneableConfigurationComponent, JAXBUnmarshallable {
    private static final long serialVersionUID = 4879873994727821938L;
    protected static final TypedProperties EMPTY_PROPERTIES = new TypedProperties();
    protected transient Log log = LogFactory.getLog(getClass());  
@@ -119,5 +119,10 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
    @Override
    public CloneableConfigurationComponent clone() throws CloneNotSupportedException {
       return (AbstractConfigurationBean) super.clone();
+   }
+
+   @Override
+   public void willUnmarshall(Object parent) {
+      // default no-op
    }
 }

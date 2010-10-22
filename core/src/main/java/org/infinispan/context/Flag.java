@@ -88,6 +88,11 @@ public enum Flag {
     */
    SKIP_CACHE_STORE,
    /**
+    * Skips loading an entry from any configured {@link CacheStore}s. Useful for example to perform a put() operation
+    * while not interested in the return value of put() which would return the eventually existing previous value.
+    */
+   SKIP_CACHE_LOAD,
+   /**
     * Swallows any exceptions, logging them instead at a low log level.  Will prevent a failing operation from
     * affecting any ongoing JTA transactions as well.
     */

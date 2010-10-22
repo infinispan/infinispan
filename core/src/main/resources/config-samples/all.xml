@@ -189,8 +189,8 @@
       </clustering>
    </namedCache>
 
-   <namedCache name="withReplicatinQueue">
-      <clustering>
+   <namedCache name="withReplicationQueue">
+      <clustering mode="r">
          <async useReplQueue="true" replQueueInterval="100" replQueueMaxElements="200"/>
       </clustering>
    </namedCache>

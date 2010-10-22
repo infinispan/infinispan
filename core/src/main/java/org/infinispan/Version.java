@@ -31,10 +31,10 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public class Version {
-   public static final String version = "4.2.0.ALPHA4";
+   public static final String version = "5.0.0.SNAPSHOT";
    public static final String codename = "Pagoa";
    public static final String projectName = "Infinispan";
-   static final byte[] version_id = {'4', '2', '0', 'A', 'L', 'P', 'H', 'A', '4'};
+   static final byte[] version_id = {'0', '5', '0', '0', 'S'};
    private static final int MAJOR_SHIFT = 11;
    private static final int MINOR_SHIFT = 6;
    private static final int MAJOR_MASK = 0x00f800;
