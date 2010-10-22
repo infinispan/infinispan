@@ -47,10 +47,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
 
    @Test
    public void testRepeatedLoads() throws CacheLoaderException {
-      CacheLoaderManager clm = TestingUtil.extractComponent(cache, CacheLoaderManager.class);
-      ChainingCacheStore ccs = (ChainingCacheStore) clm.getCacheLoader();
-      CountingCacheStore countingCS = (CountingCacheStore) ccs.getStores().keySet().iterator().next();
-      reset(cache,countingCS);
+      CountingCacheStore countingCS = getCountingCacheStore();
       store.store(InternalEntryFactory.create("k1", "v1"));
 
       assert countingCS.numLoads == 0;
@@ -69,10 +66,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
 
    @Test
    public void testSkipCacheFlagUsage() throws CacheLoaderException {
-      CacheLoaderManager clm = TestingUtil.extractComponent(cache, CacheLoaderManager.class);
-      ChainingCacheStore ccs = (ChainingCacheStore) clm.getCacheLoader();
-      CountingCacheStore countingCS = (CountingCacheStore) ccs.getStores().keySet().iterator().next();
-      reset(cache, countingCS);
+      CountingCacheStore countingCS = getCountingCacheStore();
       
       store.store(InternalEntryFactory.create("k1", "v1"));
 
@@ -119,6 +113,33 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       assert null == cache.getAdvancedCache().get("k2batch");
       assert countingCS.numLoads == 3 : "Expected 2, was " + countingCS.numLoads;
       cache.endBatch(true);
+   }
+
+   private CountingCacheStore getCountingCacheStore() {
+      CacheLoaderManager clm = TestingUtil.extractComponent(cache, CacheLoaderManager.class);
+      ChainingCacheStore ccs = (ChainingCacheStore) clm.getCacheLoader();
+      CountingCacheStore countingCS = (CountingCacheStore) ccs.getStores().keySet().iterator().next();
+      reset(cache, countingCS);
+      return countingCS;
+   }
+   
+   @Test
+   public void testSkipCacheLoadFlagUsage() throws CacheLoaderException {
+      CountingCacheStore countingCS = getCountingCacheStore();
+      
+      store.store(InternalEntryFactory.create("home", "Vermezzo"));
+      store.store(InternalEntryFactory.create("home-second", "Newcastle Upon Tyne"));
+
+      assert countingCS.numLoads == 0;
+      //load using SKIP_CACHE_LOAD should not find the object in the store
+      assert cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).get("home") == null;
+      assert countingCS.numLoads == 0;
+      
+      assert cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).put("home", "Newcastle") == null;
+      assert countingCS.numLoads == 0;
+      
+      assert "Newcastle Upon Tyne".equals(cache.getAdvancedCache().put("home-second", "Newcastle Upon Tyne, second"));
+      assert countingCS.numLoads == 1;
    }
    
    private void reset(Cache cache, CountingCacheStore countingCS) {
