@@ -1,5 +1,6 @@
 package org.infinispan.config.parsing;
 
+import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
@@ -14,6 +15,7 @@ import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -121,7 +123,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert def.getIsolationLevel() == IsolationLevel.REPEATABLE_READ;
    }
 
-
    private void testNamedCacheFile(XmlConfigurationParser parser) throws IOException {
 
       GlobalConfiguration gc = parser.parseGlobalConfiguration();
@@ -160,10 +161,14 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       Configuration c = namedCaches.get("transactional");
 
+      assert !c.getCacheMode().isClustered();
       assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
       assert c.isUseEagerLocking();
       assert c.isEagerLockSingleNode();
       assert !c.isSyncRollbackPhase();
+
+      c = namedCaches.get("transactional2");
+      assert c.getTransactionManagerLookupClass().equals("org.something.Lookup");
 
       c = namedCaches.get("syncRepl");
 
@@ -217,7 +222,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert csConf.isPurgeOnStartup();
       assert csConf.getLocation().equals("/tmp/FileCacheStore-Location");
       assert csConf.getSingletonStoreConfig().getPushStateTimeout() == 20000;
-      assert csConf.getSingletonStoreConfig().isPushStateWhenCoordinator() == true;
+      assert csConf.getSingletonStoreConfig().isPushStateWhenCoordinator();
       assert csConf.getAsyncStoreConfig().getThreadPoolSize() == 5;
       assert csConf.getAsyncStoreConfig().getFlushLockTimeout() == 15000;
       assert csConf.getAsyncStoreConfig().isEnabled();
@@ -251,6 +256,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c = namedCaches.get("withDeadlockDetection");
       assert c.isEnableDeadlockDetection();
       assert c.getDeadlockDetectionSpinDuration() == 1221;
+      assert c.getCacheMode() == Configuration.CacheMode.DIST_SYNC;
    }
 
    private void testConfigurationMerging(XmlConfigurationParser parser) throws IOException {
@@ -327,6 +333,13 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c.applyOverrides(namedCaches.get("lazyDeserialization"));
       assert c.isUseLazyDeserialization();
       assert !c.isExposeJmxStatistics();
+
+      c = defaultCfg.clone();
+      c.applyOverrides(namedCaches.get("withReplicationQueue"));
+      assert c.getCacheMode() == Configuration.CacheMode.DIST_SYNC;
+      assert c.isUseReplQueue();
+      assert c.getReplQueueInterval() == 100;
+      assert c.getReplQueueMaxElements() == 200;
 
       c = defaultCfg.clone();
       Configuration configurationWL = namedCaches.get("withLoader");

@@ -73,7 +73,7 @@ import java.util.Map;
  */
 @XmlRootElement(name = "infinispan")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class InfinispanConfiguration implements XmlConfigurationParser {
+public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnmarshallable {
 
    private static final Log log = LogFactory.getLog(InfinispanConfiguration.class);
 
@@ -247,6 +247,16 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
             source = replaceProperties(config, nf);
          }
 
+         u.setListener(new Unmarshaller.Listener() {
+            @Override
+            public void beforeUnmarshal(Object target, Object parent) {
+               if (target instanceof JAXBUnmarshallable) {
+                  // notify the bean that it is about to be unmarshalled
+                  ((JAXBUnmarshallable) target).willUnmarshall();
+               }
+            }
+         });
+
          InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(source);
          ic.accept(cbv);
          return ic;
@@ -405,5 +415,10 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
          map.put(conf.getName(), conf);
       }
       return map;
+   }
+
+   @Override
+   public void willUnmarshall() {
+      // no-op
    }
 }

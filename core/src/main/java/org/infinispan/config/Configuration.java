@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.infinispan.config.Configuration.CacheMode.*;
 
 /**
  * Encapsulates the configuration of a Cache. Configures the default cache which can be retrieved
@@ -105,7 +106,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private UnsafeType unsafe = new UnsafeType();
 
    @XmlElement
-   private ClusteringType clustering = new ClusteringType();
+   private ClusteringType clustering = new ClusteringType(LOCAL);
 
    @XmlElement
    private JmxStatistics jmxStatistics = new JmxStatistics();
@@ -418,7 +419,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       clustering.setMode(CacheMode.valueOf(uc(cacheMode)));
       if (clustering.mode == null) {
          log.warn("Unknown cache mode '" + cacheMode + "', using defaults.");
-         clustering.setMode(CacheMode.LOCAL);
+         clustering.setMode(LOCAL);
       }
    }
 
@@ -1222,6 +1223,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          result = 31 * result + (useEagerLocking != null ? useEagerLocking.hashCode() : 0);
          return result;
       }
+
+      @Override
+      public void willUnmarshall() {
+         // set the REAL default now!!
+         // make sure we use the setter so that the change is registered for merging
+         setTransactionManagerLookupClass(GenericTransactionManagerLookup.class.getName());
+      }
    }
    /**
     * 
@@ -1337,7 +1345,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @XmlTransient      
       @ConfigurationDocRef(bean=Configuration.class,targetElement="setCacheMode")
-      protected CacheMode mode = CacheMode.LOCAL;
+      protected CacheMode mode;
 
       @XmlElement
       protected SyncType sync = new SyncType();
@@ -1353,6 +1361,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @XmlElement
       protected HashType hash = new HashType();
+
+      public ClusteringType(CacheMode mode) {
+         this.mode = mode;
+      }
+
+      public ClusteringType() {
+         this.mode = DIST_SYNC;
+      }
 
       public void setMode(CacheMode mode) {
          testImmutability("mode");
@@ -1412,6 +1428,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          result = 31 * result + (hash != null ? hash.hashCode() : 0);
          return result;
       }
+
+      @Override
+      public void willUnmarshall() {
+         // set the REAL default now!!
+         // must use the setter to ensure the change is registered on the bean
+         setMode(DIST_SYNC);
+      }
    }
 
    public static class ClusteringTypeAdapter extends XmlAdapter<ClusteringType, ClusteringType> {
@@ -1427,19 +1450,19 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             String mode = ct.stringMode.toLowerCase();
             if(mode.startsWith("r")){
                if(ct.isSynchronous())
-                  ct.setMode(CacheMode.REPL_SYNC);
+                  ct.setMode(REPL_SYNC);
                else 
-                  ct.setMode(CacheMode.REPL_ASYNC);
+                  ct.setMode(REPL_ASYNC);
             } else if (mode.startsWith("i")){
                if(ct.isSynchronous())
-                  ct.setMode(CacheMode.INVALIDATION_SYNC);
+                  ct.setMode(INVALIDATION_SYNC);
                else 
-                  ct.setMode(CacheMode.INVALIDATION_ASYNC);
+                  ct.setMode(INVALIDATION_ASYNC);
             } else if (mode.startsWith("d")){
                if(ct.isSynchronous())
-                  ct.setMode(CacheMode.DIST_SYNC);
+                  ct.setMode(DIST_SYNC);
                else 
-                  ct.setMode(CacheMode.DIST_ASYNC);
+                  ct.setMode(DIST_ASYNC);
             }
             else {
                throw new ConfigurationException("Invalid clustering mode" + ct.stringMode);
