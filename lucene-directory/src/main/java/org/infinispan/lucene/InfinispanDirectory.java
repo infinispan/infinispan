@@ -249,7 +249,7 @@ public class InfinispanDirectory extends Directory {
             break;
          }
          ChunkCacheKey toChunkKey = new ChunkCacheKey(indexName, to, i);
-         chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(toChunkKey, ob);
+         chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).put(toChunkKey, ob);
       } while (true);
       
       // rename metadata first
