@@ -23,13 +23,11 @@ package org.infinispan.config;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import static org.infinispan.config.Configuration.CacheMode.LOCAL;
-import static org.infinispan.config.Configuration.CacheMode.REPL_ASYNC;
+import static org.infinispan.config.Configuration.CacheMode.*;
 
 /**
  * ConfigurationValidationTest.
@@ -61,6 +59,33 @@ public class ConfigurationValidationTest extends AbstractInfinispanTest {
       }
    }
 
+   @Test (expectedExceptions = ConfigurationException.class)
+   public void testDistAndReplQueue() {
+      EmbeddedCacheManager ecm = null;
+      try {
+         Configuration c = new Configuration();
+         c.setCacheMode(DIST_SYNC);
+         c.setUseReplQueue(true);
+         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
+         ecm.getCache();
+      } finally {
+         TestingUtil.killCacheManagers(ecm);
+      }
+   }
+
+   @Test (expectedExceptions = ConfigurationException.class)
+   public void testSyncAndReplQueue() {
+      EmbeddedCacheManager ecm = null;
+      try {
+         Configuration c = new Configuration();
+         c.setCacheMode(REPL_SYNC);
+         c.setUseReplQueue(true);
+         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
+         ecm.getCache();
+      } finally {
+         TestingUtil.killCacheManagers(ecm);
+      }
+   }
 
    private EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfiguration gc = GlobalConfiguration.getNonClusteredDefault();

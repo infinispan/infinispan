@@ -248,7 +248,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
             public void beforeUnmarshal(Object target, Object parent) {
                if (target instanceof JAXBUnmarshallable) {
                   // notify the bean that it is about to be unmarshalled
-                  ((JAXBUnmarshallable) target).willUnmarshall();
+                  ((JAXBUnmarshallable) target).willUnmarshall(parent);
                }
             }
          });
@@ -414,7 +414,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    }
 
    @Override
-   public void willUnmarshall() {
+   public void willUnmarshall(Object parent) {
       // no-op
    }
 }
