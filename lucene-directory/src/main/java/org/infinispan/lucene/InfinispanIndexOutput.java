@@ -163,11 +163,11 @@ public class InfinispanIndexOutput extends IndexOutput {
          // create key for the current chunk
          ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentChunkNumber);
          if (trace) log.trace("Storing segment chunk: " + key);
-         chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(key, bufferToFlush);
+         chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(key, bufferToFlush);
       }
       // override existing file header with new size and updated accesstime
       file.touch();
-      metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(fileKey, file);
+      metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(fileKey, file);
       registerToFileListIfNeeded();
       if (microbatch) chunksCache.endBatch(true);
    }
