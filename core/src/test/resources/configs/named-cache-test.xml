@@ -54,8 +54,13 @@
    </default>
 
    <namedCache name="transactional">
-      <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" useEagerLocking="true" eagerLockSingleNode="true"/>
+      <transaction useEagerLocking="true" eagerLockSingleNode="true"/>
    </namedCache>
+
+   <namedCache name="transactional2">
+      <transaction transactionManagerLookupClass="org.something.Lookup"/>
+   </namedCache>
+
 
    <namedCache name="syncRepl">
       <clustering mode="repl">
@@ -166,6 +171,11 @@
      </loaders>   
    </namedCache>
 
+   <namedCache name="withReplicationQueue">
+      <clustering>
+         <async useReplQueue="true" replQueueInterval="100" replQueueMaxElements="200"/>
+      </clustering>
+   </namedCache>
    
    <namedCache name="cacheWithCustomInterceptors">
    
