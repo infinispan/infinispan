@@ -49,4 +49,13 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
    @Override
    public void visitConfiguration(Configuration bean) {
    }
+
+   @Override
+   public void visitClusteringType(Configuration.ClusteringType clusteringType) {
+      if (clusteringType.mode.isDistributed() && clusteringType.async.useReplQueue)
+         throw new ConfigurationException("Use of the replication queue is invalid when using DISTRIBUTED mode.");
+
+      if (clusteringType.mode.isSynchronous() && clusteringType.async.useReplQueue)
+         throw new ConfigurationException("Use of the replication queue is only allowed with an ASYNCHRONOUS cluster mode.");
+   }
 }

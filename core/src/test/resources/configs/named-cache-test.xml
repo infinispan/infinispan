@@ -139,7 +139,7 @@
    </namedCache>
 
    <namedCache name="withouthJmxEnabled">
-      <clustering>
+      <clustering mode="r" >
          <async useReplQueue="true" replQueueInterval="100" replQueueMaxElements="200"/>
       </clustering>
       <jmxStatistics enabled="false"/>
@@ -172,7 +172,7 @@
    </namedCache>
 
    <namedCache name="withReplicationQueue">
-      <clustering>
+      <clustering mode="r">
          <async useReplQueue="true" replQueueInterval="100" replQueueMaxElements="200"/>
       </clustering>
    </namedCache>

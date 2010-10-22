@@ -122,7 +122,7 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
    }
 
    @Override
-   public void willUnmarshall() {
+   public void willUnmarshall(Object parent) {
       // default no-op
    }
 }
