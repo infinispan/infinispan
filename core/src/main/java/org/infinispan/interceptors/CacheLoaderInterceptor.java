@@ -121,9 +121,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    private boolean loadIfNeeded(InvocationContext ctx, Object key) throws Throwable {
-      // in case SKIP_CACHE_STORE flag was enabled the operation is skipped
-      if (ctx.hasFlag(Flag.SKIP_CACHE_STORE)) {
-         return false;
+      if (ctx.hasFlag(Flag.SKIP_CACHE_STORE) || ctx.hasFlag(Flag.SKIP_CACHE_LOAD)) {
+         return false; //skip operation
       }
       // first check if the container contains the key we need.  Try and load this into the context.
       CacheEntry e = entryFactory.wrapEntryForReading(ctx, key);
