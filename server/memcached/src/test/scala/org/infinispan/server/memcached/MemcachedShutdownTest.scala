@@ -14,6 +14,7 @@ import org.testng.Assert._
 @Test(groups = Array("functional"), testName = "server.memcached.MemcachedShutdownTest")
 class MemcachedShutdownTest extends MemcachedSingleNodeTest {
 
+   @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
    override protected def shutdownClient {}
 
    def testAny(m: Method) {
