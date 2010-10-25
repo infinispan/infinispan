@@ -33,6 +33,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 
+import static java.util.Collections.emptySet;
+
 /**
  * Repository for {@link org.infinispan.transaction.xa.RemoteTransaction} and {@link
  * org.infinispan.transaction.xa.TransactionXaAdapter}s (locally originated transactions).
@@ -85,7 +87,7 @@ public class TransactionTable {
 
    public Set<Object> getLockedKeysForRemoteTransaction(GlobalTransaction gtx) {
       RemoteTransaction transaction = remoteTransactions.get(gtx);
-      if (transaction == null) return Collections.EMPTY_SET;
+      if (transaction == null) return emptySet();
       return transaction.getLockedKeys();
    }
 

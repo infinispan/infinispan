@@ -1069,7 +1069,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @SuppressWarnings("unchecked")
    public List<CustomInterceptorConfig> getCustomInterceptors() {
-      return customInterceptors.customInterceptors == null ? Collections.EMPTY_LIST : customInterceptors.customInterceptors;
+      return customInterceptors.customInterceptors == null ? Collections.<CustomInterceptorConfig>emptyList() : customInterceptors.customInterceptors;
    }
 
    /**
