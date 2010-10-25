@@ -336,7 +336,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       c = defaultCfg.clone();
       c.applyOverrides(namedCaches.get("withReplicationQueue"));
-      assert c.getCacheMode() == Configuration.CacheMode.DIST_SYNC;
+      assert c.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
       assert c.isUseReplQueue();
       assert c.getReplQueueInterval() == 100;
       assert c.getReplQueueMaxElements() == 200;
