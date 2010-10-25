@@ -31,7 +31,8 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public class Version {
-   public static final String version = "4.2.0.SNAPSHOT";
+   public static final String major = "4.2";
+   public static final String version = major + ".0.SNAPSHOT";
    public static final String codename = "Ursus";
    public static final String projectName = "Infinispan";
    static final byte[] version_id = {'0', '4', '2', '0', 'S'};

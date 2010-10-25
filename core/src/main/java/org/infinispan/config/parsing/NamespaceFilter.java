@@ -1,5 +1,6 @@
 package org.infinispan.config.parsing;
 
+import org.infinispan.Version;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.XMLFilterImpl;
@@ -9,7 +10,7 @@ import org.xml.sax.helpers.XMLFilterImpl;
  */
 public class NamespaceFilter extends XMLFilterImpl {
 
-   public static final String ISPN_NS = "urn:infinispan:config:4.2";
+   public static final String ISPN_NS = "urn:infinispan:config:" + Version.major;
 
    //State variable
    private boolean addedNamespace = false;
