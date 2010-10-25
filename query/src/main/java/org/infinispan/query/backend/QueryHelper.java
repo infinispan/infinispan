@@ -183,6 +183,7 @@ public class QueryHelper {
       // get the component registry and then register the searchFactory.
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       cr.registerComponent(searchFactory, SearchFactoryImplementor.class);
+      cr.registerComponent(new SearchFactoryStopper(searchFactory), SearchFactoryStopper.class);
 
       // Get the interceptor chain factory so I can create my interceptor.
       InterceptorChainFactory icf = cr.getComponent(InterceptorChainFactory.class);
