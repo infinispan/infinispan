@@ -463,7 +463,13 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       @Override
       public void emitNotification(List<Address> oldMembers, View newView) {
          MergeView mv = (MergeView) newView;
-         notifier.notifyMerge(members, oldMembers, getAddress(), (int) newView.getVid().getId(), needsToRejoin(newView), getSubgroups(mv.getSubgroups()));
+
+         final Address address = getAddress();
+         final int viewId = (int) newView.getVid().getId();
+         final boolean needsRejoin = needsToRejoin(newView);
+         
+         notifier.notifyMerge(members, oldMembers, address, viewId, needsRejoin, getSubgroups(mv.getSubgroups()));
+         notifier.notifyViewChange(members, oldMembers, address, viewId, needsRejoin);
       }
 
       private List<List<Address>> getSubgroups(Vector<View> subviews) {
