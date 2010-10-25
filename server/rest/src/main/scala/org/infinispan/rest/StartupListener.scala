@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServlet
  * requests are attempted to be serviced. Less kitten carnage.
  *
  * @author Michael Neale
- * @author Galder Zamarreno
+ * @author Galder Zamarreño
  * @since 4.0
  */
 class StartupListener extends HttpServlet {

@@ -16,7 +16,7 @@ import org.infinispan.{CacheException, Cache}
  * // TODO
  *
  * @author Michael Neale
- * @author Galder Zamarreno
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @Path("/rest")
@@ -86,8 +86,8 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
    @Path("/{cacheName}/{cacheKey}")
    def putEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String,
                 @HeaderParam("Content-Type") mediaType: String, data: Array[Byte],
-                @HeaderParam("timeToLiveSeconds") ttl: Long,
-                @HeaderParam("maxIdleTimeSeconds") idleTime: Long) = {
+                @DefaultValue("-1") @HeaderParam("timeToLiveSeconds") ttl: Long,
+                @DefaultValue("-1") @HeaderParam("maxIdleTimeSeconds") idleTime: Long) = {
       val cache = ManagerInstance.getCache(cacheName)
       if (request.getMethod == "POST" && cache.containsKey(key)) {
          Response.status(Status.CONFLICT).build()

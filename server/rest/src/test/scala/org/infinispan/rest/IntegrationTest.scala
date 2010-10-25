@@ -11,6 +11,8 @@ import org.testng.annotations.Test
 import org.testng.Assert._
 import java.lang.reflect.Method
 import org.infinispan.manager.{CacheContainer, DefaultCacheManager}
+import scala.math._
+import org.infinispan.test.TestingUtil
 
 /**
  * This tests using the Apache HTTP commons client library - but you could use anything
@@ -18,7 +20,7 @@ import org.infinispan.manager.{CacheContainer, DefaultCacheManager}
  * (Given that RESTEasy does most of the heavy lifting !).
  *
  * @author Michael Neale
- * @author Galder Zamarreno
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @Test(groups = Array("functional"), testName = "rest.IntegrationTest")
@@ -175,19 +177,34 @@ class IntegrationTest {
       assertEquals(HttpServletResponse.SC_OK, Client.call(put).getStatusCode)
    }
 
-   def testPutDataWithTimeToLive(m: Method) = {
+   def testPutDataWithTimeToLive(m: Method) = putAndAssertEphemeralData(m, "2", "3")
+
+   def testPutDataWithMaxIdleOnly(m: Method) = putAndAssertEphemeralData(m, "", "3")
+
+   def testPutDataWithTimeToLiveOnly(m: Method) = putAndAssertEphemeralData(m, "3", "")
+
+   private def putAndAssertEphemeralData(m: Method, timeToLiveSeconds: String, maxIdleTimeSeconds: String) {
       val fullPathKey = fullPath + "/" + m.getName
       val post = new PostMethod(fullPathKey)
       post.setRequestHeader("Content-Type", "application/text")
-      post.setRequestHeader("timeToLiveSeconds", "2")
-      post.setRequestHeader("maxIdleTimeSeconds", "3")
+      var maxWaitTime = 0
+      if (!timeToLiveSeconds.isEmpty) {
+         maxWaitTime = max(maxWaitTime, timeToLiveSeconds.toInt)
+         post.setRequestHeader("timeToLiveSeconds", timeToLiveSeconds)
+      }
+
+      if (!maxIdleTimeSeconds.isEmpty) {
+         maxWaitTime = max(maxWaitTime, maxIdleTimeSeconds.toInt)
+         post.setRequestHeader("maxIdleTimeSeconds", maxIdleTimeSeconds)
+      }
+
       post.setRequestBody("data")
       Client.call(post)
 
       val get = Client.call(new GetMethod(fullPathKey))
       assertEquals("data", get.getResponseBodyAsString)
 
-      Thread.sleep(3000)
+      TestingUtil.sleepThread((maxWaitTime + 1) * 1000)
       Client.call(get)
       assertEquals(HttpServletResponse.SC_NOT_FOUND, get.getStatusCode)
    }
