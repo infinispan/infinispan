@@ -62,13 +62,14 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    Cache cache;
    InvocationContextContainer icc;
 
-   AtomicHashMapProxy(Cache cache, Object deltaMapKey, BatchContainer batchContainer, InvocationContextContainer icc) {
+   AtomicHashMapProxy(Cache<?, ?> cache, Object deltaMapKey, BatchContainer batchContainer, InvocationContextContainer icc) {
       this.cache = cache;
       this.deltaMapKey = deltaMapKey;
       this.batchContainer = batchContainer;
       this.icc = icc;
    }
 
+   @SuppressWarnings("unchecked")
    private AtomicHashMap<K, V> toMap(Object object) {
       Object map = (object instanceof MarshalledValue) ? ((MarshalledValue) object).get() : object;
       return (AtomicHashMap<K, V>) map;
@@ -79,6 +80,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       return toMap(cache.get(deltaMapKey));
    }
 
+   @SuppressWarnings("unchecked")
    private AtomicHashMap<K, V> getDeltaMapForWrite(InvocationContext ctx) {
       CacheEntry lookedUpEntry = ctx.lookupEntry(deltaMapKey);
       boolean lockedAndCopied = lookedUpEntry != null && lookedUpEntry.isChanged() &&
@@ -98,9 +100,9 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
                log.trace("Forcing write lock even for reads");
          }
 
-         AtomicHashMap map = getDeltaMapForRead();
+         AtomicHashMap<K, V> map = getDeltaMapForRead();
          // copy for write
-         AtomicHashMap copy = map == null ? new AtomicHashMap(true) : map.copyForWrite();
+         AtomicHashMap<K, V> copy = map == null ? new AtomicHashMap<K, V>(true) : map.copyForWrite();
          copy.initForWriting();
          // reinstate the flag
          if (suppressLocks) ctx.setFlags(Flag.SKIP_LOCKING);
@@ -113,17 +115,17 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
 
    public Set<K> keySet() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return map == null ? Collections.EMPTY_SET : map.keySet();
+      return map == null ? Collections.<K>emptySet() : map.keySet();
    }
 
    public Collection<V> values() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return map == null ? Collections.EMPTY_SET : map.values();
+      return map == null ? Collections.<V>emptySet() : map.values();
    }
 
    public Set<Entry<K, V>> entrySet() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return map == null ? Collections.EMPTY_SET : map.entrySet();
+      return map == null ? Collections.<Entry<K,V>>emptySet() : map.entrySet();
    }
 
    public int size() {
@@ -133,17 +135,17 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
 
    public boolean isEmpty() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return map == null ? true : map.isEmpty();
+      return map == null || map.isEmpty();
    }
 
    public boolean containsKey(Object key) {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return map == null ? false : map.containsKey(key);
+      return map != null && map.containsKey(key);
    }
 
    public boolean containsValue(Object value) {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return map == null ? false : map.containsValue(value);
+      return map != null && map.containsValue(value);
    }
 
    public V get(Object key) {

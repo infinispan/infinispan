@@ -69,10 +69,11 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
     * Construction only allowed through this factory method.  This factory is intended for use internally by the
     * CacheDelegate.  User code should use {@link AtomicMapLookup#getAtomicMap(Cache, Object)}.
     */
-   public static AtomicHashMap newInstance(Cache cache, Object cacheKey) {
-      AtomicHashMap value = new AtomicHashMap();
+   @SuppressWarnings("unchecked")
+   public static <K, V> AtomicHashMap<K, V> newInstance(Cache cache, Object cacheKey) {
+      AtomicHashMap<K, V> value = new AtomicHashMap<K, V>();
       Object oldValue = cache.putIfAbsent(cacheKey, value);
-      if (oldValue != null) value = (AtomicHashMap) oldValue;
+      if (oldValue != null) value = (AtomicHashMap<K, V>) oldValue;
       return value;
    }
 
@@ -133,6 +134,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       return oldValue;
    }
 
+   @SuppressWarnings("unchecked")
    public V remove(Object key) {
       V oldValue = delegate.remove(key);
       RemoveOperation<K, V> op = new RemoveOperation<K, V>((K) key, oldValue);
@@ -145,6 +147,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       for (Entry<? extends K, ? extends V> e : t.entrySet()) put(e.getKey(), e.getValue());
    }
 
+   @SuppressWarnings("unchecked")
    public void clear() {
       FastCopyHashMap<K, V> originalEntries = (FastCopyHashMap<K, V>) delegate.clone();
       ClearOperation<K, V> op = new ClearOperation<K, V>(originalEntries);
@@ -175,10 +178,11 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       return toReturn;
    }
 
-   public AtomicHashMap copyForWrite() {
+   @SuppressWarnings("unchecked")
+   public AtomicHashMap<K, V> copyForWrite() {
       try {
-         AtomicHashMap clone = (AtomicHashMap) super.clone();
-         clone.delegate = (FastCopyHashMap) delegate.clone();
+         AtomicHashMap<K, V> clone = (AtomicHashMap<K, V>) super.clone();
+         clone.delegate = (FastCopyHashMap<K, V>) delegate.clone();
          clone.proxy = proxy;
          clone.copied = true;
          return clone;
@@ -214,6 +218,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
          output.writeObject(map.delegate);
       }
 
+      @SuppressWarnings("unchecked")
       public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          FastCopyHashMap delegate = (FastCopyHashMap) input.readObject();
          return new AtomicHashMap(delegate);
