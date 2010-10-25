@@ -19,6 +19,8 @@ import org.infinispan.transaction.xa.TransactionTable;
 import java.util.Collections;
 import java.util.Set;
 
+import static java.util.Collections.emptySet;
+
 /**
  * This interceptor populates the {@link org.infinispan.transaction.xa.DldGlobalTransaction} with
  * appropriate information needed in order to accomplish deadlock detection. It MUST process populate data before the
@@ -79,7 +81,7 @@ public class DeadlockDetectingInterceptor extends CommandInterceptor {
       }
       Object result = invokeNextInterceptor(ctx, command);
       if (ctx.isOriginLocal()) {
-         globalTransaction.setRemoteLockIntention(Collections.EMPTY_SET);
+         globalTransaction.setRemoteLockIntention(emptySet());
       }
       return result;
    }

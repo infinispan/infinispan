@@ -47,6 +47,8 @@ import org.infinispan.lucene.InfinispanDirectory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 
+import static java.util.Collections.emptyList;
+
 /**
  * DemoActions does some basic operations on the Lucene index,
  * to be used by DemoDriver to show base operations on Lucene.
@@ -89,7 +91,7 @@ public class DemoActions {
       } catch (IOException ioe) {
          // not recommended: in the simple demo this likely means that the index was not yet
          // initialized, so returning empty list.
-         return Collections.EMPTY_LIST;
+         return emptyList();
       }
    }
    

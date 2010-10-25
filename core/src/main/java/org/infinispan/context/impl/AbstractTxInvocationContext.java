@@ -25,7 +25,7 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
    }
 
    public Set<Object> getAffectedKeys() {
-      return affectedKeys == null ? Collections.EMPTY_SET : affectedKeys;
+      return affectedKeys == null ? Collections.emptySet() : affectedKeys;
    }
 
    public void addAffectedKeys(Object... keys) {

@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static java.util.Collections.emptyList;
 import static org.hibernate.search.reader.ReaderProviderHelper.getIndexReaders;
 import static org.hibernate.search.util.FilterCacheModeTypeHelper.cacheInstance;
 import static org.hibernate.search.util.FilterCacheModeTypeHelper.cacheResults;
@@ -280,7 +281,7 @@ public class CacheQueryImpl implements CacheQuery {
    public List<Object> list() throws SearchException {
       IndexSearcher searcher = buildSearcher(searchFactory);
 
-      if (searcher == null) return Collections.EMPTY_LIST;
+      if (searcher == null) return emptyList();
 
 
       try {

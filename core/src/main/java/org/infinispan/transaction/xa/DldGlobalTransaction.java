@@ -12,6 +12,8 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
+import static java.util.Collections.emptySet;
+
 /**
  * This class is used when deadlock detection is enabled.
  *
@@ -30,9 +32,9 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
    private transient volatile Object localLockIntention;
 
-   protected volatile Set<Object> remoteLockIntention = Collections.EMPTY_SET;
+   protected volatile Set<Object> remoteLockIntention = emptySet();
 
-   private volatile Set<Object> locksAtOrigin = Collections.EMPTY_SET;
+   private volatile Set<Object> locksAtOrigin = emptySet();
 
    public DldGlobalTransaction() {
    }
@@ -160,12 +162,13 @@ public class DldGlobalTransaction extends GlobalTransaction {
       }
 
       @Override
+      @SuppressWarnings("unchecked")
       public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          DldGlobalTransaction ddGt = (DldGlobalTransaction) super.readObject(input);
          ddGt.setCoinToss(input.readLong());
          Object locksAtOriginObj = input.readObject();
          if (locksAtOriginObj == null) {
-            ddGt.setLocksHeldAtOrigin(Collections.EMPTY_SET);
+            ddGt.setLocksHeldAtOrigin(emptySet());
          } else {
             ddGt.setLocksHeldAtOrigin((Set<Object>) locksAtOriginObj);
          }
