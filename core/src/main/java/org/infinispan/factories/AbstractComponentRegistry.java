@@ -96,18 +96,16 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
    // component and method containers
    final Map<String, Component> componentLookup = new HashMap<String, Component>();
-   
+
    protected static List<ModuleLifecycle> moduleLifecycles;
-   
+
    static {
       try {
          moduleLifecycles = ModuleProperties.resolveModuleLifecycles();
-      } catch (Exception e) {         
+      } catch (Exception e) {
          moduleLifecycles = Collections.emptyList();
       }
    }
-   
-   
 
 
    volatile ComponentStatus state = ComponentStatus.INSTANTIATED;
@@ -130,6 +128,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * as Commands.
     *
     * @param target object to wire
+    *
     * @throws ConfigurationException if there is a problem wiring the instance
     */
    public void wireDependencies(Object target) throws ConfigurationException {
@@ -219,6 +218,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       c.injectDependencies();
 
       if (old == null) getLog().trace("Registering component {0} under name {1}", c, name);
+      if (state == ComponentStatus.RUNNING) populateLifeCycleMethods(c);
    }
 
    /**
@@ -250,8 +250,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    private String getComponentName(Class component, Annotation[][] annotations, int paramNumber) {
       String name;
       if (annotations == null ||
-            annotations.length <= paramNumber ||
-            (name = findComponentName(annotations[paramNumber])) == null) return component.getName();
+              annotations.length <= paramNumber ||
+              (name = findComponentName(annotations[paramNumber])) == null) return component.getName();
 
       return name;
    }
@@ -283,7 +283,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * <p/>
     *
     * @param componentClass type of component to be retrieved.  Should not be null.
+    *
     * @return a fully wired component instance, or null if one cannot be found or constructed.
+    *
     * @throws ConfigurationException if there is a problem with constructing or wiring the instance.
     */
    protected <T> T getOrCreateComponent(Class<T> componentClass) {
@@ -304,8 +306,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             // create this component and add it to the registry
             AbstractComponentFactory factory = getFactory(componentClass);
             component = factory instanceof NamedComponentFactory ?
-                  ((NamedComponentFactory) factory).construct(componentClass, name)
-                  : factory.construct(componentClass);
+                    ((NamedComponentFactory) factory).construct(componentClass, name)
+                    : factory.construct(componentClass);
             attemptedFactoryConstruction = true;
 
          }
@@ -328,6 +330,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * doesn't exist in the registry, one is created.
     *
     * @param componentClass type of component to construct
+    *
     * @return component factory capable of constructing such components
     */
    protected AbstractComponentFactory getFactory(Class componentClass) {
@@ -398,6 +401,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * public constructor.
     *
     * @param factory class of factory to be created
+    *
     * @return factory instance
     */
    AbstractComponentFactory instantiateFactory(Class<? extends AbstractComponentFactory> factory) {
@@ -427,6 +431,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * Retrieves a component from the {@link Configuration}
     *
     * @param componentClass component type
+    *
     * @return component, or null if it cannot be found
     */
    @SuppressWarnings("unchecked")
@@ -460,6 +465,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * Retrieves a component of a specified type from the registry, or null if it cannot be found.
     *
     * @param type type to find
+    *
     * @return component, or null
     */
    public <T> T getComponent(Class<T> type) {
@@ -507,29 +513,31 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * by priority.
     */
    private void populateLifecycleMethods() {
-      for (Component c : componentLookup.values()) {
-         if (!c.methodsScanned) {
-            c.methodsScanned = true;
-            c.startMethods.clear();
-            c.stopMethods.clear();
+      for (Component c : componentLookup.values()) populateLifeCycleMethods(c);
+   }
 
-            List<Method> methods = ReflectionUtil.getAllMethods(c.instance.getClass(), Start.class);
-            for (Method m : methods) {
-               PrioritizedMethod em = new PrioritizedMethod();
-               em.component = c;
-               em.method = m;
-               em.priority = m.getAnnotation(Start.class).priority();
-               c.startMethods.add(em);
-            }
+   private void populateLifeCycleMethods(Component c) {
+      if (!c.methodsScanned) {
+         c.methodsScanned = true;
+         c.startMethods.clear();
+         c.stopMethods.clear();
 
-            methods = ReflectionUtil.getAllMethods(c.instance.getClass(), Stop.class);
-            for (Method m : methods) {
-               PrioritizedMethod em = new PrioritizedMethod();
-               em.component = c;
-               em.method = m;
-               em.priority = m.getAnnotation(Stop.class).priority();
-               c.stopMethods.add(em);
-            }
+         List<Method> methods = ReflectionUtil.getAllMethods(c.instance.getClass(), Start.class);
+         for (Method m : methods) {
+            PrioritizedMethod em = new PrioritizedMethod();
+            em.component = c;
+            em.method = m;
+            em.priority = m.getAnnotation(Start.class).priority();
+            c.startMethods.add(em);
+         }
+
+         methods = ReflectionUtil.getAllMethods(c.instance.getClass(), Stop.class);
+         for (Method m : methods) {
+            PrioritizedMethod em = new PrioritizedMethod();
+            em.component = c;
+            em.method = m;
+            em.priority = m.getAnnotation(Stop.class).priority();
+            c.stopMethods.add(em);
          }
       }
    }
@@ -713,6 +721,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     *
     * @param originLocal true if the call originates locally (i.e., from the {@link org.infinispan.CacheDelegate} or
     *                    false if it originates remotely, i.e., from the {@link org.infinispan.remoting.InboundInvocationHandler}.
+    *
     * @return true if invocations are allowed, false otherwise.
     */
    public boolean invocationsAllowed(boolean originLocal) {
@@ -790,10 +799,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       @Override
       public String toString() {
          return "Component{" +
-               "instance=" + instance +
-               ", name=" + name +
-               ", nonVolatile=" + nonVolatile +
-               '}';
+                 "instance=" + instance +
+                 ", name=" + name +
+                 ", nonVolatile=" + nonVolatile +
+                 '}';
       }
 
       /**
@@ -855,9 +864,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       @Override
       public String toString() {
          return "PrioritizedMethod{" +
-               "method=" + method +
-               ", priority=" + priority +
-               '}';
+                 "method=" + method +
+                 ", priority=" + priority +
+                 '}';
       }
    }
 
