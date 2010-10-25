@@ -97,10 +97,5 @@ public class RehashAfterPartitionMergeTest extends BaseDistFunctionalTest {
       public void handle(ViewChangedEvent e) {
          ai.getAndIncrement();
       }
-      
-      @Merged
-      public void merged(MergeEvent e){
-         ai.getAndIncrement();
-      }
    }
 }

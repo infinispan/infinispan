@@ -22,7 +22,6 @@ public class ListenerRegistration {
    }
 
    @ViewChanged
-   @Merged
    public void handleViewChange(ViewChangedEvent vce) {
       keyAffinityService.handleViewChange(vce);
    }

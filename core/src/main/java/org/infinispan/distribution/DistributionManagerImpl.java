@@ -394,7 +394,6 @@ public class DistributionManagerImpl implements DistributionManager {
    public class ViewChangeListener {
       
       @ViewChanged
-      @Merged
       public void handleViewChange(ViewChangedEvent e) {
          log.trace("view change received. Needs to re-join? " + e.isNeedsToRejoin());         
          boolean started;

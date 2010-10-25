@@ -94,7 +94,6 @@ public class TransactionTable {
    public class StaleTransactionCleanup {
       
       @ViewChanged
-      @Merged
       public void onViewChange(ViewChangedEvent vce) {
          final List<Address> leavers = MembershipArithmetic.getMembersLeft(vce.getOldMembers(), vce.getNewMembers());
          if (!leavers.isEmpty()) {

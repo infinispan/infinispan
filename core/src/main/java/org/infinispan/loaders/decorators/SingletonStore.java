@@ -327,7 +327,6 @@ public class SingletonStore extends AbstractDelegatingStore {
        * became the coordinator. This method will report any issues that could potentially arise from this push.
        */
       @ViewChanged
-      @Merged
       public void viewChange(ViewChangedEvent event) {
          boolean tmp = isCoordinator(event.getNewMembers(), event.getLocalAddress());
 
