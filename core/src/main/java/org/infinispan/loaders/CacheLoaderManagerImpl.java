@@ -7,8 +7,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
 
-import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
-import static org.infinispan.context.Flag.SKIP_CACHE_STATUS_CHECK;
+import static org.infinispan.context.Flag.*;
 
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -129,8 +128,17 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
                throw new CacheException("Unable to preload!", e);
             }
 
-            for (InternalCacheEntry e : state)
-               cache.getAdvancedCache().withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL).put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
+            for (InternalCacheEntry e : state) {
+               if (clmConfig.isShared() || !(loader instanceof ChainingCacheStore)) {
+                  cache.getAdvancedCache()
+                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL, SKIP_CACHE_STORE) 
+                       .put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
+               } else {
+                  cache.getAdvancedCache()
+                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL)
+                       .put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
+               }
+            }
 
             if (debugTiming) {
                long stop = System.currentTimeMillis();

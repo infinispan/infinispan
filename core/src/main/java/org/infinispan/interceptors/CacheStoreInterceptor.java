@@ -21,14 +21,6 @@
  */
 package org.infinispan.interceptors;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -44,7 +36,6 @@ import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -64,6 +55,17 @@ import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
+import static org.infinispan.context.Flag.SKIP_SHARED_CACHE_STORE;
 
 /**
  * Writes modifications back to the store on the way out: stores modifications back through the CacheLoader, either
@@ -104,11 +106,17 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
     * if this is a shared cache loader and the call is of remote origin, pass up the chain
     */
    public final boolean skip(InvocationContext ctx, VisitableCommand command) {
-      if (store == null) return true;  // could be because the cache loader oes not implement cache store
-      if ((!ctx.isOriginLocal() && loaderConfig. isShared()) || ctx.hasFlag(Flag.SKIP_CACHE_STORE)) {
+      if (store == null) return true;  // could be because the cache loader does not implement cache store
+      if ((!ctx.isOriginLocal() && loaderConfig.isShared()) || ctx.hasFlag(SKIP_CACHE_STORE)) {
          if (trace) log.trace("Passing up method call and bypassing this interceptor since the cache loader is shared and this call originated remotely.");
          return true;
       }
+      
+      if (loaderConfig.isShared() && ctx.hasFlag(SKIP_SHARED_CACHE_STORE)) {
+         if (trace) log.trace("Explicitly requested to skip storage if cache store is shared - and it is.");
+         return true;
+      }
+
       return false;
    }
 

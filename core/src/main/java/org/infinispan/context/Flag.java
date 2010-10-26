@@ -109,5 +109,9 @@ public enum Flag {
     * Flags the invocation as a {@link Cache#putForExternalRead(Object, Object)} call, as opposed to a regular
     * {@link Cache#put(Object, Object)}.
     */
-   PUT_FOR_EXTERNAL_READ
+   PUT_FOR_EXTERNAL_READ,
+   /**
+    * If this flag is enabled, if a cache store is shared, then storage to the store is skipped.
+    */
+   SKIP_SHARED_CACHE_STORE
 }
