@@ -2,8 +2,6 @@ package org.infinispan.lock;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.Flag;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -15,8 +13,6 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.infinispan.context.Flag.FAIL_SILENTLY;
 
