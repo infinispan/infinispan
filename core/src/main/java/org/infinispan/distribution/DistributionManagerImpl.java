@@ -384,7 +384,7 @@ public class DistributionManagerImpl implements DistributionManager {
             InternalCacheValue v = e.getValue();
             PutKeyValueCommand put = cf.buildPutKeyValueCommand(e.getKey(), v.getValue(), v.getLifespan(), v.getMaxIdle());
             InvocationContext ctx = icc.createInvocationContext();
-            ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_REMOTE_LOOKUP);
+            ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_SHARED_CACHE_STORE);
             interceptorChain.invoke(ctx, put);
          }
       }
