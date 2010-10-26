@@ -102,7 +102,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    final List<ListenerInvocation> transactionCompletedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
 
    private InvocationContextContainer icc;
-   private Cache cache;
+   private Cache<Object, Object> cache;
 
    public CacheNotifierImpl() {
 
@@ -120,6 +120,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    }
 
    @Inject
+   @SuppressWarnings("unchecked")
    void injectDependencies(InvocationContextContainer icc, Cache cache) {
       this.icc = icc;
       this.cache = cache;
@@ -141,16 +142,12 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
          boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
          try {
-            EventImpl e = new EventImpl();
-            e.setCache(cache);
+            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
             e.setOriginLocal(originLocal);
             e.setPre(pre);
             e.setKey(key);
             setTx(ctx, e);
-            e.setType(CACHE_ENTRY_CREATED);
-            for (ListenerInvocation listener : cacheEntryCreatedListeners) {
-               listener.invoke(e);
-            }
+            for (ListenerInvocation listener : cacheEntryCreatedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);
          }
@@ -163,17 +160,13 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
          boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
          try {
-            EventImpl e = new EventImpl();
-            e.setCache(cache);
+            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_MODIFIED);
             e.setOriginLocal(originLocal);
             e.setValue(value);
             e.setPre(pre);
             e.setKey(key);
             setTx(ctx, e);
-            e.setType(CACHE_ENTRY_MODIFIED);
-            for (ListenerInvocation listener : cacheEntryModifiedListeners) {
-               listener.invoke(e);
-            }
+            for (ListenerInvocation listener : cacheEntryModifiedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);
          }
@@ -186,17 +179,13 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
          boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
          try {
-            EventImpl e = new EventImpl();
-            e.setCache(cache);
+            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_REMOVED);
             e.setOriginLocal(originLocal);
             e.setValue(value);
             e.setPre(pre);
             e.setKey(key);
             setTx(ctx, e);
-            e.setType(CACHE_ENTRY_REMOVED);
-            for (ListenerInvocation listener : cacheEntryRemovedListeners) {
-               listener.invoke(e);
-            }
+            for (ListenerInvocation listener : cacheEntryRemovedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);
          }
@@ -208,16 +197,12 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       if (!cacheEntryVisitedListeners.isEmpty()) {
          InvocationContext contexts = icc.suspend();
          try {
-            EventImpl e = new EventImpl();
-            e.setCache(cache);
+            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_VISITED);
             e.setPre(pre);
             e.setKey(key);
             e.setValue(value);
             setTx(ctx, e);
-            e.setType(CACHE_ENTRY_VISITED);
-            for (ListenerInvocation listener : cacheEntryVisitedListeners) {
-               listener.invoke(e);
-            }
+            for (ListenerInvocation listener : cacheEntryVisitedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);
          }
@@ -230,17 +215,13 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
          final boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
          try {
-            EventImpl e = new EventImpl();
-            e.setCache(cache);
+            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
             e.setOriginLocal(originLocal);
             e.setPre(pre);
             e.setKey(key);
             e.setValue(value);
             setTx(ctx, e);
-            e.setType(CACHE_ENTRY_EVICTED);
-            for (ListenerInvocation listener : cacheEntryEvictedListeners) {
-               listener.invoke(e);
-            }
+            for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);
          }
@@ -253,17 +234,13 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
          final boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
          try {
-            EventImpl e = new EventImpl();
-            e.setCache(cache);
+            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_INVALIDATED);
             e.setOriginLocal(originLocal);
             e.setPre(pre);
             e.setKey(key);
             e.setValue(value);
             setTx(ctx, e);
-            e.setType(CACHE_ENTRY_INVALIDATED);
-            for (ListenerInvocation listener : cacheEntryInvalidatedListeners) {
-               listener.invoke(e);
-            }
+            for (ListenerInvocation listener : cacheEntryInvalidatedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);
          }
@@ -276,17 +253,13 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
          boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
          try {
-            EventImpl e = new EventImpl();
-            e.setCache(cache);
+            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_LOADED);
             e.setOriginLocal(originLocal);
             e.setPre(pre);
             e.setKey(key);
             e.setValue(value);
             setTx(ctx, e);
-            e.setType(CACHE_ENTRY_LOADED);
-            for (ListenerInvocation listener : cacheEntryLoadedListeners) {
-               listener.invoke(e);
-            }
+            for (ListenerInvocation listener : cacheEntryLoadedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);
          }
@@ -299,17 +272,13 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
          boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
          try {
-            EventImpl e = new EventImpl();
-            e.setCache(cache);
+            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_ACTIVATED);
             e.setOriginLocal(originLocal);
             e.setPre(pre);
             e.setKey(key);
             e.setValue(value);
             setTx(ctx, e);
-            e.setType(CACHE_ENTRY_ACTIVATED);
-            for (ListenerInvocation listener : cacheEntryActivatedListeners) {
-               listener.invoke(e);
-            }
+            for (ListenerInvocation listener : cacheEntryActivatedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);
          }
@@ -328,16 +297,12 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       if (!cacheEntryPassivatedListeners.isEmpty()) {
          InvocationContext contexts = icc.suspend();
          try {
-            EventImpl e = new EventImpl();
-            e.setCache(cache);
+            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_PASSIVATED);
             e.setPre(pre);
             e.setKey(key);
             e.setValue(value);
             setTx(ctx, e);
-            e.setType(CACHE_ENTRY_PASSIVATED);
-            for (ListenerInvocation listener : cacheEntryPassivatedListeners) {
-               listener.invoke(e);
-            }
+            for (ListenerInvocation listener : cacheEntryPassivatedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);
          }
@@ -350,15 +315,11 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
          boolean isOriginLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
          try {
-            EventImpl e = new EventImpl();
-            e.setCache(cache);
+            EventImpl<Object, Object> e = EventImpl.createEvent(cache, TRANSACTION_COMPLETED);
             e.setOriginLocal(isOriginLocal);
             e.setTransactionId(transaction);
             e.setTransactionSuccessful(successful);
-            e.setType(TRANSACTION_COMPLETED);
-            for (ListenerInvocation listener : transactionCompletedListeners) {
-               listener.invoke(e);
-            }
+            for (ListenerInvocation listener : transactionCompletedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);
          }
@@ -371,14 +332,10 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
          boolean isOriginLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
          try {
-            EventImpl e = new EventImpl();
-            e.setCache(cache);
+            EventImpl<Object, Object> e = EventImpl.createEvent(cache, TRANSACTION_REGISTERED);
             e.setOriginLocal(isOriginLocal);
             e.setTransactionId(globalTransaction);
-            e.setType(TRANSACTION_REGISTERED);
-            for (ListenerInvocation listener : transactionRegisteredListeners) {
-               listener.invoke(e);
-            }
+            for (ListenerInvocation listener : transactionRegisteredListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);
          }

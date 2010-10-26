@@ -34,19 +34,26 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  * @since 4.0
  */
 @NotThreadSafe
-public class EventImpl implements CacheEntryActivatedEvent, CacheEntryCreatedEvent, CacheEntryEvictedEvent, CacheEntryLoadedEvent, CacheEntryModifiedEvent,
+public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCreatedEvent, CacheEntryEvictedEvent, CacheEntryLoadedEvent, CacheEntryModifiedEvent,
                                   CacheEntryPassivatedEvent, CacheEntryRemovedEvent, CacheEntryVisitedEvent, TransactionCompletedEvent, TransactionRegisteredEvent,
                                   CacheEntryInvalidatedEvent {
    private boolean pre = false; // by default events are after the fact
-   private Cache cache;
-   private Object key;
+   private Cache<K, V> cache;
+   private K key;
    private GlobalTransaction transaction;
    private boolean originLocal = true; // by default events all originate locally
    private boolean transactionSuccessful;
    private Type type;
-   private Object value;
+   private V value;
 
    public EventImpl() {
+   }
+
+   public static <K, V> EventImpl<K, V> createEvent(Cache<K, V> cache, Type type) {
+      EventImpl<K, V> e = new EventImpl<K,V>();
+      e.cache = cache;
+      e.type = type;
+      return e;
    }
 
    public Type getType() {
@@ -57,13 +64,14 @@ public class EventImpl implements CacheEntryActivatedEvent, CacheEntryCreatedEve
       return pre;
    }
 
-   public Cache getCache() {
+   public Cache<K, V> getCache() {
       return cache;
    }
 
-   public Object getKey() {
+   @SuppressWarnings("unchecked")
+   public K getKey() {
       if (key instanceof MarshalledValue)
-         key = ((MarshalledValue) key).get();
+         key = (K) ((MarshalledValue) key).get();
       return key;
    }
 
@@ -85,11 +93,11 @@ public class EventImpl implements CacheEntryActivatedEvent, CacheEntryCreatedEve
       this.pre = pre;
    }
 
-   public void setCache(Cache cache) {
+   public void setCache(Cache<K, V> cache) {
       this.cache = cache;
    }
 
-   public void setKey(Object key) {
+   public void setKey(K key) {
       this.key = key;
    }
 
@@ -109,13 +117,14 @@ public class EventImpl implements CacheEntryActivatedEvent, CacheEntryCreatedEve
       this.type = type;
    }
 
-   public Object getValue() {
+   @SuppressWarnings("unchecked")
+   public V getValue() {
       if (value instanceof MarshalledValue)
-         value = ((MarshalledValue) value).get();
+         value = (V) ((MarshalledValue) value).get();
       return value;
    }
 
-   public void setValue(Object value) {
+   public void setValue(V value) {
       this.value = value;
    }
 

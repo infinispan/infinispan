@@ -59,7 +59,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
       initCacheData(Collections.singletonMap(key, value));
    }
 
-   private void initCacheData(Map data) {
+   private void initCacheData(Map<Object, Object> data) {
       mockNotifier.notifyCacheEntryCreated(anyObject(), anyBoolean(), isA(InvocationContext.class));
       expectLastCall().anyTimes();
       mockNotifier.notifyCacheEntryModified(anyObject(), anyObject(), anyBoolean(), isA(InvocationContext.class));
@@ -138,7 +138,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
    }
 
    public void testRemoveData() throws Exception {
-      Map data = new HashMap();
+      Map<Object, Object> data = new HashMap<Object, Object>();
       data.put("key", "value");
       data.put("key2", "value2");
       initCacheData(data);
@@ -216,7 +216,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
    }
 
    public void testTxRemoveData() throws Exception {
-      Map data = new HashMap();
+      Map<Object, Object> data = new HashMap<Object, Object>();
       data.put("key", "value");
       data.put("key2", "value2");
       initCacheData(data);

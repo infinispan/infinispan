@@ -30,7 +30,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface TransactionalEvent extends Event {
+public interface TransactionalEvent<K, V> extends Event<K, V> {
    /**
     * @return the Transaction associated with the current call.  May be null if the current call is outside the scope of
     *         a transaction.

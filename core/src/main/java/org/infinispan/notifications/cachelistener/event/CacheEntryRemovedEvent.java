@@ -30,12 +30,12 @@ package org.infinispan.notifications.cachelistener.event;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface CacheEntryRemovedEvent extends CacheEntryEvent {
+public interface CacheEntryRemovedEvent<K, V> extends CacheEntryEvent<K, V> {
 
    /**
     * Retrieves the value of the entry being deleted.
     * <p />
     * @return the value of the entry being deleted, if <tt>isPre()</tt> is <tt>true</tt>.  <tt>null</tt> otherwise.
     */
-   Object getValue();
+   V getValue();
 }

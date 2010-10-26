@@ -27,11 +27,11 @@ package org.infinispan.notifications.cachelistener.event;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface CacheEntryPassivatedEvent extends CacheEntryEvent {
+public interface CacheEntryPassivatedEvent<K, V> extends CacheEntryEvent<K, V> {
    /**
     * Retrieves the value of the entry being passivated.
     *
     * @return the value of the passivated entry
     */
-   Object getValue();
+   V getValue();
 }

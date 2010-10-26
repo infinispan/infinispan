@@ -27,9 +27,9 @@ package org.infinispan.notifications.cachelistener.event;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface CacheEntryEvent extends TransactionalEvent {
+public interface CacheEntryEvent<K, V> extends TransactionalEvent<K, V> {
    /**
     * @return the key to the affected cache entry.
     */
-   Object getKey();
+   K getKey();
 }
