@@ -30,7 +30,7 @@ package org.infinispan.notifications.cachelistener.event;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface TransactionCompletedEvent extends TransactionalEvent {
+public interface TransactionCompletedEvent<K, V> extends TransactionalEvent<K, V> {
    /**
     * @return if <tt>true</tt>, the transaction completed by committing successfully.  If <tt>false</tt>, the
     *         transaction completed with a rollback.

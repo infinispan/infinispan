@@ -29,7 +29,7 @@ import org.infinispan.Cache;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface Event {
+public interface Event<K, V> {
    static enum Type {
       CACHE_ENTRY_ACTIVATED, CACHE_ENTRY_PASSIVATED, CACHE_ENTRY_VISITED,
       CACHE_ENTRY_LOADED, CACHE_ENTRY_EVICTED, CACHE_ENTRY_CREATED, CACHE_ENTRY_REMOVED, CACHE_ENTRY_MODIFIED,
@@ -49,5 +49,5 @@ public interface Event {
    /**
     * @return a handle to the cache instance that generated this notification.
     */
-   Cache getCache();
+   Cache<K, V> getCache();
 }

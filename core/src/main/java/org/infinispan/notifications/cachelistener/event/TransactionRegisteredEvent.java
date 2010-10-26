@@ -30,5 +30,5 @@ package org.infinispan.notifications.cachelistener.event;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface TransactionRegisteredEvent extends TransactionalEvent {
+public interface TransactionRegisteredEvent<K, V> extends TransactionalEvent<K, V> {
 }
