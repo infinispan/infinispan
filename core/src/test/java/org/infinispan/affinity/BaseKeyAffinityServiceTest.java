@@ -1,7 +1,7 @@
 package org.infinispan.affinity;
 
 import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.distribution.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;

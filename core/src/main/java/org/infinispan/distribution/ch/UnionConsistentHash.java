@@ -1,4 +1,4 @@
-package org.infinispan.distribution;
+package org.infinispan.distribution.ch;
 
 import org.infinispan.CacheException;
 import org.infinispan.marshall.Ids;
@@ -48,16 +48,20 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       return Immutables.immutableListConvert(addresses);
    }
 
-   public int getDistance(Address a1, Address a2) {
-      throw new UnsupportedOperationException("Unsupported!");
-   }
-
-   public boolean isAdjacent(Address a1, Address a2) {
-      throw new UnsupportedOperationException("Unsupported!");
-   }
-
    @Override
    public int getHashId(Address a) {
+      throw new UnsupportedOperationException("Unsupported!");
+   }
+
+   public List<Address> getStateProvidersOnLeave(Address leaver, int replCount) {
+      throw new UnsupportedOperationException("Unsupported!");
+   }
+
+   public boolean isStateReceiverOnLeave(Address leaver, Address node, int replCount) {
+      throw new UnsupportedOperationException("Unsupported!");
+   }
+
+   public List<Address> getStateProvidersOnJoin(Address joiner, int replCount) {
       throw new UnsupportedOperationException("Unsupported!");
    }
 
@@ -88,5 +92,13 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new UnionConsistentHash((ConsistentHash) input.readObject(), (ConsistentHash) input.readObject());
       }
+   }
+
+   public ConsistentHash getOldCH() {
+      return oldCH;
+   }
+
+   public ConsistentHash getNewCH() {
+      return newCH;
    }
 }

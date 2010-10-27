@@ -53,8 +53,8 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
-import org.infinispan.distribution.DefaultConsistentHash;
-import org.infinispan.distribution.UnionConsistentHash;
+import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.Marshallable;
@@ -84,7 +84,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.ObjectTable;
 import org.jboss.marshalling.Unmarshaller;
-import org.jboss.marshalling.river.RiverUnmarshaller;
 
 import java.io.IOException;
 import java.util.ArrayList;

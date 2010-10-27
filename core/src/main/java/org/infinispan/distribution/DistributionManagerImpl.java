@@ -14,8 +14,11 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 
-import static org.infinispan.distribution.ConsistentHashHelper.createConsistentHash;
+import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
 
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashHelper;
+import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -27,7 +30,6 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
@@ -48,15 +50,7 @@ import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashMap;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -70,7 +64,9 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 /**
  * The default distribution manager implementation
  *
- * @author Manik Surtani, Vladimir Blagojevic
+ * @author Manik Surtani
+ * @author Vladimir Blagojevic
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 @MBean(objectName = "DistributionManager", description = "Component that handles distribution of content across a cluster")
@@ -222,18 +218,21 @@ public class DistributionManagerImpl implements DistributionManager {
          Address leaver = MembershipArithmetic.getMemberLeft(oldMembers, newMembers);
          log.info("This is a LEAVE event!  Node {0} has just left", leaver);
 
-         boolean willReceiveLeaverState = willReceiveLeaverState(leaver);
-         boolean willSendLeaverState = willSendLeaverState(leaver);
-         List<Address> stateProviders = holdersOfLeaversState(newMembers, leaver);
-
          try {
-            if (!(consistentHash instanceof UnionConsistentHash)) oldConsistentHash = consistentHash;
-            else oldConsistentHash = ((UnionConsistentHash) consistentHash).newCH;
+            if (!(consistentHash instanceof UnionConsistentHash)) {
+              oldConsistentHash = consistentHash;
+            }  else {
+               oldConsistentHash = ((UnionConsistentHash) consistentHash).getNewCH();
+            }
             consistentHash = ConsistentHashHelper.removeAddress(consistentHash, leaver, configuration);
          } catch (Exception e) {
             log.fatal("Unable to process leaver!!", e);
             throw new CacheException(e);
          }
+
+         boolean willReceiveLeaverState = willReceiveLeaverState(leaver);
+         List<Address> stateProviders = holdersOfLeaversState(leaver);
+         boolean willSendLeaverState = stateProviders.contains(self);
 
          if (willReceiveLeaverState || willSendLeaverState) {
             log.info("I {0} am participating in rehash", rpcManager.getTransport().getAddress());
@@ -241,6 +240,9 @@ public class DistributionManagerImpl implements DistributionManager {
 
             if (leaveTaskFuture != null
                     && (!leaveTaskFuture.isCancelled() || !leaveTaskFuture.isDone())) {
+               if (log.isTraceEnabled()) {
+                  log.trace("Canceling running leave task!");
+               }
                leaveTaskFuture.cancel(true);
             }
 
@@ -254,27 +256,14 @@ public class DistributionManagerImpl implements DistributionManager {
       }
    }
 
-   boolean willSendLeaverState(Address leaver) {
-      ConsistentHash ch = consistentHash instanceof UnionConsistentHash ? oldConsistentHash : consistentHash;
-      return ch.isAdjacent(leaver, self);
-   }
-
-   List<Address> holdersOfLeaversState(List<Address> members, Address leaver) {
-      ConsistentHash ch = consistentHash instanceof UnionConsistentHash ? oldConsistentHash : consistentHash;
-      Set<Address> holders = new HashSet<Address>();
-      for (Address address : members) {
-
-         if (ch.isAdjacent(leaver, address)) {
-            holders.add(address);
-         }
-      }
-      return new ArrayList<Address>(holders);
+   List<Address> holdersOfLeaversState(Address leaver) {
+      List<Address> addresses = oldConsistentHash.getStateProvidersOnLeave(leaver, getReplCount());
+      if (log.isTraceEnabled()) log.trace("Holders of leaver's state are: " + addresses);
+      return addresses;
    }
 
    boolean willReceiveLeaverState(Address leaver) {
-      ConsistentHash ch = consistentHash instanceof UnionConsistentHash ? oldConsistentHash : consistentHash;
-      int dist = ch.getDistance(leaver, self);
-      return dist >= 0 && dist <= getReplCount();
+      return oldConsistentHash.isStateReceiverOnLeave(leaver, self, getReplCount());
    }
 
    public boolean isLocal(Object key) {
@@ -331,6 +320,10 @@ public class DistributionManagerImpl implements DistributionManager {
    public void setConsistentHash(ConsistentHash consistentHash) {
       log.trace("Installing new consistent hash {0}", consistentHash);
       this.consistentHash = consistentHash;
+   }
+
+   public void setOldConsistentHash(ConsistentHash oldConsistentHash) {
+      this.oldConsistentHash = oldConsistentHash;
    }
 
    @ManagedOperation(description = "Determines whether a given key is affected by an ongoing rehash, if any.")
@@ -500,5 +493,13 @@ public class DistributionManagerImpl implements DistributionManager {
    @Override
    public String toString() {
       return "DistributionManagerImpl[rehashInProgress=" + rehashInProgress + ", consistentHash=" + consistentHash + "]";
+   }
+
+   public void setSelf(Address self) {
+      this.self = self;
+   }
+
+   public void setConfiguration(Configuration configuration) {
+      this.configuration = configuration;
    }
 }

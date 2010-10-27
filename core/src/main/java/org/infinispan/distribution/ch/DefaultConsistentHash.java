@@ -1,73 +1,36 @@
-package org.infinispan.distribution;
+package org.infinispan.distribution.ch;
 
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
-import java.util.TreeMap;
 
 import static java.lang.Math.min;
-import static org.infinispan.util.hash.MurmurHash2.hash;
 
 @Marshallable(externalizer = DefaultConsistentHash.Externalizer.class, id = Ids.DEFAULT_CONSISTENT_HASH)
-public class DefaultConsistentHash extends AbstractConsistentHash {
+public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
-   // make sure all threads see the current list
-   ArrayList<Address> addresses;
-   SortedMap<Integer, Address> positions;
-   // TODO: Maybe address and addressToHashIds can be combined in a LinkedHashMap?
-   Map<Address, Integer> addressToHashIds;
-
-   final static int HASH_SPACE = 10240; // no more than 10k nodes?
-
-   public void setCaches(List<Address> caches) {
-
-      addresses = new ArrayList<Address>(caches);
-
-      // this list won't grow.
-      addresses.trimToSize();
-
-      positions = new TreeMap<Integer, Address>();
-      addressToHashIds = new HashMap<Address, Integer>();
-
-      for (Address a : addresses) {
-         int positionIndex = Math.abs(hash(a)) % HASH_SPACE;
-         // this is deterministic since the address list is ordered and the order is consistent across the grid
-         while (positions.containsKey(positionIndex)) positionIndex = positionIndex + 1 % HASH_SPACE;
-         positions.put(positionIndex, a);
-         // If address appears several times, take the lowest value to guarantee that
-         // at least the initial value and subsequent +1 values would end up in the same node
-         // TODO: Remove this check since https://jira.jboss.org/jira/browse/ISPN-428 contains a proper fix for this
-         if (!addressToHashIds.containsKey(a))
-            addressToHashIds.put(a, positionIndex);
-      }
-
-      addresses.clear();
-      // reorder addresses as per the positions.
-      for (Address a : positions.values()) addresses.add(a);
-   }
-
-   public List<Address> getCaches() {
-      return addresses;
-   }
+   private static Log log = LogFactory.getLog(DefaultConsistentHash.class);
 
    public List<Address> locate(Object key, int replCount) {
-      int keyHashCode = hash(key);
-      if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
-      int hash = Math.abs(keyHashCode);
+      int hash = getNormalizedHash(key);
       int numCopiesToFind = min(replCount, addresses.size());
 
       List<Address> owners = new ArrayList<Address>(numCopiesToFind);
 
-      SortedMap<Integer, Address> candidates = positions.tailMap(hash % HASH_SPACE);
+      SortedMap<Integer, Address> candidates = positions.tailMap(hash);
 
       int numOwnersFound = 0;
 
@@ -96,13 +59,10 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
 
    @Override
    public boolean isKeyLocalToAddress(Address target, Object key, int replCount) {
-      // more efficient impl
-      int keyHashCode = hash(key);
-      if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
-      int hash = Math.abs(keyHashCode);
+      int hash = getNormalizedHash(key);
       int numCopiesToFind = min(replCount, addresses.size());
 
-      SortedMap<Integer, Address> candidates = positions.tailMap(hash % HASH_SPACE);
+      SortedMap<Integer, Address> candidates = positions.tailMap(hash);
       int nodesTested = 0;
       for (Address a : candidates.values()) {
          if (nodesTested < numCopiesToFind) {
@@ -152,20 +112,6 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    }
 
    @Override
-   public int getHashId(Address a) {
-      Integer hashId = addressToHashIds.get(a);
-      if (hashId == null)
-         return -1;
-      else
-         return hashId.intValue();
-   }
-
-   @Override
-   public int getHashSpace() {
-      return HASH_SPACE;
-   }
-
-   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -209,5 +155,45 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
               "addresses =" + positions +
               ", hash space =" + HASH_SPACE +
               '}';
+   }
+
+   public List<Address> getAddressOnTheWheel() {
+      return addresses;
+   }
+
+   public List<Address> getStateProvidersOnJoin(Address self, int replCount) {
+      List<Address> l = new LinkedList<Address>();
+      List<Address> caches = getCaches();
+      int selfIdx = caches.indexOf(self);
+      if (selfIdx >= replCount - 1) {
+         l.addAll(caches.subList(selfIdx - replCount + 1, selfIdx));
+      } else {
+         l.addAll(caches.subList(0, selfIdx));
+         int alreadyCollected = l.size();
+         l.addAll(caches.subList(caches.size() - replCount + 1 + alreadyCollected, caches.size()));
+      }
+
+      Address plusOne;
+      if (selfIdx == caches.size() - 1)
+         plusOne = caches.get(0);
+      else
+         plusOne = caches.get(selfIdx + 1);
+
+      if (!l.contains(plusOne)) l.add(plusOne);
+      return l;
+   }
+
+   public List<Address> getStateProvidersOnLeave(Address leaver, int replCount) {
+      if (log.isTraceEnabled()) log.trace("List of addresses is: " + addresses + ". leaver is: " + leaver);
+      Set<Address> holders = new HashSet<Address>();
+      for (Address address : addresses) {
+         if (isAdjacent(leaver, address)) {
+            holders.add(address);
+            if (log.isTraceEnabled()) log.trace(address + " is state holder");
+         } else {
+            if (log.isTraceEnabled()) log.trace(address + " NOT state holder");
+         }
+      }
+      return new ArrayList<Address>(holders);
    }
 }

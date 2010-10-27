@@ -1,7 +1,7 @@
 package org.infinispan.affinity;
 
 import org.infinispan.Cache;
-import org.infinispan.distribution.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;

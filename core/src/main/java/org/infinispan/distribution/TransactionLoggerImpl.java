@@ -166,4 +166,12 @@ public class TransactionLoggerImpl implements TransactionLogger {
       uncommittedPrepares.clear();
       return commands;
    }
+
+   @Override
+   public String toString() {
+      return "TransactionLoggerImpl{" +
+            "commandQueue=" + commandQueue +
+            ", uncommittedPrepares=" + uncommittedPrepares +
+            '}';
+   }
 }

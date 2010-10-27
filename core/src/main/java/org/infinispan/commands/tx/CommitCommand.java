@@ -53,4 +53,9 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
    public byte getCommandId() {
       return COMMAND_ID;
    }
+
+   @Override
+   public String toString() {
+      return "CommitCommand{" + super.toString();
+   }
 }
