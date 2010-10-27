@@ -37,8 +37,10 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -157,7 +159,7 @@ public class LockingInterceptor extends CommandInterceptor {
          if (goRemoteFirst) {
             Object result = invokeNextInterceptor(ctx, c);
             try {
-               lockKeysForRemoteTx(ctx, c);
+               lockKeysForLockCommand(ctx, c);
                result = true;
             } catch (Throwable e) {
                result = false;
@@ -168,7 +170,7 @@ public class LockingInterceptor extends CommandInterceptor {
             }
             return result;
          } else {
-            lockKeysForRemoteTx(ctx, c);
+            lockKeysForLockCommand(ctx, c);
             if (shouldInvokeOnCluster || c.isExplicit()) {
                invokeNextInterceptor(ctx, c);
                return true;
@@ -188,9 +190,13 @@ public class LockingInterceptor extends CommandInterceptor {
       }
    }
 
-   private void lockKeysForRemoteTx(TxInvocationContext ctx, LockControlCommand c) throws InterruptedException {
+   private void lockKeysForLockCommand(TxInvocationContext ctx, LockControlCommand c) throws InterruptedException {
       for (Object key : c.getKeys()) {
-         entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, false);
+         MVCCEntry e = entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, false);
+         if (e.isCreated()) {
+            // mark as temporary entry just for the sake of a lock command
+            e.setLockPlaceholder(true);
+         }
       }
    }
 
@@ -302,7 +308,7 @@ public class LockingInterceptor extends CommandInterceptor {
                // should never resize.
                List<Object> keysToRemove = new ArrayList<Object>(lookedUpEntries.size());
                for (Map.Entry<Object, CacheEntry> e : lookedUpEntries.entrySet()) {
-                  if (!lockManager.possiblyLocked(e.getValue())) keysToRemove.add(e.getKey());
+                  if (!lockManager.possiblyLocked(e.getValue()) && !possiblyLockedInContext(ctx, e.getKey())) keysToRemove.add(e.getKey());
                }
 
                if (!keysToRemove.isEmpty()) {
@@ -314,6 +320,12 @@ public class LockingInterceptor extends CommandInterceptor {
             }
          }
       }
+   }
+
+   private boolean possiblyLockedInContext(InvocationContext ctx, Object key) {
+      if (ctx instanceof LocalTxInvocationContext) {
+         return ((LocalTxInvocationContext) ctx).getAffectedKeys().contains(key);
+      } else return false;
    }
 
    private void cleanupLocks(InvocationContext ctx, boolean commit) {

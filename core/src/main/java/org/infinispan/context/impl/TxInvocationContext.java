@@ -5,6 +5,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.transaction.Transaction;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -48,5 +49,5 @@ public interface TxInvocationContext extends InvocationContext {
    /**
     * Registers a new participant with the transaction.
     */
-   void addAffectedKeys(Object... keys);
+   void addAffectedKeys(Collection<Object> keys);
 }

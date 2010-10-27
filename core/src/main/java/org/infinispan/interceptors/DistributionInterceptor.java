@@ -16,7 +16,9 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -91,10 +93,16 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       Object returnValue = invokeNextInterceptor(ctx, command);
       // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
       // available.  It could just have been removed in the same tx beforehand.
-      if (!ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP) && returnValue == null && ctx.lookupEntry(command.getKey()) == null)
+      if (needsRemoteGet(ctx, command.getKey(), returnValue == null))
          returnValue = remoteGetAndStoreInL1(ctx, command.getKey(), isStillRehashingOnJoin);
       return returnValue;
    }
+
+   private boolean needsRemoteGet(InvocationContext ctx, Object key, boolean retvalCheck) {
+      CacheEntry entry;
+      return retvalCheck && !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP) && ((entry = ctx.lookupEntry(key)) == null || entry.isLockPlaceholder());
+   }
+
 
    /**
     * This method retrieves an entry from a remote cache and optionally stores it in L1 (if L1 is enabled).
@@ -135,12 +143,22 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       InternalCacheEntry ice = dm.retrieveFromRemoteSource(key);
 
       if (ice != null) {
-         if (storeInL1 && isL1CacheEnabled) {
-            if (trace) log.trace("Caching remotely retrieved entry for key {0} in L1", key);
-            long lifespan = ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(), configuration.getL1Lifespan());
-            PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1);
-            entryFactory.wrapEntryForWriting(ctx, key, true, false, ctx.hasLockedKey(key), false, false);
-            invokeNextInterceptor(ctx, put);
+         if (storeInL1) {
+            if (isL1CacheEnabled) {
+               if (trace) log.trace("Caching remotely retrieved entry for key {0} in L1", key);
+               long lifespan = ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(), configuration.getL1Lifespan());
+               PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1);
+               entryFactory.wrapEntryForWriting(ctx, key, true, false, ctx.hasLockedKey(key), false, false);
+               invokeNextInterceptor(ctx, put);
+            } else {
+               CacheEntry ce = ctx.lookupEntry(key);
+               if (ce == null || ce.isNull() || ce.isLockPlaceholder()) {
+                  if (ce != null && ce.isChanged())
+                     ce.setValue(ice.getValue());
+                  else
+                     ctx.putLookedUpEntry(key, ice);
+               }
+            }
          } else {
             if (trace) log.trace("Not caching remotely retrieved entry for key {0} in L1", key);
          }
