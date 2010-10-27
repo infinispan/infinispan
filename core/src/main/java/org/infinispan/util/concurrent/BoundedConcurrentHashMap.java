@@ -31,6 +31,8 @@
  */
 
 package org.infinispan.util.concurrent;
+import static java.util.Collections.*;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.AbstractCollection;
@@ -314,12 +316,12 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
    }
 
    public interface EvictionListener<K, V> {
-      void onEntryEviction(K key, V value);
+      void onEntryEviction(Map<K, V> evicted);
    }
 
    static class NullEvictionListener<K, V> implements EvictionListener<K, V> {
       @Override
-      public void onEntryEviction(K key, V value) {
+      public void onEntryEviction(Map<K, V> evicted) {
          // Do nothing.
       }
    }
@@ -866,36 +868,12 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             if (result != null) {
                if (eviction.onEntryHit(e)) {
                   Set<HashEntry<K, V>> evicted = attemptEviction(false);
-                  // piggyback listener invocation on callers thread outside lock
-                  if (evicted != null) {
-                     for (HashEntry<K, V> he : evicted) {
-                        evictionListener.onEntryEviction(he.key, he.value);
-                     }
-                  }
+                  notifyEvictionListener(evicted);
                }
             }
             return result;
          }
          return null;
-      }
-
-      private Set<HashEntry<K, V>> attemptEviction(boolean lockedAlready) {
-         Set<HashEntry<K, V>> evicted = null;
-         boolean obtainedLock = !lockedAlready ? tryLock() : true;
-         if (!obtainedLock && eviction.thresholdExpired()) {
-            lock();
-            obtainedLock = true;
-         }
-         if (obtainedLock) {
-            try {
-               evicted = eviction.execute();
-            } finally {
-               if (!lockedAlready) {
-                  unlock();
-               }
-            }
-         }
-         return evicted;
       }
 
       boolean containsKey(Object key, int hash) {
@@ -950,12 +928,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             return replaced;
          } finally {
             unlock();
-            // piggyback listener invocation on callers thread outside lock
-            if (evicted != null) {
-               for (HashEntry<K, V> he : evicted) {
-                  evictionListener.onEntryEviction(he.key, he.value);
-               }
-            }
+            notifyEvictionListener(evicted);
          }
       }
 
@@ -979,12 +952,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             return oldValue;
          } finally {
             unlock();
-            // piggyback listener invocation on callers thread outside lock
-            if(evicted != null) {
-               for (HashEntry<K, V> he : evicted) {
-                  evictionListener.onEntryEviction(he.key, he.value);
-               }
-            }
+            notifyEvictionListener(evicted);
          }
       }
 
@@ -1040,12 +1008,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             return oldValue;
          } finally {
             unlock();
-            // piggyback listener invocation on callers thread outside lock
-            if(evicted != null) {
-               for (HashEntry<K, V> he : evicted) {
-                  evictionListener.onEntryEviction(he.key, he.value);
-               }
-            }
+            notifyEvictionListener(evicted);
          }
       }
 
@@ -1174,6 +1137,43 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             } finally {
                unlock();
             }
+         }
+      }
+
+      private Set<HashEntry<K, V>> attemptEviction(boolean lockedAlready) {
+         Set<HashEntry<K, V>> evicted = null;
+         boolean obtainedLock = !lockedAlready ? tryLock() : true;
+         if (!obtainedLock && eviction.thresholdExpired()) {
+            lock();
+            obtainedLock = true;
+         }
+         if (obtainedLock) {
+            try {
+               evicted = eviction.execute();
+            } finally {
+               if (!lockedAlready) {
+                  unlock();
+               }
+            }
+         }
+         return evicted;
+      }
+
+      private void notifyEvictionListener(Set<HashEntry<K, V>> evicted) {
+         // piggyback listener invocation on callers thread outside lock
+         if (evicted != null) {
+            Map<K, V> evictedCopy;
+            if (evicted.size() == 1) {
+               HashEntry<K, V> evictedEntry = evicted.iterator().next();
+               evictedCopy = singletonMap(evictedEntry.key, evictedEntry.value);
+            } else {
+               evictedCopy = new HashMap<K, V>(evicted.size());
+               for (HashEntry<K, V> he : evicted) {
+                  evictedCopy.put(he.key, he.value);
+               }
+               evictedCopy = unmodifiableMap(evictedCopy);
+            }
+            evictionListener.onEntryEviction(evictedCopy);
          }
       }
    }

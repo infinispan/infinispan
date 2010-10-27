@@ -175,8 +175,8 @@ public class DefaultDataContainer implements DataContainer {
 
    private class DefaultEvictionListener implements EvictionListener<Object, InternalCacheEntry> {
       @Override
-      public void onEntryEviction(Object key, InternalCacheEntry value) {
-         evictionManager.onEntryEviction(key, value);
+      public void onEntryEviction(Map<Object, InternalCacheEntry> evicted) {
+         evictionManager.onEntryEviction(evicted);
       }
    }
 

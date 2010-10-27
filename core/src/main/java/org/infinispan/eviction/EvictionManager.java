@@ -1,5 +1,7 @@
 package org.infinispan.eviction;
 
+import java.util.Map;
+
 import net.jcip.annotations.ThreadSafe;
 
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -34,5 +36,5 @@ public interface EvictionManager {
     */
    boolean isEnabled();
 
-   void onEntryEviction(Object key, InternalCacheEntry value);
+   void onEntryEviction(Map<Object, InternalCacheEntry> evicted);
 }
