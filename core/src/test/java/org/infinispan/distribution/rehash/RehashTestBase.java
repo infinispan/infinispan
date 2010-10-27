@@ -44,7 +44,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       TestingUtil.sleepThread(1000);
    }
 
-   private List<MagicKey> init() {
+   protected List<MagicKey> init() {
       List<MagicKey> keys = new ArrayList<MagicKey>(Arrays.asList(
             new MagicKey(c1, "k1"), new MagicKey(c2, "k2"),
             new MagicKey(c3, "k3"), new MagicKey(c4, "k4")

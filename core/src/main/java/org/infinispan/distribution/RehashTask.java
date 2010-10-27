@@ -4,6 +4,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;

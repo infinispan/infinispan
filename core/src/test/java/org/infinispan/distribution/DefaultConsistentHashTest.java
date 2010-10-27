@@ -1,5 +1,6 @@
 package org.infinispan.distribution;
 
+import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterTest;
@@ -17,7 +18,7 @@ import java.util.Random;
 public class DefaultConsistentHashTest extends AbstractInfinispanTest {
 
    List<Address> servers;
-   ConsistentHash ch;
+   DefaultConsistentHash ch;
 
    @BeforeTest
    public void setUp() {
@@ -27,7 +28,7 @@ public class DefaultConsistentHashTest extends AbstractInfinispanTest {
          servers.add(new TestAddress(i));
       }
 
-      ch = BaseDistFunctionalTest.createNewConsistentHash(servers);
+      ch = (DefaultConsistentHash) BaseDistFunctionalTest.createNewConsistentHash(servers);
    }
 
    @AfterTest
@@ -82,7 +83,7 @@ public class DefaultConsistentHashTest extends AbstractInfinispanTest {
       Address a3 = new TestAddress(3000);
       Address a4 = new TestAddress(4000);
 
-      ch = BaseDistFunctionalTest.createNewConsistentHash(Arrays.asList(a1, a2, a3, a4));
+      ch = (DefaultConsistentHash) BaseDistFunctionalTest.createNewConsistentHash(Arrays.asList(a1, a2, a3, a4));
 
       // the CH may reorder the addresses.  Get the new order.
       List<Address> adds = ch.getCaches();
@@ -109,7 +110,7 @@ public class DefaultConsistentHashTest extends AbstractInfinispanTest {
       Address a3 = new TestAddress(3000);
       Address a4 = new TestAddress(4000);
 
-      ch = BaseDistFunctionalTest.createNewConsistentHash(Arrays.asList(a1, a2, a3, a4));
+      ch = (DefaultConsistentHash) BaseDistFunctionalTest.createNewConsistentHash(Arrays.asList(a1, a2, a3, a4));
 
       String[] keys = new String[10000];
       Random r = new Random();
@@ -125,6 +126,12 @@ public class DefaultConsistentHashTest extends AbstractInfinispanTest {
 
 class TestAddress implements Address {
    int addressNum;
+
+   String name;
+
+   public void setName(String name) {
+      this.name = name;
+   }
 
    TestAddress(int addressNum) {
       this.addressNum = addressNum;
@@ -157,7 +164,7 @@ class TestAddress implements Address {
 
    @Override
    public String toString() {
-      return "TestAddress#"+addressNum;
+      return "TestAddress#"+addressNum + (name != null? (" " + name) : "");
    }
 
    public int compareTo(Object o) {

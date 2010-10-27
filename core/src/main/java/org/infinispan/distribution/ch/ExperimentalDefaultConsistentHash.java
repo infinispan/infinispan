@@ -1,17 +1,20 @@
-package org.infinispan.distribution;
+package org.infinispan.distribution.ch;
 
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 
+import javax.naming.OperationNotSupportedException;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import static java.lang.Math.min;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * <a href = "http://weblogs.java.net/blog/tomwhite/archive/2007/11/consistent_hash.html">Consistent hashing
@@ -367,5 +370,23 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
       public String toString() {
          return string + ":" + Integer.toHexString(hash);
       }
+   }
+
+   public List<Address> getStateProvidersOnLeave(Address leaver, int replCount) {
+      Set<Address> holders = new HashSet<Address>();
+      for (Address address : nodes) {
+         if (isAdjacent(leaver, address)) {
+            holders.add(address);
+         }
+      }
+      return new ArrayList<Address>(holders);
+   }
+
+   public boolean isStateReceiverOnLeave(Address leaver, Address node, int replCount) {
+      throw new RuntimeException("Not implemented!");
+   }
+
+   public List<Address> getStateProvidersOnJoin(Address joiner, int replCount) {
+      throw new RuntimeException("Not implemented!");
    }
 }

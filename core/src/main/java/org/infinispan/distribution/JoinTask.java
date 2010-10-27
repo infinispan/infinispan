@@ -7,7 +7,9 @@ import static org.infinispan.commands.control.RehashControlCommand.Type.*;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheValue;
-import static org.infinispan.distribution.ConsistentHashHelper.createConsistentHash;
+import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
+
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
@@ -18,7 +20,6 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -210,25 +211,7 @@ public class JoinTask extends RehashTask {
     * @return
     */
    List<Address> getAddressesWhoMaySendStuff(ConsistentHash ch, int replCount) {
-      List<Address> l = new LinkedList<Address>();
-      List<Address> caches = ch.getCaches();
-      int selfIdx = caches.indexOf(self);
-      if (selfIdx >= replCount - 1) {
-         l.addAll(caches.subList(selfIdx - replCount + 1, selfIdx));
-      } else {
-         l.addAll(caches.subList(0, selfIdx));
-         int alreadyCollected = l.size();
-         l.addAll(caches.subList(caches.size() - replCount + 1 + alreadyCollected, caches.size()));
-      }
-
-      Address plusOne;
-      if (selfIdx == caches.size() - 1)
-         plusOne = caches.get(0);
-      else
-         plusOne = caches.get(selfIdx + 1);
-
-      if (!l.contains(plusOne)) l.add(plusOne);
-      return l;
+      return ch.getStateProvidersOnJoin(self, replCount);
    }
 
    public Address getMyAddress() {

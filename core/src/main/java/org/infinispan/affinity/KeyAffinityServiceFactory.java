@@ -12,7 +12,7 @@ import java.util.concurrent.Executor;
  * Services build by this factory have the following characteristics:
  * <ul>
  *  <li>are run asynchronously by a thread that can be plugged through an {@link org.infinispan.executors.ExecutorFactory} </li>
- *  <li>for key generation, the {@link org.infinispan.distribution.ConsistentHash} function of a distributed cache is used. Service does not make sense for replicated caches.</li>
+ *  <li>for key generation, the {@link org.infinispan.distribution.ch.ConsistentHash} function of a distributed cache is used. Service does not make sense for replicated caches.</li>
  *  <li>for each address cluster member (identified by an {@link org.infinispan.remoting.transport.Address} member, a fixed number of keys is generated</li>
  * </ul>
  *

@@ -1,4 +1,4 @@
-package org.infinispan.distribution;
+package org.infinispan.distribution.ch;
 
 import org.infinispan.remoting.transport.Address;
 
@@ -11,6 +11,7 @@ import java.util.Map;
  * implement a public, no-arg constructor.
  *
  * @author Manik Surtani
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public interface ConsistentHash {
@@ -22,6 +23,12 @@ public interface ConsistentHash {
     * @param caches caches in cluster.
     */
    void setCaches(List<Address> caches);
+
+   /**
+    * Sets cluster topology information that can be used by CH to improve fault tolerance by smart choosing of backups.
+    * More about it <a href="http://community.jboss.org/wiki/DesigningServerHinting">here<a/>
+    */
+   void setTopologyInfo(TopologyInfo topologyInfo);
 
    /**
     * Should return a collection of cache addresses in the cluster.
@@ -53,27 +60,6 @@ public interface ConsistentHash {
    Map<Object, List<Address>> locateAll(Collection<Object> keys, int replCount);
 
    /**
-    * Calculates the logical distance between two addresses.  This distance is based on where the addresses lie in the
-    * hash space.
-    *
-    * @param a1 address to test
-    * @param a2 address to test
-    * @return the distance between the 2 nodes.  Always a positive number, where the distance between a1 and itself is
-    *         0. The distance between a1 and the next adjacent node is 1 and teh distance between a1 and the previous
-    *         adjacent node is caches.size() - 1.  A -1 may be returned if either of the addresses do not exist.
-    */
-   int getDistance(Address a1, Address a2);
-
-   /**
-    * Tests whether two addresses are logically next to each other in the hash space.
-    *
-    * @param a1 address to test
-    * @param a2 address to test
-    * @return true if adjacent, false if not
-    */
-   boolean isAdjacent(Address a1, Address a2);
-
-   /**
     * Test to see whether a key is mapped to a given address.
     * @param a address to test
     * @param key key to test
@@ -97,4 +83,32 @@ public interface ConsistentHash {
     * @return A positive integer containing the hash space constant or 0 is not supported by implementation. 
     */
    int getHashSpace();
+
+   /**
+    * Returns the nodes that need will replicate their state if the specified node crashes. The return collection
+    * should contain all the nodes that backup-ed on leaver and one of the nodes which acted as a backup for the leaver .
+    * <p>
+    * Pre: leaver must be present in the caches known to this CH, as returned by {@link #getCaches()}
+    * @param leaver the node that leaves the cluster
+    * @param replCount
+    */
+   List<Address> getStateProvidersOnLeave(Address leaver, int replCount);
+
+   /**
+    * Is the specified node going to receive state if when another node leaves the cluster?
+    * When a node leaves the cluster following nodes would need to receive state as result of the rehashing:
+    *  - a new backup node for the lever to satisfy numOwners condition
+    *  - the nodes that would replace the leaver as a backup for other nodes
+    * @param leaver node that leaves
+    * @param node is this state receiver?
+    * @param replCount numOwners
+    */
+   boolean isStateReceiverOnLeave(Address leaver, Address node, int replCount);
+
+   /**
+    * Returns the nodes that would act as state providers when a new node joins:
+    * - the nodes for which the joiner is a backup
+    * - the nodes that held joiner's state
+    */
+   List<Address> getStateProvidersOnJoin(Address joiner, int replCount);
 }

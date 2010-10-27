@@ -9,7 +9,7 @@ import test.HotRodClient
 import test.HotRodTestingUtil._
 import org.testng.Assert._
 import org.infinispan.test.TestingUtil
-import org.infinispan.distribution.UnionConsistentHash
+import org.infinispan.distribution.ch.UnionConsistentHash
 import collection.mutable.ListBuffer
 import org.infinispan.test.AbstractCacheTest._ // Do not remove, otherwise getDefaultClusteredConfig is not found
 

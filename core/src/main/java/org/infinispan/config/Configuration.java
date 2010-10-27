@@ -21,7 +21,7 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.distribution.DefaultConsistentHash;
+import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.ComponentRegistry;

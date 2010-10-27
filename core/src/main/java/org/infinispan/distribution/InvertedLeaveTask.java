@@ -23,6 +23,8 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -84,12 +86,10 @@ public class InvertedLeaveTask extends RehashTask {
             if (isReceiver) {
                Address myAddress = rpcManager.getTransport().getAddress();
                RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE_LEAVE, myAddress,
-                        null, oldCH, newCH,leaversHandled);
+                                                                       null, oldCH, newCH, leaversHandled);
 
-               List<Address> addressesWhoMaySendStuff = getStateProviderTargets();
-               log.debug("I {0} am pulling state from {1}", self, addressesWhoMaySendStuff);
-               List<Response> resps = rpcManager.invokeRemotely(addressesWhoMaySendStuff, cmd,
-                        SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
+               log.debug("I {0} am pulling state from {1}", self, stateProviders);
+               List<Response> resps = rpcManager.invokeRemotely(stateProviders, cmd, SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
 
                log.debug("I {0} received response {1} ", self, resps);
                for (Response r : resps) {
@@ -118,17 +118,13 @@ public class InvertedLeaveTask extends RehashTask {
       }
    }
 
-   private List<Address> getStateProviderTargets() {
-      return stateProviders;
-   }
-
    private void processAndDrainTxLog(ConsistentHash oldCH, ConsistentHash newCH, int replCount) {
-      if (trace)
-         log.trace("Processing transaction log iteratively");
 
       List<WriteCommand> c;
       int i = 0;
       TransactionLogger transactionLogger = dmi.getTransactionLogger();
+      if (trace)
+         log.trace("Processing transaction log iteratively: " + transactionLogger);
       while (transactionLogger.shouldDrainWithoutLock()) {
          if (trace)
             log.trace("Processing transaction log, iteration {0}", i++);
@@ -182,8 +178,7 @@ public class InvertedLeaveTask extends RehashTask {
       transactionLogger.unlockAndDisable();
    }
 
-   private void apply(ConsistentHash oldCH, ConsistentHash newCH, int replCount,
-            List<WriteCommand> wc) {
+   private void apply(ConsistentHash oldCH, ConsistentHash newCH, int replCount, List<WriteCommand> wc) {
       // need to create another "state map"
       TransactionLogMap state = new TransactionLogMap(leavers, oldCH, newCH, replCount);
       for (WriteCommand c : wc)

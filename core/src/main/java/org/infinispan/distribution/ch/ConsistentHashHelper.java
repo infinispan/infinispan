@@ -1,4 +1,4 @@
-package org.infinispan.distribution;
+package org.infinispan.distribution.ch;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.remoting.transport.Address;

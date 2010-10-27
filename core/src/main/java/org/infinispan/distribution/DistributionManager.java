@@ -3,6 +3,7 @@ package org.infinispan.distribution;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.loaders.CacheStore;
@@ -72,8 +73,8 @@ public interface DistributionManager {
 
    /**
     * Retrieves the consistent hash instance currently in use, which may be an instance of the configured ConsistentHash
-    * instance (which defaults to {@link org.infinispan.distribution.DefaultConsistentHash}, or an instance of
-    * {@link org.infinispan.distribution.UnionConsistentHash} if a rehash is in progress.
+    * instance (which defaults to {@link org.infinispan.distribution.ch.DefaultConsistentHash}, or an instance of
+    * {@link org.infinispan.distribution.ch.UnionConsistentHash} if a rehash is in progress.
     *
     * @return a ConsistentHash instance
     */
@@ -110,7 +111,7 @@ public interface DistributionManager {
    List<Address> requestPermissionToJoin(Address joiner);
 
    /**
-    * This will cause all nodes to add the joiner to their consistent hash instance (usually by creating a {@link org.infinispan.distribution.UnionConsistentHash}
+    * This will cause all nodes to add the joiner to their consistent hash instance (usually by creating a {@link org.infinispan.distribution.ch.UnionConsistentHash}
     *
     * @param joiner address of joiner
     * @param starting if true, the joiner is reporting that it is starting the join process.  If false, the joiner is
