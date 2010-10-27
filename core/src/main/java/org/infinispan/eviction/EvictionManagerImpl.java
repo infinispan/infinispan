@@ -1,6 +1,6 @@
 package org.infinispan.eviction;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -122,8 +122,9 @@ public class EvictionManagerImpl implements EvictionManager {
 
    @Stop(priority = 5)
    public void stop() {
-      if (evictionTask != null)
+      if (evictionTask != null) {
          evictionTask.cancel(true);
+      }
    }
 
    class ScheduledTask implements Runnable {
@@ -133,7 +134,14 @@ public class EvictionManagerImpl implements EvictionManager {
    }
 
    @Override
-   public void onEntryEviction(Object key, InternalCacheEntry value) {
+   public void onEntryEviction(Map<Object, InternalCacheEntry> evicted) {
+      // XXX: Note that this should be more efficient once ISPN-720 is resolved.
+      for (Map.Entry<Object, InternalCacheEntry> e: evicted.entrySet()) {
+         onEntryEviction(e.getKey(), e.getValue());
+      }
+   }
+
+   private void onEntryEviction(Object key, InternalCacheEntry value) {
       final Object entryValue = value.getValue();
       InvocationContext context = getInvocationContext();
       try {
