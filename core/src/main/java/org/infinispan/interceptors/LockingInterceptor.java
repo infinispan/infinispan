@@ -193,7 +193,7 @@ public class LockingInterceptor extends CommandInterceptor {
    private void lockKeysForLockCommand(TxInvocationContext ctx, LockControlCommand c) throws InterruptedException {
       for (Object key : c.getKeys()) {
          MVCCEntry e = entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, false);
-         if (e.isCreated()) {
+         if (e != null && e.isCreated()) {
             // mark as temporary entry just for the sake of a lock command
             e.setLockPlaceholder(true);
          }
