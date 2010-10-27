@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:4.1 http://www.infinispan.org/schemas/infinispan-config-4.1.xsd"
-      xmlns="urn:infinispan:config:4.1">
+      xsi:schemaLocation="urn:infinispan:config:4.2 http://www.infinispan.org/schemas/infinispan-config-4.2.xsd"
+      xmlns="urn:infinispan:config:4.2">
 
    <!-- *************************** -->
    <!-- System-wide global settings -->
@@ -132,8 +132,10 @@
    <namedCache name="evictionCache">
 
       <!--
-         Eviction configuration.  WakeupInterval defines how often the eviction thread runs, in milliseconds.  0 means
-         the eviction thread will never run.  A separate executor is used for eviction in each cache.
+         Eviction configuration.
+
+         WakeupInterval defines how often the eviction thread runs, in milliseconds.
+         0 means the eviction thread will never run.
       -->
       <eviction wakeUpInterval="500" maxEntries="5000" strategy="FIFO"  threadPolicy="PIGGYBACK"/>
       <expiration lifespan="60000" maxIdle="1000"/>
