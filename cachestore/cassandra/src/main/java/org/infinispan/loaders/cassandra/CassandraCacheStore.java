@@ -101,7 +101,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	@Override
 	public InternalCacheEntry load(Object key) throws CacheLoaderException {
 		String hashKey = CassandraCacheStore.hashKey(key);
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 		try {
 			cassandraClient = pool.getConnection();
 			ColumnOrSuperColumn column = cassandraClient.get(config.keySpace, hashKey, entryColumnPath, ConsistencyLevel.ONE);
@@ -128,7 +128,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
 	@Override
 	public Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException {
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 		try {
 			cassandraClient = pool.getConnection();
 			Set<InternalCacheEntry> s = new HashSet<InternalCacheEntry>();
@@ -189,7 +189,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
 	@Override
 	public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 		try {
 			cassandraClient = pool.getConnection();
 			Set<Object> s = new HashSet<Object>();
@@ -236,7 +236,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
 	@Override
 	public void clear() throws CacheLoaderException {
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 		try {
 			cassandraClient = pool.getConnection();
 			SlicePredicate slicePredicate = new SlicePredicate();
@@ -274,7 +274,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	public boolean remove(Object key) throws CacheLoaderException {
 		if (trace)
 			log.trace("remove(\"{0}\") ", key);
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 		try {
 			cassandraClient = pool.getConnection();
 			Map<String, Map<String, List<Mutation>>> mutationMap = new HashMap<String, Map<String, List<Mutation>>>();
@@ -306,7 +306,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	}
 
 	public void store(InternalCacheEntry entry) throws CacheLoaderException {
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 
 		try {
 			cassandraClient = pool.getConnection();
@@ -396,7 +396,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	protected void purgeInternal() throws CacheLoaderException {
 		if (trace)
 			log.trace("purgeInternal");
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 		try {
 			cassandraClient = pool.getConnection();
 			// We need to get all supercolumns from the beginning of time until now, in SLICE_SIZE chunks
@@ -430,7 +430,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
 	@Override
 	protected void applyModifications(List<? extends Modification> mods) throws CacheLoaderException {
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 
 		try {
 			cassandraClient = pool.getConnection();

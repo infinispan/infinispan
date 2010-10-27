@@ -8,6 +8,7 @@ import org.apache.cassandra.service.EmbeddedCassandraService;
 import org.apache.thrift.transport.TTransportException;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheStore;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -38,6 +39,11 @@ public class CassandraCacheStoreTest extends BaseCacheStoreTest {
 		Thread t = new Thread(cassandra);
 		t.setDaemon(true);
 		t.start();
+	}
+	
+	@AfterClass
+	public static void cleanup() {
+		System.exit(0);
 	}
 
 	@Override

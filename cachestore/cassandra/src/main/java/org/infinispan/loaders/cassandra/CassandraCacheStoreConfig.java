@@ -83,8 +83,8 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
 	}
 
 	
-	public boolean getFramed() {
-		return poolProperties.getFramed();
+	public boolean isFramed() {
+		return poolProperties.isFramed();
 	}
 
 	

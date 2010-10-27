@@ -154,6 +154,7 @@
    ~ disk.  Keep the data disks and the CommitLog disks separate for best
    ~ performance
   -->
+  <SavedCachesDirectory>${java.io.tmpdir}/infinispan-cassandra-cachestore/savedcaches</SavedCachesDirectory>
   <CommitLogDirectory>${java.io.tmpdir}/infinispan-cassandra-cachestore/commitlog</CommitLogDirectory>
   <DataFileDirectories>
       <DataFileDirectory>${java.io.tmpdir}/infinispan-cassandra-cachestore/data</DataFileDirectory>
