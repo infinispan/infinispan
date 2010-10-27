@@ -18,4 +18,10 @@ public interface MVCCEntry extends CacheEntry {
     *                       to {@link org.infinispan.util.concurrent.IsolationLevel#REPEATABLE_READ}.
     */
    void copyForUpdate(DataContainer container, boolean writeSkewCheck);
+
+   /**
+    * Marks an entry as a lock placeholder
+    * @param placeholder if true, the entry is marked as a lock placeholder.  If false, the entry is un-marked as a placeholder.
+    */
+   void setLockPlaceholder(boolean placeholder);
 }

@@ -38,4 +38,14 @@ public class NullMarkerEntryForRemoval extends RepeatableReadEntry {
    public final boolean isValid() {
       return false;
    }
+
+   @Override
+   public boolean isLockPlaceholder() {
+      return false;
+   }
+
+   @Override
+   public void setLockPlaceholder(boolean placeholder) {
+      // a no-op
+   }
 }

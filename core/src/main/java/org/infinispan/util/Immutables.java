@@ -556,6 +556,11 @@ public class Immutables {
          throw new UnsupportedOperationException();
       }
 
+      @Override
+      public boolean isLockPlaceholder() {
+         return entry.isLockPlaceholder();
+      }
+
       public InternalCacheEntry clone() {
          return new ImmutableInternalCacheEntry(entry.clone());
       }

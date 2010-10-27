@@ -6,6 +6,7 @@ import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,11 +29,13 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
       return affectedKeys == null ? Collections.emptySet() : affectedKeys;
    }
 
-   public void addAffectedKeys(Object... keys) {
-      if (affectedKeys == null) {
-         affectedKeys = new HashSet<Object>();
+   public void addAffectedKeys(Collection<Object> keys) {
+      if (keys != null && !keys.isEmpty()) {
+         if (affectedKeys == null) {
+            affectedKeys = new HashSet<Object>();
+         }
+         affectedKeys.addAll(keys);
       }
-      affectedKeys.addAll(Arrays.asList(keys));
    }
 
    @Override

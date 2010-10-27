@@ -145,7 +145,7 @@ public class LockManagerImpl implements LockManager {
    }
 
    public final boolean possiblyLocked(CacheEntry entry) {
-      return entry == null || entry.isChanged() || entry.isNull();
+      return entry == null || entry.isChanged() || entry.isNull() || entry.isLockPlaceholder();
    }
 
    public void releaseLocks(InvocationContext ctx) {

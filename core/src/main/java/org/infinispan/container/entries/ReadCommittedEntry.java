@@ -27,6 +27,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.*;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.LOCK_PLACEHOLDER;
 
 /**
  * A wrapper around a cached entry that encapsulates read committed semantics when writes are initiated, committed or
@@ -62,7 +63,8 @@ public class ReadCommittedEntry implements MVCCEntry {
       CHANGED(1), // same as 1 << 0
       CREATED(1 << 1),
       REMOVED(1 << 2),
-      VALID(1 << 3);
+      VALID(1 << 3),
+      LOCK_PLACEHOLDER(1 << 4);      
 
       final byte mask;
 
@@ -143,6 +145,14 @@ public class ReadCommittedEntry implements MVCCEntry {
       if (!isCreated()) oldValue = value;
    }
 
+   @Override
+   public void setLockPlaceholder(boolean placeholder) {
+      if (placeholder)
+         setFlag(LOCK_PLACEHOLDER);
+      else
+         unsetFlag(LOCK_PLACEHOLDER);
+   }
+
    @SuppressWarnings("unchecked")
    public final void commit(DataContainer container) {
       // only do stuff if there are changes.
@@ -193,6 +203,11 @@ public class ReadCommittedEntry implements MVCCEntry {
          setFlag(VALID);
       else
          unsetFlag(VALID);
+   }
+
+   @Override
+   public boolean isLockPlaceholder() {
+      return isFlagSet(LOCK_PLACEHOLDER);
    }
 
    public final boolean isCreated() {

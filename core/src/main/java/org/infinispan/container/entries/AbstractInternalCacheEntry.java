@@ -59,6 +59,10 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
       return false;
    }
 
+   public final boolean isLockPlaceholder() {
+      return false;
+   }
+
    public void setMaxIdle(long maxIdle) {
    }
 
