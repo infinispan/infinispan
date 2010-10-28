@@ -7,6 +7,7 @@ import org.testng.annotations.Test
 import net.spy.memcached.CASResponse
 import org.infinispan.test.TestingUtil
 import org.infinispan.Version
+import java.net.Socket
 
 /**
  * Tests Memcached protocol functionality against Infinispan Memcached server.
@@ -232,6 +233,42 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
       val newValue = client.incr(k(m), Integer.MAX_VALUE)
       assertEquals(newValue, Int.MaxValue.asInstanceOf[Long] + 1)
+   }
+
+   def testIncrementBeyondLongMax(m: Method) {
+      val f = client.set(k(m), 0, "9223372036854775808")
+      assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
+      val newValue = incr(m, 1, 19)
+      assertEquals(BigInt(newValue), BigInt("9223372036854775809"))
+   }
+
+   def testIncrementSurpassLongMax(m: Method) {
+      val f = client.set(k(m), 0, "9223372036854775807")
+      assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
+      val newValue = incr(m, 1, 19)
+      assertEquals(BigInt(newValue), BigInt("9223372036854775808"))
+   }
+
+   def testIncrementSurpassBigIntMax(m: Method) {
+      val f = client.set(k(m), 0, "18446744073709551615")
+      assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
+      val newValue = incr(m, 1, 1)
+      assertEquals(newValue, "0")
+   }
+
+   private def incr(m: Method, by: Int, expectedLength: Int): String = {
+      // Spymemcached expects Long so does not support 64-bit unsigned integer. Instead, do things manually.
+      val req = "incr " + k(m) + " " + by + "\r\n"
+      val socket = new Socket(server.getHost, server.getPort)
+      try {
+         socket.getOutputStream.write(req.getBytes)
+         // Make the array big enough to read the data but ignore the trailing carriage return
+         val resp = new Array[Byte](expectedLength)
+         socket.getInputStream.read(resp)
+         return new String(resp)
+      } finally {
+         socket.close
+      }
    }
 
    def testDecrementBasic(m: Method) {

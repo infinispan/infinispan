@@ -196,12 +196,15 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
             val params = readParameters(h, b)
             val prev = cache.get(k)
             if (prev != null) {
-               val prevCounter = new String(prev.data)
+               val prevCounter = BigInt(new String(prev.data))
                val newCounter =
                   h.op match {
-                     case IncrementRequest => prevCounter.toLong + params.get.delta.toLong
+                     case IncrementRequest => {
+                        val candidateCounter = prevCounter + BigInt(params.get.delta)
+                        if (candidateCounter > BigInt("18446744073709551615")) 0 else candidateCounter
+                     }
                      case DecrementRequest => {
-                        val candidateCounter = prevCounter.toLong - params.get.delta.toLong
+                        val candidateCounter = prevCounter - BigInt(params.get.delta)
                         if (candidateCounter < 0) 0 else candidateCounter
                      }
                   }
