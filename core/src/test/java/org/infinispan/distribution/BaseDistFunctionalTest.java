@@ -24,12 +24,10 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -375,70 +373,5 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
    protected TransactionManager getTransactionManager(Cache<?, ?> cache) {
       return TestingUtil.getTransactionManager(cache);
-   }
-
-   /**
-    * A special type of key that if passed a cache in its constructor, will ensure it will always be assigned to that
-    * cache (plus however many additional caches in the hash space)
-    */
-   public static class MagicKey implements Serializable {
-      /** The serialVersionUID */
-      private static final long serialVersionUID = -835275755945753954L;
-      String name = null;
-      int hashcode;
-      String address;
-
-      public MagicKey(Cache<?, ?> toMapTo) {
-         address = addressOf(toMapTo).toString();
-         Random r = new Random();
-         for (; ;) {
-            // create a dummy object with this hashcode
-            final int hc = r.nextInt();
-            Object dummy = new Object() {
-               @Override
-               public int hashCode() {
-                  return hc;
-               }
-            };
-
-            if (BaseDistFunctionalTest.isFirstOwner(toMapTo, dummy)) {
-               // we have found a hashcode that works!
-               hashcode = hc;
-               break;
-            }
-         }
-      }
-
-      public MagicKey(Cache<?, ?> toMapTo, String name) {
-         this(toMapTo);
-         this.name = name;
-      }
-
-      @Override
-      public int hashCode() {
-         return hashcode;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-
-         MagicKey magicKey = (MagicKey) o;
-
-         if (hashcode != magicKey.hashcode) return false;
-         if (address != null ? !address.equals(magicKey.address) : magicKey.address != null) return false;
-
-         return true;
-      }
-
-      @Override
-      public String toString() {
-         return "MagicKey{" +
-               (name == null ? "" : "name=" + name + ", ") +
-               "hashcode=" + hashcode +
-               ", address='" + address + '\'' +
-               '}';
-      }
    }
 }

@@ -2,6 +2,7 @@ package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -181,13 +182,13 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
 class Updater extends Thread {
    static final Random r = new Random();
    volatile int currentValue = 0;
-   BaseDistFunctionalTest.MagicKey key;
+   MagicKey key;
    Cache cache;
    CountDownLatch latch;
    volatile boolean running = true;
    TransactionManager tm;
 
-   Updater(Cache cache, BaseDistFunctionalTest.MagicKey key, CountDownLatch latch, boolean tx) {
+   Updater(Cache cache, MagicKey key, CountDownLatch latch, boolean tx) {
       super("Updater-" + key);
       this.key = key;
       this.cache = cache;

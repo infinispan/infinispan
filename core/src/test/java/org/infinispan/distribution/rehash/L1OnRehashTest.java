@@ -1,6 +1,7 @@
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.distribution.BaseDistFunctionalTest;

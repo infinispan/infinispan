@@ -1,17 +1,12 @@
 package org.infinispan.lock;
 
 import org.infinispan.Cache;
-import org.infinispan.affinity.KeyAffinityService;
-import org.infinispan.affinity.KeyAffinityServiceFactory;
-import org.infinispan.affinity.KeyAffinityServiceImpl;
-import org.infinispan.affinity.KeyGenerator;
 import org.infinispan.config.Configuration;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
 
 import javax.transaction.HeuristicMixedException;
@@ -19,19 +14,13 @@ import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.concurrent.Executors;
-
-import static org.infinispan.context.Flag.FAIL_SILENTLY;
 
 
 @Test(testName = "lock.APITest", groups = "functional")
 @CleanupAfterMethod
 public class APIDistTest extends MultipleCacheManagersTest {
    EmbeddedCacheManager cm1, cm2;
-   String key; // guaranteed to be mapped to cache2
+   MagicKey key; // guaranteed to be mapped to cache2
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -45,24 +34,11 @@ public class APIDistTest extends MultipleCacheManagersTest {
       cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       registerCacheManager(cm1, cm2);
       cm1.getCache();
-      Cache<String, String> c = cm2.getCache();
-
-      // lets generate a key such that it is always mapped to cache2.
-      KeyAffinityService<String> service = KeyAffinityServiceFactory.newKeyAffinityService(c,
-              Executors.newCachedThreadPool(), new KeyGenerator<String>() {
-                 final Random r = new Random();
-
-                 @Override
-                 public String getKey() {
-                    return Integer.toHexString(r.nextInt(2000));
-                 }
-              }, 2);
-
-      key = service.getKeyForAddress(c.getAdvancedCache().getRpcManager().getAddress());
+      key = new MagicKey(cm2.getCache(), "Key mapped to Cache2");
    }
 
    public void testLockAndGet() throws SystemException, NotSupportedException {
-      Cache<String, String> cache1 = cache(0), cache2 = cache(1);
+      Cache<MagicKey, String> cache1 = cache(0), cache2 = cache(1);
 
       cache1.put(key, "v");
 
@@ -76,7 +52,7 @@ public class APIDistTest extends MultipleCacheManagersTest {
    }
 
    public void testLockAndGetAndPut() throws SystemException, NotSupportedException, RollbackException, HeuristicRollbackException, HeuristicMixedException, InterruptedException {
-      Cache<String, String> cache1 = cache(0), cache2 = cache(1);
+      Cache<MagicKey, String> cache1 = cache(0), cache2 = cache(1);
 
       cache1.put(key, "v");
 
@@ -96,7 +72,7 @@ public class APIDistTest extends MultipleCacheManagersTest {
    }
 
    public void testLockAndPutRetval() throws SystemException, NotSupportedException, RollbackException, HeuristicRollbackException, HeuristicMixedException, InterruptedException {
-      Cache<String, String> cache1 = cache(0), cache2 = cache(1);
+      Cache<MagicKey, String> cache1 = cache(0), cache2 = cache(1);
 
       cache1.put(key, "v");
 
@@ -115,7 +91,7 @@ public class APIDistTest extends MultipleCacheManagersTest {
    }
 
    public void testLockAndRemoveRetval() throws SystemException, NotSupportedException, RollbackException, HeuristicRollbackException, HeuristicMixedException, InterruptedException {
-      Cache<String, String> cache1 = cache(0), cache2 = cache(1);
+      Cache<MagicKey, String> cache1 = cache(0), cache2 = cache(1);
 
       cache1.put(key, "v");
 
@@ -132,5 +108,4 @@ public class APIDistTest extends MultipleCacheManagersTest {
       assert (null == (val = cache1.get(key))) : "Could not find key " + key + " on cache1: expected null, was " + val;
       assert (null == (val = cache2.get(key))) : "Could not find key " + key + " on cache2: expected null, was " + val;
    }
-
 }
