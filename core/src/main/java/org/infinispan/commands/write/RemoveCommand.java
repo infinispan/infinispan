@@ -22,6 +22,7 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.Ids;
@@ -70,7 +71,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+      CacheEntry e = ctx.lookupEntry(key);
       if (e == null || e.isNull()) {
          nonExistent = true;
          log.trace("Nothing to remove since the entry is null or we have a null entry");
@@ -81,6 +82,9 @@ public class RemoveCommand extends AbstractDataWriteCommand {
             return false;
          }
       }
+
+      if (!(e instanceof MVCCEntry)) ctx.putLookedUpEntry(key, null);
+
       if (value != null && e.getValue() != null && !e.getValue().equals(value)) {
          successful = false;
          return false;
