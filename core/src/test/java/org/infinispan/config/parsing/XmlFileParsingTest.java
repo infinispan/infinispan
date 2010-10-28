@@ -8,6 +8,7 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
 import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
@@ -234,7 +235,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getCacheMode() == Configuration.CacheMode.DIST_SYNC;
       assert c.getL1Lifespan() == 600000;
       assert c.getRehashWaitTime() == 120000;
-      assert c.getConsistentHashClass().equals(DefaultConsistentHash.class.getName());
+      assert c.getConsistentHashClass().equals(TopologyAwareConsistentHash.class.getName());
       assert c.getNumOwners() == 3;
       assert c.isL1CacheEnabled();
 

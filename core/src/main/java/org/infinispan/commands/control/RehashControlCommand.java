@@ -13,6 +13,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.marshall.Ids;
@@ -63,6 +64,7 @@ public class RehashControlCommand extends BaseRpcCommand {
    List<WriteCommand> txLogCommands;
    List<PrepareCommand> pendingPrepares;
    CommandsFactory commandsFactory;
+   NodeTopologyInfo nodeTopologyInfo;
    private static final Log log = LogFactory.getLog(RehashControlCommand.class);
 
    public RehashControlCommand() {
@@ -115,10 +117,9 @@ public class RehashControlCommand extends BaseRpcCommand {
          case JOIN_REQ:
             return distributionManager.requestPermissionToJoin(sender);
          case JOIN_REHASH_START:
-            distributionManager.informRehashOnJoin(sender, true);
-            return null;
+            return distributionManager.informRehashOnJoin(sender, true, nodeTopologyInfo);
          case JOIN_REHASH_END:
-            distributionManager.informRehashOnJoin(sender, false);
+            distributionManager.informRehashOnJoin(sender, false, nodeTopologyInfo);
             return null;
          case PULL_STATE_JOIN:
             return pullStateForJoin();             
@@ -230,7 +231,11 @@ public class RehashControlCommand extends BaseRpcCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{cacheName, (byte) type.ordinal(), sender, state, oldCH, nodesLeft, newCH, txLogCommands, pendingPrepares};
+      return new Object[]{cacheName, (byte) type.ordinal(), sender, state, oldCH, nodesLeft, newCH, txLogCommands, pendingPrepares, nodeTopologyInfo};
+   }
+
+   public void setNodeTopologyInfo(NodeTopologyInfo nodeTopologyInfo) {
+      this.nodeTopologyInfo = nodeTopologyInfo;
    }
 
    @SuppressWarnings("unchecked")
@@ -245,6 +250,7 @@ public class RehashControlCommand extends BaseRpcCommand {
       newCH = (ConsistentHash) parameters[i++];
       txLogCommands = (List<WriteCommand>) parameters[i++];
       pendingPrepares = (List<PrepareCommand>) parameters[i++];
+      nodeTopologyInfo = (NodeTopologyInfo) parameters[i++];
    }
 
    @Override

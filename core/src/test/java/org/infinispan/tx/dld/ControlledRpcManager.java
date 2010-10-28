@@ -108,9 +108,10 @@ public final class ControlledRpcManager implements RpcManager {
       realOne.invokeRemotely(recipients, rpc, sync);
    }
 
-   public void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException {
+   public List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException {
       failIfNeeded();
       realOne.invokeRemotely(recipients, rpc, sync, usePriorityQueue);
+      return null;
    }
 
    public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<Object> future) {

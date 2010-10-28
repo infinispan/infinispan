@@ -6,6 +6,7 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -18,6 +19,8 @@ import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsiste
 
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
+import org.infinispan.distribution.ch.NodeTopologyInfo;
+import org.infinispan.distribution.ch.TopologyInfo;
 import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -86,6 +89,8 @@ public class DistributionManagerImpl implements DistributionManager {
    private final ExecutorService rehashExecutor;
 
    private final TransactionLogger transactionLogger = new TransactionLoggerImpl();
+
+   TopologyInfo topologyInfo = new TopologyInfo();
    
    /**
     * Rehash flag set by a rehash task associated with this DistributionManager
@@ -155,6 +160,12 @@ public class DistributionManagerImpl implements DistributionManager {
       log.trace("Starting distribution manager on " + getMyAddress());            
       listener = new ViewChangeListener();
       notifier.addListener(listener);
+      GlobalConfiguration gc = configuration.getGlobalConfiguration();
+      if (gc.hasTopologyInfo()) {
+         Address address = rpcManager.getTransport().getAddress();
+         NodeTopologyInfo nti = new NodeTopologyInfo(gc.getMachineId(),gc.getRackId(), gc.getSiteId(), address);
+         topologyInfo.addNodeTopologyInfo(address, nti);
+      }
       join();
    }
    
@@ -187,7 +198,7 @@ public class DistributionManagerImpl implements DistributionManager {
       setJoinComplete(false);
       Transport t = rpcManager.getTransport();
       List<Address> members = t.getMembers();
-      consistentHash = createConsistentHash(configuration, members);
+      consistentHash = createConsistentHash(configuration, members, topologyInfo);
       self = t.getAddress();
       if (members.size() > 1 && !t.getCoordinator().equals(self)) {
          JoinTask joinTask = new JoinTask(rpcManager, cf, configuration, dataContainer, this);
@@ -218,13 +229,15 @@ public class DistributionManagerImpl implements DistributionManager {
          Address leaver = MembershipArithmetic.getMemberLeft(oldMembers, newMembers);
          log.info("This is a LEAVE event!  Node {0} has just left", leaver);
 
+         topologyInfo.removeNodeInfo(leaver);
+
          try {
             if (!(consistentHash instanceof UnionConsistentHash)) {
               oldConsistentHash = consistentHash;
             }  else {
                oldConsistentHash = ((UnionConsistentHash) consistentHash).getNewCH();
             }
-            consistentHash = ConsistentHashHelper.removeAddress(consistentHash, leaver, configuration);
+            consistentHash = ConsistentHashHelper.removeAddress(consistentHash, leaver, configuration, topologyInfo);
          } catch (Exception e) {
             log.fatal("Unable to process leaver!!", e);
             throw new CacheException(e);
@@ -346,7 +359,7 @@ public class DistributionManagerImpl implements DistributionManager {
       }
    }
 
-   public void informRehashOnJoin(Address a, boolean starting) {
+   public NodeTopologyInfo informRehashOnJoin(Address a, boolean starting, NodeTopologyInfo nodeTopologyInfo) {
       log.trace("Informed of a JOIN by {0}.  Starting? {1}", a, starting);
       if (!starting) {
          if (consistentHash instanceof UnionConsistentHash) {
@@ -356,18 +369,17 @@ public class DistributionManagerImpl implements DistributionManager {
          }
          joiner = null;            
       } else {
+         topologyInfo.addNodeTopologyInfo(a, nodeTopologyInfo);
+         log.trace("Node topology info added({0}).  Topology info is {1}", nodeTopologyInfo, topologyInfo);         
          ConsistentHash chOld = consistentHash;
          if (chOld instanceof UnionConsistentHash) throw new RuntimeException("Not expecting a union CH!");
          oldConsistentHash = chOld;
          joiner = a;        
-         ConsistentHash chNew;
-         chNew = (ConsistentHash) Util.getInstance(configuration.getConsistentHashClass());
-         List<Address> newAddresses = new LinkedList<Address>(chOld.getCaches());
-         newAddresses.add(a);
-         chNew.setCaches(newAddresses);
+         ConsistentHash chNew = ConsistentHashHelper.createConsistentHash(configuration, chOld.getCaches(), topologyInfo, a);
          consistentHash = new UnionConsistentHash(chOld, chNew);
       }
       log.trace("New CH is {0}", consistentHash);
+      return topologyInfo.getNodeTopologyInfo(rpcManager.getAddress());
    }
 
    public void applyState(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state) {
@@ -501,5 +513,9 @@ public class DistributionManagerImpl implements DistributionManager {
 
    public void setConfiguration(Configuration configuration) {
       this.configuration = configuration;
+   }
+
+   public TopologyInfo getTopologyInfo() {
+      return topologyInfo;
    }
 }

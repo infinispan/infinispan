@@ -72,7 +72,7 @@ public class InvertedLeaveTask extends RehashTask {
       long start = trace ? System.currentTimeMillis() : 0;
 
       int replCount = configuration.getNumOwners();
-      ConsistentHash oldCH = ConsistentHashHelper.createConsistentHash(configuration, dmi.getConsistentHash().getCaches(), leaversHandled);
+      ConsistentHash oldCH = ConsistentHashHelper.createConsistentHash(configuration, dmi.getConsistentHash().getCaches(), leaversHandled, dmi.topologyInfo);
       ConsistentHash newCH = dmi.getConsistentHash();
       try {
          if (log.isDebugEnabled()) {

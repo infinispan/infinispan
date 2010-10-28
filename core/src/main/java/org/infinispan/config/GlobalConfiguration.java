@@ -35,6 +35,7 @@ import java.util.Properties;
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  * 
  * @see <a href="../../../config.html#ce_infinispan_global">Configuration reference</a>
@@ -161,6 +162,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     */
    public void setStrictPeerToPeer(boolean strictPeerToPeer) {
       transport.setStrictPeerToPeer(strictPeerToPeer);
+   }
+
+   public boolean hasTopologyInfo() {
+      return getSiteId() != null || getRackId() != null || getMachineId() != null;
    }
 
    /**
@@ -300,6 +305,52 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public void setClusterName(String clusterName) {
       transport.setClusterName(clusterName);
    }
+
+   /**
+    * The id of the machine where this node runs. Used for <a href="http://community.jboss.org/wiki/DesigningServerHinting">server
+    * hinting</a> .
+    */
+   public void setMachineId(String machineId) {
+      transport.setMachineId(machineId);
+   }
+
+   /**
+    * @see #setMachineId(String)
+    */
+   public String getMachineId() {
+      return transport.getMachineId();
+   }
+
+   /**
+    * The id of the rack where this node runs. Used for <a href="http://community.jboss.org/wiki/DesigningServerHinting">server
+    * hinting</a> .
+    */
+   public void setRackId(String rackId) {
+      transport.setRackId(rackId);
+   }
+
+   /**
+    * @see #setRackId(String)
+    */
+   public String getRackId() {
+      return transport.getRackId();
+   }
+
+   /**
+    * The id of the site where this node runs. Used for <a href="http://community.jboss.org/wiki/DesigningServerHinting">server
+    * hinting</a> .
+    */
+   public void setSiteId(String siteId) {
+      transport.setSiteId(siteId);
+   }
+
+   /**
+    * @see #setSiteId(String) 
+    */
+   public String getSiteId() {
+      return transport.getSiteId();
+   }
+
 
    public ShutdownHookBehavior getShutdownHookBehavior() {
       return shutdown.hookBehavior;
@@ -661,7 +712,16 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
      
       @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setClusterName")
       protected String clusterName = "Infinispan-Cluster";
-     
+
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setMachineId")
+      protected String machineId;
+
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setRackId")
+      protected String rackId;
+
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setSiteId")
+      protected String siteId;
+
       @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setStrictPeerToPeer")
       protected Boolean strictPeerToPeer = true;      
       
@@ -696,6 +756,36 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       public void setClusterName(String clusterName) {
          testImmutability("clusterName");
          this.clusterName = clusterName;
+      }
+
+      @XmlAttribute
+      public void setMachineId(String machineId) {
+         testImmutability("machineId");
+         this.machineId = machineId;
+      }
+
+      @XmlAttribute
+      public void setRackId(String rackId) {
+         testImmutability("rackId");
+         this.rackId = rackId;
+      }
+
+      @XmlAttribute
+      public void setSiteId(String siteId) {
+         testImmutability("siteId");
+         this.siteId = siteId;
+      }
+
+      public String getMachineId() {
+         return machineId;
+      }
+
+      public String getRackId() {
+         return rackId;
+      }
+
+      public String getSiteId() {
+         return siteId;
       }
 
       @XmlAttribute

@@ -5,6 +5,7 @@ import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
+import org.infinispan.distribution.ch.TopologyInfo;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
@@ -54,7 +55,7 @@ public class WorkDuringJoinTest extends BaseDistFunctionalTest {
       List<MagicKey> keys = init();
       ConsistentHash chOld = getConsistentHash(c1);
       Address joinerAddress = startNewMember();
-      ConsistentHash chNew = ConsistentHashHelper.createConsistentHash(chOld.getClass(), chOld.getCaches(), joinerAddress);
+      ConsistentHash chNew = ConsistentHashHelper.createConsistentHash(chOld.getClass(), chOld.getCaches(), new TopologyInfo(), joinerAddress);
       // which key should me mapped to the joiner?
       MagicKey keyToTest = null;
       for (MagicKey k: keys) {

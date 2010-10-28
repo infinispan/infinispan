@@ -4,6 +4,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.loaders.CacheStore;
@@ -115,9 +116,9 @@ public interface DistributionManager {
     *
     * @param joiner address of joiner
     * @param starting if true, the joiner is reporting that it is starting the join process.  If false, the joiner is
-    * reporting that it has completed the join process.
+    * @param nodeTopologyInfo
     */
-   void informRehashOnJoin(Address joiner, boolean starting);
+   NodeTopologyInfo informRehashOnJoin(Address joiner, boolean starting, NodeTopologyInfo nodeTopologyInfo);
 
    /**
     * Retrieves a cache store if one is available and set up for use in rehashing.  May return null!

@@ -44,7 +44,7 @@
          There is no added cost to defining a transport but not creating a cache that uses one, since the transport
          is created and initialized lazily.
       -->
-      <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno"/>
+      <transport clusterName="infinispan-cluster" machineId="m1" rackId="r1" siteId="s1" distributedSyncTimeout="50000" nodeName="Jalapeno"/>
          <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
          <!-- See the JGroupsTransport javadocs for more flags -->
 

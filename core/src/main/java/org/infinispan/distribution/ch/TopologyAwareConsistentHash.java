@@ -1,13 +1,20 @@
 package org.infinispan.distribution.ch;
 
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 
 import static java.lang.Math.min;
 
@@ -15,6 +22,7 @@ import static java.lang.Math.min;
  * Consistent hash that is aware of cluster topology.
  * Design described here: http://community.jboss.org/wiki/DesigningServerHinting.
  * <p>
+ * <pre>
  * Algorithm:
  * - place nodes on the hash wheel based address's hash code
  * - For selecting owner nodes:
@@ -24,11 +32,12 @@ import static java.lang.Math.min;
  *       - if not enough nodes found repeat walk again and pick nodes that have different site id, rack id and machine id
  *       - Ultimately cycle back to the first node selected, don't discard any nodes, regardless of machine id/rack
  * id/site id match.
-
+ * </pre>
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
+@Marshallable(externalizer = TopologyAwareConsistentHash.Externalizer.class, id = Ids.TOPOLOGY_AWARE_CH)
 public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
 
    public List<Address> locate(Object key, int replCount) {
@@ -118,5 +127,33 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       int hash = getNormalizedHash(key);
       Integer ownerHash = positions.tailMap(hash).firstKey();
       return positions.get(ownerHash);
+   }
+
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      @Override
+      public void writeObject(ObjectOutput output, Object subject) throws IOException {
+         TopologyAwareConsistentHash dch = (TopologyAwareConsistentHash) subject;
+         output.writeObject(dch.addresses);
+         output.writeObject(dch.positions);
+         output.writeObject(dch.addressToHashIds);
+         Collection<NodeTopologyInfo> infoCollection = dch.topologyInfo.getAllTopologyInfo();
+         output.writeInt(infoCollection.size());
+         for (NodeTopologyInfo nti : infoCollection) output.writeObject(nti);
+      }
+
+      @Override
+      public Object readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         TopologyAwareConsistentHash ch = new TopologyAwareConsistentHash();
+         ch.addresses = (ArrayList<Address>) unmarshaller.readObject();
+         ch.positions = (SortedMap<Integer, Address>) unmarshaller.readObject();
+         ch.addressToHashIds = (Map<Address, Integer>) unmarshaller.readObject();
+         ch.topologyInfo = new TopologyInfo();
+         int ntiCount = unmarshaller.readInt();
+         for (int i = 0; i < ntiCount; i++) {
+            NodeTopologyInfo nti = (NodeTopologyInfo) unmarshaller.readObject();
+            ch.topologyInfo.addNodeTopologyInfo(nti.getAddress(), nti);
+         }
+         return ch;
+      }
    }
 }
