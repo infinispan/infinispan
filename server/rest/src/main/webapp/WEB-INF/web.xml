@@ -19,10 +19,16 @@
       <servlet-name>InitServlet</servlet-name>
       <servlet-class>org.infinispan.rest.StartupListener</servlet-class>
 
-      <!-- specify your cache configuration file -->
+      <!-- Specify your cache configuration file -->
       <init-param>
          <param-name>infinispan.config</param-name>
          <param-value>infinispan.xml</param-value>
+      </init-param>
+
+      <!-- Managed bean name to look up when the REST server is running an app server -->
+      <init-param>
+         <param-name>infinispan.cachemanager.bean</param-name>
+         <param-value>DefaultCacheManager</param-value>
       </init-param>
 
       <load-on-startup>1</load-on-startup>
