@@ -22,6 +22,7 @@
 package org.infinispan.config;
 
 import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.ComponentRegistry;
@@ -60,6 +61,7 @@ import static org.infinispan.config.Configuration.CacheMode.*;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Vladimir Blagojevic
  * @author Galder Zamarreño
+ * @author Mircea.Markus@jboss.com
  * @see <a href="../../../config.html#ce_infinispan_default">Configuration reference</a>
  * @since 4.0
  */
@@ -154,10 +156,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    //   SETTERS - MAKE SURE ALL SETTERS PERFORM testImmutability()!!!
    // ------------------------------------------------------------------------------------------------------------
 
-   /**
-    * will be removed, please use {@link org.infinispan.manager.EmbeddedCacheManager#getGlobalConfiguration()}
-    */
-   @Deprecated
+
    public GlobalConfiguration getGlobalConfiguration() {
       return globalConfiguration;
    }
@@ -395,8 +394,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * Cache mode. For distribution, set mode to either 'd', 'dist' or 'distribution'. For replication, use either 'r',
     * 'repl' or 'replication'. Finally, for invalidation, 'i', 'inv' or 'invalidation'.
-    *
-    * @param cacheMode
     */
    public void setCacheMode(CacheMode cacheModeInt) {
       clustering.setMode(cacheModeInt);
@@ -943,6 +940,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    public String getConsistentHashClass() {
+      if (clustering.hash.consistentHashClass == null) {
+         clustering.hash.consistentHashClass = globalConfiguration == null || globalConfiguration.hasTopologyInfo() ? TopologyAwareConsistentHash.class.getName() : DefaultConsistentHash.class.getName();
+      }
       return clustering.hash.consistentHashClass;
    }
 
@@ -1912,7 +1912,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       private static final long serialVersionUID = 752218766840948822L;
 
       @ConfigurationDocRef(name = "class", bean = Configuration.class, targetElement = "setConsistentHashClass")
-      protected String consistentHashClass = DefaultConsistentHash.class.getName();
+      protected String consistentHashClass;
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setNumOwners")
       protected Integer numOwners = 2;

@@ -117,4 +117,6 @@ public interface Ids {
    static final byte BYTE_ARRAY_KEY = 57;
    static final byte TOPOLOGY_ADDRESS = 58;
    static final byte TOPOLOGY_VIEW = 59;
+   static final byte NODE_TOPOLOGY_INFO = 60;
+   static final byte TOPOLOGY_AWARE_CH = 61;
 }

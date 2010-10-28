@@ -509,7 +509,7 @@ public class TopologyAwareConsistentHashTest {
 
    private void addNode(TestAddress address, String machineId, String rackId, String siteId) {
       addresses.add(address);
-      NodeTopologyInfo nti = new NodeTopologyInfo(machineId, rackId, siteId);
+      NodeTopologyInfo nti = new NodeTopologyInfo(machineId, rackId, siteId, null);
       ti.addNodeTopologyInfo(address, nti);
    }
 

@@ -15,6 +15,7 @@ import java.io.IOException;
 
 import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
 import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
+import static org.testng.Assert.assertEquals;
 
 /**
  * @author Manik Surtani
@@ -32,6 +33,10 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
 
    public void testNamedCacheXML() throws IOException {
       cm = TestCacheManagerFactory.fromXml("configs/named-cache-test.xml");
+
+      assertEquals("s1", cm.getGlobalConfiguration().getSiteId());
+      assertEquals("r1", cm.getGlobalConfiguration().getRackId());
+      assertEquals("m1", cm.getGlobalConfiguration().getMachineId());
 
       // test default cache
       Cache c = cm.getCache();

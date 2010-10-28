@@ -42,4 +42,8 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
    public void setTopologyInfo(TopologyInfo topologyInfo) {
       this.topologyInfo = topologyInfo;
    }
+
+   public TopologyInfo getTopologyInfo() {
+      return topologyInfo;
+   }
 }

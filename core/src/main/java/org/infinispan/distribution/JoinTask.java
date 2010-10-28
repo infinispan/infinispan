@@ -10,6 +10,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
 
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
@@ -41,6 +42,7 @@ import java.util.Random;
  * <ul>
  *
  * @author Manik Surtani
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public class JoinTask extends RehashTask {
@@ -87,9 +89,10 @@ public class JoinTask extends RehashTask {
          // 2.  new CH instance
          if (chOld.getCaches().contains(self))
             chNew = chOld;
-         else
-            chNew = createConsistentHash(configuration, chOld.getCaches(), self);
-         
+         else {
+            chNew = createConsistentHash(configuration, chOld.getCaches(), dmi.topologyInfo, self);
+         }
+
          dmi.setConsistentHash(chNew);
          try {
             if (configuration.isRehashEnabled()) {
@@ -97,8 +100,11 @@ public class JoinTask extends RehashTask {
                transactionLogger.enable();
    
                // 4.  Broadcast new temp CH
-               rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);
-   
+               RehashControlCommand rehashControlCommand = cf.buildRehashControlCommand(JOIN_REHASH_START, self);
+               rehashControlCommand.setNodeTopologyInfo(dmi.topologyInfo.getNodeTopologyInfo(rpcManager.getAddress()));
+               List<Response> responseList = rpcManager.invokeRemotely(null, rehashControlCommand, true, true);
+               updateTopologyInfo(responseList);
+
                // 5.  txLogger being enabled will cause ClusteredGetCommands to return uncertain responses.
    
                // 6.  pull state from everyone.
@@ -147,7 +153,18 @@ public class JoinTask extends RehashTask {
       }
    }
 
-    private ConsistentHash retrieveOldCH(boolean trace) throws InterruptedException, IllegalAccessException,
+   private void updateTopologyInfo(List<Response> responseList) {
+      for (Response r : responseList) {
+         SuccessfulResponse sr = (SuccessfulResponse) r;
+         NodeTopologyInfo nti = (NodeTopologyInfo) sr.getResponseValue();
+         if (nti != null) {
+            dmi.topologyInfo.addNodeTopologyInfo(nti.getAddress(), nti);
+         }
+      }
+      if (log.isTraceEnabled()) log.trace("Topology after after getting cluster info: " + dmi.topologyInfo);
+   }
+
+   private ConsistentHash retrieveOldCH(boolean trace) throws InterruptedException, IllegalAccessException,
                     InstantiationException, ClassNotFoundException {
         
         // this happens in a loop to ensure we receive the correct CH and not a "union".
@@ -184,7 +201,7 @@ public class JoinTask extends RehashTask {
                     log.trace("Sleeping for {0}", Util.prettyPrintTime(time));
                 Thread.sleep(time); // sleep for a while and retry
             } else {
-                result = createConsistentHash(configuration, addresses);
+                result = createConsistentHash(configuration, addresses, dmi.topologyInfo);
             }
         } while (result == null && System.currentTimeMillis() < giveupTime);
 

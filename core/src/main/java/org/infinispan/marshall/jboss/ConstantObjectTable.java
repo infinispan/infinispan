@@ -54,6 +54,8 @@ import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.ch.NodeTopologyInfo;
+import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.Externalizer;
@@ -170,6 +172,8 @@ public class ConstantObjectTable implements ObjectTable {
       MARSHALLABLES.add(ClearOperation.class.getName());
       MARSHALLABLES.add(DefaultConsistentHash.class.getName());
       MARSHALLABLES.add(UnionConsistentHash.class.getName());
+      MARSHALLABLES.add(NodeTopologyInfo.class.getName());
+      MARSHALLABLES.add(TopologyAwareConsistentHash.class.getName());
 
       MARSHALLABLES.add("org.infinispan.server.core.CacheValue");
       MARSHALLABLES.add("org.infinispan.server.memcached.MemcachedValue");

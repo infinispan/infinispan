@@ -11,6 +11,7 @@ import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.ch.TopologyInfo;
 import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -90,7 +91,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
    public static ConsistentHash createNewConsistentHash(List<Address> servers) {
       try {
-         return ConsistentHashHelper.createConsistentHash(DefaultConsistentHash.class, servers);
+         return ConsistentHashHelper.createConsistentHash(DefaultConsistentHash.class, servers, new TopologyInfo());
       } catch (RuntimeException re) {
          throw re;
       } catch (Exception e) {

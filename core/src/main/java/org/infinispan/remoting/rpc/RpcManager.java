@@ -37,6 +37,7 @@ import java.util.List;
  * the registered {@link Transport}.
  *
  * @author Manik Surtani
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public interface RpcManager {
@@ -156,7 +157,7 @@ public interface RpcManager {
     * @param usePriorityQueue if true, a priority queue is used
     * @throws ReplicationException in the event of problems
     */
-   void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException;
+   List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException;
 
    /**
     * The same as {@link #invokeRemotely(java.util.Collection, org.infinispan.commands.ReplicableCommand, boolean)}
