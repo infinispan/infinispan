@@ -195,8 +195,12 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
     * now and it's returned in milliseconds unit.
     */
    private def toMillis(lifespan: Int): Long = {
-      if (lifespan > SecondsInAMonth) TimeUnit.SECONDS.toMillis(lifespan) - System.currentTimeMillis
-      else TimeUnit.SECONDS.toMillis(lifespan)
+      if (lifespan > SecondsInAMonth) {
+         val unixTimeExpiry = TimeUnit.SECONDS.toMillis(lifespan) - System.currentTimeMillis
+         if (unixTimeExpiry < 0) 0 else unixTimeExpiry
+      } else {
+         TimeUnit.SECONDS.toMillis(lifespan)
+      }
    }
 
 }
