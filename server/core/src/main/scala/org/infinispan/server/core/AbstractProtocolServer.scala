@@ -7,7 +7,6 @@ import org.infinispan.server.core.VersionGenerator._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.Main._
 import java.util.Properties
-import org.infinispan.util.logging.Log
 import org.infinispan.util.{TypedProperties, Util}
 
 /**
@@ -16,7 +15,7 @@ import org.infinispan.util.{TypedProperties, Util}
  * @author Galder Zamarreño
  * @since 4.1
  */
-abstract class AbstractProtocolServer(threadNamePrefix: String) extends ProtocolServer {
+abstract class AbstractProtocolServer(threadNamePrefix: String) extends ProtocolServer with Logging {
    protected var host: String = _
    protected var port: Int = _
    protected var masterThreads: Int = _
@@ -58,6 +57,12 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
             throw new IllegalArgumentException("Send buffer size can't be lower than 0: " + sendBufSize)
          }
 
+         if (isDebugEnabled) {
+            debug("Starting server with basic settings: host={0}, port={1}, masterThreads={2}, workerThreads={3}, " +
+                  "idleTimeout={4}, tcpNoDelay={5}, sendBufSize={6}, recvBufSize={7}", host, port,
+                  masterThreads, workerThreads, idleTimeout, tcpNoDelay, sendBufSize, recvBufSize)
+         }
+
          // Register rank calculator before starting any cache so that we can capture all view changes
          cacheManager.addListener(getRankCalculatorListener)
          // Start default cache
@@ -83,8 +88,15 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
    }
 
    override def stop {
+      val isDebug = isDebugEnabled
+      if (isDebug)
+         debug("Stopping server listening in {0}:{1}", host, port)
+
       if (transport != null)
          transport.stop
+
+      if (isDebug)
+         debug("Server stopped")
    }
 
    def getCacheManager = cacheManager
