@@ -90,7 +90,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
    override def stop {
       val isDebug = isDebugEnabled
       if (isDebug)
-         debug("Stopping server listening in {1}:{2}", host, port)
+         debug("Stopping server listening in {0}:{1}", host, port)
 
       if (transport != null)
          transport.stop
