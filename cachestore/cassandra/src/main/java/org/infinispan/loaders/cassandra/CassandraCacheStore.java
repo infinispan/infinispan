@@ -12,9 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.dataforte.cassandra.pool.ConnectionPool;
+import net.dataforte.cassandra.pool.DataSource;
 
 import org.apache.cassandra.thrift.Cassandra;
+import org.apache.cassandra.thrift.CassandraThriftDataSource;
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
 import org.apache.cassandra.thrift.ColumnParent;
@@ -60,8 +61,8 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	private static final boolean trace = log.isTraceEnabled();
 
 	private CassandraCacheStoreConfig config;
-
-	private ConnectionPool pool;
+	
+	private CassandraThriftDataSource dataSource;
 
 	private ColumnPath entryColumnPath;
 	private ColumnParent entryColumnParent;
@@ -83,7 +84,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	public void start() throws CacheLoaderException {
 
 		try {
-			pool = new ConnectionPool(config.getPoolProperties());
+			dataSource = new DataSource(config.getPoolProperties());						
 			entryColumnPath = new ColumnPath(config.entryColumnFamily).setColumn(ENTRY_COLUMN_NAME.getBytes("UTF-8"));
 			entryColumnParent = new ColumnParent(config.entryColumnFamily);
 			expirationColumnParent = new ColumnParent(config.expirationColumnFamily);			
@@ -101,9 +102,9 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	@Override
 	public InternalCacheEntry load(Object key) throws CacheLoaderException {
 		String hashKey = CassandraCacheStore.hashKey(key);
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 		try {
-			cassandraClient = pool.getConnection();
+			cassandraClient = dataSource.getConnection();
 			ColumnOrSuperColumn column = cassandraClient.get(config.keySpace, hashKey, entryColumnPath, ConsistencyLevel.ONE);
 			InternalCacheEntry ice = unmarshall(column.getColumn().getValue(), key);
 			if (ice != null && ice.isExpired()) {
@@ -117,7 +118,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		} catch (Exception e) {
 			throw new CacheLoaderException(e);
 		} finally {
-			pool.release(cassandraClient);
+			dataSource.releaseConnection(cassandraClient);
 		}
 	}
 
@@ -128,9 +129,9 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
 	@Override
 	public Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException {
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 		try {
-			cassandraClient = pool.getConnection();
+			cassandraClient = dataSource.getConnection();
 			Set<InternalCacheEntry> s = new HashSet<InternalCacheEntry>();
 			SlicePredicate slicePredicate = new SlicePredicate();
 			slicePredicate.setSlice_range(new SliceRange(entryColumnPath.getColumn(), emptyByteArray, false, 1));
@@ -183,15 +184,15 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		} catch (Exception e) {
 			throw new CacheLoaderException(e);
 		} finally {
-			pool.release(cassandraClient);
+			dataSource.releaseConnection(cassandraClient);
 		}
 	}
 
 	@Override
 	public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 		try {
-			cassandraClient = pool.getConnection();
+			cassandraClient = dataSource.getConnection();
 			Set<Object> s = new HashSet<Object>();
 			SlicePredicate slicePredicate = new SlicePredicate();
 			slicePredicate.setSlice_range(new SliceRange(entryColumnPath.getColumn(), emptyByteArray, false, 1));
@@ -221,7 +222,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		} catch (Exception e) {
 			throw new CacheLoaderException(e);
 		} finally {
-			pool.release(cassandraClient);
+			dataSource.releaseConnection(cassandraClient);
 		}
 	}
 
@@ -231,14 +232,14 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	 */
 	@Override
 	public void stop() {
-		pool.close();
+		
 	}
 
 	@Override
 	public void clear() throws CacheLoaderException {
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 		try {
-			cassandraClient = pool.getConnection();
+			cassandraClient = dataSource.getConnection();
 			SlicePredicate slicePredicate = new SlicePredicate();
 			slicePredicate.setSlice_range(new SliceRange(entryColumnPath.getColumn(), emptyByteArray, false, 1));
 			String startKey = "";
@@ -265,7 +266,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		} catch (Exception e) {
 			throw new CacheLoaderException(e);
 		} finally {
-			pool.release(cassandraClient);
+			dataSource.releaseConnection(cassandraClient);
 		}
 
 	}
@@ -274,9 +275,9 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	public boolean remove(Object key) throws CacheLoaderException {
 		if (trace)
 			log.trace("remove(\"{0}\") ", key);
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 		try {
-			cassandraClient = pool.getConnection();
+			cassandraClient = dataSource.getConnection();
 			Map<String, Map<String, List<Mutation>>> mutationMap = new HashMap<String, Map<String, List<Mutation>>>();
 			remove0(CassandraCacheStore.hashKey(key), mutationMap);
 			cassandraClient.batch_mutate(config.keySpace, mutationMap, ConsistencyLevel.ONE);
@@ -285,7 +286,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 			log.error("Exception while removing " + key, e);
 			return false;
 		} finally {
-			pool.release(cassandraClient);
+			dataSource.releaseConnection(cassandraClient);
 		}
 	}
 
@@ -306,10 +307,10 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	}
 
 	public void store(InternalCacheEntry entry) throws CacheLoaderException {
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 
 		try {
-			cassandraClient = pool.getConnection();
+			cassandraClient = dataSource.getConnection();
 			Map<String, Map<String, List<Mutation>>> mutationMap = new HashMap<String, Map<String, List<Mutation>>>(2);
 			store0(entry, mutationMap);
 			
@@ -317,7 +318,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		} catch (Exception e) {
 			throw new CacheLoaderException(e);
 		} finally {
-			pool.release(cassandraClient);
+			dataSource.releaseConnection(cassandraClient);
 		}
 	}
 
@@ -396,9 +397,9 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	protected void purgeInternal() throws CacheLoaderException {
 		if (trace)
 			log.trace("purgeInternal");
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 		try {
-			cassandraClient = pool.getConnection();
+			cassandraClient = dataSource.getConnection();
 			// We need to get all supercolumns from the beginning of time until now, in SLICE_SIZE chunks
 			SlicePredicate predicate = new SlicePredicate();
 			predicate.setSlice_range(new SliceRange(emptyByteArray, longToBytes(System.currentTimeMillis()), false, SLICE_SIZE));
@@ -423,17 +424,17 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		} catch (Exception e) {
 			throw new CacheLoaderException(e);
 		} finally {
-			pool.release(cassandraClient);
+			dataSource.releaseConnection(cassandraClient);
 		}
 
 	}
 
 	@Override
 	protected void applyModifications(List<? extends Modification> mods) throws CacheLoaderException {
-		Cassandra.Iface cassandraClient = null;
+		Cassandra.Client cassandraClient = null;
 
 		try {
-			cassandraClient = pool.getConnection();
+			cassandraClient = dataSource.getConnection();
 			Map<String, Map<String, List<Mutation>>> mutationMap = new HashMap<String, Map<String, List<Mutation>>>();
 
 			for (Modification m : mods) {
@@ -456,7 +457,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		} catch (Exception e) {
 			throw new CacheLoaderException(e);
 		} finally {
-			pool.release(cassandraClient);
+			dataSource.releaseConnection(cassandraClient);
 		}
 
 	}

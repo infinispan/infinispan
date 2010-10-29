@@ -20,7 +20,14 @@
 		<dependency>
 			<groupId>net.dataforte.cassandra</groupId>
 			<artifactId>cassandra-connection-pool</artifactId>
-			<version>0.1.0</version>
+			<version>${version.cassandra.connection.pool}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.cassandra</groupId>
+			<artifactId>apache-cassandra</artifactId>
+			<version>${version.cassandra}</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
