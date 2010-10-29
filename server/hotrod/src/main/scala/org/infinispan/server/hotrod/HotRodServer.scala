@@ -56,6 +56,9 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
       if (isClustered) {
          val externalHost = typedProps.getProperty(PROP_KEY_PROXY_HOST, getHost)
          val externalPort = typedProps.getIntProperty(PROP_KEY_PROXY_PORT, getPort)
+         if (isDebugEnabled)
+            debug("Externally facing address is {0}:{1}", externalHost, externalPort)
+
          addSelfToTopologyView(externalHost, externalPort, cacheManager)
       }
 
