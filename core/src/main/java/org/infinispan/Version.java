@@ -31,8 +31,14 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public class Version {
+   // -----------------------------------------------------------------------------------------------------------------
+   //   Please make sure versions saved in this file ALWAYS end with '-SNAPSHOT'.  This is the only way the release
+   //   scripts can properly detect and substitute the versions for the correct versions at release-time.  Be careful
+   //   to note that this is '-SNAPSHOT' and not '.SNAPSHOT', as per Maven's versioning conventions. -- Manik Surtani
+   // -----------------------------------------------------------------------------------------------------------------
+
    public static final String major = "5.0";
-   public static final String version = major + ".0.SNAPSHOT";
+   public static final String version = major + ".0-SNAPSHOT";
    public static final String codename = "Pagoa";
    public static final String projectName = "Infinispan";
    static final byte[] version_id = {'0', '5', '0', '0', 'S'};
