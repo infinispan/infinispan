@@ -1,7 +1,8 @@
 package org.infinispan.query.blackbox;
 
 import org.hibernate.search.engine.SearchFactoryImplementor;
-import org.hibernate.search.impl.SearchFactoryImpl;
+import org.hibernate.search.impl.ImmutableSearchFactory;
+import org.hibernate.search.impl.MutableSearchFactory;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
@@ -38,7 +39,7 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
          cc = TestCacheManagerFactory.createCacheManager(c, true);
          Cache<?, ?> cache = cc.getCache();
          QueryHelper qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class, AnotherGrassEater.class);
-         SearchFactoryImpl sfi = (SearchFactoryImpl) TestingUtil.extractComponent(cache, SearchFactoryImplementor.class);
+         SearchFactoryImplementor sfi = TestingUtil.extractComponent(cache, SearchFactoryImplementor.class);
 
          assert !isStopped(sfi);
 
@@ -51,18 +52,33 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
       }
    }
 
-   private boolean isStopped(SearchFactoryImpl sfi) {
+   private boolean isStopped(SearchFactoryImplementor sfi) {
       // this sucks - there is no public API to test the Search Factory's status!!!
       // This method may fail if used with future versions of Hibernate Search.
 
-      try {
-         Field status = SearchFactoryImpl.class.getDeclaredField("stopped");
-         status.setAccessible(true); // to allow access to a private field
-         AtomicBoolean b = (AtomicBoolean) status.get(sfi);
-         return b.get();
-      } catch (Exception e) {
-         throw new RuntimeException("Cannot test running state of the search factory", e);
+      if (sfi instanceof ImmutableSearchFactory) {
+
+         try {
+            Field status = ImmutableSearchFactory.class.getDeclaredField("stopped");
+            status.setAccessible(true); // to allow access to a private field
+            AtomicBoolean b = (AtomicBoolean) status.get(sfi);
+            return b.get();
+         } catch (Exception e) {
+            throw new RuntimeException("Cannot test running state of the search factory", e);
+         }
+      } else {
+         if (sfi instanceof MutableSearchFactory) {
+            try {
+               Field delegateField = MutableSearchFactory.class.getDeclaredField("stopped");
+               delegateField.setAccessible(true);
+               SearchFactoryImplementor delegate = (SearchFactoryImplementor) delegateField.get(sfi);
+               return isStopped(delegate);
+            } catch (Exception e) {
+               throw new RuntimeException("Cannot test running state of the search factory", e);
+            }
+         }
       }
 
+      throw new RuntimeException("Cannot test running state of the search factory as it is neither a MutableSearchFactory nor an ImmutableSearchFactory");
    }
 }
