@@ -131,7 +131,6 @@
          <artifactId>testng</artifactId>
          <version>${version.testng}</version>
          <scope>test</scope>
-         <classifier>jdk15</classifier>
       </dependency>
       <dependency>
          <groupId>net.jcip</groupId>
