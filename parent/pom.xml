@@ -119,7 +119,7 @@
       <version.scala>2.8.0</version.scala>
       <version.slf4j>1.5.8</version.slf4j>
       <version.spymemcached>2.5</version.spymemcached>
-      <version.testng>5.11</version.testng>
+      <version.testng>5.12.1</version.testng>
       <version.webdav.servlet>2.0</version.webdav.servlet>
       <version.xsom>20081112</version.xsom>
       <version.xstream>1.3.1</version.xstream>
