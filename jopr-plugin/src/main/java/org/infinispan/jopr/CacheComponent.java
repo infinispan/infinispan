@@ -207,20 +207,6 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
       return null;
    }
 
-//   private EmsBean queryCacheBean(EmsConnection conn, String cacheManagerName, String cacheName) {
-//      String pattern = getNamedCachePattern(cacheManagerName, cacheName);
-//      if (log.isTraceEnabled()) log.trace("Pattern to query is {0}", pattern);
-//      ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(pattern);
-//      // Assume that a single cache fulfills this pattern since
-//      // the most normal thing is for the same domain to be
-//      // used by all cache within the same VM
-//      return conn.queryBeans(queryUtility.getTranslatedQuery()).get(0);
-//   }
-
-   private String getNamedCachePattern(String cacheManagerName, String cacheName) {
-      return namedCacheComponentPattern(cacheManagerName, cacheName, "Cache") + ",*";
-   }
-
    private String getSingleComponentPattern(String cacheManagerName, String cacheName, String componentName) {
       return namedCacheComponentPattern(cacheManagerName, cacheName, componentName) + ",*";
    }
@@ -229,19 +215,6 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
       return CacheDiscovery.cacheComponentPattern(cacheManagerName, componentName)
             + ",name=" + ObjectName.quote(cacheName);
    }
-
-//   private EmsBean getComponentBean(String name) {
-//      EmsConnection conn = getConnection();
-//      String componentName = name.substring(0, name.indexOf("."));
-//      String pattern = getSingleComponentPattern(cacheManagerName, cacheName, componentName);
-//      if (log.isTraceEnabled()) log.trace("Pattern to query is {0}", pattern);
-//      ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(pattern);
-//      EmsBean bean = conn.queryBeans(queryUtility.getTranslatedQuery()).get(0);
-//      if (bean == null) {
-//         if (log.isTraceEnabled()) log.trace("No mbean found with name {0}", pattern);
-//      }
-//      return bean;
-//   }
 
    private EmsBean queryCacheBean() {
       return queryBean("Cache");
