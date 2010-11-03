@@ -23,6 +23,15 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
 	 * @configRef desc="The Cassandra column family for expirations"
 	 */
 	String expirationColumnFamily = "InfinispanExpiration";
+	
+	/**
+	 * @configRef desc="Whether the keySpace is shared between multiple caches"
+	 */
+	boolean sharedKeyspace = false;
+	
+	String readConsistencyLevel = "ONE";
+	
+	String writeConsistencyLevel = "ONE";
 
 	protected PoolProperties poolProperties;
 
@@ -53,6 +62,30 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
 
 	public void setExpirationColumnFamily(String expirationColumnFamily) {
 		this.expirationColumnFamily = expirationColumnFamily;
+	}
+
+	public boolean isSharedKeyspace() {
+		return sharedKeyspace;
+	}
+
+	public void setSharedKeyspace(boolean sharedKeyspace) {
+		this.sharedKeyspace = sharedKeyspace;
+	}
+
+	public String getReadConsistencyLevel() {
+		return readConsistencyLevel;
+	}
+
+	public void setReadConsistencyLevel(String readConsistencyLevel) {
+		this.readConsistencyLevel = readConsistencyLevel;
+	}
+
+	public String getWriteConsistencyLevel() {
+		return writeConsistencyLevel;
+	}
+
+	public void setWriteConsistencyLevel(String writeConsistencyLevel) {
+		this.writeConsistencyLevel = writeConsistencyLevel;
 	}
 
 	public PoolProperties getPoolProperties() {
