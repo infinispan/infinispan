@@ -95,20 +95,14 @@ public interface ConsistentHash {
    List<Address> getStateProvidersOnLeave(Address leaver, int replCount);
 
    /**
-    * Is the specified node going to receive state if when another node leaves the cluster?
-    * When a node leaves the cluster following nodes would need to receive state as result of the rehashing:
-    *  - a new backup node for the lever to satisfy numOwners condition
-    *  - the nodes that would replace the leaver as a backup for other nodes
-    * @param leaver node that leaves
-    * @param node is this state receiver?
-    * @param replCount numOwners
-    */
-   boolean isStateReceiverOnLeave(Address leaver, Address node, int replCount);
-
-   /**
     * Returns the nodes that would act as state providers when a new node joins:
     * - the nodes for which the joiner is a backup
     * - the nodes that held joiner's state
     */
    List<Address> getStateProvidersOnJoin(Address joiner, int replCount);
+
+   /**
+    * Returns the nodes that backup data for the supplied node including the node itself.
+    */
+   List<Address> getBackupsForNode(Address node, int replCount);
 }

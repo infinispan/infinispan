@@ -60,16 +60,10 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       }
    }
 
-   public boolean isStateReceiverOnLeave(Address leaver, Address node, int replCount) {
-      for (Address address : addresses) {
-         List<Address> backups = locate(address, replCount + 1);
-         if (backups.contains(leaver) && (backups.indexOf(node) == backups.size() - 1)) {
-            return true;
-         }
-      }
-      return false;
+   @Override
+   public List<Address> getBackupsForNode(Address node, int replCount) {
+      return locate(node, replCount);
    }
-
 
    public List<Address> getCaches() {
       return addresses;
@@ -95,5 +89,14 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       int keyHashCode = hash(key);
       if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
       return Math.abs(keyHashCode) % HASH_SPACE;
+   }
+
+   @Override
+   public String toString() {
+      return "AbstractWheelConsistentHash{" +
+            "addresses=" + addresses +
+            ", positions=" + positions +
+            ", addressToHashIds=" + addressToHashIds +
+            "} " + super.toString();
    }
 }

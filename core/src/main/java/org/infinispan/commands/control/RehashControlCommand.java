@@ -264,6 +264,7 @@ public class RehashControlCommand extends BaseRpcCommand {
             ", consistentHash=" + newCH +
             ", txLogCommands=" + txLogCommands +
             ", pendingPrepares=" + pendingPrepares +
+            ", nodeTopologyInfo=" + nodeTopologyInfo +
             '}';
    }
 }

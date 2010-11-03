@@ -1,5 +1,6 @@
-package org.infinispan.distribution;
+package org.infinispan.distribution.topologyaware;
 
+import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.ch.TopologyInfo;
@@ -59,18 +60,6 @@ public class TopologyAwareConsistentHashTest {
       addresses.clear();
       ch = new TopologyAwareConsistentHash();
       ch.setTopologyInfo(ti);
-   }
-
-   public void testIsStateReceiverOnLeave() {
-      addNode(a0, "m0", null, null);
-      addNode(a1, "m1", null, null);
-      addNode(a2, "m0", null, null);
-      addNode(a3, "m1", null, null);
-      setAddresses();
-
-      assert !ch.isStateReceiverOnLeave(a0, a1, 2);
-      assert ch.isStateReceiverOnLeave(a0, a2, 2);
-      assert !ch.isStateReceiverOnLeave(a0, a1, 2);
    }
 
    public void testDifferentMachines() {

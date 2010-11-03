@@ -290,4 +290,21 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    public AdvancedCache advancedCache(int i, String cacheName) {
       return cache(i, cacheName).getAdvancedCache();
    }
+
+   public List<Cache> caches(String name) {
+      List<Cache> result = new ArrayList<Cache>();
+      for (EmbeddedCacheManager ecm : cacheManagers) {
+         result.add(name == null? ecm.getCache() : ecm.getCache(name));
+      }
+      return result;
+   }
+
+   public List<Cache> caches() {
+      return caches(null);
+   }
+
+   protected Address address(Cache c) {
+      return c.getAdvancedCache().getRpcManager().getAddress();
+   }
+
 }
