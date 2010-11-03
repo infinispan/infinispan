@@ -23,7 +23,6 @@ package org.infinispan.jmx;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.CacheDelegate;
 import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
@@ -58,6 +57,7 @@ import java.util.Set;
 @SurvivesRestarts
 public class CacheJmxRegistration extends AbstractJmxRegistration {
    private static final Log log = LogFactory.getLog(CacheJmxRegistration.class);
+   public static final String CACHE_JMX_GROUP = "type=Cache";
 
    private AdvancedCache cache;
    private Set<Component> nonCacheComponents;
@@ -107,7 +107,7 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    }
    
    public void unregisterCacheMBean() {
-      String pattern = jmxDomain + ":" + ComponentsJmxRegistration.JMX_RESOURCE_KEY + "=" + CacheDelegate.OBJECT_NAME + ",*";
+      String pattern = jmxDomain + ":" + CACHE_JMX_GROUP + ",*";
       try {
          Set<ObjectName> names = mBeanServer.queryNames(new ObjectName(pattern), null);
          for (ObjectName name : names) {
@@ -128,16 +128,22 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
 
    @Override
    protected ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components) {
-      ComponentsJmxRegistration registrar = new ComponentsJmxRegistration(mBeanServer, components, getGroupName());
-      updateDomain(registrar, cache.getComponentRegistry().getGlobalComponentRegistry(), mBeanServer);
+      // Quote group name, to handle invalid ObjectName characters
+      String groupName = CACHE_JMX_GROUP
+            + "," + ComponentsJmxRegistration.NAME_KEY + "="
+            + ObjectName.quote(cache.getName() + "(" + cache.getConfiguration().getCacheModeString().toLowerCase() + ")")
+            + ",manager=" + ObjectName.quote(cache.getConfiguration().getGlobalConfiguration().getCacheManagerName());
+      ComponentsJmxRegistration registrar = new ComponentsJmxRegistration(mBeanServer, components, groupName);
+      updateDomain(registrar, cache.getComponentRegistry().getGlobalComponentRegistry(), mBeanServer, groupName);
       return registrar;
    }
    
-   protected void updateDomain(ComponentsJmxRegistration registrar, GlobalComponentRegistry componentRegistry, MBeanServer mBeanServer) {
+   protected void updateDomain(ComponentsJmxRegistration registrar, GlobalComponentRegistry componentRegistry,
+                               MBeanServer mBeanServer, String groupName) {
       GlobalConfiguration gc = componentRegistry.getComponent(GlobalConfiguration.class);
       CacheManagerJmxRegistration managerJmxReg = componentRegistry.getComponent(CacheManagerJmxRegistration.class);
       if (!gc.isExposeGlobalJmxStatistics() && jmxDomain == null) {
-         String tmpJmxDomain = getJmxDomain(gc.getJmxDomain(), mBeanServer);
+         String tmpJmxDomain = getJmxDomain(gc.getJmxDomain(), mBeanServer, groupName);
          synchronized (managerJmxReg) {
             if (managerJmxReg.jmxDomain == null) {
                if (!tmpJmxDomain.equals(gc.getJmxDomain()) && !gc.isAllowDuplicateDomains()) {
@@ -172,10 +178,6 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
          }
       }
       return componentsExceptCache;
-   }
-
-   private String getGroupName() {
-      return cache.getName() + "(" + cache.getConfiguration().getCacheModeString().toLowerCase() + ")";
    }
 
 }

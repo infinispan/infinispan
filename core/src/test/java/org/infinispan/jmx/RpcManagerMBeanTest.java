@@ -17,6 +17,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.testng.Assert.assertEquals;
 import org.testng.annotations.Test;
 
@@ -46,11 +47,13 @@ import java.util.List;
  * A workaround in Eclipse is to add -ea to the default VM parameters used.
  * 
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  */
 @Test(groups = "functional", testName = "jmx.RpcManagerMBeanTest")
 public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
    private final String cachename = "repl_sync_cache";
-   public static final String JMX_DOMAIN = RpcManagerMBeanTest.class.getSimpleName();  
+   public static final String JMX_DOMAIN = RpcManagerMBeanTest.class.getSimpleName();
+   public static final String JMX_DOMAIN2 = JMX_DOMAIN + "2";
 
    protected void createCacheManagers() throws Throwable {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
@@ -80,8 +83,8 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       Cache cache1 = manager(0).getCache(cachename);
       Cache cache2 = manager(1).getCache(cachename);
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=\"" + cachename + "(repl_sync)\",jmx-resource=RpcManager");
-      ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=\"" + cachename + "(repl_sync)\",jmx-resource=RpcManager");
+      ObjectName rpcManager1 = getCacheObjectName(JMX_DOMAIN, cachename + "(repl_sync)", "RpcManager");
+      ObjectName rpcManager2 = getCacheObjectName(JMX_DOMAIN2, cachename + "(repl_sync)", "RpcManager");
       assert mBeanServer.isRegistered(rpcManager1);
       assert mBeanServer.isRegistered(rpcManager2);
 
@@ -119,8 +122,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       Cache cache1 = manager(0).getCache(cachename);
       Cache cache2 = manager(1).getCache(cachename);
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=\"" + cachename + "(repl_sync)\",jmx-resource=RpcManager");
-      ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=\"" + cachename + "(repl_sync)\",jmx-resource=RpcManager");
+      ObjectName rpcManager1 = getCacheObjectName(JMX_DOMAIN, cachename + "(repl_sync)", "RpcManager");
       
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 0);
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
@@ -205,8 +207,8 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
    @Test(dependsOnMethods = "testSuccessRatio")
    public void testAddressInformation() throws Exception {
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=\"" + cachename + "(repl_sync)\",jmx-resource=RpcManager");
-      ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=\"" + cachename + "(repl_sync)\",jmx-resource=RpcManager");
+      ObjectName rpcManager1 = getCacheObjectName(JMX_DOMAIN, cachename + "(repl_sync)", "RpcManager");
+      ObjectName rpcManager2 = getCacheObjectName(JMX_DOMAIN2, cachename + "(repl_sync)", "RpcManager");
       String cm1Address = manager(0).getAddress().toString();
       String cm2Address = manager(1).getAddress().toString();
       assert mBeanServer.getAttribute(rpcManager1, "NodeAddress").equals(cm1Address);

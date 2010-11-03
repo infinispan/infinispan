@@ -36,6 +36,7 @@ import java.util.Properties;
  * @author Manik Surtani
  * @author Vladimir Blagojevic
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @since 4.0
  * 
  * @see <a href="../../../config.html#ce_infinispan_global">Configuration reference</a>
@@ -146,6 +147,22 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     */
    public void setAllowDuplicateDomains(boolean allowDuplicateDomains) {
       globalJmxStatistics.setAllowDuplicateDomains(allowDuplicateDomains);
+   }
+
+   public String getCacheManagerName() {
+      return globalJmxStatistics.cacheManagerName;
+   }
+
+   /**
+    * If JMX statistics are enabled, this property represents the name of this cache manager.
+    * It offers the possibility for clients to provide a user-defined name to the cache manager
+    * which later can be used to identify the cache manager within a JMX based management tool
+    * amongst other cache managers that might be running under the same JVM.
+    *
+    * @param cacheManagerName
+    */
+   public void setCacheManagerName(String cacheManagerName) {
+      globalJmxStatistics.setCacheManagerName(cacheManagerName);
    }
 
    public boolean isStrictPeerToPeer() {
@@ -885,13 +902,16 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       protected Boolean enabled = false;
       
       @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setJmxDomain")
-      protected String jmxDomain = "infinispan";
+      protected String jmxDomain = "org.infinispan";
 
       @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setMBeanServerLookup")
       protected String mBeanServerLookup = PlatformMBeanServerLookup.class.getName();
 
       @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setAllowDuplicateDomains")
       protected Boolean allowDuplicateDomains = false;
+
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setCacheManagerName")
+      protected String cacheManagerName = "DefaultCacheManager";
 
       @XmlAttribute
       public void setEnabled(Boolean enabled) {
@@ -920,6 +940,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          testImmutability("allowDuplicateDomains");
          this.allowDuplicateDomains = allowDuplicateDomains;
       }
+
+      @XmlAttribute
+      public void setCacheManagerName(String cacheManagerName) {
+         testImmutability("cacheManagerName");
+         this.cacheManagerName = cacheManagerName;
+      }
+
    }
 
    /**

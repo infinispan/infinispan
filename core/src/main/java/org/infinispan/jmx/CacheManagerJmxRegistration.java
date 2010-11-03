@@ -9,6 +9,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 import java.util.Set;
 
@@ -22,7 +23,7 @@ import java.util.Set;
 @SurvivesRestarts
 public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
    private static final Log log = LogFactory.getLog(CacheManagerJmxRegistration.class);
-   public static final String GLOBAL_JMX_GROUP = "[global]";
+   public static final String CACHE_MANAGER_JMX_GROUP = "type=CacheManager";
    private GlobalComponentRegistry globalReg;
 
    @Inject
@@ -55,14 +56,18 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
 
    @Override
    protected ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components) {
-      ComponentsJmxRegistration registrar = new ComponentsJmxRegistration(mBeanServer, components, GLOBAL_JMX_GROUP);
-      updateDomain(registrar, globalReg, mBeanServer);
+      // Quote group name, to handle invalid ObjectName characters      
+      String groupName = CACHE_MANAGER_JMX_GROUP
+            + "," + ComponentsJmxRegistration.NAME_KEY
+            + "=" + ObjectName.quote(globalConfig.getCacheManagerName());
+      ComponentsJmxRegistration registrar = new ComponentsJmxRegistration(mBeanServer, components, groupName);
+      updateDomain(registrar, mBeanServer, groupName);
       return registrar;
    }
 
-   protected void updateDomain(ComponentsJmxRegistration registrar, GlobalComponentRegistry componentRegistry, MBeanServer mBeanServer) {
+   protected void updateDomain(ComponentsJmxRegistration registrar, MBeanServer mBeanServer, String groupName) {
       if (jmxDomain == null) {
-         jmxDomain = getJmxDomain(globalConfig.getJmxDomain(), mBeanServer);
+         jmxDomain = getJmxDomain(globalConfig.getJmxDomain(), mBeanServer, groupName);
          String configJmxDomain = globalConfig.getJmxDomain();
          if (!jmxDomain.equals(configJmxDomain) && !globalConfig.isAllowDuplicateDomains()) {
             String message = "There's already an cache manager instance registered under '" + configJmxDomain +

@@ -10,6 +10,7 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import static org.infinispan.test.TestingUtil.*;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -18,13 +19,17 @@ import org.testng.annotations.Test;
 import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
 
 /**
  * Tester class for ActivationInterceptor and PassivationInterceptor.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  */
 @Test(groups = "functional", testName = "jmx.ActivationAndPassivationInterceptorMBeanTest")
 public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheManagerTest {
@@ -33,7 +38,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
    ObjectName activationInterceptorObjName;
    ObjectName passivationInterceptorObjName;
    CacheStore cacheStore;
-   private static final String JMX_DOMAIN = ActivationAndPassivationInterceptorMBeanTest.class.getName();
+   private static final String JMX_DOMAIN = ActivationAndPassivationInterceptorMBeanTest.class.getSimpleName();
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
@@ -51,8 +56,8 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
 
       cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
-      activationInterceptorObjName = new ObjectName(JMX_DOMAIN + ":cache-name=\"test(local)\",jmx-resource=Activation");
-      passivationInterceptorObjName = new ObjectName(JMX_DOMAIN + ":cache-name=\"test(local)\",jmx-resource=Passivation");
+      activationInterceptorObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "Activation");
+      passivationInterceptorObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "Passivation");
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       cacheStore = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
@@ -71,73 +76,73 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       threadMBeanServer.setAttribute(activationInterceptorObjName, new Attribute("StatisticsEnabled", Boolean.TRUE));
    }
 
-   public void testActivationOnGet() throws Exception {
+   public void testActivationOnGet(Method m) throws Exception {
       assertActivationCount(0);
-      assert cache.get("key") == null;
+      assert cache.get(k(m)) == null;
       assertActivationCount(0);
-      cacheStore.store(InternalEntryFactory.create("key", "value"));
-      assert cacheStore.containsKey("key");
-      assert cache.get("key").equals("value");
+      cacheStore.store(InternalEntryFactory.create(k(m), v(m)));
+      assert cacheStore.containsKey(k(m));
+      assert cache.get(k(m)).equals(v(m));
       assertActivationCount(1);
-      assert !cacheStore.containsKey("key");
+      assert !cacheStore.containsKey(k(m));
    }
 
-   public void testActivationOnPut() throws Exception {
+   public void testActivationOnPut(Method m) throws Exception {
       assertActivationCount(0);
-      assert cache.get("key") == null;
+      assert cache.get(k(m)) == null;
       assertActivationCount(0);
-      cacheStore.store(InternalEntryFactory.create("key", "value"));
-      assert cacheStore.containsKey("key");
-      cache.put("key", "value2");
-      assert cache.get("key").equals("value2");
+      cacheStore.store(InternalEntryFactory.create(k(m), v(m)));
+      assert cacheStore.containsKey(k(m));
+      cache.put(k(m), v(m, "2"));
+      assert cache.get(k(m)).equals(v(m, "2"));
       assertActivationCount(1);
-      assert !cacheStore.containsKey("key") : "this should only be persisted on evict";
+      assert !cacheStore.containsKey(k(m)) : "this should only be persisted on evict";
    }
 
-   public void testActivationOnRemove() throws Exception {
+   public void testActivationOnRemove(Method m) throws Exception {
       assertActivationCount(0);
-      assert cache.get("key") == null;
+      assert cache.get(k(m)) == null;
       assertActivationCount(0);
-      cacheStore.store(InternalEntryFactory.create("key", "value"));
-      assert cacheStore.containsKey("key");
-      assert cache.remove("key").equals("value");
+      cacheStore.store(InternalEntryFactory.create(k(m), v(m)));
+      assert cacheStore.containsKey(k(m));
+      assert cache.remove(k(m)).equals(v(m));
       assertActivationCount(1);
-      assert !cacheStore.containsKey("key");
+      assert !cacheStore.containsKey(k(m));
    }
 
-   public void testActivationOnReplace() throws Exception {
+   public void testActivationOnReplace(Method m) throws Exception {
       assertActivationCount(0);
-      assert cache.get("key") == null;
+      assert cache.get(k(m)) == null;
       assertActivationCount(0);
-      cacheStore.store(InternalEntryFactory.create("key", "value"));
-      assert cacheStore.containsKey("key");
-      assert cache.replace("key", "value2").equals("value");
+      cacheStore.store(InternalEntryFactory.create(k(m), v(m)));
+      assert cacheStore.containsKey(k(m));
+      assert cache.replace(k(m), v(m, "2")).equals(v(m));
       assertActivationCount(1);
-      assert !cacheStore.containsKey("key");
+      assert !cacheStore.containsKey(k(m));
    }
 
-   public void testActivationOnPutMap() throws Exception {
+   public void testActivationOnPutMap(Method m) throws Exception {
       assertActivationCount(0);
-      assert cache.get("key") == null;
+      assert cache.get(k(m)) == null;
       assertActivationCount(0);
-      cacheStore.store(InternalEntryFactory.create("key", "value"));
-      assert cacheStore.containsKey("key");
+      cacheStore.store(InternalEntryFactory.create(k(m), v(m)));
+      assert cacheStore.containsKey(k(m));
 
       Map toAdd = new HashMap();
-      toAdd.put("key", "value2");
+      toAdd.put(k(m), v(m, "2"));
       cache.putAll(toAdd);
       assertActivationCount(1);
-      assert cache.get("key").equals("value2");
-      assert !cacheStore.containsKey("key");
+      assert cache.get(k(m)).equals(v(m, "2"));
+      assert !cacheStore.containsKey(k(m));
    }
 
-   public void testPassivationOnEvict() throws Exception {
+   public void testPassivationOnEvict(Method m) throws Exception {
       assertPassivationCount(0);
-      cache.put("key", "val");
-      cache.put("key2", "val2");
-      cache.evict("key");
+      cache.put(k(m), v(m));
+      cache.put(k(m, "2"), v(m, "2"));
+      cache.evict(k(m));
       assertPassivationCount(1);
-      cache.evict("key2");
+      cache.evict(k(m, "2"));
       assertPassivationCount(2);
       cache.evict("not_existing_key");
       assertPassivationCount(2);
@@ -150,4 +155,5 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
    private void assertPassivationCount(int activationCount) throws Exception {
       assert Integer.valueOf(threadMBeanServer.getAttribute(passivationInterceptorObjName, "Passivations").toString()).equals(activationCount);
    }
+
 }

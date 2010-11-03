@@ -17,10 +17,13 @@ import org.testng.annotations.Test;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import static org.infinispan.test.TestingUtil.*;
+
 /**
  * Tests the jmx functionality from CacheLoaderInterceptor and CacheStoreInterceptor.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  */
 @Test(groups = "functional", testName = "jmx.CacheLoaderAndCacheStoreInterceptorMBeanTest")
 public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheManagerTest {
@@ -48,8 +51,8 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
 
       cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
-      loaderInterceptorObjName = new ObjectName(JMX_DOMAIN + ":cache-name=\"test(local)\",jmx-resource=CacheLoader");
-      storeInterceptorObjName = new ObjectName(JMX_DOMAIN + ":cache-name=\"test(local)\",jmx-resource=CacheStore");
+      loaderInterceptorObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "CacheLoader");
+      storeInterceptorObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "CacheStore");
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       cacheStore = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();

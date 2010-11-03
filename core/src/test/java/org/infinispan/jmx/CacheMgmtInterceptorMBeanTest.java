@@ -5,6 +5,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import static org.infinispan.test.TestingUtil.*;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -18,13 +19,14 @@ import java.util.Map;
  * Test functionality in {@link org.infinispan.interceptors.CacheMgmtInterceptor}.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  */
 @Test(groups = "functional", testName = "jmx.CacheMgmtInterceptorMBeanTest")
 public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
    private ObjectName mgmtInterceptor;
    private MBeanServer threadMBeanServer;
    AdvancedCache advanced;
-   private static final String JMX_DOMAIN = CacheMgmtInterceptorMBeanTest.class.getName();
+   private static final String JMX_DOMAIN = CacheMgmtInterceptorMBeanTest.class.getSimpleName();
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
@@ -38,7 +40,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
       advanced = cache.getAdvancedCache();
-      mgmtInterceptor = new ObjectName(JMX_DOMAIN + ":cache-name=\"test(local)\",jmx-resource=Statistics");
+      mgmtInterceptor = getCacheObjectName(JMX_DOMAIN, "test(local)", "Statistics");
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return cacheManager;

@@ -15,6 +15,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -237,8 +238,17 @@ public class TestCacheManagerFactory {
     * @see #createCacheManagerEnforceJmxDomain(String)
     */
    public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(String jmxDomain, boolean exposeGlobalJmx, boolean exposeCacheJmx) {
+      return createCacheManagerEnforceJmxDomain(jmxDomain, null, exposeGlobalJmx, exposeCacheJmx);
+   }
+
+   /**
+    * @see #createCacheManagerEnforceJmxDomain(String)
+    */
+   public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(String jmxDomain, String cacheManagerName, boolean exposeGlobalJmx, boolean exposeCacheJmx) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setJmxDomain(jmxDomain);
+      if (cacheManagerName != null)
+         globalConfiguration.setCacheManagerName(cacheManagerName);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       globalConfiguration.setExposeGlobalJmxStatistics(exposeGlobalJmx);
       Configuration configuration = new Configuration();

@@ -33,6 +33,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import static org.infinispan.test.TestingUtil.*;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -52,8 +53,8 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
    }
    
    public void testStartStopManagedOperations() throws Exception {
-      ObjectName defaultOn = new ObjectName(JMX_DOMAIN + ":cache-name=\"" + CacheContainer.DEFAULT_CACHE_NAME + "(local)\",jmx-resource=Cache");
-      ObjectName managerON = new ObjectName(JMX_DOMAIN + ":cache-name=\"[global]\",jmx-resource=CacheManager");
+      ObjectName defaultOn = getCacheObjectName(JMX_DOMAIN);
+      ObjectName managerON = getCacheManagerObjectName(JMX_DOMAIN);
       server.invoke(managerON, "startCache", new Object[]{}, new String[]{});
       assert ComponentStatus.RUNNING.toString().equals(server.getAttribute(defaultOn, "CacheStatus"));
       assert server.getAttribute(managerON, "CreatedCacheCount").equals("1");
@@ -81,10 +82,10 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
    }
    
    public void testManagerStopRemovesCacheMBean(Method m) throws Exception {
-      final String otherJmxDomain = JMX_DOMAIN + '.' + m.getName();
-      ObjectName defaultOn = new ObjectName(otherJmxDomain + ":cache-name=\"" + CacheContainer.DEFAULT_CACHE_NAME + "(local)\",jmx-resource=Cache");
-      ObjectName galderOn = new ObjectName(otherJmxDomain + ":cache-name=\"galder(local)\",jmx-resource=Cache");
-      ObjectName managerON = new ObjectName(otherJmxDomain + ":cache-name=\"[global]\",jmx-resource=CacheManager");
+      final String otherJmxDomain = getMethodSpecificJmxDomain(m, JMX_DOMAIN);
+      ObjectName defaultOn = getCacheObjectName(otherJmxDomain);
+      ObjectName galderOn = getCacheObjectName(otherJmxDomain, "galder(local)");
+      ObjectName managerON = getCacheManagerObjectName(otherJmxDomain);
       CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain);
       server.invoke(managerON, "startCache", new Object[]{}, new String[]{});
       server.invoke(managerON, "startCache", new Object[]{"galder"}, new String[]{String.class.getName()});

@@ -40,6 +40,7 @@ import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
 import org.jgroups.stack.ProtocolStack;
 
+import javax.management.ObjectName;
 import javax.transaction.TransactionManager;
 import java.io.File;
 import java.lang.reflect.Field;
@@ -875,4 +876,34 @@ public class TestingUtil {
    public static TransactionTable getTransactionTable(Cache<Object, Object> cache) {
       return cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
    }
+
+   public static String getMethodSpecificJmxDomain(Method m, String jmxDomain) {
+      return jmxDomain + '.' + m.getName();
+   }
+
+   public static ObjectName getCacheManagerObjectName(String jmxDomain) throws Exception {
+      return getCacheManagerObjectName(jmxDomain, "DefaultCacheManager");
+   }
+
+   public static ObjectName getCacheManagerObjectName(String jmxDomain, String cacheManagerName) throws Exception {
+      return new ObjectName(jmxDomain + ":type=CacheManager,name=" + ObjectName.quote(cacheManagerName) + ",component=CacheManager");
+   }
+
+   public static ObjectName getCacheObjectName(String jmxDomain) throws Exception {
+      return getCacheObjectName(jmxDomain, CacheContainer.DEFAULT_CACHE_NAME + "(local)");
+   }
+
+   public static ObjectName getCacheObjectName(String jmxDomain, String cacheName) throws Exception {
+      return getCacheObjectName(jmxDomain, cacheName, "Cache");
+   }
+
+   public static ObjectName getCacheObjectName(String jmxDomain, String cacheName, String component) throws Exception {
+      return getCacheObjectName(jmxDomain, cacheName, component, "DefaultCacheManager");
+   }
+
+   public static ObjectName getCacheObjectName(String jmxDomain, String cacheName, String component, String cacheManagerName) throws Exception {
+      return new ObjectName(jmxDomain + ":type=Cache,manager=" + ObjectName.quote(cacheManagerName)
+            + ",name=" + ObjectName.quote(cacheName) + ",component=" + component);
+   }
+
 }

@@ -28,8 +28,10 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
+import javax.management.ObjectName;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,22 +42,22 @@ import java.util.Set;
  * @author Heiko W. Rupp
  * @author Galder Zamarreño
  */
-public class CacheDiscovery implements ResourceDiscoveryComponent<CacheManagerComponent> {
+public class CacheDiscovery extends MBeanResourceDiscoveryComponent<CacheManagerComponent> {
    private static final Log log = LogFactory.getLog(CacheDiscovery.class);
 
-   /** Naming pattern of the cache mbean */
-   static final String CACHE_QUERY = "*:cache-name=%name%,jmx-resource=Cache";
-
    /** Run the discovery */
-   public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<CacheManagerComponent> discoveryContext) throws Exception {
+   public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<CacheManagerComponent> ctx) {
       boolean trace = log.isTraceEnabled();
-      if (trace) log.trace("Discover resources with context: " + discoveryContext);
+      if (trace) log.trace("Discover resources with context");
       Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
-      EmsConnection conn = discoveryContext.getParentResourceComponent().getConnection();
-      if (trace) log.trace("Connection to ems server stablished: " + conn);
-      
-      ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(CACHE_QUERY);
+      EmsConnection conn = ctx.getParentResourceComponent().getEmsConnection();
+      if (trace) log.trace("Connection to ems server established");
+
+      String pattern = getAllCachesPattern(ctx.getParentResourceContext().getResourceKey());
+      if (trace) log.trace("Pattern to query is {0}", pattern);
+
+      ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(pattern);
       List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
       if (trace) log.trace("Querying [" + queryUtility.getTranslatedQuery() + "] returned beans: " + beans);
 
@@ -66,12 +68,12 @@ public class CacheDiscovery implements ResourceDiscoveryComponent<CacheManagerCo
          String name = bean.getAttribute("CacheName").getValue().toString();
          if (trace) log.trace("Resource name is {0}", name);
          DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-               discoveryContext.getResourceType(), // Resource Type
-               bean.getBeanName().getCanonicalName(), // Resource Key
+               ctx.getResourceType(), // Resource Type
+               name, // Resource Key
                name, // Resource name 
                null, // Version
                "One cache within Infinispan", // ResourceDescription
-               discoveryContext.getDefaultPluginConfiguration(), // Plugin Config
+               ctx.getDefaultPluginConfiguration(), // Plugin Config
                null // ProcessInfo
          );
 
@@ -80,5 +82,13 @@ public class CacheDiscovery implements ResourceDiscoveryComponent<CacheManagerCo
          log.info("Discovered new ...  " + bean.getBeanName().getCanonicalName());
       }
       return discoveredResources;
+   }
+
+   private String getAllCachesPattern(String cacheManagerName) {
+      return cacheComponentPattern(cacheManagerName, "Cache") + ",*";
+   }
+
+   protected static String cacheComponentPattern(String cacheManagerName, String componentName) {
+      return "*:type=Cache,component=" + componentName + ",manager=" + ObjectName.quote(cacheManagerName);
    }
 }

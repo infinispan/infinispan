@@ -399,7 +399,8 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    @ManagedAttribute(description = "Returns the cache name")
    @Metric(displayName = "Cache name", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
    public String getCacheName() {
-      return getName().equals(CacheContainer.DEFAULT_CACHE_NAME) ? "Default Cache" : getName();
+      String name = getName().equals(CacheContainer.DEFAULT_CACHE_NAME) ? "Default Cache" : getName();
+      return name + "(" + getConfiguration().getCacheModeString().toLowerCase() + ")";
    }
 
    public String getVersion() {

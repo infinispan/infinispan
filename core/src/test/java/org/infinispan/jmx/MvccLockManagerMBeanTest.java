@@ -12,10 +12,13 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.transaction.TransactionManager;
 
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
+
 /**
  * Test the JMX functionality in {@link org.infinispan.util.concurrent.locks.LockManagerImpl}.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  */
 @Test(groups = "functional", testName = "jmx.MvccLockManagerMBeanTest")
 public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
@@ -38,7 +41,7 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
 
       cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
-      lockManagerObjName = new ObjectName(JMX_DOMAIN + ":cache-name=\"test(local)\",jmx-resource=LockManager");
+      lockManagerObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "LockManager");
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return cacheManager;
