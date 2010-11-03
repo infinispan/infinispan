@@ -57,11 +57,12 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       throw new UnsupportedOperationException("Unsupported!");
    }
 
-   public boolean isStateReceiverOnLeave(Address leaver, Address node, int replCount) {
+   public List<Address> getStateProvidersOnJoin(Address joiner, int replCount) {
       throw new UnsupportedOperationException("Unsupported!");
    }
 
-   public List<Address> getStateProvidersOnJoin(Address joiner, int replCount) {
+   @Override
+   public List<Address> getBackupsForNode(Address node, int replCount) {
       throw new UnsupportedOperationException("Unsupported!");
    }
 

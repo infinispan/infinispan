@@ -65,7 +65,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       configuration.setSyncReplTimeout(60, TimeUnit.SECONDS);
       configuration.setLockAcquisitionTimeout(45, TimeUnit.SECONDS);
       configuration.setL1CacheEnabled(l1CacheEnabled);
-      if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);
+      if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);      
       caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration);
 
       reorderBasedOnCHPositions();
@@ -266,7 +266,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected static boolean isOwner(Cache<?, ?> c, Object key) {
-      DistributionManager dm = c.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class);
+      DistributionManager dm = c.getAdvancedCache().getDistributionManager();
       List<Address> ownerAddresses = dm.locate(key);
       for (Address a : ownerAddresses) {
          if (addressOf(c).equals(a)) return true;

@@ -46,4 +46,12 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
    public TopologyInfo getTopologyInfo() {
       return topologyInfo;
    }
+
+   @Override
+   public String toString() {
+      return "AbstractConsistentHash{" +
+            "caches=" + caches +
+            ", topologyInfo=" + topologyInfo +
+            '}';
+   }
 }

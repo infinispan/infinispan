@@ -1,7 +1,9 @@
-package org.infinispan.distribution;
+package org.infinispan.distribution.topologyaware;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.distribution.BaseDistFunctionalTest;
+import org.infinispan.distribution.DistributionManagerImpl;
 import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.ch.TopologyInfo;
@@ -21,11 +23,17 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      addClusterEnabledCacheManagers(Configuration.CacheMode.DIST_SYNC, 3);
+      addClusterEnabledCacheManagers(getClusterConfig(), 3);
       updatedSiteInfo(manager(0), "s0", "r0", "m0");
       updatedSiteInfo(manager(1), "s1", "r1", "m1");
       updatedSiteInfo(manager(2), "s2", "r2", "m2");
+      log.info("Here it starts");
       BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0), cache(1), cache(2));
+      log.info("Here it ends");
+   }
+
+   protected Configuration getClusterConfig() {
+      return getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
    }
 
    private void updatedSiteInfo(EmbeddedCacheManager embeddedCacheManager, String s, String r, String m) {
@@ -41,6 +49,7 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
       assert advancedCache(2).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;
 
       DistributionManagerImpl dmi = (DistributionManagerImpl) advancedCache(0).getDistributionManager();
+      System.out.println("dmi.getTopologyInfo() = " + dmi.getTopologyInfo());
       assertTopologyInfo3Nodes(dmi.getTopologyInfo());
       dmi = (DistributionManagerImpl) advancedCache(1).getDistributionManager();
       assertTopologyInfo3Nodes(dmi.getTopologyInfo());

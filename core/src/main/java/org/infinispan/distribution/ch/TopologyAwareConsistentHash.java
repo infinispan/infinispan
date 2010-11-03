@@ -1,5 +1,6 @@
 package org.infinispan.distribution.ch;
 
+import org.infinispan.CacheException;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
@@ -125,7 +126,11 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
 
    private Address getOwner(Object key) {
       int hash = getNormalizedHash(key);
-      Integer ownerHash = positions.tailMap(hash).firstKey();
+      SortedMap<Integer, Address> map = positions.tailMap(hash);
+      if (map.size() == 0) {
+         return positions.get(positions.firstKey());
+      }
+      Integer ownerHash = map.firstKey();
       return positions.get(ownerHash);
    }
 

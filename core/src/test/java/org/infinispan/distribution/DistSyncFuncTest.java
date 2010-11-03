@@ -59,7 +59,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
 
    }
 
-   public void testBasicDistribution() {
+   public void testBasicDistribution() throws Throwable {
       for (Cache<Object, String> c : caches) assert c.isEmpty();
 
       getOwners("k1")[0].put("k1", "value");

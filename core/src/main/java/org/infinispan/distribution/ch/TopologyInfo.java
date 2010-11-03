@@ -1,13 +1,8 @@
 package org.infinispan.distribution.ch;
 
-import org.infinispan.marshall.Externalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.CacheException;
 import org.infinispan.remoting.transport.Address;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,13 +18,22 @@ public class TopologyInfo {
    
    private Map<Address, NodeTopologyInfo> address2TopologyInfo = new HashMap<Address, NodeTopologyInfo>();
 
+   public TopologyInfo() {
+   }
+
+   public TopologyInfo(TopologyInfo topologyInfo) {
+      this.address2TopologyInfo.putAll(topologyInfo.address2TopologyInfo);
+   }
+
    public void addNodeTopologyInfo(Address addr, NodeTopologyInfo ti) {
       address2TopologyInfo.put(addr, ti);
    }
 
    public boolean isSameSite(Address a1, Address a2) {
       NodeTopologyInfo info1 = address2TopologyInfo.get(a1);
+      if (info1 == null) throw new CacheException("No such address ( " + a1 + ") in the list of caches: " + address2TopologyInfo);
       NodeTopologyInfo info2 = address2TopologyInfo.get(a2);
+      if (info2 == null) throw new CacheException("No such address ( " + a2 + ") in the list of caches: " + address2TopologyInfo);
       return info1.sameSite(info2);
    }
 
@@ -80,5 +84,9 @@ public class TopologyInfo {
       return "TopologyInfo{" +
             "address2TopologyInfo=" + address2TopologyInfo +
             '}';
+   }
+
+   public boolean containsInfoForNode(Address address) {
+      return address2TopologyInfo.get(address) != null;
    }
 }

@@ -5,7 +5,6 @@ import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 
-import javax.naming.OperationNotSupportedException;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -382,11 +381,12 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
       return new ArrayList<Address>(holders);
    }
 
-   public boolean isStateReceiverOnLeave(Address leaver, Address node, int replCount) {
+   public List<Address> getStateProvidersOnJoin(Address joiner, int replCount) {
       throw new RuntimeException("Not implemented!");
    }
 
-   public List<Address> getStateProvidersOnJoin(Address joiner, int replCount) {
+   @Override
+   public List<Address> getBackupsForNode(Address node, int replCount) {
       throw new RuntimeException("Not implemented!");
    }
 }

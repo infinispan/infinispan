@@ -100,10 +100,7 @@ public class JoinTask extends RehashTask {
                transactionLogger.enable();
    
                // 4.  Broadcast new temp CH
-               RehashControlCommand rehashControlCommand = cf.buildRehashControlCommand(JOIN_REHASH_START, self);
-               rehashControlCommand.setNodeTopologyInfo(dmi.topologyInfo.getNodeTopologyInfo(rpcManager.getAddress()));
-               List<Response> responseList = rpcManager.invokeRemotely(null, rehashControlCommand, true, true);
-               updateTopologyInfo(responseList);
+               broadcastNewCh();
 
                // 5.  txLogger being enabled will cause ClusteredGetCommands to return uncertain responses.
    
@@ -127,7 +124,7 @@ public class JoinTask extends RehashTask {
                dmi.drainLocalTransactionLog();
                unlocked = true;
             } else {
-               rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);
+               broadcastNewCh();
                if (trace) log.trace("Rehash not enabled, so not pulling state.");
             }                                 
          } finally {
@@ -151,6 +148,13 @@ public class JoinTask extends RehashTask {
          else
             log.info("{0} completed join rehash!", self);
       }
+   }
+
+   private void broadcastNewCh() {
+      RehashControlCommand rehashControlCommand = cf.buildRehashControlCommand(JOIN_REHASH_START, self);
+      rehashControlCommand.setNodeTopologyInfo(dmi.topologyInfo.getNodeTopologyInfo(rpcManager.getAddress()));
+      List<Response> responseList = rpcManager.invokeRemotely(null, rehashControlCommand, true, true);
+      updateTopologyInfo(responseList);
    }
 
    private void updateTopologyInfo(List<Response> responseList) {

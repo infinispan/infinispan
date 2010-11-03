@@ -44,7 +44,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.MembershipArithmetic;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -229,7 +228,6 @@ public class DistributionManagerImpl implements DistributionManager {
          Address leaver = MembershipArithmetic.getMemberLeft(oldMembers, newMembers);
          log.info("This is a LEAVE event!  Node {0} has just left", leaver);
 
-         topologyInfo.removeNodeInfo(leaver);
 
          try {
             if (!(consistentHash instanceof UnionConsistentHash)) {
@@ -243,8 +241,8 @@ public class DistributionManagerImpl implements DistributionManager {
             throw new CacheException(e);
          }
 
-         boolean willReceiveLeaverState = willReceiveLeaverState(leaver);
          List<Address> stateProviders = holdersOfLeaversState(leaver);
+         boolean willReceiveLeaverState = willReceiveLeaverState(stateProviders);
          boolean willSendLeaverState = stateProviders.contains(self);
 
          if (willReceiveLeaverState || willSendLeaverState) {
@@ -265,18 +263,42 @@ public class DistributionManagerImpl implements DistributionManager {
             leaveTaskFuture = rehashExecutor.submit(task);
          } else {
             log.info("Not in same subspace, so ignoring leave event");
+            topologyInfo.removeNodeInfo(leaver);
          }
       }
    }
 
    List<Address> holdersOfLeaversState(Address leaver) {
-      List<Address> addresses = oldConsistentHash.getStateProvidersOnLeave(leaver, getReplCount());
-      if (log.isTraceEnabled()) log.trace("Holders of leaver's state are: " + addresses);
-      return addresses;
+      List<Address> result = new ArrayList<Address>();
+      for (Address addr : oldConsistentHash.getCaches()) {
+         List<Address> backups = oldConsistentHash.getBackupsForNode(addr, getReplCount());
+         log.trace("Backups for {0} are {1}", addr, backups);
+         if (addr.equals(leaver)) {
+            if (backups.size() > 1) {
+               Address mainBackup = backups.get(1);
+               result.add(mainBackup);
+               log.trace("Leaver's ({0}) main backup({1}) is looking for another backup as well.", leaver, mainBackup);
+            }
+         } else if (backups.contains(leaver)) {
+            log.trace("{0} is looking for a new backup to replace {1}", addr, leaver);
+            result.add(addr);
+         }
+      }
+      log.trace("Nodes that need new backups are: {0}", result);
+      return result;
    }
 
-   boolean willReceiveLeaverState(Address leaver) {
-      return oldConsistentHash.isStateReceiverOnLeave(leaver, self, getReplCount());
+   boolean willReceiveLeaverState(List<Address> stateProviders) {
+      for (Address addr : stateProviders) {
+         List<Address> addressList = consistentHash.getBackupsForNode(addr, getReplCount());
+         boolean isLast = addressList.indexOf(self) == addressList.size() - 1;
+         if (isLast) {
+            log.trace("This is a new backup for {0}", addr);
+            return true;
+         }
+      }
+      log.trace("This node won't receive state");
+      return false;
    }
 
    public boolean isLocal(Object key) {

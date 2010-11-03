@@ -115,6 +115,7 @@ public class InvertedLeaveTask extends RehashTask {
                      - start));
          else
             log.info("{0} completed leave rehash!", self);
+         for (Address addr : leaversHandled) dmi.topologyInfo.removeNodeInfo(addr);
       }
    }
 
