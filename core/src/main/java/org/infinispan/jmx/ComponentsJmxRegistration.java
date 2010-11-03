@@ -21,9 +21,11 @@
  */
 package org.infinispan.jmx;
 
+import org.infinispan.CacheDelegate;
 import org.infinispan.CacheException;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -38,6 +40,7 @@ import java.util.Set;
  * Registers a set of components on an MBean server.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public class ComponentsJmxRegistration {
@@ -51,15 +54,15 @@ public class ComponentsJmxRegistration {
 
    private Set<AbstractComponentRegistry.Component> components;
 
-   public static final String CACHE_NAME_KEY = "cache-name";
-   public static final String JMX_RESOURCE_KEY = "jmx-resource";
+   public static String COMPONENT_KEY = "component";
+   public static String NAME_KEY = "name";   
 
    /**
     * C-tor.
     *
     * @param mBeanServer the server where mbeans are being registered
     * @param components  components
-    * @param groupName   group name
+    * @param groupName   name of jmx group name
     * @see java.lang.management.ManagementFactory#getPlatformMBeanServer()
     * @see <a href="http://java.sun.com/j2se/1.5.0/docs/guide/management/mxbeans.html#mbean_server">platform
     *      MBeanServer</a>
@@ -67,8 +70,7 @@ public class ComponentsJmxRegistration {
    public ComponentsJmxRegistration(MBeanServer mBeanServer, Set<AbstractComponentRegistry.Component> components, String groupName) {
       this.mBeanServer = mBeanServer;
       this.components = components;
-      // Quote group name, to handle invalid ObjectName characters
-      this.groupName = ObjectName.quote(groupName);
+      this.groupName = groupName;
    }
 
    public void setJmxDomain(String jmxDomain) {
@@ -83,8 +85,7 @@ public class ComponentsJmxRegistration {
          List<ResourceDMBean> resourceDMBeans = getResourceDMBeansFromComponents();
          boolean trace = log.isTraceEnabled();
          for (ResourceDMBean resource : resourceDMBeans) {
-            String resourceName = resource.getObjectName();
-            ObjectName objectName = new ObjectName(getObjectName(resourceName));
+            ObjectName objectName = getObjectName(resource);
             if (!mBeanServer.isRegistered(objectName)) {
                try {
                   mBeanServer.registerMBean(resource, objectName);
@@ -113,8 +114,7 @@ public class ComponentsJmxRegistration {
          List<ResourceDMBean> resourceDMBeans = getResourceDMBeansFromComponents();
          boolean trace = log.isTraceEnabled();
          for (ResourceDMBean resource : resourceDMBeans) {
-            String resourceName = resource.getObjectName();
-            ObjectName objectName = new ObjectName(getObjectName(resourceName));
+            ObjectName objectName = getObjectName(resource);
             if (mBeanServer.isRegistered(objectName)) {
                mBeanServer.unregisterMBean(objectName);
                if (trace) log.trace("Unregistered " + objectName);
@@ -137,11 +137,15 @@ public class ComponentsJmxRegistration {
       return resourceDMBeans;
    }
 
-   public String getObjectName(String resourceName) {
-      return getObjectName(jmxDomain, groupName, resourceName);
+   private ObjectName getObjectName(ResourceDMBean resource) throws Exception {
+      return getObjectName(resource.getObjectName());
+   }
+
+   protected ObjectName getObjectName(String resourceName) throws Exception {
+      return new ObjectName(getObjectName(jmxDomain, groupName, resourceName));
    }
 
    public static String getObjectName(String jmxDomain, String groupName, String resourceName) {
-      return jmxDomain + ":" + CACHE_NAME_KEY + "=" + groupName + "," + JMX_RESOURCE_KEY + "=" + resourceName;
+      return jmxDomain + ":" + groupName + "," + COMPONENT_KEY + "=" + resourceName;
    }
 }

@@ -25,7 +25,10 @@ package org.infinispan.jmx;
 import java.util.Set;
 
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
+import org.infinispan.CacheException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.util.Util;
@@ -62,21 +65,23 @@ public abstract class AbstractJmxRegistration {
       return lookup.getMBeanServer();
    }
 
-   protected String getJmxDomain(String jmxDomain, MBeanServer mBeanServer) {
-      String[] registeredDomains = mBeanServer.getDomains();
+   protected String getJmxDomain(String jmxDomain, MBeanServer mBeanServer, String groupName) {
       int index = 2;
       String finalName = jmxDomain;
       boolean done = false;
       while (!done) {
          done = true;
-         for (String domain : registeredDomains) {
-            if (domain.equals(finalName)) {
+         try {
+            ObjectName targetName = new ObjectName(finalName + ':' + groupName + ",*");
+            if (mBeanServer.queryNames(targetName, null).size() > 0) {
                finalName = jmxDomain + index++;
                done = false;
-               break;
             }
+         } catch (MalformedObjectNameException e) {
+            throw new CacheException("Unable to check for duplicate names", e);
          }
       }
+
       return finalName;
    }
 }

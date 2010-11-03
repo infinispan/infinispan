@@ -184,14 +184,14 @@
                </docletArtifact>
                <useStandardDocletOptions>false</useStandardDocletOptions>
             </configuration>
-         <executions>
-            <execution>
-               <phase>process-classes</phase>
-               <goals>
-                  <goal>javadoc</goal>
-               </goals>
-            </execution>
-         </executions>
+            <executions>
+               <execution>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>javadoc</goal>
+                  </goals>
+               </execution>
+            </executions>
          </plugin>
          
          <!--

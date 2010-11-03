@@ -31,7 +31,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -51,7 +53,7 @@ import org.rhq.helpers.pluginGen.ResourceCategory;
 import org.rhq.helpers.pluginGen.Props.MetricProps;
 import org.rhq.helpers.pluginGen.Props.OperationProps;
 import org.rhq.helpers.pluginGen.Props.SimpleProperty;
-import org.rhq.helpers.pluginGen.Props.Template;
+import org.rhq.helpers.pluginGen.Props.TypeKey;
 
 import com.sun.javadoc.DocErrorReporter;
 import com.sun.javadoc.RootDoc;
@@ -103,30 +105,16 @@ public class RhqPluginXmlGenerator {
       root.setName("Infinispan Cache Manager");
       root.setPkg("org.infinispan.jopr");
       root.setDependsOnJmxPlugin(true);
-      root.setManualAddOfResourceType(true);
       root.setDiscoveryClass("CacheManagerDiscovery");
       root.setComponentClass("CacheManagerComponent");
-      root.setSingleton(true);
-      root.setCategory(ResourceCategory.SERVER);
+      root.setSingleton(false);
+      root.setCategory(ResourceCategory.SERVICE);
+      Set<TypeKey> servers = new HashSet<TypeKey>();
+      servers.add(new TypeKey("JMX Server", "JMX"));
+      servers.add(new TypeKey("JBossAS Server", "JBossAS"));
+      servers.add(new TypeKey("JBossAS Server", "JBossAS5"));
+      root.setRunsInsides(servers);
       populateMetricsAndOperations(globalClasses, root, false);
-      
-      SimpleProperty connect = new SimpleProperty("connectorAddress");
-      connect.setDescription("JMX Remoting address of the remote Infinispan Instance");
-      connect.setReadOnly(false);
-      root.getSimpleProps().add(connect);
-       
-      SimpleProperty objectName = new SimpleProperty("objectName");
-      objectName.setDescription("ObjectName of the Manager");
-      objectName.setType("string");
-      objectName.setReadOnly(true);
-      root.getSimpleProps().add(objectName);
-      Template defaultTemplate = new Template("defaultManualDiscovery");
-      defaultTemplate.setDescription("The default setup for Infinispan");
-      SimpleProperty connect2 = new SimpleProperty("connectorAddress");
-      connect2.setDisplayName("URL of the remote server");
-      connect2.setDefaultValue("service:jmx:rmi://127.0.0.1/jndi/rmi://127.0.0.1:6996/jmxrmi");
-      defaultTemplate.getSimpleProps().add(connect2);
-      root.getTemplates().add(defaultTemplate);
 
       Props cache = new Props();
       cache.setName("Infinispan Cache");

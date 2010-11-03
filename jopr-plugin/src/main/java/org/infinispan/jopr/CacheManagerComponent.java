@@ -31,13 +31,16 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.plugins.jmx.JMXComponent;
+import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
+import javax.management.ObjectName;
+import java.util.List;
 import java.util.Set;
+
+import static org.infinispan.jmx.CacheManagerJmxRegistration.CACHE_MANAGER_JMX_GROUP;
 
 /**
  * The component class for the Infinispan manager
@@ -45,10 +48,10 @@ import java.util.Set;
  * @author Heiko W. Rupp
  * @author Galder Zamarreño
  */
-public class CacheManagerComponent implements ResourceComponent, MeasurementFacet {
+public class CacheManagerComponent extends MBeanResourceComponent<MBeanResourceComponent> {
    private static final Log log = LogFactory.getLog(CacheManagerComponent.class);
-   private ResourceContext context;
-   private ConnectionHelper helper;
+   protected ResourceContext<JMXComponent> context;
+   private String cacheManagerPattern;
 
    /**
     * Return availability of this resource. We do this by checking the connection to it. If the Manager would expose
@@ -58,13 +61,13 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
     */
    public AvailabilityType getAvailability() {
       boolean trace = log.isTraceEnabled();
-      EmsConnection conn = getConnection();
+      EmsConnection conn = getEmsConnection();
       try {
          conn.refresh();
          EmsBean bean = queryCacheManagerBean(conn);
          if (bean != null) {
             bean.refreshAttributes();
-            if (trace) log.trace("Cache manager could be found and attributes where refreshed, so it's up.", bean);
+            if (trace) log.trace("Cache manager {0} could be found and attributes where refreshed, so it's up.", bean);
             return AvailabilityType.UP;
          }
          if (trace) log.trace("Cache manager could not be found, so cache manager is down");
@@ -77,23 +80,16 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
 
    /**
     * Start the resource connection
-    *
-    * @see org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)
     */
-   public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
+   public void start(ResourceContext context) {
+      // TODO: Call super.start() ?
       this.context = context;
-      this.helper = new ConnectionHelper();
-      getConnection();
+      this.cacheManagerPattern = "*:" + CACHE_MANAGER_JMX_GROUP + ",name=" + ObjectName.quote(context.getResourceKey()) + ",*";
    }
 
-   /**
-    * Tear down the rescource connection
-    *
-    * @see org.rhq.core.pluginapi.inventory.ResourceComponent#stop()
-    */
-   public void stop() {
-      helper.closeConnection();
-
+   @Override
+   public EmsConnection getEmsConnection() {
+      return context.getParentResourceComponent().getEmsConnection();
    }
 
    /**
@@ -102,11 +98,11 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
     * @see org.rhq.core.pluginapi.measurement.MeasurementFacet#getValues(org.rhq.core.domain.measurement.MeasurementReport,
     *      java.util.Set)
     */
-   public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+   public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
       boolean trace = log.isTraceEnabled();
       if (trace) log.trace("Get values for these metrics: {0}", metrics);
-      EmsConnection conn = getConnection();
-      if (trace) log.trace("Connection to ems server stablished: {0}", conn);
+      EmsConnection conn = getEmsConnection();
+      if (trace) log.trace("Connection to ems server established: {0}", conn);
       EmsBean bean = queryCacheManagerBean(conn);
       bean.refreshAttributes();
       if (trace) log.trace("Querying returned bean: {0}", bean);
@@ -127,19 +123,15 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
       }
    }
 
-   /**
-    * Helper to obtain a connection
-    *
-    * @return EmsConnection object
-    */
-   protected EmsConnection getConnection() {
-      return helper.getEmsConnection(context.getPluginConfiguration());
-   }
-
    private EmsBean queryCacheManagerBean(EmsConnection conn) {
-      String pattern = context.getPluginConfiguration().getSimpleValue("objectName", null);
+      String pattern = cacheManagerPattern;
       if (log.isTraceEnabled()) log.trace("Pattern to query is {0}", pattern);
       ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(pattern);
-      return conn.queryBeans(queryUtility.getTranslatedQuery()).get(0);
+      List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
+      if (beans.size() > 1) {
+         // If more than one are returned, most likely is due to duplicate domains which is not the general case
+         log.warn("More than one bean returned from applying {0} pattern: {1}", pattern, beans);
+      }
+      return beans.get(0);
    }
 }

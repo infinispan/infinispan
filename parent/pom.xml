@@ -113,9 +113,13 @@
       <version.netty>3.2.3.Final</version.netty>
       <version.org.jboss.naming>5.0.3.GA</version.org.jboss.naming>
       <version.resteasy>2.0-beta-2</version.resteasy>
-      <version.rhq.pluginAnnotations>1.4.0.B01</version.rhq.pluginAnnotations>
-      <version.rhq.plugingen>1.4.0.B01</version.rhq.plugingen>
-      <version.rhq>1.2.0.GA</version.rhq>
+<!--
+      <version.rhq.pluginAnnotations>4.0.0-SNAPSHOT</version.rhq.pluginAnnotations>
+      <version.rhq.plugingen>4.0.0-SNAPSHOT</version.rhq.plugingen>
+-->
+      <version.rhq.pluginAnnotations>3.0.1</version.rhq.pluginAnnotations>
+      <version.rhq.plugingen>3.0.1</version.rhq.plugingen>
+      <version.rhq>3.0.0</version.rhq>
       <version.scala>2.8.0</version.scala>
       <version.slf4j>1.5.8</version.slf4j>
       <version.spymemcached>2.5</version.spymemcached>

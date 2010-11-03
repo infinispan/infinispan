@@ -623,23 +623,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    @ManagedAttribute(description = "The name of this cache manager")
    @Metric(displayName = "Cache manager name", displayType = DisplayType.SUMMARY, dataType = DataType.TRAIT)
    public String getName() {
-      StringBuilder sb = new StringBuilder();
-      sb.append(globalConfiguration.getJmxDomain()).append('@');
-      String jmxPort = System.getProperty("com.sun.management.jmxremote.port");
-      if (jmxPort != null) {
-         try {
-            // At least until jdk6, Sun bind the jmx agent to
-            // 0.0.0.0:jmxPort, so using local host name is safe.
-            sb.append(InetAddress.getLocalHost().getHostName()).append(':').append(jmxPort);
-         } catch (UnknownHostException e) {
-            if (log.isTraceEnabled())
-               log.trace("Unable to resolve host", e);
-            sb.append(getLogicalAddressString());
-         }
-      } else {
-         sb.append(getLogicalAddressString());
-      }
-      return sb.toString();
+      return globalConfiguration.getCacheManagerName();
    }
 
    @ManagedOperation(description = "Starts the default cache associated with this cache manager")

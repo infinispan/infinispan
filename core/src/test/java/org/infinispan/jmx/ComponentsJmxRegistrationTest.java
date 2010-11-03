@@ -5,7 +5,6 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -25,12 +24,12 @@ import java.util.Set;
  * Tester class for {@link ComponentsJmxRegistration}.
  *
  * @author Mircea.Markus@jboss.com
- * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @Test(groups = "functional", testName = "jmx.ComponentsJmxRegistrationTest")
 public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
-
+   public static final String JMX_DOMAIN = ComponentsJmxRegistrationTest.class.getSimpleName();
    private MBeanServer mBeanServer;
    private List<EmbeddedCacheManager> cacheContainers = new ArrayList<EmbeddedCacheManager>();
 
@@ -58,7 +57,7 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
 
       ComponentsJmxRegistration regComponents = buildRegistrator(first);
       regComponents.registerMBeans();
-      String name = regComponents.getObjectName("Statistics");
+      String name = regComponents.getObjectName("Statistics").toString();
       ObjectName name1 = new ObjectName(name);
       assert mBeanServer.isRegistered(name1);
       regComponents.unregisterMBeans();
@@ -69,7 +68,10 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
    private ComponentsJmxRegistration buildRegistrator(Cache cache) {
       AdvancedCache ac = (AdvancedCache) cache;
       Set<AbstractComponentRegistry.Component> components = ac.getComponentRegistry().getRegisteredComponents();
-      return new ComponentsJmxRegistration(mBeanServer, components, cache.getName());
+      String groupName = "name=" + ObjectName.quote(cache.getName());
+      ComponentsJmxRegistration registrator = new ComponentsJmxRegistration(mBeanServer, components, groupName);
+      registrator.setJmxDomain(JMX_DOMAIN);
+      return registrator;
    }
 
    public void testRegisterReplicatedCache() throws Exception {
@@ -85,7 +87,7 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
 
       ComponentsJmxRegistration regComponents = buildRegistrator(first);
       regComponents.registerMBeans();
-      String name = regComponents.getObjectName("Statistics");
+      String name = regComponents.getObjectName("Statistics").toString();
       ObjectName name1 = new ObjectName(name);
       assertCorrectJmxName(name1, first);
       assert mBeanServer.isRegistered(name1);
@@ -113,8 +115,8 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
       replicatedRegComponents.registerMBeans();
       localRegComponents.registerMBeans();
 
-      String replicatedtCMgmtIntName = replicatedRegComponents.getObjectName("Statistics");
-      String localCMgmtIntName = localRegComponents.getObjectName("Statistics");
+      String replicatedtCMgmtIntName = replicatedRegComponents.getObjectName("Statistics").toString();
+      String localCMgmtIntName = localRegComponents.getObjectName("Statistics").toString();
       ObjectName replObjectName = new ObjectName(replicatedtCMgmtIntName);
       ObjectName localObjName = new ObjectName(localCMgmtIntName);
       assertCorrectJmxName(replObjectName, replicatedCache);
@@ -130,8 +132,8 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
    }
 
    private void assertCorrectJmxName(ObjectName objectName, Cache cache) {
-      assert ObjectName.unquote(objectName.getKeyProperty(ComponentsJmxRegistration.CACHE_NAME_KEY)).startsWith(cache.getName());
-      assert objectName.getKeyProperty(ComponentsJmxRegistration.JMX_RESOURCE_KEY) != null;
+      assert ObjectName.unquote(objectName.getKeyProperty(ComponentsJmxRegistration.NAME_KEY)).startsWith(cache.getName());
+      assert objectName.getKeyProperty(ComponentsJmxRegistration.COMPONENT_KEY) != null;
    }
 
    private Configuration config() {

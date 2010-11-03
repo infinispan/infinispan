@@ -6,6 +6,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import static org.infinispan.test.TestingUtil.*;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -19,6 +20,7 @@ import javax.management.ServiceNotFoundException;
  * Tests whether the attributes defined by DefaultCacheManager work correct.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @Test(groups = "functional", testName = "jmx.CacheManagerMBeanTest")
@@ -31,7 +33,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, true, false);
-      name = new ObjectName(JMX_DOMAIN + ":cache-name=\"[global]\",jmx-resource=CacheManager");
+      name = getCacheManagerObjectName(JMX_DOMAIN);
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       server.invoke(name, "startCache", new Object[]{}, new String[]{});
       return cacheManager;
@@ -77,10 +79,10 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       
    }
    
-   public void testJmxRegistrationAtStartupAndStop(Method method) throws Exception {
-      final String otherJmxDomain = JMX_DOMAIN + '.' + method.getName();
+   public void testJmxRegistrationAtStartupAndStop(Method m) throws Exception {
+      final String otherJmxDomain = getMethodSpecificJmxDomain(m, JMX_DOMAIN);
       CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain, true, false);
-      ObjectName otherName = new ObjectName(otherJmxDomain + ":cache-name=\"[global]\",jmx-resource=CacheManager");
+      ObjectName otherName = getCacheManagerObjectName(otherJmxDomain);
       try {
          assert server.getAttribute(otherName, "CreatedCacheCount").equals("0");
       } finally {
@@ -93,4 +95,16 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       } catch (InstanceNotFoundException e) {
       }
    }
+
+   public void testCustomCacheManagerName(Method m) throws Exception {
+      final String otherJmxDomain = getMethodSpecificJmxDomain(m, JMX_DOMAIN);
+      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain, "Hibernate2LC", true, false);
+      ObjectName otherName = getCacheManagerObjectName(otherJmxDomain, "Hibernate2LC");
+      try {
+         assert server.getAttribute(otherName, "CreatedCacheCount").equals("0");
+      } finally {
+         otherContainer.stop();
+      }
+   }
+
 }
