@@ -49,7 +49,10 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       new RequestHeader(op.get)
    }
 
-   override def readKey(h: RequestHeader, b: ChannelBuffer): String = readElement(b)
+   override def readKey(h: RequestHeader, b: ChannelBuffer): String = {
+      val k = readElement(b)
+      if (k.length > 250) throw new ServerException(h, new IOException("Key length over the 250 character limit")) else k
+   }
 
    private def readKeys(h: RequestHeader, b: ChannelBuffer): Array[String] = {
       val line = readLine(b)
@@ -302,11 +305,12 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       val sb = new StringBuilder
       t match {
          case se: ServerException => {
-            se.getCause match {
+            val cause = se.getCause
+            cause match {
                case u: UnknownOperationException => ERROR
                case c: ClosedChannelException => null // no-op, only log
                case _ => {
-                  t match {
+                  cause match {
                      case i: IOException => sb.append("CLIENT_ERROR ")
                      case _ => sb.append("SERVER_ERROR ")
                   }

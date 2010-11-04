@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import org.testng.Assert._
 import org.testng.annotations.Test
 import net.spy.memcached.CASResponse
-import org.infinispan.test.TestingUtil
+import org.infinispan.test.TestingUtil._
 import org.infinispan.Version
 import java.net.Socket
 
@@ -27,7 +27,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    def testSetWithExpirySeconds(m: Method) {
       val f = client.set(k(m), 1, v(m))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
-      TestingUtil.sleepThread(1100)
+      sleepThread(1100)
       assertNull(client.get(k(m)))
    }
 
@@ -35,14 +35,14 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       val future = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis + 1000).asInstanceOf[Int]
       val f = client.set(k(m), future, v(m))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
-      TestingUtil.sleepThread(1100)
+      sleepThread(1100)
       assertNull(client.get(k(m)))
    }
 
    def testSetWithExpiryUnixTimeInPast(m: Method) {
       val f = client.set(k(m), 60*60*24*30 + 1, v(m))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
-      TestingUtil.sleepThread(1100)
+      sleepThread(1100)
       assertNull(client.get(k(m)))
    }
 
@@ -67,7 +67,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    def testAddWithExpirySeconds(m: Method) {
       var f = client.add(k(m), 1, v(m))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
-      TestingUtil.sleepThread(1100)
+      sleepThread(1100)
       assertNull(client.get(k(m)))
       f = client.add(k(m), 0, v(m, "v1-"))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
@@ -78,7 +78,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       val future = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis + 1000).asInstanceOf[Int]
       var f = client.add(k(m), future, v(m))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
-      TestingUtil.sleepThread(1100)
+      sleepThread(1100)
       assertNull(client.get(k(m)))
       f = client.add(k(m), 0, v(m, "v1-"))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
@@ -110,7 +110,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       val f = client.replace(k(m), 1, v(m, "v1-"))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
       assertEquals(client.get(k(m)), v(m, "v1-"))
-      TestingUtil.sleepThread(1100)
+      sleepThread(1100)
       assertNull(client.get(k(m)))
    }
 
@@ -120,7 +120,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       val f = client.replace(k(m), future, v(m, "v1-"))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
       assertEquals(client.get(k(m)), v(m, "v1-"))
-      TestingUtil.sleepThread(1100)
+      sleepThread(1100)
       assertNull(client.get(k(m)))
    }
 
@@ -263,21 +263,6 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertEquals(newValue, "0")
    }
 
-   private def incr(m: Method, by: Int, expectedLength: Int): String = {
-      // Spymemcached expects Long so does not support 64-bit unsigned integer. Instead, do things manually.
-      val req = "incr " + k(m) + " " + by + "\r\n"
-      val socket = new Socket(server.getHost, server.getPort)
-      try {
-         socket.getOutputStream.write(req.getBytes)
-         // Make the array big enough to read the data but ignore the trailing carriage return
-         val resp = new Array[Byte](expectedLength)
-         socket.getInputStream.read(resp)
-         return new String(resp)
-      } finally {
-         socket.close
-      }
-   }
-
    def testDecrementBasic(m: Method) {
       var f = client.set(k(m), 0, "1")
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
@@ -333,7 +318,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       val f = client.flush(2);
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
 
-      TestingUtil.sleepThread(2200);
+      sleepThread(2200);
 
       for (i <- 1 to 5) {
          val key = k(m, "k" + i + "-");
@@ -348,10 +333,43 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertEquals(version, Version.version)
    }
 
+   def testKeyLengthLimit(m: Method) {
+      val keyUnderLimit = generateRandomString(249)
+      var f = client.set(keyUnderLimit, 0, "78")
+      assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
+      assertEquals(client.get(keyUnderLimit), "78")
+
+      val keyInLimit = generateRandomString(250)
+      f = client.set(keyInLimit, 0, "89")
+      assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
+      assertEquals(client.get(keyInLimit), "89")
+
+      val keyAboveLimit = generateRandomString(251)
+      val resp = incr(keyAboveLimit, 1, 1024)
+      assertTrue(resp.contains("CLIENT_ERROR"))
+   }
+
    private def addAndGet(m: Method) {
       val f = client.add(k(m), 0, v(m))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
       assertEquals(client.get(k(m)), v(m))
+   }
+
+   private def incr(m: Method, by: Int, expectedLength: Int): String = incr(k(m), by, expectedLength)
+
+   private def incr(k: String, by: Int, expectedLength: Int): String = {
+      // Spymemcached expects Long so does not support 64-bit unsigned integer. Instead, do things manually.
+      val req = "incr " + k + " " + by + "\r\n"
+      val socket = new Socket(server.getHost, server.getPort)
+      try {
+         socket.getOutputStream.write(req.getBytes)
+         // Make the array big enough to read the data but ignore the trailing carriage return
+         val resp = new Array[Byte](expectedLength)
+         socket.getInputStream.read(resp)
+         return new String(resp)
+      } finally {
+         socket.close
+      }
    }
 
 }
