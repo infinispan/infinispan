@@ -39,6 +39,13 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertNull(client.get(k(m)))
    }
 
+   def testSetWithExpiryUnixTimeInPast(m: Method) {
+      val f = client.set(k(m), 60*60*24*30 + 1, v(m))
+      assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
+      TestingUtil.sleepThread(1100)
+      assertNull(client.get(k(m)))
+   }
+
    def testGetMultipleKeys(m: Method) {
       val f1 = client.set(k(m, "k1-"), 0, v(m, "v1-"))
       val f2 = client.set(k(m, "k2-"), 0, v(m, "v2-"))
