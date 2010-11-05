@@ -48,7 +48,7 @@ import static org.infinispan.util.Util.getInstance;
  * <ul>
  * <li><tt>infinispan.client.hotrod.request_balancing_strategy</tt>, default = org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy.  For replicated (vs distributed) Hot Rod server clusters, the client balances requests to the
  * servers according to this strategy.</li>
- * <li><tt>infinispan.client.hotrod.server_list</tt>, default = 127.0.0.1:11311.  This is the initial list of Hot Rod servers to connect to, specified in the following format: host1:port1;host2:port2...
+ * <li><tt>infinispan.client.hotrod.server_list</tt>, default = 127.0.0.1:11222.  This is the initial list of Hot Rod servers to connect to, specified in the following format: host1:port1;host2:port2...
  * At least one host:port must be specified.</li>
  * <li><tt>infinispan.client.hotrod.force_return_values</tt>, default = false.  Whether or not to implicitly {@link org.infinispan.client.hotrod.Flag#FORCE_RETURN_VALUE} for all calls.</li>
  * <li><tt>infinispan.client.hotrod.tcp_no_delay</tt>, default = true.  Affects TCP NODELAY on the TCP stack.</li>
@@ -174,7 +174,7 @@ public class RemoteCacheManager implements CacheContainer {
    /**
     * Same as {@link #RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in the
     * classpath, in a file named <tt>hotrod-client.properties</tt>. If no properties can be found in the classpath, the
-    * server tries to connect to "127.0.0.1:11311" in start.
+    * server tries to connect to "127.0.0.1:11222" in start.
     *
     * @param start weather or not to start the RemoteCacheManager
     * @throws HotRodClientException if such a file cannot be found in the classpath

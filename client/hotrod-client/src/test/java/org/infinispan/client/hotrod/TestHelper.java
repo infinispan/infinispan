@@ -22,7 +22,7 @@ public class TestHelper {
    /**
     * This needs to be different than the one used in the server tests in order to make sure that there's no clash.
     */
-   private static final AtomicInteger uniquePort = new AtomicInteger(11312);
+   private static final AtomicInteger uniquePort = new AtomicInteger(11223);
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager) {
       // TODO: This is very rudimentary!! HotRodTestingUtil needs a more robust solution where ports are generated randomly and retries if already bound

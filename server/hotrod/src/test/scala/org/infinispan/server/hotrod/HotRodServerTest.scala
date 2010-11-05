@@ -18,7 +18,7 @@ class HotRodServerTest {
       try {
          server.start(null, new DefaultCacheManager)
          assertEquals(server.getHost, "127.0.0.1")
-         assertEquals(server.getPort, 11311)
+         assertEquals(server.getPort, 11222)
       } finally {
          server.stop
       }
