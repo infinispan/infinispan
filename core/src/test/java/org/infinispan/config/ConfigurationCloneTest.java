@@ -22,6 +22,7 @@
 package org.infinispan.config;
 
 import java.lang.reflect.Method;
+import java.util.Properties;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -76,6 +77,13 @@ public class ConfigurationCloneTest extends SingleCacheManagerTest {
          String message = e.getMessage();
          assert message.contains("[maxEntries]") : "Exception should indicate that it's Eviction maxEntries that we're trying to override but it says: " + message;
       }
-      
+   }
+
+   public void testGlobalConfigurationCloning(Method m) {
+      GlobalConfiguration clone = cacheManager.getGlobalConfiguration().clone();
+      String newJmxDomain = m.getName();
+      clone.setJmxDomain(newJmxDomain);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(clone);
+      assert cacheManager.getGlobalConfiguration().getJmxDomain().equals(newJmxDomain);
    }
 }

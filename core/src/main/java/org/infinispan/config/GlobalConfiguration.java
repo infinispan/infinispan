@@ -997,6 +997,13 @@ abstract class AbstractConfigurationBeanWithGCR extends AbstractConfigurationBea
       return gcr != null && gcr.getStatus() != null && gcr.getStatus() == ComponentStatus.RUNNING;
    }
 
+   @Override
+   public CloneableConfigurationComponent clone() throws CloneNotSupportedException {
+      AbstractConfigurationBeanWithGCR dolly = (AbstractConfigurationBeanWithGCR) super.clone();
+      // Do not clone the registry to avoid leak of runtime information to clone users
+      dolly.gcr = null;
+      return dolly;
+   }
 }
 
 class PropertiesType {
