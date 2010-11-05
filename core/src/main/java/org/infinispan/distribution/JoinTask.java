@@ -159,15 +159,10 @@ public class JoinTask extends RehashTask {
 
    private void updateTopologyInfo(List<Response> responseList) {
       for (Response r : responseList) {
-         if(r instanceof SuccessfulResponse) {
-            SuccessfulResponse sr = (SuccessfulResponse) r;
-            NodeTopologyInfo nti = (NodeTopologyInfo) sr.getResponseValue();
-            if (nti != null) {
-               dmi.topologyInfo.addNodeTopologyInfo(nti.getAddress(), nti);
-            }
-         }
-         else if(log.isTraceEnabled()) {  // will ignore unsuccessful response
-            log.trace("updateTopologyInfo got response with success=" + r.isSuccessful() +", is a " + r.getClass().getSimpleName());
+         SuccessfulResponse sr = (SuccessfulResponse) r;
+         NodeTopologyInfo nti = (NodeTopologyInfo) sr.getResponseValue();
+         if (nti != null) {
+            dmi.topologyInfo.addNodeTopologyInfo(nti.getAddress(), nti);
          }
       }
       if (log.isTraceEnabled()) log.trace("Topology after after getting cluster info: " + dmi.topologyInfo);
