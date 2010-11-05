@@ -183,7 +183,7 @@ object Main extends Logging {
       println
       println("    --                                 Stop processing options")
       println
-      println("    -p, --port=<num>                   TCP port number to listen on (default: 11211 for Memcached, 11311 for Hot Rod and 8181 for WebSocket server)")
+      println("    -p, --port=<num>                   TCP port number to listen on (default: 11211 for Memcached, 11222 for Hot Rod and 8181 for WebSocket server)")
       println
       println("    -l, --host=<host or ip>            Interface to listen on (default: 127.0.0.1, localhost)")
       println

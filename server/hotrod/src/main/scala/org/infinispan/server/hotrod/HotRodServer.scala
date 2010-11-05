@@ -40,7 +40,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 
    override def start(p: Properties, cacheManager: EmbeddedCacheManager) {
       val properties = if (p == null) new Properties else p
-      super.start(properties, cacheManager, 11311)
+      super.start(properties, cacheManager, 11222)
    }
 
    override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {

@@ -37,6 +37,7 @@ public class ConfigurationProperties {
 
    private static final int DEFAULT_KEY_SIZE = 64;
    private static final int DEFAULT_VALUE_SIZE = 512;
+   private static final int DEFAULT_HOTROD_PORT = 11222;
 
    private final TypedProperties props;
 
@@ -60,11 +61,11 @@ public class ConfigurationProperties {
 
    public Collection<InetSocketAddress> getServerList() {
       Set<InetSocketAddress> addresses = new HashSet<InetSocketAddress>();
-      String servers = props.getProperty(SERVER_LIST, "127.0.0.1:11311");
+      String servers = props.getProperty(SERVER_LIST, "127.0.0.1:" + DEFAULT_HOTROD_PORT);
       for (String server: servers.split(";")) {
          String[] components = server.trim().split(":");
          String host = components[0];
-         int port = 11311;
+         int port = DEFAULT_HOTROD_PORT;
          if (components.length > 1) port = Integer.parseInt(components[1]);
          addresses.add(new InetSocketAddress(host, port));
       }
