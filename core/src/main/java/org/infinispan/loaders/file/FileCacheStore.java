@@ -48,9 +48,12 @@ public class FileCacheStore extends BucketBasedCacheStore {
    
    protected void loopOverBuckets(BucketHandler handler) throws CacheLoaderException {
       try {
-         for (File bucketFile : root.listFiles()) {
-            Bucket bucket = loadBucket(bucketFile);
-            if (handler.handle(bucket)) break;
+         File[] listFiles;
+         if (root != null && (listFiles = root.listFiles()) != null) {
+            for (File bucketFile : listFiles) {
+               Bucket bucket = loadBucket(bucketFile);
+               if (handler.handle(bucket)) break;
+            }
          }
       } catch (InterruptedException ie) {
          if (log.isDebugEnabled()) log.debug("Interrupted, so stop looping over buckets.");
