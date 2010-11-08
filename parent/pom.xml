@@ -258,6 +258,9 @@
                   <Export-Package>
                      ${project.groupId}.*;version=${project.version};-split-package:=error
                   </Export-Package>
+		  <Import-Package>
+		     !javax.*|net.*|org.jboss.*|org.apache.*|org.xml.*|org.rhq.*|org.jgroups.*,*
+		  </Import-Package>
                </instructions>
             </configuration>
          </plugin>
