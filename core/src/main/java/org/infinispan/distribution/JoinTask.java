@@ -166,8 +166,8 @@ public class JoinTask extends RehashTask {
                dmi.topologyInfo.addNodeTopologyInfo(nti.getAddress(), nti);
             }
          }
-         else if(log.isTraceEnabled()) {  // will ignore unsuccessful response
-            log.trace("updateTopologyInfo got response with success=" + r.isSuccessful() +", is a " + r.getClass().getSimpleName());
+         else if(trace) {  // will ignore unsuccessful response
+            log.trace("updateTopologyInfo will ignore unsuccessful response (another node may not be ready), got response with success=" + r.isSuccessful() +", is a " + r.getClass().getSimpleName());
          }
       }
       if (log.isTraceEnabled()) log.trace("Topology after after getting cluster info: " + dmi.topologyInfo);
