@@ -159,7 +159,9 @@ def updateVersions(version, workingDir, trunkDir):
         l = re.sub('version_id = .*;', 'version_id = ' + version_bytes + ';', l)
       else:
         if l.find("public static final String version =") > -1:
-          l = re.sub('version = "[A-Z0-9\.]*";', 'version = "' + version + '";', l)
+          ver_bits = version.split('.')
+          micro_mod = "%s.%s" % (ver_bits[2], ver_bits[3])
+          l = re.sub('version\s*=\s*major\s*\+\s*"[A-Z0-9\.\-]*";', 'version = major + "' + micro_mod + '";', l)
       f_out.write(l)
   finally:
     f_in.close()
