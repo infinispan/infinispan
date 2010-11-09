@@ -18,6 +18,7 @@ test-output
 transaction.log
 hotrod_client.log
 output.log
+infinispan_test.log
 # vim files
 *.swp
 # generated rhq plugin xml
