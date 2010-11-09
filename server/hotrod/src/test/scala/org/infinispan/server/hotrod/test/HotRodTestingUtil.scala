@@ -40,10 +40,20 @@ object HotRodTestingUtil extends Logging {
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, idleTimeout: Int): HotRodServer =
       startHotRodServer(manager, port, idleTimeout, host, port)
 
-   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, idleTimeout: Int, proxyHost: String, proxyPort: Int): HotRodServer = {
+   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, idleTimeout: Int, proxyHost: String, proxyPort: Int): HotRodServer =
+      startHotRodServer(manager, port, idleTimeout, proxyHost, proxyPort, -1)
+
+   def startHotRodServerWithDelay(manager: EmbeddedCacheManager, port: Int, delay: Long): HotRodServer =
+      startHotRodServer(manager, port, 0, host, port, delay)
+
+   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, idleTimeout: Int,
+                         proxyHost: String, proxyPort: Int, delay: Long): HotRodServer = {
       val server = new HotRodServer {
          import HotRodServer._
          override protected def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
+            if (delay > 0)
+               Thread.sleep(delay)
+
             cacheManager.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
          }
       }
