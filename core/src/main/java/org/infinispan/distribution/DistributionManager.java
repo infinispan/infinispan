@@ -2,7 +2,6 @@ package org.infinispan.distribution;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.factories.scopes.Scope;
@@ -21,6 +20,7 @@ import java.util.Set;
  *
  * @author Manik Surtani
  * @author Mircea.Markus@jboss.com
+ * @author Vladimir Blagojevic
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -140,13 +140,6 @@ public interface DistributionManager {
    boolean isJoinComplete();
 
    /**
-    * Applies a state map received via a RehashControlCommand.  Usually this means state has been pushed to the
-    * current node probably due to another node leaving the cluster.
-    * @param state state to apply
-    */
-   void applyReceivedState(Map<Object, InternalCacheValue> state);
-
-   /**
     * A helper method that retrieves a list of nodes affected by operations on a set of keys.  This helper will in turn
     * call {@link #locateAll(java.util.Collection)} and then combine the result addresses.
     * @param affectedKeys keys to locate
@@ -160,5 +153,7 @@ public interface DistributionManager {
     * @param modifications ordered list of mods
     */
    void applyRemoteTxLog(List<WriteCommand> modifications);
+
+   void informRehashOnLeave(Address sender);
 }
 
