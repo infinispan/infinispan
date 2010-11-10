@@ -34,7 +34,7 @@ public abstract class RehashTask implements Callable<Void> {
 
    DistributionManagerImpl dmi;
    RpcManager rpcManager;
-   Configuration configuration;   
+   Configuration conf;   
    CommandsFactory cf;
    DataContainer dataContainer;
 
@@ -42,7 +42,7 @@ public abstract class RehashTask implements Callable<Void> {
             Configuration configuration, CommandsFactory cf, DataContainer dataContainer) {
       this.dmi = dmi;
       this.rpcManager = rpcManager;
-      this.configuration = configuration;
+      this.conf = configuration;
       this.cf = cf;
       this.dataContainer = dataContainer;
    }
@@ -98,8 +98,8 @@ public abstract class RehashTask implements Callable<Void> {
    }
 
    protected Collection<Address> getInvalidHolders(Object key, ConsistentHash chOld, ConsistentHash chNew) {
-      List<Address> oldOwners = chOld.locate(key, configuration.getNumOwners());
-      List<Address> newOwners = chNew.locate(key, configuration.getNumOwners());
+      List<Address> oldOwners = chOld.locate(key, conf.getNumOwners());
+      List<Address> newOwners = chNew.locate(key, conf.getNumOwners());
 
       List<Address> toInvalidate = new LinkedList<Address>(oldOwners);
       toInvalidate.removeAll(newOwners);

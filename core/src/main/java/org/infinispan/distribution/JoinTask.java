@@ -43,6 +43,7 @@ import java.util.Random;
  *
  * @author Manik Surtani
  * @author Mircea.Markus@jboss.com
+ * @author Vladimir Blagojevic
  * @since 4.0
  */
 public class JoinTask extends RehashTask {
@@ -74,7 +75,10 @@ public class JoinTask extends RehashTask {
 
    protected void performRehash() throws Exception {
       long start = trace ? System.currentTimeMillis() : 0;
-      if (log.isDebugEnabled()) log.debug("Commencing rehash on node: " + getMyAddress() + ". Before start, dmi.joinComplete = " + dmi.isJoinComplete());
+  
+      log.debug("Starting join rehash[enabled={0}, joinComplete={1}] on node {2} ",
+               conf.isRehashEnabled(), dmi.isJoinComplete(), getMyAddress());
+      
       TransactionLogger transactionLogger = dmi.getTransactionLogger();
       boolean unlocked = false;
       ConsistentHash chOld;
@@ -90,27 +94,26 @@ public class JoinTask extends RehashTask {
          if (chOld.getCaches().contains(self))
             chNew = chOld;
          else {
-            chNew = createConsistentHash(configuration, chOld.getCaches(), dmi.topologyInfo, self);
+            chNew = createConsistentHash(conf, chOld.getCaches(), dmi.topologyInfo, self);
          }
 
          dmi.setConsistentHash(chNew);
          try {
-            if (configuration.isRehashEnabled()) {
+            if (conf.isRehashEnabled()) {
                // 3.  Enable TX logging
                transactionLogger.enable();
    
                // 4.  Broadcast new temp CH
                broadcastNewCh();
-
-               // 5.  txLogger being enabled will cause ClusteredGetCommands to return uncertain responses.
    
                // 6.  pull state from everyone.
                Address myAddress = rpcManager.getTransport().getAddress();
                
                RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE_JOIN, myAddress, null, chOld, chNew,null);
                // TODO I should be able to process state chunks from different nodes simultaneously!!
-               List<Address> addressesWhoMaySendStuff = getAddressesWhoMaySendStuff(chNew, configuration.getNumOwners());
-               List<Response> resps = rpcManager.invokeRemotely(addressesWhoMaySendStuff, cmd, SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
+               
+               List<Address> providers = chNew.getStateProvidersOnJoin(self, conf.getNumOwners());
+               List<Response> resps = rpcManager.invokeRemotely(providers, cmd, SYNCHRONOUS, conf.getRehashRpcTimeout(), true);
    
                // 7.  Apply state
                for (Response r : resps) {
@@ -125,13 +128,12 @@ public class JoinTask extends RehashTask {
                unlocked = true;
             } else {
                broadcastNewCh();
-               if (trace) log.trace("Rehash not enabled, so not pulling state.");
             }                                 
          } finally {
             // 10.
             rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_END, self), true, true);
             
-            if (configuration.isRehashEnabled()) {
+            if (conf.isRehashEnabled()) {
                // 11.
                invalidateInvalidHolders(chOld, chNew);
             }
@@ -144,9 +146,9 @@ public class JoinTask extends RehashTask {
          if (!unlocked) transactionLogger.unlockAndDisable();
          dmi.setJoinComplete(true);
          if (trace)
-            log.info("{0} completed join rehash in {1}!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
+            log.info("Completed join rehash on node {0} in {1}!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
          else
-            log.info("{0} completed join rehash!", self);
+            log.info("Completed join rehash on node {0}!", self);
       }
    }
 
@@ -180,7 +182,7 @@ public class JoinTask extends RehashTask {
         // TODO make at least *some* of these configurable!
         ConsistentHash result = null;
         long minSleepTime = 500, maxSleepTime = 2000; // sleep time between retries
-        int maxWaitTime = (int) configuration.getRehashRpcTimeout() * 10; // after which we give up!
+        int maxWaitTime = (int) conf.getRehashRpcTimeout() * 10; // after which we give up!
         Random rand = new Random();
         long giveupTime = System.currentTimeMillis() + maxWaitTime;
         do {
@@ -190,7 +192,7 @@ public class JoinTask extends RehashTask {
             List<Address> addresses;
             try {
                 resp = rpcManager.invokeRemotely(coordinator(), cf.buildRehashControlCommand(
-                                JOIN_REQ, self), SYNCHRONOUS, configuration.getRehashRpcTimeout(),
+                                JOIN_REQ, self), SYNCHRONOUS, conf.getRehashRpcTimeout(),
                                 true);
                 addresses = parseResponses(resp);
                 if (log.isDebugEnabled())
@@ -210,7 +212,7 @@ public class JoinTask extends RehashTask {
                     log.trace("Sleeping for {0}", Util.prettyPrintTime(time));
                 Thread.sleep(time); // sleep for a while and retry
             } else {
-                result = createConsistentHash(configuration, addresses, dmi.topologyInfo);
+                result = createConsistentHash(conf, addresses, dmi.topologyInfo);
             }
         } while (result == null && System.currentTimeMillis() < giveupTime);
 
@@ -223,21 +225,6 @@ public class JoinTask extends RehashTask {
    @Override
    protected Log getLog() {
       return log;
-   }
-
-   /**
-    * Retrieves a List of Address of who should be sending state to the joiner (self), given a repl count (numOwners)
-    * for each entry.
-    * <p />
-    * The algorithm essentially works like this.  Given a list of all Addresses in the system (ordered by their positions
-    * in the new consistent hash wheel), locate where the current address (self, the joiner) is, on this list.  Addresses
-    * from (replCount - 1) positions behind self, and 1 position ahead of self would be sending state.
-    * <p />
-    * @param replCount
-    * @return
-    */
-   List<Address> getAddressesWhoMaySendStuff(ConsistentHash ch, int replCount) {
-      return ch.getStateProvidersOnJoin(self, replCount);
    }
 
    public Address getMyAddress() {
