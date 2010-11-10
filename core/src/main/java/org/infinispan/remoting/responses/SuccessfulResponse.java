@@ -63,4 +63,11 @@ public class SuccessfulResponse extends ValidResponse {
          return new SuccessfulResponse(input.readObject());
       }
    }
+
+   @Override
+   public String toString() {
+      return "SuccessfulResponse{" +
+            "responseValue=" + responseValue +
+            "} ";
+   }
 }

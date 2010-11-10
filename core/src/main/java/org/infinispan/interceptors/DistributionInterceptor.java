@@ -89,12 +89,15 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      boolean isStillRehashingOnJoin = !dm.isJoinComplete();
+      
+      // If you are a joiner then even if a rehash has completed you still may not have integrated all remote state.
+      // so we need to check whether join has completed as well.
+      boolean isRehashInProgress = !dm.isJoinComplete() || dm.isRehashInProgress();
       Object returnValue = invokeNextInterceptor(ctx, command);
       // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
       // available.  It could just have been removed in the same tx beforehand.
       if (needsRemoteGet(ctx, command.getKey(), returnValue == null))
-         returnValue = remoteGetAndStoreInL1(ctx, command.getKey(), isStillRehashingOnJoin);
+         returnValue = remoteGetAndStoreInL1(ctx, command.getKey(), isRehashInProgress);
       return returnValue;
    }
 
