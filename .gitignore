@@ -15,12 +15,13 @@ atlassian-ide-plugin.xml
 maven-ant-tasks.jar
 test-output
 # log files
-transaction.log
-hotrod_client.log
-output.log
+*.log
 # vim files
 *.swp
 # generated rhq plugin xml
 rhq-plugin.xml
 # generated schema
 core/src/main/resources/schema
+# Compiled python files
+*.pyc
+

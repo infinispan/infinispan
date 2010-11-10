@@ -21,6 +21,7 @@
  */
 package org.infinispan.util;
 
+import org.infinispan.CacheException;
 import org.infinispan.config.ConfigurationException;
 
 import java.io.Closeable;
@@ -467,6 +468,13 @@ public final class Util {
                               " id=" + threadInfo.getLockOwnerId());
            threadDump.append("\n");
       }
+   }
+
+   public static CacheException rewrapAsCacheException(Throwable t) {
+      if (t instanceof CacheException)
+         return (CacheException) t;
+      else
+         return new CacheException(t);
    }
 
 }
