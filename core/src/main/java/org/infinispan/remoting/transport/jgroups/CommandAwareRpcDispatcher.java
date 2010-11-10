@@ -61,6 +61,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.util.Util.formatString;
 import static org.infinispan.util.Util.prettyPrintTime;
+import static org.infinispan.util.Util.rewrapAsCacheException;
 
 /**
  * A JGroups RPC dispatcher that knows how to deal with {@link ReplicableCommand}s.
@@ -119,7 +120,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          try {
             response = task.call();
          } catch (Exception e) {
-            throw new CacheException(e);
+            throw rewrapAsCacheException(e);
          }
          if (mode == GroupRequest.GET_NONE) return null; // "Traditional" async.
          if (response.isEmpty() || containsOnlyNulls(response))
@@ -245,6 +246,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
 
       public RspList call() throws Exception {
+         if (log.isTraceEnabled()) {
+            log.trace("Replication task sending " + command + " to addresses " + dests);
+         }
 
          // Replay capability requires responses from all members!
          int mode = supportReplay ? GroupRequest.GET_ALL : this.mode;
@@ -280,7 +284,15 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                // This is possibly a remote GET.
                // TODO this is sub-optimal and sequential (for now), until JGroups provides notifying futures - JGRP-1030
                for (Address a : targets) {
-                  Object response = sendMessage(constructMessage(buf, a), opts);
+                  Object response;
+                  try {
+                     response = sendMessage(constructMessage(buf, a), opts);
+                     if (log.isTraceEnabled()) {
+                        log.trace("Received response: " + response);
+                     }
+                  } catch (org.jgroups.TimeoutException e) {
+                     throw new TimeoutException("Timeout!", e);
+                  }
                   filter.isAcceptable(response, a);
                   if (!filter.needMoreResponses()) {
                      retval = new RspList(Collections.singleton(new Rsp(a, response)));
