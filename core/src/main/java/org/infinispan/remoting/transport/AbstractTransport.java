@@ -34,7 +34,7 @@ public abstract class AbstractTransport implements Transport {
       return true;
    }
 
-   protected boolean parseResponseAndAddToResponseList(Object value, List<Response> retval, boolean wasSuspected,
+   protected boolean parseResponseAndAddToResponseList(Object responseObject, List<Response> responseListToAddTo, boolean wasSuspected,
                                                        boolean wasReceived, Address sender, boolean usedResponseFilter)
            throws Exception
    {
@@ -46,14 +46,14 @@ public abstract class AbstractTransport implements Transport {
             throw new SuspectException("Suspected member: " + sender);
          } else {
             // if we have a response filter then we may not have waited for some nodes!
-            if (usedResponseFilter) throw new TimeoutException("Replication timeout for " + sender);
+            if (!usedResponseFilter) throw new TimeoutException("Replication timeout for " + sender);
          }
       } else {
          invalidResponse = false;
-         if (value instanceof Response) {
-            Response response = (Response) value;
+         if (responseObject instanceof Response) {
+            Response response = (Response) responseObject;
             if (response instanceof ExceptionResponse) {
-               Exception e = ((ExceptionResponse) value).getException();
+               Exception e = ((ExceptionResponse) response).getException();
                if (!(e instanceof ReplicationException)) {
                   // if we have any application-level exceptions make sure we throw them!!
                   if (shouldThrowException(e)) {
@@ -63,13 +63,13 @@ public abstract class AbstractTransport implements Transport {
                   }
                }
             }
-            retval.add(response);
-         } else if (value instanceof Exception) {
-            Exception e = (Exception) value;
+            responseListToAddTo.add(response);
+         } else if (responseObject instanceof Exception) {
+            Exception e = (Exception) responseObject;
             if (trace) log.trace("Unexpected exception from " + sender, e);
             throw e;
-         } else if (value instanceof Throwable) {
-            Throwable t = (Throwable) value;
+         } else if (responseObject instanceof Throwable) {
+            Throwable t = (Throwable) responseObject;
             if (trace) log.trace("Unexpected throwable from " + sender, t);
             throw new CacheException("Remote (" + sender + ") failed unexpectedly", t);
          }
