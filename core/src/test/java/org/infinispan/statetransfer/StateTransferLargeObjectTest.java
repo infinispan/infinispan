@@ -2,12 +2,9 @@ package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.Flag;
 import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.UnitTestTestNGListener;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -41,7 +38,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
       config.setL1CacheEnabled(false);
       config.setNumOwners(3);
       config.setUseLockStriping(false);
-      addClusterEnabledCacheManagers(config, 4);
+      createCluster(config, 4);
       c0 = cache(0);
       c1 = cache(1);
       c2 = cache(2);
