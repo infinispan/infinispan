@@ -255,17 +255,6 @@ public interface CommandsFactory {
 
    /**
     * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a
-    * control command with a sender and a payload - a map of state to be pushed to the recipient.  The {@link org.infinispan.commands.control.RehashControlCommand.Type}
-    * of this command is {@link org.infinispan.commands.control.RehashControlCommand.Type#PUSH_STATE}.
-    *
-    * @param sender sender's Address
-    * @param state state map to be pushed to the recipient of this command
-    * @return a RehashControlCommand
-    */
-   RehashControlCommand buildRehashControlCommand(Address sender, Map<Object, InternalCacheValue> state);
-
-   /**
-    * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a
     * control command with a sender and a payload - a transaction log of writes that occured during the generation and
     * delivery of state.  The {@link org.infinispan.commands.control.RehashControlCommand.Type}
     * of this command is {@link org.infinispan.commands.control.RehashControlCommand.Type#DRAIN_TX}.
