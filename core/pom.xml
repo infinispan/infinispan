@@ -118,7 +118,7 @@
                      ${project.groupId}.*;version=${project.version};-split-package:=error
                   </Export-Package>
 		  <Import-Package>
-		     ${project.groupId}.*;!javax.*|net.*|org.*,*
+		     ${project.groupId}.*;!net.*|org.*,*
 		  </Import-Package>
                </instructions>
             </configuration>
