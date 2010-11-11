@@ -98,6 +98,7 @@ public class DummyTransaction implements Transaction {
             status = Status.STATUS_COMMITTED;
          } catch (HeuristicMixedException e) {
             status = Status.STATUS_UNKNOWN;
+            throw e;
          } finally {
             //notify synchronizations
             notifyAfterCompletion(status);
