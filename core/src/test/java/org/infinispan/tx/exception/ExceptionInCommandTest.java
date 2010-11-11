@@ -20,7 +20,7 @@ public class ExceptionInCommandTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      addClusterEnabledCacheManagers(Configuration.CacheMode.REPL_SYNC, 2);
+      createCluster(Configuration.CacheMode.REPL_SYNC, 2);
       waitForClusterToForm();
    }                                                                        
 
