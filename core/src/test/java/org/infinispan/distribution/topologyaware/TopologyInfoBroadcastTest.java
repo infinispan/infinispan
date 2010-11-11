@@ -23,7 +23,7 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      addClusterEnabledCacheManagers(getClusterConfig(), 3);
+      createCluster(getClusterConfig(), 3);
       updatedSiteInfo(manager(0), "s0", "r0", "m0");
       updatedSiteInfo(manager(1), "s1", "r1", "m1");
       updatedSiteInfo(manager(2), "s2", "r2", "m2");

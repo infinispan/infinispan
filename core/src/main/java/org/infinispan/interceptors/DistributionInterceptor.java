@@ -1,7 +1,6 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -18,7 +17,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -33,7 +31,6 @@ import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -185,32 +182,32 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return handleWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()), false);
+      return handleWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()), false, false);
    }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       // don't bother with a remote get for the PutMapCommand!
       return handleWriteCommand(ctx, command,
-              new MultipleKeysRecipientGenerator(command.getMap().keySet()), true);
+              new MultipleKeysRecipientGenerator(command.getMap().keySet()), true, false);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
 
       return handleWriteCommand(ctx, command,
-              new SingleKeyRecipientGenerator(command.getKey()), false);
+              new SingleKeyRecipientGenerator(command.getKey()), false, false);
    }
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return handleWriteCommand(ctx, command, CLEAR_COMMAND_GENERATOR, false);
+      return handleWriteCommand(ctx, command, CLEAR_COMMAND_GENERATOR, false, true);
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleWriteCommand(ctx, command,
-              new SingleKeyRecipientGenerator(command.getKey()), false);
+              new SingleKeyRecipientGenerator(command.getKey()), false, false);
    }
 
    @Override
@@ -291,12 +288,14 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    }
 
    private NotifyingNotifiableFuture<Object> flushL1Cache(int numCallRecipients, Collection<Object> keys, Object retval) {
-      if (isL1CacheEnabled && numCallRecipients > 0 && rpcManager.getTransport().getMembers().size() > numCallRecipients) {
+      if (isL1CacheEnabled && rpcManager.getTransport().getMembers().size() > numCallRecipients) {
          if (trace) log.trace("Invalidating L1 caches");
          InvalidateCommand ic = cf.buildInvalidateFromL1Command(false, keys);
          NotifyingNotifiableFuture<Object> future = new AggregatingNotifyingFutureImpl(retval, 2);
          rpcManager.broadcastRpcCommandInFuture(ic, future);
          return future;
+      } else {
+         if (trace) log.trace("Not performing invalidation! isL1CacheEnabled? {0} numCallRecipients={1}", isL1CacheEnabled, numCallRecipients);
       }
       return null;
    }
@@ -305,14 +304,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     * If we are within one transaction we won't do any replication as replication would only be performed at commit
     * time. If the operation didn't originate locally we won't do any replication either.
     */
-   private Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet) throws Throwable {
-      // TODO Remove isSingleOwnerAndLocal() once https://jira.jboss.org/jira/browse/JGRP-1084 has been implemented
-      boolean localModeForced = isLocalModeForced(ctx) || isSingleOwnerAndLocal(recipientGenerator);
+   private Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet, boolean skipL1Invalidation) throws Throwable {
       // see if we need to load values from remote srcs first
       if (!skipRemoteGet) remoteGetBeforeWrite(ctx, command.isConditional(), recipientGenerator);
+      boolean sync = isSynchronous(ctx);
 
       // if this is local mode then skip distributing
-      if (localModeForced) {
+      if (isLocalModeForced(ctx)) {
          log.trace("LOCAL mode forced.  No RPC needed.");
          return invokeNextInterceptor(ctx, command);
       }
@@ -326,15 +324,20 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                List<Address> rec = recipientGenerator.generateRecipients();
                if (trace) log.trace("Invoking command {0} on hosts {1}", command, rec);
                boolean useFuture = ctx.isUseFutureReturnType();
-               boolean sync = isSynchronous(ctx);
-               NotifyingNotifiableFuture<Object> future = flushL1Cache(rec == null ? 0 : rec.size(), recipientGenerator.getKeys(), returnValue);
-               if (useFuture) {
-                  if (future == null) future = new NotifyingFutureImpl(returnValue);
-                  rpcManager.invokeRemotelyInFuture(rec, command, future);
-                  return future;
-               } else {
-                  rpcManager.invokeRemotely(rec, command, sync);
-                  if (future != null && !sync) future.get(); // wait for the inval command to complete
+               NotifyingNotifiableFuture<Object> future = null;
+               if (!skipL1Invalidation) future = flushL1Cache(rec == null ? 0 : rec.size(), recipientGenerator.getKeys(), returnValue);
+               if (!isSingleOwnerAndLocal(recipientGenerator)) {
+                  if (useFuture) {
+                     if (future == null) future = new NotifyingFutureImpl(returnValue);
+                     rpcManager.invokeRemotelyInFuture(rec, command, future);
+                     return future;
+                  } else {
+                     rpcManager.invokeRemotely(rec, command, sync);
+                  }
+               }
+               if (future != null && sync) {
+                  future.get(); // wait for the inval command to complete
+                  if (trace) log.trace("Finished invalidating keys {0} ", recipientGenerator.getKeys());
                }
             }
          } else {
