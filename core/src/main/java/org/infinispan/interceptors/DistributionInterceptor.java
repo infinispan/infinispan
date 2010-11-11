@@ -243,7 +243,12 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          List<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
          NotifyingNotifiableFuture<Object> f = flushL1Cache(recipients.size(), ctx.getLockedKeys(), null);
          rpcManager.invokeRemotely(recipients, command, configuration.isSyncCommitPhase(), true);
-         if (f != null) f.get();
+         if (f != null && configuration.isSyncCommitPhase())
+         try {
+            f.get();
+         } catch (Exception e) {
+            if (log.isInfoEnabled()) log.info("Failed invalidating remote cache: ", e);
+         }
       }
       return invokeNextInterceptor(ctx, command);
    }
