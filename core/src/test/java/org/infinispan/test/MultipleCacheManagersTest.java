@@ -5,10 +5,10 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -157,15 +157,15 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return addClusterEnabledCacheManager(configuration);
    }
 
-   protected void addClusterEnabledCacheManagers(Configuration.CacheMode mode, boolean transactional, int count) {
+   protected void createCluster(Configuration.CacheMode mode, boolean transactional, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, transactional);
    }
    
-   protected void addClusterEnabledCacheManagers(Configuration config, int count) {
+   protected void createCluster(Configuration config, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(config);
    }
 
-   protected void addClusterEnabledCacheManagers(Configuration.CacheMode mode, int count) {
+   protected void createCluster(Configuration.CacheMode mode, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, true);
    }
 
@@ -307,4 +307,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return c.getAdvancedCache().getRpcManager().getAddress();
    }
 
+   protected LockManager lockManager(int i) {
+      return TestingUtil.extractLockManager(cache(i));
+   } 
 }

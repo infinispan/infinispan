@@ -104,7 +104,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
    public void commit(Xid xid, boolean isOnePhase) throws XAException {
       // always call prepare() - even if this is just a 1PC!
       if (isOnePhase) prepare(xid);
-      if (trace) log.trace("committing TransactionXaAdapter: " + globalTx);
+      if (trace) log.trace("committing transaction: " + globalTx);
       try {
          LocalTxInvocationContext ctx = icc.createTxInvocationContext();
          ctx.setXaCache(this);
@@ -134,6 +134,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
    }
 
    public void rollback(Xid xid) throws XAException {
+      if (trace) log.trace("rollback transaction: " + globalTx);
       RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(globalTx);
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
       ctx.setXaCache(this);
