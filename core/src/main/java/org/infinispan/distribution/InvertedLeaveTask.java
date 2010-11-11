@@ -1,7 +1,10 @@
 package org.infinispan.distribution;
 
 import static org.infinispan.commands.control.RehashControlCommand.Type.PULL_STATE_LEAVE;
+import static org.infinispan.commands.control.RehashControlCommand.Type.LEAVE_REHASH_END;
+
 import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
+import static org.infinispan.remoting.rpc.ResponseMode.ASYNCHRONOUS;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -49,18 +52,22 @@ public class InvertedLeaveTask extends RehashTask {
    private final List<Address> leavers;
    private final Address self;
    private final List<Address> leaversHandled;
-   private final List<Address> stateProviders;
+   private final List<Address> providers;
+   private final List<Address> receivers;
    private final boolean isReceiver;
+   private final boolean isSender;
 
    public InvertedLeaveTask(DistributionManagerImpl dmi, RpcManager rpcManager, Configuration conf,
             CommandsFactory commandsFactory, DataContainer dataContainer, List<Address> leavers,
-            List<Address> stateProviders, boolean isReceiver) {
+            List<Address> stateProviders, List<Address> stateReceivers, boolean isReceiver) {
       super(dmi, rpcManager, conf, commandsFactory, dataContainer);
       this.leavers = leavers;
       this.leaversHandled = new LinkedList<Address>(leavers);
-      this.stateProviders = stateProviders;
-      this.isReceiver = isReceiver;
+      this.providers = stateProviders;
+      this.receivers = stateReceivers;
+      this.isReceiver = isReceiver;      
       this.self = rpcManager.getTransport().getAddress();
+      this.isSender = stateProviders.contains(self);
    }
 
    @SuppressWarnings("unchecked")
@@ -72,50 +79,54 @@ public class InvertedLeaveTask extends RehashTask {
       long start = trace ? System.currentTimeMillis() : 0;
 
       int replCount = configuration.getNumOwners();
-      ConsistentHash oldCH = ConsistentHashHelper.createConsistentHash(configuration, dmi.getConsistentHash().getCaches(), leaversHandled, dmi.topologyInfo);
       ConsistentHash newCH = dmi.getConsistentHash();
+      ConsistentHash oldCH = ConsistentHashHelper.createConsistentHash(configuration, newCH.getCaches(), leaversHandled, dmi.topologyInfo);
+
       try {
-         if (log.isDebugEnabled()) {
-            if (isReceiver) {
-               log.debug("Commencing rehash at {0}, I am a state receiver", self);
-            } else {
-               log.debug("Commencing rehash at {0}, I am a state producer", self);
-            }
-         }
+         log.debug("Starting leave rehash[enabled={0},isReceiver={1},isSender={2}] on node {3}",
+                  configuration.isRehashEnabled(), isReceiver, isSender, self);
+
          if (configuration.isRehashEnabled()) {
             if (isReceiver) {
-               Address myAddress = rpcManager.getTransport().getAddress();
-               RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE_LEAVE, myAddress,
-                                                                       null, oldCH, newCH, leaversHandled);
+               try {
+                  RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE_LEAVE, self,
+                           null, oldCH, newCH, leaversHandled);
 
-               log.debug("I {0} am pulling state from {1}", self, stateProviders);
-               List<Response> resps = rpcManager.invokeRemotely(stateProviders, cmd, SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
+                  log.debug("I {0} am pulling state from {1}", self, providers);
+                  List<Response> resps = rpcManager.invokeRemotely(providers, cmd, SYNCHRONOUS,
+                           configuration.getRehashRpcTimeout(), true);
 
-               log.debug("I {0} received response {1} ", self, resps);
-               for (Response r : resps) {
-                  if (r instanceof SuccessfulResponse) {
-                     Map<Object, InternalCacheValue> state = getStateFromResponse((SuccessfulResponse) r);
-                     log.debug("I {0} am applying state {1} ", self, state);
-                     dmi.applyState(newCH, state);
+                  log.debug("I {0} received response {1} ", self, resps);
+                  for (Response r : resps) {
+                     if (r instanceof SuccessfulResponse) {
+                        Map<Object, InternalCacheValue> state = getStateFromResponse((SuccessfulResponse) r);
+                        log.debug("I {0} am applying state {1} ", self, state);
+                        dmi.applyState(newCH, state);
+                     }
                   }
+               } finally {
+                  RehashControlCommand c = cf.buildRehashControlCommand(LEAVE_REHASH_END, self);
+                  rpcManager.invokeRemotely(providers, c, ASYNCHRONOUS, configuration.getRehashRpcTimeout(), false);
                }
             }
-            processAndDrainTxLog(oldCH, newCH, replCount);
-            invalidateInvalidHolders(leaversHandled, oldCH, newCH);
-         } else {
-            if (trace)
-               log.trace("Rehash not enabled, so not pulling state.");
+            if (isSender) {
+               dmi.awaitLeaveRehashAcks(receivers, configuration.getStateRetrievalTimeout());
+               processAndDrainTxLog(oldCH, newCH, replCount);
+               invalidateInvalidHolders(leaversHandled, oldCH, newCH);
+            }
          }
       } catch (Exception e) {
          throw new CacheException("Unexpected exception", e);
       } finally {
          leavers.removeAll(leaversHandled);
          if (trace)
-            log.info("{0} completed leave rehash in {1}!", self, Util.prettyPrintTime(System.currentTimeMillis()
-                     - start));
+            log.info("Completed leave rehash on node {0} in {1}", self,
+                     Util.prettyPrintTime(System.currentTimeMillis() - start));
          else
-            log.info("{0} completed leave rehash!", self);
-         for (Address addr : leaversHandled) dmi.topologyInfo.removeNodeInfo(addr);
+            log.info("Completed leave rehash on node {0}", self);
+
+         for (Address addr : leaversHandled)
+            dmi.topologyInfo.removeNodeInfo(addr);
       }
    }
 
