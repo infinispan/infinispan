@@ -38,6 +38,7 @@ import java.util.Arrays;
  * It may break up into several commands in future.
  *
  * @author Manik Surtani
+ * @author Vladimir Blagojevic
  * @since 4.0
  */
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.REHASH_CONTROL_COMMAND)
@@ -46,7 +47,7 @@ public class RehashControlCommand extends BaseRpcCommand {
    public static final int COMMAND_ID = 17;
 
    public enum Type {
-      JOIN_REQ, JOIN_REHASH_START, JOIN_REHASH_END, JOIN_ABORT, PULL_STATE_JOIN, PULL_STATE_LEAVE, PUSH_STATE, DRAIN_TX, DRAIN_TX_PREPARES
+      JOIN_REQ, JOIN_REHASH_START, JOIN_REHASH_END, JOIN_ABORT, PULL_STATE_JOIN, PULL_STATE_LEAVE, LEAVE_REHASH_END, DRAIN_TX, DRAIN_TX_PREPARES
    }
 
    Type type;
@@ -121,12 +122,13 @@ public class RehashControlCommand extends BaseRpcCommand {
          case JOIN_REHASH_END:
             distributionManager.informRehashOnJoin(sender, false, nodeTopologyInfo);
             return null;
+         case LEAVE_REHASH_END:
+            distributionManager.informRehashOnLeave(sender);   
+            return null;
          case PULL_STATE_JOIN:
             return pullStateForJoin();             
          case PULL_STATE_LEAVE:
-             return pullStateForLeave();    
-         case PUSH_STATE:
-            return pushState();
+             return pullStateForLeave();          
          case DRAIN_TX:
             distributionManager.applyRemoteTxLog(txLogCommands);
             return null;
@@ -218,12 +220,6 @@ public class RehashControlCommand extends BaseRpcCommand {
          if (newOwnerList.contains(sender)) return true;
       }
       return false;
-   }
-   
-
-   public Object pushState() {
-      distributionManager.applyReceivedState(state);
-      return null;
    }
 
    public byte getCommandId() {

@@ -27,7 +27,6 @@ import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import static org.infinispan.commands.control.RehashControlCommand.Type.DRAIN_TX_PREPARES;
 import static org.infinispan.commands.control.RehashControlCommand.Type.DRAIN_TX;
-import static org.infinispan.commands.control.RehashControlCommand.Type.PUSH_STATE;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
@@ -326,10 +325,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type, Address sender) {
       return buildRehashControlCommand(type, sender, null, null, null, null);
-   }
-
-   public RehashControlCommand buildRehashControlCommand(Address sender, Map<Object, InternalCacheValue> state) {
-      return buildRehashControlCommand(PUSH_STATE, sender, state, null, null,  null);
    }
 
    public RehashControlCommand buildRehashControlCommandTxLog(Address sender, List<WriteCommand> commands) {
