@@ -4,8 +4,8 @@ import org.infinispan.CacheException;
 import org.infinispan.Version;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
-import org.infinispan.executors.DefaultSharedExecutorFactory;
-import org.infinispan.executors.DefaultSharedScheduledExecutorFactory;
+import org.infinispan.executors.DefaultExecutorFactory;
+import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -655,7 +655,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
             
       @XmlAttribute
       @ConfigurationDoc(name="factory", desc="Fully qualified class name of the ExecutorFactory to use.  Must implement org.infinispan.executors.ExecutorFactory")
-      protected String factory = DefaultSharedExecutorFactory.class.getName();
+      protected String factory = DefaultExecutorFactory.class.getName();
 
       public ExecutorFactoryType(String factory) {
          this.factory = factory;
@@ -693,7 +693,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       
       @XmlAttribute
       @ConfigurationDoc(name="factory",desc="Fully qualified class name of the ScheduledExecutorFactory to use.  Must implement org.infinispan.executors.ScheduledExecutorFactory")
-      protected String factory = DefaultSharedScheduledExecutorFactory.class.getName();
+      protected String factory = DefaultScheduledExecutorFactory.class.getName();
 
       public ScheduledExecutorFactoryType(String factory) {
          this.factory = factory;
