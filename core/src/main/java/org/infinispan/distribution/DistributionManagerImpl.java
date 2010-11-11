@@ -62,6 +62,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * The default distribution manager implementation
@@ -118,6 +121,10 @@ public class DistributionManagerImpl implements DistributionManager {
    private final List<Address> leavers = new CopyOnWriteArrayList<Address>();
    private volatile Future<Void> leaveTaskFuture;
    private final ReclosableLatch startLatch = new ReclosableLatch(false);
+   
+   private Lock leaveAcks = new ReentrantLock();
+   private Condition ackArrived = leaveAcks.newCondition();
+   private List<Address> leaveRehashAcks = Collections.synchronizedList(new ArrayList<Address>());
   
 
    /**
@@ -242,11 +249,12 @@ public class DistributionManagerImpl implements DistributionManager {
          }
 
          List<Address> stateProviders = holdersOfLeaversState(leaver);
-         boolean willReceiveLeaverState = willReceiveLeaverState(stateProviders);
-         boolean willSendLeaverState = stateProviders.contains(self);
-
-         if (willReceiveLeaverState || willSendLeaverState) {
-            log.info("I {0} am participating in rehash", rpcManager.getTransport().getAddress());
+         List<Address> receiversOfLeaverState = receiversOfLeaverState(stateProviders);
+         boolean willReceiveLeaverState = receiversOfLeaverState.contains(self);
+         boolean willProvideState = stateProviders.contains(self);    
+         if (willReceiveLeaverState || willProvideState) {
+            log.info("I {0} am participating in rehash, state providers {1}, state receivers {2}",
+                     rpcManager.getTransport().getAddress(), stateProviders, receiversOfLeaverState);               
             transactionLogger.enable();
 
             if (leaveTaskFuture != null
@@ -259,8 +267,8 @@ public class DistributionManagerImpl implements DistributionManager {
 
             leavers.add(leaver);
             InvertedLeaveTask task = new InvertedLeaveTask(this, rpcManager, configuration, cf,
-                    dataContainer, leavers, stateProviders, willReceiveLeaverState);
-            leaveTaskFuture = rehashExecutor.submit(task);
+                    dataContainer, leavers, stateProviders, receiversOfLeaverState, willReceiveLeaverState);
+            leaveTaskFuture = rehashExecutor.submit(task);          
          } else {
             log.info("Not in same subspace, so ignoring leave event");
             topologyInfo.removeNodeInfo(leaver);
@@ -288,17 +296,14 @@ public class DistributionManagerImpl implements DistributionManager {
       return result;
    }
 
-   boolean willReceiveLeaverState(List<Address> stateProviders) {
+   List<Address> receiversOfLeaverState(List<Address> stateProviders) {
+      List<Address> result = new ArrayList<Address>();
       for (Address addr : stateProviders) {
          List<Address> addressList = consistentHash.getBackupsForNode(addr, getReplCount());
-         boolean isLast = addressList.indexOf(self) == addressList.size() - 1;
-         if (isLast) {
-            log.trace("This is a new backup for {0}", addr);
-            return true;
-         }
+         result.add(addressList.get( addressList.size() - 1));         
       }
       log.trace("This node won't receive state");
-      return false;
+      return result;
    }
 
    public boolean isLocal(Object key) {
@@ -403,6 +408,19 @@ public class DistributionManagerImpl implements DistributionManager {
       log.trace("New CH is {0}", consistentHash);
       return topologyInfo.getNodeTopologyInfo(rpcManager.getAddress());
    }
+   
+   @Override
+   public void informRehashOnLeave(Address sender) {
+      leaveAcks.lock();
+      try {
+         leaveRehashAcks.add(sender);         
+         log.trace("Received and processed LEAVE_REHASH_END from " + sender);
+         ackArrived.signalAll();
+      }
+      finally{
+         leaveAcks.unlock();
+      }    
+   }
 
    public void applyState(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state) {
       log.trace("Apply state with " + state);
@@ -415,10 +433,18 @@ public class DistributionManagerImpl implements DistributionManager {
             interceptorChain.invoke(ctx, put);
          }
       }
+      boolean unlocked = false;
+      try {
+         drainLocalTransactionLog();
+         unlocked = true;
+      } finally {
+         if (!unlocked) transactionLogger.unlockAndDisable();
+      }
    }
 
    @Listener
    public class ViewChangeListener {
+      
       @ViewChanged
       public void handleViewChange(ViewChangedEvent e) {
          log.trace("view change received. Needs to re-join? " + e.isNeedsToRejoin());         
@@ -453,17 +479,6 @@ public class DistributionManagerImpl implements DistributionManager {
    @Metric(displayName = "Is rehash in progress?", dataType = DataType.TRAIT)
    public boolean isRehashInProgress() {
       return !leavers.isEmpty() || rehashInProgress;
-   }
-
-   public void applyReceivedState(Map<Object, InternalCacheValue> state) {
-      applyState(consistentHash, state);
-      boolean unlocked = false;
-      try {
-         drainLocalTransactionLog();
-         unlocked = true;
-      } finally {
-         if (!unlocked) transactionLogger.unlockAndDisable();
-      }
    }
 
    public boolean isJoinComplete() {
@@ -538,5 +553,28 @@ public class DistributionManagerImpl implements DistributionManager {
 
    public TopologyInfo getTopologyInfo() {
       return topologyInfo;
+   }
+
+   public boolean awaitLeaveRehashAcks(List<Address> stateReceivers, long timeout) throws InterruptedException {
+      long start = System.currentTimeMillis();
+      boolean timeoutReached = false;
+      boolean receivedAcks = false;
+
+      leaveAcks.lock();
+      try {
+         while (!timeoutReached) {            
+            receivedAcks = leaveRehashAcks.size() > 0 && stateReceivers.containsAll(leaveRehashAcks);
+            if (receivedAcks)                
+               break;            
+            else               
+               ackArrived.await(1000, TimeUnit.MILLISECONDS);            
+            
+            timeoutReached = (System.currentTimeMillis() - start) > timeout;
+         }         
+      } finally {
+         leaveRehashAcks.clear();
+         leaveAcks.unlock();
+      }
+      return !timeoutReached;
    }
 }
