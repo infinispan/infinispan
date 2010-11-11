@@ -22,21 +22,52 @@ import static org.infinispan.factories.KnownComponentNames.*;
 @DefaultFactoryFor(classes = {ExecutorService.class, Executor.class, ScheduledExecutorService.class})
 public class NamedExecutorsFactory extends NamedComponentFactory implements AutoInstantiableFactory {
 
+   private ExecutorService notificationExecutor;
+   private ExecutorService asyncTransportExecutor;
+   private ScheduledExecutorService evictionExecutor;
+   private ScheduledExecutorService asyncReplicationExecutor;
+
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType, String componentName) {
       try {
+         // Construction happens only on startup of either CacheManager, or Cache, so
+         // using synchronized protection does not have a great impact on app performance.
          if (componentName.equals(ASYNC_NOTIFICATION_EXECUTOR)) {
-            return (T) buildAndConfigureExecutorService(globalConfiguration.getAsyncListenerExecutorFactoryClass(),
-                                                        globalConfiguration.getAsyncListenerExecutorProperties(), componentName);
+            synchronized (this) {
+               if (notificationExecutor == null) {
+                  notificationExecutor = buildAndConfigureExecutorService(
+                        globalConfiguration.getAsyncListenerExecutorFactoryClass(),
+                        globalConfiguration.getAsyncListenerExecutorProperties(), componentName);
+               }
+            }
+            return (T) notificationExecutor;
          } else if (componentName.equals(ASYNC_TRANSPORT_EXECUTOR)) {
-            return (T) buildAndConfigureExecutorService(globalConfiguration.getAsyncTransportExecutorFactoryClass(),
-                                                        globalConfiguration.getAsyncTransportExecutorProperties(), componentName);
+            synchronized (this) {
+               if (asyncTransportExecutor == null) {
+                  asyncTransportExecutor = buildAndConfigureExecutorService(
+                        globalConfiguration.getAsyncTransportExecutorFactoryClass(),
+                        globalConfiguration.getAsyncTransportExecutorProperties(), componentName);
+               }
+            }
+            return (T) asyncTransportExecutor;
          } else if (componentName.equals(EVICTION_SCHEDULED_EXECUTOR)) {
-            return (T) buildAndConfigureScheduledExecutorService(globalConfiguration.getEvictionScheduledExecutorFactoryClass(),
-                                                                 globalConfiguration.getEvictionScheduledExecutorProperties(), componentName);
+            synchronized (this) {
+               if (evictionExecutor == null) {
+                  evictionExecutor = buildAndConfigureScheduledExecutorService(
+                        globalConfiguration.getEvictionScheduledExecutorFactoryClass(),
+                        globalConfiguration.getEvictionScheduledExecutorProperties(), componentName);
+               }
+            }
+            return (T) evictionExecutor;
          } else if (componentName.equals(ASYNC_REPLICATION_QUEUE_EXECUTOR)) {
-            return (T) buildAndConfigureScheduledExecutorService(globalConfiguration.getReplicationQueueScheduledExecutorFactoryClass(),
-                                                                 globalConfiguration.getReplicationQueueScheduledExecutorProperties(), componentName);
+            synchronized (this) {
+               if (asyncReplicationExecutor == null) {
+                  asyncReplicationExecutor = buildAndConfigureScheduledExecutorService(
+                        globalConfiguration.getReplicationQueueScheduledExecutorFactoryClass(),
+                        globalConfiguration.getReplicationQueueScheduledExecutorProperties(), componentName);
+               }
+            }
+            return (T) asyncReplicationExecutor;
          } else {
             throw new ConfigurationException("Unknown named executor " + componentName);
          }
