@@ -110,7 +110,11 @@ public class InvertedLeaveTask extends RehashTask {
                }
             }
             if (isSender) {
-               dmi.awaitLeaveRehashAcks(receivers, configuration.getStateRetrievalTimeout());
+               Set<Address> recCopy = new HashSet<Address>(receivers);
+               if(isReceiver) {
+                  recCopy.remove(self);
+               }
+               dmi.awaitLeaveRehashAcks(recCopy, configuration.getStateRetrievalTimeout());
                processAndDrainTxLog(oldCH, newCH, replCount);
                invalidateInvalidHolders(leaversHandled, oldCH, newCH);
             }
