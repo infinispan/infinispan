@@ -122,9 +122,9 @@ public class DistributionManagerImpl implements DistributionManager {
    private volatile Future<Void> leaveTaskFuture;
    private final ReclosableLatch startLatch = new ReclosableLatch(false);
    
-   private Lock leaveAcks = new ReentrantLock();
-   private Condition ackArrived = leaveAcks.newCondition();
-   private List<Address> leaveRehashAcks = Collections.synchronizedList(new ArrayList<Address>());
+   private final Lock leaveAcksLock = new ReentrantLock();
+   private final Condition acksArrived = leaveAcksLock.newCondition();
+   private final Set<Address> leaveRehashAcks = new HashSet<Address>();
   
 
    /**
@@ -411,14 +411,14 @@ public class DistributionManagerImpl implements DistributionManager {
    
    @Override
    public void informRehashOnLeave(Address sender) {
-      leaveAcks.lock();
+      leaveAcksLock.lock();
       try {
          leaveRehashAcks.add(sender);         
-         log.trace("Received and processed LEAVE_REHASH_END from " + sender);
-         ackArrived.signalAll();
+         log.trace("Received and processed LEAVE_REHASH_END from {0}, received {1} ", self, leaveRehashAcks);
+         acksArrived.signalAll();
       }
       finally{
-         leaveAcks.unlock();
+         leaveAcksLock.unlock();
       }    
    }
 
@@ -555,25 +555,25 @@ public class DistributionManagerImpl implements DistributionManager {
       return topologyInfo;
    }
 
-   public boolean awaitLeaveRehashAcks(List<Address> stateReceivers, long timeout) throws InterruptedException {
+   public boolean awaitLeaveRehashAcks(Set<Address> stateReceivers, long timeout) throws InterruptedException {
       long start = System.currentTimeMillis();
       boolean timeoutReached = false;
       boolean receivedAcks = false;
 
-      leaveAcks.lock();
+      leaveAcksLock.lock();
       try {
          while (!timeoutReached) {            
-            receivedAcks = leaveRehashAcks.size() > 0 && stateReceivers.containsAll(leaveRehashAcks);
+            receivedAcks = stateReceivers.equals(leaveRehashAcks);
             if (receivedAcks)                
                break;            
             else               
-               ackArrived.await(1000, TimeUnit.MILLISECONDS);            
+               acksArrived.await(1000, TimeUnit.MILLISECONDS);            
             
             timeoutReached = (System.currentTimeMillis() - start) > timeout;
          }         
       } finally {
          leaveRehashAcks.clear();
-         leaveAcks.unlock();
+         leaveAcksLock.unlock();
       }
       return !timeoutReached;
    }
