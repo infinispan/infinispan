@@ -127,11 +127,22 @@ public class RhqPluginXmlGenerator {
       populateMetricsAndOperations(namedCacheClasses, cache, true);
       
       root.getChildren().add(cache);
-         
-      pg.createFile(root, "descriptor", "rhq-plugin.xml", "../../../src/main/resources/META-INF");
-      copyFile(new File("../../../src/main/resources/META-INF/rhq-plugin.xml"), new File("../../../target/classes/META-INF/rhq-plugin.xml"));
+
+      String metaInfDir = "../../../src/main/resources/META-INF";
+      mkDirs(metaInfDir);
+      String targetMetaInfDir = "../../../target/classes/META-INF";
+      mkDirs(targetMetaInfDir);
+
+      pg.createFile(root, "descriptor", "rhq-plugin.xml", metaInfDir);
+      copyFile(new File(metaInfDir + "/rhq-plugin.xml"), new File(targetMetaInfDir + "/rhq-plugin.xml"));
       
       return true;
+   }
+
+   private static void mkDirs(String dirName) throws IOException {
+      boolean created = new File(dirName).mkdirs();
+      if (!created)
+         throw new IOException("Unable to create directories for " + dirName);
    }
    
    private static void copyFile(File in, File out) throws IOException {
