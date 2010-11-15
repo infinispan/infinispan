@@ -330,7 +330,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                if (trace) log.trace("Invoking command {0} on hosts {1}", command, rec);
                boolean useFuture = ctx.isUseFutureReturnType();
                NotifyingNotifiableFuture<Object> future = null;
-               if (!skipL1Invalidation) future = flushL1Cache(rec == null ? 0 : rec.size(), recipientGenerator.getKeys(), returnValue);
+               if (!skipL1Invalidation)
+                  future = flushL1Cache(rec == null ? 0 : rec.size(), recipientGenerator.getKeys(), returnValue);
                if (!isSingleOwnerAndLocal(recipientGenerator)) {
                   if (useFuture) {
                      if (future == null) future = new NotifyingFutureImpl(returnValue);
@@ -339,6 +340,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                   } else {
                      rpcManager.invokeRemotely(rec, command, sync);
                   }
+               } else if (useFuture && future != null) {
+                  return future;
                }
                if (future != null && sync) {
                   future.get(); // wait for the inval command to complete
