@@ -23,7 +23,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +50,8 @@ public class TransactionTable {
 
    private final Map<GlobalTransaction, RemoteTransaction> remoteTransactions = new ConcurrentHashMap<GlobalTransaction, RemoteTransaction>();
 
+   private final Object listener = new StaleTransactionCleanup();
+   
    private CommandsFactory commandsFactory;
    private Configuration configuration;
    private InvocationContextContainer icc;
@@ -58,7 +59,7 @@ public class TransactionTable {
    private CacheNotifier notifier;
    private RpcManager rpcManager;
    private GlobalTransactionFactory gtf;
-   private ExecutorService lockBreakingService = Executors.newFixedThreadPool(1);
+   private ExecutorService lockBreakingService;
    private EmbeddedCacheManager cm;
 
    @Inject
@@ -77,11 +78,13 @@ public class TransactionTable {
 
    @Start
    private void start() {
-      cm.addListener(new StaleTransactionCleanup());
+      lockBreakingService = Executors.newFixedThreadPool(1);
+      cm.addListener(listener);
    }
 
    @Stop
    private void stop() {
+      cm.removeListener(listener);
       lockBreakingService.shutdownNow();
    }
 
