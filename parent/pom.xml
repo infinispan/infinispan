@@ -79,7 +79,7 @@
       <version.bdbje>4.0.92</version.bdbje>
       <version.c3p0>0.9.1.2</version.c3p0>
       <version.cassandra>0.6.6</version.cassandra>
-      <version.cassandra.connection.pool>0.3.0</version.cassandra.connection.pool>
+      <version.cassandra.connection.pool>0.3.2</version.cassandra.connection.pool>
       <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
       <version.commons.compress>1.0</version.commons.compress>
       <version.commons.pool>1.5.4</version.commons.pool>

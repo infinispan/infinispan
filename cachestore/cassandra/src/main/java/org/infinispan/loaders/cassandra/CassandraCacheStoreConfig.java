@@ -1,8 +1,14 @@
 package org.infinispan.loaders.cassandra;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 import net.dataforte.cassandra.pool.PoolProperties;
 
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
+import org.infinispan.util.FileLookup;
 
 /**
  * Configures {@link CassandraCacheStore}.
@@ -23,15 +29,27 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
 	 * @configRef desc="The Cassandra column family for expirations"
 	 */
 	String expirationColumnFamily = "InfinispanExpiration";
-	
+
 	/**
 	 * @configRef desc="Whether the keySpace is shared between multiple caches"
 	 */
 	boolean sharedKeyspace = false;
-	
+
+	/**
+	 * @configRef desc="Which Cassandra consistency level to use when reading"
+	 */
 	String readConsistencyLevel = "ONE";
-	
+
+	/**
+	 * @configRef desc="Which Cassandra consistency level to use when writing"
+	 */
 	String writeConsistencyLevel = "ONE";
+
+	/**
+	 * @configRef desc=
+	 *            "An optional properties file for configuring the underlying cassandra connection pool"
+	 */
+	String configurationPropertiesFile;
 
 	protected PoolProperties poolProperties;
 
@@ -132,13 +150,40 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
 	public void setUsername(String username) {
 		poolProperties.setUsername(username);
 	}
-	
+
 	public void setDatasourceJndiLocation(String location) {
 		poolProperties.setDataSourceJNDI(location);
 	}
-	
+
 	public String getDatasourceJndiLocation() {
 		return poolProperties.getDataSourceJNDI();
+	}
+
+	public String getConfigurationPropertiesFile() {
+		return configurationPropertiesFile;
+	}
+
+	public void setConfigurationPropertiesFile(String configurationPropertiesFile) throws CacheLoaderException {
+		this.configurationPropertiesFile = configurationPropertiesFile;
+		readConfigurationProperties();
+	}
+
+	private void readConfigurationProperties() throws CacheLoaderException {
+		if (configurationPropertiesFile == null || configurationPropertiesFile.trim().length() == 0)
+			return;
+		InputStream i = new FileLookup().lookupFile(configurationPropertiesFile);
+		if (i != null) {
+			Properties p = new Properties();
+			try {
+				p.load(i);
+			} catch (IOException ioe) {
+				throw new CacheLoaderException("Unable to read environment properties file " + configurationPropertiesFile, ioe);
+			}
+			// Apply all properties to the PoolProperties object
+			for(String propertyName : p.stringPropertyNames()) {
+				poolProperties.set(propertyName, p.getProperty(propertyName));
+			}
+		}
 	}
 
 }
