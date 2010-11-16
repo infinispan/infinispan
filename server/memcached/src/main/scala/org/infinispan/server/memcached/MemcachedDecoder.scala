@@ -79,46 +79,50 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       if (!line.isEmpty) {
          if (isTraceEnabled) trace("Operation parameters: {0}", line)
          val args = line.trim.split(" +")
-         var index = 0
-         h.op match {
-            case RemoveRequest => {
-               val delayedDeleteTime = parseDelayedDeleteTime(index, args)
-               val noReply = if (delayedDeleteTime == -1) parseNoReply(index, args) else false
-               Some(new MemcachedParameters(null, -1, -1, -1, noReply, 0, "", 0))
-            }
-            case IncrementRequest | DecrementRequest => {
-               val delta = args(index)
-               index += 1
-               Some(new MemcachedParameters(null, -1, -1, -1, parseNoReply(index, args), 0, delta, 0)) 
-            }
-            case FlushAllRequest => {
-               val flushDelay = args(index).toInt
-               index += 1
-               Some(new MemcachedParameters(null, -1, -1, -1, parseNoReply(index, args), 0, "", flushDelay))
-            }
-            case _ => {
-               val flags = getFlags(args(index))
-               index += 1
-               val lifespan = {
-                  val streamLifespan = getLifespan(args(index))
-                  if (streamLifespan <= 0) -1 else streamLifespan
+         try {
+            var index = 0
+            h.op match {
+               case RemoveRequest => {
+                  val delayedDeleteTime = parseDelayedDeleteTime(index, args)
+                  val noReply = if (delayedDeleteTime == -1) parseNoReply(index, args) else false
+                  Some(new MemcachedParameters(null, -1, -1, -1, noReply, 0, "", 0))
                }
-               index += 1
-               val length = getLength(args(index))
-               val streamVersion = h.op match {
-                  case ReplaceIfUnmodifiedRequest => {
-                     index += 1
-                     getVersion(args(index))
+               case IncrementRequest | DecrementRequest => {
+                  val delta = args(index)
+                  index += 1
+                  Some(new MemcachedParameters(null, -1, -1, -1, parseNoReply(index, args), 0, delta, 0))
+               }
+               case FlushAllRequest => {
+                  val flushDelay = args(index).toInt
+                  index += 1
+                  Some(new MemcachedParameters(null, -1, -1, -1, parseNoReply(index, args), 0, "", flushDelay))
+               }
+               case _ => {
+                  val flags = getFlags(args(index))
+                  index += 1
+                  val lifespan = {
+                     val streamLifespan = getLifespan(args(index))
+                     if (streamLifespan <= 0) -1 else streamLifespan
                   }
-                  case _ => -1
+                  index += 1
+                  val length = getLength(args(index))
+                  val streamVersion = h.op match {
+                     case ReplaceIfUnmodifiedRequest => {
+                        index += 1
+                        getVersion(args(index))
+                     }
+                     case _ => -1
+                  }
+                  index += 1
+                  val noReply = parseNoReply(index, args)
+                  val data = new Array[Byte](length)
+                  b.readBytes(data, 0, data.length)
+                  readLine(b) // read the rest of line to clear CRLF after value Byte[]
+                  Some(new MemcachedParameters(data, lifespan, -1, streamVersion, noReply, flags, "", 0))
                }
-               index += 1
-               val noReply = parseNoReply(index, args)
-               val data = new Array[Byte](length)
-               b.readBytes(data, 0, data.length)
-               readLine(b) // read the rest of line to clear CRLF after value Byte[]
-               Some(new MemcachedParameters(data, lifespan, -1, streamVersion, noReply, flags, "", 0))
             }
+         } catch {
+            case _: ArrayIndexOutOfBoundsException => throw new IOException("Missing content in command line " + line)
          }
       } else {
          None // For example when delete <key> is sent without any further parameters, or flush_all without delay
@@ -311,7 +315,8 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
                case c: ClosedChannelException => null // no-op, only log
                case _ => {
                   cause match {
-                     case i: IOException => sb.append("CLIENT_ERROR ")
+                     case i: IOException => sb.append("CLIENT_ERROR bad command line format: ")
+                     case n: NumberFormatException => sb.append("CLIENT_ERROR bad command line format: ")
                      case _ => sb.append("SERVER_ERROR ")
                   }
                   sb.append(t).append(CRLF)
