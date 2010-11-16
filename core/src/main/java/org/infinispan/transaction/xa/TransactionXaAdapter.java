@@ -129,6 +129,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
          }
       } finally {
          txTable.removeLocalTransaction(transaction);
+         icc.suspend();
          this.modifications = null;
       }
    }
@@ -144,6 +145,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
          throw new XAException(XAException.XA_HEURHAZ);
       } finally {
          txTable.removeLocalTransaction(transaction);
+         icc.suspend();
          this.modifications = null;
       }
    }
