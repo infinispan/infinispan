@@ -346,7 +346,30 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
       val keyAboveLimit = generateRandomString(251)
       val resp = incr(keyAboveLimit, 1, 1024)
-      assertTrue(resp.contains("CLIENT_ERROR"))
+      assertClientError(resp)
+   }
+
+   def testInvalidCas(m: Method) {
+      var resp = send("cas bad blah 0 0 0\r\n\r\n", 1024)
+      assertClientError(resp)
+
+      resp = send("cas bad 0 blah 0 0\r\n\r\n", 1024)
+      assertClientError(resp)
+
+      resp = send("cas bad 0 0 blah 0\r\n\r\n", 1024)
+      assertClientError(resp)
+
+      resp = send("cas bad 0 0 0 blah\r\n\r\n", 1024)
+      assertClientError(resp)
+   }
+
+   def testInvalidCasValue(m: Method) {
+      val resp = send("cas foo 0 0 6 \r\nbarva2\r\n", 1024)
+      assertClientError(resp)
+   }
+
+   private def assertClientError(resp: String) {
+      assertTrue(resp.contains("CLIENT_ERROR"), "Instead response is: " + resp)
    }
 
    private def addAndGet(m: Method) {
@@ -360,6 +383,10 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    private def incr(k: String, by: Int, expectedLength: Int): String = {
       // Spymemcached expects Long so does not support 64-bit unsigned integer. Instead, do things manually.
       val req = "incr " + k + " " + by + "\r\n"
+      send(req, expectedLength)
+   }
+
+   private def send(req: String, expectedLength: Int): String = {
       val socket = new Socket(server.getHost, server.getPort)
       try {
          socket.getOutputStream.write(req.getBytes)
@@ -371,5 +398,4 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
          socket.close
       }
    }
-
 }
