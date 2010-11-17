@@ -1,17 +1,14 @@
 package org.infinispan.server.core
 
-import scala.collection.JavaConversions._
-import scala.collection.mutable
-import scala.collection.immutable
 import java.io.IOException
 import java.security.{PrivilegedAction, AccessController}
 import java.util.concurrent.{ThreadFactory, ExecutionException, Callable, Executors}
 import gnu.getopt.{Getopt, LongOpt}
 import org.infinispan.Version
-import org.infinispan.manager.{CacheContainer, DefaultCacheManager}
 import java.util.Properties
-import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior
 import org.infinispan.util.{TypedProperties, Util}
+import org.infinispan.config.{Configuration, GlobalConfiguration}
+import org.infinispan.manager.{EmbeddedCacheManager, CacheContainer, DefaultCacheManager}
 
 /**
  * Main class for server startup.
@@ -50,9 +47,15 @@ object Main extends Logging {
    
    private var server: ProtocolServer = _
 
+   private var cacheManager: EmbeddedCacheManager = _
+
+   def getServer = server
+
+   def getCacheManager = cacheManager
+
    def main(args: Array[String]) {
       info("Start main with args: {0}", args.mkString(", "))
-      var worker = new Callable[Void] {
+      val worker = new Callable[Void] {
          override def call = {
             try {
                boot(args)
@@ -67,7 +70,7 @@ object Main extends Logging {
             null
          }
       }
-      var f = Executors.newSingleThreadScheduledExecutor(new ThreadFactory {
+      val f = Executors.newSingleThreadScheduledExecutor(new ThreadFactory {
          override def newThread(r: Runnable): Thread = {
             // TODO Maybe create thread names based on the protocol run
             return new Thread(r, "InfinispanServer-Main")
@@ -92,10 +95,10 @@ object Main extends Logging {
          case "hotrod" => "org.infinispan.server.hotrod.HotRodServer"
          case "websocket" => "org.infinispan.server.websocket.WebSocketServer"
       }
-      val server = Util.getInstance(clazz).asInstanceOf[ProtocolServer]
+      server = Util.getInstance(clazz).asInstanceOf[ProtocolServer]
 
       val configFile = props.getProperty(PROP_KEY_CACHE_CONFIG)
-      val cacheManager = if (configFile == null) new DefaultCacheManager else new DefaultCacheManager(configFile)
+      cacheManager = if (configFile == null) createCacheManagerNoConfig else new DefaultCacheManager(configFile)
       // Servers need a shutdown hook to close down network layer, so there's no need for an extra shutdown hook.
       // Removing Infinispan's hook also makes shutdown procedures for server and cache manager sequential, avoiding
       // issues with having the JGroups channel disconnected before it's removed itself from the topology view.
@@ -104,9 +107,17 @@ object Main extends Logging {
       server.start(props, cacheManager)
    }
 
+   private def createCacheManagerNoConfig: EmbeddedCacheManager = {
+      val globalCfg = new GlobalConfiguration
+      globalCfg.setExposeGlobalJmxStatistics(true)
+      val defaultCfg = new Configuration
+      defaultCfg.setExposeJmxStatistics(true)
+      new DefaultCacheManager(globalCfg, defaultCfg)
+   }
+
    private def processCommandLine(args: Array[String]) {
-      var sopts = "-:hD:Vp:l:m:t:c:r:i:n:s:e:o:x:"
-      var lopts = Array(
+      val sopts = "-:hD:Vp:l:m:t:c:r:i:n:s:e:o:x:"
+      val lopts = Array(
          new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
          new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'V'),
          new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
@@ -122,7 +133,7 @@ object Main extends Logging {
          new LongOpt("proxy_host", LongOpt.REQUIRED_ARGUMENT, null, 'o'),
          new LongOpt("proxy_port", LongOpt.REQUIRED_ARGUMENT, null, 'x')
          )
-      var getopt = new Getopt("startServer", args, sopts, lopts)
+      val getopt = new Getopt("startServer", args, sopts, lopts)
       var code: Int = 0
       while ((({code = getopt.getopt; code})) != -1) {
          code match {
@@ -228,7 +239,7 @@ private class ShutdownHook(server: ProtocolServer, cacheManager: CacheContainer)
             override def newThread(r: Runnable): Thread = new Thread(r, "StopThread")
          }
 
-         var f = Executors.newSingleThreadExecutor(tf).submit(new Callable[Void] {
+         val f = Executors.newSingleThreadExecutor(tf).submit(new Callable[Void] {
             override def call = {
                // Stop server first so that no new requests are allowed
                server.stop
