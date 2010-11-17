@@ -19,7 +19,8 @@ import org.infinispan.manager.EmbeddedCacheManager
 class MemcachedStatsTest extends MemcachedSingleNodeTest {
    private var jmxDomain = classOf[MemcachedStatsTest].getSimpleName
 
-   override def createTestCacheManager: EmbeddedCacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain)
+   override def createTestCacheManager: EmbeddedCacheManager =
+      TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain)
 
    def testUnsupportedStats(m: Method) {
       val stats = getStats
@@ -48,7 +49,7 @@ class MemcachedStatsTest extends MemcachedSingleNodeTest {
        assertEquals(stats.get("version"), Version.version)
     }
 
-   def testTodoStats: Unit = {
+   def testTodoStats {
       val stats = getStats
       assertEquals(stats.get("curr_connections"), "0")
       assertEquals(stats.get("total_connections"), "0")
@@ -58,7 +59,7 @@ class MemcachedStatsTest extends MemcachedSingleNodeTest {
    }
 
 
-   def testStats(m: Method): Unit = {
+   def testStats(m: Method) {
       var stats = getStats
       assertEquals(stats.get("cmd_set"), "0")
       assertEquals(stats.get("cmd_get"), "0")
