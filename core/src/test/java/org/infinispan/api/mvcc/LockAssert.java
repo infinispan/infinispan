@@ -16,7 +16,6 @@ import org.infinispan.util.concurrent.locks.containers.LockContainer;
 public class LockAssert {
    public static void assertLocked(Object key, LockManager lockManager, InvocationContextContainer icc) {
       assert lockManager.isLocked(key) : key + " not locked!";
-//      assert icc.get().getKeysLocked().contains(key) : "Lock not recorded for " + key;
    }
 
    public static void assertNotLocked(Object key, InvocationContextContainer icc) {
@@ -27,12 +26,6 @@ public class LockAssert {
    public static void assertNoLocks(LockManager lockManager, InvocationContextContainer icc) {
       LockContainer lc = (LockContainer) TestingUtil.extractField(lockManager, "lockContainer");
       assert lc.getNumLocksHeld() == 0 : "Stale locks exist! NumLocksHeld is " + lc.getNumLocksHeld() + " and lock info is " + lockManager.printLockInfo();
-      InvocationContext invocationContext = icc.getInvocationContext();
-      if (invocationContext instanceof TxInvocationContext) {
-         TxInvocationContext txContext = (TxInvocationContext) invocationContext;
-         int modCount = txContext.getModifications() == null ? 0 : txContext.getModifications().size();
-         assert modCount == 0 : " expected 0 modifications but were " + modCount ;
-      }
    }
 
    public static void assertNoLocks(Cache cache) {
