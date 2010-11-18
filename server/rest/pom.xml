@@ -47,7 +47,7 @@
                </execution>
             </executions>
             <configuration>
-               <scalaVersion>2.8.0</scalaVersion>
+               <scalaVersion>${version.scala}</scalaVersion>
             </configuration>
          </plugin>
          <plugin>
