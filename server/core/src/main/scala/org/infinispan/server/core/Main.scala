@@ -9,6 +9,7 @@ import java.util.Properties
 import org.infinispan.util.{TypedProperties, Util}
 import org.infinispan.config.{Configuration, GlobalConfiguration}
 import org.infinispan.manager.{EmbeddedCacheManager, CacheContainer, DefaultCacheManager}
+import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior
 
 /**
  * Main class for server startup.
@@ -102,6 +103,7 @@ object Main extends Logging {
       // Servers need a shutdown hook to close down network layer, so there's no need for an extra shutdown hook.
       // Removing Infinispan's hook also makes shutdown procedures for server and cache manager sequential, avoiding
       // issues with having the JGroups channel disconnected before it's removed itself from the topology view.
+      cacheManager.getGlobalConfiguration.setShutdownHookBehavior(ShutdownHookBehavior.DONT_REGISTER)
       addShutdownHook(new ShutdownHook(server, cacheManager))
       server.start(props, cacheManager)
    }
