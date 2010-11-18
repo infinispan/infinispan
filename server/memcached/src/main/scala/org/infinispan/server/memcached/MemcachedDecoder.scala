@@ -308,10 +308,10 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
    override def createErrorResponse(t: Throwable): AnyRef = {
       val sb = new StringBuilder
       t match {
+         case u: UnknownOperationException => ERROR
          case se: ServerException => {
             val cause = se.getCause
             cause match {
-               case u: UnknownOperationException => ERROR
                case c: ClosedChannelException => null // no-op, only log
                case _ => {
                   cause match {

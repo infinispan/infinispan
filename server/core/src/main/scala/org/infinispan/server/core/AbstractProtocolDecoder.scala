@@ -27,7 +27,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
 
    override def decode(ctx: ChannelHandlerContext, buffer: ChannelBuffer): AnyRef = {
       val header = readHeader(buffer)
-      if (header == null) return null // Something went wrong reading the header, so get more bytes 
+      if (header == null) return null // Something went wrong reading the header, so get more bytes
       try {
          val ret = header.op match {
             case PutRequest | PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest | RemoveRequest => {

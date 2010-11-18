@@ -333,7 +333,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertEquals(version, Version.version)
    }
 
-   def testKeyLengthLimit(m: Method) {
+   def testKeyLengthLimit {
       val keyUnderLimit = generateRandomString(249)
       var f = client.set(keyUnderLimit, 0, "78")
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
@@ -349,27 +349,40 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertClientError(resp)
    }
 
-   def testInvalidCas(m: Method) {
-      var resp = send("cas bad blah 0 0 0\r\n\r\n", 1024)
+   def testInvalidCas {
+      var resp = send("cas bad blah 0 0 0\r\n\r\n")
       assertClientError(resp)
 
-      resp = send("cas bad 0 blah 0 0\r\n\r\n", 1024)
+      resp = send("cas bad 0 blah 0 0\r\n\r\n")
       assertClientError(resp)
 
-      resp = send("cas bad 0 0 blah 0\r\n\r\n", 1024)
+      resp = send("cas bad 0 0 blah 0\r\n\r\n")
       assertClientError(resp)
 
-      resp = send("cas bad 0 0 0 blah\r\n\r\n", 1024)
+      resp = send("cas bad 0 0 0 blah\r\n\r\n")
       assertClientError(resp)
    }
 
-   def testInvalidCasValue(m: Method) {
-      val resp = send("cas foo 0 0 6 \r\nbarva2\r\n", 1024)
+   def testInvalidCasValue {
+      val resp = send("cas foo 0 0 6 \r\nbarva2\r\n")
       assertClientError(resp)
+   }
+
+   def testUnknownCommand {
+      val resp = send("blah\r\n")
+      assertError(resp)
    }
 
    private def assertClientError(resp: String) {
-      assertTrue(resp.contains("CLIENT_ERROR"), "Instead response is: " + resp)
+      assertExpectedError(resp, "CLIENT_ERROR")
+   }
+
+   private def assertError(resp: String) {
+      assertExpectedError(resp, "ERROR")
+   }
+
+   private def assertExpectedError(resp: String, expectedError: String) {
+      assertTrue(resp.contains(expectedError), "Instead response is: " + resp)
    }
 
    private def addAndGet(m: Method) {
@@ -385,6 +398,8 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       val req = "incr " + k + " " + by + "\r\n"
       send(req, expectedLength)
    }
+
+   private def send(req: String): String = send(req, 1024)
 
    private def send(req: String, expectedLength: Int): String = {
       val socket = new Socket(server.getHost, server.getPort)
