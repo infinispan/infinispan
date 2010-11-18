@@ -9,6 +9,7 @@ import java.util.Properties
 import org.infinispan.util.{TypedProperties, Util}
 import org.infinispan.config.{Configuration, GlobalConfiguration}
 import org.infinispan.manager.{EmbeddedCacheManager, CacheContainer, DefaultCacheManager}
+import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior
 
 /**
  * Main class for server startup.
