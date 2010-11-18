@@ -333,7 +333,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertEquals(version, Version.version)
    }
 
-   def testKeyLengthLimit {
+   def testIncrKeyLengthLimit {
       val keyUnderLimit = generateRandomString(249)
       var f = client.set(keyUnderLimit, 0, "78")
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
@@ -346,6 +346,16 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
       val keyAboveLimit = generateRandomString(251)
       val resp = incr(keyAboveLimit, 1, 1024)
+      assertClientError(resp)
+   }
+
+   def testGetKeyLengthLimit {
+      var tooLongKey = generateRandomString(251)
+      var resp = send("get " + tooLongKey + "\r\n")
+      assertClientError(resp)
+
+      tooLongKey = generateRandomString(251)
+      resp = send("get k1 k2 k3 " + tooLongKey + "\r\n")
       assertClientError(resp)
    }
 

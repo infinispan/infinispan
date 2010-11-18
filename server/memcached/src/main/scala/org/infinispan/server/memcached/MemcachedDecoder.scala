@@ -49,29 +49,27 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       new RequestHeader(op.get)
    }
 
-   override def readKey(h: RequestHeader, b: ChannelBuffer): String = {
-      val k = readElement(b)
-      if (k.length > 250) throw new ServerException(h, new IOException("Key length over the 250 character limit")) else k
-   }
+   override def readKey(h: RequestHeader, b: ChannelBuffer): String = checkKeyLength(h, readElement(b))
 
-   private def readKeys(h: RequestHeader, b: ChannelBuffer): Array[String] = {
-      val line = readLine(b)
-      line.trim.split(" +")
-   }
+   private def readKeys(b: ChannelBuffer): Array[String] = readLine(b).trim.split(" +")
 
    override protected def get(h: RequestHeader, buffer: ChannelBuffer, cache: Cache[String, MemcachedValue]): AnyRef = {
-      val keys = readKeys(h, buffer)
+      val keys = readKeys(buffer)
       if (keys.length > 1) {
          val map = new HashMap[String, MemcachedValue]()
          for (k <- keys) {
-            val v = cache.get(k)
+            val v = cache.get(checkKeyLength(h, k))
             if (v != null)
                map += (k -> v)
          }
          createMultiGetResponse(h, new immutable.HashMap ++ map)
       } else {
-         createGetResponse(h, keys.head, cache.get(keys.head))
+         createGetResponse(h, keys.head, cache.get(checkKeyLength(h, keys.head)))
       }
+   }
+
+   private def checkKeyLength(h: RequestHeader, k: String): String = {
+      if (k.length > 250) throw new ServerException(h, new IOException("Key length over the 250 character limit")) else k
    }
 
    override def readParameters(h: RequestHeader, b: ChannelBuffer): Option[MemcachedParameters] = {
