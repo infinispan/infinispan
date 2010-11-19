@@ -77,6 +77,7 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
          verify(mockNotifier);
 
          reset(mockNotifier);
+         mockNotifier.removeListener(isA(StaleTransactionCleanup.class));
          mockNotifier.notifyCacheStopped("testCache");
          replay(mockNotifier);
          testCache.stop();
