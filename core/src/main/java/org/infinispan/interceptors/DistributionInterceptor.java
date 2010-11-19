@@ -100,7 +100,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    private boolean needsRemoteGet(InvocationContext ctx, Object key, boolean retvalCheck) {
       CacheEntry entry;
-      return retvalCheck && !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP) && ((entry = ctx.lookupEntry(key)) == null || entry.isLockPlaceholder());
+      return retvalCheck && !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP) && ((entry = ctx.lookupEntry(key)) == null || entry.isNull() || entry.isLockPlaceholder());
    }
 
 
