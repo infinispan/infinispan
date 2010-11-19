@@ -183,6 +183,7 @@
          <groupId>log4j</groupId>
          <artifactId>log4j</artifactId>
          <version>${version.log4j}</version>
+         <optional>true</optional>
       </dependency>
 
       <!-- used to serialize non-serializable objects for a dummy marshaller -->
