@@ -34,6 +34,7 @@ class MemcachedStatsTest extends MemcachedSingleNodeTest {
       assertEquals(stats.get("auth_errors"), "0")
       assertEquals(stats.get("limit_maxbytes"), "0")
       assertEquals(stats.get("conn_yields"), "0")
+      assertEquals(stats.get("reclaimed"), "0")
    }
 
    def testUncomparableStats(m: Method) {
