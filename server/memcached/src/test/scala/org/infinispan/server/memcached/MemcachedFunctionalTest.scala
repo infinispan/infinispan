@@ -158,26 +158,26 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
    def testGetsBasic(m: Method) {
       addAndGet(m)
-      var value = client.gets(k(m))
+      val value = client.gets(k(m))
       assertEquals(value.getValue(), v(m))
       assertTrue(value.getCas() != 0)
    }
 
    def testCasBasic(m: Method) {
       addAndGet(m)
-      var value = client.gets(k(m))
+      val value = client.gets(k(m))
       assertEquals(value.getValue(), v(m))
       assertTrue(value.getCas() != 0)
-      var resp = client.cas(k(m), value.getCas, v(m, "v1-"))
+      val resp = client.cas(k(m), value.getCas, v(m, "v1-"))
       assertEquals(resp, CASResponse.OK)
    }
 
    def testCasNotFound(m: Method) {
       addAndGet(m)
-      var value = client.gets(k(m))
+      val value = client.gets(k(m))
       assertEquals(value.getValue(), v(m))
       assertTrue(value.getCas() != 0)
-      var resp = client.cas(k(m, "k1-"), value.getCas, v(m, "v1-"))
+      val resp = client.cas(k(m, "k1-"), value.getCas, v(m, "v1-"))
       assertEquals(resp, CASResponse.NOT_FOUND)
    }
 
@@ -198,6 +198,25 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertEquals(resp, CASResponse.OK)
    }
 
+   def testInvalidCas {
+      var resp = send("cas bad blah 0 0 0\r\n\r\n")
+      assertClientError(resp)
+
+      resp = send("cas bad 0 blah 0 0\r\n\r\n")
+      assertClientError(resp)
+
+      resp = send("cas bad 0 0 blah 0\r\n\r\n")
+      assertClientError(resp)
+
+      resp = send("cas bad 0 0 0 blah\r\n\r\n")
+      assertClientError(resp)
+   }
+
+   def testInvalidCasValue {
+      val resp = send("cas foo 0 0 6 \r\nbarva2\r\n")
+      assertClientError(resp)
+   }
+
    def testDeleteBasic(m: Method) {
       addAndGet(m)
       val f = client.delete(k(m))
@@ -209,6 +228,8 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       val f = client.delete(k(m))
       assertFalse(f.get(timeout, TimeUnit.SECONDS).booleanValue)
    }
+
+   def testPipelinedDelete = assertExpectedResponse(send("delete a\r\ndelete a\r\n"), "NOT_FOUND")
 
    def testIncrementBasic(m: Method) {
       val f = client.set(k(m), 0, "1")
@@ -264,13 +285,13 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    }
 
    def testDecrementBasic(m: Method) {
-      var f = client.set(k(m), 0, "1")
+      val f = client.set(k(m), 0, "1")
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
       assertEquals(client.decr(k(m), 1), 0)
    }
 
    def testDecrementTriple(m: Method) {
-      var f = client.set(k(m), 0, "8")
+      val f = client.set(k(m), 0, "8")
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
       assertEquals(client.decr(k(m), 1), 7)
       assertEquals(client.decr(k(m), 2), 5)
@@ -282,9 +303,9 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    }
 
    def testDecrementBelowZero(m: Method) {
-      var f = client.set(k(m), 0, "1")
+      val f = client.set(k(m), 0, "1")
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
-      var newValue = client.decr(k(m), 2)
+      val newValue = client.decr(k(m), 2)
       assertEquals(newValue, 0)
    }
 
@@ -359,41 +380,14 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertClientError(resp)
    }
 
-   def testInvalidCas {
-      var resp = send("cas bad blah 0 0 0\r\n\r\n")
-      assertClientError(resp)
+   def testUnknownCommand = assertError(send("blah\r\n"))
 
-      resp = send("cas bad 0 blah 0 0\r\n\r\n")
-      assertClientError(resp)
+   private def assertClientError(resp: String) = assertExpectedResponse(resp, "CLIENT_ERROR")
 
-      resp = send("cas bad 0 0 blah 0\r\n\r\n")
-      assertClientError(resp)
+   private def assertError(resp: String) = assertExpectedResponse(resp, "ERROR")
 
-      resp = send("cas bad 0 0 0 blah\r\n\r\n")
-      assertClientError(resp)
-   }
-
-   def testInvalidCasValue {
-      val resp = send("cas foo 0 0 6 \r\nbarva2\r\n")
-      assertClientError(resp)
-   }
-
-   def testUnknownCommand {
-      val resp = send("blah\r\n")
-      assertError(resp)
-   }
-
-   private def assertClientError(resp: String) {
-      assertExpectedError(resp, "CLIENT_ERROR")
-   }
-
-   private def assertError(resp: String) {
-      assertExpectedError(resp, "ERROR")
-   }
-
-   private def assertExpectedError(resp: String, expectedError: String) {
-      assertTrue(resp.contains(expectedError), "Instead response is: " + resp)
-   }
+   private def assertExpectedResponse(resp: String, expectedResp: String) =
+      assertTrue(resp.contains(expectedResp), "Instead response is: " + resp)
 
    private def addAndGet(m: Method) {
       val f = client.add(k(m), 0, v(m))
