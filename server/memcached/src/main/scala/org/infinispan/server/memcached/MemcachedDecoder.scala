@@ -365,6 +365,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
          buildStat("limit_maxbytes", 0, sb), // Unsupported
          buildStat("threads", 0, sb), // TODO: Through netty?
          buildStat("conn_yields", 0, sb), // Unsupported
+         buildStat("reclaimed", 0, sb), // Unsupported
          wrappedBuffer(END)
       )
    }
