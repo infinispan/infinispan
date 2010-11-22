@@ -1,6 +1,5 @@
 package org.infinispan.server.memcached
 
-import org.infinispan.manager.{CacheContainer}
 import org.infinispan.server.core.Operation._
 import org.infinispan.server.memcached.MemcachedOperation._
 import org.infinispan.context.Flag
@@ -40,7 +39,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
    private final val replaceIfUnmodifiedBadval = new AtomicLong(0)
 
    override def readHeader(buffer: ChannelBuffer): RequestHeader = {
-      val streamOp = readElement(buffer)
+      val (streamOp, endOfOp) = readElement(buffer)
       val op = toRequest(streamOp)
       if (op == None) {
          val line = readLine(buffer) // Read rest of line to clear the operation
@@ -49,7 +48,11 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       new RequestHeader(op.get)
    }
 
-   override def readKey(h: RequestHeader, b: ChannelBuffer): String = checkKeyLength(h, readElement(b))
+   override def readKey(h: RequestHeader, b: ChannelBuffer): (String, Boolean) = {
+      val (k, endOfOp) = readElement(b)
+      checkKeyLength(h, k)
+      (k, endOfOp)
+   }
 
    private def readKeys(b: ChannelBuffer): Array[String] = readLine(b).trim.split(" +")
 
@@ -178,8 +181,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
    override def handleCustomRequest(h: RequestHeader, b: ChannelBuffer, cache: Cache[String, MemcachedValue]): AnyRef = {
       h.op match {
          case AppendRequest | PrependRequest => {
-            val k = readKey(h, b)
-            val params = readParameters(h, b)
+            val (k, params) = readKeyAndParams(h, b)
             val prev = cache.get(k)
             if (prev != null) {
                val concatenated = h.op match {
@@ -197,8 +199,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
             }
          }
          case IncrementRequest | DecrementRequest => {
-            val k = readKey(h, b)
-            val params = readParameters(h, b)
+            val (k, params) = readKeyAndParams(h, b)
             val prev = cache.get(k)
             if (prev != null) {
                val prevCounter = BigInt(new String(prev.data))
@@ -214,7 +215,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
                      }
                   }
                val next = createValue(newCounter.toString.getBytes, generateVersion(cache), params.get.flags)
-               var replaced = cache.replace(k, prev, next)
+               val replaced = cache.replace(k, prev, next)
                if (replaced) {
                   if (isStatsEnabled) if (h.op == IncrementRequest) incrHits.incrementAndGet() else decrHits.incrementAndGet
                   if (!params.get.noReply) new String(next.data) + CRLF else null
@@ -327,7 +328,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
    }
 
    def createStatsResponse(header: RequestHeader, stats: Stats): AnyRef = {
-      var sb = new StringBuilder
+      val sb = new StringBuilder
       List[ChannelBuffer] (
          buildStat("pid", 0, sb),
          buildStat("uptime", stats.getTimeSinceStart, sb),

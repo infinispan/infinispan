@@ -25,17 +25,24 @@ trait TextProtocolUtil {
    val CR = 13
    val LF = 10
 
-   def readElement(buffer: ChannelBuffer): String = readElement(buffer, new StringBuilder())
+   /**
+    * In the particular case of Memcached, the end of operation/command
+    * is signaled by "\r\n" characters. So, if end of operation is
+    * found, this method would return the element and true. On the
+    * contrary, if space was found instead of end of operation
+    * character, then it'd return the element and false.
+    */
+   def readElement(buffer: ChannelBuffer): (String, Boolean) = readElement(buffer, new StringBuilder())
 
-   private def readElement(buffer: ChannelBuffer, sb: StringBuilder): String = {
+   private def readElement(buffer: ChannelBuffer, sb: StringBuilder): (String, Boolean) = {
       var next = buffer.readByte 
       if (next == 32) { // Space
-         sb.toString.trim
+         (sb.toString.trim, false)
       }
       else if (next == 13) { // CR
          next = buffer.readByte
          if (next == 10) { // LF
-            sb.toString.trim
+            (sb.toString.trim, true)
          } else {
             sb.append(next.asInstanceOf[Char])
             readElement(buffer, sb)
