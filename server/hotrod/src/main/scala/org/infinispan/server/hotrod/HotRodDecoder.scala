@@ -27,7 +27,6 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
    type SuitableParameters = RequestParameters
 
    private var isError = false
-   private var joined = false
    private val isTrace = isTraceEnabled
 
    override def readHeader(buffer: ChannelBuffer): HotRodHeader = {
@@ -80,8 +79,10 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
       getCacheInstance(cacheName, cacheManager)
    }
 
-   override def readKey(h: HotRodHeader, b: ChannelBuffer): ByteArrayKey =
-      h.decoder.readKey(b)
+   override def readKey(h: HotRodHeader, b: ChannelBuffer): (ByteArrayKey, Boolean) =
+       // In the case of Hot Rod, each element is delimited, so there's
+       // no chance of reading the key and finding the end of operation.
+      (h.decoder.readKey(b), false)
 
    override def readParameters(h: HotRodHeader, b: ChannelBuffer): Option[RequestParameters] =
       h.decoder.readParameters(h, b)

@@ -31,8 +31,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
       try {
          val ret = header.op match {
             case PutRequest | PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest | RemoveRequest => {
-               val k = readKey(header, buffer)
-               val params = readParameters(header, buffer)
+               val (k, params) = readKeyAndParams(header, buffer)
                val cache = getCache(header)
                header.op match {
                   case PutRequest => put(header, k, params, cache)
@@ -53,6 +52,12 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
          case e: Exception => throw new ServerException(header, e)
          case t: Throwable => throw t
       }
+   }
+
+   protected def readKeyAndParams(h: SuitableHeader, b: ChannelBuffer): (K, Option[SuitableParameters]) = {
+      val (k, endOfOp) = readKey(h, b)
+      val params = if (!endOfOp) readParameters(h, b) else None
+      (k, params)
    }
 
    def decodeLast(ctx: ChannelHandlerContext, buffer: ChannelBuffer): AnyRef = null // no-op
@@ -133,8 +138,8 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
    }
 
    protected def get(header: SuitableHeader, buffer: ChannelBuffer, cache: Cache[K, V]): AnyRef = {
-      val key = readKey(header, buffer)
-      createGetResponse(header, key, cache.get(key))
+      val (k, endOfOp) = readKey(header, buffer)
+      createGetResponse(header, k, cache.get(k))
    }
 
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
@@ -155,7 +160,13 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
 
    protected def getCache(h: SuitableHeader): Cache[K, V]
 
-   protected def readKey(h: SuitableHeader, b: ChannelBuffer): K
+   /**
+    * Returns the key read along with a boolean indicating whether the
+    * end of the operation was found or not. This allows client to
+    * differentiate between extra parameters or pipelined sequence of
+    * operations.
+    */
+   protected def readKey(h: SuitableHeader, b: ChannelBuffer): (K, Boolean)
 
    protected def readParameters(h: SuitableHeader, b: ChannelBuffer): Option[SuitableParameters]
 
