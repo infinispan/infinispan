@@ -21,6 +21,8 @@ trait TextProtocolUtil {
    val NOT_STORED = "NOT_STORED\r\n".getBytes
    val OK = "OK\r\n".getBytes
    val ERROR = "ERROR\r\n".getBytes
+   val CLIENT_ERROR_BAD_FORMAT = "CLIENT_ERROR bad command line format: "
+   val SERVER_ERROR = "SERVER_ERROR "
 
    val CR = 13
    val LF = 10

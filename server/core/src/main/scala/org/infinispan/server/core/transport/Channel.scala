@@ -12,4 +12,6 @@ abstract class Channel {
 
    def disconnect: ChannelFuture
 
+   def getUnderlyingChannel: AnyRef
+
 }

@@ -9,7 +9,7 @@ import org.infinispan.server.core.transport.{ChannelBuffer, ChannelFuture, Chann
  * @author Galder Zamarreño
  * @since 4.1
  */
-class ChannelAdapter(val ch: NettyChannel) extends Channel {
+class ChannelAdapter(ch: NettyChannel) extends Channel {
 
    override def disconnect: ChannelFuture = new ChannelFutureAdapter(ch.disconnect());
 
@@ -21,4 +21,5 @@ class ChannelAdapter(val ch: NettyChannel) extends Channel {
       new ChannelFutureAdapter(ch.write(toWrite));
    }
 
+   override def getUnderlyingChannel: AnyRef = ch
 }
