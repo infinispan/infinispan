@@ -4,18 +4,20 @@ import org.infinispan.CacheException;
 import org.infinispan.Version;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
-import org.infinispan.executors.DefaultExecutorFactory;
-import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.TypedProperties;
+import org.infinispan.util.Util;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -64,31 +66,31 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public static final short DEFAULT_MARSHALL_VERSION = Version.getVersionShort();
 
    @XmlElement
-   private ExecutorFactoryType asyncListenerExecutor = new ExecutorFactoryType();
+   ExecutorFactoryType asyncListenerExecutor = new ExecutorFactoryType();
 
    @XmlElement
-   private ExecutorFactoryType asyncTransportExecutor = new ExecutorFactoryType();
+   ExecutorFactoryType asyncTransportExecutor = new ExecutorFactoryType();
 
    @XmlElement
-   private ScheduledExecutorFactoryType evictionScheduledExecutor = new ScheduledExecutorFactoryType();
+   ScheduledExecutorFactoryType evictionScheduledExecutor = new ScheduledExecutorFactoryType();
 
    @XmlElement
-   private ScheduledExecutorFactoryType replicationQueueScheduledExecutor = new ScheduledExecutorFactoryType();
+   ScheduledExecutorFactoryType replicationQueueScheduledExecutor = new ScheduledExecutorFactoryType();
 
    @XmlElement
-   private GlobalJmxStatisticsType globalJmxStatistics = new GlobalJmxStatisticsType();
+   GlobalJmxStatisticsType globalJmxStatistics = new GlobalJmxStatisticsType();
 
    @XmlElement
-   private TransportType transport = new TransportType(null);
+   TransportType transport = new TransportType(null);
 
    @XmlElement
-   private SerializationType serialization = new SerializationType();
+   SerializationType serialization = new SerializationType();
 
    @XmlElement
-   private ShutdownType shutdown = new ShutdownType();
+   ShutdownType shutdown = new ShutdownType();
 
    @XmlTransient
-   private GlobalComponentRegistry gcr;
+   GlobalComponentRegistry gcr;
 
    public boolean isExposeGlobalJmxStatistics() {
       return globalJmxStatistics.enabled;
@@ -125,13 +127,34 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return globalJmxStatistics.mBeanServerLookup;
    }
 
+   public Properties getMBeanServerProperties() {
+      return globalJmxStatistics.properties;
+   }
+
+   /**
+    * Sets properties which are then passed to the MBean Server Lookup implementation specified.
+    * @param properties properties to pass to the MBean Server Lookup
+    */
+   public void setMBeanServerProperties(Properties properties) {
+      globalJmxStatistics.setProperties(toTypedProperties(properties));
+   }
+
    /**
     * Fully qualified name of class that will attempt to locate a JMX MBean server to bind to
     * 
-    * @param mBeanServerLookup
+    * @param mBeanServerLookupClass fully qualified class name of the MBean Server Lookup class implementation
     */
-   public void setMBeanServerLookup(String mBeanServerLookup) {
-      globalJmxStatistics.setMBeanServerLookup(mBeanServerLookup);
+   public void setMBeanServerLookup(String mBeanServerLookupClass) {
+      globalJmxStatistics.setMBeanServerLookup(mBeanServerLookupClass);
+   }
+
+   @XmlTransient
+   public void setMBeanServerLookup(MBeanServerLookup mBeanServerLookup) {
+      globalJmxStatistics.setMBeanServerLookupInstance(mBeanServerLookup);
+   }
+
+   public MBeanServerLookup getMBeanServerLookupInstance() {
+      return globalJmxStatistics.getMBeanServerLookupInstance();
    }
 
    public boolean isAllowDuplicateDomains() {
@@ -913,6 +936,12 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setCacheManagerName")
       protected String cacheManagerName = "DefaultCacheManager";
 
+      @XmlElement(name = "properties")
+      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setMBeanServerProperties")
+      protected TypedProperties properties = EMPTY_PROPERTIES;
+
+      private MBeanServerLookup mBeanServerLookupInstance;
+
       @XmlAttribute
       public void setEnabled(Boolean enabled) {
          testImmutability("enabled");
@@ -922,6 +951,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       public void accept(ConfigurationBeanVisitor v) {
          v.visitGlobalJmxStatisticsType(this);
       }
+
+       public void setProperties(TypedProperties p) {
+         this.properties = p;
+       }
 
       @XmlAttribute
       public void setJmxDomain(String jmxDomain) {
@@ -947,6 +980,17 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          this.cacheManagerName = cacheManagerName;
       }
 
+      public MBeanServerLookup getMBeanServerLookupInstance() {
+         if (mBeanServerLookupInstance == null)
+            mBeanServerLookupInstance = (MBeanServerLookup) Util.getInstance(mBeanServerLookup);
+
+         return mBeanServerLookupInstance;
+      }
+
+      @XmlTransient
+      public void setMBeanServerLookupInstance(MBeanServerLookup MBeanServerLookupInstance) {
+         this.mBeanServerLookupInstance = MBeanServerLookupInstance;
+      }
    }
 
    /**

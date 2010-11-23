@@ -60,9 +60,8 @@ public abstract class AbstractJmxRegistration {
    }
 
    protected MBeanServer getMBeanServer(GlobalConfiguration configuration) {
-      String serverLookup = configuration.getMBeanServerLookup();
-      MBeanServerLookup lookup = (MBeanServerLookup) Util.getInstance(serverLookup);
-      return lookup.getMBeanServer();
+      MBeanServerLookup lookup = configuration.getMBeanServerLookupInstance();
+      return lookup.getMBeanServer(configuration.getMBeanServerProperties());
    }
 
    protected String getJmxDomain(String jmxDomain, MBeanServer mBeanServer, String groupName) {
