@@ -469,14 +469,22 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.store(InternalEntryFactory.create("k1", "v1", lifespan));
       cs.store(InternalEntryFactory.create("k2", "v2", -1, idle));
       cs.store(InternalEntryFactory.create("k3", "v3", lifespan, idle));
+      cs.store(InternalEntryFactory.create("k4", "v4", -1, -1)); // immortal entry
+      cs.store(InternalEntryFactory.create("k5", "v5", lifespan * 1000, idle * 1000)); // long life mortal entry
       assert cs.containsKey("k1");
       assert cs.containsKey("k2");
       assert cs.containsKey("k3");
+      assert cs.containsKey("k4");
+      assert cs.containsKey("k5");
+
       Thread.sleep(lifespan + 10);
       purgeExpired();
+
       assert !cs.containsKey("k1");
       assert !cs.containsKey("k2");
       assert !cs.containsKey("k3");
+      assert cs.containsKey("k4");
+      assert cs.containsKey("k5");
    }
 
    public void testLoadKeys() throws CacheLoaderException {
