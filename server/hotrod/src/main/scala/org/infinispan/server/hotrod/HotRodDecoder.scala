@@ -29,7 +29,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
    private var isError = false
    private val isTrace = isTraceEnabled
 
-   override def readHeader(buffer: ChannelBuffer): HotRodHeader = {
+   override def readHeader(buffer: ChannelBuffer): Option[HotRodHeader] = {
       try {
          val magic = buffer.readUnsignedByte
          if (magic != Magic) {
@@ -37,13 +37,13 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
                throw new InvalidMagicIdException("Error reading magic byte or message id: " + magic)
             } else {
                if (isTrace) trace("Error happened previously, ignoring {0} byte until we find the magic number again", magic)
-               return null // Keep trying to read until we find magic
+               return None // Keep trying to read until we find magic
             }
          }
       } catch {
          case e: Exception => {
             isError = true
-            throw new ServerException(new ErrorHeader(0), e)
+            throw e
          }
       }
 
@@ -53,16 +53,16 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
          val version = buffer.readUnsignedByte
          val decoder = version match {
             case Version10 => Decoder10
-            case _ => throw new UnknownVersionException("Unknown version:" + version)
+            case _ => throw new UnknownVersionException("Unknown version:" + version, messageId)
          }
          val header = decoder.readHeader(buffer, messageId)
          if (isTrace) trace("Decoded header {0}", header)
          isError = false
-         header
+         Some(header)
       } catch {
          case e: Exception => {
             isError = true
-            throw new ServerException(new ErrorHeader(messageId), e)
+            throw e
          }
       }
    }
@@ -116,15 +116,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
 
    override def createErrorResponse(t: Throwable): AnyRef = {
       t match {
-         case se: ServerException => {
-            val h = se.header.asInstanceOf[HotRodHeader]
-            se.getCause match {
-               case i: InvalidMagicIdException => new ErrorResponse(0, "", 1, InvalidMagicOrMsgId, 0, i.toString)
-               case u: UnknownOperationException => new ErrorResponse(h.messageId, "", 1, UnknownOperation, 0, u.toString)
-               case u: UnknownVersionException => new ErrorResponse(h.messageId, "", 1, UnknownVersion, 0, u.toString)
-               case t: Throwable => h.decoder.createErrorResponse(h, t)
-            }
-         }
+         case h: HotRodException => h.response
          case c: ClosedChannelException => null
          case t: Throwable => new ErrorResponse(0, "", 1, ServerError, 0, t.toString)
       }
@@ -133,6 +125,18 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
    override protected def getOptimizedCache(h: HotRodHeader, c: Cache[ByteArrayKey, CacheValue]): Cache[ByteArrayKey, CacheValue] = {
       h.decoder.getOptimizedCache(h, c)
    }
+
+   override protected def createServerException(e: Exception, h: Option[HotRodHeader]): (HotRodException, Boolean) = {
+      e match {
+         case i: InvalidMagicIdException =>
+            (new HotRodException(new ErrorResponse(0, "", 1, InvalidMagicOrMsgId, 0, i.toString), e), true)
+         case h: HotRodUnknownOperationException =>
+            (new HotRodException(new ErrorResponse(h.messageId, "", 1, UnknownOperation, 0, h.toString), e), true)
+         case u: UnknownVersionException =>
+            (new HotRodException(new ErrorResponse(u.messageId, "", 1, UnknownVersion, 0, u.toString), e), true)
+         case t: Throwable => (new HotRodException(h.get.decoder.createErrorResponse(h.get, t), e), false)
+      }
+   }
 }
 
 object HotRodDecoder extends Logging {
@@ -140,7 +144,9 @@ object HotRodDecoder extends Logging {
    private val Version10 = 10
 }
 
-class UnknownVersionException(reason: String) extends StreamCorruptedException(reason)
+class UnknownVersionException(reason: String, val messageId: Long) extends StreamCorruptedException(reason)
+
+class HotRodUnknownOperationException(reason: String, val messageId: Long) extends UnknownOperationException(reason)
 
 class InvalidMagicIdException(reason: String) extends StreamCorruptedException(reason)
 
@@ -168,3 +174,5 @@ class ErrorHeader(override val messageId: Long) extends HotRodHeader(ErrorRespon
 }
 
 class CacheNotFoundException(msg: String) extends CacheException(msg)
+
+class HotRodException(val response: ErrorResponse, cause: Throwable) extends Exception(cause)

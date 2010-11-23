@@ -8,6 +8,8 @@ import net.spy.memcached.CASResponse
 import org.infinispan.test.TestingUtil._
 import org.infinispan.Version
 import java.net.Socket
+import collection.mutable.ListBuffer
+import java.io.InputStream
 
 /**
  * Tests Memcached protocol functionality against Infinispan Memcached server.
@@ -229,7 +231,18 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertFalse(f.get(timeout, TimeUnit.SECONDS).booleanValue)
    }
 
-   def testPipelinedDelete = assertExpectedResponse(send("delete a\r\ndelete a\r\n"), "NOT_FOUND")
+   def testPipelinedDelete {
+      val responses = sendMulti("delete a\r\ndelete a\r\n", 2)
+      assertEquals(responses.length, 2)
+      responses.foreach(r => assertTrue(r == "NOT_FOUND"))
+   }
+
+   def testPipelinedGetAfterInvalidCas {
+      val responses = sendMulti("cas bad 0 0 1 0 0\r\nget a\r\n", 2)
+      assertEquals(responses.length, 2)
+      assertTrue(responses.head.contains("CLIENT_ERROR"))
+      assertTrue(responses.tail.head == "END", "Instead response was: " + responses.tail.head)
+   }
 
    def testIncrementBasic(m: Method) {
       val f = client.set(k(m), 0, "1")
@@ -266,21 +279,21 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    def testIncrementBeyondLongMax(m: Method) {
       val f = client.set(k(m), 0, "9223372036854775808")
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
-      val newValue = incr(m, 1, 19)
+      val newValue = incr(m, 1)
       assertEquals(BigInt(newValue), BigInt("9223372036854775809"))
    }
 
    def testIncrementSurpassLongMax(m: Method) {
       val f = client.set(k(m), 0, "9223372036854775807")
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
-      val newValue = incr(m, 1, 19)
+      val newValue = incr(m, 1)
       assertEquals(BigInt(newValue), BigInt("9223372036854775808"))
    }
 
    def testIncrementSurpassBigIntMax(m: Method) {
       val f = client.set(k(m), 0, "18446744073709551615")
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
-      val newValue = incr(m, 1, 1)
+      val newValue = incr(m, 1)
       assertEquals(newValue, "0")
    }
 
@@ -366,7 +379,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertEquals(client.get(keyInLimit), "89")
 
       val keyAboveLimit = generateRandomString(251)
-      val resp = incr(keyAboveLimit, 1, 1024)
+      val resp = incr(keyAboveLimit, 1)
       assertClientError(resp)
    }
 
@@ -389,32 +402,59 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    private def assertExpectedResponse(resp: String, expectedResp: String) =
       assertTrue(resp.contains(expectedResp), "Instead response is: " + resp)
 
+//   def testRegex {
+//      val notFoundRegex = new Regex("""\bNOT_FOUND\b""")
+//      assertEquals(notFoundRegex.findAllIn("NOT_FOUND\r\nNOT_FOUND\r\n").length, 2)
+//   }
+//
+//   private def assertExpectedResponse(resp: String, expectedResp: String, numberOfTimes: Int) {
+//      val expectedRespRegex = new Regex("""\b""" + expectedResp + """\b""")
+//      assertEquals(expectedRespRegex.findAllIn(resp).length, numberOfTimes,
+//         "Expected " + expectedResp + " to be found " + numberOfTimes
+//               + " times, but instead received response: " + resp)
+//   }
+
    private def addAndGet(m: Method) {
       val f = client.add(k(m), 0, v(m))
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
       assertEquals(client.get(k(m)), v(m))
    }
 
-   private def incr(m: Method, by: Int, expectedLength: Int): String = incr(k(m), by, expectedLength)
+   private def incr(m: Method, by: Int): String = incr(k(m), by)
 
-   private def incr(k: String, by: Int, expectedLength: Int): String = {
-      // Spymemcached expects Long so does not support 64-bit unsigned integer. Instead, do things manually.
-      val req = "incr " + k + " " + by + "\r\n"
-      send(req, expectedLength)
-   }
+   private def incr(k: String, by: Int): String = send("incr " + k + " " + by + "\r\n")
 
-   private def send(req: String): String = send(req, 1024)
+   private def send(req: String): String = sendMulti(req, 1).head
 
-   private def send(req: String, expectedLength: Int): String = {
+   private def sendMulti(req: String, expectedResponses: Int): List[String] = {
       val socket = new Socket(server.getHost, server.getPort)
       try {
          socket.getOutputStream.write(req.getBytes)
-         // Make the array big enough to read the data but ignore the trailing carriage return
-         val resp = new Array[Byte](expectedLength)
-         socket.getInputStream.read(resp)
-         return new String(resp)
-      } finally {
+         val buffer = new ListBuffer[String]
+         for (i <- 0 until expectedResponses)
+            buffer += readLine(socket.getInputStream, new StringBuilder)
+         buffer.toList
+      }
+      finally {
          socket.close
+      }
+   }
+
+   private def readLine(is: InputStream, sb: StringBuilder): String = {
+      var next = is.read
+      if (next == 13) { // CR
+         next = is.read
+         if (next == 10) { // LF
+            sb.toString.trim
+         } else {
+            sb.append(next.asInstanceOf[Char])
+            readLine(is, sb)
+         }
+      } else if (next == 10) { //LF
+         sb.toString.trim
+      } else {
+         sb.append(next.asInstanceOf[Char])
+         readLine(is, sb)
       }
    }
 }
