@@ -68,7 +68,7 @@ abstract class AbstractVersionedDecoder {
    /**
     * Create an error response based on the Throwable instance received.
     */
-   def createErrorResponse(header: HotRodHeader, t: Throwable): AnyRef
+   def createErrorResponse(header: HotRodHeader, t: Throwable): ErrorResponse
 
    /**
     * Get an optimized cache instance depending on the operation parameters.

@@ -38,14 +38,14 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
    private final val replaceIfUnmodifiedHits = new AtomicLong(0)
    private final val replaceIfUnmodifiedBadval = new AtomicLong(0)
 
-   override def readHeader(buffer: ChannelBuffer): RequestHeader = {
+   override def readHeader(buffer: ChannelBuffer): Option[RequestHeader] = {
       val (streamOp, endOfOp) = readElement(buffer)
       val op = toRequest(streamOp)
       if (op == None) {
          val line = readLine(buffer) // Read rest of line to clear the operation
          throw new UnknownOperationException("Unknown operation: " + streamOp);
       }
-      new RequestHeader(op.get)
+      Some(new RequestHeader(op.get))
    }
 
    override def readKey(h: RequestHeader, b: ChannelBuffer): (String, Boolean) = {
@@ -72,7 +72,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
    }
 
    private def checkKeyLength(h: RequestHeader, k: String): String = {
-      if (k.length > 250) throw new ServerException(h, new IOException("Key length over the 250 character limit")) else k
+      if (k.length > 250) throw new IOException("Key length over the 250 character limit") else k
    }
 
    override def readParameters(h: RequestHeader, b: ChannelBuffer): Option[MemcachedParameters] = {
@@ -298,7 +298,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
          case GetRequest | GetWithVersionRequest => {
             for ((k, v) <- pairs)
                elements += buildGetResponse(h.op, k, v)
-            elements += wrappedBuffer("END\r\n".getBytes)
+            elements += wrappedBuffer(END)
          }
       }
       elements.toList
@@ -308,22 +308,23 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       val sb = new StringBuilder
       t match {
          case u: UnknownOperationException => ERROR
-         case se: ServerException => {
-            val cause = se.getCause
+         case m: MemcachedException => {
+            val cause = m.getCause
             cause match {
                case c: ClosedChannelException => null // no-op, only log
-               case _ => {
-                  cause match {
-                     case i: IOException => sb.append("CLIENT_ERROR bad command line format: ")
-                     case n: NumberFormatException => sb.append("CLIENT_ERROR bad command line format: ")
-                     case _ => sb.append("SERVER_ERROR ")
-                  }
-                  sb.append(t).append(CRLF)
-               }
+               case _ => sb.append(m.getMessage).append(t).append(CRLF)
             }
          }
          case c: ClosedChannelException => null // no-op, only log
-         case _ => sb.append("SERVER_ERROR ").append(t).append(CRLF)
+         case _ => sb.append(SERVER_ERROR).append(t).append(CRLF)
+      }
+   }
+
+   override protected def createServerException(e: Exception, h: Option[RequestHeader]): (MemcachedException, Boolean) = {
+      e match {
+         case i: IOException => (new MemcachedException(CLIENT_ERROR_BAD_FORMAT, e), true)
+         case n: NumberFormatException => (new MemcachedException(CLIENT_ERROR_BAD_FORMAT, e), true)
+         case _ => (new MemcachedException(SERVER_ERROR, e), false)
       }
    }
 
@@ -446,3 +447,4 @@ private object RequestResolver extends Logging {
    }
 }
 
+class MemcachedException(message: String, cause: Throwable) extends Exception(message, cause)

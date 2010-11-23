@@ -41,7 +41,7 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
          case 0x15 => StatsRequest
          case 0x17 => PingRequest
          case 0x19 => BulkGetRequest
-         case _ => throw new UnknownOperationException("Unknown operation: " + streamOp)
+         case _ => throw new HotRodUnknownOperationException("Unknown operation: " + streamOp, messageId)
       }
       if (isTraceEnabled) trace("Operation code: {0} has been matched to {1}", streamOp, op)
       
@@ -172,7 +172,7 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
       new StatsResponse(h.messageId, h.cacheName, h.clientIntel, immutable.Map[String, String]() ++ stats, h.topologyId)
    }
 
-   override def createErrorResponse(h: HotRodHeader, t: Throwable): AnyRef = {
+   override def createErrorResponse(h: HotRodHeader, t: Throwable): ErrorResponse = {
       t match {
          case i: IOException =>
             new ErrorResponse(h.messageId, h.cacheName, h.clientIntel, ParseError, h.topologyId, i.toString)
