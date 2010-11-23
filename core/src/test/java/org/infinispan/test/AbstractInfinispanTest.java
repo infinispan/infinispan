@@ -68,11 +68,45 @@ public class AbstractInfinispanTest {
       }
    }
 
+   public void fork(Runnable r, boolean sync) {
+      final SyncForkSupport syncForkSupport = new SyncForkSupport(r);
+      Thread t = new Thread(syncForkSupport);
+      t.start();
+      if (sync) {
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+               return syncForkSupport.done;
+            }
+         });
+      }
+   }
+
+
    public void eventually(Condition ec) {
       eventually(ec, 10000);
    }
 
    public interface Condition {
       public boolean isSatisfied() throws Exception;
+   }
+
+   private class SyncForkSupport implements Runnable {
+
+      volatile Runnable realOne;
+      volatile boolean done = false;
+
+      private SyncForkSupport(Runnable realOne) {
+         this.realOne = realOne;
+      }
+
+      @Override
+      public void run() {
+         try {
+            realOne.run();
+         } finally {
+            done = true;
+         }
+      }
    }
 }
