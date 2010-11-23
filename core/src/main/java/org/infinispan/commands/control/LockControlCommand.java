@@ -29,6 +29,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.RemoteTransaction;
 import org.infinispan.util.Util;
@@ -238,5 +239,9 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
             ", keys=" + keys +
             ", unlock=" + unlock +
             ", singleKey=" + singleKey + '}';
+   }
+
+   public Address getOrigin() {
+      return globalTx.getAddress();
    }
 }

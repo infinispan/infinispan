@@ -21,6 +21,7 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -45,6 +46,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ReversibleOrderedSet;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -69,12 +72,14 @@ public class LockingInterceptor extends CommandInterceptor {
    DataContainer dataContainer;
    EntryFactory entryFactory;
    boolean useReadCommitted;
+   Transport transport;
 
    @Inject
-   public void setDependencies(LockManager lockManager, DataContainer dataContainer, EntryFactory entryFactory) {
+   public void setDependencies(LockManager lockManager, DataContainer dataContainer, EntryFactory entryFactory, Transport transport) {
       this.lockManager = lockManager;
       this.dataContainer = dataContainer;
       this.entryFactory = entryFactory;
+      this.transport = transport;
    }
 
    @Start
@@ -137,7 +142,13 @@ public class LockingInterceptor extends CommandInterceptor {
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand c) throws Throwable {
       boolean localTxScope = ctx.isOriginLocal() && ctx.isInTxScope();
       boolean shouldInvokeOnCluster = false;
+      
       try {
+
+         if (!ctx.isOriginLocal() && !transport.getMembers().contains(c.getOrigin())) { //ISPN-777
+            throw new CacheException("Member " + c.getOrigin() + " no longer in cluster. Forcing tx rollback for tx: " + c.getGlobalTransaction());
+         }
+
          if (localTxScope) {
             c.attachGlobalTransaction((GlobalTransaction) ctx.getLockOwner());
          }
