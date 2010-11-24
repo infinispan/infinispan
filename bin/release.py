@@ -162,7 +162,7 @@ def update_versions(version):
       else:
         if l.find("public static final String version =") > -1:
           ver_bits = version.split('.')
-          micro_mod = "%s.%s" % (ver_bits[2], ver_bits[3])
+          micro_mod = ".%s.%s" % (ver_bits[2], ver_bits[3])
           l = re.sub('version\s*=\s*major\s*\+\s*"[A-Z0-9\.\-]*";', 'version = major + "' + micro_mod + '";', l)
       f_out.write(l)
   finally:
