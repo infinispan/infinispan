@@ -42,7 +42,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       val (streamOp, endOfOp) = readElement(buffer)
       val op = toRequest(streamOp)
       if (op == None) {
-         val line = readLine(buffer) // Read rest of line to clear the operation
+         readLine(buffer) // Read rest of line to clear the operation
          throw new UnknownOperationException("Unknown operation: " + streamOp);
       }
       Some(new RequestHeader(op.get))
@@ -50,7 +50,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
 
    override def readKey(h: RequestHeader, b: ChannelBuffer): (String, Boolean) = {
       val (k, endOfOp) = readElement(b)
-      checkKeyLength(h, k)
+      checkKeyLength(h, k, endOfOp, b)
       (k, endOfOp)
    }
 
@@ -61,18 +61,21 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       if (keys.length > 1) {
          val map = new HashMap[String, MemcachedValue]()
          for (k <- keys) {
-            val v = cache.get(checkKeyLength(h, k))
+            val v = cache.get(checkKeyLength(h, k, true, buffer))
             if (v != null)
                map += (k -> v)
          }
          createMultiGetResponse(h, new immutable.HashMap ++ map)
       } else {
-         createGetResponse(h, keys.head, cache.get(checkKeyLength(h, keys.head)))
+         createGetResponse(h, keys.head, cache.get(checkKeyLength(h, keys.head, true, buffer)))
       }
    }
 
-   private def checkKeyLength(h: RequestHeader, k: String): String = {
-      if (k.length > 250) throw new IOException("Key length over the 250 character limit") else k
+   private def checkKeyLength(h: RequestHeader, k: String, endOfOp: Boolean, b: ChannelBuffer): String = {
+      if (k.length > 250) {
+         if (!endOfOp) readLine(b) // Clear the rest of line
+         throw new IOException("Key length over the 250 character limit")
+      } else k
    }
 
    override def readParameters(h: RequestHeader, b: ChannelBuffer): Option[MemcachedParameters] = {
@@ -307,11 +310,12 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
    override def createErrorResponse(t: Throwable): AnyRef = {
       val sb = new StringBuilder
       t match {
-         case u: UnknownOperationException => ERROR
          case m: MemcachedException => {
-            val cause = m.getCause
-            cause match {
+            m.getCause match {
+               case u: UnknownOperationException => ERROR
                case c: ClosedChannelException => null // no-op, only log
+               case i: IOException => sb.append(m.getMessage).append(CRLF)
+               case n: NumberFormatException => sb.append(m.getMessage).append(CRLF)
                case _ => sb.append(m.getMessage).append(t).append(CRLF)
             }
          }
@@ -320,10 +324,10 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       }
    }
 
-   override protected def createServerException(e: Exception, h: Option[RequestHeader]): (MemcachedException, Boolean) = {
+   override protected def createServerException(e: Exception, h: Option[RequestHeader], b: ChannelBuffer): (MemcachedException, Boolean) = {
       e match {
-         case i: IOException => (new MemcachedException(CLIENT_ERROR_BAD_FORMAT, e), true)
-         case n: NumberFormatException => (new MemcachedException(CLIENT_ERROR_BAD_FORMAT, e), true)
+         case i: IOException => (new MemcachedException(CLIENT_ERROR_BAD_FORMAT + i.getMessage, i), true)
+         case n: NumberFormatException => (new MemcachedException(CLIENT_ERROR_BAD_FORMAT + n.getMessage, n), true)
          case _ => (new MemcachedException(SERVER_ERROR, e), false)
       }
    }

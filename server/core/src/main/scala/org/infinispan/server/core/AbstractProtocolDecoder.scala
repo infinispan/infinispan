@@ -9,7 +9,7 @@ import org.infinispan.server.core.VersionGenerator._
 import transport._
 import transport.ChannelBuffers._
 import org.infinispan.util.Util
-import java.io.{IOException, StreamCorruptedException}
+import java.io.StreamCorruptedException
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -52,7 +52,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
          null
       } catch {
          case e: Exception => {
-            val (serverException, isClientError) = createServerException(e, optionalHeader)
+            val (serverException, isClientError) = createServerException(e, optionalHeader, buffer)
             // If decode returns an exception, decode won't be called again so,
             // we need to fire the exception explicitly so that requests can
             // carry on being processed on same connection after a client error
@@ -202,7 +202,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
 
    protected def handleCustomRequest(h: SuitableHeader, b: ChannelBuffer, cache: Cache[K, V]): AnyRef
 
-   protected def createServerException(e: Exception, h: Option[SuitableHeader]): (Exception, Boolean)
+   protected def createServerException(e: Exception, h: Option[SuitableHeader], b: ChannelBuffer): (Exception, Boolean)
 
    protected def generateVersion(cache: Cache[K, V]): Long = {
       val rpcManager = cache.getAdvancedCache.getRpcManager
