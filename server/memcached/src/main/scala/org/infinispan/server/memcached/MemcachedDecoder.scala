@@ -74,7 +74,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
    private def checkKeyLength(h: RequestHeader, k: String, endOfOp: Boolean, b: ChannelBuffer): String = {
       if (k.length > 250) {
          if (!endOfOp) readLine(b) // Clear the rest of line
-         throw new IOException("Key length over the 250 character limit")
+         throw new StreamCorruptedException("Key length over the 250 character limit")
       } else k
    }
 
@@ -110,6 +110,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
                   }
                   index += 1
                   val length = getLength(args(index))
+                  if (length < 0) throw new StreamCorruptedException("Negative bytes length provided: " + length)
                   val streamVersion = h.op match {
                      case ReplaceIfUnmodifiedRequest => {
                         index += 1
@@ -316,11 +317,11 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
                case c: ClosedChannelException => null // no-op, only log
                case i: IOException => sb.append(m.getMessage).append(CRLF)
                case n: NumberFormatException => sb.append(m.getMessage).append(CRLF)
-               case _ => sb.append(m.getMessage).append(t).append(CRLF)
+               case _ => sb.append(m.getMessage).append(CRLF)
             }
          }
          case c: ClosedChannelException => null // no-op, only log
-         case _ => sb.append(SERVER_ERROR).append(t).append(CRLF)
+         case _ => sb.append(SERVER_ERROR).append(t.getMessage).append(CRLF)
       }
    }
 
@@ -328,7 +329,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       e match {
          case i: IOException => (new MemcachedException(CLIENT_ERROR_BAD_FORMAT + i.getMessage, i), true)
          case n: NumberFormatException => (new MemcachedException(CLIENT_ERROR_BAD_FORMAT + n.getMessage, n), true)
-         case _ => (new MemcachedException(SERVER_ERROR, e), false)
+         case _ => (new MemcachedException(SERVER_ERROR + e, e), false)
       }
    }
 
