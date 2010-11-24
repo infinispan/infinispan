@@ -126,7 +126,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
       h.decoder.getOptimizedCache(h, c)
    }
 
-   override protected def createServerException(e: Exception, h: Option[HotRodHeader]): (HotRodException, Boolean) = {
+   override protected def createServerException(e: Exception, h: Option[HotRodHeader], b: ChannelBuffer): (HotRodException, Boolean) = {
       e match {
          case i: InvalidMagicIdException =>
             (new HotRodException(new ErrorResponse(0, "", 1, InvalidMagicOrMsgId, 0, i.toString), e), true)

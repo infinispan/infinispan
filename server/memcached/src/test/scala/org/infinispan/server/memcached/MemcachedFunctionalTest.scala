@@ -395,12 +395,25 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
    def testUnknownCommand = assertError(send("blah\r\n"))
 
-   private def assertClientError(resp: String) = assertExpectedResponse(resp, "CLIENT_ERROR")
+   def testReadFullLineAfterLongKey {
+      val key = generateRandomString(300)
+      val command = "add " + key + " 0 0 1\r\nget a\r\n"
+      val responses = sendMulti(command, 2)
+      assertEquals(responses.length, 2)
+      assertTrue(responses.head.contains("CLIENT_ERROR"))
+      assertTrue(responses.tail.head == "END", "Instead response was: " + responses.tail.head)
+   }
 
-   private def assertError(resp: String) = assertExpectedResponse(resp, "ERROR")
+   private def assertClientError(resp: String) = assertExpectedResponse(resp, "CLIENT_ERROR", false)
 
-   private def assertExpectedResponse(resp: String, expectedResp: String) =
-      assertTrue(resp.contains(expectedResp), "Instead response is: " + resp)
+   private def assertError(resp: String) = assertExpectedResponse(resp, "ERROR", true)
+
+   private def assertExpectedResponse(resp: String, expectedResp: String, strictComparison: Boolean) {
+      if (strictComparison)
+         assertEquals(resp, expectedResp, "Instead response is: " + resp)
+      else
+         assertTrue(resp.contains(expectedResp), "Instead response is: " + resp)
+   }
 
 //   def testRegex {
 //      val notFoundRegex = new Regex("""\bNOT_FOUND\b""")
