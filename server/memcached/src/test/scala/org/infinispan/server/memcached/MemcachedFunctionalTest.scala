@@ -404,6 +404,11 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertTrue(responses.tail.head == "END", "Instead response was: " + responses.tail.head)
    }
 
+   def testNegativeBytesLengthValue {
+      assertClientError(send("set boo1 0 0 -1\r\n"))
+      assertClientError(send("add boo2 0 0 -1\r\n"))
+   }
+
    private def assertClientError(resp: String) = assertExpectedResponse(resp, "CLIENT_ERROR", false)
 
    private def assertError(resp: String) = assertExpectedResponse(resp, "ERROR", true)
