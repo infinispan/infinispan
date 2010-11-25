@@ -265,8 +265,13 @@ def release():
   else:
     uploader = Uploader()
   
-  git= Git(branch, version.upper())
-  
+  git = Git(branch, version.upper())
+  if not git.is_upstream_clone():
+    proceed = input_with_default('This is not a clone of an %supstream%s Infinispan repository! Are you sure you want to proceed?' % (Colors.UNDERLINE, Colors.END), 'N')
+    if not proceed.upper().startswith('Y'):
+      prettyprint("... User Abort!", Levels.WARNING)
+      sys.exit(1)
+      
   ## Release order:
   # Step 1: Tag in Git
   prettyprint("Step 1: Tagging %s in git as %s" % (branch, version), Levels.INFO)
