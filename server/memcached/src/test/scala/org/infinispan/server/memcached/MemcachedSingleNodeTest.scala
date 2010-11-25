@@ -6,6 +6,10 @@ import org.infinispan.test.fwk.TestCacheManagerFactory
 import net.spy.memcached.MemcachedClient
 import org.testng.annotations.{Test, AfterClass}
 import org.infinispan.manager.EmbeddedCacheManager
+import java.net.Socket
+import collection.mutable.ListBuffer
+import java.io.InputStream
+import org.testng.Assert._
 
 /**
  * Base class for single node tests.
@@ -43,4 +47,53 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with Memca
 
    @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
    protected def shutdownClient = memcachedClient.shutdown
+
+   protected def send(req: String): String = sendMulti(req, 1).head
+
+   protected def sendMulti(req: String, expectedResponses: Int): List[String] = {
+      val socket = new Socket(server.getHost, server.getPort)
+      try {
+         socket.getOutputStream.write(req.getBytes)
+         val buffer = new ListBuffer[String]
+         for (i <- 0 until expectedResponses)
+            buffer += readLine(socket.getInputStream, new StringBuilder)
+         buffer.toList
+      }
+      finally {
+         socket.close
+      }
+   }
+
+   protected def readLine(is: InputStream, sb: StringBuilder): String = {
+      var next = is.read
+      if (next == 13) { // CR
+         next = is.read
+         if (next == 10) { // LF
+            sb.toString.trim
+         } else {
+            sb.append(next.asInstanceOf[Char])
+            readLine(is, sb)
+         }
+      } else if (next == 10) { //LF
+         sb.toString.trim
+      } else {
+         sb.append(next.asInstanceOf[Char])
+         readLine(is, sb)
+      }
+   }
+
+   @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
+   protected def assertClientError(resp: String) = assertExpectedResponse(resp, "CLIENT_ERROR", false)
+
+   @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
+   protected def assertError(resp: String) = assertExpectedResponse(resp, "ERROR", true)
+
+   @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
+   protected def assertExpectedResponse(resp: String, expectedResp: String, strictComparison: Boolean) {
+      if (strictComparison)
+         assertEquals(resp, expectedResp, "Instead response is: " + resp)
+      else
+         assertTrue(resp.contains(expectedResp), "Instead response is: " + resp)
+   }
+
 }

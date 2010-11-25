@@ -7,9 +7,6 @@ import org.testng.annotations.Test
 import net.spy.memcached.CASResponse
 import org.infinispan.test.TestingUtil._
 import org.infinispan.Version
-import java.net.Socket
-import collection.mutable.ListBuffer
-import java.io.InputStream
 
 /**
  * Tests Memcached protocol functionality against Infinispan Memcached server.
@@ -409,17 +406,6 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertClientError(send("add boo2 0 0 -1\r\n"))
    }
 
-   private def assertClientError(resp: String) = assertExpectedResponse(resp, "CLIENT_ERROR", false)
-
-   private def assertError(resp: String) = assertExpectedResponse(resp, "ERROR", true)
-
-   private def assertExpectedResponse(resp: String, expectedResp: String, strictComparison: Boolean) {
-      if (strictComparison)
-         assertEquals(resp, expectedResp, "Instead response is: " + resp)
-      else
-         assertTrue(resp.contains(expectedResp), "Instead response is: " + resp)
-   }
-
 //   def testRegex {
 //      val notFoundRegex = new Regex("""\bNOT_FOUND\b""")
 //      assertEquals(notFoundRegex.findAllIn("NOT_FOUND\r\nNOT_FOUND\r\n").length, 2)
@@ -442,37 +428,4 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
    private def incr(k: String, by: Int): String = send("incr " + k + " " + by + "\r\n")
 
-   private def send(req: String): String = sendMulti(req, 1).head
-
-   private def sendMulti(req: String, expectedResponses: Int): List[String] = {
-      val socket = new Socket(server.getHost, server.getPort)
-      try {
-         socket.getOutputStream.write(req.getBytes)
-         val buffer = new ListBuffer[String]
-         for (i <- 0 until expectedResponses)
-            buffer += readLine(socket.getInputStream, new StringBuilder)
-         buffer.toList
-      }
-      finally {
-         socket.close
-      }
-   }
-
-   private def readLine(is: InputStream, sb: StringBuilder): String = {
-      var next = is.read
-      if (next == 13) { // CR
-         next = is.read
-         if (next == 10) { // LF
-            sb.toString.trim
-         } else {
-            sb.append(next.asInstanceOf[Char])
-            readLine(is, sb)
-         }
-      } else if (next == 10) { //LF
-         sb.toString.trim
-      } else {
-         sb.append(next.asInstanceOf[Char])
-         readLine(is, sb)
-      }
-   }
 }
