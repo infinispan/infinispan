@@ -45,6 +45,11 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
          readLine(buffer) // Read rest of line to clear the operation
          throw new UnknownOperationException("Unknown operation: " + streamOp);
       }
+      if (op.get == StatsRequest && !endOfOp) {
+         val line = readLine(buffer).trim
+         if (!line.isEmpty)
+            throw new IOException("Stats command does not accept arguments: " + line)
+      }
       Some(new RequestHeader(op.get))
    }
 
