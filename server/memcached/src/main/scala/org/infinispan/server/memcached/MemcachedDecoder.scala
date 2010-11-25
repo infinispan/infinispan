@@ -102,7 +102,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
                   Some(new MemcachedParameters(null, -1, -1, -1, parseNoReply(index, args), 0, delta, 0))
                }
                case FlushAllRequest => {
-                  val flushDelay = args(index).toInt
+                  val flushDelay = friendlyMaxIntCheck(args(index), "Flush delay")
                   index += 1
                   Some(new MemcachedParameters(null, -1, -1, -1, parseNoReply(index, args), 0, "", flushDelay))
                }
@@ -150,12 +150,12 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
 
    private def getLifespan(lifespan: String): Int = {
       if (lifespan == null) throw new EOFException("No expiry passed")
-      lifespan.toInt
+      friendlyMaxIntCheck(lifespan, "Lifespan")
    }
 
    private def getLength(length: String): Int = {
       if (length == null) throw new EOFException("No bytes passed")
-      length.toInt
+      friendlyMaxIntCheck(length, "The number of bytes")
    }
 
    private def getVersion(version: String): Long = {
@@ -407,6 +407,19 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       sb.toString
    }
 
+   private def friendlyMaxIntCheck(number: String, message: String): Int = {
+      try {
+         number.toInt
+      } catch {
+         case n: NumberFormatException => {
+            if (number.toLong > Int.MaxValue)
+               throw new NumberFormatException(message + " sent (" + number
+                                               + ") exceeds the limit (" + Int.MaxValue + ")")
+            else
+               throw n
+         }
+      }
+   }
 }
 
 class MemcachedParameters(override val data: Array[Byte], override val lifespan: Int,
