@@ -171,6 +171,17 @@ class MemcachedStatsTest extends MemcachedSingleNodeTest {
       assertEquals(stats.get("cas_hits"), "1")
       assertEquals(stats.get("cas_badval"), "1")
    }
+
+   def testStatsWithArgs {
+      var resp = send("stats\r\n")
+      assertExpectedResponse(resp, "STAT", false)
+      resp = send("stats \r\n")
+      assertExpectedResponse(resp, "STAT", false)
+      resp = send("stats boo\r\n")
+      assertClientError(resp)
+      resp = send("stats boo boo2 boo3\r\n")
+      assertClientError(resp)
+   }
    
    private def getStats() = {
       val stats = client.getStats()
