@@ -23,6 +23,7 @@ class Colors(object):
   RED = '\033[91m'
   CYAN = '\033[96m'  
   END = '\033[0m'  
+  UNDERLINE = '\033[4m'  
   
   @staticmethod  
   def magenta():
@@ -226,16 +227,27 @@ class GlobDirectoryWalker:
 
 class Git(object):  
   '''Encapsulates git functionality necessary for releasing Infinispan'''
-  
-  def __init__(self, branch, tag_name):
-    self.cmd = "git"
+  cmd = 'git'
+  # Helper functions to clean up branch lists 
+  @staticmethod
+  def clean(e): return e.strip().replace(' ', '').replace('*', '')
+  @staticmethod
+  def non_empty(e): return e != None and e.strip() != ''
+  @staticmethod
+  def current(e): return e != None and e.strip().replace(' ', '').startswith('*') 
+ 
+  def __init__(self, branch, tag_name):        
+    if not self.is_git_directory():
+      raise Exception('Attempting to run git outside of a repository. Current directory is %s' % os.path.abspath(os.path.curdir))    
+      
     self.branch = branch
     self.tag = tag_name
-    self.verbose = False        
+    self.verbose = False 
     if settings['verbose']:
       self.verbose = True
     rand = '%x'.upper() % (random.random() * 100000)
-    self.working_branch='__temp_%s' % rand    
+    self.working_branch = '__temp_%s' % rand
+    self.original_branch = self.current_branch() 
   
   def run_git(self, opts):
     call = [self.cmd]
@@ -252,11 +264,19 @@ class Git(object):
       prettyprint( 'Executing %s' % call, Levels.DEBUG )
     return subprocess.Popen(call, stdout=subprocess.PIPE).communicate()[0].split('\n')
   
+  def is_git_directory(self):
+    return self.run_git('branch')[0] != ''
+ 
+  def is_upstream_clone(self):
+    r = self.run_git('remote show -n origin')
+    cleaned = map(self.clean, r)
+    def push(e): return e.startswith('PushURL:')
+    def remove_noise(e): return e.replace('PushURL:', '')
+    push_urls = map(remove_noise, filter(push, cleaned))
+    return len(push_urls) == 1 and push_urls[0] == 'git@github.com:infinispan/infinispan.git'
+ 
   def clean_branches(self, raw_branch_list):
-    def clean(e): return e.replace(' ', '').replace('*', '').strip()
-    def no_empty(e): return e != ''
-    
-    return map(clean, filter(no_empty, raw_branch_list))
+    return map(self.clean, filter(self.non_empty, raw_branch_list))
   
   def remote_branch_exists(self):
     '''Tests whether the branch exists on the remote origin'''
@@ -290,9 +310,14 @@ class Git(object):
   def push_to_origin(self):
     '''Pushes the updated tags to origin'''
     self.run_git("push origin --tags")
-  
+ 
+  def current_branch(self):
+    '''Returns the current branch you are on'''
+    return map(self.clean, filter(self.current, self.run_git('branch')))[0]
+
   def cleanup(self): 
     '''Cleans up any temporary branches created'''
+    self.run_git("checkout %s" % self.original_branch)
     self.run_git("branch -D %s" % self.working_branch)
 
 class DryRun(object):
@@ -347,10 +372,6 @@ class DryRunUploader(DryRun):
   
   def upload(self, fr, to, type):
     self.copy(fr, "%s/%s/%s" % (self.location_root, type, to))    
-
-
-def is_git_repo(directory):
-  return os.path.isdir(directory + "/.git")
 
 def maven_build_distribution():
   """Builds the distribution in the current working dir"""
