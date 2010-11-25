@@ -320,6 +320,15 @@ class IntegrationTest {
       val get = new GetMethod(fullPathKey)
       Client call get
       assertEquals(HttpServletResponse.SC_NOT_FOUND, get.getStatusCode)
+
+      val head = Client call new HeadMethod(fullPathKey)
+      assertEquals(HttpServletResponse.SC_NOT_FOUND, head.getStatusCode)
+
+      val put = new PostMethod(fullPathKey)
+      put.setRequestHeader("Content-Type", "application/text")
+      put.setRequestBody("data")
+      Client call put
+      assertEquals(HttpServletResponse.SC_NOT_FOUND, put.getStatusCode)
    }
 
    def testSerializedObjects(m: Method) = {
