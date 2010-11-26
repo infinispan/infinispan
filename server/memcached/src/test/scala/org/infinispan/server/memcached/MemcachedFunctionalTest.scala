@@ -406,6 +406,31 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertClientError(send("add boo2 0 0 -1\r\n"))
    }
 
+   def testFlagsIsUnsigned(m: Method) {
+      val k = m.getName
+      assertClientError(send("set boo1 -1 0 0\r\n"))
+      assertStored(send("set " + k + " 4294967295 0 0\r\n"))
+      assertClientError(send("set boo2 4294967296 0 0\r\n"))
+      assertClientError(send("set boo2 18446744073709551615 0 0\r\n"))
+   }
+
+   def testIncrDecrIsUnsigned(m: Method) {
+      var k = m.getName
+      var f = client.set(k, 0, "0")
+      assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
+      assertClientError(send("incr " + k + " -1\r\n"))
+      assertClientError(send("decr " + k + " -1\r\n"))
+      k = k + "-1"
+      f = client.set(k, 0, "0")
+      assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
+      assertExpectedResponse(send("incr " + k + " 18446744073709551615\r\n"), "18446744073709551615", true)
+      k = k + "-1"
+      f = client.set(k, 0, "0")
+      assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
+      assertClientError(send("incr " + k + " 18446744073709551616\r\n"))
+      assertClientError(send("decr " + k + " 18446744073709551616\r\n"))
+   }
+
 //   def testRegex {
 //      val notFoundRegex = new Regex("""\bNOT_FOUND\b""")
 //      assertEquals(notFoundRegex.findAllIn("NOT_FOUND\r\nNOT_FOUND\r\n").length, 2)

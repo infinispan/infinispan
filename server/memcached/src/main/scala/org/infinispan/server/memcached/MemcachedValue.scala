@@ -13,7 +13,7 @@ import org.infinispan.marshall.Marshallable
  */
 // TODO: putting Ids.MEMCACHED_CACHE_VALUE fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
 @Marshallable(externalizer = classOf[MemcachedValue.Externalizer], id = 56)
-class MemcachedValue(override val data: Array[Byte], override val version: Long, val flags: Int)
+class MemcachedValue(override val data: Array[Byte], override val version: Long, val flags: Long)
       extends CacheValue(data, version) {
 
    override def toString = {
@@ -33,14 +33,14 @@ object MemcachedValue {
          output.write(cacheValue.data.length)
          output.write(cacheValue.data)
          output.writeLong(cacheValue.version)
-         output.writeInt(cacheValue.flags)
+         output.writeLong(cacheValue.flags)
       }
 
       override def readObject(input: ObjectInput): AnyRef = {
          val data = new Array[Byte](input.read())
          input.readFully(data)
          val version = input.readLong
-         val flags = input.readInt
+         val flags = input.readLong
          new MemcachedValue(data, version, flags)
       }
    }

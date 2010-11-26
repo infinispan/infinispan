@@ -27,6 +27,9 @@ trait TextProtocolUtil {
    val CR = 13
    val LF = 10
 
+   val MAX_UNSIGNED_LONG = BigInt("18446744073709551615")
+   val MIN_UNSIGNED = BigInt("0")
+
    /**
     * In the particular case of Memcached, the end of operation/command
     * is signaled by "\r\n" characters. So, if end of operation is
