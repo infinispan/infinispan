@@ -102,9 +102,21 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
                   Some(new MemcachedParameters(null, -1, -1, -1, parseNoReply(index, args), 0, delta, 0))
                }
                case FlushAllRequest => {
-                  val flushDelay = friendlyMaxIntCheck(args(index), "Flush delay")
+                  var noReplyFound = false
+                  val flushDelay =
+                     try {
+                        friendlyMaxIntCheck(args(index), "Flush delay")
+                     } catch {
+                        case n: NumberFormatException => {
+                           if (n.getMessage.contains("noreply")) {
+                              noReplyFound = true
+                              0
+                           } else throw n
+                        }
+                     }
                   index += 1
-                  Some(new MemcachedParameters(null, -1, -1, -1, parseNoReply(index, args), 0, "", flushDelay))
+                  val noReply = if (!noReplyFound) parseNoReply(index, args) else true
+                  Some(new MemcachedParameters(null, -1, -1, -1, noReply, 0, "", flushDelay))
                }
                case _ => {
                   val flags = getFlags(args(index))

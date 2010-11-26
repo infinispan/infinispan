@@ -229,13 +229,13 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    }
 
    def testPipelinedDelete {
-      val responses = sendMulti("delete a\r\ndelete a\r\n", 2)
+      val responses = sendMulti("delete a\r\ndelete a\r\n", 2, true)
       assertEquals(responses.length, 2)
       responses.foreach(r => assertTrue(r == "NOT_FOUND"))
    }
 
    def testPipelinedGetAfterInvalidCas {
-      val responses = sendMulti("cas bad 0 0 1 0 0\r\nget a\r\n", 2)
+      val responses = sendMulti("cas bad 0 0 1 0 0\r\nget a\r\n", 2, true)
       assertEquals(responses.length, 2)
       assertTrue(responses.head.contains("CLIENT_ERROR"))
       assertTrue(responses.tail.head == "END", "Instead response was: " + responses.tail.head)
@@ -357,6 +357,8 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       }
    }
 
+   def testFlushAllNoReply() = sendNoWait("flush_all noreply\r\n")
+
    def testVersion {
       val versions = client.getVersions
       assertEquals(versions.size(), 1)
@@ -395,7 +397,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    def testReadFullLineAfterLongKey {
       val key = generateRandomString(300)
       val command = "add " + key + " 0 0 1\r\nget a\r\n"
-      val responses = sendMulti(command, 2)
+      val responses = sendMulti(command, 2, true)
       assertEquals(responses.length, 2)
       assertTrue(responses.head.contains("CLIENT_ERROR"))
       assertTrue(responses.tail.head == "END", "Instead response was: " + responses.tail.head)
