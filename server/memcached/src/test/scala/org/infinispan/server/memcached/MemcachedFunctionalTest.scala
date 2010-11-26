@@ -433,6 +433,12 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertClientError(send("decr " + k + " 18446744073709551616\r\n"))
    }
 
+   def testVerbosity {
+      assertClientError(send("verbosity\r\n"))
+      assertClientError(send("verbosity 5\r\n"))
+      assertClientError(send("verbosity 10 noreply\r\n"))
+   }
+
 //   def testRegex {
 //      val notFoundRegex = new Regex("""\bNOT_FOUND\b""")
 //      assertEquals(notFoundRegex.findAllIn("NOT_FOUND\r\nNOT_FOUND\r\n").length, 2)

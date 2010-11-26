@@ -50,6 +50,12 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
          if (!line.isEmpty)
             throw new StreamCorruptedException("Stats command does not accept arguments: " + line)
       }
+      if (op.get == VerbosityRequest) {
+         if (!endOfOp)
+            readLine(buffer) // Read rest of line to clear the operation
+         throw new StreamCorruptedException("Memcached 'verbosity' command is unsupported")
+      }
+
       Some(new RequestHeader(op.get))
    }
 
@@ -496,7 +502,8 @@ private object RequestResolver extends Logging {
       "decr" -> DecrementRequest,
       "flush_all" -> FlushAllRequest,
       "version" -> VersionRequest,
-      "stats" -> StatsRequest
+      "stats" -> StatsRequest,
+      "verbosity" -> VerbosityRequest
    )
 
    def toRequest(commandName: String): Option[Enumeration#Value] = {
