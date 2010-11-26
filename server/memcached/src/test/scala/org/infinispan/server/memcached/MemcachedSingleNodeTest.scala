@@ -89,6 +89,9 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with Memca
    protected def assertError(resp: String) = assertExpectedResponse(resp, "ERROR", true)
 
    @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
+   protected def assertStored(resp: String) = assertExpectedResponse(resp, "STORED", true)
+
+   @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
    protected def assertExpectedResponse(resp: String, expectedResp: String, strictComparison: Boolean) {
       if (strictComparison)
          assertEquals(resp, expectedResp, "Instead response is: " + resp)
