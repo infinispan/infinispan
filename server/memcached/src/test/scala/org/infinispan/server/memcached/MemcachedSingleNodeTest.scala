@@ -48,16 +48,22 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with Memca
    @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
    protected def shutdownClient = memcachedClient.shutdown
 
-   protected def send(req: String): String = sendMulti(req, 1).head
+   protected def send(req: String): String = sendMulti(req, 1, true).head
 
-   protected def sendMulti(req: String, expectedResponses: Int): List[String] = {
+   protected def sendNoWait(req: String): String = sendMulti(req, 1, false).head
+
+   protected def sendMulti(req: String, expectedResponses: Int, wait: Boolean): List[String] = {
       val socket = new Socket(server.getHost, server.getPort)
       try {
          socket.getOutputStream.write(req.getBytes)
-         val buffer = new ListBuffer[String]
-         for (i <- 0 until expectedResponses)
-            buffer += readLine(socket.getInputStream, new StringBuilder)
-         buffer.toList
+         if (wait) {
+            val buffer = new ListBuffer[String]
+            for (i <- 0 until expectedResponses)
+               buffer += readLine(socket.getInputStream, new StringBuilder)
+            buffer.toList
+         } else {
+            List()
+         }
       }
       finally {
          socket.close
