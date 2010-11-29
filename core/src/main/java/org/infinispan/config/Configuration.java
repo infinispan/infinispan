@@ -393,7 +393,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    /**
     * Cache mode. For distribution, set mode to either 'd', 'dist' or 'distribution'. For replication, use either 'r',
-    * 'repl' or 'replication'. Finally, for invalidation, 'i', 'inv' or 'invalidation'.
+    * 'repl' or 'replication'. Finally, for invalidation, 'i', 'inv' or 'invalidation'.  If the cache mode is set to
+    * 'l' or 'local', the cache in question will not support clustering even if its cache manager does.
     */
    public void setCacheMode(CacheMode cacheModeInt) {
       clustering.setMode(cacheModeInt);
@@ -401,9 +402,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    /**
     * Cache mode. For distribution, set mode to either 'd', 'dist' or 'distribution'. For replication, use either 'r',
-    * 'repl' or 'replication'. Finally, for invalidation, 'i', 'inv' or 'invalidation'.
-    *
-    * @param cacheMode
+    * 'repl' or 'replication'. Finally, for invalidation, 'i', 'inv' or 'invalidation'.  If the cache mode is set to
+    * 'l' or 'local', the cache in question will not support clustering even if its cache manager does.
     */
    public void setCacheMode(String cacheMode) {
       if (cacheMode == null) throw new ConfigurationException("Cache mode cannot be null", "CacheMode");
@@ -1446,8 +1446,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
                   ct.setMode(DIST_SYNC);
                else
                   ct.setMode(DIST_ASYNC);
-            } else {
-               throw new ConfigurationException("Invalid clustering mode" + ct.stringMode);
+            } else if (mode.startsWith("l")) {
+               ct.setMode(LOCAL);
+            } else
+            {
+               throw new ConfigurationException("Invalid clustering mode " + ct.stringMode);
             }
          }
          return ct;
