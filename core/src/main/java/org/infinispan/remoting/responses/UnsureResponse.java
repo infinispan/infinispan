@@ -21,11 +21,11 @@ public class UnsureResponse extends ValidResponse {
       return false;
    }
 
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<UnsureResponse> {
+      public void writeObject(ObjectOutput output, UnsureResponse subject) throws IOException {
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public UnsureResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return INSTANCE;
       }
    }   

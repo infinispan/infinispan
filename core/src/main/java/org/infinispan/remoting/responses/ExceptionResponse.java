@@ -32,12 +32,12 @@ public class ExceptionResponse extends InvalidResponse {
       this.exception = exception;
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         output.writeObject(((ExceptionResponse) subject).exception);
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<ExceptionResponse> {
+      public void writeObject(ObjectOutput output, ExceptionResponse response) throws IOException {
+         output.writeObject(response.exception);
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ExceptionResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new ExceptionResponse((Exception) input.readObject());
       }
    }

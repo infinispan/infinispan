@@ -95,17 +95,16 @@ public class TransientMortalCacheValue extends MortalCacheValue {
       return (TransientMortalCacheValue) super.clone();
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         TransientMortalCacheValue icv = (TransientMortalCacheValue) subject;
-         output.writeObject(icv.value);
-         UnsignedNumeric.writeUnsignedLong(output, icv.created);
-         output.writeLong(icv.lifespan); // could be negative so should not use unsigned longs
-         UnsignedNumeric.writeUnsignedLong(output, icv.lastUsed);
-         output.writeLong(icv.maxIdle); // could be negative so should not use unsigned longs
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<TransientMortalCacheValue> {
+      public void writeObject(ObjectOutput output, TransientMortalCacheValue value) throws IOException {
+         output.writeObject(value.value);
+         UnsignedNumeric.writeUnsignedLong(output, value.created);
+         output.writeLong(value.lifespan); // could be negative so should not use unsigned longs
+         UnsignedNumeric.writeUnsignedLong(output, value.lastUsed);
+         output.writeLong(value.maxIdle); // could be negative so should not use unsigned longs
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public TransientMortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
          Long lifespan = input.readLong();

@@ -40,7 +40,6 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
    private int poolSize;
 
    public static class Externalizer implements org.infinispan.marshall.Externalizer {
-
       public void writeObject(ObjectOutput output, Object object) throws IOException {
          ExperimentalDefaultConsistentHash gch = (ExperimentalDefaultConsistentHash) object;
          output.writeObject(gch.nodes);

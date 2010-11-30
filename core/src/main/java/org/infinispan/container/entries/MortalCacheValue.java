@@ -94,15 +94,14 @@ public class MortalCacheValue extends ImmortalCacheValue {
       return (MortalCacheValue) super.clone();
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         MortalCacheValue icv = (MortalCacheValue) subject;
-         output.writeObject(icv.value);
-         UnsignedNumeric.writeUnsignedLong(output, icv.created);
-         output.writeLong(icv.lifespan); // could be negative so should not use unsigned longs
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<MortalCacheValue> {
+      public void writeObject(ObjectOutput output, MortalCacheValue mcv) throws IOException {
+         output.writeObject(mcv.value);
+         UnsignedNumeric.writeUnsignedLong(output, mcv.created);
+         output.writeLong(mcv.lifespan); // could be negative so should not use unsigned longs
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
          Long lifespan = input.readLong();

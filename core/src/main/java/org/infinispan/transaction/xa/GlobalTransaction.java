@@ -127,16 +127,23 @@ public class GlobalTransaction implements Cloneable {
       }
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      protected GlobalTransactionFactory gtxFactory = new GlobalTransactionFactory();
-      
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         GlobalTransaction gtx = (GlobalTransaction) subject;
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<GlobalTransaction> {
+      protected GlobalTransactionFactory gtxFactory;
+
+      public Externalizer(GlobalTransactionFactory gtxFactory) {
+         this.gtxFactory = gtxFactory;
+      }
+
+      public Externalizer() {
+         gtxFactory = new GlobalTransactionFactory();
+      }
+
+      public void writeObject(ObjectOutput output, GlobalTransaction gtx) throws IOException {
          output.writeLong(gtx.id);
          output.writeObject(gtx.addr);      
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public GlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          GlobalTransaction gtx = gtxFactory.instantiateGlobalTransaction();
          gtx.id = input.readLong();
          gtx.addr = (Address) input.readObject();

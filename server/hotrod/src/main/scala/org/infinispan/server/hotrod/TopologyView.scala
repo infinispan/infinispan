@@ -18,14 +18,13 @@ case class TopologyView(val topologyId: Int, val members: List[TopologyAddress])
 // TODO: The downside here is that you'd need to make multiple cache calls atomic via txs or similar.
 
 object TopologyView {
-   class Externalizer extends org.infinispan.marshall.Externalizer {
-      override def writeObject(output: ObjectOutput, obj: AnyRef) {
-         val topologyView = obj.asInstanceOf[TopologyView]
+   class Externalizer extends org.infinispan.marshall.Externalizer[TopologyView] {
+      override def writeObject(output: ObjectOutput, topologyView: TopologyView) {
          output.writeInt(topologyView.topologyId)
          output.writeObject(topologyView.members.toArray) // Write arrays instead since writing Lists causes issues
       }
 
-      override def readObject(input: ObjectInput): AnyRef = {
+      override def readObject(input: ObjectInput): TopologyView = {
          val topologyId = input.readInt
          val members = input.readObject.asInstanceOf[Array[TopologyAddress]]
          TopologyView(topologyId, members.toList)

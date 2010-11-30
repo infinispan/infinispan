@@ -46,7 +46,7 @@ import java.util.TreeSet;
  */
 @Immutable
 @Marshallable(id = Ids.JDK_SETS)
-public class SetExternalizer implements Externalizer {
+public class SetExternalizer implements Externalizer<Set> {
    private static final int HASHSET = 0;
    private static final int TREESET = 1;
    private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(2);
@@ -56,13 +56,13 @@ public class SetExternalizer implements Externalizer {
       numbers.put(TreeSet.class, TREESET);
    }
 
-   public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      int number = numbers.get(subject.getClass(), -1);
+   public void writeObject(ObjectOutput output, Set set) throws IOException {
+      int number = numbers.get(set.getClass(), -1);
       output.writeByte(number);
-      MarshallUtil.marshallCollection((Collection) subject, output);
+      MarshallUtil.marshallCollection(set, output);
    }
 
-   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public Set readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int magicNumber = input.readUnsignedByte();
       Set subject = null;
       switch (magicNumber) {

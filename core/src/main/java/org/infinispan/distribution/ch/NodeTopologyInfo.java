@@ -62,11 +62,10 @@ public class NodeTopologyInfo {
       return address;
    }
 
-   public static class NodeTopologyInfoExternalizer implements Externalizer {
+   public static class NodeTopologyInfoExternalizer implements Externalizer<NodeTopologyInfo> {
 
       @Override
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
-         NodeTopologyInfo nti = (NodeTopologyInfo) object;
+      public void writeObject(ObjectOutput output, NodeTopologyInfo nti) throws IOException {
          output.writeObject(nti.siteId);
          output.writeObject(nti.rackId);
          output.writeObject(nti.machineId);
@@ -74,7 +73,7 @@ public class NodeTopologyInfo {
       }
 
       @Override
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public NodeTopologyInfo readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          String siteId = (String) input.readObject();
          String rackId = (String) input.readObject();
          String machineId = (String) input.readObject();

@@ -133,18 +133,17 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
             "} " + super.toString();
    }
 
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         TransientMortalCacheEntry ice = (TransientMortalCacheEntry) subject;
-         output.writeObject(ice.key);
-         output.writeObject(ice.cacheValue.value);
-         UnsignedNumeric.writeUnsignedLong(output, ice.cacheValue.created);
-         output.writeLong(ice.cacheValue.lifespan); // could be negative so should not use unsigned longs
-         UnsignedNumeric.writeUnsignedLong(output, ice.cacheValue.lastUsed);
-         output.writeLong(ice.cacheValue.maxIdle); // could be negative so should not use unsigned longs
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<TransientMortalCacheEntry> {
+      public void writeObject(ObjectOutput output, TransientMortalCacheEntry entry) throws IOException {
+         output.writeObject(entry.key);
+         output.writeObject(entry.cacheValue.value);
+         UnsignedNumeric.writeUnsignedLong(output, entry.cacheValue.created);
+         output.writeLong(entry.cacheValue.lifespan); // could be negative so should not use unsigned longs
+         UnsignedNumeric.writeUnsignedLong(output, entry.cacheValue.lastUsed);
+         output.writeLong(entry.cacheValue.maxIdle); // could be negative so should not use unsigned longs
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public TransientMortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);

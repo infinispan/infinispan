@@ -80,14 +80,13 @@ public class AtomicHashMapDelta implements Delta {
       return changeLog == null ? 0 : changeLog.size();
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
-         AtomicHashMapDelta delta = (AtomicHashMapDelta) object;        
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<AtomicHashMapDelta> {
+      public void writeObject(ObjectOutput output, AtomicHashMapDelta delta) throws IOException {
          if (trace) log.trace("Serializing changeLog " + delta.changeLog);
          output.writeObject(delta.changeLog);
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public AtomicHashMapDelta readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          AtomicHashMapDelta delta = new AtomicHashMapDelta();
          delta.changeLog = (List<Operation>) input.readObject();
          if (trace) log.trace("Deserialized changeLog " + delta.changeLog);

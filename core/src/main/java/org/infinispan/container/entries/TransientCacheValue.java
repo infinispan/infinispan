@@ -93,15 +93,14 @@ public class TransientCacheValue extends ImmortalCacheValue {
       return (TransientCacheValue) super.clone();
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         TransientCacheValue icv = (TransientCacheValue) subject;
-         output.writeObject(icv.value);
-         UnsignedNumeric.writeUnsignedLong(output, icv.lastUsed);
-         output.writeLong(icv.maxIdle); // could be negative so should not use unsigned longs
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<TransientCacheValue> {
+      public void writeObject(ObjectOutput output, TransientCacheValue tcv) throws IOException {
+         output.writeObject(tcv.value);
+         UnsignedNumeric.writeUnsignedLong(output, tcv.lastUsed);
+         output.writeLong(tcv.maxIdle); // could be negative so should not use unsigned longs
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public TransientCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          Long maxIdle = input.readLong();

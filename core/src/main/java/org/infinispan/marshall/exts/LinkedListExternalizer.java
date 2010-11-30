@@ -43,13 +43,13 @@ import java.util.LinkedList;
  */
 @Immutable
 @Marshallable(id = Ids.LINKED_LIST)
-public class LinkedListExternalizer implements Externalizer {
+public class LinkedListExternalizer implements Externalizer<LinkedList> {
 
-   public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      MarshallUtil.marshallCollection((Collection) subject, output);
+   public void writeObject(ObjectOutput output, LinkedList list) throws IOException {
+      MarshallUtil.marshallCollection(list, output);
    }
 
-   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public LinkedList readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int size = UnsignedNumeric.readUnsignedInt(input);
       LinkedList l = new LinkedList();
       for (int i = 0; i < size; i++) l.add(input.readObject());

@@ -17,16 +17,15 @@ import org.infinispan.remoting.transport.Address
 case class TopologyAddress(val host: String, val port: Int, val hashIds: Map[String, Int], val clusterAddress: Address)
 
 object TopologyAddress {
-   class Externalizer extends org.infinispan.marshall.Externalizer {
-      override def writeObject(output: ObjectOutput, obj: AnyRef) {
-         val topologyAddress = obj.asInstanceOf[TopologyAddress]
+   class Externalizer extends org.infinispan.marshall.Externalizer[TopologyAddress] {
+      override def writeObject(output: ObjectOutput, topologyAddress: TopologyAddress) {
          output.writeObject(topologyAddress.host)
          output.writeInt(topologyAddress.port)
          output.writeObject(topologyAddress.hashIds)
          output.writeObject(topologyAddress.clusterAddress)
       }
 
-      override def readObject(input: ObjectInput): AnyRef = {
+      override def readObject(input: ObjectInput): TopologyAddress = {
          val host = input.readObject.asInstanceOf[String]
          val port = input.readInt
          val hashIds = input.readObject.asInstanceOf[Map[String, Int]]

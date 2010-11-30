@@ -37,15 +37,14 @@ import java.io.ObjectOutput;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class ReplicableCommandExternalizer implements Externalizer {
+public class ReplicableCommandExternalizer implements Externalizer<ReplicableCommand> {
    private RemoteCommandsFactory cmdFactory;
    
    public void inject(RemoteCommandsFactory cmdFactory) {
       this.cmdFactory = cmdFactory;
    }
 
-   public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      ReplicableCommand command = (ReplicableCommand) subject;
+   public void writeObject(ObjectOutput output, ReplicableCommand command) throws IOException {
       output.writeShort(command.getCommandId());
       Object[] args = command.getParameters();
       int numArgs = (args == null ? 0 : args.length);
@@ -63,7 +62,7 @@ public class ReplicableCommandExternalizer implements Externalizer {
       }
    }
 
-   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public ReplicableCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       short methodId = input.readShort();
       int numArgs = UnsignedNumeric.readUnsignedInt(input);
       Object[] args = null;
