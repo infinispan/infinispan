@@ -8,13 +8,13 @@ import java.io.{IOException, EOFException, StreamCorruptedException}
 import java.nio.channels.ClosedChannelException
 import java.util.concurrent.atomic.AtomicLong
 import org.infinispan.stats.Stats
-import org.infinispan.server.core.transport.ChannelBuffer
 import org.infinispan.server.core._
 import org.infinispan.{AdvancedCache, Version, CacheException, Cache}
 import org.infinispan.server.core.transport.ChannelBuffers._
 import org.infinispan.util.Util
 import collection.mutable.{HashMap, ListBuffer}
 import scala.collection.immutable
+import transport.{ChannelHandlerContext, ChannelBuffer}
 
 /**
  * A Memcached protocol specific decoder
@@ -210,7 +210,8 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
 
    override def getCache(h: RequestHeader): Cache[String, MemcachedValue] = cache
 
-   override def handleCustomRequest(h: RequestHeader, b: ChannelBuffer, cache: Cache[String, MemcachedValue]): AnyRef = {
+   override def handleCustomRequest(h: RequestHeader, b: ChannelBuffer, cache: Cache[String, MemcachedValue],
+                                    ctx: ChannelHandlerContext): AnyRef = {
       h.op match {
          case AppendRequest | PrependRequest => {
             val (k, params) = readKeyAndParams(h, b)
@@ -272,6 +273,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
             if (params == None || !params.get.noReply) OK else null
          }
          case VersionRequest => new StringBuilder().append("VERSION ").append(Version.version).append(CRLF)
+         case QuitRequest => ctx.getChannel.close
       }
    }
 
@@ -503,7 +505,8 @@ private object RequestResolver extends Logging {
       "flush_all" -> FlushAllRequest,
       "version" -> VersionRequest,
       "stats" -> StatsRequest,
-      "verbosity" -> VerbosityRequest
+      "verbosity" -> VerbosityRequest,
+      "quit" -> QuitRequest
    )
 
    def toRequest(commandName: String): Option[Enumeration#Value] = {
