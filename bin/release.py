@@ -162,7 +162,7 @@ def update_versions(version):
       else:
         if l.find("public static final String version =") > -1:
           ver_bits = version.split('.')
-          micro_mod = "%s.%s" % (ver_bits[2], ver_bits[3])
+          micro_mod = ".%s.%s" % (ver_bits[2], ver_bits[3])
           l = re.sub('version\s*=\s*major\s*\+\s*"[A-Z0-9\.\-]*";', 'version = major + "' + micro_mod + '";', l)
       f_out.write(l)
   finally:
@@ -265,8 +265,13 @@ def release():
   else:
     uploader = Uploader()
   
-  git= Git(branch, version.upper())
-  
+  git = Git(branch, version.upper())
+  if not git.is_upstream_clone():
+    proceed = input_with_default('This is not a clone of an %supstream%s Infinispan repository! Are you sure you want to proceed?' % (Colors.UNDERLINE, Colors.END), 'N')
+    if not proceed.upper().startswith('Y'):
+      prettyprint("... User Abort!", Levels.WARNING)
+      sys.exit(1)
+      
   ## Release order:
   # Step 1: Tag in Git
   prettyprint("Step 1: Tagging %s in git as %s" % (branch, version), Levels.INFO)

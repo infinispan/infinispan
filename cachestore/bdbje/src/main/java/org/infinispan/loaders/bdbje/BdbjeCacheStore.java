@@ -560,7 +560,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    @Override
    protected void purgeInternal() throws CacheLoaderException {
       try {
-         Map<Long, Object> expired = expiryMap.tailMap(System.currentTimeMillis(), true);
+         Map<Long, Object> expired = expiryMap.headMap(System.currentTimeMillis(), true);
          for (Map.Entry<Long, Object> entry : expired.entrySet()) {
             expiryMap.remove(entry.getKey());
             cacheMap.remove(entry.getValue());

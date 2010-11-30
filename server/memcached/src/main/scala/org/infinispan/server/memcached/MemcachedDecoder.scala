@@ -8,13 +8,13 @@ import java.io.{IOException, EOFException, StreamCorruptedException}
 import java.nio.channels.ClosedChannelException
 import java.util.concurrent.atomic.AtomicLong
 import org.infinispan.stats.Stats
-import org.infinispan.server.core.transport.ChannelBuffer
 import org.infinispan.server.core._
 import org.infinispan.{AdvancedCache, Version, CacheException, Cache}
 import org.infinispan.server.core.transport.ChannelBuffers._
 import org.infinispan.util.Util
 import collection.mutable.{HashMap, ListBuffer}
 import scala.collection.immutable
+import transport.{ChannelHandlerContext, ChannelBuffer}
 
 /**
  * A Memcached protocol specific decoder
@@ -38,19 +38,30 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
    private final val replaceIfUnmodifiedHits = new AtomicLong(0)
    private final val replaceIfUnmodifiedBadval = new AtomicLong(0)
 
-   override def readHeader(buffer: ChannelBuffer): RequestHeader = {
+   override def readHeader(buffer: ChannelBuffer): Option[RequestHeader] = {
       val (streamOp, endOfOp) = readElement(buffer)
       val op = toRequest(streamOp)
       if (op == None) {
-         val line = readLine(buffer) // Read rest of line to clear the operation
+         readLine(buffer) // Read rest of line to clear the operation
          throw new UnknownOperationException("Unknown operation: " + streamOp);
       }
-      new RequestHeader(op.get)
+      if (op.get == StatsRequest && !endOfOp) {
+         val line = readLine(buffer).trim
+         if (!line.isEmpty)
+            throw new StreamCorruptedException("Stats command does not accept arguments: " + line)
+      }
+      if (op.get == VerbosityRequest) {
+         if (!endOfOp)
+            readLine(buffer) // Read rest of line to clear the operation
+         throw new StreamCorruptedException("Memcached 'verbosity' command is unsupported")
+      }
+
+      Some(new RequestHeader(op.get))
    }
 
    override def readKey(h: RequestHeader, b: ChannelBuffer): (String, Boolean) = {
       val (k, endOfOp) = readElement(b)
-      checkKeyLength(h, k)
+      checkKeyLength(h, k, endOfOp, b)
       (k, endOfOp)
    }
 
@@ -61,18 +72,21 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       if (keys.length > 1) {
          val map = new HashMap[String, MemcachedValue]()
          for (k <- keys) {
-            val v = cache.get(checkKeyLength(h, k))
+            val v = cache.get(checkKeyLength(h, k, true, buffer))
             if (v != null)
                map += (k -> v)
          }
          createMultiGetResponse(h, new immutable.HashMap ++ map)
       } else {
-         createGetResponse(h, keys.head, cache.get(checkKeyLength(h, keys.head)))
+         createGetResponse(h, keys.head, cache.get(checkKeyLength(h, keys.head, true, buffer)))
       }
    }
 
-   private def checkKeyLength(h: RequestHeader, k: String): String = {
-      if (k.length > 250) throw new ServerException(h, new IOException("Key length over the 250 character limit")) else k
+   private def checkKeyLength(h: RequestHeader, k: String, endOfOp: Boolean, b: ChannelBuffer): String = {
+      if (k.length > 250) {
+         if (!endOfOp) readLine(b) // Clear the rest of line
+         throw new StreamCorruptedException("Key length over the 250 character limit")
+      } else k
    }
 
    override def readParameters(h: RequestHeader, b: ChannelBuffer): Option[MemcachedParameters] = {
@@ -94,12 +108,25 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
                   Some(new MemcachedParameters(null, -1, -1, -1, parseNoReply(index, args), 0, delta, 0))
                }
                case FlushAllRequest => {
-                  val flushDelay = args(index).toInt
+                  var noReplyFound = false
+                  val flushDelay =
+                     try {
+                        friendlyMaxIntCheck(args(index), "Flush delay")
+                     } catch {
+                        case n: NumberFormatException => {
+                           if (n.getMessage.contains("noreply")) {
+                              noReplyFound = true
+                              0
+                           } else throw n
+                        }
+                     }
                   index += 1
-                  Some(new MemcachedParameters(null, -1, -1, -1, parseNoReply(index, args), 0, "", flushDelay))
+                  val noReply = if (!noReplyFound) parseNoReply(index, args) else true
+                  Some(new MemcachedParameters(null, -1, -1, -1, noReply, 0, "", flushDelay))
                }
                case _ => {
                   val flags = getFlags(args(index))
+                  if (flags < 0) throw new StreamCorruptedException("Flags cannot be negative: " + flags)
                   index += 1
                   val lifespan = {
                      val streamLifespan = getLifespan(args(index))
@@ -107,6 +134,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
                   }
                   index += 1
                   val length = getLength(args(index))
+                  if (length < 0) throw new StreamCorruptedException("Negative bytes length provided: " + length)
                   val streamVersion = h.op match {
                      case ReplaceIfUnmodifiedRequest => {
                         index += 1
@@ -134,19 +162,23 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       new MemcachedValue(p.data, nextVersion, p.flags)
    }
 
-   private def getFlags(flags: String): Int = {
+   private def getFlags(flags: String): Long = {
       if (flags == null) throw new EOFException("No flags passed")
-      flags.toInt
+      try {
+         numericLimitCheck(flags, 4294967295L, "Flags")
+      } catch {
+         case n: NumberFormatException => numericLimitCheck(flags, 4294967295L, "Flags", n)
+      }
    }
 
    private def getLifespan(lifespan: String): Int = {
       if (lifespan == null) throw new EOFException("No expiry passed")
-      lifespan.toInt
+      friendlyMaxIntCheck(lifespan, "Lifespan")
    }
 
    private def getLength(length: String): Int = {
       if (length == null) throw new EOFException("No bytes passed")
-      length.toInt
+      friendlyMaxIntCheck(length, "The number of bytes")
    }
 
    private def getVersion(version: String): Long = {
@@ -178,7 +210,8 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
 
    override def getCache(h: RequestHeader): Cache[String, MemcachedValue] = cache
 
-   override def handleCustomRequest(h: RequestHeader, b: ChannelBuffer, cache: Cache[String, MemcachedValue]): AnyRef = {
+   override def handleCustomRequest(h: RequestHeader, b: ChannelBuffer, cache: Cache[String, MemcachedValue],
+                                    ctx: ChannelHandlerContext): AnyRef = {
       h.op match {
          case AppendRequest | PrependRequest => {
             val (k, params) = readKeyAndParams(h, b)
@@ -203,14 +236,15 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
             val prev = cache.get(k)
             if (prev != null) {
                val prevCounter = BigInt(new String(prev.data))
+               val delta = validateDelta(params.get.delta)
                val newCounter =
                   h.op match {
                      case IncrementRequest => {
-                        val candidateCounter = prevCounter + BigInt(params.get.delta)
-                        if (candidateCounter > BigInt("18446744073709551615")) 0 else candidateCounter
+                        val candidateCounter = prevCounter + delta
+                        if (candidateCounter > MAX_UNSIGNED_LONG) 0 else candidateCounter
                      }
                      case DecrementRequest => {
-                        val candidateCounter = prevCounter - BigInt(params.get.delta)
+                        val candidateCounter = prevCounter - delta
                         if (candidateCounter < 0) 0 else candidateCounter
                      }
                   }
@@ -239,7 +273,17 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
             if (params == None || !params.get.noReply) OK else null
          }
          case VersionRequest => new StringBuilder().append("VERSION ").append(Version.version).append(CRLF)
+         case QuitRequest => ctx.getChannel.close
       }
+   }
+
+   private def validateDelta(delta: String): BigInt = {
+      val bigIntDelta = BigInt(delta)
+      if (bigIntDelta > MAX_UNSIGNED_LONG)
+         throw new StreamCorruptedException("Increment or decrement delta sent (" + delta + ") exceeds unsigned limit (" + MAX_UNSIGNED_LONG + ")")
+      else if (bigIntDelta < MIN_UNSIGNED)
+         throw new StreamCorruptedException("Increment or decrement delta cannot be negative: " + delta)
+      bigIntDelta
    }
 
    override def createSuccessResponse(h: RequestHeader, params: Option[MemcachedParameters], prev: MemcachedValue): AnyRef = {
@@ -298,7 +342,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
          case GetRequest | GetWithVersionRequest => {
             for ((k, v) <- pairs)
                elements += buildGetResponse(h.op, k, v)
-            elements += wrappedBuffer("END\r\n".getBytes)
+            elements += wrappedBuffer(END)
          }
       }
       elements.toList
@@ -307,23 +351,25 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
    override def createErrorResponse(t: Throwable): AnyRef = {
       val sb = new StringBuilder
       t match {
-         case u: UnknownOperationException => ERROR
-         case se: ServerException => {
-            val cause = se.getCause
-            cause match {
+         case m: MemcachedException => {
+            m.getCause match {
+               case u: UnknownOperationException => ERROR
                case c: ClosedChannelException => null // no-op, only log
-               case _ => {
-                  cause match {
-                     case i: IOException => sb.append("CLIENT_ERROR bad command line format: ")
-                     case n: NumberFormatException => sb.append("CLIENT_ERROR bad command line format: ")
-                     case _ => sb.append("SERVER_ERROR ")
-                  }
-                  sb.append(t).append(CRLF)
-               }
+               case i: IOException => sb.append(m.getMessage).append(CRLF)
+               case n: NumberFormatException => sb.append(m.getMessage).append(CRLF)
+               case _ => sb.append(m.getMessage).append(CRLF)
             }
          }
          case c: ClosedChannelException => null // no-op, only log
-         case _ => sb.append("SERVER_ERROR ").append(t).append(CRLF)
+         case _ => sb.append(SERVER_ERROR).append(t.getMessage).append(CRLF)
+      }
+   }
+
+   override protected def createServerException(e: Exception, h: Option[RequestHeader], b: ChannelBuffer): (MemcachedException, Boolean) = {
+      e match {
+         case i: IOException => (new MemcachedException(CLIENT_ERROR_BAD_FORMAT + i.getMessage, i), true)
+         case n: NumberFormatException => (new MemcachedException(CLIENT_ERROR_BAD_FORMAT + n.getMessage, n), true)
+         case _ => (new MemcachedException(SERVER_ERROR + e, e), false)
       }
    }
 
@@ -378,7 +424,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       buffer
    }
 
-   private def createValue(data: Array[Byte], nextVersion: Long, flags: Int): MemcachedValue = {
+   private def createValue(data: Array[Byte], nextVersion: Long, flags: Long): MemcachedValue = {
       new MemcachedValue(data, nextVersion, flags)
    }   
 
@@ -396,11 +442,33 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       sb.toString
    }
 
+   private def friendlyMaxIntCheck(number: String, message: String): Int = {
+      try {
+         number.toInt
+      } catch {
+         case n: NumberFormatException => numericLimitCheck(number, Int.MaxValue, message, n)
+      }
+   }
+
+   private def numericLimitCheck(number: String, maxValue: Long, message: String, n: NumberFormatException): Int = {
+      if (number.toLong > maxValue)
+         throw new NumberFormatException(message + " sent (" + number
+            + ") exceeds the limit (" + maxValue + ")")
+      else throw n
+   }
+
+   private def numericLimitCheck(number: String, maxValue: Long, message: String): Long =  {
+      val numeric = number.toLong
+      if (number.toLong > maxValue)
+         throw new NumberFormatException(message + " sent (" + number
+            + ") exceeds the limit (" + maxValue + ")")
+      numeric
+   }
 }
 
 class MemcachedParameters(override val data: Array[Byte], override val lifespan: Int,
                           override val maxIdle: Int, override val streamVersion: Long,
-                          val noReply: Boolean, val flags: Int, val delta: String,
+                          val noReply: Boolean, val flags: Long, val delta: String,
                           val flushDelay: Int) extends RequestParameters(data, lifespan, maxIdle, streamVersion) {
    override def toString = {
       new StringBuilder().append("MemcachedParameters").append("{")
@@ -436,7 +504,9 @@ private object RequestResolver extends Logging {
       "decr" -> DecrementRequest,
       "flush_all" -> FlushAllRequest,
       "version" -> VersionRequest,
-      "stats" -> StatsRequest
+      "stats" -> StatsRequest,
+      "verbosity" -> VerbosityRequest,
+      "quit" -> QuitRequest
    )
 
    def toRequest(commandName: String): Option[Enumeration#Value] = {
@@ -446,3 +516,4 @@ private object RequestResolver extends Logging {
    }
 }
 
+class MemcachedException(message: String, cause: Throwable) extends Exception(message, cause)

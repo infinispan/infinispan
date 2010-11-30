@@ -6,10 +6,10 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
 import org.infinispan.stats.Stats
 import org.infinispan.server.core.VersionGenerator._
-import java.io.StreamCorruptedException
 import transport._
 import transport.ChannelBuffers._
 import org.infinispan.util.Util
+import java.io.StreamCorruptedException
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -24,11 +24,14 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
    type SuitableHeader <: RequestHeader
 
    private val versionCounter = new AtomicInteger
+   private val isTrace = isTraceEnabled
 
    override def decode(ctx: ChannelHandlerContext, buffer: ChannelBuffer): AnyRef = {
-      val header = readHeader(buffer)
-      if (header == null) return null // Something went wrong reading the header, so get more bytes
+      var optionalHeader: Option[SuitableHeader] = None
       try {
+         optionalHeader = readHeader(buffer)
+         if (optionalHeader == None) return null // Something went wrong reading the header, so get more bytes
+         val header = optionalHeader.get
          val ret = header.op match {
             case PutRequest | PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest | RemoveRequest => {
                val (k, params) = readKeyAndParams(header, buffer)
@@ -43,13 +46,23 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
             }
             case GetRequest | GetWithVersionRequest => get(header, buffer, getCache(header))
             case StatsRequest => createStatsResponse(header, getCache(header).getAdvancedCache.getStats)
-            case _ => handleCustomRequest(header, buffer, getCache(header))
+            case _ => handleCustomRequest(header, buffer, getCache(header), ctx)
          }
          writeResponse(ctx.getChannel, ret)
          null
       } catch {
-         case se: ServerException => throw se
-         case e: Exception => throw new ServerException(header, e)
+         case e: Exception => {
+            val (serverException, isClientError) = createServerException(e, optionalHeader, buffer)
+            // If decode returns an exception, decode won't be called again so,
+            // we need to fire the exception explicitly so that requests can
+            // carry on being processed on same connection after a client error
+            if (isClientError) {
+               Channels.fireExceptionCaught(ctx.getChannel, serverException)
+               null
+            } else {
+               throw serverException
+            }
+         }
          case t: Throwable => throw t
       }
    }
@@ -64,6 +77,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
 
    private def writeResponse(ch: Channel, response: AnyRef) {
       if (response != null) {
+         if (isTrace) trace("Write response {0}", response)
          response match {
             // We only expect Lists of ChannelBuffer instances, so don't worry about type erasure 
             case l: List[ChannelBuffer] => l.foreach(ch.write(_))
@@ -156,7 +170,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
       }
    }
 
-   protected def readHeader(b: ChannelBuffer): SuitableHeader
+   protected def readHeader(b: ChannelBuffer): Option[SuitableHeader]
 
    protected def getCache(h: SuitableHeader): Cache[K, V]
 
@@ -186,7 +200,10 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
 
    protected def createStatsResponse(h: SuitableHeader, stats: Stats): AnyRef
 
-   protected def handleCustomRequest(h: SuitableHeader, b: ChannelBuffer, cache: Cache[K, V]): AnyRef
+   protected def handleCustomRequest(h: SuitableHeader, b: ChannelBuffer, cache: Cache[K, V],
+                                     ctx: ChannelHandlerContext): AnyRef
+
+   protected def createServerException(e: Exception, h: Option[SuitableHeader], b: ChannelBuffer): (Exception, Boolean)
 
    protected def generateVersion(cache: Cache[K, V]): Long = {
       val rpcManager = cache.getAdvancedCache.getRpcManager
@@ -241,5 +258,3 @@ class RequestParameters(val data: Array[Byte], val lifespan: Int, val maxIdle: I
 }
 
 class UnknownOperationException(reason: String) extends StreamCorruptedException(reason)
-
-class ServerException(val header: RequestHeader, cause: Throwable) extends Exception(cause)

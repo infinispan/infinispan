@@ -11,4 +11,5 @@ object MemcachedOperation extends Enumeration(10) {
    val AppendRequest, PrependRequest = Value
    val IncrementRequest, DecrementRequest = Value
    val FlushAllRequest, VersionRequest = Value
+   val VerbosityRequest, QuitRequest = Value
 }

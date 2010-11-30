@@ -31,10 +31,15 @@
         oob_thread_pool.rejection_policy="Discard"        
          />
 
-   <!--<TCPPING timeout="3000"-->
-            <!--initial_hosts="localhost[7800],localhost[7801]}"-->
-            <!--port_range="5"-->
-            <!--num_initial_members="3"/>-->
+   <!-- Ergonomics, new in JGroups 2.11, are disabled by default in TCPPING until JGRP-1253 is resolved -->
+   <!--
+   <TCPPING timeout="3000"
+            initial_hosts="localhost[7800],localhost[7801]}"
+            port_range="5"
+            num_initial_members="3"
+            ergonomics="false"
+        />
+   -->
 
    <MPING bind_addr="${jgroups.bind_addr:127.0.0.1}" break_on_coord_rsp="true"
       mcast_addr="${jgroups.udp.mcast_addr:228.6.7.8}" mcast_port="${jgroups.udp.mcast_port:46655}" ip_ttl="${jgroups.udp.ip_ttl:2}"
