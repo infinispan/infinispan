@@ -359,6 +359,13 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
    def testFlushAllNoReply = sendNoWait("flush_all noreply\r\n")
 
+   def testFlushAllPipeline {
+      val responses = sendMulti("flush_all\r\nget a\r\n", 2, true)
+      assertEquals(responses.length, 2)
+      assertEquals(responses.head, "OK")
+      assertEquals(responses.tail.head, "END")
+   }
+
    def testVersion {
       val versions = client.getVersions
       assertEquals(versions.size(), 1)
@@ -400,7 +407,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       val responses = sendMulti(command, 2, true)
       assertEquals(responses.length, 2)
       assertTrue(responses.head.contains("CLIENT_ERROR"))
-      assertTrue(responses.tail.head == "END", "Instead response was: " + responses.tail.head)
+      assertEquals(responses.tail.head, "END")
    }
 
    def testNegativeBytesLengthValue {
