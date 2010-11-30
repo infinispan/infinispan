@@ -44,11 +44,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       this.embeddedCacheManager = embeddedCacheManager;
    }
 
-   private boolean isDefined(String cacheName) {
-      log.error("Defined caches: {0}", embeddedCacheManager.getCacheNames());
-      return embeddedCacheManager.getCacheNames().contains(cacheName);
-   }
-
    public Response handle(CacheRpcCommand cmd) throws Throwable {
       String cacheName = cmd.getCacheName();
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
@@ -56,15 +51,11 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       if (cr == null) {
          if (embeddedCacheManager.getGlobalConfiguration().isStrictPeerToPeer()) {
             // lets see if the cache is *defined* and perhaps just not started.
-            if (isDefined(cacheName)) {
-               log.info("Will try and wait for the cache to start");
-               long giveupTime = System.currentTimeMillis() + 30000; // arbitrary (?) wait time for caches to start
-               while (cr == null && System.currentTimeMillis() < giveupTime) {
-                  Thread.sleep(100);
-                  cr = gcr.getNamedComponentRegistry(cacheName);
-               }
-            } else {
-               log.info("Cache {0} is not defined.  No point in waiting.", cacheName);
+            log.info("Will try and wait for the cache to start");
+            long giveupTime = System.currentTimeMillis() + 30000; // arbitrary (?) wait time for caches to start
+            while (cr == null && System.currentTimeMillis() < giveupTime) {
+               Thread.sleep(100);
+               cr = gcr.getNamedComponentRegistry(cacheName);
             }
          }
          if (cr == null) {

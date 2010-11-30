@@ -41,6 +41,7 @@ public class NonExistentCacheTest extends AbstractInfinispanTest {
          assert "v".equals(cm1.getCache().get("k"));
          assert "v".equals(cm2.getCache().get("k"));
 
+         c.setSyncReplTimeout(35000);
          cm1.defineConfiguration("newCache", c);
 
          if (strict) {
@@ -48,7 +49,8 @@ public class NonExistentCacheTest extends AbstractInfinispanTest {
                cm1.getCache("newCache").put("k", "v");
                assert false : "Should have failed!";
             } catch (CacheException e) {
-               assert e.getCause() instanceof NamedCacheNotFoundException;
+               Throwable throwable = e.getCause();
+               assert throwable instanceof NamedCacheNotFoundException;
             }
          } else {
             cm1.getCache("newCache").put("k", "v");
