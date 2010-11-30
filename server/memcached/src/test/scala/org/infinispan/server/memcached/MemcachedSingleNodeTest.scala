@@ -50,7 +50,7 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with Memca
 
    protected def send(req: String): String = sendMulti(req, 1, true).head
 
-   protected def sendNoWait(req: String): String = sendMulti(req, 1, false).head
+   protected def sendNoWait(req: String) = sendMulti(req, 1, false)
 
    protected def sendMulti(req: String, expectedResponses: Int, wait: Boolean): List[String] = {
       val socket = new Socket(server.getHost, server.getPort)
