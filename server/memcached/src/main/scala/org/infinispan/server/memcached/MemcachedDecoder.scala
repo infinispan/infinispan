@@ -42,7 +42,8 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       val (streamOp, endOfOp) = readElement(buffer)
       val op = toRequest(streamOp)
       if (op == None) {
-         readLine(buffer) // Read rest of line to clear the operation
+         if (!endOfOp)
+            readLine(buffer) // Read rest of line to clear the operation
          throw new UnknownOperationException("Unknown operation: " + streamOp);
       }
       if (op.get == StatsRequest && !endOfOp) {
