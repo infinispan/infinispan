@@ -46,7 +46,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
             }
             case GetRequest | GetWithVersionRequest => get(header, buffer, getCache(header))
             case StatsRequest => createStatsResponse(header, getCache(header).getAdvancedCache.getStats)
-            case _ => handleCustomRequest(header, buffer, getCache(header))
+            case _ => handleCustomRequest(header, buffer, getCache(header), ctx)
          }
          writeResponse(ctx.getChannel, ret)
          null
@@ -200,7 +200,8 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
 
    protected def createStatsResponse(h: SuitableHeader, stats: Stats): AnyRef
 
-   protected def handleCustomRequest(h: SuitableHeader, b: ChannelBuffer, cache: Cache[K, V]): AnyRef
+   protected def handleCustomRequest(h: SuitableHeader, b: ChannelBuffer, cache: Cache[K, V],
+                                     ctx: ChannelHandlerContext): AnyRef
 
    protected def createServerException(e: Exception, h: Option[SuitableHeader], b: ChannelBuffer): (Exception, Boolean)
 

@@ -14,4 +14,6 @@ abstract class Channel {
 
    def getUnderlyingChannel: AnyRef
 
+   def close: ChannelFuture
+
 }

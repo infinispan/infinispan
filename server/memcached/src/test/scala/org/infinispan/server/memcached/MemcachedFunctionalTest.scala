@@ -357,7 +357,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       }
    }
 
-   def testFlushAllNoReply() = sendNoWait("flush_all noreply\r\n")
+   def testFlushAllNoReply = sendNoWait("flush_all noreply\r\n")
 
    def testVersion {
       val versions = client.getVersions
@@ -437,6 +437,12 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertClientError(send("verbosity\r\n"))
       assertClientError(send("verbosity 5\r\n"))
       assertClientError(send("verbosity 10 noreply\r\n"))
+   }
+
+   def testQuit(m: Method) {
+      var f = client.set(k(m), 0, "0")
+      assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
+      sendNoWait("quit\r\n")
    }
 
 //   def testRegex {
