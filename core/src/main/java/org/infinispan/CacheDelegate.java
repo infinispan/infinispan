@@ -404,7 +404,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    }
 
    public String getVersion() {
-      return Version.version;
+      return Version.VERSION;
    }
 
    @Override

@@ -32,7 +32,7 @@ import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_NO_SCHEMA;
 public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    public void testNamedCacheFileJaxb() throws Exception {
-      String schemaFileName = "infinispan-config-" + Version.getMajorVersion() + ".xsd";
+      String schemaFileName = String.format("infinispan-config-%s.xsd", Version.MAJOR_MINOR);
       testNamedCacheFile(InfinispanConfiguration.newInfinispanConfiguration(
             "configs/named-cache-test.xml", "schema/" + schemaFileName, new ConfigurationValidatingVisitor()));
    }
@@ -43,7 +43,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testConfigSampleAllValidation() throws Exception {
-      String schemaFileName = "infinispan-config-" + Version.getMajorVersion() + ".xsd";
+      String schemaFileName = String.format("infinispan-config-%s.xsd", Version.MAJOR_MINOR);
       InfinispanConfiguration.newInfinispanConfiguration("config-samples/all.xml", "schema/" + schemaFileName, new ConfigurationValidatingVisitor());
    }
 
@@ -87,7 +87,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "   </default>\n" +
             TestingUtil.INFINISPAN_END_TAG;
 
-      String schemaFileName = "schema/infinispan-config-" + Version.getMajorVersion() + ".xsd";
+      String schemaFileName = String.format("infinispan-config-%s.xsd", Version.MAJOR_MINOR);
       
       InputStream is = new ByteArrayInputStream(config.getBytes());      
       InfinispanConfiguration c = InfinispanConfiguration.newInfinispanConfiguration(is,

@@ -111,6 +111,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
 @MBean(objectName = DefaultCacheManager.OBJECT_NAME, description = "Component that acts as a manager, factory and container for caches in the system.")
+@SuppressWarnings("deprecated")
 public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public static final String OBJECT_NAME = "CacheManager";
    private static final Log log = LogFactory.getLog(DefaultCacheManager.class);

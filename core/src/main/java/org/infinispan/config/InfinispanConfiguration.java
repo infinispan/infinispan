@@ -79,11 +79,11 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
 
    public static final String SCHEMA_SYSTEM_PROPERTY = "infinispan.config.schema";
 
-   private static final String DEFAULT_SCHEMA_LOCATION = "schema/infinispan-config-" + Version.getMajorVersion() + ".xsd";
+   private static final String DEFAULT_SCHEMA_LOCATION = String.format("schema/infinispan-config-%s.xsd", Version.MAJOR_MINOR);
 
    public static final String SCHEMA_URL_SYSTEM_PROPERTY = "infinispan.config.schema.url";
 
-   private static final String DEFAULT_SCHEMA_URL = "http://www.infinispan.org/schemas/infinispan-config-" + Version.getMajorVersion() + ".xsd";
+   private static final String DEFAULT_SCHEMA_URL = String.format("http://www.infinispan.org/schemas/infinispan-config-%s.xsd", Version.MAJOR_MINOR);
 
    @XmlElement
    private final GlobalConfiguration global = new GlobalConfiguration();
