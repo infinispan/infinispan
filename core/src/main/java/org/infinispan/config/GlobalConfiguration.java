@@ -12,9 +12,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
@@ -25,6 +23,9 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -502,6 +503,14 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       serialization.setVersion(marshallVersion);
    }
 
+   public void setMarshallablesType(MarshallablesType marshallableType) {
+      serialization.setMarshallableTypes(marshallableType);
+   }
+
+   public MarshallablesType getMarshallableTypes() {
+      return serialization.marshallableTypes;
+   }
+
    public long getDistributedSyncTimeout() {
       return transport.distributedSyncTimeout;
    }
@@ -771,7 +780,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setTransportClass")
       protected String transportClass = null; // The default constructor sets default to JGroupsTransport
 
-      
       @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setTransportNodeName")
       protected String nodeName = null;
 
@@ -885,12 +893,19 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setMarshallVersion")
       protected String version = Version.MAJOR_MINOR;
 
+      @XmlElement(name = "marshallables")
+      protected MarshallablesType marshallableTypes = new MarshallablesType();
+
       public SerializationType() {
          super();
       }
 
       public void accept(ConfigurationBeanVisitor v) {
          v.visitSerializationType(this);
+      }
+      
+      public void setMarshallableTypes(MarshallablesType marshallableTypes) {
+         this.marshallableTypes = marshallableTypes;
       }
 
       @XmlAttribute
@@ -903,6 +918,69 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       public void setVersion(String version) {
          testImmutability("version");
          this.version = version;
+      }
+   }
+   /**
+    * Configures custom marshallers.
+    *
+    * @see <a href="../../../config.html#ce_global_serialization_marshallers">Configuration reference</a>
+    */
+   @XmlAccessorType(XmlAccessType.FIELD)
+   @ConfigurationDoc(name = "marshallables")
+   public static class MarshallablesType extends AbstractConfigurationBeanWithGCR {
+      
+
+      /** The serialVersionUID */
+      private static final long serialVersionUID = -496116709223466807L;
+      
+      @XmlElement(name = "marshallable")
+      private List<MarshallableConfig> marshallables = new ArrayList<MarshallableConfig>();
+
+      @Override
+      public MarshallablesType clone() throws CloneNotSupportedException {
+         MarshallablesType dolly = (MarshallablesType) super.clone();
+         if (marshallables != null) {
+            dolly.marshallables = new ArrayList<MarshallableConfig>();
+            for (MarshallableConfig config : marshallables) {
+               MarshallableConfig clone = (MarshallableConfig) config.clone();
+               dolly.marshallables.add(clone);
+            }
+         }
+         return dolly;
+      }
+
+      public void accept(ConfigurationBeanVisitor v) {
+         for (MarshallableConfig i : marshallables) {
+            i.accept(v);
+         }
+         v.visitMarshallablesType(this);
+      }
+
+      public List<MarshallableConfig> getMarshallableConfigs() {
+         return marshallables;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof MarshallablesType)) return false;
+
+         MarshallablesType that = (MarshallablesType) o;
+
+         if (marshallables != null ? !marshallables.equals(that.marshallables) : that.marshallables != null)
+            return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         return marshallables != null ? marshallables.hashCode() : 0;
+      }
+
+      public void setMarshallableConfigs(List<MarshallableConfig> customInterceptors) {
+         testImmutability("customInterceptors");
+         this.marshallables = customInterceptors;
       }
    }
 

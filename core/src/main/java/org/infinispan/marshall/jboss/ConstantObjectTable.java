@@ -45,6 +45,9 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.config.GlobalConfiguration.MarshallablesType;
+import org.infinispan.config.MarshallableConfig;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.MortalCacheEntry;
@@ -57,8 +60,10 @@ import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.ch.UnionConsistentHash;
+import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.StreamingMarshaller;
@@ -93,6 +98,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -120,6 +126,8 @@ public class ConstantObjectTable implements ObjectTable {
       JDK_EXTERNALIZERS.put(TreeSet.class.getName(), SetExternalizer.class.getName());
       JDK_EXTERNALIZERS.put("java.util.Collections$SingletonList", SingletonListExternalizer.class.getName());
 
+      // TODO Create foreign externalizers in corresponding modules for any non internal classes
+      // TODO Change MARSHALLABLES collection into a Class based collection to speed up starup
       MARSHALLABLES.add(GlobalTransaction.class.getName());
       MARSHALLABLES.add(DldGlobalTransaction.class.getName());
       MARSHALLABLES.add(JGroupsAddress.class.getName());
@@ -190,59 +198,21 @@ public class ConstantObjectTable implements ObjectTable {
 
    /**
     * Contains mapping of ids to their corresponding Externalizer classes via ExternalizerAdapter instances.
+    * This maps contains mappings for both internal and foreign or user defined externalizers.
+    *
+    * Internal ids are only allowed to be unsigned bytes (0 to 254). 255 is an special id that signals the
+    * arrival of a foreign externalizer id. Foreign externalizers are only allowed to use positive ids that between 0
+    * and Integer.MAX_INT. To avoid clashes between foreign and internal ids, foreign ids are transformed into negative
+    * values to be stored in this map. This way, we avoid the need of a second map to hold user defined externalizers.
     */
    private final Map<Integer, ExternalizerAdapter> readers = new HashMap<Integer, ExternalizerAdapter>();
 
    private volatile boolean started;
 
-   public void start(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller) {
-      HashSet<Integer> ids = new HashSet<Integer>();
-
-      for (Map.Entry<String, String> entry : JDK_EXTERNALIZERS.entrySet()) {
-         try {
-            Class clazz = Util.loadClassStrict(entry.getKey());
-            Externalizer ext = null;
-            ext = (Externalizer) Util.getInstanceStrict(entry.getValue());
-            Marshallable marshallable = ReflectionUtil.getAnnotation(ext.getClass(), Marshallable.class);
-            int id = marshallable.id();
-            ids.add(id);
-            ExternalizerAdapter adapter = new ExternalizerAdapter(id, ext);
-            writers.put(clazz, adapter);
-            readers.put(id, adapter);
-         } catch (Exception e) {
-            if (log.isDebugEnabled()) {
-               log.debug("Unable to load class {0}", e.getMessage());
-            }
-         }
-      }
-
-      for (String marshallableClass : MARSHALLABLES) {
-         try {
-            Class clazz = Util.loadClassStrict(marshallableClass);
-            Marshallable marshallable = ReflectionUtil.getAnnotation(clazz, Marshallable.class);
-            if (marshallable != null && !marshallable.externalizer().equals(Externalizer.class)) {
-               int id = marshallable.id();
-               Externalizer ext = null;
-               ext = Util.getInstance(marshallable.externalizer());
-               if (!ids.add(id))
-                  throw new CacheException("Duplicate id found! id=" + id + " in " + ext.getClass().getName() + " is shared by another marshallable class.");
-               if (ext instanceof ReplicableCommandExternalizer) {
-                  ((ReplicableCommandExternalizer) ext).inject(cmdFactory);
-               }
-               if (ext instanceof MarshalledValue.Externalizer) {
-                  ((MarshalledValue.Externalizer) ext).inject(ispnMarshaller);
-               }
-
-               ExternalizerAdapter adapter = new ExternalizerAdapter(id, ext);
-               writers.put(clazz, adapter);
-               readers.put(id, adapter);
-            }
-         } catch (ClassNotFoundException e) {
-            if (!marshallableClass.startsWith("org.infinispan")) {
-               if (log.isDebugEnabled()) log.debug("Unable to load class {0}", e.getMessage());
-            }
-         }
-      }
+   public void start(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller, GlobalConfiguration globalCfg) {
+      loadJdkExternalizers();
+      loadInternalMarshallables(cmdFactory, ispnMarshaller);
+      loadForeignMarshallables(globalCfg);
 
       started = true;
 
@@ -266,18 +236,22 @@ public class ConstantObjectTable implements ObjectTable {
             log.trace("Either the marshaller has stopped or hasn't started. Write externalizers are not propery populated: {0}", writers);
 
          if (Thread.currentThread().isInterrupted())
-            throw new IOException("Cache manager is shutting down, " +
-                  "so type write externalizer for type=" + clazz.getName() + " cannot be resolved. " +
-                  "Interruption being pushed up.", new InterruptedException());
+            throw new IOException(String.format(
+                  "Cache manager is shutting down, so type write externalizer for type=%s cannot be resolved. Interruption being pushed up.",
+                  clazz.getName()), new InterruptedException());
          else
-            throw new IllegalStateException("No write externalizer available for: " + clazz.getName() +
-                  ", either marshaller is stopped or has not started up yet.");
+            throw new IllegalStateException(String.format(
+                  "No write externalizer available for: %s, either marshaller is stopped or has not started up yet.",
+                  clazz.getName()));
       }
       return writer;
    }
 
    public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
       int readerIndex = input.readUnsignedByte();
+      if (readerIndex == Ids.MAX_ID) // User defined externalizer
+         readerIndex = generateForeignReaderIndex(UnsignedNumeric.readUnsignedInt(input));
+
       ExternalizerAdapter adapter = readers.get(readerIndex);
       if (adapter == null) {
          if (!started) {
@@ -285,23 +259,118 @@ public class ConstantObjectTable implements ObjectTable {
                log.trace("Either the marshaller has stopped or hasn't started. Read externalizers are not propery populated: {0}", readers);
 
             if (Thread.currentThread().isInterrupted())
-               throw new IOException("Cache manager is shutting down, " +
-                     "so type (id=" + readerIndex + ") cannot be resolved. Interruption being pushed up.", new InterruptedException());
+               throw new IOException(String.format(
+                     "Cache manager is shutting down, so type (id=%d) cannot be resolved. Interruption being pushed up.",
+                     readerIndex), new InterruptedException());
             else
-               throw new CacheException("Cache manager is either starting up or shutting down but it's not interrupted, " +
-                     "so type (id=" + readerIndex + ") cannot be resolved.");
+               throw new CacheException(String.format(
+                     "Cache manager is either starting up or shutting down but it's not interrupted, so type (id=%d) cannot be resolved.",
+                     readerIndex));
          } else {
             if (log.isTraceEnabled()) {
                log.trace("Unknown type. Input stream has {0} to read", input.available());
                log.trace("Check contents of read externalizers: {0}", readers);
             }
 
-            throw new CacheException("Type of data read is unknown. Id=" + readerIndex + " " +
-                  "is not amongst known reader indexes.");
+            throw new CacheException(String.format(
+                  "Type of data read is unknown. Id=%d is not amongst known reader indexes.",
+                  readerIndex));
          }
       }
 
       return adapter.readObject(input);
+   }
+
+   private void loadJdkExternalizers() {
+      for (Map.Entry<String, String> entry : JDK_EXTERNALIZERS.entrySet()) {
+         try {
+            Class typeClass = Util.loadClassStrict(entry.getKey());
+            Externalizer ext = (Externalizer) Util.getInstanceStrict(entry.getValue());
+            Marshallable marshallable = ReflectionUtil.getAnnotation(ext.getClass(), Marshallable.class);
+            int id = checkInternalIdLimit(marshallable.id(), ext);
+            updateExtReadersWriters(new ExternalizerAdapter(id, ext), typeClass);
+         } catch (Exception e) {
+            if (log.isDebugEnabled()) {
+               log.debug("Unable to load class {0}", e.getMessage());
+            }
+         }
+      }
+   }
+
+   private void loadInternalMarshallables(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller) {
+      for (String marshallableClass : MARSHALLABLES) {
+         try {
+            Class typeClass = Util.loadClassStrict(marshallableClass);
+            Marshallable marshallable = ReflectionUtil.getAnnotation(typeClass, Marshallable.class);
+            if (marshallable != null && !marshallable.externalizer().equals(Externalizer.class)) {
+               Externalizer ext = Util.getInstance(marshallable.externalizer());
+
+               if (ext instanceof ReplicableCommandExternalizer)
+                  ((ReplicableCommandExternalizer) ext).inject(cmdFactory);
+
+               if (ext instanceof MarshalledValue.Externalizer)
+                  ((MarshalledValue.Externalizer) ext).inject(ispnMarshaller);
+
+               int id = checkInternalIdLimit(marshallable.id(), ext);
+               updateExtReadersWriters(new ExternalizerAdapter(id, ext), typeClass);
+            }
+         } catch (ClassNotFoundException e) {
+            if (!marshallableClass.startsWith("org.infinispan")) {
+               if (log.isDebugEnabled()) log.debug("Unable to load class {0}", e.getMessage());
+            }
+         }
+      }
+   }
+
+   private void loadForeignMarshallables(GlobalConfiguration globalCfg) {
+      if (log.isTraceEnabled())
+         log.trace("Loading user defined externalizers");
+      MarshallablesType marshallables = globalCfg.getMarshallableTypes();
+      List<MarshallableConfig> configs = marshallables.getMarshallableConfigs();
+      for (MarshallableConfig config : configs) {
+         Class typeClass = Util.loadClass(config.getTypeClass());
+         Externalizer ext = (Externalizer) Util.getInstance(config.getExternalizerClass());
+         int id = checkForeignIdLimit(config.getId(), ext);
+         updateExtReadersWriters(new ForeignExternalizerAdapter(id, ext), typeClass, generateForeignReaderIndex(id));
+      }
+   }
+
+   private void updateExtReadersWriters(ExternalizerAdapter adapter, Class typeClass) {
+      updateExtReadersWriters(adapter, typeClass, adapter.id);
+   }
+
+   private void updateExtReadersWriters(ExternalizerAdapter adapter, Class typeClass, int readerIndex) {
+      writers.put(typeClass, adapter);
+      ExternalizerAdapter prev = readers.put(readerIndex, adapter);
+      if (prev != null)
+         throw new CacheException(String.format(
+               "Duplicate id found! id=%d in %s is shared by another marshallable class (%s). Reader index is %d",
+               adapter.id, adapter.externalizer.getClass().getName(), prev.externalizer.getClass().getName(), readerIndex));
+
+      if (log.isTraceEnabled())
+         log.trace("Loaded externalizer {0} for {1} with id {2} and reader index {3}",
+                   adapter.externalizer.getClass().getName(), typeClass, adapter.id, readerIndex);
+
+   }
+
+   private int checkInternalIdLimit(int id, Externalizer ext) {
+      if (id >= Ids.MAX_ID)
+         throw new CacheException(String.format(
+               "Internal %s externalizer is using an id(%d) that exceeed the limit. It needs to be smaller than %d",
+               ext, id, Ids.MAX_ID));
+      return id;
+   }
+
+   private int checkForeignIdLimit(int id, Externalizer ext) {
+      if (id < 0)
+         throw new CacheException(String.format(
+               "Foreign %s externalizer is using a negative id(%d). Only positive id values are allowed.",
+               ext, id));
+      return id;
+   }
+
+   private int generateForeignReaderIndex(int foreignId) {
+      return 0x80000000 | foreignId;
    }
 
    static class ExternalizerAdapter implements Writer {
@@ -326,6 +395,23 @@ public class ConstantObjectTable implements ObjectTable {
       public String toString() {
          // Each adapter is represented by the externalizer it delegates to, so just return the class name
          return externalizer.getClass().getName();
+      }
+   }
+
+   static class ForeignExternalizerAdapter extends ExternalizerAdapter {
+      final int foreignId;
+
+      ForeignExternalizerAdapter(int foreignId, Externalizer externalizer) {
+         super(Ids.MAX_ID, externalizer);
+         this.foreignId = foreignId;
+      }
+
+      @Override
+      public void writeObject(Marshaller output, Object object) throws IOException {
+         output.write(id);
+         // Write as an unsigned, variable length, integer to safe space
+         UnsignedNumeric.writeUnsignedInt(output, foreignId);
+         externalizer.writeObject(output, object);
       }
    }
 }

@@ -27,6 +27,7 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -109,7 +110,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       chain.addInterceptorAfter(mvli, MarshalledValueInterceptor.class);
       
       marshaller = new VersionAwareMarshaller();
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), null);
+      marshaller.inject(Thread.currentThread().getContextClassLoader(), null, cache1.getConfiguration().getGlobalConfiguration());
       marshaller.start();
    }
    
@@ -377,9 +378,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       Pojo pojo = new Pojo();
       MarshalledValue mv = new MarshalledValue(pojo, true, marshaller);
 
-
       VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), null);
+      marshaller.inject(Thread.currentThread().getContextClassLoader(), null, new GlobalConfiguration());
       marshaller.start();
 
       // start the test

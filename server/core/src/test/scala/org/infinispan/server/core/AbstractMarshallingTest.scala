@@ -5,6 +5,7 @@ import org.testng.annotations.{AfterClass, BeforeTest}
 import org.infinispan.commands.RemoteCommandsFactory
 import java.util.Random
 import java.io.{ObjectOutputStream, ByteArrayOutputStream}
+import org.infinispan.config.GlobalConfiguration
 
 /**
  * Abstract class to help marshalling tests in different server modules.
@@ -18,7 +19,7 @@ abstract class AbstractMarshallingTest {
 
    @BeforeTest
    def setUp {
-      marshaller.inject(Thread.currentThread.getContextClassLoader, new RemoteCommandsFactory)
+      marshaller.inject(Thread.currentThread.getContextClassLoader, new RemoteCommandsFactory, new GlobalConfiguration)
       marshaller.start
    }
 

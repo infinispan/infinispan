@@ -40,7 +40,15 @@
          <!-- See the JGroupsTransport javadocs for more flags -->
       </transport>
 
-      <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0"/>
+      <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0">
+         <marshallables>
+            <marshallable id="456" typeClass="org.infinispan.marshall.ForeignExternalizerTest$LegacyObj"
+                          externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$LegacyObjExternalizer"/>
+            <marshallable id="789" typeClass="java.util.concurrent.ConcurrentSkipListMap"
+                          externalizerClass="org.infinispan.marshall.exts.MapExternalizer"/>
+         </marshallables>
+      </serialization>
+
       <globalJmxStatistics enabled="false" jmxDomain="funky_domain"
                            mBeanServerLookup="org.infinispan.jmx.PerThreadMBeanServerLookup"
                            allowDuplicateDomains="true"/>

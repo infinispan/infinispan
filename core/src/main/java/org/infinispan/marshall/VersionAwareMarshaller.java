@@ -22,6 +22,7 @@
 package org.infinispan.marshall;
 
 import org.infinispan.commands.RemoteCommandsFactory;
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -59,21 +60,23 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
    private final JBossMarshaller defaultMarshaller;
    private ClassLoader loader;
    private RemoteCommandsFactory remoteCommandsFactory;
+   private GlobalConfiguration globalCfg;
 
    public VersionAwareMarshaller() {
       defaultMarshaller = new JBossMarshaller();
    }
 
    @Inject
-   public void inject(ClassLoader loader, RemoteCommandsFactory remoteCommandsFactory) {
+   public void inject(ClassLoader loader, RemoteCommandsFactory remoteCommandsFactory, GlobalConfiguration globalCfg) {
       this.loader = loader;
       this.remoteCommandsFactory = remoteCommandsFactory;
+      this.globalCfg = globalCfg;
    }
 
    @Start(priority = 9)
    // should start before Transport component
    public void start() {
-      defaultMarshaller.start(loader, remoteCommandsFactory, this);
+      defaultMarshaller.start(loader, remoteCommandsFactory, this, globalCfg);
    }
 
    @Stop(priority = 11) // Stop after transport to avoid send/receive and marshaller not being ready

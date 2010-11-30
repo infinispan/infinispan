@@ -38,6 +38,7 @@ import org.infinispan.config.Configuration.TransactionType;
 import org.infinispan.config.Configuration.UnsafeType;
 import org.infinispan.config.GlobalConfiguration.FactoryClassWithPropertiesType;
 import org.infinispan.config.GlobalConfiguration.GlobalJmxStatisticsType;
+import org.infinispan.config.GlobalConfiguration.MarshallablesType;
 import org.infinispan.config.GlobalConfiguration.SerializationType;
 import org.infinispan.config.GlobalConfiguration.ShutdownType;
 import org.infinispan.config.GlobalConfiguration.TransportType;
@@ -181,6 +182,14 @@ public abstract class AbstractConfigurationBeanVisitor implements ConfigurationB
    }
    
    public void visitCustomInterceptorConfig(CustomInterceptorConfig bean) {
+      defaultVisit(bean);
+   }
+   
+   public void visitMarshallableConfig(MarshallableConfig bean) {
+      defaultVisit(bean);
+   }
+   
+   public void visitMarshallablesType(MarshallablesType bean) {
       defaultVisit(bean);
    }
 

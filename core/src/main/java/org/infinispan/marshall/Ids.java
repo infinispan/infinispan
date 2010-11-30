@@ -22,12 +22,17 @@
 package org.infinispan.marshall;
 
 /**
- * Indexes.
+ * Indexes for object types. These are currently limited to being unsigned bytes, so valid values are considered those
+ * in the range of 0 to 254. Please note that the use of 255 is forbidden since this is reserved for foreign, or user
+ * defined, externalizers.
  *
  * @author Galder Zamarreño
  * @since 4.0
  */
 public interface Ids {
+   // No internal externalizer should use this upper limit Id or anything higher than that.
+   static final int MAX_ID = 255;
+
    /**
     * ids for jdk classes *
     */
@@ -83,20 +88,20 @@ public interface Ids {
    static final byte INVALIDATE_L1_COMMAND = 35;
    static final byte LOCK_CONTROL_COMMAND = 36;
    static final byte EVICT_COMMAND = 37;
-   // others
 
+   // others
    static final byte GLOBAL_TRANSACTION = 38;
    static final byte JGROUPS_ADDRESS = 39;
    static final byte MARSHALLED_VALUE = 40;
    static final byte TRANSACTION_LOG_ENTRY = 41;
    static final byte BUCKET = 42;
    static final byte DEADLOCK_DETECTING_GLOBAL_TRANSACTION = 43;
+
    /**
     * ids for infinispan tree classes *
     */
 
    static final byte NODE_KEY = 44;
-
    static final byte FQN = 45;
    static final byte ATOMIC_HASH_MAP_DELTA = 46;
 
@@ -108,6 +113,7 @@ public interface Ids {
    static final byte DEFAULT_CONSISTENT_HASH = 51;
    static final byte UNION_CONSISTENT_HASH = 52;
    static final byte JOIN_COMPLETE_COMMAND = 53;
+
    /*
     * ids for server modules
     */

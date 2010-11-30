@@ -22,6 +22,7 @@
 package org.infinispan.marshall.jboss;
 
 import org.infinispan.commands.RemoteCommandsFactory;
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.StreamingMarshaller;
@@ -36,7 +37,7 @@ import java.io.InputStream;
  * <p />
  * The reason why this is implemented specially in Infinispan rather than resorting to Java serialization or even the
  * more efficient JBoss serialization is that a lot of efficiency can be gained when a majority of the serialization
- * that occurs has to do with a small set of known types such as {@link org.infinispan.transaction.GlobalTransaction} or
+ * that occurs has to do with a small set of known types such as {@link org.infinispan.transaction.xa.GlobalTransaction} or
  * {@link org.infinispan.commands.ReplicableCommand}, and class type information can be replaced with simple magic
  * numbers.
  * <p/>
@@ -48,10 +49,10 @@ import java.io.InputStream;
 public class JBossMarshaller extends GenericJBossMarshaller implements StreamingMarshaller {   
    private ConstantObjectTable objectTable;
 
-   public void start(ClassLoader defaultCl, RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller) {
+   public void start(ClassLoader defaultCl, RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller, GlobalConfiguration globalCfg) {
       if (log.isDebugEnabled()) log.debug("Using JBoss Marshalling");
       this.defaultCl = defaultCl;
-      objectTable = createCustomObjectTable(cmdFactory, ispnMarshaller);
+      objectTable = createCustomObjectTable(cmdFactory, ispnMarshaller, globalCfg);
       configuration.setObjectTable(objectTable);
    }
 
@@ -77,9 +78,9 @@ public class JBossMarshaller extends GenericJBossMarshaller implements Streaming
       return super.isMarshallable(o) || ReflectionUtil.isAnnotationPresent(o.getClass(), Marshallable.class);
    }
 
-   private ConstantObjectTable createCustomObjectTable(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller) {
+   private ConstantObjectTable createCustomObjectTable(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller, GlobalConfiguration globalCfg) {
       ConstantObjectTable objectTable = new ConstantObjectTable();
-      objectTable.start(cmdFactory, ispnMarshaller);
+      objectTable.start(cmdFactory, ispnMarshaller, globalCfg);
       return objectTable;
    }
 }
