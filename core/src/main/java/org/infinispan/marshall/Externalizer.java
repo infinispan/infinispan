@@ -28,29 +28,54 @@ import java.io.ObjectOutput;
 import org.infinispan.marshall.jboss.ConstantObjectTable;
 
 /**
- * Extended interface that extends capabilities of writing predefined objects 
- * with the possibility of reading them. Any new externalizer implementations
- * should implement this interface. Implementations are free to write class 
- * information to the wire as they wish. See {@link ReplicableCommandExternalizer} 
- * for an such example.
- * 
- * To add a new {@link Externalizer}, follow these steps:
- * 
- * 1. Create an implementation of {@link Externalizer}.
- * 
- * 2. Add class that {@link Externalizer} implementation marshalls to set in 
- * {@link ConstantObjectTable.MARSHALLABLES}
- * 
- * 3. Annotate the class being marshalled with {@link Marshallable} indicating the 
- * {@link Externalizer} implementation and a unique index number.
- * 
+ * One of the key aspects of Infinispan is that it often needs to marshall/unmarshall
+ * objects in order to provide some of its functionality.  For example, if it needs
+ * to store objects in a write-through or write-behind cache store, the objects stored
+ * need marshalling.  If a cluster of Infinispan nodes is formed, objects shipped around
+ * need marshalling.  Even if you enable lazy deserialization, objects need to marshalled
+ * so that they can be lazily unmarshalled with the correct classloader.
+ *
+ * Using standard JDK serialization is slow and produces payloads that are too big and
+ * can affect bandwidth usage.  On top of that, JDK serialization does not work well with
+ * objects that are supposed to be immutable.  In order to avoid these issues, Infinispan
+ * uses JBoss Marshalling for marshalling/unmarshalling objects.  JBoss Marshalling is fast
+ * , provides very space efficient payloads, and on top of that, allows users to construct
+ * objects themselves during unmarshalling, hence allowing objects to carry on being immutable.
+ *
+ * Starting with 5.0, users of Infinispan can now benefit from this marshalling
+ * framework as well, and they can provide their own implementations of the Externalizer<T>
+ * interface in order to define, how a particular object type needs to be marshalled or
+ * unmarshalled.
+ *
+ * It's common practice to include Externalizer implementations within the classes that
+ * they marshall/unmarshall as public static classes.  To make Externalizer implementations
+ * easier to code and more typesafe, make sure you define type <T> as the type of object
+ * that's being marshalled/unmarshalled.  You can find plenty of examples of Externalizer
+ * implementations in the Infinispan code base, but to highlight one, check the Externalizer
+ * implementation for {@link org.infinispan.remoting.transport.jgroups.JGroupsAddress} in
+ * {@link org.infinispan.remoting.transport.jgroups.JGroupsAddress.Externalizer}
+ *
+ * Once the Externalizer implementations have been build, make sure you configure Infinispan
+ * accordingly so that each externalizer has a unique id, and link the Externalizer together
+ * with the class type that it serializes via {@link org.infinispan.config.GlobalConfiguration}
+ * or the equivalent XML configuration.  For more detailed information on the configuration,
+ * check the Configuration Reference document.
+ *
+ * Even though internally we have a {@link org.infinispan.marshall.Marshallable} annotation
+ * that we use to link up Externalizers with the types that we marshall, user-provided classes
+ * should not use this annotation because we do not try to do any annotation scanning in
+ * classes that are not internal to Infinispan.  There's two reasons for doing this: First
+ * annotation scanning can be an expensive process.  Second is that often users will try to
+ * provide Externalizer implementations for classes that they cannot modify to retrofit an
+ * annotation, or they classes for which they don't even have the source code.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 public interface Externalizer<T> {
    
    /**
-    * Write the predefined object reference to the stream.
+    * Write the object reference to the stream.
     *
     * @param output the object output to write to
     * @param object the object reference to write
@@ -60,7 +85,9 @@ public interface Externalizer<T> {
    
    /**
     * Read an instance from the stream.  The instance will have been written by the
-    * {@link #writeObject(Object)} method.
+    * {@link #writeObject(ObjectOutput, Object)} method.  Implementations are free
+    * to create instances of the object read from the stream in any way that they
+    * feel like. This could be via constructor, factory or reflection.
     *
     * @param input the object input to read from
     * @return the object instance

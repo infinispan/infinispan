@@ -38,6 +38,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalEntryFactory;
@@ -91,7 +92,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory());
+      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory(), new GlobalConfiguration());
       marshaller.start();
    }
 

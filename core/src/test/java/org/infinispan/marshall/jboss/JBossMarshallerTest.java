@@ -24,11 +24,14 @@ package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.RemoteCommandsFactory;
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -44,14 +47,14 @@ import java.io.ObjectOutput;
  */
 @Test(groups = "functional", testName = "marshall.jboss.JBossMarshallerTest")
 public class JBossMarshallerTest extends AbstractInfinispanTest {
+   private static final Log log = LogFactory.getLog(JBossMarshallerTest.class);
 
    private final VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
 
-   private GlobalTransactionFactory gtf = new GlobalTransactionFactory();
-
    @BeforeTest
    public void setUp() {
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory());
+      ClassLoader cl = Thread.currentThread().getContextClassLoader();
+      marshaller.inject(cl, new RemoteCommandsFactory(), new GlobalConfiguration());
       marshaller.start();
    }
 
@@ -61,20 +64,42 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
    }
    
    public void testDuplicateExternalizerId() throws Exception {
+      withExpectedFailure(DuplicateIdClass.class, "Should have thrown a CacheException reporting the duplicate id");
+   }
+
+   public void testInternalExternalIdLimit() {
+      withExpectedFailure(TooHighIdClass.class, "Should have thrown a CacheException indicating that the Id is too high");
+   }
+
+   private void withExpectedFailure(Class extClass, String message) {
       JBossMarshaller jbmarshaller = new JBossMarshaller();
-      ConstantObjectTable.MARSHALLABLES.add(DuplicateIdClass.class.getName());
+      ConstantObjectTable.MARSHALLABLES.add(extClass.getName());
       try {
-         jbmarshaller.start(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory(), marshaller);
-         assert false : "Should have thrown a CacheException reporting the duplicate id";
+         ClassLoader cl = Thread.currentThread().getContextClassLoader();
+         jbmarshaller.start(cl, new RemoteCommandsFactory(), marshaller, new GlobalConfiguration());
+         assert false : message;
       } catch (CacheException ce) {
+         log.trace("Expected exception", ce);
       } finally {
          jbmarshaller.stop();
-         ConstantObjectTable.MARSHALLABLES.remove(DuplicateIdClass.class.getName());
+         ConstantObjectTable.MARSHALLABLES.remove(extClass.getName());
       }
    }
    
    @Marshallable(externalizer = DuplicateIdClass.Externalizer.class, id = Ids.ARRAY_LIST)
    static class DuplicateIdClass {
+      public static class Externalizer implements org.infinispan.marshall.Externalizer {
+         public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return null;
+         }
+
+         public void writeObject(ObjectOutput output, Object object) throws IOException {
+         }
+      }
+   }
+
+   @Marshallable(externalizer = TooHighIdClass.Externalizer.class, id = 255)
+   static class TooHighIdClass {
       public static class Externalizer implements org.infinispan.marshall.Externalizer {
          public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             return null;
