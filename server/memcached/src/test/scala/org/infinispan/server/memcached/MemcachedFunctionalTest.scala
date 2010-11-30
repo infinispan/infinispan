@@ -370,7 +370,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       val versions = client.getVersions
       assertEquals(versions.size(), 1)
       val version = versions.values.iterator.next
-      assertEquals(version, Version.version)
+      assertEquals(version, Version.VERSION)
    }
 
    def testIncrKeyLengthLimit {

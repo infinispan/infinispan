@@ -47,7 +47,7 @@ class MemcachedStatsTest extends MemcachedSingleNodeTest {
 
    def testStaticStats(m: Method) {
        val stats = getStats
-       assertEquals(stats.get("version"), Version.version)
+       assertEquals(stats.get("version"), Version.VERSION)
     }
 
    def testTodoStats {

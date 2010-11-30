@@ -289,7 +289,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
                scheduler.schedule(new DelayedFlushAll(cache, flushFunction), flushDelay, TimeUnit.SECONDS)
             if (params == None || !params.get.noReply) OK else null
          }
-         case VersionRequest => new StringBuilder().append("VERSION ").append(Version.version).append(CRLF)
+         case VersionRequest => new StringBuilder().append("VERSION ").append(Version.VERSION).append(CRLF)
          case QuitRequest => ctx.getChannel.close
       }
    }

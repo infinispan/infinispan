@@ -41,11 +41,11 @@ public class ConfigHtmlGenerator extends AbstractConfigHtmlGenerator {
    }
    
    protected String getSchemaFile() {
-       return "schema/infinispan-config-" + Version.getMajorVersion() + ".xsd";
+       return String.format("schema/infinispan-config-%s.xsd", Version.MAJOR_MINOR);
    }
    
    protected String getTitle() {
-       return "<h2>Infinispan configuration options "  + Version.getMajorVersion() + " </h2><br/>";
+       return String.format("<h2>Infinispan configuration options %s</h2><br/>", Version.MAJOR_MINOR);
    }
    
    protected String getRootElementName() {

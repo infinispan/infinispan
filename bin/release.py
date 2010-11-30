@@ -150,26 +150,28 @@ def update_versions(version):
       version_bytes += "'%s', " % ch
   version_bytes = version_bytes[:-2]
   version_bytes += "}"
-  version_java = "./core/src/main/java/org/infinispan/Version.java"
-  modified_files.append(version_java)
+  version_props = "./core/src/main/resources/org/infinispan/version.properties"
+  modified_files.append(version_props)
   
-  f_in = open(version_java)
-  f_out = open(version_java+".tmp", "w")
+  f_in = open(version_props)
+  f_out = open(version_props+".tmp", "w")
+  
   try:
     for l in f_in:
-      if l.find("static final byte[] version_id = ") > -1:
-        l = re.sub('version_id = .*;', 'version_id = ' + version_bytes + ';', l)
-      else:
-        if l.find("public static final String version =") > -1:
-          ver_bits = version.split('.')
-          micro_mod = ".%s.%s" % (ver_bits[2], ver_bits[3])
-          l = re.sub('version\s*=\s*major\s*\+\s*"[A-Z0-9\.\-]*";', 'version = major + "' + micro_mod + '";', l)
-      f_out.write(l)
+      if l.find("infinispan.version.codename") > -1:
+        f_out.write(l)
+        f_out.write('\n')
+    pieces = version.split('.')
+    f_out.write('infinispan.version.major = %s \n' % pieces[0])
+    f_out.write('infinispan.version.minor = %s \n' % pieces[1])
+    f_out.write('infinispan.version.micro = %s \n' % pieces[2])
+    f_out.write('infinispan.version.modifier = %s \n' % pieces[3])
+    f_out.write("infinispan.version.snapshot = false \n")
   finally:
     f_in.close()
     f_out.close()
     
-  os.rename(version_java+".tmp", version_java)
+  os.rename(version_props+".tmp", version_props)
   
   # Now make sure this goes back into the repository.
   git.commit(modified_files)

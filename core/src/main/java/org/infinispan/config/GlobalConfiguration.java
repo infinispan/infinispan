@@ -883,7 +883,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       protected String marshallerClass = VersionAwareMarshaller.class.getName(); // the default
       
       @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setMarshallVersion")
-      protected String version = Version.getMajorVersion();
+      protected String version = Version.MAJOR_MINOR;
 
       public SerializationType() {
          super();

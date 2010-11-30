@@ -77,7 +77,7 @@ public class JaxbSchemaGenerator {
         }
 
         public Result createOutput(String namespaceUri, String suggestedFileName) throws IOException {
-            return new StreamResult(new File(dir, "infinispan-config-" + Version.getMajorVersion() + ".xsd"));
+            return new StreamResult(new File(dir, String.format("infinispan-config-%s.xsd", Version.MAJOR_MINOR)));
         }
     }
 }
