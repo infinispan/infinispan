@@ -401,6 +401,13 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
    def testUnknownCommand = assertError(send("blah\r\n"))
 
+   def testUnknownCommandPipelined {
+      val responses = sendMulti("bogus\r\ndelete a\r\n", 2, true)
+      assertEquals(responses.length, 2)
+      assertEquals(responses.head, "ERROR")
+      assertEquals(responses.tail.head, "NOT_FOUND")
+   }
+
    def testReadFullLineAfterLongKey {
       val key = generateRandomString(300)
       val command = "add " + key + " 0 0 1\r\nget a\r\n"
