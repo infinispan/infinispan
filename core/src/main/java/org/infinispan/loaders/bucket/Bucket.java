@@ -101,15 +101,14 @@ public final class Bucket {
       entries.clear();
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         Bucket b = (Bucket) subject;
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<Bucket> {
+      public void writeObject(ObjectOutput output, Bucket b) throws IOException {
          Map<Object, InternalCacheEntry> entries = b.entries;
          UnsignedNumeric.writeUnsignedInt(output, entries.size());
          for (InternalCacheEntry se : entries.values()) output.writeObject(se);
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public Bucket readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Bucket b = new Bucket();
          int numEntries = UnsignedNumeric.readUnsignedInt(input);
          for (int i = 0; i < numEntries; i++) b.addEntry((InternalCacheEntry) input.readObject());

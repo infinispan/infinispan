@@ -60,7 +60,7 @@ public class ClearOperation<K, V> extends Operation<K, V> {
    
    public static class Externalizer implements org.infinispan.marshall.Externalizer {
       public void writeObject(ObjectOutput output, Object object) throws IOException {
-         // no-op;         
+         // no-op
       }
 
       public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {

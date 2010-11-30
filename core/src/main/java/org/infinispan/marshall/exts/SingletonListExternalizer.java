@@ -41,13 +41,13 @@ import java.util.List;
  */
 @Immutable
 @Marshallable(id = Ids.SINGLETON_LIST)
-public class SingletonListExternalizer implements Externalizer {
+public class SingletonListExternalizer implements Externalizer<List> {
 
-   public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      output.writeObject(((List) subject).get(0));
+   public void writeObject(ObjectOutput output, List list) throws IOException {
+      output.writeObject(list.get(0));
    }
 
-   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public List readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       return Collections.singletonList(input.readObject());
    }
 

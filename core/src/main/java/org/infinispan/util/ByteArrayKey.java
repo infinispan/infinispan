@@ -47,14 +47,13 @@ public class ByteArrayKey {
          .append("}").toString();
    }
 
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
-         ByteArrayKey key = (ByteArrayKey) object;
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<ByteArrayKey> {
+      public void writeObject(ObjectOutput output, ByteArrayKey key) throws IOException {
          output.writeInt(key.data.length);
          output.write(key.data);
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ByteArrayKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          byte[] data = new byte[input.readInt()];
          input.readFully(data);
          return new ByteArrayKey(data);

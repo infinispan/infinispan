@@ -43,13 +43,13 @@ import java.util.Collection;
  */
 @Immutable
 @Marshallable(id = Ids.ARRAY_LIST)
-public class ArrayListExternalizer implements Externalizer {
+public class ArrayListExternalizer implements Externalizer<ArrayList> {
 
-   public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      MarshallUtil.marshallCollection((Collection) subject, output);
+   public void writeObject(ObjectOutput output, ArrayList list) throws IOException {
+      MarshallUtil.marshallCollection(list, output);
    }
 
-   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public ArrayList readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int size = UnsignedNumeric.readUnsignedInt(input);
       ArrayList l = new ArrayList(size);
       for (int i = 0; i < size; i++) l.add(input.readObject());

@@ -144,15 +144,11 @@ public class DldGlobalTransaction extends GlobalTransaction {
       return this.locksAtOrigin;
    }
 
-   public static class Externalizer extends GlobalTransaction.Externalizer {
-      public Externalizer() {
-         gtxFactory = new GlobalTransactionFactory(true);
-      }
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<DldGlobalTransaction> {
+      private final GlobalTransaction.Externalizer delegate = new GlobalTransaction.Externalizer(new GlobalTransactionFactory(true));
 
-      @Override
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         super.writeObject(output, subject);
-         DldGlobalTransaction ddGt = (DldGlobalTransaction) subject;
+      public void writeObject(ObjectOutput output, DldGlobalTransaction ddGt) throws IOException {
+         delegate.writeObject(output, ddGt);
          output.writeLong(ddGt.getCoinToss());
          if (ddGt.locksAtOrigin.isEmpty()) {
             output.writeObject(null);
@@ -161,10 +157,9 @@ public class DldGlobalTransaction extends GlobalTransaction {
          }
       }
 
-      @Override
       @SuppressWarnings("unchecked")
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         DldGlobalTransaction ddGt = (DldGlobalTransaction) super.readObject(input);
+      public DldGlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         DldGlobalTransaction ddGt = (DldGlobalTransaction) delegate.readObject(input);
          ddGt.setCoinToss(input.readLong());
          Object locksAtOriginObj = input.readObject();
          if (locksAtOriginObj == null) {

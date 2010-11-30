@@ -35,12 +35,12 @@ public class UnsuccessfulResponse extends ValidResponse {
       return 13;
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<UnsuccessfulResponse> {
+      public void writeObject(ObjectOutput output, UnsuccessfulResponse object) throws IOException {
          // no-op
       }
       
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public UnsuccessfulResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return INSTANCE;
       }
    }

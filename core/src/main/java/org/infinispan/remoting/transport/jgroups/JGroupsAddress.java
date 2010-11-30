@@ -59,13 +59,12 @@ public class JGroupsAddress implements Address {
       this.address = address;
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         JGroupsAddress address = (JGroupsAddress) subject;
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<JGroupsAddress> {
+      public void writeObject(ObjectOutput output, JGroupsAddress address) throws IOException {
          output.writeObject(address.address);
       }
 
-      public Object readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public JGroupsAddress readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          JGroupsAddress address = new JGroupsAddress();
          address.address = (org.jgroups.Address) unmarshaller.readObject();
          return address;

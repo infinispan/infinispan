@@ -50,12 +50,12 @@ public class RequestIgnoredResponse extends InvalidResponse {
       return "RequestIgnoredResponse";
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<RequestIgnoredResponse> {
+      public void writeObject(ObjectOutput output, RequestIgnoredResponse object) throws IOException {
          // no-op
       }
       
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public RequestIgnoredResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return INSTANCE;
       }
    }

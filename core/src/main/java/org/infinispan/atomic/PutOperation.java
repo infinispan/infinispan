@@ -64,14 +64,13 @@ public class PutOperation<K, V> extends Operation<K, V> {
       delegate.put(key, newValue);
    }
 
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
-         PutOperation put = (PutOperation) object;
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<PutOperation> {
+      public void writeObject(ObjectOutput output, PutOperation put) throws IOException {
          output.writeObject(put.key);
          output.writeObject(put.newValue);
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public PutOperation readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          PutOperation put = new PutOperation();
          put.key = input.readObject();
          put.newValue = input.readObject();         

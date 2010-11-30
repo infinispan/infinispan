@@ -131,16 +131,15 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       return result;
    }
 
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         DefaultConsistentHash dch = (DefaultConsistentHash) subject;
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<DefaultConsistentHash> {
+      public void writeObject(ObjectOutput output, DefaultConsistentHash dch) throws IOException {
          output.writeObject(dch.addresses);
          output.writeObject(dch.positions);
          output.writeObject(dch.addressToHashIds);
       }
 
       @SuppressWarnings("unchecked")
-      public Object readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public DefaultConsistentHash readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          DefaultConsistentHash dch = new DefaultConsistentHash();
          dch.addresses = (ArrayList<Address>) unmarshaller.readObject();
          dch.positions = (SortedMap<Integer, Address>) unmarshaller.readObject();

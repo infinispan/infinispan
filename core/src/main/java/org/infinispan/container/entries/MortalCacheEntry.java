@@ -109,16 +109,15 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       return clone;
    }
 
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         MortalCacheEntry ice = (MortalCacheEntry) subject;
-         output.writeObject(ice.key);
-         output.writeObject(ice.cacheValue.value);
-         UnsignedNumeric.writeUnsignedLong(output, ice.cacheValue.created);
-         output.writeLong(ice.cacheValue.lifespan); // could be negative so should not use unsigned longs      
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<MortalCacheEntry> {
+      public void writeObject(ObjectOutput output, MortalCacheEntry mce) throws IOException {
+         output.writeObject(mce.key);
+         output.writeObject(mce.cacheValue.value);
+         UnsignedNumeric.writeUnsignedLong(output, mce.cacheValue.created);
+         output.writeLong(mce.cacheValue.lifespan); // could be negative so should not use unsigned longs
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);

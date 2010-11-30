@@ -134,10 +134,9 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       return positions.get(ownerHash);
    }
 
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<TopologyAwareConsistentHash> {
       @Override
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         TopologyAwareConsistentHash dch = (TopologyAwareConsistentHash) subject;
+      public void writeObject(ObjectOutput output, TopologyAwareConsistentHash dch) throws IOException {
          output.writeObject(dch.addresses);
          output.writeObject(dch.positions);
          output.writeObject(dch.addressToHashIds);
@@ -147,7 +146,7 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       }
 
       @Override
-      public Object readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public TopologyAwareConsistentHash readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          TopologyAwareConsistentHash ch = new TopologyAwareConsistentHash();
          ch.addresses = (ArrayList<Address>) unmarshaller.readObject();
          ch.positions = (SortedMap<Integer, Address>) unmarshaller.readObject();

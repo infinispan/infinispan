@@ -43,7 +43,7 @@ import java.util.TreeMap;
  * @since 4.0
  */
 @Marshallable(id = Ids.JDK_MAPS)
-public class MapExternalizer implements Externalizer {
+public class MapExternalizer implements Externalizer<Map> {
    private static final int HASHMAP = 0;
    private static final int TREEMAP = 1;
    private static final int FASTCOPYHASHMAP = 2;
@@ -55,13 +55,13 @@ public class MapExternalizer implements Externalizer {
       numbers.put(FastCopyHashMap.class, FASTCOPYHASHMAP);
    }
 
-   public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      int number = numbers.get(subject.getClass(), -1);
+   public void writeObject(ObjectOutput output, Map map) throws IOException {
+      int number = numbers.get(map.getClass(), -1);
       output.write(number);
-      MarshallUtil.marshallMap((Map) subject, output);
+      MarshallUtil.marshallMap(map, output);
    }
 
-   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public Map readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int magicNumber = input.readUnsignedByte();
       Map subject = null;
       switch (magicNumber) {

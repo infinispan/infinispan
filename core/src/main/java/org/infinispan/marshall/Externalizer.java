@@ -47,7 +47,7 @@ import org.infinispan.marshall.jboss.ConstantObjectTable;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface Externalizer {
+public interface Externalizer<T> {
    
    /**
     * Write the predefined object reference to the stream.
@@ -56,7 +56,7 @@ public interface Externalizer {
     * @param object the object reference to write
     * @throws IOException if an I/O error occurs
     */
-   void writeObject(ObjectOutput output, Object object) throws IOException;
+   void writeObject(ObjectOutput output, T object) throws IOException;
    
    /**
     * Read an instance from the stream.  The instance will have been written by the
@@ -67,6 +67,6 @@ public interface Externalizer {
     * @throws IOException if an I/O error occurs
     * @throws ClassNotFoundException if a class could not be found
     */
-   Object readObject(ObjectInput input) throws IOException, ClassNotFoundException;
+   T readObject(ObjectInput input) throws IOException, ClassNotFoundException;
 
 }

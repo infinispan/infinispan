@@ -111,16 +111,15 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       return clone;
    }
 
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         TransientCacheEntry ice = (TransientCacheEntry) subject;
-         output.writeObject(ice.key);
-         output.writeObject(ice.cacheValue.value);
-         UnsignedNumeric.writeUnsignedLong(output, ice.cacheValue.lastUsed);
-         output.writeLong(ice.cacheValue.maxIdle); // could be negative so should not use unsigned longs
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<TransientCacheEntry> {
+      public void writeObject(ObjectOutput output, TransientCacheEntry tce) throws IOException {
+         output.writeObject(tce.key);
+         output.writeObject(tce.cacheValue.value);
+         UnsignedNumeric.writeUnsignedLong(output, tce.cacheValue.lastUsed);
+         output.writeLong(tce.cacheValue.maxIdle); // could be negative so should not use unsigned longs
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public TransientCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);

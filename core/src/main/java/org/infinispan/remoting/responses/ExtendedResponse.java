@@ -55,14 +55,13 @@ public class ExtendedResponse extends ValidResponse {
       return response.isSuccessful();
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         ExtendedResponse er = (ExtendedResponse) subject;
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<ExtendedResponse> {
+      public void writeObject(ObjectOutput output, ExtendedResponse er) throws IOException {
          output.writeBoolean(er.replayIgnoredRequests);
          output.writeObject(er.response);
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ExtendedResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          boolean replayIgnoredRequests = input.readBoolean();
          Response response = (Response) input.readObject();
          return new ExtendedResponse(response, replayIgnoredRequests);

@@ -715,13 +715,13 @@ public class Immutables {
          return map.toString();
       }
 
-      public static class Externalizer implements org.infinispan.marshall.Externalizer {
-         public void writeObject(ObjectOutput output, Object subject) throws IOException {
-            MarshallUtil.marshallMap((Map) subject, output);
+      public static class Externalizer implements org.infinispan.marshall.Externalizer<Map> {
+         public void writeObject(ObjectOutput output, Map map) throws IOException {
+            MarshallUtil.marshallMap(map, output);
          }
 
          @SuppressWarnings("unchecked")
-         public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public Map readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             Map map = new HashMap();
             MarshallUtil.unmarshallMap(map, input);
             return Immutables.immutableMapWrap(map);
