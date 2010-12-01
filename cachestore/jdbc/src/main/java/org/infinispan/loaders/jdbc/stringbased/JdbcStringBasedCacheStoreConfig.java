@@ -24,13 +24,15 @@ package org.infinispan.loaders.jdbc.stringbased;
 import org.infinispan.loaders.jdbc.AbstractNonDelegatingJdbcCacheStoreConfig;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
+import org.infinispan.loaders.keymappers.Key2StringMapper;
 import org.infinispan.util.Util;
 
 /**
  * Configuration for {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore} cache store.
  *
  * @author Mircea.Markus@jboss.com
- * @see org.infinispan.loaders.jdbc.stringbased.Key2StringMapper
+ * @see org.infinispan.loaders.keymappers.Key2StringMapper
  */
 public class JdbcStringBasedCacheStoreConfig extends AbstractNonDelegatingJdbcCacheStoreConfig {
 
@@ -68,9 +70,9 @@ public class JdbcStringBasedCacheStoreConfig extends AbstractNonDelegatingJdbcCa
    }
 
    /**
-    * Name of the class implementing Key2StringMapper. The default value is {@link org.infinispan.loaders.jdbc.stringbased.DefaultTwoWayKey2StringMapper}
+    * Name of the class implementing Key2StringMapper. The default value is {@link org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper}
     *
-    * @see org.infinispan.loaders.jdbc.stringbased.Key2StringMapper
+    * @see org.infinispan.loaders.keymappers.Key2StringMapper
     */
    public void setKey2StringMapperClass(String className) {
       testImmutability("key2StringMapper");

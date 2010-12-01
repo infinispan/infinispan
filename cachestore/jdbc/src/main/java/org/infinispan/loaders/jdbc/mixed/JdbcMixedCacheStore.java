@@ -44,7 +44,7 @@ import java.util.Set;
  * Cache store that combines functionality of {@link JdbcBinaryCacheStore} and {@link JdbcStringBasedCacheStore}. It
  * aggregates an instance of JdbcBinaryCacheStore and JdbcStringBasedCacheStore, delegating work to one of them
  * (sometimes both, see below) based on the passed in key. In order to determine which store to use it will rely on the
- * configured {@link org.infinispan.loaders.jdbc.stringbased.Key2StringMapper} )(see configuration).
+ * configured {@link org.infinispan.loaders.keymappers.Key2StringMapper} )(see configuration).
  * <p/>
  * The advantage it brings is the possibility of efficiently storing string(able) keyed {@link
  * org.infinispan.container.entries.InternalCacheEntry}s, and at the same time being able to store any other keys, a la

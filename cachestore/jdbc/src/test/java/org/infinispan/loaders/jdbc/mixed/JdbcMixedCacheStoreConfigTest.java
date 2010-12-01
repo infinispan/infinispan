@@ -22,7 +22,7 @@
 package org.infinispan.loaders.jdbc.mixed;
 
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
-import org.infinispan.loaders.jdbc.stringbased.DefaultTwoWayKey2StringMapper;
+import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

@@ -24,7 +24,7 @@ package org.infinispan.lucene;
 import java.util.regex.Pattern;
 
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
-import org.infinispan.loaders.jdbc.stringbased.TwoWayKey2StringMapper;
+import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
 
 /**
  * To configure a JdbcStringBasedCacheStoreConfig for the Lucene Directory, use this

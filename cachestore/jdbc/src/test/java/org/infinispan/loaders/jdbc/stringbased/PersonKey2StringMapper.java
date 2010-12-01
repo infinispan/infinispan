@@ -21,6 +21,8 @@
  */
 package org.infinispan.loaders.jdbc.stringbased;
 
+import org.infinispan.loaders.keymappers.Key2StringMapper;
+
 /**
  * Used for testing jdbc cache stores.
  *
