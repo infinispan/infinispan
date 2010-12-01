@@ -286,7 +286,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
             if (flushDelay == 0)
                flushFunction(cache.getAdvancedCache)
             else
-               scheduler.schedule(new DelayedFlushAll(cache, flushFunction), flushDelay, TimeUnit.SECONDS)
+               scheduler.schedule(new DelayedFlushAll(cache, flushFunction), toMillis(flushDelay), TimeUnit.MILLISECONDS)
             if (params == None || !params.get.noReply) OK else null
          }
          case VersionRequest => new StringBuilder().append("VERSION ").append(Version.VERSION).append(CRLF)
