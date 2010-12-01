@@ -10,7 +10,7 @@ import scala.collection.JavaConversions._
 import java.util.concurrent.TimeUnit._
 import org.infinispan.{CacheException, Cache}
 import org.infinispan.remoting.transport.Address
-import org.infinispan.manager.EmbeddedCacheManager
+import org.infinispan.manager.{CacheContainer, EmbeddedCacheManager}
 import java.util.{Properties, Random}
 import org.infinispan.server.core.{CacheValue, Logging, AbstractProtocolServer}
 import org.infinispan.eviction.EvictionStrategy
@@ -223,7 +223,10 @@ object HotRodServer {
 
    def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager): Cache[ByteArrayKey, CacheValue] = {
       if (cacheName.isEmpty) cacheManager.getCache[ByteArrayKey, CacheValue]
+      else if (cacheName != CacheContainer.DEFAULT_CACHE_NAME && !cacheManager.getCacheNames.contains(cacheName))
+         throw new CacheNotFoundException("Cache with name '" + cacheName + "' not found amongst the configured caches")
+      else if (cacheName == CacheContainer.DEFAULT_CACHE_NAME) cacheManager.getCache[ByteArrayKey, CacheValue]
       else cacheManager.getCache(cacheName)
-   }   
+   }
 }
 
