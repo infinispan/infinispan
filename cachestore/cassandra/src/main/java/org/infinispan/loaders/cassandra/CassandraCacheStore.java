@@ -37,10 +37,13 @@ import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
+import org.infinispan.loaders.cassandra.keymapper.TwoWayKey2StringMapper;
+import org.infinispan.loaders.cassandra.keymapper.UnsupportedKeyTypeException;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -61,9 +64,9 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	private static final boolean trace = log.isTraceEnabled();
 
 	private CassandraCacheStoreConfig config;
-	
+
 	private CassandraThriftDataSource dataSource;
-	
+
 	private ConsistencyLevel readConsistencyLevel;
 	private ConsistencyLevel writeConsistencyLevel;
 
@@ -73,6 +76,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	private ColumnParent expirationColumnParent;
 	private String entryKeyPrefix;
 	private String expirationKey;
+	private TwoWayKey2StringMapper keyMapper;
 
 	static private byte emptyByteArray[] = {};
 
@@ -96,9 +100,10 @@ public class CassandraCacheStore extends AbstractCacheStore {
 			writeConsistencyLevel = ConsistencyLevel.valueOf(config.writeConsistencyLevel);
 			entryColumnPath = new ColumnPath(config.entryColumnFamily).setColumn(ENTRY_COLUMN_NAME.getBytes("UTF-8"));
 			entryColumnParent = new ColumnParent(config.entryColumnFamily);
-			entryKeyPrefix = ENTRY_KEY_PREFIX+(config.isSharedKeyspace()?cacheName+"_":"");
+			entryKeyPrefix = ENTRY_KEY_PREFIX + (config.isSharedKeyspace() ? cacheName + "_" : "");
 			expirationColumnParent = new ColumnParent(config.expirationColumnFamily);
-			expirationKey = EXPIRATION_KEY+(config.isSharedKeyspace()?"_"+cacheName:"");
+			expirationKey = EXPIRATION_KEY + (config.isSharedKeyspace() ? "_" + cacheName : "");
+			keyMapper = (TwoWayKey2StringMapper) Util.getInstance(config.getKeyMapper());
 		} catch (Exception e) {
 			throw new ConfigurationException(e);
 		}
@@ -150,16 +155,16 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
 			// Get the keys in SLICE_SIZE blocks
 			int sliceSize = Math.min(SLICE_SIZE, numEntries);
-			for(boolean complete = false; !complete; ) {
+			for (boolean complete = false; !complete;) {
 				KeyRange keyRange = new KeyRange(sliceSize);
 				keyRange.setStart_token(startKey);
 				keyRange.setEnd_token("");
-				List<KeySlice> keySlices = cassandraClient.get_range_slices(config.keySpace, entryColumnParent, slicePredicate, keyRange, readConsistencyLevel);				
+				List<KeySlice> keySlices = cassandraClient.get_range_slices(config.keySpace, entryColumnParent, slicePredicate, keyRange, readConsistencyLevel);
 
 				// Cycle through all the keys
 				for (KeySlice keySlice : keySlices) {
-					String key = unhashKey(keySlice.getKey());
-					if(key==null) // Skip invalid keys
+					Object key = unhashKey(keySlice.getKey());
+					if (key == null) // Skip invalid keys
 						continue;
 					List<ColumnOrSuperColumn> columns = keySlice.getColumns();
 					if (columns.size() > 0) {
@@ -179,9 +184,9 @@ public class CassandraCacheStore extends AbstractCacheStore {
 					complete = true;
 				} else {
 					// Cassandra has returned exactly the amount of keys we
-					// asked for. If we haven't reached the required quota yet, 
+					// asked for. If we haven't reached the required quota yet,
 					// assume we need to cycle again starting from
-					// the last returned key (excluded)					
+					// the last returned key (excluded)
 					sliceSize = Math.min(SLICE_SIZE, numEntries - s.size());
 					if (sliceSize == 0) {
 						complete = true;
@@ -189,7 +194,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 						startKey = keySlices.get(keySlices.size() - 1).getKey();
 					}
 				}
-				
+
 			}
 			return s;
 		} catch (Exception e) {
@@ -222,9 +227,9 @@ public class CassandraCacheStore extends AbstractCacheStore {
 				}
 
 				for (KeySlice keySlice : keySlices) {
-					if(keySlice.getColumnsSize()>0) {
-						String key = unhashKey(keySlice.getKey());
-						if (key!=null && (keysToExclude == null || !keysToExclude.contains(key)))
+					if (keySlice.getColumnsSize() > 0) {
+						Object key = unhashKey(keySlice.getKey());
+						if (key != null && (keysToExclude == null || !keysToExclude.contains(key)))
 							s.add(key);
 					}
 				}
@@ -243,7 +248,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	 */
 	@Override
 	public void stop() {
-		
+
 	}
 
 	@Override
@@ -324,7 +329,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 			cassandraClient = dataSource.getConnection();
 			Map<String, Map<String, List<Mutation>>> mutationMap = new HashMap<String, Map<String, List<Mutation>>>(2);
 			store0(entry, mutationMap);
-			
+
 			cassandraClient.batch_mutate(config.keySpace, mutationMap, writeConsistencyLevel);
 		} catch (Exception e) {
 			throw new CacheLoaderException(e);
@@ -333,23 +338,24 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		}
 	}
 
-	private void store0(InternalCacheEntry entry, Map<String, Map<String, List<Mutation>>> mutationMap) throws IOException {
+	private void store0(InternalCacheEntry entry, Map<String, Map<String, List<Mutation>>> mutationMap) throws IOException, UnsupportedKeyTypeException {
 		Object key = entry.getKey();
 		if (trace)
 			log.trace("store(\"{0}\") ", key);
 		String cassandraKey = hashKey(key);
-      try {
-         addMutation(mutationMap, cassandraKey, config.entryColumnFamily, entryColumnPath.getColumn(), marshall(entry));
-         if (entry.canExpire()) {
-            addExpiryEntry(cassandraKey, entry.getExpiryTime(), mutationMap);
-         }
-      } catch (InterruptedException ie) {
-         if (trace) log.trace("Interrupted while trying to marshall entry");
-         Thread.currentThread().interrupt();
-      }
+		try {
+			addMutation(mutationMap, cassandraKey, config.entryColumnFamily, entryColumnPath.getColumn(), marshall(entry));
+			if (entry.canExpire()) {
+				addExpiryEntry(cassandraKey, entry.getExpiryTime(), mutationMap);
+			}
+		} catch (InterruptedException ie) {
+			if (trace)
+				log.trace("Interrupted while trying to marshall entry");
+			Thread.currentThread().interrupt();
+		}
 	}
-	
-	private void addExpiryEntry(String cassandraKey, long expiryTime, Map<String, Map<String, List<Mutation>>> mutationMap) {		
+
+	private void addExpiryEntry(String cassandraKey, long expiryTime, Map<String, Map<String, List<Mutation>>> mutationMap) {
 		try {
 			addMutation(mutationMap, expirationKey, config.expirationColumnFamily, longToBytes(expiryTime), cassandraKey.getBytes("UTF-8"), emptyByteArray);
 		} catch (Exception e) {
@@ -394,15 +400,17 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		} catch (ClassNotFoundException e) {
 			throw new CacheLoaderException(e);
 		} catch (InterruptedException ie) {
-         if (log.isTraceEnabled()) log.trace("Interrupted while reading from stream");
-         Thread.currentThread().interrupt();
-      }
+			if (log.isTraceEnabled())
+				log.trace("Interrupted while reading from stream");
+			Thread.currentThread().interrupt();
+		}
 	}
 
 	/**
-	 * Purge expired entries.
-	 * Expiration entries are stored in a single key (expirationKey) within a specific ColumnFamily (set by configuration).
-	 * The entries are grouped by expiration timestamp in SuperColumns within which each entry's key is mapped to a column
+	 * Purge expired entries. Expiration entries are stored in a single key
+	 * (expirationKey) within a specific ColumnFamily (set by configuration).
+	 * The entries are grouped by expiration timestamp in SuperColumns within
+	 * which each entry's key is mapped to a column
 	 */
 	@Override
 	protected void purgeInternal() throws CacheLoaderException {
@@ -411,25 +419,26 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		Cassandra.Client cassandraClient = null;
 		try {
 			cassandraClient = dataSource.getConnection();
-			// We need to get all supercolumns from the beginning of time until now, in SLICE_SIZE chunks
+			// We need to get all supercolumns from the beginning of time until
+			// now, in SLICE_SIZE chunks
 			SlicePredicate predicate = new SlicePredicate();
 			predicate.setSlice_range(new SliceRange(emptyByteArray, longToBytes(System.currentTimeMillis()), false, SLICE_SIZE));
 			Map<String, Map<String, List<Mutation>>> mutationMap = new HashMap<String, Map<String, List<Mutation>>>();
-			for(boolean complete=false; !complete; ) {
+			for (boolean complete = false; !complete;) {
 				// Get all columns
 				List<ColumnOrSuperColumn> slice = cassandraClient.get_slice(config.keySpace, expirationKey, expirationColumnParent, predicate, readConsistencyLevel);
 				complete = slice.size() < SLICE_SIZE;
 				// Delete all keys returned by the slice
-				for(ColumnOrSuperColumn crumb : slice) {
-					SuperColumn scol = crumb.getSuper_column();					
-					for(Iterator<Column> i = scol.getColumnsIterator(); i.hasNext(); ) {
+				for (ColumnOrSuperColumn crumb : slice) {
+					SuperColumn scol = crumb.getSuper_column();
+					for (Iterator<Column> i = scol.getColumnsIterator(); i.hasNext();) {
 						Column col = i.next();
 						// Remove the entry row
 						remove0(new String(col.getName(), "UTF-8"), mutationMap);
 					}
 					// Remove the expiration supercolumn
 					addMutation(mutationMap, expirationKey, config.expirationColumnFamily, scol.getName(), null, null);
-				}				
+				}
 			}
 			cassandraClient.batch_mutate(config.keySpace, mutationMap, writeConsistencyLevel);
 		} catch (Exception e) {
@@ -478,13 +487,17 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		return "CassandraCacheStore";
 	}
 
-	private String hashKey(Object key) {
-		return entryKeyPrefix + key.toString();
+	private String hashKey(Object key) throws UnsupportedKeyTypeException {
+		if (!keyMapper.isSupportedType(key.getClass())) {
+			throw new UnsupportedKeyTypeException(key);
+		}
+
+		return entryKeyPrefix + keyMapper.getStringMapping(key);
 	}
 
-	private String unhashKey(String key) {
-		if(key.startsWith(entryKeyPrefix))
-			return key.substring(entryKeyPrefix.length());
+	private Object unhashKey(String key) {
+		if (key.startsWith(entryKeyPrefix))
+			return keyMapper.getKeyMapping(key.substring(entryKeyPrefix.length()));
 		else
 			return null;
 	}
@@ -509,7 +522,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
 		if (value == null) { // Delete
 			Deletion deletion = new Deletion(System.currentTimeMillis());
-			if(superColumn!=null) {
+			if (superColumn != null) {
 				deletion.setSuper_column(superColumn);
 			}
 			if (column != null) { // Single column delete
@@ -518,7 +531,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 			columnFamilyMutations.add(new Mutation().setDeletion(deletion));
 		} else { // Insert/update
 			ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
-			if(superColumn!=null) {
+			if (superColumn != null) {
 				List<Column> columns = new ArrayList<Column>();
 				columns.add(new Column(column, value, System.currentTimeMillis()));
 				cosc.setSuper_column(new SuperColumn(superColumn, columns));
