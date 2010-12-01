@@ -337,7 +337,14 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       }
    }
 
-   def testFlushAllDelayed(m: Method) {
+   def testFlushAllDelayed(m: Method) = flushAllDelayed(m, 2, 2200)
+
+   def testFlushAllDelayedUnixTime(m: Method) {
+      val delay: Int = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis + 2000).asInstanceOf[Int]
+      flushAllDelayed(m, delay, 2200)
+   }
+
+   private def flushAllDelayed(m: Method, delay: Int, sleep: Long) {
       for (i <- 1 to 5) {
          val key = k(m, "k" + i + "-");
          val value = v(m, "v" + i + "-");
@@ -346,10 +353,10 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
          assertEquals(client.get(key), value)
       }
 
-      val f = client.flush(2);
+      val f = client.flush(delay);
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
 
-      sleepThread(2200);
+      sleepThread(sleep);
 
       for (i <- 1 to 5) {
          val key = k(m, "k" + i + "-");
