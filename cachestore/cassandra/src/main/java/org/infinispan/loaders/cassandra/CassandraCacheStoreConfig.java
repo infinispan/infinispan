@@ -8,6 +8,7 @@ import net.dataforte.cassandra.pool.PoolProperties;
 
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
+import org.infinispan.loaders.cassandra.keymapper.DefaultTwoWayKey2StringMapper;
 import org.infinispan.util.FileLookup;
 
 /**
@@ -50,6 +51,12 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
 	 *            "An optional properties file for configuring the underlying cassandra connection pool"
 	 */
 	String configurationPropertiesFile;
+	
+	/**
+	 * @configRef desc=
+	 *            "The keymapper for converting keys to strings (uses the DefaultTwoWayKey2Stringmapper by default"
+	 */
+	String keyMapper = DefaultTwoWayKey2StringMapper.class.getName();
 
 	protected PoolProperties poolProperties;
 
@@ -186,4 +193,11 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
 		}
 	}
 
+	public String getKeyMapper() {
+		return keyMapper;
+	}
+
+	public void setKeyMapper(String keyMapper) {
+		this.keyMapper = keyMapper;
+	}
 }
