@@ -8,7 +8,7 @@
 
    <!-- A time/date based rolling appender -->
    <appender name="FILE" class="org.apache.log4j.DailyRollingFileAppender">
-      <param name="File" value="infinispan_test.log"/>
+      <param name="File" value="infinispan.log"/>
       <param name="Append" value="false"/>
 
       <!-- Rollover at midnight each day -->
@@ -45,7 +45,7 @@
    <!-- ================ -->
 
    <category name="org.infinispan">
-      <priority value="TRACE"/>
+      <priority value="INFO"/>
    </category>
 
    <category name="org.infinispan.profiling">
@@ -57,6 +57,22 @@
    </category>
 
    <category name="org.infinispan.factories">
+      <priority value="WARN"/>
+   </category>
+
+   <category name="org.infinispan.client.hotrod">
+      <priority value="WARN"/>
+   </category>
+
+   <category name="org.infinispan.lucene">
+      <priority value="WARN"/>
+   </category>
+
+   <category name="com.mchange">
+      <priority value="WARN"/>
+   </category>
+
+   <category name="org.jgroups">
       <priority value="WARN"/>
    </category>
 
