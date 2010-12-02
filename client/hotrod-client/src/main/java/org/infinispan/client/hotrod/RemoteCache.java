@@ -119,7 +119,7 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
 
 
    /**
-    * Operation might be supported for smart clients that will be able to register for topology changes.
+    * This operation is not supported.
     *
     * @throws UnsupportedOperationException
     */
@@ -127,74 +127,96 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    void addListener(Object listener);
 
    /**
+    * This operation is not supported.
+    *
     * @throws UnsupportedOperationException
-    * @see #addListener(Object)
     */
    @Override
    void removeListener(Object listener);
 
    /**
+    * This operation is not supported.
+    *
     * @throws UnsupportedOperationException
-    * @see #addListener(Object)
     */
    @Override
    Set<Object> getListeners();
 
    /**
+    * This operation is not supported.
+    *
     * @throws UnsupportedOperationException
     */
    @Override
    int size();
 
    /**
+    * This operation is not supported.
+    *
     * @throws UnsupportedOperationException
     */
    @Override
    boolean isEmpty();
 
    /**
+    * This operation is not supported.
+    *
     * @throws UnsupportedOperationException
     */
    @Override
    boolean containsValue(Object value);
 
    /**
+    * This operation is not supported.
+    *
     * @throws UnsupportedOperationException
     */
    @Override
    Set<K> keySet();
 
    /**
+    * This operation is not supported.
+    *
     * @throws UnsupportedOperationException
     */
    @Override
    Collection<V> values();
 
    /**
+    * This operation is not supported.
+    *
     * @throws UnsupportedOperationException
     */
    @Override
    Set<Entry<K, V>> entrySet();
 
    /**
+    * This operation is not supported.
+    *
     * @throws UnsupportedOperationException
     */
    @Override
    void evict(K key);
 
    /**
+    * This operation is not supported.
+    *
     * @throws UnsupportedOperationException
     */
    @Override
    Configuration getConfiguration();
 
    /**
+    * This operation is not supported.
+    *
     * @throws UnsupportedOperationException
     */
    @Override
    boolean startBatch();
 
    /**
+    * This operation is not supported.
+    *
     * @throws UnsupportedOperationException
     */
    @Override
