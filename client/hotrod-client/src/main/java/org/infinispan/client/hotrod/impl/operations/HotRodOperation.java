@@ -129,10 +129,11 @@ public abstract class HotRodOperation implements HotRodConstants {
             throw new HotRodClientException(msgFromServer, messageId, status);
          }
          case HotRodConstants.COMMAND_TIMEOUT_STATUS: {
+            String msg = transport.readString();
             if (log.isTraceEnabled()) {
-               log.trace("timeout message received from the server");
+               log.trace("Server-side timeout performing operation: " + msg);
             }
-            throw new HotRodTimeoutException();
+            throw new HotRodTimeoutException(msg, messageId, status);
          }
          case HotRodConstants.NO_ERROR_STATUS:
          case HotRodConstants.KEY_DOES_NOT_EXIST_STATUS:
