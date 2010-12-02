@@ -15,7 +15,7 @@
 
       <!-- specify your cache configuration file -->
       <init-param>
-         <param-name>infinispan.configuration</param-name>
+         <param-name>infinispan.config</param-name>
          <param-value>infinispan.xml</param-value>
       </init-param>
 
