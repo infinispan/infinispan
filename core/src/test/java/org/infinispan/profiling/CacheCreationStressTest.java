@@ -1,5 +1,6 @@
-package org.infinispan;
+package org.infinispan.profiling;
 
+import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -12,21 +13,19 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 /**
- * // TODO: Document this
+ * Test class that verifies how quickly Cache instances are created under different scenarios
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 4.2
  */
 @Test(groups = "functional", testName = "marshall.VersionAwareMarshallerTest")
-public class StressCacheCreationTest extends AbstractInfinispanTest {
+public class CacheCreationStressTest extends AbstractInfinispanTest {
 
-   private static final Log log = LogFactory.getLog(StressCacheCreationTest.class);
-
-   public void test000() {
+   public void testCreateCachesFromSameContainer() {
       long start = System.currentTimeMillis();
       CacheContainer container = new DefaultCacheManager();
       for (int i = 0; i < 1000; i++) {
-         container.getCache(generateRandomString(20));
+         Cache cache = container.getCache(generateRandomString(20));
       }
       System.out.println("Took: " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start));
       TestingUtil.sleepThread(2000);

@@ -36,6 +36,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.manager.ReflectionCache;
 import org.infinispan.util.BeanUtils;
 import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.ReflectionUtil;
@@ -110,6 +111,12 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
    volatile ComponentStatus state = ComponentStatus.INSTANTIATED;
 
+   final ReflectionCache reflectionCache;
+
+   public AbstractComponentRegistry(ReflectionCache reflectionCache) {
+      this.reflectionCache = reflectionCache;
+   }
+
    /**
     * Retrieves the state of the registry
     *
@@ -135,7 +142,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       try {
          // don't use the reflection cache for wireDependencies calls since these are not managed by the ComponentRegistry
          // and may be invoked at any time, even after the cache starts.
-         List<Method> methods = ReflectionUtil.getAllMethods(target.getClass(), Inject.class);
+         List<Method> methods = getAllMethodsViaReflection(target.getClass(), Inject.class);
 
          // search for anything we need to inject
          for (Method method : methods) invokeInjectionMethod(target, method);
@@ -228,7 +235,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    protected void addComponentDependencies(Component c) {
       Class type = c.instance.getClass();
-      List<Method> methods = ReflectionUtil.getAllMethods(type, Inject.class);
+      List<Method> methods = getAllMethodsViaReflection(type, Inject.class);
       c.injectionMethods.clear();
       c.injectionMethods.addAll(methods);
    }
@@ -522,7 +529,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          c.startMethods.clear();
          c.stopMethods.clear();
 
-         List<Method> methods = ReflectionUtil.getAllMethods(c.instance.getClass(), Start.class);
+         List<Method> methods = getAllMethodsViaReflection(c.instance.getClass(), Start.class);
          for (Method m : methods) {
             PrioritizedMethod em = new PrioritizedMethod();
             em.component = c;
@@ -531,7 +538,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             c.startMethods.add(em);
          }
 
-         methods = ReflectionUtil.getAllMethods(c.instance.getClass(), Stop.class);
+         methods = getAllMethodsViaReflection(c.instance.getClass(), Stop.class);
          for (Method m : methods) {
             PrioritizedMethod em = new PrioritizedMethod();
             em.component = c;
@@ -773,6 +780,27 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    }
 
    /**
+    * Returns an immutable set containing all the components that exists in the repository at this moment.
+    *
+    * @return a set of components
+    */
+   public Set<Component> getRegisteredComponents() {
+      HashSet<Component> defensiveCopy = new HashSet<Component>(componentLookup.values());
+      return Collections.unmodifiableSet(defensiveCopy);
+   }
+
+   @Override
+   public AbstractComponentRegistry clone() throws CloneNotSupportedException {
+      AbstractComponentRegistry dolly = (AbstractComponentRegistry) super.clone();
+      dolly.state = ComponentStatus.INSTANTIATED;
+      return dolly;
+   }
+
+   private List<Method> getAllMethodsViaReflection(Class c, Class<? extends Annotation> annotationType) {
+      return reflectionCache.getAllMethods(c, annotationType);
+   }
+
+   /**
     * A wrapper representing a component in the registry
     */
    public class Component {
@@ -870,20 +898,4 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
    }
 
-   /**
-    * Returns an immutable set containing all the components that exists in the repository at this moment.
-    *
-    * @return a set of components
-    */
-   public Set<Component> getRegisteredComponents() {
-      HashSet<Component> defensiveCopy = new HashSet<Component>(componentLookup.values());
-      return Collections.unmodifiableSet(defensiveCopy);
-   }
-
-   @Override
-   public AbstractComponentRegistry clone() throws CloneNotSupportedException {
-      AbstractComponentRegistry dolly = (AbstractComponentRegistry) super.clone();
-      dolly.state = ComponentStatus.INSTANTIATED;
-      return dolly;
-   }
 }

@@ -29,6 +29,7 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.ReflectionCache;
 
 /**
  * An internal factory for constructing Caches.  Used by the {@link DefaultCacheManager}, this is not intended as public
@@ -47,15 +48,18 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    /**
     * This implementation clones the configuration passed in before using it.
     *
+    *
     * @param configuration           to use
     * @param globalComponentRegistry global component registry to attach the cache to
     * @param cacheName               name of the cache
+    * @param reflectionCache
     * @return a cache
     * @throws ConfigurationException if there are problems with the cfg
     */
-   public Cache<K, V> createCache(Configuration configuration, GlobalComponentRegistry globalComponentRegistry, String cacheName) throws ConfigurationException {
+   public Cache<K, V> createCache(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
+                                  String cacheName, ReflectionCache reflectionCache) throws ConfigurationException {
       try {
-         return createAndWire(configuration, globalComponentRegistry, cacheName);
+         return createAndWire(configuration, globalComponentRegistry, cacheName, reflectionCache);
       }
       catch (ConfigurationException ce) {
          throw ce;
@@ -68,24 +72,22 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
    }
 
-   public Cache<K, V> createDefaultCache(Configuration configuration) throws ConfigurationException {
-      return createCache(configuration, null, CacheContainer.DEFAULT_CACHE_NAME);
-   }
-
-   protected AdvancedCache<K, V> createAndWire(Configuration configuration, GlobalComponentRegistry globalComponentRegistry, String cacheName) throws Exception {
+   protected AdvancedCache<K, V> createAndWire(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
+                                               String cacheName, ReflectionCache reflectionCache) throws Exception {
       AdvancedCache<K, V> spi = new CacheDelegate<K, V>(cacheName);
-      bootstrap(cacheName, spi, configuration, globalComponentRegistry);
+      bootstrap(cacheName, spi, configuration, globalComponentRegistry, reflectionCache);
       return spi;
    }
 
    /**
     * Bootstraps this factory with a Configuration and a ComponentRegistry.
     */
-   private void bootstrap(String cacheName, AdvancedCache spi, Configuration configuration, GlobalComponentRegistry globalComponentRegistry) {
+   private void bootstrap(String cacheName, AdvancedCache spi, Configuration configuration,
+                          GlobalComponentRegistry globalComponentRegistry, ReflectionCache reflectionCache) {
       this.configuration = configuration;
 
       // injection bootstrap stuff
-      componentRegistry = new ComponentRegistry(cacheName, configuration, spi, globalComponentRegistry);
+      componentRegistry = new ComponentRegistry(cacheName, configuration, spi, globalComponentRegistry, reflectionCache);
       componentRegistry.registerDefaultClassLoader(defaultClassLoader);
       componentRegistry.registerComponent(spi, AdvancedCache.class);
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class);

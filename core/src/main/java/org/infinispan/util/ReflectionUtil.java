@@ -33,6 +33,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Basic reflection utilities to enhance what the JDK provides.
@@ -42,7 +44,6 @@ import java.util.List;
  */
 public class ReflectionUtil {
    private static final Log log = LogFactory.getLog(ReflectionUtil.class);
-   
 
    /**
     * Returns a set of Methods that contain the given method annotation.  This includes all public, protected, package
