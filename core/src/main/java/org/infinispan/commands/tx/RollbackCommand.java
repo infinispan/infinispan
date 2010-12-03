@@ -23,11 +23,13 @@ package org.infinispan.commands.tx;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.RemoteTransaction;
 
 /**
  * Command corresponding to a transaction rollback.
@@ -50,12 +52,17 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
       return visitor.visitRollbackCommand((TxInvocationContext) ctx, this);
    }
 
+   @Override
+   public void visitRemoteTransaction(RemoteTransaction tx) {
+      tx.invalidate();
+   }
+
    public byte getCommandId() {
       return COMMAND_ID;
    }
 
    @Override
    public String toString() {
-      return "RollbackCommand{ " + super.toString();
+      return "RollbackCommand {" + super.toString();
    }
 }

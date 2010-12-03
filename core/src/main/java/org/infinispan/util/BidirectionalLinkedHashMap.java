@@ -807,4 +807,11 @@ public class BidirectionalLinkedHashMap<K, V> extends AbstractMap<K, V> implemen
 
       return result;
    }
+
+   @Override
+   public String toString() {
+      return "BidirectionalLinkedHashMap{" +
+            "size=" + size +
+            '}';
+   }
 }

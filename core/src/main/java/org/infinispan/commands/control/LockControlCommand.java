@@ -232,16 +232,12 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
 
    @Override
    public String toString() {
-      return "LockControlCommand{" +
+      return "LockControlCommand {" +
             "gtx=" + globalTx +
             ", cacheName='" + cacheName +
             ", implicit='" + implicit +
             ", keys=" + keys +
             ", unlock=" + unlock +
             ", singleKey=" + singleKey + '}';
-   }
-
-   public Address getOrigin() {
-      return globalTx.getAddress();
    }
 }
