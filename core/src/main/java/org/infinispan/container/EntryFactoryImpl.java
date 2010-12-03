@@ -35,6 +35,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.transaction.xa.InvalidTransactionException;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -111,79 +112,88 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    private MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, InternalCacheEntry entry, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval, boolean undeleteIfNeeded) throws InterruptedException {
-      CacheEntry cacheEntry = ctx.lookupEntry(key);
-      MVCCEntry mvccEntry = null;
-      if (createIfAbsent && cacheEntry != null && cacheEntry.isNull()) cacheEntry = null;
-      if (cacheEntry != null) // exists in context!  Just acquire lock if needed, and wrap.
-      {
-         if (trace) log.trace("Exists in context.");
-         // Acquire lock if needed. Add necessary check for skip locking in advance in order to avoid marshalled value issues
-         if (alreadyLocked || ctx.hasFlag(Flag.SKIP_LOCKING) || acquireLock(ctx, key)) {
+      try {
+         CacheEntry cacheEntry = ctx.lookupEntry(key);
+         MVCCEntry mvccEntry = null;
+         if (createIfAbsent && cacheEntry != null && cacheEntry.isNull()) cacheEntry = null;
+         if (cacheEntry != null) // exists in context!  Just acquire lock if needed, and wrap.
+         {
+            if (trace) log.trace("Exists in context.");
+            // Acquire lock if needed. Add necessary check for skip locking in advance in order to avoid marshalled value issues
+            if (alreadyLocked || ctx.hasFlag(Flag.SKIP_LOCKING) || acquireLock(ctx, key)) {
 
-            if (cacheEntry instanceof MVCCEntry && (!forRemoval || !(cacheEntry instanceof NullMarkerEntry))) {
-               mvccEntry = (MVCCEntry) cacheEntry;
-            } else {
-               // this is a read-only entry that needs to be copied to a proper read-write entry!!
-               mvccEntry = createWrappedEntry(key, cacheEntry.getValue(), false, forRemoval, cacheEntry.getLifespan());
-               cacheEntry = mvccEntry;
-               ctx.putLookedUpEntry(key, cacheEntry);
+               if (cacheEntry instanceof MVCCEntry && (!forRemoval || !(cacheEntry instanceof NullMarkerEntry))) {
+                  mvccEntry = (MVCCEntry) cacheEntry;
+               } else {
+                  // this is a read-only entry that needs to be copied to a proper read-write entry!!
+                  mvccEntry = createWrappedEntry(key, cacheEntry.getValue(), false, forRemoval, cacheEntry.getLifespan());
+                  cacheEntry = mvccEntry;
+                  ctx.putLookedUpEntry(key, cacheEntry);
+               }
+
+               // create a copy of the underlying entry
+               mvccEntry.copyForUpdate(container, writeSkewCheck);
+            } else if (ctx.hasFlag(Flag.FORCE_WRITE_LOCK)) {
+               // If lock was already held and force write lock is on, just wrap
+               if (cacheEntry instanceof MVCCEntry && (!forRemoval || !(cacheEntry instanceof NullMarkerEntry))) {
+                  mvccEntry = (MVCCEntry) cacheEntry;
+               }
             }
 
-            // create a copy of the underlying entry
-            mvccEntry.copyForUpdate(container, writeSkewCheck);
-         } else if (ctx.hasFlag(Flag.FORCE_WRITE_LOCK)) {
-            // If lock was already held and force write lock is on, just wrap
-            if (cacheEntry instanceof MVCCEntry && (!forRemoval || !(cacheEntry instanceof NullMarkerEntry))) {
-               mvccEntry = (MVCCEntry) cacheEntry;
+            if (cacheEntry.isRemoved() && createIfAbsent && undeleteIfNeeded) {
+               if (trace) log.trace("Entry is deleted in current scope.  Need to un-delete.");
+               if (mvccEntry != cacheEntry) mvccEntry = (MVCCEntry) cacheEntry;
+               mvccEntry.setRemoved(false);
+               mvccEntry.setValid(true);
+            }
+
+            return mvccEntry;
+
+         } else {
+            boolean lockAcquired = false;
+            if (!alreadyLocked) {
+               lockAcquired = acquireLock(ctx, key);
+            }
+            // else, fetch from dataContainer or used passed entry.
+            cacheEntry = entry != null ? entry : container.get(key);
+            if (cacheEntry != null) {
+               if (trace) log.trace("Retrieved from container.");
+               // exists in cache!  Just acquire lock if needed, and wrap.
+               // do we need a lock?
+               boolean needToCopy = alreadyLocked || lockAcquired || ctx.hasFlag(Flag.SKIP_LOCKING); // even if we do not acquire a lock, if skip-locking is enabled we should copy
+               mvccEntry = createWrappedEntry(key, cacheEntry.getValue(), false, false, cacheEntry.getLifespan());
+               ctx.putLookedUpEntry(key, mvccEntry);
+               if (needToCopy) mvccEntry.copyForUpdate(container, writeSkewCheck);
+            } else if (createIfAbsent) {
+               // this is the *only* point where new entries can be created!!
+               if (trace) log.trace("Creating new entry.");
+               // now to lock and create the entry.  Lock first to prevent concurrent creation!
+               notifier.notifyCacheEntryCreated(key, true, ctx);
+               mvccEntry = createWrappedEntry(key, null, true, false, -1);
+               mvccEntry.setCreated(true);
+               ctx.putLookedUpEntry(key, mvccEntry);
+               mvccEntry.copyForUpdate(container, writeSkewCheck);
+               notifier.notifyCacheEntryCreated(key, false, ctx);
+            } else {
+               releaseLock(key);
             }
          }
 
-         if (cacheEntry.isRemoved() && createIfAbsent && undeleteIfNeeded) {
-            if (trace) log.trace("Entry is deleted in current scope.  Need to un-delete.");
-            if (mvccEntry != cacheEntry) mvccEntry = (MVCCEntry) cacheEntry;
-            mvccEntry.setRemoved(false);
-            mvccEntry.setValid(true);
+         // see if we need to force the lock on nonexistent entries.
+         if (mvccEntry == null && forceLockIfAbsent) {
+            // make sure we record this! Null value since this is a forced lock on the key
+            if (acquireLock(ctx, key)) ctx.putLookedUpEntry(key, null);
          }
 
          return mvccEntry;
-
-      } else {
-         boolean lockAcquired = false;
-         if (!alreadyLocked) {
-            lockAcquired = acquireLock(ctx, key);
-         }
-         // else, fetch from dataContainer or used passed entry.
-         cacheEntry = entry != null ? entry : container.get(key);
-         if (cacheEntry != null) {
-            if (trace) log.trace("Retrieved from container.");
-            // exists in cache!  Just acquire lock if needed, and wrap.
-            // do we need a lock?
-            boolean needToCopy = alreadyLocked || lockAcquired || ctx.hasFlag(Flag.SKIP_LOCKING); // even if we do not acquire a lock, if skip-locking is enabled we should copy
-            mvccEntry = createWrappedEntry(key, cacheEntry.getValue(), false, false, cacheEntry.getLifespan());
-            ctx.putLookedUpEntry(key, mvccEntry);
-            if (needToCopy) mvccEntry.copyForUpdate(container, writeSkewCheck);
-         } else if (createIfAbsent) {
-            // this is the *only* point where new entries can be created!!
-            if (trace) log.trace("Creating new entry.");
-            // now to lock and create the entry.  Lock first to prevent concurrent creation!
-            notifier.notifyCacheEntryCreated(key, true, ctx);
-            mvccEntry = createWrappedEntry(key, null, true, false, -1);
-            mvccEntry.setCreated(true);
-            ctx.putLookedUpEntry(key, mvccEntry);
-            mvccEntry.copyForUpdate(container, writeSkewCheck);
-            notifier.notifyCacheEntryCreated(key, false, ctx);
-         } else {
+      } catch (InvalidTransactionException ite) {
+         try {
             releaseLock(key);
+         } catch (Exception e) {
+            // may not be necessary?
          }
+         throw ite;
       }
-
-      // see if we need to force the lock on nonexistent entries.
-      if (mvccEntry == null && forceLockIfAbsent) {
-         // make sure we record this! Null value since this is a forced lock on the key
-         if (acquireLock(ctx, key)) ctx.putLookedUpEntry(key, null);
-      }
-
-      return mvccEntry;
    }
 
    /**

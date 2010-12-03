@@ -175,11 +175,11 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
 
    @Override
    public String toString() {
-      return "PrepareCommand{" +
+      return "PrepareCommand {" +
             "gtx=" + globalTx +
             ", modifications=" + (modifications == null ? null : Arrays.asList(modifications)) +
             ", onePhaseCommit=" + onePhaseCommit +
-            "} " + super.toString();
+            ", " + super.toString();
    }
 
    public boolean containsModificationType(Class<? extends ReplicableCommand> replicableCommandClass) {
