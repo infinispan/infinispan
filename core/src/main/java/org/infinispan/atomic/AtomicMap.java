@@ -62,6 +62,17 @@ import org.infinispan.atomic.AtomicMapLookup;
  *    AtomicMap&lt;String, Integer&gt; map = AtomicMapLookup.getAtomicMap(cache, "my_atomic_map_key");
  * </code>
  * </p>
+ * <p><b><u>Referential Integrity</u></b><br />
+ * It is important to note that concurrent readers of an AtomicMap will essentially have the same view of the contents
+ * of the underlying structure, but since AtomicMaps use internal proxies, readers are isolated from concurrent writes
+ * and {@link IsolationLevel#READ_COMMITTED} and {@link IsolationLevel#REPEATABLE_READ} semantics are guaranteed.
+ * However, this guarantee is only present if the values stored in an AtomicMap are <i>immutable</i> (e.g., Strings,
+ * primitives, and other immutable types).</p>
+ *
+ * <p>Mutable value objects which happen to be stored in an AtomicMap may be updated and, prior to being committed,
+ * or even replaced in the map, be visible to concurrent readers.  Hence, AtomicMaps are <b><i>not suitable</i></b> for
+ * use with mutable value objects.</p>
+ * </p>
  * <br />
  * <p>
  * This interface, for all practical purposes, is just a marker interface that indicates that maps of this type will
