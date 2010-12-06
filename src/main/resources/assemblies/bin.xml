@@ -47,6 +47,7 @@
                      <exclude>**/*.cmd</exclude>
                      <exclude>**/*.py</exclude>
                      <exclude>**/*.rb</exclude>
+                     <exclude>org/*</exclude>
                   </excludes>
                </fileSet>
 

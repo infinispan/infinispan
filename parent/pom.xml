@@ -347,6 +347,9 @@
                </archive>
                <excludes>
                   <exclude>**/log4j.xml</exclude>
+                  <exclude>**/*.bat</exclude>
+                  <exclude>**/*.sh</exclude>
+                  <exclude>**/*.txt</exclude>
                </excludes>
             </configuration>
             <executions>
