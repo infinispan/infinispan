@@ -94,7 +94,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    public static final String CONFIGURATION_XML = "configurationXml";
    public static final String CONFIGURATION_FILE = "configurationFile";
    public static final String CHANNEL_LOOKUP = "channelLookup";
-   protected static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "config-samples/jgroups-udp.xml";
+   protected static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "jgroups-udp.xml";
    protected boolean startChannel = true, stopChannel = true;
 
    protected Channel channel;
