@@ -46,6 +46,7 @@ import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.Doc;
 import com.sun.javadoc.FieldDoc;
 import com.sun.javadoc.MethodDoc;
+import com.sun.javadoc.Parameter;
 import com.sun.javadoc.RootDoc;
 import com.sun.xml.xsom.XSAttributeDecl;
 import com.sun.xml.xsom.XSFacet;
@@ -285,94 +286,129 @@ public abstract class AbstractConfigHtmlGenerator extends HtmlGenerator {
       sb.append("<tr class=\"a\"><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr>\n");
 
       Class<?> bean = n.getBeanClass();
-      Object object = null;
+      Object beanClassInstance = null;
       try {
          Constructor<?>[] constructors = bean.getDeclaredConstructors();
          for (Constructor<?> c : constructors) {
             if (c.getParameterTypes().length == 0) {
                c.setAccessible(true);
-               object = c.newInstance();
+               beanClassInstance = c.newInstance();
             }
          }
       } catch (Exception e) {
-         System.out.println("Did not construct object " + bean);
+         throw new RuntimeException("TreeNode " + n.getName() + " is associated with a bean class "
+                  + bean + " whose instantiation failed on default contructor ");
       }
-
+      
+      if(beanClassInstance == null)
+         throw new RuntimeException("Bean class could not be instantied, aborting!");
+         
       Set<XSAttributeDecl> attributes = n.getAttributes();
       for (XSAttributeDecl a : attributes) {
-         sb.append("<tr class=\"b\">");
-
-         // name, type...
-         sb.append("<td>").append("<code>" + a.getName() + "</code>").append("</td>\n");
-         sb.append("<td>").append("<code>" + a.getType().getName() + "</code>");
-
-         boolean isRestricted = false;
-         XSRestrictionSimpleType restriction = a.getType().asRestriction();
-         Collection<? extends XSFacet> declaredFacets = restriction.getDeclaredFacets();
-         for (XSFacet facet : declaredFacets) {
-            if (facet.getName().equalsIgnoreCase("enumeration")) {
-               isRestricted = true;
-               break;
-            }
-         }
-
-         debug("attribute = " + a.getName() + "(restricted = " + isRestricted + ")", 1);
-
-         // restriction on type...
-         if (isRestricted) {
-            sb.append("* (");
-            for (XSFacet facet : declaredFacets) {
-               sb.append(facet.getValue().toString() + '|');
-            }
-            sb.deleteCharAt(sb.length() - 1);
-            sb.append(")</td>\n");
-         } else {
-            sb.append("</td>\n");
-         }
-
-         Field field = findField(bean, a.getName());
-         if (field == null) {
-            throw new RuntimeException("Null field for " + bean.getName() + " attribute "
-                     + a.getName());
-         }
-
-         // if default value specified in annotation use it
-         if (a.getDefaultValue() != null) {
-            debug("annotation-defined default = " + a.getDefaultValue(), 2);
-            sb.append("<td>").append(a.getDefaultValue().toString()).append("</td>\n");
-         }
-
-         // otherwise use reflected field and read default value
-         else {
-            Object defaultValue = null;
-            try {
-               defaultValue = ReflectionUtil.getValue(object, field.getName());
-               if (defaultValue != null) {
-                  sb.append("<td>").append(defaultValue.toString()).append("</td>\n");
-                  debug("field-defined default = " + defaultValue, 2);
-               } else {
-                  debug("field-defined default is null!", 2);
-                  sb.append("<td>").append("null").append("</td>\n");
-               }
-            } catch (Exception e) {
-               debug("Caught exception, bean is " + bean.getName() + ", looking for field "
-                        + a.getName() + ", field " + field, 2);
-               e.printStackTrace();
-               sb.append("<td>").append("N/A").append("</td>\n");
-            }
-         }
-
-         // and finally description
-         String desc = findAttributeDescription(field);
-         if (desc != null) {
-            sb.append("<td>").append(desc).append("\n");
-            String htmlFile = field.getDeclaringClass().getName().replace(".", "/").replace("$",".").concat(".html");
-            sb.append(" (<a href=\"" + htmlFile.concat("#").concat(field.getName()) + "\">"+ "Javadoc</a>)");
-            sb.append("</td>\n");
-         }
-         sb.append("</tr>\n");
+         generateTableRowForAttribute(a, sb, beanClassInstance);
       }
       sb.append("</table>\n");
+   }
+
+   protected void generateTableRowForAttribute(XSAttributeDecl a, StringBuilder sb, Object beanClassInstance) {
+      sb.append("<tr class=\"b\">");
+
+      // name, type...
+      sb.append("<td>").append("<code>" + a.getName() + "</code>").append("</td>\n");
+      sb.append("<td>").append("<code>" + a.getType().getName() + "</code>");
+
+      boolean isRestricted = false;
+      XSRestrictionSimpleType restriction = a.getType().asRestriction();
+      Collection<? extends XSFacet> declaredFacets = restriction.getDeclaredFacets();
+      for (XSFacet facet : declaredFacets) {
+         if (facet.getName().equalsIgnoreCase("enumeration")) {
+            isRestricted = true;
+            break;
+         }
+      }
+
+      debug("attribute = " + a.getName() + "(restricted = " + isRestricted + ")", 1);
+
+      // restriction on type...
+      if (isRestricted) {
+         sb.append("* (");
+         for (XSFacet facet : declaredFacets) {
+            sb.append(facet.getValue().toString() + '|');
+         }
+         sb.deleteCharAt(sb.length() - 1);
+         sb.append(")</td>\n");
+      } else {
+         sb.append("</td>\n");
+      }
+
+      Field field = findField(beanClassInstance.getClass(), a.getName());
+      if (field == null) {
+         throw new RuntimeException("Null field for " + beanClassInstance.getClass() + " attribute "
+                  + a.getName());
+      }
+
+      // if default value specified in annotation use it
+      if (a.getDefaultValue() != null) {
+         debug("annotation-defined default = " + a.getDefaultValue(), 2);
+         sb.append("<td>").append(a.getDefaultValue().toString()).append("</td>\n");
+      } else {
+         // otherwise use reflected field and read default value
+         Object defaultValue = null;
+         try {
+            defaultValue = ReflectionUtil.getValue(beanClassInstance, field.getName());
+            if (defaultValue != null) {
+               sb.append("<td>").append(defaultValue.toString()).append("</td>\n");
+               debug("field-defined default = " + defaultValue, 2);
+            } else {
+               debug("field-defined default is null!", 2);
+               sb.append("<td>").append("null").append("</td>\n");
+            }
+         } catch (Exception e) {
+            debug("Caught exception, bean is " + beanClassInstance.getClass() + ", looking for field "
+                     + a.getName() + ", field " + field, 2);
+            e.printStackTrace();
+            sb.append("<td>").append("N/A").append("</td>\n");
+         }
+      }
+
+      // and finally description
+      String desc = null;
+      Doc docElement = null;
+      ConfigurationDocRef docRef = null;
+      if (field.isAnnotationPresent(ConfigurationDoc.class)) {
+         desc = field.getAnnotation(ConfigurationDoc.class).desc();
+      } else if (field.isAnnotationPresent(ConfigurationDocRef.class)) {
+         docRef = field.getAnnotation(ConfigurationDocRef.class);
+         docElement = findDocElement(docRef.bean(), docRef.targetElement());
+         desc = docElement.commentText();
+      }
+      if (desc != null) {
+         sb.append("<td>").append(desc).append("\n");            
+         String htmlFile = field.getDeclaringClass().getName().replace(".", "/").replace("$",".").concat(".html");
+         //overridden by ConfigurationDocRef?
+         if(docRef != null) {
+            htmlFile = docRef.bean().getName().replace(".", "/").replace("$",".").concat(".html");
+            if(docElement instanceof MethodDoc){
+               MethodDoc mDocElement = (MethodDoc)docElement;
+               Parameter[] parameters = mDocElement.parameters();
+               
+               //if this is MethodDoc then docRef is pointing to a method, get targetElement
+               String targetElement = docRef.targetElement();
+               StringBuilder javadocTarget = new StringBuilder(targetElement);
+               javadocTarget.append("(");
+               for (Parameter parameter : parameters) {
+                  javadocTarget.append(parameter.type().qualifiedTypeName()).append(","); 
+               }
+               javadocTarget.deleteCharAt(javadocTarget.length()-1);
+               javadocTarget.append(")");
+               sb.append(" (<a href=\"" + htmlFile.concat("#").concat(javadocTarget.toString()) + "\">"+ "Javadoc</a>)");
+            }
+         } else {
+            sb.append(" (<a href=\"" + htmlFile.concat("#").concat(field.getName()) + "\">"+ "Javadoc</a>)");
+         }            
+         sb.append("</td>\n");
+      }
+      sb.append("</tr>\n");
    }
 
    private void debug(String s, int level) {
@@ -437,19 +473,7 @@ public abstract class AbstractConfigHtmlGenerator extends HtmlGenerator {
       }
       sb.append("</p>");
    }
-
-   protected String findAttributeDescription(Field field) {
-      String desc = null;
-      if (field.isAnnotationPresent(ConfigurationDoc.class)) {
-         desc = field.getAnnotation(ConfigurationDoc.class).desc();
-      } else if (field.isAnnotationPresent(ConfigurationDocRef.class)) {
-         ConfigurationDocRef docRef = field.getAnnotation(ConfigurationDocRef.class);
-         Doc fieldDocRec = findDocElement(docRef.bean(), docRef.targetElement());
-         desc = fieldDocRec.commentText();
-      }
-      return desc;
-   }
-
+   
    protected Field findField(Class<?> clazz, String name) {
       Field f = null;
       boolean found = false;
