@@ -56,6 +56,6 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
 
    @Override
    public String toString() {
-      return "CommitCommand{" + super.toString();
+      return "CommitCommand {" + super.toString();
    }
 }

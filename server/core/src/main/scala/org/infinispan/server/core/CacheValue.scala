@@ -40,15 +40,14 @@ class CacheValue(val data: Array[Byte], val version: Long) {
 }
 
 object CacheValue {
-   class Externalizer extends org.infinispan.marshall.Externalizer {
-      override def writeObject(output: ObjectOutput, obj: AnyRef) {
-         val cacheValue = obj.asInstanceOf[CacheValue]
+   class Externalizer extends org.infinispan.marshall.Externalizer[CacheValue] {
+      override def writeObject(output: ObjectOutput, cacheValue: CacheValue) {
          output.writeInt(cacheValue.data.length)
          output.write(cacheValue.data)
          output.writeLong(cacheValue.version)
       }
 
-      override def readObject(input: ObjectInput): AnyRef = {
+      override def readObject(input: ObjectInput): CacheValue = {
          val data = new Array[Byte](input.readInt())
          input.readFully(data) // Must be readFully, otherwise partial arrays can be read under load!
          val version = input.readLong

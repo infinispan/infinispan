@@ -31,9 +31,11 @@ public class RemoteTransaction implements CacheTransaction, Cloneable {
 
    private GlobalTransaction tx;
 
+   private volatile boolean valid = true;
+
 
    public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
-      this.modifications = modifications == null || modifications.length == 0 ? Collections.<WriteCommand>emptyList(): Arrays.asList(modifications);
+      this.modifications = modifications == null || modifications.length == 0 ? Collections.<WriteCommand>emptyList() : Arrays.asList(modifications);
       lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(this.modifications.size());
       this.tx = tx;
    }
@@ -44,6 +46,10 @@ public class RemoteTransaction implements CacheTransaction, Cloneable {
       this.tx = tx;
    }
 
+   public void invalidate() {
+      valid = false;
+   }
+
    public GlobalTransaction getGlobalTransaction() {
       return tx;
    }
@@ -51,9 +57,9 @@ public class RemoteTransaction implements CacheTransaction, Cloneable {
    public List<WriteCommand> getModifications() {
       return modifications;
    }
-   
-   public void setModifications(WriteCommand[] modifications){
-      this.modifications = Arrays.asList(modifications);  
+
+   public void setModifications(WriteCommand[] modifications) {
+      this.modifications = Arrays.asList(modifications);
    }
 
    public CacheEntry lookupEntry(Object key) {
@@ -65,10 +71,14 @@ public class RemoteTransaction implements CacheTransaction, Cloneable {
    }
 
    public void putLookedUpEntry(Object key, CacheEntry e) {
-      if (log.isTraceEnabled()) {
-         log.trace("Adding key " + key + " to tx " + getGlobalTransaction());
+      if (valid) {
+         if (log.isTraceEnabled()) {
+            log.trace("Adding key " + key + " to tx " + getGlobalTransaction());
+         }
+         lookedUpEntries.put(key, e);
+      } else {
+         throw new InvalidTransactionException("This remote transaction " + getGlobalTransaction() + " is invalid");
       }
-      lookedUpEntries.put(key, e);
    }
 
    public void removeLookedUpEntry(Object key) {

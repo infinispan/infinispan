@@ -10,7 +10,7 @@ import org.xml.sax.helpers.XMLFilterImpl;
  */
 public class NamespaceFilter extends XMLFilterImpl {
 
-   public static final String ISPN_NS = "urn:infinispan:config:" + Version.major;
+   public static final String ISPN_NS = "urn:infinispan:config:" ;//+ Version.MAJOR_MINOR;
 
    //State variable
    private boolean addedNamespace = false;

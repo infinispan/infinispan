@@ -27,16 +27,15 @@ class MemcachedValue(override val data: Array[Byte], override val version: Long,
 }
 
 object MemcachedValue {
-   class Externalizer extends org.infinispan.marshall.Externalizer {
-      override def writeObject(output: ObjectOutput, obj: AnyRef) {
-         val cacheValue = obj.asInstanceOf[MemcachedValue]
+   class Externalizer extends org.infinispan.marshall.Externalizer[MemcachedValue] {
+      override def writeObject(output: ObjectOutput, cacheValue: MemcachedValue) {
          output.write(cacheValue.data.length)
          output.write(cacheValue.data)
          output.writeLong(cacheValue.version)
          output.writeLong(cacheValue.flags)
       }
 
-      override def readObject(input: ObjectInput): AnyRef = {
+      override def readObject(input: ObjectInput): MemcachedValue = {
          val data = new Array[Byte](input.read())
          input.readFully(data)
          val version = input.readLong

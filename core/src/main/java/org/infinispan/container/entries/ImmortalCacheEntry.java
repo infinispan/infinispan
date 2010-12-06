@@ -97,14 +97,13 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       return clone;
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         ImmortalCacheEntry ice = (ImmortalCacheEntry) subject;
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<ImmortalCacheEntry> {
+      public void writeObject(ObjectOutput output, ImmortalCacheEntry ice) throws IOException {
          output.writeObject(ice.key);
          output.writeObject(ice.cacheValue.value);      
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ImmortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
          return new ImmortalCacheEntry(k, v);

@@ -7,8 +7,8 @@ package org.infinispan.client.hotrod.exceptions;
  * @since 4.1
  */
 public class HotRodClientException extends RuntimeException {
-   private long messageId;
-   private int errorStatusCode;
+   private long messageId = -1;
+   private int errorStatusCode = -1;
 
    public HotRodClientException() {
    }
@@ -34,9 +34,12 @@ public class HotRodClientException extends RuntimeException {
 
    @Override
    public String toString() {
-      return "HotRodServerException{" +
-            "messageId=" + messageId +
-            ", errorStatusCode=" + errorStatusCode +
-            "} " + super.toString();
+      StringBuilder sb = new StringBuilder(getClass().getName());
+      sb.append(":");
+      if (messageId != -1) sb.append(" id [").append(messageId).append("]");
+      if (errorStatusCode != -1) sb.append(" code [").append(errorStatusCode).append("]");
+      String message = getLocalizedMessage();
+      if (message != null) sb.append(" ").append(message);
+      return sb.toString();
    }
 }

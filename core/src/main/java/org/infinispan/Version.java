@@ -22,6 +22,10 @@
 package org.infinispan;
 
 import net.jcip.annotations.Immutable;
+import org.infinispan.util.TypedProperties;
+import org.infinispan.util.Util;
+
+import java.io.ByteArrayOutputStream;
 
 /**
  * Contains version information about this release of Infinispan.
@@ -31,22 +35,43 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public class Version {
-   // -----------------------------------------------------------------------------------------------------------------
-   //   Please make sure versions saved in this file ALWAYS end with '-SNAPSHOT'.  This is the only way the release
-   //   scripts can properly detect and substitute the versions for the correct versions at release-time.  Be careful
-   //   to note that this is '-SNAPSHOT' and not '.SNAPSHOT', as per Maven's versioning conventions. -- Manik Surtani
-   // -----------------------------------------------------------------------------------------------------------------
+   public static final String VERSION;
+   public static final String CODENAME;
+   public static final String PROJECT_NAME = "Infinispan";
+   public static final byte[] VERSION_ID;
+   public static final String MAJOR_MINOR;
 
-   public static final String major = "5.0";
-   public static final String version = major + ".0-SNAPSHOT";
-   public static final String codename = "Pagoa";
-   public static final String projectName = "Infinispan";
-   static final byte[] version_id = {'0', '5', '0', '0', 'S'};
    private static final int MAJOR_SHIFT = 11;
    private static final int MINOR_SHIFT = 6;
    private static final int MAJOR_MASK = 0x00f800;
    private static final int MINOR_MASK = 0x0007c0;
    private static final int PATCH_MASK = 0x00003f;
+
+   static {
+      try {
+         TypedProperties p = new TypedProperties();
+         p.load(Util.loadResourceAsStream("org/infinispan/version.properties"));
+         String major = p.getProperty("infinispan.version.major").trim();
+         String minor = p.getProperty("infinispan.version.minor").trim();
+         String micro = p.getProperty("infinispan.version.micro").trim();
+         String modifier = p.getProperty("infinispan.version.modifier").trim().toUpperCase();
+         CODENAME = p.getProperty("infinispan.version.codename");
+         boolean snap = p.getBooleanProperty("infinispan.version.snapshot", false);
+         VERSION = String.format("%s.%s.%s%s%s", major, minor, micro, snap ? "-" : ".", modifier);
+         ByteArrayOutputStream baos = new ByteArrayOutputStream();
+         for (int i=0; i<major.length(); i++) baos.write(major.charAt(i));
+         for (int i=0; i<minor.length(); i++) baos.write(minor.charAt(i));
+         for (int i=0; i<micro.length(); i++) baos.write(micro.charAt(i));
+         if (snap)
+            baos.write('S');
+         else
+            for (int i=0; i<modifier.length(); i++) baos.write(modifier.charAt(i));
+         VERSION_ID = baos.toByteArray();
+         MAJOR_MINOR = major + "." + minor;
+      } catch (Exception e) {
+         throw new CacheException("Cannot find 'org/infinispan/version.properties'.  Cannot continue!", e);
+      }
+   }
 
    /**
     * Prints version information.
@@ -59,18 +84,18 @@ public class Version {
     * Prints full version information to the standard output.
     */
    public static void printFullVersionInformation() {
-      System.out.println(projectName);
+      System.out.println(PROJECT_NAME);
       System.out.println();
-      System.out.println("\nVersion: \t" + version);
-      System.out.println("Codename: \t" + codename);
-      System.out.println("History:  \t(see https://jira.jboss.org/jira/browse/ISPN for details)\n");
+      System.out.printf("Version: \t%s\n", VERSION);
+      System.out.printf("Codename: \t%s\n", CODENAME);
+      System.out.println("History: \t(see https://jira.jboss.org/jira/browse/ISPN for details)\n");
    }
 
    /**
     * Returns version information as a string.
     */
    public static String printVersion() {
-      return projectName + " '" + codename + "' " + version;
+      return PROJECT_NAME + " '" + CODENAME + "' " + VERSION;
    }
 
    public static String printVersionId(byte[] v, int len) {
@@ -84,33 +109,24 @@ public class Version {
       return sb.toString();
    }
 
-   public static String printVersionId(byte[] v) {
-      StringBuilder sb = new StringBuilder();
-      if (v != null) {
-         for (byte aV : v) sb.append((char) aV);
-      }
-      return sb.toString();
-   }
-
-
    public static boolean compareTo(byte[] v) {
       if (v == null)
          return false;
-      if (v.length < version_id.length)
+      if (v.length < VERSION_ID.length)
          return false;
-      for (int i = 0; i < version_id.length; i++) {
-         if (version_id[i] != v[i])
+      for (int i = 0; i < VERSION_ID.length; i++) {
+         if (VERSION_ID[i] != v[i])
             return false;
       }
       return true;
    }
 
    public static int getLength() {
-      return version_id.length;
+      return VERSION_ID.length;
    }
 
    public static short getVersionShort() {
-      return getVersionShort(version);
+      return getVersionShort(VERSION);
    }
 
    public static short getVersionShort(String versionString) {
@@ -154,10 +170,5 @@ public class Version {
 
    private static String[] getParts(String versionString) {
       return versionString.split("[\\.\\-]");
-   }
-
-   public static String getMajorVersion() {
-      String[] parts = getParts(version);
-      return parts[0] + "." + parts[1];
    }
 }

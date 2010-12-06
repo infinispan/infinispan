@@ -38,14 +38,13 @@ final class CacheKey(val data: Array[Byte]) {
 }
 
 object CacheKey extends Logging {
-   class Externalizer extends org.infinispan.marshall.Externalizer {
-      override def writeObject(output: ObjectOutput, obj: AnyRef) {
-         val cacheKey = obj.asInstanceOf[CacheKey]
+   class Externalizer extends org.infinispan.marshall.Externalizer[CacheKey] {
+      override def writeObject(output: ObjectOutput, cacheKey: CacheKey) {
          output.writeInt(cacheKey.data.length)
          output.write(cacheKey.data)
       }
 
-      override def readObject(input: ObjectInput): AnyRef = {
+      override def readObject(input: ObjectInput): CacheKey = {
          val data = new Array[Byte](input.readInt())
          input.readFully(data)
          new CacheKey(data)

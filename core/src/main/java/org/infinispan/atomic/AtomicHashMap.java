@@ -212,14 +212,13 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       return delta;
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         AtomicHashMap map = (AtomicHashMap) subject;
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<AtomicHashMap> {
+      public void writeObject(ObjectOutput output, AtomicHashMap map) throws IOException {
          output.writeObject(map.delegate);
       }
 
       @SuppressWarnings("unchecked")
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public AtomicHashMap readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          FastCopyHashMap delegate = (FastCopyHashMap) input.readObject();
          return new AtomicHashMap(delegate);
       }

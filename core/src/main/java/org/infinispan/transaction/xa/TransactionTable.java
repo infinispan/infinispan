@@ -130,12 +130,15 @@ public class TransactionTable {
                      rc.init(invoker, icc, TransactionTable.this);
                      try {
                         rc.perform(null);
+                        if (trace) log.trace("Rollback of {0} complete.", gtx);
                      } catch (Throwable e) {
                         log.warn("Unable to roll back gtx " + gtx, e);
                      } finally {
                         removeRemoteTransaction(gtx);
                      }
                   }
+
+                  if (trace) log.trace("Completed cleaning stale locks.");
                }
             });
          } catch (RejectedExecutionException ree) {
@@ -229,7 +232,7 @@ public class TransactionTable {
    public boolean removeRemoteTransaction(GlobalTransaction txId) {
       boolean existed = remoteTransactions.remove(txId) != null;
       if (trace) {
-         log.trace("Removed " + txId + " from transaction table. Returning " + existed);
+         log.trace("Removed " + txId + " from transaction table. Transaction existed? " + existed);
       }
       return existed;
    }

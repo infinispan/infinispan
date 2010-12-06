@@ -19,35 +19,29 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.loaders.jdbc.stringbased;
-
-import org.infinispan.loaders.CacheLoaderException;
+package org.infinispan.loaders.keymappers;
 
 /**
- * Exception thrown by {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore} when one tries to
- * persist a StoredEntry with an unsupported key type.
+ * Defines the logic of mapping a key object to a String. This is required by certain cache stores, in order
+ * to map each key to a String which the underlying store is capable of handling. It should generate a unique String
+ * based on the supplied key.
  *
  * @author Mircea.Markus@jboss.com
- * @see org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore
+ * @author Manik Surtani
  */
-public class UnsupportedKeyTypeException extends CacheLoaderException {
+public interface Key2StringMapper {
 
-   /** The serialVersionUID */
-   private static final long serialVersionUID = 1442739860198872706L;
+   /**
+    * Do we support this key type?
+    * @param keyType type to test
+    * @return true if the type is supported, false otherwise.
+    */
+   boolean isSupportedType(Class<?> keyType);
 
-   public UnsupportedKeyTypeException(Object key) {
-      this("Unsupported key type: '" + key.getClass().getName() + "' on key: " + key);
-   }
-
-   public UnsupportedKeyTypeException(String message) {
-      super(message);
-   }
-
-   public UnsupportedKeyTypeException(String message, Throwable cause) {
-      super(message, cause);
-   }
-
-   public UnsupportedKeyTypeException(Throwable cause) {
-      super(cause);
-   }
+   /**
+    * Must return an unique String for the supplied key.
+    * @param key key to map to a String
+    * @return String representation of the key
+    */
+   String getStringMapping(Object key);
 }

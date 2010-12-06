@@ -70,16 +70,15 @@ public class TransactionLog {
          return modifications;
       }
       
-      public static class Externalizer implements org.infinispan.marshall.Externalizer {
-         public void writeObject(ObjectOutput output, Object subject) throws IOException {
-            TransactionLog.LogEntry le = (TransactionLog.LogEntry) subject;
+      public static class Externalizer implements org.infinispan.marshall.Externalizer<TransactionLog.LogEntry> {
+         public void writeObject(ObjectOutput output, TransactionLog.LogEntry le) throws IOException {
             output.writeObject(le.transaction);
             WriteCommand[] cmds = le.modifications;
             UnsignedNumeric.writeUnsignedInt(output, cmds.length);
             for (WriteCommand c : cmds) output.writeObject(c);
          }
 
-         public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public TransactionLog.LogEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             GlobalTransaction gtx = (GlobalTransaction) input.readObject();
             int numCommands = UnsignedNumeric.readUnsignedInt(input);
             WriteCommand[] cmds = new WriteCommand[numCommands];

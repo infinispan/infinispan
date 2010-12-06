@@ -111,6 +111,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
 @MBean(objectName = DefaultCacheManager.OBJECT_NAME, description = "Component that acts as a manager, factory and container for caches in the system.")
+@SuppressWarnings("deprecated")
 public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    public static final String OBJECT_NAME = "CacheManager";
    private static final Log log = LogFactory.getLog(DefaultCacheManager.class);
@@ -120,6 +121,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    private final ConcurrentMap<String, Configuration> configurationOverrides = new ConcurrentHashMap<String, Configuration>();
    private final GlobalComponentRegistry globalComponentRegistry;
    private final ReentrantPerEntryLockContainer cacheNameLockContainer;
+   private final ReflectionCache reflectionCache = new ReflectionCache();
 
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults.  See {@link
@@ -208,7 +210,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       this.globalConfiguration.accept(new ConfigurationValidatingVisitor());
       this.defaultConfiguration = defaultConfiguration == null ? new Configuration() : defaultConfiguration.clone();
       this.defaultConfiguration.accept(new ConfigurationValidatingVisitor());
-      this.globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this);
+      this.globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, reflectionCache);
       this.cacheNameLockContainer = new ReentrantPerEntryLockContainer(this.defaultConfiguration.getConcurrencyLevel());
       if (start)
          start();
@@ -249,7 +251,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             c.applyOverrides(entry.getValue());
             configurationOverrides.put(entry.getKey(), c);
          }
-         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this);
+         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, reflectionCache);
          cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());
       } catch (RuntimeException re) {
          throw new ConfigurationException(re);
@@ -293,7 +295,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             c.applyOverrides(entry.getValue());
             configurationOverrides.put(entry.getKey(), c);
          }
-         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this);
+         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, reflectionCache);
          cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());
       } catch (ConfigurationException ce) {
          throw ce;
@@ -344,7 +346,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             }
          }
 
-         globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this);
+         globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, reflectionCache);
          cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());
       } catch (RuntimeException re) {
          throw new ConfigurationException(re);
@@ -483,7 +485,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
       c.setGlobalConfiguration(globalConfiguration);
       c.assertValid();
-      Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName);
+      Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName, reflectionCache);
       CacheWrapper cw = new CacheWrapper(cache);
       try {
          existingCache = caches.putIfAbsent(cacheName, cw);
@@ -522,6 +524,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       }
       globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
       globalComponentRegistry.stop();
+
+      // Clear the reflection cache to avoid leaks
+      reflectionCache.stop();
    }
 
    private void unregisterCacheMBean(Cache cache) {

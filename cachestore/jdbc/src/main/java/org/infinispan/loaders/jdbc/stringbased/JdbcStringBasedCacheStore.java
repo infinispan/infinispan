@@ -33,6 +33,9 @@ import org.infinispan.loaders.jdbc.DataManipulationHelper;
 import org.infinispan.loaders.jdbc.JdbcUtil;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.loaders.keymappers.Key2StringMapper;
+import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
+import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -52,7 +55,7 @@ import java.util.Set;
  * {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore}, this cache store will store each entry within a row
  * in the table (rather than grouping multiple entries into an row). This assures a finer grained granularity for all
  * operation, and better performance. In order to be able to store non-string keys, it relies on an {@link
- * Key2StringMapper}.
+ * org.infinispan.loaders.keymappers.Key2StringMapper}.
  * <p/>
  * The actual storage table is defined through configuration {@link JdbcStringBasedCacheStore}. The table can be
  * created/dropped on-the-fly, at deployment time. For more details consult javadoc for {@link
@@ -60,22 +63,22 @@ import java.util.Set;
  * <p/>
  * It is recommended to use {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore}} over
  * {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore}} whenever it is possible, as is has a better performance.
- * One scenario in which this is not possible to use it though, is when you can't write an {@link Key2StringMapper}} to map the
+ * One scenario in which this is not possible to use it though, is when you can't write an {@link org.infinispan.loaders.keymappers.Key2StringMapper}} to map the
  * keys to to string objects (e.g. when you don't have control over the types of the keys, for whatever reason).
  * <p/>
  * <b>Preload</b>.In order to support preload functionality the store needs to read the string keys from the database and transform them
- * into the corresponding key objects. {@link org.infinispan.loaders.jdbc.stringbased.Key2StringMapper} only supports
+ * into the corresponding key objects. {@link org.infinispan.loaders.keymappers.Key2StringMapper} only supports
  * key to string transformation(one way); in order to be able to use preload one needs to specify an
- * {@link org.infinispan.loaders.jdbc.stringbased.TwoWayKey2StringMapper}, which extends {@link org.infinispan.loaders.jdbc.stringbased.Key2StringMapper} and
+ * {@link org.infinispan.loaders.keymappers.TwoWayKey2StringMapper}, which extends {@link org.infinispan.loaders.keymappers.Key2StringMapper} and
  * allows bidirectional transformation.
  * <p/>
  * <b>Rehashing</b>. When a node leaves/joins, Infinispan moves around persistent state as part of rehashing process.
  * For this it needs access to the underlaying key objects, so if distribution is used, the mapper needs to be an
- * {@link org.infinispan.loaders.jdbc.stringbased.TwoWayKey2StringMapper} otherwise the cache won't start (same constraint as with preloading).
+ * {@link org.infinispan.loaders.keymappers.TwoWayKey2StringMapper} otherwise the cache won't start (same constraint as with preloading).
  *
  * @author Mircea.Markus@jboss.com
- * @see Key2StringMapper
- * @see DefaultTwoWayKey2StringMapper
+ * @see org.infinispan.loaders.keymappers.Key2StringMapper
+ * @see org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper
  */
 @CacheLoaderMetadata(configurationClass = JdbcStringBasedCacheStoreConfig.class)
 public class JdbcStringBasedCacheStore extends LockSupportCacheStore {

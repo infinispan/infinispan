@@ -59,13 +59,12 @@ public class RemoveOperation<K, V> extends Operation<K, V> {
       delegate.remove(key);
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
-         RemoveOperation remove = (RemoveOperation) object;
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<RemoveOperation> {
+      public void writeObject(ObjectOutput output, RemoveOperation remove) throws IOException {
          output.writeObject(remove.key);
       }
       
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public RemoveOperation readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          RemoveOperation remove = new RemoveOperation();
          remove.key = input.readObject();
          return remove;

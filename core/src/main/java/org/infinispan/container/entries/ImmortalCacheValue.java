@@ -93,13 +93,12 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
       }
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         ImmortalCacheValue icv = (ImmortalCacheValue) subject;
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<ImmortalCacheValue> {
+      public void writeObject(ObjectOutput output, ImmortalCacheValue icv) throws IOException {
          output.writeObject(icv.value);
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ImmortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
          return new ImmortalCacheValue(v);
       }

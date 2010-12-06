@@ -30,6 +30,8 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
+import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
@@ -43,7 +45,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Tester for {@link JdbcStringBasedCacheStore} with an alternative {@link org.infinispan.loaders.jdbc.stringbased.Key2StringMapper}.
+ * Tester for {@link JdbcStringBasedCacheStore} with an alternative {@link org.infinispan.loaders.keymappers.Key2StringMapper}.
  *
  * @author Mircea.Markus@jboss.com
  */

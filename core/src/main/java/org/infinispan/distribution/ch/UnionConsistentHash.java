@@ -82,15 +82,13 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       return oldCH;
    }
 
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
-         UnionConsistentHash uch = (UnionConsistentHash) object;
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<UnionConsistentHash> {
+      public void writeObject(ObjectOutput output, UnionConsistentHash uch) throws IOException {
          output.writeObject(uch.oldCH);
          output.writeObject(uch.newCH);
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public UnionConsistentHash readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new UnionConsistentHash((ConsistentHash) input.readObject(), (ConsistentHash) input.readObject());
       }
    }

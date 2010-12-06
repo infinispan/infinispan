@@ -236,22 +236,21 @@ public class MarshalledValue {
             ReplicableCommand.class.isAssignableFrom(type) || type.equals(MarshalledValue.class);
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<MarshalledValue> {
       private StreamingMarshaller marshaller;
       
       public void inject(StreamingMarshaller marshaller) {
          this.marshaller = marshaller;
       }
       
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         MarshalledValue mv = ((MarshalledValue) subject);
+      public void writeObject(ObjectOutput output, MarshalledValue mv) throws IOException {
          byte[] raw = mv.getRaw();
          UnsignedNumeric.writeUnsignedInt(output, raw.length);
          output.write(raw);
          output.writeInt(mv.hashCode());      
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MarshalledValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          int length = UnsignedNumeric.readUnsignedInt(input);
          byte[] raw = new byte[length];
          input.readFully(raw);

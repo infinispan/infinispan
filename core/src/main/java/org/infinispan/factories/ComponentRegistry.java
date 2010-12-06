@@ -9,6 +9,7 @@ import org.infinispan.factories.scopes.ScopeDetector;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.manager.ReflectionCache;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -44,8 +45,9 @@ public class ComponentRegistry extends AbstractComponentRegistry {
     * @param cache            cache
     * @param globalComponents Shared Component Registry to delegate to
     */
-   public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache cache, GlobalComponentRegistry globalComponents) {
-
+   public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache cache,
+                            GlobalComponentRegistry globalComponents, ReflectionCache reflectionCache) {
+      super(reflectionCache);
       try {
          this.cacheName = cacheName;
          if (cacheName == null) throw new ConfigurationException("Cache name cannot be null!");

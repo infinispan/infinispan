@@ -337,7 +337,14 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       }
    }
 
-   def testFlushAllDelayed(m: Method) {
+   def testFlushAllDelayed(m: Method) = flushAllDelayed(m, 2, 2200)
+
+   def testFlushAllDelayedUnixTime(m: Method) {
+      val delay: Int = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis + 2000).asInstanceOf[Int]
+      flushAllDelayed(m, delay, 2200)
+   }
+
+   private def flushAllDelayed(m: Method, delay: Int, sleep: Long) {
       for (i <- 1 to 5) {
          val key = k(m, "k" + i + "-");
          val value = v(m, "v" + i + "-");
@@ -346,10 +353,10 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
          assertEquals(client.get(key), value)
       }
 
-      val f = client.flush(2);
+      val f = client.flush(delay);
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
 
-      sleepThread(2200);
+      sleepThread(sleep);
 
       for (i <- 1 to 5) {
          val key = k(m, "k" + i + "-");
@@ -359,11 +366,18 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
    def testFlushAllNoReply = sendNoWait("flush_all noreply\r\n")
 
+   def testFlushAllPipeline {
+      val responses = sendMulti("flush_all\r\nget a\r\n", 2, true)
+      assertEquals(responses.length, 2)
+      assertEquals(responses.head, "OK")
+      assertEquals(responses.tail.head, "END")
+   }
+
    def testVersion {
       val versions = client.getVersions
       assertEquals(versions.size(), 1)
       val version = versions.values.iterator.next
-      assertEquals(version, Version.version)
+      assertEquals(version, Version.VERSION)
    }
 
    def testIncrKeyLengthLimit {
@@ -394,13 +408,20 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
    def testUnknownCommand = assertError(send("blah\r\n"))
 
+   def testUnknownCommandPipelined {
+      val responses = sendMulti("bogus\r\ndelete a\r\n", 2, true)
+      assertEquals(responses.length, 2)
+      assertEquals(responses.head, "ERROR")
+      assertEquals(responses.tail.head, "NOT_FOUND")
+   }
+
    def testReadFullLineAfterLongKey {
       val key = generateRandomString(300)
       val command = "add " + key + " 0 0 1\r\nget a\r\n"
       val responses = sendMulti(command, 2, true)
       assertEquals(responses.length, 2)
       assertTrue(responses.head.contains("CLIENT_ERROR"))
-      assertTrue(responses.tail.head == "END", "Instead response was: " + responses.tail.head)
+      assertEquals(responses.tail.head, "END")
    }
 
    def testNegativeBytesLengthValue {

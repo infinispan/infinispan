@@ -54,12 +54,12 @@ public class SuccessfulResponse extends ValidResponse {
       return responseValue != null ? responseValue.hashCode() : 0;
    }
    
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         output.writeObject(((SuccessfulResponse) subject).responseValue);      
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<SuccessfulResponse> {
+      public void writeObject(ObjectOutput output, SuccessfulResponse response) throws IOException {
+         output.writeObject(response.responseValue);
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public SuccessfulResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new SuccessfulResponse(input.readObject());
       }
    }

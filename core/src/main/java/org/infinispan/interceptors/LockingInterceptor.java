@@ -24,6 +24,7 @@ package org.infinispan.interceptors;
 import org.infinispan.CacheException;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -46,7 +47,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ReversibleOrderedSet;
@@ -55,9 +56,11 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Interceptor to implement <a href="http://wiki.jboss.org/wiki/JBossCacheMVCC">MVCC</a> functionality.
@@ -113,9 +116,19 @@ public class LockingInterceptor extends CommandInterceptor {
       }
    }
 
+   private void abortIfRemoteTransactionInvalid(TxInvocationContext ctx, AbstractTransactionBoundaryCommand c) {
+      // this check fixes ISPN-777
+      if (!ctx.isOriginLocal()) {
+         Address origin = c.getGlobalTransaction().getAddress();
+         if (!transport.getMembers().contains(origin))
+            throw new CacheException("Member " + origin + " no longer in cluster. Forcing tx rollback for " + c.getGlobalTransaction());
+      }
+   }
+
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       try {
+         abortIfRemoteTransactionInvalid(ctx, command);
          return invokeNextInterceptor(ctx, command);
       } catch (TimeoutException te) {
          cleanupLocks(ctx, false);
@@ -142,13 +155,9 @@ public class LockingInterceptor extends CommandInterceptor {
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand c) throws Throwable {
       boolean localTxScope = ctx.isOriginLocal() && ctx.isInTxScope();
       boolean shouldInvokeOnCluster = false;
-      
+
       try {
-
-         if (!ctx.isOriginLocal() && !transport.getMembers().contains(c.getOrigin())) { //ISPN-777
-            throw new CacheException("Member " + c.getOrigin() + " no longer in cluster. Forcing tx rollback for tx: " + c.getGlobalTransaction());
-         }
-
+         abortIfRemoteTransactionInvalid(ctx, c);
          if (localTxScope) {
             c.attachGlobalTransaction((GlobalTransaction) ctx.getLockOwner());
          }
