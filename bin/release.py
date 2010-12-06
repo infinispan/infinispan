@@ -144,34 +144,34 @@ def update_versions(version):
       modified_files.append(pom)
   
   ## Now look for Version.java
-  version_bytes = '{'
-  for ch in version:
-    if not ch == ".":
-      version_bytes += "'%s', " % ch
-  version_bytes = version_bytes[:-2]
-  version_bytes += "}"
-  version_props = "./core/src/main/resources/org/infinispan/version.properties"
-  modified_files.append(version_props)
+  version_java = "./core/src/main/java/org/infinispan/Version.java"
+  modified_files.append(version_java)
   
-  f_in = open(version_props)
-  f_out = open(version_props+".tmp", "w")
-  
+  f_in = open(version_java)
+  f_out = open(version_java+".tmp", "w")
+
+  regexp = re.compile('\s*private static final (String (MAJOR|MINOR|MICRO|MODIFIER)|boolean SNAPSHOT)')
+  pieces = version.split('.')
   try:
     for l in f_in:
-      if l.find("infinispan.version.codename") > -1:
+      if regexp.match(l):
+        if l.find('MAJOR') > -1:
+          f_out.write('   private static final String MAJOR = "%s";\n' % pieces[0])
+        elif l.find('MINOR') > -1:
+          f_out.write('   private static final String MINOR = "%s";\n' % pieces[1])
+        elif l.find('MICRO') > -1:
+          f_out.write('   private static final String MICRO = "%s";\n' % pieces[2])
+        elif l.find('MODIFIER') > -1:
+          f_out.write('   private static final String MODIFIER = "%s";\n' % pieces[3])
+        elif l.find('SNAPSHOT') > -1:
+          f_out.write('   private static final boolean SNAPSHOT = false;\n')
+      else:
         f_out.write(l)
-        f_out.write('\n')
-    pieces = version.split('.')
-    f_out.write('infinispan.version.major = %s \n' % pieces[0])
-    f_out.write('infinispan.version.minor = %s \n' % pieces[1])
-    f_out.write('infinispan.version.micro = %s \n' % pieces[2])
-    f_out.write('infinispan.version.modifier = %s \n' % pieces[3])
-    f_out.write("infinispan.version.snapshot = false \n")
   finally:
     f_in.close()
     f_out.close()
     
-  os.rename(version_props+".tmp", version_props)
+  os.rename(version_java+".tmp", version_java)
   
   # Now make sure this goes back into the repository.
   git.commit(modified_files)

@@ -22,8 +22,6 @@
 package org.infinispan;
 
 import net.jcip.annotations.Immutable;
-import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
 
 import java.io.ByteArrayOutputStream;
 
@@ -35,11 +33,18 @@ import java.io.ByteArrayOutputStream;
  */
 @Immutable
 public class Version {
-   public static final String VERSION;
-   public static final String CODENAME;
+
+   private static final String MAJOR = "5";
+   private static final String MINOR = "0";
+   private static final String MICRO = "0";
+   private static final String MODIFIER = "SNAPSHOT";
+   private static final boolean SNAPSHOT = true;
+
+   public static String VERSION = String.format("%s.%s.%s%s%s", MAJOR, MINOR, MICRO, SNAPSHOT ? "-" : ".", MODIFIER);
+   public static String CODENAME = "Pagoa";
    public static final String PROJECT_NAME = "Infinispan";
-   public static final byte[] VERSION_ID;
-   public static final String MAJOR_MINOR;
+   public static byte[] VERSION_ID = readVersionBytes();
+   public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
 
    private static final int MAJOR_SHIFT = 11;
    private static final int MINOR_SHIFT = 6;
@@ -47,30 +52,16 @@ public class Version {
    private static final int MINOR_MASK = 0x0007c0;
    private static final int PATCH_MASK = 0x00003f;
 
-   static {
-      try {
-         TypedProperties p = new TypedProperties();
-         p.load(Util.loadResourceAsStream("org/infinispan/version.properties"));
-         String major = p.getProperty("infinispan.version.major").trim();
-         String minor = p.getProperty("infinispan.version.minor").trim();
-         String micro = p.getProperty("infinispan.version.micro").trim();
-         String modifier = p.getProperty("infinispan.version.modifier").trim().toUpperCase();
-         CODENAME = p.getProperty("infinispan.version.codename");
-         boolean snap = p.getBooleanProperty("infinispan.version.snapshot", false);
-         VERSION = String.format("%s.%s.%s%s%s", major, minor, micro, snap ? "-" : ".", modifier);
-         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-         for (int i=0; i<major.length(); i++) baos.write(major.charAt(i));
-         for (int i=0; i<minor.length(); i++) baos.write(minor.charAt(i));
-         for (int i=0; i<micro.length(); i++) baos.write(micro.charAt(i));
-         if (snap)
-            baos.write('S');
-         else
-            for (int i=0; i<modifier.length(); i++) baos.write(modifier.charAt(i));
-         VERSION_ID = baos.toByteArray();
-         MAJOR_MINOR = major + "." + minor;
-      } catch (Exception e) {
-         throw new CacheException("Cannot find 'org/infinispan/version.properties'.  Cannot continue!", e);
-      }
+   private static byte[] readVersionBytes() {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      for (int i = 0; i < MAJOR.length(); i++) baos.write(MAJOR.charAt(i));
+      for (int i = 0; i < MINOR.length(); i++) baos.write(MINOR.charAt(i));
+      for (int i = 0; i < MICRO.length(); i++) baos.write(MICRO.charAt(i));
+      if (SNAPSHOT)
+         baos.write('S');
+      else
+         for (int i = 0; i < MODIFIER.length(); i++) baos.write(MODIFIER.charAt(i));
+      return baos.toByteArray();
    }
 
    /**
@@ -148,8 +139,8 @@ public class Version {
 
    public static short encodeVersion(int major, int minor, int patch) {
       return (short) ((major << MAJOR_SHIFT)
-            + (minor << MINOR_SHIFT)
-            + patch);
+                            + (minor << MINOR_SHIFT)
+                            + patch);
    }
 
    public static String decodeVersion(short version) {
