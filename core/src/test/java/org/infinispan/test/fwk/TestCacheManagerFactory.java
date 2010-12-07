@@ -130,11 +130,16 @@ public class TestCacheManagerFactory {
     * Creates an cache manager that does support clustering with a given default cache configuration.
     */
    public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig) {
+      return createClusteredCacheManager(defaultCacheConfig, false);
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig, boolean transactional) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setTransportNodeName(perThreadCacheManagers.get().getNextCacheName());
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
       amendTransport(globalConfiguration);
+      if (transactional) amendJTA(defaultCacheConfig);
       return newDefaultCacheManager(true, globalConfiguration, defaultCacheConfig, false);
    }
 
