@@ -139,9 +139,9 @@ public abstract class AbstractListenerImpl {
    protected boolean testListenerClassValidity(Class<?> listenerClass) {
       Listener l = ReflectionUtil.getAnnotation(listenerClass, Listener.class);
       if (l == null)
-         throw new IncorrectListenerException("Cache listener class MUST be annotated with org.infinispan.notifications.annotation.Listener");
+         throw new IncorrectListenerException(String.format("Cache listener class %s must be annotated with org.infinispan.notifications.annotation.Listener", listenerClass.getName()));
       if (!Modifier.isPublic(listenerClass.getModifiers()))
-         throw new IncorrectListenerException("Cache listener class MUST be public!");
+         throw new IncorrectListenerException(String.format("Cache listener class %s must be public!", listenerClass.getName()));
       return l.sync();
    }
 
