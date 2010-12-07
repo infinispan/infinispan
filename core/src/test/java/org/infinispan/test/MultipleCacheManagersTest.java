@@ -136,20 +136,35 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    /**
-    * Creates a new cache manager, starts it, and adds it to the list of known cache managers on the current thread.
-    * Uses a default clustered cache manager global config.
+    * Creates a new non-transactional cache manager, starts it, and adds it to the list of known cache managers on the
+    * current thread.  Uses a default clustered cache manager global config.
     *
     * @param defaultConfig default cfg to use
     * @return the new CacheManager
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(defaultConfig);
+      return addClusterEnabledCacheManager(defaultConfig, false);
+   }
+
+   /**
+    * Creates a new optionally transactional cache manager, starts it, and adds it to the list of known cache managers on
+    * the current thread.  Uses a default clustered cache manager global config.
+    *
+    * @param defaultConfig default cfg to use
+    * @param transactional if true, the configuration will be decorated with necessary transactional settings
+    * @return the new CacheManager
+    */
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig, boolean transactional) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(defaultConfig, transactional);
       cacheManagers.add(cm);
       return cm;
    }
 
    /**
     * Creates a new cache manager, starts it, and adds it to the list of known cache managers on the current thread.
+    * @param mode cache mode to use
+    * @param transactional if true, the configuration will be decorated with necessary transactional settings
+    * @return an embedded cache manager
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration.CacheMode mode, boolean transactional) {
       Configuration configuration = getDefaultClusteredConfig(mode, transactional);
@@ -163,6 +178,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    
    protected void createCluster(Configuration config, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(config);
+   }
+
+   protected void createCluster(Configuration config, boolean transactional, int count) {
+      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(config, transactional);
    }
 
    protected void createCluster(Configuration.CacheMode mode, int count) {
@@ -291,15 +310,20 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return cache(i, cacheName).getAdvancedCache();
    }
 
-   public List<Cache> caches(String name) {
-      List<Cache> result = new ArrayList<Cache>();
+   public <K, V> List<Cache<K, V>> caches(String name) {
+      List<Cache<K, V>> result = new ArrayList<Cache<K, V>>();
       for (EmbeddedCacheManager ecm : cacheManagers) {
-         result.add(name == null? ecm.getCache() : ecm.getCache(name));
+         Cache<K, V> c;
+         if (name == null)
+            c = ecm.getCache();
+         else
+            c = ecm.getCache(name);
+         result.add(c);
       }
       return result;
    }
 
-   public List<Cache> caches() {
+   public <K, V> List<Cache<K, V>> caches() {
       return caches(null);
    }
 
