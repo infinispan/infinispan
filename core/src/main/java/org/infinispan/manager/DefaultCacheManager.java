@@ -448,22 +448,43 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       }
    }
 
+   /**
+    * {@inheritDoc}
+    */
    public String getClusterName() {
       return globalConfiguration.getClusterName();
    }
 
+   /**
+    * {@inheritDoc}
+    */
    public List<Address> getMembers() {
       if (globalComponentRegistry == null) return null;
       Transport t = globalComponentRegistry.getComponent(Transport.class);
       return t == null ? null : t.getMembers();
    }
 
+   /**
+    * {@inheritDoc}
+    */
    public Address getAddress() {
       if (globalComponentRegistry == null) return null;
       Transport t = globalComponentRegistry.getComponent(Transport.class);
       return t == null ? null : t.getAddress();
    }
 
+   /**
+    * {@inheritDoc}
+    */
+   public Address getCoordinator() {
+      if (globalComponentRegistry == null) return null;
+      Transport t = globalComponentRegistry.getComponent(Transport.class);
+      return t == null ? null : t.getCoordinator();
+   }
+
+   /**
+    * {@inheritDoc}
+    */
    public boolean isCoordinator() {
       if (globalComponentRegistry == null) return false;
       Transport t = globalComponentRegistry.getComponent(Transport.class);
