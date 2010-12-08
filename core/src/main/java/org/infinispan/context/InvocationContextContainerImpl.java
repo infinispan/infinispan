@@ -26,8 +26,8 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.transaction.xa.LocalTransaction;
 import org.infinispan.transaction.xa.TransactionTable;
-import org.infinispan.transaction.xa.TransactionXaAdapter;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -64,8 +64,8 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
          } else {
             localContext = (LocalTxInvocationContext) existing;
          }
-         TransactionXaAdapter xaAdapter = transactionTable.getXaCacheAdapter(tx);
-         localContext.setXaCache(xaAdapter);
+         LocalTransaction localTransaction = transactionTable.getLocalTransaction(tx);
+         localContext.setLocalTransaction(localTransaction);
          return localContext;
       } else {
          NonTxInvocationContext nonTxContext;

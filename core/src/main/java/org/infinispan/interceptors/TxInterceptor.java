@@ -1,5 +1,7 @@
 package org.infinispan.interceptors;
 
+import org.infinispan.CacheException;
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -16,6 +18,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -24,6 +27,7 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.transaction.TransactionLog;
+import org.infinispan.transaction.xa.LocalTransaction;
 import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
@@ -61,14 +65,20 @@ public class TxInterceptor extends CommandInterceptor {
    private final AtomicLong rollbacks = new AtomicLong(0);
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statisticsEnabled;
+   private CommandsFactory commandsFactory;
+   private InvocationContextContainer icc;
+   private InterceptorChain invoker;
 
 
    @Inject
-   public void init(TransactionManager tm, TransactionTable txTable, TransactionLog transactionLog, Configuration c) {
+   public void init(TransactionManager tm, TransactionTable txTable, TransactionLog transactionLog, Configuration c, CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker) {
       this.configuration = c;
       this.tm = tm;
       this.transactionLog = transactionLog;
       this.txTable = txTable;
+      this.commandsFactory = commandsFactory;
+      this.icc = icc;
+      this.invoker = invoker;
       setStatisticsEnabled(configuration.isExposeJmxStatistics());
    }
 
@@ -152,37 +162,46 @@ public class TxInterceptor extends CommandInterceptor {
 
    private Object enlistReadAndInvokeNext(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (shouldEnlist(ctx)) {
-         TransactionXaAdapter xaAdapter = enlist(ctx);
+         LocalTransaction localTransaction = enlist(ctx);
          LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
-         localTxContext.setXaCache(xaAdapter);
+         localTxContext.setLocalTransaction(localTransaction);
       }
       return invokeNextInterceptor(ctx, command);
    }
 
    private Object enlistWriteAndInvokeNext(InvocationContext ctx, WriteCommand command) throws Throwable {
-      TransactionXaAdapter xaAdapter = null;
+      LocalTransaction localTransaction = null;
       boolean shouldAddMod = false;
       if (shouldEnlist(ctx)) {
-         xaAdapter = enlist(ctx);
+         localTransaction = enlist(ctx);
          LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
          if (localModeNotForced(ctx)) shouldAddMod = true;
-         localTxContext.setXaCache(xaAdapter);
+         localTxContext.setLocalTransaction(localTransaction);
       }
       Object rv;
       rv = invokeNextInterceptor(ctx, command);
       if (!ctx.isInTxScope())
          transactionLog.logNoTxWrite(command);
-      if (command.isSuccessful() && shouldAddMod) xaAdapter.addModification(command);
+      if (command.isSuccessful() && shouldAddMod) localTransaction.addModification(command);
       return rv;
    }
 
-   public TransactionXaAdapter enlist(InvocationContext ctx) throws SystemException, RollbackException {
+   public LocalTransaction enlist(InvocationContext ctx) throws SystemException, RollbackException {
       Transaction transaction = tm.getTransaction();
       if (transaction == null) throw new IllegalStateException("This should only be called in an tx scope");
       int status = transaction.getStatus();
       if (isNotValid(status)) throw new IllegalStateException("Transaction " + transaction +
             " is not in a valid state to be invoking cache operations on.");
-      return txTable.getOrCreateXaAdapter(transaction, ctx);
+      LocalTransaction localTransaction = txTable.getOrCreateLocalTransaction(transaction, ctx);
+      if (!localTransaction.isEnlisted()) { //make sure that you only enlist it once
+         try {
+            transaction.enlistResource(new TransactionXaAdapter(localTransaction, txTable, commandsFactory, configuration, invoker, icc));
+         } catch (Exception e) {
+            log.error("Failed to enlist TransactionXaAdapter to transaction");
+            throw new CacheException(e);
+         }
+      }
+      return localTransaction;
    }
 
    private boolean isNotValid(int status) {

@@ -1,7 +1,5 @@
 package org.infinispan.transaction.xa;
 
-import org.infinispan.CacheException;
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
@@ -23,6 +21,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
+import javax.transaction.xa.Xid;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,13 +45,14 @@ public class TransactionTable {
    private static final Log log = LogFactory.getLog(TransactionTable.class);
    private static boolean trace = log.isTraceEnabled();
 
-   private final Map<Transaction, TransactionXaAdapter> localTransactions = new ConcurrentHashMap<Transaction, TransactionXaAdapter>();
+   private final Map<Transaction, LocalTransaction> localTransactions = new ConcurrentHashMap<Transaction, LocalTransaction>();
 
    private final Map<GlobalTransaction, RemoteTransaction> remoteTransactions = new ConcurrentHashMap<GlobalTransaction, RemoteTransaction>();
 
+   private final Map<Xid, LocalTransaction> xid2LocalTx = new ConcurrentHashMap<Xid, LocalTransaction>();
+
    private final Object listener = new StaleTransactionCleanup();
    
-   private CommandsFactory commandsFactory;
    private Configuration configuration;
    private InvocationContextContainer icc;
    private InterceptorChain invoker;
@@ -63,10 +63,9 @@ public class TransactionTable {
    private EmbeddedCacheManager cm;
 
    @Inject
-   public void initialize(CommandsFactory commandsFactory, RpcManager rpcManager, Configuration configuration,
+   public void initialize(RpcManager rpcManager, Configuration configuration,
                           InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier,
                           GlobalTransactionFactory gtf, EmbeddedCacheManager cm) {
-      this.commandsFactory = commandsFactory;
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.icc = icc;
@@ -94,6 +93,15 @@ public class TransactionTable {
       return transaction.getLockedKeys();
    }
 
+   public LocalTransaction getLocalTransaction(Xid xid) {
+      return this.xid2LocalTx.get(xid);
+   }
+
+   public void addLocalTransactionMapping(LocalTransaction localTransaction) {
+      if (localTransaction.getXid() == null) throw new IllegalStateException("Initialize xid first!");
+      this.xid2LocalTx.put(localTransaction.getXid(), localTransaction);
+   }
+
    @Listener
    public class StaleTransactionCleanup {
       @ViewChanged
@@ -103,9 +111,9 @@ public class TransactionTable {
             if (trace) log.trace("Saw {0} leavers - kicking off a lock breaking task", leavers.size());
             cleanTxForWhichTheOwnerLeft(leavers);
             if (configuration.isUseEagerLocking() && configuration.isEagerLockSingleNode() && configuration.getCacheMode().isDistributed()) {
-               for (TransactionXaAdapter xaAdapter : localTransactions.values()) {
-                  if (xaAdapter.hasRemoteLocksAcquired(leavers)) {
-                     xaAdapter.markForRollback();
+               for (LocalTransaction localTx : localTransactions.values()) {
+                  if (localTx.hasRemoteLocksAcquired(leavers)) {
+                     localTx.markForRollback();
                   }
                }
             }
@@ -198,20 +206,14 @@ public class TransactionTable {
     * Returns the {@link org.infinispan.transaction.xa.TransactionXaAdapter} corresponding to the supplied transaction.
     * If none exists, will be created first.
     */
-   public TransactionXaAdapter getOrCreateXaAdapter(Transaction transaction, InvocationContext ctx) {
-      TransactionXaAdapter current = localTransactions.get(transaction);
+   public LocalTransaction getOrCreateLocalTransaction(Transaction transaction, InvocationContext ctx) {
+      LocalTransaction current = localTransactions.get(transaction);
       if (current == null) {
          Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
          GlobalTransaction tx = gtf.newGlobalTransaction(localAddress, false);
          if (trace) log.trace("Created a new GlobalTransaction {0}", tx);
-         current = new TransactionXaAdapter(tx, icc, invoker, commandsFactory, configuration, this, transaction);
+         current = new LocalTransaction(transaction, tx);
          localTransactions.put(transaction, current);
-         try {
-            transaction.enlistResource(current);
-         } catch (Exception e) {
-            log.error("Failed to enlist TransactionXaAdapter to transaction");
-            throw new CacheException(e);
-         }
          notifier.notifyTransactionRegistered(tx, ctx);
       }
       return current;
@@ -221,8 +223,9 @@ public class TransactionTable {
     * Removes the {@link org.infinispan.transaction.xa.TransactionXaAdapter} corresponding to the given tx. Returns true
     * if such an tx exists.
     */
-   public boolean removeLocalTransaction(Transaction tx) {
-      return localTransactions.remove(tx) != null;
+   public boolean removeLocalTransaction(LocalTransaction localTransaction) {
+      xid2LocalTx.remove(localTransaction.getXid());
+      return localTransactions.remove(localTransaction.getTransaction()) != null;
    }
 
    /**
@@ -245,13 +248,11 @@ public class TransactionTable {
       return localTransactions.size();
    }
 
-   public TransactionXaAdapter getXaCacheAdapter(Transaction tx) {
+   public LocalTransaction getLocalTransaction(Transaction tx) {
       return localTransactions.get(tx);
    }
 
    public boolean containRemoteTx(GlobalTransaction globalTransaction) {
       return remoteTransactions.containsKey(globalTransaction);
    }
-
-
 }

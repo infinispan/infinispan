@@ -4,7 +4,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.TransactionXaAdapter;
+import org.infinispan.transaction.xa.LocalTransaction;
 import org.infinispan.util.BidirectionalMap;
 
 import javax.transaction.Transaction;
@@ -20,10 +20,10 @@ import java.util.Map;
  */
 public class LocalTxInvocationContext extends AbstractTxInvocationContext {
 
-   private volatile TransactionXaAdapter xaAdapter;
+   private volatile LocalTransaction localTransaction;
 
    public Transaction getRunningTransaction() {
-      return xaAdapter.getTransaction();
+      return localTransaction.getTransaction();
    }
 
    public boolean isOriginLocal() {
@@ -35,53 +35,53 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    public Object getLockOwner() {
-      return xaAdapter.getGlobalTx();
+      return localTransaction.getGlobalTransaction();
    }
 
    public GlobalTransaction getGlobalTransaction() {
-      return xaAdapter.getGlobalTx();
+      return localTransaction.getGlobalTransaction();
    }
 
    public List<WriteCommand> getModifications() {
-      return xaAdapter == null ? null : xaAdapter.getModifications();
+      return localTransaction == null ? null : localTransaction.getModifications();
    }
 
-   public void setXaCache(TransactionXaAdapter xaAdapter) {
-      this.xaAdapter = xaAdapter;
+   public void setLocalTransaction(LocalTransaction localTransaction) {
+      this.localTransaction = localTransaction;
    }
 
    public CacheEntry lookupEntry(Object key) {
-      return xaAdapter != null ? xaAdapter.lookupEntry(key) : null;
+      return localTransaction != null ? localTransaction.lookupEntry(key) : null;
    }
 
    public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
-      return xaAdapter.getLookedUpEntries();
+      return localTransaction.getLookedUpEntries();
    }
 
    public void putLookedUpEntry(Object key, CacheEntry e) {
-      xaAdapter.putLookedUpEntry(key, e);
+      localTransaction.putLookedUpEntry(key, e);
    }
 
    public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
       for (Map.Entry<Object, CacheEntry> ce: lookedUpEntries.entrySet()) {
-         xaAdapter.putLookedUpEntry(ce.getKey(), ce.getValue());
+         localTransaction.putLookedUpEntry(ce.getKey(), ce.getValue());
       }
    }
 
    public void removeLookedUpEntry(Object key) {
-      xaAdapter.removeLookedUpEntry(key);
+      localTransaction.removeLookedUpEntry(key);
    }
 
    public void clearLookedUpEntries() {
-      xaAdapter.clearLookedUpEntries();
+      localTransaction.clearLookedUpEntries();
    }
 
    @Override
    public boolean hasLockedKey(Object key) {
-      return xaAdapter != null && super.hasLockedKey(key);
+      return localTransaction != null && super.hasLockedKey(key);
    }
 
    public void remoteLocksAcquired(Collection<Address> nodes) {
-      xaAdapter.locksAcquired(nodes);
+      localTransaction.locksAcquired(nodes);
    }
 }
