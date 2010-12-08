@@ -21,18 +21,11 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class RemoteTransaction implements CacheTransaction, Cloneable {
+public class RemoteTransaction extends AbstractCacheTransaction implements Cloneable {
 
    private static Log log = LogFactory.getLog(RemoteTransaction.class);
 
-   private List<WriteCommand> modifications;
-
-   private BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries;
-
-   private GlobalTransaction tx;
-
    private volatile boolean valid = true;
-
 
    public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
       this.modifications = modifications == null || modifications.length == 0 ? Collections.<WriteCommand>emptyList() : Arrays.asList(modifications);
@@ -48,26 +41,6 @@ public class RemoteTransaction implements CacheTransaction, Cloneable {
 
    public void invalidate() {
       valid = false;
-   }
-
-   public GlobalTransaction getGlobalTransaction() {
-      return tx;
-   }
-
-   public List<WriteCommand> getModifications() {
-      return modifications;
-   }
-
-   public void setModifications(WriteCommand[] modifications) {
-      this.modifications = Arrays.asList(modifications);
-   }
-
-   public CacheEntry lookupEntry(Object key) {
-      return lookedUpEntries.get(key);
-   }
-
-   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
-      return lookedUpEntries;
    }
 
    public void putLookedUpEntry(Object key, CacheEntry e) {

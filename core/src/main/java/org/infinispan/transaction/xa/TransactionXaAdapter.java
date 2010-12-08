@@ -4,29 +4,16 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.BidirectionalLinkedHashMap;
-import org.infinispan.util.BidirectionalMap;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * This acts both as an local {@link org.infinispan.transaction.xa.CacheTransaction} and implementor of an {@link
@@ -35,83 +22,86 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class TransactionXaAdapter implements CacheTransaction, XAResource {
+public class TransactionXaAdapter implements XAResource {
 
    private static final Log log = LogFactory.getLog(TransactionXaAdapter.class);
    private static boolean trace = log.isTraceEnabled();
 
    private int txTimeout;
 
-   private volatile List<WriteCommand> modifications;
-   private BidirectionalMap<Object, CacheEntry> lookedUpEntries;
+   private final InvocationContextContainer icc;
+   private final InterceptorChain invoker;
 
-   private GlobalTransaction globalTx;
-   private InvocationContextContainer icc;
-   private InterceptorChain invoker;
+   private final CommandsFactory commandsFactory;
+   private final Configuration configuration;
 
-   private CommandsFactory commandsFactory;
-   private Configuration configuration;
+   private final TransactionTable txTable;
 
-   private TransactionTable txTable;
-   private Transaction transaction;
+   /**
+    * XAResource is associated with a transaction between enlistment (XAResource.start()) XAResource.end(). It's only the
+    * boundary methods (prepare, commit, rollback) that need to be "stateless".
+    * Reefer to section 3.4.4 from JTA spec v.1.1
+    */
+   private final LocalTransaction localTransaction;
 
-   private Set<Address> remoteLockedNodes;
-   private boolean isMarkedForRollback;
 
-
-   public TransactionXaAdapter(GlobalTransaction globalTx, InvocationContextContainer icc, InterceptorChain invoker,
-                               CommandsFactory commandsFactory, Configuration configuration, TransactionTable txTable,
-                               Transaction transaction) {
-      this.globalTx = globalTx;
-      this.icc = icc;
-      this.invoker = invoker;
+   public TransactionXaAdapter(LocalTransaction localTransaction, TransactionTable txTable, CommandsFactory commandsFactory,
+                               Configuration configuration, InterceptorChain invoker, InvocationContextContainer icc) {
+      this.localTransaction = localTransaction;
+      this.txTable = txTable;
       this.commandsFactory = commandsFactory;
       this.configuration = configuration;
-      this.txTable = txTable;
-      this.transaction = transaction;
+      this.invoker = invoker;
+      this.icc = icc;
    }
 
-   public void addModification(WriteCommand mod) {
-      if (trace) log.trace("Adding modification {0}. Mod list is {1}", mod, modifications);
-      if (modifications == null) {
-         modifications = new ArrayList<WriteCommand>(8);
-      }
-      modifications.add(mod);
-   }
-
+   /**
+    * This can be call for any transaction object. See Section 3.4.6 (Resource Sharing) from JTA spec v1.1.
+    */
    public int prepare(Xid xid) throws XAException {
-      checkMarkedForRollback();
+      LocalTransaction localTransaction = getLocalTransactionAndValidate(xid);
+      
+      validateNotMarkedForRollback(localTransaction);
+
       if (configuration.isOnePhaseCommit()) {
-         if (trace)
-            log.trace("Received prepare for tx: " + xid + " . Skipping call as 1PC will be used.");
+         if (trace) log.trace("Received prepare for tx: {0}. Skipping call as 1PC will be used.", xid);
          return XA_OK;
       }
 
-      PrepareCommand prepareCommand = commandsFactory.buildPrepareCommand(globalTx, modifications, configuration.isOnePhaseCommit());
+      PrepareCommand prepareCommand = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), configuration.isOnePhaseCommit());
       if (trace) log.trace("Sending prepare command through the chain: " + prepareCommand);
 
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-      ctx.setXaCache(this);
+      ctx.setLocalTransaction(localTransaction);
       try {
          invoker.invoke(ctx, prepareCommand);
-         return XA_OK;
+         if (localTransaction.isReadOnly()) {
+            if (trace) log.trace("Readonly transaction: " + localTransaction.getGlobalTransaction());
+            return XA_RDONLY;
+         } else {
+            return XA_OK;
+         }
       } catch (Throwable e) {
          log.error("Error while processing PrepareCommand", e);
          throw new XAException(XAException.XAER_RMERR);
       }
    }
 
+   /**
+    * Same comment as for {@link #prepare(javax.transaction.xa.Xid)} applies for commit.
+    */
    public void commit(Xid xid, boolean isOnePhase) throws XAException {
-      // always call prepare() - even if this is just a 1PC!
-      if (isOnePhase) prepare(xid);
-      if (trace) log.trace("committing transaction: " + globalTx);
+      LocalTransaction localTransaction = getLocalTransactionAndValidate(xid);
+
+      if (trace) log.trace("committing transaction {0}" + localTransaction.getGlobalTransaction());
       try {
          LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-         ctx.setXaCache(this);
-         if (configuration.isOnePhaseCommit()) {
-            checkMarkedForRollback();
+         ctx.setLocalTransaction(localTransaction);
+         if (configuration.isOnePhaseCommit() || isOnePhase) {
+            validateNotMarkedForRollback(localTransaction);
+
             if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
-            PrepareCommand command = commandsFactory.buildPrepareCommand(globalTx, modifications, true);
+            PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
             try {
                invoker.invoke(ctx, command);
             } catch (Throwable e) {
@@ -119,7 +109,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
                throw new XAException(XAException.XAER_RMERR);
             }
          } else {
-            CommitCommand commitCommand = commandsFactory.buildCommitCommand(globalTx);
+            CommitCommand commitCommand = commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
             try {
                invoker.invoke(ctx, commitCommand);
             } catch (Throwable e) {
@@ -128,35 +118,46 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
             }
          }
       } finally {
-         txTable.removeLocalTransaction(transaction);
-         icc.suspend();
-         this.modifications = null;
+         cleanup(localTransaction);
       }
    }
 
-   public void rollback(Xid xid) throws XAException {
-      if (trace) log.trace("rollback transaction: " + globalTx);
-      RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(globalTx);
+   /**
+    * Same comment as for {@link #prepare(javax.transaction.xa.Xid)} applies for commit.
+    */   
+   public void rollback(Xid xid) throws XAException {      
+      LocalTransaction localTransaction = getLocalTransactionAndValidate(xid);
+      if (trace) log.trace("rollback transaction {0} ", localTransaction.getGlobalTransaction());
+      RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-      ctx.setXaCache(this);
+      ctx.setLocalTransaction(localTransaction);
       try {
          invoker.invoke(ctx, rollbackCommand);
       } catch (Throwable e) {
          log.error("Exception while rollback", e);
          throw new XAException(XAException.XA_HEURHAZ);
       } finally {
-         txTable.removeLocalTransaction(transaction);
-         icc.suspend();
-         this.modifications = null;
+         cleanup(localTransaction);
       }
    }
 
+   private LocalTransaction getLocalTransactionAndValidate(Xid xid) throws XAException {
+      LocalTransaction localTransaction = txTable.getLocalTransaction(xid);
+      if  (localTransaction == null) {
+         if (trace) log.trace("no tx found for {0}", xid);
+         throw new XAException(XAException.XAER_NOTA);
+      }
+      return localTransaction;
+   }
+
    public void start(Xid xid, int i) throws XAException {
-      if (trace) log.trace("start called on tx " + this.globalTx);
+      localTransaction.setXid(xid);
+      txTable.addLocalTransactionMapping(localTransaction);
+      if (trace) log.trace("start called on tx " + this.localTransaction.getGlobalTransaction());
    }
 
    public void end(Xid xid, int i) throws XAException {
-      if (trace) log.trace("end called on tx " + this.globalTx);
+      if (trace) log.trace("end called on tx " + this.localTransaction.getGlobalTransaction());
    }
 
    public void forget(Xid xid) throws XAException {
@@ -186,95 +187,35 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
       return true;
    }
 
-   public CacheEntry lookupEntry(Object key) {
-      if (lookedUpEntries == null) return null;
-      return lookedUpEntries.get(key);
-   }
-
-   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
-      return (BidirectionalMap<Object, CacheEntry>)
-            (lookedUpEntries == null ? InfinispanCollections.emptyBidirectionalMap() : lookedUpEntries);
-   }
-
-   public void putLookedUpEntry(Object key, CacheEntry e) {
-      initLookedUpEntries();
-      lookedUpEntries.put(key, e);
-   }
-
-   private void initLookedUpEntries() {
-      if (lookedUpEntries == null) lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(4);
-   }
-
-   public GlobalTransaction getGlobalTx() {
-      return globalTx;
-   }
-
-   public List<WriteCommand> getModifications() {
-      if (trace) log.trace("Retrieving modification list {0}.", modifications);
-      return modifications;
-   }
-
-   public Transaction getTransaction() {
-      return transaction;
-   }
-
-   public GlobalTransaction getGlobalTransaction() {
-      return globalTx;
-   }
-
-   public void removeLookedUpEntry(Object key) {
-      if (lookedUpEntries != null) lookedUpEntries.remove(key);
-   }
-
-   public void clearLookedUpEntries() {
-      if (lookedUpEntries != null) lookedUpEntries.clear();
-   }
-
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof TransactionXaAdapter)) return false;
-
       TransactionXaAdapter that = (TransactionXaAdapter) o;
-
-      if (!globalTx.equals(that.globalTx)) return false;
-
-      return true;
+      return this.localTransaction.equals(that.localTransaction);
    }
 
    @Override
    public int hashCode() {
-      return globalTx.hashCode();
+      return localTransaction.getGlobalTransaction().hashCode();
    }
 
    @Override
    public String toString() {
       return "TransactionXaAdapter{" +
-            "modifications=" + modifications +
-            ", lookedUpEntries=" + lookedUpEntries +
-            ", globalTx=" + globalTx +
-            ", transaction=" + transaction +
-            ", txTimeout=" + txTimeout +
+            "localTransaction=" + localTransaction +
             '}';
    }
 
-   public boolean hasRemoteLocksAcquired(List<Address> leavers) {
-      if (log.isTraceEnabled()) {
-         log.trace("My remote locks: " + remoteLockedNodes + ", leavers are:" + leavers);
+   private void validateNotMarkedForRollback(LocalTransaction localTransaction) throws XAException {
+      if (localTransaction.isMarkedForRollback()) {
+         if (trace) log.trace("Transaction already marked for rollback: {0}", localTransaction);
+         throw new XAException(XAException.XA_RBROLLBACK);
       }
-      return (remoteLockedNodes != null) && !Collections.disjoint(remoteLockedNodes, leavers);
    }
 
-   public void locksAcquired(Collection<Address> nodes) {
-      if (remoteLockedNodes == null) remoteLockedNodes = new HashSet<Address>();
-      remoteLockedNodes.addAll(nodes);
-   }
-
-   public void markForRollback() {
-      isMarkedForRollback = true;
-   }
-
-   private void checkMarkedForRollback() throws XAException {
-      if (isMarkedForRollback) throw new XAException(XAException.XA_RBOTHER);
+   private void cleanup(LocalTransaction localTransaction) {
+      txTable.removeLocalTransaction(localTransaction);
+      icc.suspend();
    }   
 }
