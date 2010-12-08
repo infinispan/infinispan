@@ -89,12 +89,29 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     */
    String getClusterName();
 
+   /**
+    * @return the addresses of all the members in the cluster.
+    */
    List<Address> getMembers();
 
+   /**
+    * @return the address of the local node
+    */
    Address getAddress();
 
+   /**
+    * @return the address of the cluster's coordinator
+    */
+   Address getCoordinator();
+
+   /**
+    * @return whether the local node is the cluster's coordinator
+    */
    boolean isCoordinator();
 
+   /**
+    * @return the status of the cache manager
+    */
    ComponentStatus getStatus();
 
    /**
@@ -110,7 +127,6 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @return the default configuration associated with this CacheManager
     */
    Configuration getDefaultConfiguration();
-
 
    /**
     * If no named caches are registered, this method returns an empty set.  The default cache is never included in this
