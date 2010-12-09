@@ -54,14 +54,6 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
       }
    }
 
-   public void removeLookedUpEntry(Object key) {
-      lookedUpEntries.remove(key);
-   }
-
-   public void clearLookedUpEntries() {
-      lookedUpEntries.clear();
-   }
-
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
