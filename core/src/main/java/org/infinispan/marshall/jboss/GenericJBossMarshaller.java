@@ -17,7 +17,6 @@ import org.jboss.marshalling.Unmarshaller;
 import org.jboss.marshalling.reflect.SunReflectiveCreator;
 
 import java.io.ByteArrayInputStream;
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
@@ -34,7 +33,7 @@ import java.net.URL;
  * In addition to making use of JBoss Marshalling, this Marshaller 
  * @author Manik Surtani
  * @version 4.1
- * @see http://www.jboss.org/jbossmarshalling
+ * @see <a href="http://www.jboss.org/jbossmarshalling">JBoss Marshalling</a>
  */
 public class GenericJBossMarshaller extends AbstractMarshaller {
 
@@ -122,14 +121,22 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
       } else {
          marshaller = marshallerTL.get();
       }
+
+      if (log.isTraceEnabled())
+         log.trace("Start marshaller@{0} after retrieving marshaller from {1}",
+                   Integer.toHexString(System.identityHashCode(marshaller)), isReentrant ? "factory" : "thread local");
+
       marshaller.start(Marshalling.createByteOutput(os));
       return marshaller;
    }
 
    public void finishObjectOutput(ObjectOutput oo) {
       try {
+         if (log.isTraceEnabled())
+            log.trace("Stop marshaller@{0}", Integer.toHexString(System.identityHashCode(oo)));
+
          ((org.jboss.marshalling.Marshaller) oo).finish();
-      } catch (IOException ioe) {
+      } catch (IOException ignored) {
       }
    }
 
@@ -154,6 +161,11 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
       } else {
          unmarshaller = unmarshallerTL.get();
       }
+
+      if (log.isTraceEnabled())
+         log.trace("Start unmarshaller@{0} after retrieving marshaller from {1}",
+                   Integer.toHexString(System.identityHashCode(unmarshaller)), isReentrant ? "factory" : "thread local");
+
       unmarshaller.start(Marshalling.createByteInput(is));
       return unmarshaller;
    }
@@ -164,14 +176,17 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
 
    public void finishObjectInput(ObjectInput oi) {
       try {
+         if (log.isTraceEnabled())
+            log.trace("Stop unmarshaller@{0}", Integer.toHexString(System.identityHashCode(oi)));
+
          if (oi != null) ((Unmarshaller) oi).finish();
-      } catch (IOException e) {
+      } catch (IOException ignored) {
       }
    }
 
    @Override
    public boolean isMarshallable(Object o) {
-      return (o instanceof Serializable || o instanceof Externalizable);
+      return (o instanceof Serializable);
    }
 
    protected static class DebuggingExceptionListener implements ExceptionListener {
