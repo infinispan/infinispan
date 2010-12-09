@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -43,7 +44,7 @@ public class LocalTransaction extends AbstractCacheTransaction {
    public void addModification(WriteCommand mod) {
       if (trace) log.trace("Adding modification {0}. Mod list is {1}", mod, modifications);
       if (modifications == null) {
-         modifications = new ArrayList<WriteCommand>(8);
+         modifications = new LinkedList<WriteCommand>();
       }
       modifications.add(mod);
    }
@@ -72,11 +73,6 @@ public class LocalTransaction extends AbstractCacheTransaction {
       return transaction;
    }
 
-   public CacheEntry lookupEntry(Object key) {
-      if (lookedUpEntries == null) return null;
-      return lookedUpEntries.get(key);
-   }
-
    public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
       return (BidirectionalMap<Object, CacheEntry>)
             (lookedUpEntries == null ? InfinispanCollections.emptyBidirectionalMap() : lookedUpEntries);
@@ -85,14 +81,6 @@ public class LocalTransaction extends AbstractCacheTransaction {
    public void putLookedUpEntry(Object key, CacheEntry e) {
       if (lookedUpEntries == null) lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(4);
       lookedUpEntries.put(key, e);
-   }
-
-   public void removeLookedUpEntry(Object key) {
-      if (lookedUpEntries != null) lookedUpEntries.remove(key);
-   }
-
-   public void clearLookedUpEntries() {
-      if (lookedUpEntries != null) lookedUpEntries.clear();
    }
 
    public boolean isReadOnly() {

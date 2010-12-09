@@ -36,11 +36,20 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       this.modifications = Arrays.asList(modifications);
    }
 
+   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
+      return lookedUpEntries;
+   }
+
    public CacheEntry lookupEntry(Object key) {
+      if (lookedUpEntries == null) return null;
       return lookedUpEntries.get(key);
    }
 
-   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
-      return lookedUpEntries;
+   public void removeLookedUpEntry(Object key) {
+      if (lookedUpEntries != null) lookedUpEntries.remove(key);
+   }
+
+   public void clearLookedUpEntries() {
+      if (lookedUpEntries != null) lookedUpEntries.clear();
    }
 }
