@@ -9,6 +9,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 
 import static org.infinispan.context.Flag.*;
 
+import org.infinispan.context.Flag;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -26,6 +27,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Collections;
 import java.util.Set;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 
 public class CacheLoaderManagerImpl implements CacheLoaderManager {
 
@@ -131,11 +133,11 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             for (InternalCacheEntry e : state) {
                if (clmConfig.isShared() || !(loader instanceof ChainingCacheStore)) {
                   cache.getAdvancedCache()
-                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL, SKIP_CACHE_STORE) 
+                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL, SKIP_CACHE_STORE, SKIP_REMOTE_LOOKUP)
                        .put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
                } else {
                   cache.getAdvancedCache()
-                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL)
+                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL, SKIP_REMOTE_LOOKUP)
                        .put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
                }
             }
