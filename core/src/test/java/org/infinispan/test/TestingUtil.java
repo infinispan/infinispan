@@ -468,12 +468,16 @@ public class TestingUtil {
    protected static Set<Cache> getRunningCaches(EmbeddedCacheManager cacheContainer) {
       Set<Cache> running = new HashSet<Cache>();
       for (String cacheName : cacheContainer.getCacheNames()) {
-         Cache c = cacheContainer.getCache(cacheName);
-         if (c.getStatus().allowInvocations()) running.add(c);
+         if (cacheContainer.isRunning(cacheName)) {
+            Cache c = cacheContainer.getCache(cacheName);
+            if (c.getStatus().allowInvocations()) running.add(c);
+         }
       }
 
-      Cache defaultCache = ((DefaultCacheManager) cacheContainer).getCache();
-      if (defaultCache.getStatus().allowInvocations()) running.add(defaultCache);
+      if (cacheContainer.isDefaultRunning()) {
+         Cache defaultCache = ((DefaultCacheManager) cacheContainer).getCache();
+         if (defaultCache.getStatus().allowInvocations()) running.add(defaultCache);
+      }
 
       return running;
    }
