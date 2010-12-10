@@ -19,7 +19,7 @@
 
       <transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
       <properties>
-         <property name="configurationFile" value="${test.property.jgroupsConfigFile:config-samples/jgroups-tcp.xml}"/>
+         <property name="configurationFile" value="${test.property.jgroupsConfigFile:jgroups-tcp.xml}"/>
          </properties>
       </transport>
 
