@@ -35,7 +35,7 @@
       <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno" machineId="m1" rackId="r1" siteId="s1">
          <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
          <properties>
-         <property name="configurationFile" value="config-samples/jgroups-udp.xml"/>
+         <property name="configurationFile" value="jgroups-udp.xml"/>
          </properties>
          <!-- See the JGroupsTransport javadocs for more flags -->
       </transport>
