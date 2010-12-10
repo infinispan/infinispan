@@ -67,6 +67,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -591,6 +592,19 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          return Collections.emptySet();
       else
          return Immutables.immutableSetWrap(names);
+   }
+
+   public boolean isRunning(String cacheName) {
+      CacheWrapper w = caches.get(cacheName);
+      try {
+         return w != null && w.latch.await(0, TimeUnit.MILLISECONDS);
+      } catch (InterruptedException e) {
+         return false;
+      }
+   }
+
+   public boolean isDefaultRunning() {
+      return isRunning(DEFAULT_CACHE_NAME);
    }
 
    private void assertIsNotTerminated() {

@@ -135,4 +135,17 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @return an immutable set of non-default named caches registered with this cache manager.
     */
    Set<String> getCacheNames();
+
+   /**
+    * Tests whether a named cache is running.
+    * @param cacheName name of cache to test.
+    * @return true if the named cache exists and is running; false otherwise.
+    */
+   boolean isRunning(String cacheName);
+
+   /**
+    * Tests whether the default cache is running.
+    * @return true if the default cache is running; false otherwise.
+    */
+   boolean isDefaultRunning();
 }
