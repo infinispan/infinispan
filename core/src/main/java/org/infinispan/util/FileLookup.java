@@ -65,21 +65,46 @@ public class FileLookup {
 
    protected InputStream getAsInputStreamFromClassLoader(String filename) {
       ClassLoader cl = Thread.currentThread().getContextClassLoader();
-      InputStream is = cl == null ? null : cl.getResourceAsStream(filename);
+      InputStream is;
+      try {
+         is = cl == null ? null : cl.getResourceAsStream(filename);
+      } catch (RuntimeException re) {
+         // could be valid; see ISPN-827
+         is = null;
+      }
+
       if (is == null) {
-         // check system class loaderold
-         is = getClass().getClassLoader().getResourceAsStream(filename);
+         try {
+            // check system class loader
+            is = getClass().getClassLoader().getResourceAsStream(filename);
+         } catch (RuntimeException re) {
+            // could be valid; see ISPN-827
+            is = null;
+         }
       }
       return is;
    }
 
    public URL lookupFileLocation(String filename) {
       ClassLoader cl = Thread.currentThread().getContextClassLoader();
-      URL u = cl == null ? null : cl.getResource(filename);
-      if (u == null) {
-         // check system class loaderold
-         u = getClass().getClassLoader().getResource(filename);
+      URL u;
+      try {
+         u = cl == null ? null : cl.getResource(filename);
+      } catch (RuntimeException re) {
+         // could be valid; see ISPN-827
+         u = null;
       }
+
+      if (u == null) {
+         try {
+            // check system class loader
+            u = getClass().getClassLoader().getResource(filename);
+         } catch (RuntimeException re) {
+            // could be valid; see ISPN-827
+            u = null;
+         }
+      }
+
       if (u == null) {
          File f = new File(filename);
          if (f.exists()) try {
