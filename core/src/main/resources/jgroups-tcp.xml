@@ -2,7 +2,7 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:org:jgroups file:schema/JGroups-2.8.xsd">
    <TCP
-        bind_addr="${jgroups.tcp.address}"
+        bind_addr="${jgroups.tcp.addressi:127.0.0.1}"
         bind_port="${jgroups.tcp.port:7800}"
         loopback="true"
         port_range="30"
