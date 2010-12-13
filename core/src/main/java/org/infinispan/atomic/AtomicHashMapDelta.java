@@ -21,11 +21,8 @@
  */
 package org.infinispan.atomic;
 
-import org.infinispan.atomic.Delta;
-import org.infinispan.atomic.DeltaAware;
-import org.infinispan.atomic.Operation;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -41,7 +38,6 @@ import java.util.List;
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
  * @since 4.0
  */
-@Marshallable(externalizer = AtomicHashMapDelta.Externalizer.class, id = Ids.ATOMIC_HASH_MAP_DELTA)
 public class AtomicHashMapDelta implements Delta {
    private static final Log log = LogFactory.getLog(AtomicHashMapDelta.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -79,7 +75,8 @@ public class AtomicHashMapDelta implements Delta {
    public int getChangeLogSize() {
       return changeLog == null ? 0 : changeLog.size();
    }
-   
+
+   @Marshalls(typeClasses = AtomicHashMapDelta.class, id = Ids.ATOMIC_HASH_MAP_DELTA)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<AtomicHashMapDelta> {
       public void writeObject(ObjectOutput output, AtomicHashMapDelta delta) throws IOException {
          if (trace) log.trace("Serializing changeLog " + delta.changeLog);

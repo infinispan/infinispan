@@ -21,13 +21,16 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.marshall.Externalizer;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 /**
- * Defines custom marshallable to be registered with marshalling framework
+ * Defines custom Externalizers to be registered with marshalling framework
  *
  * @author Vladimir Blagojevic
  * @since 5.0
@@ -35,54 +38,34 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlType(name = "marshallable")
 @ConfigurationDoc(name = "marshallable")
-public class MarshallableConfig extends AbstractConfigurationBeanWithGCR {
+public class ExternalizerConfig extends AbstractConfigurationBeanWithGCR {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = -5161505617995274887L;
 
-   @ConfigurationDocRef(bean = MarshallableConfig.class, targetElement = "setTypeClass")
-   protected String typeClass;
-
-   @ConfigurationDocRef(bean = MarshallableConfig.class, targetElement = "setExternalizerClass")
+   @ConfigurationDocRef(bean = ExternalizerConfig.class, targetElement = "setExternalizerClass")
    protected String externalizerClass;
 
-   @ConfigurationDocRef(bean = MarshallableConfig.class, targetElement = "setId")
+   private Externalizer externalizer;
+
+   @ConfigurationDocRef(bean = ExternalizerConfig.class, targetElement = "setId")
    protected Integer id;
-
-   public MarshallableConfig() {
-      super();
-   }
-
-   public String getTypeClass() {
-      return typeClass;
-   }
-
-   /**
-    * Fully qualified name of the class that the configured {@link org.infinispan.marshall.Externalizer} can
-    * marshall/unmarshall. Establishing the link between marshalled types and {@link org.infinispan.marshall.Externalizer}
-    * implementations enables users to provide their own marshalling mechanisms even for classes which they cannot
-    * modify or extend.
-    * 
-    * @param typeClass
-    */
-   @XmlAttribute
-   public void setTypeClass(String typeClass) {
-      this.typeClass = typeClass;
-   }
 
    public String getExternalizerClass() {
       return externalizerClass;
    }
 
    /**
-    * {@link org.infinispan.marshall.Externalizer} implementation that knows how
-    * to marshall or unmarshall instances of a particular, user-defined, type.
+    * Fully qualified class name of an {@link org.infinispan.marshall.Externalizer}
+    * implementation that knows how to marshall or unmarshall instances of one, or
+    * several, user-defined, types.
     * 
     * @param externalizerClass
     */
    @XmlAttribute
-   public void setExternalizerClass(String externalizerClass) {
+   public ExternalizerConfig setExternalizerClass(String externalizerClass) {
       this.externalizerClass = externalizerClass;
+      return this;
    }
 
    public Integer getId() {
@@ -90,35 +73,45 @@ public class MarshallableConfig extends AbstractConfigurationBeanWithGCR {
    }
 
    /**
-    * This identifier distinguishes between different user-defined classes, providing
-    * a more performant way to ship class information around rather than passing
-    * class names or class information in general around.
+    * This identifier distinguishes between different user-defined {@link Externalizer}
+    * implementations, providing a more performant way to ship class information around
+    * rather than passing class names or class information in general around.
     *
     * Only positive ids are allowed, and you can use any number as long as it does not
-    * clash with an already existing number for a different class. If there're any
-    * clashes, Infinispan will abort startup and will provide class information of
-    * the ids clashing.
+    * clash with an already existing number for a {@link Externalizer} implementation.
+    *
+    * If there're any clashes, Infinispan will abort startup and will provide class
+    * information of the ids clashing.
     * 
     * @param id
     */
    @XmlAttribute
-   public void setId(Integer id) {
+   public ExternalizerConfig setId(Integer id) {
       this.id = id;
+      return this;
+   }
+
+   @XmlTransient // Prevent JAXB from thinking that externalizer is an XML attribute
+   public Externalizer getExternalizer() {
+      return externalizer;
+   }
+
+   public ExternalizerConfig setExternalizer(Externalizer externalizer) {
+      this.externalizer = externalizer;
+      return this;
    }
 
    public String toString() {
-      return "MarshallableConfig{";
+      return "ExternalizerConfig{";
    }
 
    public boolean equals(Object o) {
       if (this == o)
          return true;
-      if (!(o instanceof MarshallableConfig))
+      if (!(o instanceof ExternalizerConfig))
          return false;
 
-      MarshallableConfig that = (MarshallableConfig) o;
-      if (typeClass != null && !typeClass.equals(that.typeClass))
-         return false;
+      ExternalizerConfig that = (ExternalizerConfig) o;
       if (externalizerClass != null && !externalizerClass.equals(that.externalizerClass))
          return false;
       if (id != null && !id.equals(that.id))
@@ -129,13 +122,12 @@ public class MarshallableConfig extends AbstractConfigurationBeanWithGCR {
 
    public int hashCode() {
       int result;
-      result = (typeClass != null ? typeClass.hashCode() : 0);
-      result = 31 * result + (externalizerClass != null ? externalizerClass.hashCode() : 0);
+      result = (externalizerClass != null ? externalizerClass.hashCode() : 0);
       result = 31 * result + (id != null ? id.hashCode() : 0);
       return result;
    }
 
    public void accept(ConfigurationBeanVisitor v) {
-      v.visitMarshallableConfig(this);
+      v.visitExternalizerConfig(this);
    }
 }

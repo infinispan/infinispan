@@ -41,12 +41,11 @@
       </transport>
 
       <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0">
-         <marshallables>
-            <marshallable id="456" typeClass="org.infinispan.marshall.ForeignExternalizerTest$LegacyObj"
-                          externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$LegacyObjExternalizer"/>
-            <marshallable id="789" typeClass="java.util.concurrent.ConcurrentSkipListMap"
-                          externalizerClass="org.infinispan.marshall.exts.MapExternalizer"/>
-         </marshallables>
+         <externalizers>
+            <externalizer id="1234" externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj$Externalizer"/>
+            <externalizer externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj$Externalizer"/>
+            <externalizer id="3456" externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj$Externalizer"/>
+         </externalizers>
       </serialization>
 
       <globalJmxStatistics enabled="false" jmxDomain="funky_domain"

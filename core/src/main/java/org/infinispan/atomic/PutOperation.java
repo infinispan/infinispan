@@ -27,7 +27,7 @@ import java.io.ObjectOutput;
 import java.util.Map;
 
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 
 /**
  * An atomic put operation.
@@ -38,7 +38,6 @@ import org.infinispan.marshall.Marshallable;
  * @param <V>
  * @since 4.0
  */
-@Marshallable(externalizer = PutOperation.Externalizer.class, id = Ids.ATOMIC_PUT_OPERATION)
 public class PutOperation<K, V> extends Operation<K, V> {
    private K key;
    private V oldValue;
@@ -64,6 +63,7 @@ public class PutOperation<K, V> extends Operation<K, V> {
       delegate.put(key, newValue);
    }
 
+   @Marshalls(typeClasses = PutOperation.class, id = Ids.ATOMIC_PUT_OPERATION)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<PutOperation> {
       public void writeObject(ObjectOutput output, PutOperation put) throws IOException {
          output.writeObject(put.key);

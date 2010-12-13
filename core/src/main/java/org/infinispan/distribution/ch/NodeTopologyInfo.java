@@ -2,7 +2,7 @@ package org.infinispan.distribution.ch;
 
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
 
 import java.io.IOException;
@@ -15,7 +15,6 @@ import java.io.ObjectOutput;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Marshallable(externalizer = NodeTopologyInfo.NodeTopologyInfoExternalizer.class, id = Ids.NODE_TOPOLOGY_INFO)
 public class NodeTopologyInfo {
 
    private final String machineId;
@@ -62,26 +61,6 @@ public class NodeTopologyInfo {
       return address;
    }
 
-   public static class NodeTopologyInfoExternalizer implements Externalizer<NodeTopologyInfo> {
-
-      @Override
-      public void writeObject(ObjectOutput output, NodeTopologyInfo nti) throws IOException {
-         output.writeObject(nti.siteId);
-         output.writeObject(nti.rackId);
-         output.writeObject(nti.machineId);
-         output.writeObject(nti.address);
-      }
-
-      @Override
-      public NodeTopologyInfo readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String siteId = (String) input.readObject();
-         String rackId = (String) input.readObject();
-         String machineId = (String) input.readObject();
-         Address address = (Address) input.readObject();
-         return new NodeTopologyInfo(machineId, rackId, siteId, address);
-      }
-   }
-
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -114,5 +93,25 @@ public class NodeTopologyInfo {
             ", siteId='" + siteId + '\'' +
             ", address=" + address +
             '}';
+   }
+
+   @Marshalls(typeClasses = NodeTopologyInfo.class, id = Ids.NODE_TOPOLOGY_INFO)
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<NodeTopologyInfo> {
+      @Override
+      public void writeObject(ObjectOutput output, NodeTopologyInfo nti) throws IOException {
+         output.writeObject(nti.siteId);
+         output.writeObject(nti.rackId);
+         output.writeObject(nti.machineId);
+         output.writeObject(nti.address);
+      }
+
+      @Override
+      public NodeTopologyInfo readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         String siteId = (String) input.readObject();
+         String rackId = (String) input.readObject();
+         String machineId = (String) input.readObject();
+         Address address = (Address) input.readObject();
+         return new NodeTopologyInfo(machineId, rackId, siteId, address);
+      }
    }
 }

@@ -1,7 +1,7 @@
 package org.infinispan.distribution.ch;
 
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 
@@ -25,7 +25,6 @@ import java.util.Set;
  * @author akluge
  * @author Manik Surtani
  */
-@Marshallable(externalizer = ExperimentalDefaultConsistentHash.Externalizer.class, id = Ids.DEFAULT_CONSISTENT_HASH)
 public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
    /**
     * A Weight and weight factor of 1 gives one node per address.  In future we may decide to make these configurable,
@@ -39,6 +38,7 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
    private List<Entry> pool;
    private int poolSize;
 
+   @Marshalls(typeClasses = ExperimentalDefaultConsistentHash.class, id = Ids.DEFAULT_CONSISTENT_HASH)
    public static class Externalizer implements org.infinispan.marshall.Externalizer {
       public void writeObject(ObjectOutput output, Object object) throws IOException {
          ExperimentalDefaultConsistentHash gch = (ExperimentalDefaultConsistentHash) object;

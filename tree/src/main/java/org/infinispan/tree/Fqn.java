@@ -24,7 +24,7 @@ package org.infinispan.tree;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
@@ -79,7 +79,6 @@ import java.util.List;
  * @since 4.0
  */
 @Immutable
-@Marshallable(externalizer = Fqn.Externalizer.class, id = Ids.FQN)
 public class Fqn implements Comparable<Fqn> {
    /**
     * Separator between FQN elements.
@@ -494,6 +493,7 @@ public class Fqn implements Comparable<Fqn> {
       return Fqn.fromRelativeFqn(newAncestor, subFqn);
    }
 
+   @Marshalls(typeClasses = Fqn.class, id = Ids.FQN)
    public static class Externalizer implements org.infinispan.marshall.Externalizer {
       public void writeObject(ObjectOutput output, Object object) throws IOException {
          Fqn fqn = (Fqn) object;

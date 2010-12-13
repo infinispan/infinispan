@@ -26,7 +26,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshallUtil;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -645,7 +645,6 @@ public class Immutables {
       }
    }
 
-   @Marshallable(externalizer = ImmutableMapWrapper.Externalizer.class, id = Ids.IMMUTABLE_MAP)
    private static class ImmutableMapWrapper<K, V> implements Map<K, V>, Serializable, Immutable {
       private static final long serialVersionUID = 708144227046742221L;
 
@@ -714,18 +713,20 @@ public class Immutables {
       public String toString() {
          return map.toString();
       }
+   }
 
-      public static class Externalizer implements org.infinispan.marshall.Externalizer<Map> {
-         public void writeObject(ObjectOutput output, Map map) throws IOException {
-            MarshallUtil.marshallMap(map, output);
-         }
+   @Marshalls(typeClasses = ImmutableMapWrapper.class, id = Ids.IMMUTABLE_MAP)
+   public static class ImmutableMapWrapperExternalizer implements org.infinispan.marshall.Externalizer<Map> {
+      public void writeObject(ObjectOutput output, Map map) throws IOException {
+         MarshallUtil.marshallMap(map, output);
+      }
 
-         @SuppressWarnings("unchecked")
-         public Map readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            Map map = new HashMap();
-            MarshallUtil.unmarshallMap(map, input);
-            return Immutables.immutableMapWrap(map);
-         }
+      @SuppressWarnings("unchecked")
+      public Map readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         Map map = new HashMap();
+         MarshallUtil.unmarshallMap(map, input);
+         return Immutables.immutableMapWrap(map);
       }
    }
+
 }

@@ -23,7 +23,7 @@ package org.infinispan.marshall.exts;
 
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.MarshallUtil;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.FastCopyHashMap;
 import org.jboss.marshalling.util.IdentityIntMap;
@@ -42,7 +42,7 @@ import java.util.TreeMap;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Marshallable(id = Ids.JDK_MAPS)
+@Marshalls(typeClasses = {HashMap.class, TreeMap.class, FastCopyHashMap.class}, id = Ids.MAPS)
 public class MapExternalizer implements Externalizer<Map> {
    private static final int HASHMAP = 0;
    private static final int TREEMAP = 1;

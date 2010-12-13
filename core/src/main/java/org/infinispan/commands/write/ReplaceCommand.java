@@ -24,17 +24,12 @@ package org.infinispan.commands.write;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
-import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
-
 
 /**
  * @author Mircea.Markus@jboss.com
- * @author Galder Zamarre�o
+ * @author Galder Zamarreño
  * @since 4.0
  */
-@Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.REPLACE_COMMAND)
 public class ReplaceCommand extends AbstractDataWriteCommand {
    public static final byte COMMAND_ID = 11;
 

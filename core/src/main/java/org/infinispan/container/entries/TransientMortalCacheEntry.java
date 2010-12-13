@@ -2,7 +2,7 @@ package org.infinispan.container.entries;
 
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -16,7 +16,6 @@ import static java.lang.Math.min;
  * @author Manik Surtani
  * @since 4.0
  */
-@Marshallable(externalizer = TransientMortalCacheEntry.Externalizer.class, id = Ids.TRANSIENT_MORTAL_ENTRY)
 public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
    private TransientMortalCacheValue cacheValue;
@@ -133,6 +132,7 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
             "} " + super.toString();
    }
 
+   @Marshalls(typeClasses = TransientMortalCacheEntry.class, id = Ids.TRANSIENT_MORTAL_ENTRY)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<TransientMortalCacheEntry> {
       public void writeObject(ObjectOutput output, TransientMortalCacheEntry entry) throws IOException {
          output.writeObject(entry.key);

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.marshall.Ids;
 
 /**
@@ -13,7 +13,6 @@ import org.infinispan.marshall.Ids;
  * @author Manik Surtani
  * @since 4.0
  */
-@Marshallable(externalizer = SuccessfulResponse.Externalizer.class, id = Ids.SUCCESSFUL_RESPONSE)
 public class SuccessfulResponse extends ValidResponse {
 
    private Object responseValue;
@@ -53,7 +52,15 @@ public class SuccessfulResponse extends ValidResponse {
    public int hashCode() {
       return responseValue != null ? responseValue.hashCode() : 0;
    }
-   
+
+   @Override
+   public String toString() {
+      return "SuccessfulResponse{" +
+            "responseValue=" + responseValue +
+            "} ";
+   }
+
+   @Marshalls(typeClasses = SuccessfulResponse.class, id = Ids.SUCCESSFUL_RESPONSE)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<SuccessfulResponse> {
       public void writeObject(ObjectOutput output, SuccessfulResponse response) throws IOException {
          output.writeObject(response.responseValue);
@@ -64,10 +71,4 @@ public class SuccessfulResponse extends ValidResponse {
       }
    }
 
-   @Override
-   public String toString() {
-      return "SuccessfulResponse{" +
-            "responseValue=" + responseValue +
-            "} ";
-   }
 }

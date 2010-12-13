@@ -25,8 +25,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import org.infinispan.marshall.jboss.ConstantObjectTable;
-
 /**
  * One of the key aspects of Infinispan is that it often needs to marshall/unmarshall
  * objects in order to provide some of its functionality.  For example, if it needs
@@ -55,19 +53,10 @@ import org.infinispan.marshall.jboss.ConstantObjectTable;
  * implementation for {@link org.infinispan.remoting.transport.jgroups.JGroupsAddress} in
  * {@link org.infinispan.remoting.transport.jgroups.JGroupsAddress.Externalizer}
  *
- * Once the Externalizer implementations have been build, make sure you configure Infinispan
- * accordingly so that each externalizer has a unique id, and link the Externalizer together
- * with the class type that it serializes via {@link org.infinispan.config.GlobalConfiguration}
- * or the equivalent XML configuration.  For more detailed information on the configuration,
- * check the Configuration Reference document.
- *
- * Even though internally we have a {@link org.infinispan.marshall.Marshallable} annotation
- * that we use to link up Externalizers with the types that we marshall, user-provided classes
- * should not use this annotation because we do not try to do any annotation scanning in
- * classes that are not internal to Infinispan.  There's two reasons for doing this: First
- * annotation scanning can be an expensive process.  Second is that often users will try to
- * provide Externalizer implementations for classes that they cannot modify to retrofit an
- * annotation, or they classes for which they don't even have the source code.
+ * Once the Externalizer implementations have been built, make sure you annotate each
+ * Externalizer implementation with the {@link Marshalls} annotation so that the link between
+ * the type of classes externalized and the Externalizer itself can be established. Please
+ * see the annotation javadoc for more details on this.
  *
  * @author Galder Zamarreño
  * @since 4.0

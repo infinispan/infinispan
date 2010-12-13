@@ -24,12 +24,15 @@ package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.RemoteCommandsFactory;
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.config.ExternalizerConfig;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterTest;
@@ -39,6 +42,10 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.infinispan.marshall.ForeignExternalizerTest.*;
 
 /**
  * Test the behaviour of JBoss Marshalling based {@link org.infinispan.marshall.StreamingMarshaller} implementation
@@ -63,31 +70,134 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       marshaller.stop();
    }
    
-   public void testDuplicateExternalizerId() throws Exception {
-      withExpectedFailure(DuplicateIdClass.class, "Should have thrown a CacheException reporting the duplicate id");
+   public void testInternalDuplicateExternalizerId() throws Exception {
+      withExpectedInternalFailure(DuplicateIdClass.Externalizer.class, "Should have thrown a CacheException reporting the duplicate id");
    }
 
    public void testInternalExternalIdLimit() {
-      withExpectedFailure(TooHighIdClass.class, "Should have thrown a CacheException indicating that the Id is too high");
+      withExpectedInternalFailure(TooHighIdClass.Externalizer.class, "Should have thrown a CacheException indicating that the Id is too high");
    }
 
-   private void withExpectedFailure(Class extClass, String message) {
+   public void testForeignExternalizerIdNegative() {
+      withExpectedFailure(createForeignExternalizerGlobalConfig(-1),
+                          "Should have thrown a CacheException reporting that negative ids are not allowed");
+   }
+
+   public void testForeignExternalizerIdClash() {
+      withExpectedFailure(createMultiForeignExternalizerGlobalConfig(3456, true),
+                          "Should have thrown a CacheException reporting duplicate id");
+      withExpectedFailure(createMultiForeignExternalizerGlobalConfig(5678, true),
+                          "Should have thrown a CacheException reporting duplicate id");
+   }
+
+   public void testForeignExternalizerWithoutId() {
+      withExpectedFailure(createMultiForeignExternalizerGlobalConfig(9999, false),
+                          "Should have thrown a CacheException reporting that no id has been set");
+   }
+
+   public void testForeignExternalizerConfigIdWins() throws Exception {
+      GlobalConfiguration globalCfg = createForeignExternalizerGlobalConfig(3456);
       JBossMarshaller jbmarshaller = new JBossMarshaller();
-      ConstantObjectTable.MARSHALLABLES.add(extClass.getName());
+      ClassLoader cl = Thread.currentThread().getContextClassLoader();
+      try {
+         jbmarshaller.start(cl, new RemoteCommandsFactory(), null, globalCfg);
+         assert 3456 == jbmarshaller.externalizerTable.getExternalizerId(new IdViaBothObj());
+      } finally {
+         jbmarshaller.stop();
+      }
+   }
+
+   public void testForeignExternalizerMultiClassTypesViaSameExternalizer() {
+      GlobalConfiguration globalCfg = new GlobalConfiguration();
+      globalCfg.addExternalizer(new MultiIdViaClassExternalizer());
+      JBossMarshaller jbmarshaller = new JBossMarshaller();
+      ClassLoader cl = Thread.currentThread().getContextClassLoader();
+      try {
+         jbmarshaller.start(cl, new RemoteCommandsFactory(), null, globalCfg);
+         assert 767 == jbmarshaller.externalizerTable.getExternalizerId(new IdViaConfigObj());
+         assert 767 == jbmarshaller.externalizerTable.getExternalizerId(new IdViaAnnotationObj());
+         assert 767 == jbmarshaller.externalizerTable.getExternalizerId(new IdViaBothObj());
+      } finally {
+         jbmarshaller.stop();
+      }
+   }
+
+   public void testForeignExternalizerMultiClassNameTypesViaSameExternalizer() {
+      GlobalConfiguration globalCfg = new GlobalConfiguration();
+      globalCfg.addExternalizer(868, new MultiIdViaClassNameExternalizer());
+      JBossMarshaller jbmarshaller = new JBossMarshaller();
+      ClassLoader cl = Thread.currentThread().getContextClassLoader();
+      try {
+         jbmarshaller.start(cl, new RemoteCommandsFactory(), null, globalCfg);
+         assert 868 == jbmarshaller.externalizerTable.getExternalizerId(new IdViaConfigObj());
+         assert 868 == jbmarshaller.externalizerTable.getExternalizerId(new IdViaAnnotationObj());
+         assert 868 == jbmarshaller.externalizerTable.getExternalizerId(new IdViaBothObj());
+      } finally {
+         jbmarshaller.stop();
+      }
+   }
+
+   private GlobalConfiguration createForeignExternalizerGlobalConfig(int id) {
+      GlobalConfiguration globalCfg = GlobalConfiguration.getClusteredDefault();
+      List<ExternalizerConfig> list = new ArrayList<ExternalizerConfig>();
+      GlobalConfiguration.ExternalizersType type = new GlobalConfiguration.ExternalizersType();
+      ExternalizerConfig externalizer = new ExternalizerConfig();
+      externalizer.setId(id);
+      externalizer.setExternalizerClass("org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj$Externalizer");
+      list.add(externalizer);
+      type.setExternalizerConfigs(list);
+      globalCfg.setExternalizersType(type);
+      return globalCfg;
+   }
+
+   private GlobalConfiguration createMultiForeignExternalizerGlobalConfig(int id, boolean doSetId) {
+      GlobalConfiguration globalCfg = GlobalConfiguration.getClusteredDefault();
+      if (doSetId)
+         globalCfg.addExternalizer(id, new IdViaConfigObj.Externalizer());
+      else
+         globalCfg.addExternalizer(new IdViaConfigObj.Externalizer());
+
+      globalCfg.addExternalizer(new IdViaAnnotationObj.Externalizer());
+      globalCfg.addExternalizer(3456, new IdViaBothObj.Externalizer());
+      return globalCfg;
+   }
+
+   private void withExpectedInternalFailure(final Class extClass, String message) {
+      JBossMarshaller jbmarshaller = new JBossMarshaller() {
+         @Override
+         protected ExternalizerTable createExternalizerTable(RemoteCommandsFactory f, StreamingMarshaller m, GlobalConfiguration g) {
+            ExternalizerTable objectTable = new ExternalizerTable();
+            objectTable.addInternalExternalizer(extClass);
+            objectTable.start(f, m, g);
+            return objectTable;
+         }
+      };
       try {
          ClassLoader cl = Thread.currentThread().getContextClassLoader();
          jbmarshaller.start(cl, new RemoteCommandsFactory(), marshaller, new GlobalConfiguration());
          assert false : message;
-      } catch (CacheException ce) {
+      } catch (ConfigurationException ce) {
          log.trace("Expected exception", ce);
       } finally {
          jbmarshaller.stop();
-         ConstantObjectTable.MARSHALLABLES.remove(extClass.getName());
       }
    }
-   
-   @Marshallable(externalizer = DuplicateIdClass.Externalizer.class, id = Ids.ARRAY_LIST)
+
+   private void withExpectedFailure(GlobalConfiguration globalCfg, String message) {
+      JBossMarshaller jbmarshaller = new JBossMarshaller();
+      ClassLoader cl = Thread.currentThread().getContextClassLoader();
+      try {
+         jbmarshaller.start(cl, new RemoteCommandsFactory(), null, globalCfg);
+         assert false : message;
+      } catch (ConfigurationException ce) {
+         log.trace("Expected exception", ce);
+      } finally {
+         jbmarshaller.stop();
+      }
+   }
+
    static class DuplicateIdClass {
+      @Marshalls(typeClasses = DuplicateIdClass.class, id = Ids.ARRAY_LIST)
       public static class Externalizer implements org.infinispan.marshall.Externalizer {
          public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             return null;
@@ -98,8 +208,8 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       }
    }
 
-   @Marshallable(externalizer = TooHighIdClass.Externalizer.class, id = 255)
    static class TooHighIdClass {
+      @Marshalls(typeClasses = TooHighIdClass.class, id = 255)
       public static class Externalizer implements org.infinispan.marshall.Externalizer {
          public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             return null;
@@ -110,4 +220,58 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       }
    }
 
+   @Marshalls(typeClasses = {IdViaConfigObj.class, IdViaAnnotationObj.class, IdViaBothObj.class}, id = 767)
+   static class MultiIdViaClassExternalizer implements Externalizer<Object> {
+      private final Externalizer idViaConfigObjExt = new IdViaConfigObj.Externalizer();
+      private final Externalizer idViaAnnotationObjExt = new IdViaAnnotationObj.Externalizer();
+      private final Externalizer idViaBothObjExt = new IdViaBothObj.Externalizer();
+
+      @Override
+      public void writeObject(ObjectOutput output, Object object) throws IOException {
+         Externalizer ext;
+         if (object instanceof IdViaConfigObj) {
+            output.write(0);
+            ext = idViaConfigObjExt;
+         } else if (object instanceof IdViaAnnotationObj) {
+            output.write(1);
+            ext = idViaAnnotationObjExt;
+         } else if (object instanceof IdViaBothObj){
+            output.write(2);
+            ext = idViaBothObjExt;
+         } else {
+            throw new CacheException(String.format(
+                  "Object of type %s is not supported by externalizer %s",
+                  object.getClass().getName(), this.getClass().getName()));
+         }
+         ext.writeObject(output, object);
+      }
+
+      @Override
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         int index = input.read();
+         Externalizer ext;
+         switch (index) {
+            case 0:
+               ext = idViaConfigObjExt;
+               break;
+            case 1:
+               ext = idViaAnnotationObjExt;
+               break;
+            case 2:
+               ext = idViaBothObjExt;
+               break;
+            default:
+               throw new CacheException(String.format(
+                     "Unknown index (%d) for externalizer %s",
+                     index, this.getClass().getName()));
+         }
+         return ext.readObject(input);
+      }
+   }
+
+   @Marshalls(typeClassNames = {"org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj",
+                                "org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj",
+                                "org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj"})
+   static class MultiIdViaClassNameExternalizer extends MultiIdViaClassExternalizer {
+   }
 }

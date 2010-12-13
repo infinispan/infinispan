@@ -48,7 +48,6 @@ import java.util.Arrays;
  * @see org.infinispan.interceptors.MarshalledValueInterceptor
  * @since 4.0
  */
-@Marshallable(externalizer = MarshalledValue.Externalizer.class, id = Ids.MARSHALLED_VALUE)
 public class MarshalledValue {
    volatile protected Object instance;
    volatile protected byte[] raw;
@@ -235,7 +234,8 @@ public class MarshalledValue {
             (type.isArray() && isTypeExcluded(type.getComponentType())) || type.equals(GlobalTransaction.class) || Address.class.isAssignableFrom(type) ||
             ReplicableCommand.class.isAssignableFrom(type) || type.equals(MarshalledValue.class);
    }
-   
+
+   @Marshalls(typeClasses = MarshalledValue.class, id = Ids.MARSHALLED_VALUE)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<MarshalledValue> {
       private StreamingMarshaller marshaller;
       

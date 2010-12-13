@@ -297,6 +297,7 @@
                      <value>${testNGListener}</value>
                   </property>
                </properties>
+               <argLine>-Xmx1024m -XX:MaxPermSize=1024m</argLine>
             </configuration>
          </plugin>
          <!-- eclipse project file generation -->

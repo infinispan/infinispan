@@ -27,9 +27,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
-import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.RemoteTransaction;
@@ -49,7 +46,6 @@ import java.util.HashSet;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-@Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.PREPARE_COMMAND)
 public class PrepareCommand extends AbstractTransactionBoundaryCommand {
 
    private static final Log log = LogFactory.getLog(PrepareCommand.class);

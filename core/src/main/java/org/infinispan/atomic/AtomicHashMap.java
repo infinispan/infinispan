@@ -26,9 +26,8 @@ import org.infinispan.Cache;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.util.FastCopyHashMap;
-import org.infinispan.atomic.AtomicMapLookup;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -58,7 +57,6 @@ import java.util.Set;
  * @since 4.0
  */
 @NotThreadSafe
-@Marshallable(externalizer = AtomicHashMap.Externalizer.class, id = Ids.ATOMIC_HASH_MAP)
 public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneable {
    FastCopyHashMap<K, V> delegate;
    private AtomicHashMapDelta delta = null;
@@ -211,7 +209,8 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       if (delta == null) delta = new AtomicHashMapDelta();
       return delta;
    }
-   
+
+   @Marshalls(typeClasses = AtomicHashMap.class, id = Ids.ATOMIC_HASH_MAP)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<AtomicHashMap> {
       public void writeObject(ObjectOutput output, AtomicHashMap map) throws IOException {
          output.writeObject(map.delegate);

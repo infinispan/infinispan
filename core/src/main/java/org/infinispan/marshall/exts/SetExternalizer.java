@@ -27,13 +27,12 @@ import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshallUtil;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
@@ -45,7 +44,7 @@ import java.util.TreeSet;
  * @since 4.0
  */
 @Immutable
-@Marshallable(id = Ids.JDK_SETS)
+@Marshalls(typeClasses = {HashSet.class, TreeSet.class}, id = Ids.JDK_SETS)
 public class SetExternalizer implements Externalizer<Set> {
    private static final int HASHSET = 0;
    private static final int TREESET = 1;

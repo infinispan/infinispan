@@ -31,7 +31,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.util.Util;
 
 /**
@@ -40,7 +40,6 @@ import org.infinispan.util.Util;
  * @author Manik Surtani
  * @since 4.0
  */
-@Marshallable(externalizer = NodeKey.Externalizer.class, id = Ids.NODE_KEY)
 public class NodeKey {
    final Fqn fqn;
    final Type contents;
@@ -89,7 +88,8 @@ public class NodeKey {
             ", fqn=" + fqn +
             '}';
    }
-   
+
+   @Marshalls(typeClasses = NodeKey.class, id = Ids.NODE_KEY)
    public static class Externalizer implements org.infinispan.marshall.Externalizer {
       private static final byte DATA_BYTE = 1;
       private static final byte STRUCTURE_BYTE = 2;

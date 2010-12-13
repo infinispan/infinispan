@@ -24,9 +24,7 @@ package org.infinispan.marshall.jboss;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.io.ExposedByteArrayOutputStream;
-import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.ReflectionUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,25 +39,25 @@ import java.io.InputStream;
  * {@link org.infinispan.commands.ReplicableCommand}, and class type information can be replaced with simple magic
  * numbers.
  * <p/>
- * Unknown types (typically user data) falls back to JBoss serialization.
+ * Unknown types (typically user data) falls back to Java serialization.
  *
  * @author Galder Zamarreño
  * @since 4.0
  */
 public class JBossMarshaller extends GenericJBossMarshaller implements StreamingMarshaller {   
-   private ConstantObjectTable objectTable;
+   ExternalizerTable externalizerTable;
 
    public void start(ClassLoader defaultCl, RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller, GlobalConfiguration globalCfg) {
       if (log.isDebugEnabled()) log.debug("Using JBoss Marshalling");
       this.defaultCl = defaultCl;
-      objectTable = createCustomObjectTable(cmdFactory, ispnMarshaller, globalCfg);
-      configuration.setObjectTable(objectTable);
+      externalizerTable = createExternalizerTable(cmdFactory, ispnMarshaller, globalCfg);
+      configuration.setObjectTable(externalizerTable);
    }
 
    public void stop() {
       // Do not leak classloader when cache is stopped.
       defaultCl = null;
-      if (objectTable != null) objectTable.stop();
+      if (externalizerTable != null) externalizerTable.stop();
    }
 
    @Override
@@ -75,12 +73,12 @@ public class JBossMarshaller extends GenericJBossMarshaller implements Streaming
 
    @Override
    public boolean isMarshallable(Object o) {
-      return super.isMarshallable(o) || ReflectionUtil.isAnnotationPresent(o.getClass(), Marshallable.class);
+      return super.isMarshallable(o) || externalizerTable.isMarshallable(o);
    }
 
-   private ConstantObjectTable createCustomObjectTable(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller, GlobalConfiguration globalCfg) {
-      ConstantObjectTable objectTable = new ConstantObjectTable();
-      objectTable.start(cmdFactory, ispnMarshaller, globalCfg);
-      return objectTable;
+   protected ExternalizerTable createExternalizerTable(RemoteCommandsFactory f, StreamingMarshaller m, GlobalConfiguration g) {
+      ExternalizerTable extTable = new ExternalizerTable();
+      extTable.start(f, m, g);
+      return extTable;
    }
 }

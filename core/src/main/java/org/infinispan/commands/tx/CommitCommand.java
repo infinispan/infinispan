@@ -24,9 +24,6 @@ package org.infinispan.commands.tx;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
-import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
@@ -35,7 +32,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
-@Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.COMMIT_COMMAND)
 public class CommitCommand extends AbstractTransactionBoundaryCommand {
    public static final byte COMMAND_ID = 14;
 

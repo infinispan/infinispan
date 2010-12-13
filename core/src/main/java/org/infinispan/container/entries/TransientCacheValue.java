@@ -6,7 +6,7 @@ import java.io.ObjectOutput;
 
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 
 /**
  * A transient cache value, to correspond with {@link org.infinispan.container.entries.TransientCacheEntry}
@@ -14,7 +14,6 @@ import org.infinispan.marshall.Marshallable;
  * @author Manik Surtani
  * @since 4.0
  */
-@Marshallable(externalizer = TransientCacheValue.Externalizer.class, id = Ids.TRANSIENT_VALUE)
 public class TransientCacheValue extends ImmortalCacheValue {
    long maxIdle = -1;
    long lastUsed;
@@ -92,7 +91,8 @@ public class TransientCacheValue extends ImmortalCacheValue {
    public TransientCacheValue clone() {
       return (TransientCacheValue) super.clone();
    }
-   
+
+   @Marshalls(typeClasses = TransientCacheValue.class, id = Ids.TRANSIENT_VALUE)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<TransientCacheValue> {
       public void writeObject(ObjectOutput output, TransientCacheValue tcv) throws IOException {
          output.writeObject(tcv.value);

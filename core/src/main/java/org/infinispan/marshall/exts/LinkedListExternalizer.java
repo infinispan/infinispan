@@ -27,12 +27,11 @@ import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshallUtil;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.LinkedList;
 
 /**
@@ -42,7 +41,7 @@ import java.util.LinkedList;
  * @since 4.0
  */
 @Immutable
-@Marshallable(id = Ids.LINKED_LIST)
+@Marshalls(typeClasses = LinkedList.class, id = Ids.LINKED_LIST)
 public class LinkedListExternalizer implements Externalizer<LinkedList> {
 
    public void writeObject(ObjectOutput output, LinkedList list) throws IOException {

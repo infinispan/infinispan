@@ -2,7 +2,7 @@ package org.infinispan.server.hotrod
 
 import org.infinispan.util.Util
 import java.util.Arrays
-import org.infinispan.marshall.Marshallable
+import org.infinispan.marshall.Marshalls
 import java.io.{ObjectInput, ObjectOutput}
 import org.infinispan.server.core.Logging
 
@@ -12,8 +12,6 @@ import org.infinispan.server.core.Logging
  * @author Galder Zamarreño
  * @since 4.1
  */
-// TODO: putting Ids.HOTROD_CACHE_KEY fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
-@Marshallable(externalizer = classOf[CacheKey.Externalizer], id = 57)
 final class CacheKey(val data: Array[Byte]) {
 
    override def equals(obj: Any) = {
@@ -38,6 +36,8 @@ final class CacheKey(val data: Array[Byte]) {
 }
 
 object CacheKey extends Logging {
+   // TODO: putting Ids.HOTROD_CACHE_KEY fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
+   @Marshalls(typeClasses = Array(classOf[CacheKey]), id = 57)
    class Externalizer extends org.infinispan.marshall.Externalizer[CacheKey] {
       override def writeObject(output: ObjectOutput, cacheKey: CacheKey) {
          output.writeInt(cacheKey.data.length)

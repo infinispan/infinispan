@@ -21,10 +21,6 @@
  */
 package org.infinispan.util;
 
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
-import org.infinispan.marshall.exts.MapExternalizer;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.AbstractCollection;
@@ -44,7 +40,6 @@ import java.util.Set;
  * @author Jason T. Greene
  * @since 4.0
  */
-@Marshallable(externalizer = MapExternalizer.class, id = Ids.FASTCOPY_HASH_MAP)
 public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, Cloneable, Serializable {
    /**
     * Serialization ID

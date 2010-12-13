@@ -16,9 +16,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
-import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
@@ -41,7 +38,6 @@ import java.util.Arrays;
  * @author Vladimir Blagojevic
  * @since 4.0
  */
-@Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.REHASH_CONTROL_COMMAND)
 public class RehashControlCommand extends BaseRpcCommand {
 
    public static final int COMMAND_ID = 17;

@@ -50,15 +50,15 @@
 
       <!-- Again, sensible defaults are used here if this is omitted.  -->
       <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0">
-         <!-- User defined marshallable classes alongside their corresponding externalizer and id numbers -->
-         <marshallables>
-            <!-- With Externalizer defined as inner static class -->
-            <marshallable id="456" typeClass="org.infinispan.marshall.ForeignExternalizerTest$LegacyObj"
-                          externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$LegacyObjExternalizer"/>
-            <!-- With Externalizer defined as normarl class -->
-            <marshallable id="789" typeClass="java.util.concurrent.ConcurrentSkipListMap"
-                          externalizerClass="org.infinispan.marshall.exts.MapExternalizer"/>
-         </marshallables>
+         <!-- User defined externalizer classes -->
+         <externalizers>
+            <!-- Externalizer defined as inner static class, with id set via XML configuration -->
+            <externalizer id="1234" externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj$Externalizer"/>
+            <!-- Externalizer defined as inner static class, with id set via annotation -->
+            <externalizer externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj$Externalizer"/>
+            <!-- Externalizer defined as inner static class, with id set both via XML config and annotation -->
+            <externalizer id="3456" externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj$Externalizer"/>
+         </externalizers>
       </serialization>
 
       <!--
