@@ -5,7 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 
 /**
  * An immortal cache value, to correspond with {@link org.infinispan.container.entries.ImmortalCacheEntry}
@@ -13,7 +13,6 @@ import org.infinispan.marshall.Marshallable;
  * @author Manik Surtani
  * @since 4.0
  */
-@Marshallable(externalizer = ImmortalCacheValue.Externalizer.class, id = Ids.IMMORTAL_VALUE)
 public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
 
    Object value;
@@ -92,7 +91,8 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
          throw new RuntimeException("Should never happen", e);
       }
    }
-   
+
+   @Marshalls(typeClasses = ImmortalCacheValue.class, id = Ids.IMMORTAL_VALUE)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<ImmortalCacheValue> {
       public void writeObject(ObjectOutput output, ImmortalCacheValue icv) throws IOException {
          output.writeObject(icv.value);

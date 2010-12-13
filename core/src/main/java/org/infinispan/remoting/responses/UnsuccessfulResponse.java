@@ -1,7 +1,7 @@
 package org.infinispan.remoting.responses;
 
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -13,7 +13,6 @@ import java.io.ObjectOutput;
  * @author Manik Surtani
  * @since 4.0
  */
-@Marshallable(externalizer = UnsuccessfulResponse.Externalizer.class, id = Ids.UNSUCCESSFUL_RESPONSE)
 public class UnsuccessfulResponse extends ValidResponse {
    public static final UnsuccessfulResponse INSTANCE = new UnsuccessfulResponse();
 
@@ -34,7 +33,8 @@ public class UnsuccessfulResponse extends ValidResponse {
    public int hashCode() {
       return 13;
    }
-   
+
+   @Marshalls(typeClasses = UnsuccessfulResponse.class, id = Ids.UNSUCCESSFUL_RESPONSE)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<UnsuccessfulResponse> {
       public void writeObject(ObjectOutput output, UnsuccessfulResponse object) throws IOException {
          // no-op

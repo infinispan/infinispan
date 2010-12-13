@@ -12,6 +12,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.TypedProperties;
@@ -503,12 +504,36 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       serialization.setVersion(marshallVersion);
    }
 
-   public void setMarshallablesType(MarshallablesType marshallableType) {
-      serialization.setMarshallableTypes(marshallableType);
+   /**
+    * Helper method that allows for quick registration of {@link Externalizer} implementations.
+    *
+    * @param externalizers
+    */
+   public void addExternalizer(Externalizer... externalizers) {
+      for (Externalizer ext : externalizers) {
+         serialization.externalizerTypes.getExternalizerConfigs().add(new ExternalizerConfig().setExternalizer(ext));
+      }
    }
 
-   public MarshallablesType getMarshallableTypes() {
-      return serialization.marshallableTypes;
+   /**
+    * Helper method that allows for quick registration of an {@link Externalizer} implementation
+    * alongside its corresponding identifier. Remember that the identifier needs to a be positive
+    * number, including 0, and cannot clash with other identifiers in the system.
+    *
+    * @param id
+    * @param externalizer
+    */
+   public void addExternalizer(int id, Externalizer externalizer) {
+      ExternalizerConfig config = new ExternalizerConfig().setExternalizer(externalizer).setId(id);
+      serialization.externalizerTypes.getExternalizerConfigs().add(config);
+   }
+
+   public void setExternalizersType(ExternalizersType externalizersType) {
+      serialization.setExternalizerTypes(externalizersType);
+   }
+
+   public ExternalizersType getExternalizersType() {
+      return serialization.externalizerTypes;
    }
 
    public long getDistributedSyncTimeout() {
@@ -893,8 +918,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setMarshallVersion")
       protected String version = Version.MAJOR_MINOR;
 
-      @XmlElement(name = "marshallables")
-      protected MarshallablesType marshallableTypes = new MarshallablesType();
+      @XmlElement(name = "externalizers")
+      protected ExternalizersType externalizerTypes = new ExternalizersType();
 
       public SerializationType() {
          super();
@@ -904,8 +929,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          v.visitSerializationType(this);
       }
       
-      public void setMarshallableTypes(MarshallablesType marshallableTypes) {
-         this.marshallableTypes = marshallableTypes;
+      public void setExternalizerTypes(ExternalizersType externalizerTypes) {
+         this.externalizerTypes = externalizerTypes;
       }
 
       @XmlAttribute
@@ -919,6 +944,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          testImmutability("version");
          this.version = version;
       }
+
+      // TODO implement equals and hashCode and update parent equals/hashcode
    }
    /**
     * Configures custom marshallers.
@@ -926,48 +953,48 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * @see <a href="../../../config.html#ce_global_serialization_marshallers">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.FIELD)
-   @ConfigurationDoc(name = "marshallables")
-   public static class MarshallablesType extends AbstractConfigurationBeanWithGCR {
+   @ConfigurationDoc(name = "externalizers")
+   public static class ExternalizersType extends AbstractConfigurationBeanWithGCR {
       
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -496116709223466807L;
       
-      @XmlElement(name = "marshallable")
-      private List<MarshallableConfig> marshallables = new ArrayList<MarshallableConfig>();
+      @XmlElement(name = "externalizer")
+      private List<ExternalizerConfig> externalizers = new ArrayList<ExternalizerConfig>();
 
       @Override
-      public MarshallablesType clone() throws CloneNotSupportedException {
-         MarshallablesType dolly = (MarshallablesType) super.clone();
-         if (marshallables != null) {
-            dolly.marshallables = new ArrayList<MarshallableConfig>();
-            for (MarshallableConfig config : marshallables) {
-               MarshallableConfig clone = (MarshallableConfig) config.clone();
-               dolly.marshallables.add(clone);
+      public ExternalizersType clone() throws CloneNotSupportedException {
+         ExternalizersType dolly = (ExternalizersType) super.clone();
+         if (externalizers != null) {
+            dolly.externalizers = new ArrayList<ExternalizerConfig>();
+            for (ExternalizerConfig config : externalizers) {
+               ExternalizerConfig clone = (ExternalizerConfig) config.clone();
+               dolly.externalizers.add(clone);
             }
          }
          return dolly;
       }
 
       public void accept(ConfigurationBeanVisitor v) {
-         for (MarshallableConfig i : marshallables) {
+         for (ExternalizerConfig i : externalizers) {
             i.accept(v);
          }
-         v.visitMarshallablesType(this);
+         v.visitExternalizersType(this);
       }
 
-      public List<MarshallableConfig> getMarshallableConfigs() {
-         return marshallables;
+      public List<ExternalizerConfig> getExternalizerConfigs() {
+         return externalizers;
       }
 
       @Override
       public boolean equals(Object o) {
          if (this == o) return true;
-         if (!(o instanceof MarshallablesType)) return false;
+         if (!(o instanceof ExternalizersType)) return false;
 
-         MarshallablesType that = (MarshallablesType) o;
+         ExternalizersType that = (ExternalizersType) o;
 
-         if (marshallables != null ? !marshallables.equals(that.marshallables) : that.marshallables != null)
+         if (externalizers != null ? !externalizers.equals(that.externalizers) : that.externalizers != null)
             return false;
 
          return true;
@@ -975,12 +1002,12 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
       @Override
       public int hashCode() {
-         return marshallables != null ? marshallables.hashCode() : 0;
+         return externalizers != null ? externalizers.hashCode() : 0;
       }
 
-      public void setMarshallableConfigs(List<MarshallableConfig> customInterceptors) {
-         testImmutability("customInterceptors");
-         this.marshallables = customInterceptors;
+      public void setExternalizerConfigs(List<ExternalizerConfig> externalizers) {
+         testImmutability("externalizers");
+         this.externalizers = externalizers;
       }
    }
 

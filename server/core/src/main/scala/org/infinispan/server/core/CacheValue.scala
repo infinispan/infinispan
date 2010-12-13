@@ -2,7 +2,7 @@ package org.infinispan.server.core
 
 import org.infinispan.util.Util
 import java.io.{ObjectOutput, ObjectInput}
-import org.infinispan.marshall.Marshallable
+import org.infinispan.marshall.Marshalls
 import java.util.Arrays
 
 /**
@@ -13,8 +13,6 @@ import java.util.Arrays
  * @author Galder Zamarreño
  * @since 4.1
  */
-// TODO: putting Ids.SERVER_CACHE_VALUE fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
-@Marshallable(externalizer = classOf[CacheValue.Externalizer], id = 55)
 class CacheValue(val data: Array[Byte], val version: Long) {
 
    override def toString = {
@@ -40,6 +38,8 @@ class CacheValue(val data: Array[Byte], val version: Long) {
 }
 
 object CacheValue {
+   // TODO: putting Ids.SERVER_CACHE_VALUE fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
+   @Marshalls(typeClasses = Array(classOf[CacheValue]), id = 55)
    class Externalizer extends org.infinispan.marshall.Externalizer[CacheValue] {
       override def writeObject(output: ObjectOutput, cacheValue: CacheValue) {
          output.writeInt(cacheValue.data.length)

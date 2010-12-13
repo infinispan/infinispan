@@ -25,7 +25,7 @@ import net.jcip.annotations.Immutable;
 
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -40,7 +40,7 @@ import java.util.List;
  * @since 4.0
  */
 @Immutable
-@Marshallable(id = Ids.SINGLETON_LIST)
+@Marshalls(typeClassNames = "java.util.Collections$SingletonList", id = Ids.SINGLETON_LIST)
 public class SingletonListExternalizer implements Externalizer<List> {
 
    public void writeObject(ObjectOutput output, List list) throws IOException {

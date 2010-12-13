@@ -1,7 +1,7 @@
 package org.infinispan.server.hotrod
 
 import java.io.{ObjectInput, ObjectOutput}
-import org.infinispan.marshall.Marshallable
+import org.infinispan.marshall.Marshalls
 import org.infinispan.remoting.transport.Address
 
 /**
@@ -13,10 +13,10 @@ import org.infinispan.remoting.transport.Address
  * @author Galder Zamarreño
  * @since 4.1
  */
-@Marshallable(externalizer = classOf[TopologyAddress.Externalizer], id = 58)
 case class TopologyAddress(val host: String, val port: Int, val hashIds: Map[String, Int], val clusterAddress: Address)
 
 object TopologyAddress {
+   @Marshalls(typeClasses = Array(classOf[TopologyAddress]), id = 58)
    class Externalizer extends org.infinispan.marshall.Externalizer[TopologyAddress] {
       override def writeObject(output: ObjectOutput, topologyAddress: TopologyAddress) {
          output.writeObject(topologyAddress.host)

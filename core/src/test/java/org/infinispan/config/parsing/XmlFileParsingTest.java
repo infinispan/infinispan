@@ -4,11 +4,10 @@ import org.infinispan.Version;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationValidatingVisitor;
+import org.infinispan.config.ExternalizerConfig;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
 import org.infinispan.config.InfinispanConfiguration;
-import org.infinispan.config.MarshallableConfig;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
@@ -149,16 +148,16 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       assert gc.getMarshallerClass().equals("org.infinispan.marshall.VersionAwareMarshaller");
       assert gc.getMarshallVersionString().equals("1.0");
-      List<MarshallableConfig> marshallables = gc.getMarshallableTypes().getMarshallableConfigs();
-      assert marshallables.size() == 2;
-      MarshallableConfig marshallable = marshallables.get(0);
-      assert marshallable.getId() == 456;
-      assert marshallable.getTypeClass().equals("org.infinispan.marshall.ForeignExternalizerTest$LegacyObj");
-      assert marshallable.getExternalizerClass().equals("org.infinispan.marshall.ForeignExternalizerTest$LegacyObjExternalizer");
-      marshallable = marshallables.get(1);
-      assert marshallable.getId() == 789;
-      assert marshallable.getTypeClass().equals("java.util.concurrent.ConcurrentSkipListMap");
-      assert marshallable.getExternalizerClass().equals("org.infinispan.marshall.exts.MapExternalizer");
+      List<ExternalizerConfig> externalizers = gc.getExternalizersType().getExternalizerConfigs();
+      assert externalizers.size() == 3;
+      ExternalizerConfig externalizer = externalizers.get(0);
+      assert externalizer.getId() == 1234;
+      assert externalizer.getExternalizerClass().equals("org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj$Externalizer");
+      externalizer = externalizers.get(1);
+      assert externalizer.getExternalizerClass().equals("org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj$Externalizer");
+      externalizer = externalizers.get(2);
+      assert externalizer.getId() == 3456;
+      assert externalizer.getExternalizerClass().equals("org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj$Externalizer");
 
       Configuration defaultConfiguration = parser.parseDefaultConfiguration();
 

@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.marshall.Ids;
 
 /**
@@ -33,7 +33,6 @@ import org.infinispan.marshall.Ids;
  *
  * @author Jason T. Greene
  */
-@Marshallable(externalizer = ExtendedResponse.Externalizer.class, id = Ids.EXTENDED_RESPONSE)
 public class ExtendedResponse extends ValidResponse {
    private final boolean replayIgnoredRequests;
    private final Response response;
@@ -54,7 +53,8 @@ public class ExtendedResponse extends ValidResponse {
    public boolean isSuccessful() {
       return response.isSuccessful();
    }
-   
+
+   @Marshalls(typeClasses = ExtendedResponse.class, id = Ids.EXTENDED_RESPONSE)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<ExtendedResponse> {
       public void writeObject(ObjectOutput output, ExtendedResponse er) throws IOException {
          output.writeBoolean(er.replayIgnoredRequests);

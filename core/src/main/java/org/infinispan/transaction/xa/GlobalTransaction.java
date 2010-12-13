@@ -22,7 +22,7 @@
 package org.infinispan.transaction.xa;
 
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
 
 import java.io.IOException;
@@ -42,7 +42,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-@Marshallable(externalizer = GlobalTransaction.Externalizer.class, id = Ids.GLOBAL_TRANSACTION)
 public class GlobalTransaction implements Cloneable {
 
    private static final long serialVersionUID = 8011434781266976149L;
@@ -126,7 +125,8 @@ public class GlobalTransaction implements Cloneable {
          throw new IllegalStateException("Impossible!");
       }
    }
-   
+
+   @Marshalls(typeClasses = GlobalTransaction.class, id = Ids.GLOBAL_TRANSACTION)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<GlobalTransaction> {
       protected GlobalTransactionFactory gtxFactory;
 

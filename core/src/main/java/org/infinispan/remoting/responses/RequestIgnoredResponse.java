@@ -26,14 +26,13 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 
 /**
  * Indicates that the request was ignored,
  *
  * @author Jason T. Greene
  */
-@Marshallable(externalizer = RequestIgnoredResponse.Externalizer.class, id = Ids.REQUEST_IGNORED_RESPONSE)
 public class RequestIgnoredResponse extends InvalidResponse {
    public static final RequestIgnoredResponse INSTANCE = new RequestIgnoredResponse();
 
@@ -49,7 +48,8 @@ public class RequestIgnoredResponse extends InvalidResponse {
    public String toString() {
       return "RequestIgnoredResponse";
    }
-   
+
+   @Marshalls(typeClasses = RequestIgnoredResponse.class, id = Ids.REQUEST_IGNORED_RESPONSE)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<RequestIgnoredResponse> {
       public void writeObject(ObjectOutput output, RequestIgnoredResponse object) throws IOException {
          // no-op

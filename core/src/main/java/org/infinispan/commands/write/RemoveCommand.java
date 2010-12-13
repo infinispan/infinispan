@@ -25,9 +25,6 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
-import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -38,7 +35,6 @@ import org.infinispan.util.logging.LogFactory;
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
-@Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.REMOVE_COMMAND)
 public class RemoveCommand extends AbstractDataWriteCommand {
    private static final Log log = LogFactory.getLog(RemoveCommand.class);
    public static final byte COMMAND_ID = 10;

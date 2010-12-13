@@ -5,7 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -14,7 +14,6 @@ import org.infinispan.remoting.transport.Address;
  * @author Manik Surtani
  * @since 4.0
  */
-@Marshallable(externalizer = JGroupsAddress.Externalizer.class, id = Ids.JGROUPS_ADDRESS)
 public class JGroupsAddress implements Address {
    org.jgroups.Address address;
 
@@ -58,7 +57,8 @@ public class JGroupsAddress implements Address {
    public void setJGroupsAddress(org.jgroups.Address address) {
       this.address = address;
    }
-   
+
+   @Marshalls(typeClasses = JGroupsAddress.class, id = Ids.JGROUPS_ADDRESS)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<JGroupsAddress> {
       public void writeObject(ObjectOutput output, JGroupsAddress address) throws IOException {
          output.writeObject(address.address);

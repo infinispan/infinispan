@@ -22,7 +22,7 @@
 package org.infinispan.atomic;
 
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.util.FastCopyHashMap;
 
 import java.io.IOException;
@@ -39,7 +39,6 @@ import java.util.Map;
  * @param <V>
  * @since 4.0
  */
-@Marshallable(externalizer = ClearOperation.Externalizer.class, id = Ids.ATOMIC_CLEAR_OPERATION)
 public class ClearOperation<K, V> extends Operation<K, V> {
    FastCopyHashMap<K, V> originalEntries;
 
@@ -57,7 +56,8 @@ public class ClearOperation<K, V> extends Operation<K, V> {
    public void replay(Map<K, V> delegate) {
       delegate.clear();
    }
-   
+
+   @Marshalls(typeClasses = ClearOperation.class, id = Ids.ATOMIC_CLEAR_OPERATION)
    public static class Externalizer implements org.infinispan.marshall.Externalizer {
       public void writeObject(ObjectOutput output, Object object) throws IOException {
          // no-op

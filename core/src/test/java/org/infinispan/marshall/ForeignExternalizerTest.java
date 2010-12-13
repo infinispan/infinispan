@@ -1,14 +1,11 @@
 package org.infinispan.marshall;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
-import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.config.Configuration;
+import org.infinispan.config.ExternalizerConfig;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.config.GlobalConfiguration.MarshallablesType;
-import org.infinispan.config.MarshallableConfig;
+import org.infinispan.config.GlobalConfiguration.ExternalizersType;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.marshall.jboss.JBossMarshaller;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -22,135 +19,134 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * // TODO: Document this
+ * Tests configuration of user defined {@link Externalizer} implementations
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.0
  */
 @Test(groups = "functional", testName = "marshall.ForeignExternalizerTest")
 public class ForeignExternalizerTest extends MultipleCacheManagersTest {
 
-   private String cacheName = "ForeignExternalizers";
-
    @Override
    protected void createCacheManagers() throws Throwable {
-      int id = 10;
-      GlobalConfiguration globalCfg1 = createForeignExternalizerGlobalConfig(id);
-      GlobalConfiguration globalCfg2 = createForeignExternalizerGlobalConfig(id);
+      GlobalConfiguration globalCfg1 = createForeignExternalizerGlobalConfig();
+      GlobalConfiguration globalCfg2 = createForeignExternalizerGlobalConfig();
       CacheContainer cm1 = TestCacheManagerFactory.createCacheManager(globalCfg1);
       CacheContainer cm2 = TestCacheManagerFactory.createCacheManager(globalCfg2);
       registerCacheManager(cm1, cm2);
       Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      defineConfigurationOnAllManagers(cacheName, cfg);
+      defineConfigurationOnAllManagers(getCacheName(), cfg);
       waitForClusterToForm();
    }
 
-   private GlobalConfiguration createForeignExternalizerGlobalConfig(int id) {
-      return createForeignExternalizerGlobalConfig(id, false);
+   protected String getCacheName() {
+      return "ForeignExternalizers";
    }
 
-   private GlobalConfiguration createForeignExternalizerGlobalConfig(int id, boolean repeat) {
+   protected GlobalConfiguration createForeignExternalizerGlobalConfig() {
       GlobalConfiguration globalCfg = GlobalConfiguration.getClusteredDefault();
-      List<MarshallableConfig> list = new ArrayList<MarshallableConfig>();
-      MarshallablesType marshallables = new MarshallablesType();
-      int max = 1;
-      if (repeat) max = 2;
+      List<ExternalizerConfig> list = new ArrayList<ExternalizerConfig>();
+      ExternalizersType type = new ExternalizersType();
 
-      for (int i = 0; i < max; i++) {
-         addMarshallable(id, list);
-      }
+      ExternalizerConfig externalizer = new ExternalizerConfig();
+      externalizer.setId(1234);
+      externalizer.setExternalizerClass("org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj$Externalizer");
+      list.add(externalizer);
 
-      marshallables.setMarshallableConfigs(list);
-      globalCfg.setMarshallablesType(marshallables);
+      externalizer = new ExternalizerConfig();
+      externalizer.setExternalizerClass("org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj$Externalizer");
+      list.add(externalizer);
+
+      externalizer = new ExternalizerConfig();
+      externalizer.setId(3456);
+      externalizer.setExternalizerClass("org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj$Externalizer");
+      list.add(externalizer);
+
+      type.setExternalizerConfigs(list);
+      globalCfg.setExternalizersType(type);
       return globalCfg;
    }
 
-   private void addMarshallable(int id, List<MarshallableConfig> list) {
-      MarshallableConfig marshallable = new MarshallableConfig();
-      marshallable.setId(id);
-      marshallable.setExternalizerClass("org.infinispan.marshall.ForeignExternalizerTest$LegacyObjExternalizer");
-      marshallable.setTypeClass("org.infinispan.marshall.ForeignExternalizerTest$LegacyObj");
-      list.add(marshallable);
+   public void testReplicatePojosWithUserDefinedExternalizers(Method m) {
+      Cache cache1 = manager(0).getCache(getCacheName());
+      Cache cache2 = manager(1).getCache(getCacheName());
+      IdViaConfigObj configObj = new IdViaConfigObj().setName("Galder");
+      String key = "k-" + m.getName() + "-viaConfig";
+      cache1.put(key, configObj);
+      assert configObj.name.equals(((IdViaConfigObj)cache2.get(key)).name);
+      IdViaAnnotationObj annotationObj = new IdViaAnnotationObj().setDate(new Date(System.currentTimeMillis()));
+      key = "k-" + m.getName() + "-viaAnnotation";
+      cache1.put(key, annotationObj);
+      assert annotationObj.date.equals(((IdViaAnnotationObj)cache2.get(key)).date);
+      IdViaBothObj bothObj = new IdViaBothObj().setAge(30);
+      key = "k-" + m.getName() + "-viaBoth";
+      cache1.put(key, bothObj);
+      assert bothObj.age == ((IdViaBothObj)cache2.get(key)).age;
    }
 
-   public void testReplicateLegacyPojoWithUserDefinedExternalizer(Method m) {
-      Cache cache1 = manager(0).getCache(cacheName);
-      Cache cache2 = manager(1).getCache(cacheName);
-      LegacyObj legacyObj = new LegacyObj();
-      legacyObj.age = 50;
-      legacyObj.name = "Galder";
-      legacyObj.date = new Date(System.currentTimeMillis());
-      cache1.put(m.getName(), legacyObj);
-      assert legacyObj.equals(cache2.get(m.getName()));
-   }
+   public static class IdViaConfigObj {
+      String name;
 
-   public void testForeignExternalizerIdNegative() {
-      withExpectedFailure(createForeignExternalizerGlobalConfig(-1),
-                          "Should have thrown a CacheException reporting that negative ids are not allowed");
-   }
+      public IdViaConfigObj setName(String name) {
+         this.name = name;
+         return this;
+      }
 
-   public void testForeignExternalizerIdClash() {
-      withExpectedFailure(createForeignExternalizerGlobalConfig(20, true),
-                          "Should have thrown a CacheException reporting duplicate id");
-   }
+      @Marshalls(typeClasses = IdViaConfigObj.class)
+      public static class Externalizer implements org.infinispan.marshall.Externalizer<IdViaConfigObj> {
+         @Override
+         public void writeObject(ObjectOutput output, IdViaConfigObj object) throws IOException {
+            output.writeUTF(object.name);
+         }
 
-   private void withExpectedFailure(GlobalConfiguration globalCfg, String message) {
-      JBossMarshaller jbmarshaller = new JBossMarshaller();
-      ClassLoader cl = Thread.currentThread().getContextClassLoader();
-      try {
-         jbmarshaller.start(cl, new RemoteCommandsFactory(), null, globalCfg);
-         assert false : message;
-      } catch (CacheException ce) {
-         log.trace("Expected exception", ce);
-      } finally {
-         jbmarshaller.stop();
+         @Override
+         public IdViaConfigObj readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new IdViaConfigObj().setName(input.readUTF());
+         }
       }
    }
 
-   public static class LegacyObj {
-      byte age;
-      String name;
+   public static class IdViaAnnotationObj {
       Date date;
 
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-
-         LegacyObj legacyObj = (LegacyObj) o;
-
-         if (age != legacyObj.age) return false;
-         if (date != null ? !date.equals(legacyObj.date) : legacyObj.date != null) return false;
-         if (name != null ? !name.equals(legacyObj.name) : legacyObj.name != null) return false;
-
-         return true;
+      public IdViaAnnotationObj setDate(Date date) {
+         this.date = date;
+         return this;
       }
 
-      @Override
-      public int hashCode() {
-         int result = (int) age;
-         result = 31 * result + (name != null ? name.hashCode() : 0);
-         result = 31 * result + (date != null ? date.hashCode() : 0);
-         return result;
+      @Marshalls(typeClasses = IdViaAnnotationObj.class, id = 5678)
+      public static class Externalizer implements org.infinispan.marshall.Externalizer<IdViaAnnotationObj> {
+         @Override
+         public void writeObject(ObjectOutput output, IdViaAnnotationObj object) throws IOException {
+            output.writeObject(object.date);
+         }
+
+         @Override
+         public IdViaAnnotationObj readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new IdViaAnnotationObj().setDate((Date) input.readObject());
+         }
       }
    }
 
-   public static class LegacyObjExternalizer implements Externalizer {
-      @Override
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
-         LegacyObj legacyObj = (LegacyObj) object;
-         output.write(legacyObj.age);
-         output.writeUTF(legacyObj.name);
-         output.writeObject(legacyObj.date);
+   public static class IdViaBothObj {
+      int age;
+
+      public IdViaBothObj setAge(int age) {
+         this.age = age;
+         return this;
       }
 
-      @Override
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         LegacyObj legacyObj = new LegacyObj();
-         legacyObj.age = (byte) input.read();
-         legacyObj.name = input.readUTF();
-         legacyObj.date = (Date) input.readObject();
-         return legacyObj;
+      @Marshalls(typeClasses = IdViaBothObj.class, id = 9012)
+      public static class Externalizer implements org.infinispan.marshall.Externalizer<IdViaBothObj> {
+         @Override
+         public void writeObject(ObjectOutput output, IdViaBothObj object) throws IOException {
+            output.writeInt(object.age);
+         }
+
+         @Override
+         public IdViaBothObj readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new IdViaBothObj().setAge(input.readInt());
+         }
       }
    }
 

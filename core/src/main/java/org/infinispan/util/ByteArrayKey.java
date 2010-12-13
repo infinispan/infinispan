@@ -1,7 +1,7 @@
 package org.infinispan.util;
 
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -14,7 +14,6 @@ import java.util.Arrays;
  * @author Galder Zamarreño
  * @since 4.1
  */
-@Marshallable(externalizer = ByteArrayKey.Externalizer.class, id = Ids.BYTE_ARRAY_KEY)
 public class ByteArrayKey {
 
    private final byte[] data;
@@ -47,6 +46,7 @@ public class ByteArrayKey {
          .append("}").toString();
    }
 
+   @Marshalls(typeClasses = ByteArrayKey.class, id = Ids.BYTE_ARRAY_KEY)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<ByteArrayKey> {
       public void writeObject(ObjectOutput output, ByteArrayKey key) throws IOException {
          output.writeInt(key.data.length);

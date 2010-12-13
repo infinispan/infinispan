@@ -1,6 +1,6 @@
 package org.infinispan.remoting.responses;
 
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.marshall.Ids;
 
 import java.io.ObjectOutput;
@@ -14,13 +14,13 @@ import java.io.ObjectInput;
  * @author Manik Surtani
  * @since 4.0
  */
-@Marshallable(externalizer = UnsureResponse.Externalizer.class, id = Ids.UNSURE_RESPONSE)
 public class UnsureResponse extends ValidResponse {
    public static final UnsureResponse INSTANCE = new UnsureResponse();
    public boolean isSuccessful() {
       return false;
    }
 
+   @Marshalls(typeClasses = UnsureResponse.class, id = Ids.UNSURE_RESPONSE)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<UnsureResponse> {
       public void writeObject(ObjectOutput output, UnsureResponse subject) throws IOException {
       }

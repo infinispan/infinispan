@@ -26,10 +26,6 @@ import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
-import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.RemoteTransaction;
 import org.infinispan.util.Util;
@@ -51,7 +47,6 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-@Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.LOCK_CONTROL_COMMAND)
 public class LockControlCommand extends AbstractTransactionBoundaryCommand {
 
    private static Log log = LogFactory.getLog(LockControlCommand.class);

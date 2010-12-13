@@ -1,7 +1,7 @@
 package org.infinispan.distribution.ch;
 
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -19,7 +19,6 @@ import java.util.SortedMap;
 
 import static java.lang.Math.min;
 
-@Marshallable(externalizer = DefaultConsistentHash.Externalizer.class, id = Ids.DEFAULT_CONSISTENT_HASH)
 public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
    private static Log log = LogFactory.getLog(DefaultConsistentHash.class);
@@ -131,6 +130,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       return result;
    }
 
+   @Marshalls(typeClasses = DefaultConsistentHash.class, id = Ids.DEFAULT_CONSISTENT_HASH)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<DefaultConsistentHash> {
       public void writeObject(ObjectOutput output, DefaultConsistentHash dch) throws IOException {
          output.writeObject(dch.addresses);

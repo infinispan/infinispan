@@ -24,8 +24,28 @@ package org.infinispan.marshall.exts;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.control.RehashControlCommand;
+import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.MultipleRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshalls;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -37,6 +57,15 @@ import java.io.ObjectOutput;
  * @author Galder Zamarreño
  * @since 4.0
  */
+@Marshalls(typeClasses = {LockControlCommand.class, RehashControlCommand.class,
+                          StateTransferControlCommand.class, GetKeyValueCommand.class,
+                          ClusteredGetCommand.class, MultipleRpcCommand.class,
+                          SingleRpcCommand.class, CommitCommand.class,
+                          PrepareCommand.class, RollbackCommand.class,
+                          ClearCommand.class, EvictCommand.class,
+                          InvalidateCommand.class, InvalidateL1Command.class,
+                          PutKeyValueCommand.class, PutMapCommand.class,
+                          RemoveCommand.class, ReplaceCommand.class}, id = Ids.REPLICABLE_COMMAND)
 public class ReplicableCommandExternalizer implements Externalizer<ReplicableCommand> {
    private RemoteCommandsFactory cmdFactory;
    

@@ -1,8 +1,7 @@
 package org.infinispan.distribution.ch;
 
-import org.infinispan.CacheException;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
 
 import java.io.IOException;
@@ -38,7 +37,6 @@ import static java.lang.Math.min;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Marshallable(externalizer = TopologyAwareConsistentHash.Externalizer.class, id = Ids.TOPOLOGY_AWARE_CH)
 public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
 
    public List<Address> locate(Object key, int replCount) {
@@ -134,6 +132,7 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       return positions.get(ownerHash);
    }
 
+   @Marshalls(typeClasses = TopologyAwareConsistentHash.class, id = Ids.TOPOLOGY_AWARE_CH)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<TopologyAwareConsistentHash> {
       @Override
       public void writeObject(ObjectOutput output, TopologyAwareConsistentHash dch) throws IOException {

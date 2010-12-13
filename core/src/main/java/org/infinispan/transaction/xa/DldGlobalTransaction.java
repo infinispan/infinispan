@@ -1,7 +1,7 @@
 package org.infinispan.transaction.xa;
 
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -9,7 +9,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Set;
 
 import static java.util.Collections.emptySet;
@@ -19,7 +18,6 @@ import static java.util.Collections.emptySet;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Marshallable(externalizer = DldGlobalTransaction.Externalizer.class, id = Ids.DEADLOCK_DETECTING_GLOBAL_TRANSACTION)
 public class DldGlobalTransaction extends GlobalTransaction {
 
    private static Log log = LogFactory.getLog(DldGlobalTransaction.class);
@@ -144,6 +142,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
       return this.locksAtOrigin;
    }
 
+   @Marshalls(typeClasses = DldGlobalTransaction.class, id = Ids.DEADLOCK_DETECTING_GLOBAL_TRANSACTION)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<DldGlobalTransaction> {
       private final GlobalTransaction.Externalizer delegate = new GlobalTransaction.Externalizer(new GlobalTransactionFactory(true));
 

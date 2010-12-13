@@ -1,6 +1,6 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.marshall.Marshallable
+import org.infinispan.marshall.Marshalls
 import java.io.{ObjectInput, ObjectOutput}
 
 /**
@@ -9,7 +9,6 @@ import java.io.{ObjectInput, ObjectOutput}
  * @author Galder Zamarreño
  * @since 4.1
  */
-@Marshallable(externalizer = classOf[TopologyView.Externalizer], id = 59)
 case class TopologyView(val topologyId: Int, val members: List[TopologyAddress])
 // TODO: TopologyView could maintain a Map[Address, TopologyAddress] rather than pushing Address into each TopologyAddress.
 // TODO: That would make crash detection more efficient at the expense of some extra space.
@@ -18,6 +17,7 @@ case class TopologyView(val topologyId: Int, val members: List[TopologyAddress])
 // TODO: The downside here is that you'd need to make multiple cache calls atomic via txs or similar.
 
 object TopologyView {
+   @Marshalls(typeClasses = Array(classOf[TopologyView]), id = 59)
    class Externalizer extends org.infinispan.marshall.Externalizer[TopologyView] {
       override def writeObject(output: ObjectOutput, topologyView: TopologyView) {
          output.writeInt(topologyView.topologyId)

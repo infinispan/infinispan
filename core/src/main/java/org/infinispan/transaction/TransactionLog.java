@@ -25,7 +25,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -52,7 +52,6 @@ public class TransactionLog {
    private final BlockingQueue<LogEntry> entries = new LinkedBlockingQueue<LogEntry>();
    private AtomicBoolean active = new AtomicBoolean();
 
-   @Marshallable(externalizer = LogEntry.Externalizer.class, id = Ids.TRANSACTION_LOG_ENTRY)
    public static class LogEntry {
       private final GlobalTransaction transaction;
       private final WriteCommand[] modifications;
@@ -69,7 +68,8 @@ public class TransactionLog {
       public WriteCommand[] getModifications() {
          return modifications;
       }
-      
+
+      @Marshalls(typeClasses = LogEntry.class, id = Ids.TRANSACTION_LOG_ENTRY)
       public static class Externalizer implements org.infinispan.marshall.Externalizer<TransactionLog.LogEntry> {
          public void writeObject(ObjectOutput output, TransactionLog.LogEntry le) throws IOException {
             output.writeObject(le.transaction);

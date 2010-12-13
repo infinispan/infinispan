@@ -5,7 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 
 /**
  * A response that encapsulates an exception
@@ -13,7 +13,6 @@ import org.infinispan.marshall.Marshallable;
  * @author Manik Surtani
  * @since 4.0
  */
-@Marshallable(externalizer = ExceptionResponse.Externalizer.class, id = Ids.EXCEPTION_RESPONSE)
 public class ExceptionResponse extends InvalidResponse {
    private Exception exception;
 
@@ -31,7 +30,8 @@ public class ExceptionResponse extends InvalidResponse {
    public void setException(Exception exception) {
       this.exception = exception;
    }
-   
+
+   @Marshalls(typeClasses = ExceptionResponse.class, id = Ids.EXCEPTION_RESPONSE)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<ExceptionResponse> {
       public void writeObject(ObjectOutput output, ExceptionResponse response) throws IOException {
          output.writeObject(response.exception);

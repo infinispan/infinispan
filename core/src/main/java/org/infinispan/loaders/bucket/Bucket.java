@@ -3,7 +3,7 @@ package org.infinispan.loaders.bucket;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -16,7 +16,6 @@ import java.util.Map;
 /**
  * A bucket is where entries are stored.
  */
-@Marshallable(externalizer = Bucket.Externalizer.class, id = Ids.BUCKET)
 public final class Bucket {
    private Map<Object, InternalCacheEntry> entries = new HashMap<Object, InternalCacheEntry>();
    private transient String bucketName;
@@ -31,15 +30,6 @@ public final class Bucket {
 
    public final InternalCacheEntry getEntry(Object key) {
       return entries.get(key);
-   }
-
-   public final void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-      int sz = in.readInt();
-      entries = new HashMap<Object, InternalCacheEntry>(sz);
-      for (int i = 0; i < sz; i++) {
-         InternalCacheEntry se = (InternalCacheEntry) in.readObject();
-         entries.put(se.getKey(), se);
-      }
    }
 
    public Map<Object, InternalCacheEntry> getEntries() {
@@ -100,7 +90,8 @@ public final class Bucket {
    public void clearEntries() {
       entries.clear();
    }
-   
+
+   @Marshalls(typeClasses = Bucket.class, id = Ids.BUCKET)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<Bucket> {
       public void writeObject(ObjectOutput output, Bucket b) throws IOException {
          Map<Object, InternalCacheEntry> entries = b.entries;

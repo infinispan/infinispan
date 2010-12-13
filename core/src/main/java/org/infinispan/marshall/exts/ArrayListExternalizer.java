@@ -27,13 +27,12 @@ import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshallUtil;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * List externalizer dealing with ArrayList and LinkedList implementations.
@@ -42,7 +41,7 @@ import java.util.Collection;
  * @since 4.0
  */
 @Immutable
-@Marshallable(id = Ids.ARRAY_LIST)
+@Marshalls(typeClasses =  ArrayList.class, id = Ids.ARRAY_LIST)
 public class ArrayListExternalizer implements Externalizer<ArrayList> {
 
    public void writeObject(ObjectOutput output, ArrayList list) throws IOException {

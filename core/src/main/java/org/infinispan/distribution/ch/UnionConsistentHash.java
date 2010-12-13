@@ -2,7 +2,7 @@ package org.infinispan.distribution.ch;
 
 import org.infinispan.CacheException;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Immutables;
 
@@ -21,7 +21,6 @@ import java.util.Set;
  * @author Manik Surtani
  * @since 4.0
  */
-@Marshallable(externalizer = UnionConsistentHash.Externalizer.class, id = Ids.UNION_CONSISTENT_HASH)
 public class UnionConsistentHash extends AbstractConsistentHash {
 
    ConsistentHash oldCH, newCH;
@@ -82,6 +81,7 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       return oldCH;
    }
 
+   @Marshalls(typeClasses = UnionConsistentHash.class, id = Ids.UNION_CONSISTENT_HASH)
    public static class Externalizer implements org.infinispan.marshall.Externalizer<UnionConsistentHash> {
       public void writeObject(ObjectOutput output, UnionConsistentHash uch) throws IOException {
          output.writeObject(uch.oldCH);

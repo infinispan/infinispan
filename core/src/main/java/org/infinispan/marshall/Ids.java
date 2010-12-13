@@ -39,7 +39,7 @@ public interface Ids {
 
    static final byte ARRAY_LIST = 0;
    static final byte LINKED_LIST = 1;
-   static final byte JDK_MAPS = 2;
+   static final byte MAPS = 2;
    static final byte JDK_SETS = 3;
    static final byte SINGLETON_LIST = 4;
 
@@ -65,29 +65,9 @@ public interface Ids {
    static final byte TRANSIENT_VALUE = 16;
    static final byte TRANSIENT_MORTAL_VALUE = 17;
 
-   // internal collections
-   static final byte FASTCOPY_HASH_MAP = 18;
+   // internal collections (id=18 no longer in use, might get reused at a later stage)
    static final byte IMMUTABLE_MAP = 19;
    static final byte ATOMIC_HASH_MAP = 20;
-
-   // commands
-   static final byte STATE_TRANSFER_CONTROL_COMMAND = 21;
-   static final byte CLUSTERED_GET_COMMAND = 22;
-   static final byte MULTIPLE_RPC_COMMAND = 23;
-   static final byte SINGLE_RPC_COMMAND = 24;
-   static final byte GET_KEY_VALUE_COMMAND = 25;
-   static final byte PUT_KEY_VALUE_COMMAND = 26;
-   static final byte REMOVE_COMMAND = 27;
-   static final byte INVALIDATE_COMMAND = 28;
-   static final byte REPLACE_COMMAND = 29;
-   static final byte CLEAR_COMMAND = 30;
-   static final byte PUT_MAP_COMMAND = 31;
-   static final byte PREPARE_COMMAND = 32;
-   static final byte COMMIT_COMMAND = 33;
-   static final byte ROLLBACK_COMMAND = 34;
-   static final byte INVALIDATE_L1_COMMAND = 35;
-   static final byte LOCK_CONTROL_COMMAND = 36;
-   static final byte EVICT_COMMAND = 37;
 
    // others
    static final byte GLOBAL_TRANSACTION = 38;
@@ -105,14 +85,15 @@ public interface Ids {
    static final byte FQN = 45;
    static final byte ATOMIC_HASH_MAP_DELTA = 46;
 
+   /**
+    * ids for infinispan core classes *
+    */
+
    static final byte ATOMIC_PUT_OPERATION = 47;
    static final byte ATOMIC_REMOVE_OPERATION = 48;
    static final byte ATOMIC_CLEAR_OPERATION = 49;
-   static final byte REHASH_CONTROL_COMMAND = 50;
-
    static final byte DEFAULT_CONSISTENT_HASH = 51;
    static final byte UNION_CONSISTENT_HASH = 52;
-   static final byte JOIN_COMPLETE_COMMAND = 53;
 
    /*
     * ids for server modules
@@ -125,4 +106,11 @@ public interface Ids {
    static final byte TOPOLOGY_VIEW = 59;
    static final byte NODE_TOPOLOGY_INFO = 60;
    static final byte TOPOLOGY_AWARE_CH = 61;
+
+   /**
+    * ids for infinispan core classes *
+    */
+
+   // commands (ids between 21 and 37 both inclusive and 50 and 53, are no longer in use, might get reused at a later stage)
+   static final byte REPLICABLE_COMMAND = 62;
 }

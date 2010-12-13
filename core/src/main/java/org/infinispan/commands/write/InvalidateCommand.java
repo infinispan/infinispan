@@ -26,9 +26,6 @@ import java.util.Collection;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
-import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -40,7 +37,6 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-@Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.INVALIDATE_COMMAND)
 public class InvalidateCommand extends RemoveCommand {
    public static final int COMMAND_ID = 6;
    private static final Log log = LogFactory.getLog(InvalidateCommand.class);
