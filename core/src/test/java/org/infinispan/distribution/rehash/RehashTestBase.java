@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A base test for all rehashing tests
@@ -86,6 +87,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
    public void testTransactional() throws Exception {
       final List<MagicKey> keys = init();
       final CountDownLatch l = new CountDownLatch(1);
+      final AtomicBoolean rollback = new AtomicBoolean(false);
 
       Thread th = new Thread("Updater") {
          @Override
@@ -108,6 +110,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
                });
                t1.commit();
             } catch (Exception e) {
+               rollback.set(true);
                throw new RuntimeException(e);
             }
          }
@@ -123,14 +126,18 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       log.info("Rehash complete");
       additionalWait();
 
-      // lets first see what the value of k1 is on c1 ...
+      //only check for these values if tx was not rolled back
+      if (!rollback.get()) {
 
-      assertOnAllCachesAndOwnership(keys.get(0), "transactionally_replaced");
-      assertOnAllCachesAndOwnership(keys.get(1), "v" + 2);
-      assertOnAllCachesAndOwnership(keys.get(2), "v" + 3);
-      assertOnAllCachesAndOwnership(keys.get(3), "v" + 4);
+         // lets first see what the value of k1 is on c1 ...
 
-      assertProperConsistentHashOnAllCaches();
+         assertOnAllCachesAndOwnership(keys.get(0), "transactionally_replaced");
+         assertOnAllCachesAndOwnership(keys.get(1), "v" + 2);
+         assertOnAllCachesAndOwnership(keys.get(2), "v" + 3);
+         assertOnAllCachesAndOwnership(keys.get(3), "v" + 4);
+
+         assertProperConsistentHashOnAllCaches();
+      }
    }
 
    /**

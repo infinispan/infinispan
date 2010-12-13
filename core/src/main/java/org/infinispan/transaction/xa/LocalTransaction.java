@@ -60,6 +60,11 @@ public class LocalTransaction extends AbstractCacheTransaction {
       if (remoteLockedNodes == null) remoteLockedNodes = new HashSet<Address>();
       remoteLockedNodes.addAll(nodes);
    }
+   
+   public Collection<Address> getRemoteLocksAcquired(){
+	   if (remoteLockedNodes == null) return Collections.emptySet();
+	   return remoteLockedNodes;
+   }
 
    public void markForRollback() {
       isMarkedForRollback = true;

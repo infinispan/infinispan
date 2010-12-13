@@ -235,23 +235,34 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-   // ---- TX boundary commands
-
+   // ---- TX boundary commands 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
+         Collection<Address> preparedOn = ((LocalTxInvocationContext)ctx).getRemoteLocksAcquired();
+         
          List<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
-         NotifyingNotifiableFuture<Object> f = flushL1Cache(recipients.size(), ctx.getLockedKeys(), null);
+         boolean goodToCommit = recipients.containsAll(preparedOn);
+         if (!goodToCommit)
+             throw new IllegalStateException("Can not commit since " + ctx.getGlobalTransaction()
+                      + " was prepared on " + preparedOn + " nodes while it is being committed to " + recipients);
+         
+         NotifyingNotifiableFuture<Object> f = flushL1Cache(recipients.size(), ctx.getLockedKeys(), null);                  
          rpcManager.invokeRemotely(recipients, command, configuration.isSyncCommitPhase(), true);
+         
          if (f != null && configuration.isSyncCommitPhase())
          try {
             f.get();
          } catch (Exception e) {
             if (log.isInfoEnabled()) log.info("Failed invalidating remote cache: ", e);
          }
+         
+        
       }
       return invokeNextInterceptor(ctx, command);
    }
+
+
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
@@ -266,6 +277,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             f = flushL1Cache(recipients.size(), ctx.getLockedKeys(), null);
          // this method will return immediately if we're the only member (because exclude_self=true)
          rpcManager.invokeRemotely(recipients, command, sync);
+         ((LocalTxInvocationContext)ctx).remoteLocksAcquired(recipients);
          if (f != null) f.get();
       }
       return retVal;
