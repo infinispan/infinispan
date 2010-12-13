@@ -1,5 +1,6 @@
 package org.infinispan.commands.write;
 
+import org.infinispan.commands.Visitor;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -80,6 +81,10 @@ public class InvalidateL1Command extends InvalidateCommand {
       }
       return null;
    }
+   
+   public void setKeys(Object [] keys){
+	   this.keys = keys;
+   }
 
    @Override
    public boolean shouldInvoke(InvocationContext ctx) {
@@ -130,6 +135,11 @@ public class InvalidateL1Command extends InvalidateCommand {
       } else if (size > 0) {
          System.arraycopy(args, 2, keys, 0, size);
       }
+   }
+   
+   @Override
+   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
+      return visitor.visitInvalidateL1Command(ctx, this);
    }
 
    @Override

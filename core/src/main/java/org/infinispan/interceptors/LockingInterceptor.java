@@ -31,6 +31,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -56,6 +57,7 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -255,6 +257,35 @@ public class LockingInterceptor extends CommandInterceptor {
          return cleanLocksAndRethrow(ctx, te);
       }
       finally {
+         doAfterCall(ctx);
+      }
+   }
+   
+   @Override
+   public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
+      Object keys [] = command.getKeys();
+      try {
+         if (keys != null && keys.length>=1) {
+            ArrayList<Object> keysCopy = new ArrayList<Object>(Arrays.asList(keys));
+            for (Object key : command.getKeys()) {
+               ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+               try {
+                  entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false, false);
+               } catch (TimeoutException te){
+            	  log.warn("Could not lock key {0} in order to invalidate from L1 at node {1}, skipping....",key,transport.getAddress()); 
+                  keysCopy.remove(key);
+                  if(keysCopy.isEmpty())
+                     return null;
+               } 
+            }
+            command.setKeys(keysCopy.toArray());
+         }
+         return invokeNextInterceptor(ctx, command);
+      } catch (Throwable te) {
+         return cleanLocksAndRethrow(ctx, te);
+      }
+      finally {
+         command.setKeys(keys);
          doAfterCall(ctx);
       }
    }

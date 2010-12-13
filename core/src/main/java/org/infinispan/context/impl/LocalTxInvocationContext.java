@@ -84,4 +84,8 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
    public void remoteLocksAcquired(Collection<Address> nodes) {
       localTransaction.locksAcquired(nodes);
    }
+   
+   public Collection<Address> getRemoteLocksAcquired(){
+	   return localTransaction.getRemoteLocksAcquired();
+   }
 }

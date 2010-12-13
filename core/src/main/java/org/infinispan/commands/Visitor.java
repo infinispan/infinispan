@@ -33,6 +33,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -82,6 +83,8 @@ public interface Visitor {
    Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable;
 
    Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable;
+   
+   Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command) throws Throwable;
 
    // locking commands
    Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable;
