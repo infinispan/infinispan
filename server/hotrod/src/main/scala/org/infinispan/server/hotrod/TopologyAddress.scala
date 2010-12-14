@@ -16,7 +16,7 @@ import org.infinispan.remoting.transport.Address
 case class TopologyAddress(val host: String, val port: Int, val hashIds: Map[String, Int], val clusterAddress: Address)
 
 object TopologyAddress {
-   @Marshalls(typeClasses = Array(classOf[TopologyAddress]), id = 58)
+   @Marshalls(typeClasses = Array(classOf[TopologyAddress]))
    class Externalizer extends org.infinispan.marshall.Externalizer[TopologyAddress] {
       override def writeObject(output: ObjectOutput, topologyAddress: TopologyAddress) {
          output.writeObject(topologyAddress.host)

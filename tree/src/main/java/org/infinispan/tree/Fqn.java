@@ -493,7 +493,7 @@ public class Fqn implements Comparable<Fqn> {
       return Fqn.fromRelativeFqn(newAncestor, subFqn);
    }
 
-   @Marshalls(typeClasses = Fqn.class, id = Ids.FQN)
+   @Marshalls(typeClasses = Fqn.class)
    public static class Externalizer implements org.infinispan.marshall.Externalizer {
       public void writeObject(ObjectOutput output, Object object) throws IOException {
          Fqn fqn = (Fqn) object;

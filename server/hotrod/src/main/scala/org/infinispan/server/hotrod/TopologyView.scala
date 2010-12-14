@@ -17,7 +17,7 @@ case class TopologyView(val topologyId: Int, val members: List[TopologyAddress])
 // TODO: The downside here is that you'd need to make multiple cache calls atomic via txs or similar.
 
 object TopologyView {
-   @Marshalls(typeClasses = Array(classOf[TopologyView]), id = 59)
+   @Marshalls(typeClasses = Array(classOf[TopologyView]))
    class Externalizer extends org.infinispan.marshall.Externalizer[TopologyView] {
       override def writeObject(output: ObjectOutput, topologyView: TopologyView) {
          output.writeInt(topologyView.topologyId)

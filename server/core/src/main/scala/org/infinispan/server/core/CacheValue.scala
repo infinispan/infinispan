@@ -38,8 +38,7 @@ class CacheValue(val data: Array[Byte], val version: Long) {
 }
 
 object CacheValue {
-   // TODO: putting Ids.SERVER_CACHE_VALUE fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
-   @Marshalls(typeClasses = Array(classOf[CacheValue]), id = 55)
+   @Marshalls(typeClasses = Array(classOf[CacheValue]))
    class Externalizer extends org.infinispan.marshall.Externalizer[CacheValue] {
       override def writeObject(output: ObjectOutput, cacheValue: CacheValue) {
          output.writeInt(cacheValue.data.length)

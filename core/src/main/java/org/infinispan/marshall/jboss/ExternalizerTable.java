@@ -98,18 +98,7 @@ import java.util.WeakHashMap;
  */
 class ExternalizerTable implements ObjectTable {
    private static final Log log = LogFactory.getLog(ExternalizerTable.class);
-   private final Set<Class<? extends Externalizer>> internalExternalizers = new HashSet<Class<? extends Externalizer>>();
-   // TODO These collection will go once other modules have been enabled to provide their own externalizers
-   private static final Set<String> TMP_EXTERNALIZERS = new HashSet<String>();
-
-   static {
-      TMP_EXTERNALIZERS.add("org.infinispan.tree.NodeKey$Externalizer");
-      TMP_EXTERNALIZERS.add("org.infinispan.tree.Fqn$Externalizer");
-      TMP_EXTERNALIZERS.add("org.infinispan.server.core.CacheValue$Externalizer");
-      TMP_EXTERNALIZERS.add("org.infinispan.server.memcached.MemcachedValue$Externalizer");
-      TMP_EXTERNALIZERS.add("org.infinispan.server.hotrod.TopologyAddress$Externalizer");
-      TMP_EXTERNALIZERS.add("org.infinispan.server.hotrod.TopologyView$Externalizer");
-   }
+   private final Set<Externalizer> internalExternalizers = new HashSet<Externalizer>();
 
    /**
     * Contains mapping of classes to their corresponding Externalizer classes via ExternalizerAdapter instances.
@@ -130,52 +119,52 @@ class ExternalizerTable implements ObjectTable {
    private volatile boolean started;
 
    private void initInternalExternalizers() {
-      internalExternalizers.add(ArrayListExternalizer.class);
-      internalExternalizers.add(LinkedListExternalizer.class);
-      internalExternalizers.add(MapExternalizer.class);
-      internalExternalizers.add(SetExternalizer.class);
-      internalExternalizers.add(SingletonListExternalizer.class);
+      internalExternalizers.add(new ArrayListExternalizer());
+      internalExternalizers.add(new LinkedListExternalizer());
+      internalExternalizers.add(new MapExternalizer());
+      internalExternalizers.add(new SetExternalizer());
+      internalExternalizers.add(new SingletonListExternalizer());
 
-      internalExternalizers.add(GlobalTransaction.Externalizer.class);
-      internalExternalizers.add(DldGlobalTransaction.Externalizer.class);
-      internalExternalizers.add(JGroupsAddress.Externalizer.class);
-      internalExternalizers.add(Immutables.ImmutableMapWrapperExternalizer.class);
-      internalExternalizers.add(MarshalledValue.Externalizer.class);
+      internalExternalizers.add(new GlobalTransaction.Externalizer());
+      internalExternalizers.add(new DldGlobalTransaction.Externalizer());
+      internalExternalizers.add(new JGroupsAddress.Externalizer());
+      internalExternalizers.add(new Immutables.ImmutableMapWrapperExternalizer());
+      internalExternalizers.add(new MarshalledValue.Externalizer());
 
-      internalExternalizers.add(TransactionLog.LogEntry.Externalizer.class);
-      internalExternalizers.add(ExtendedResponse.Externalizer.class);
-      internalExternalizers.add(SuccessfulResponse.Externalizer.class);
-      internalExternalizers.add(ExceptionResponse.Externalizer.class);
-      internalExternalizers.add(RequestIgnoredResponse.Externalizer.class);
-      internalExternalizers.add(UnsuccessfulResponse.Externalizer.class);
-      internalExternalizers.add(UnsureResponse.Externalizer.class);
+      internalExternalizers.add(new TransactionLog.LogEntry.Externalizer());
+      internalExternalizers.add(new ExtendedResponse.Externalizer());
+      internalExternalizers.add(new SuccessfulResponse.Externalizer());
+      internalExternalizers.add(new ExceptionResponse.Externalizer());
+      internalExternalizers.add(new RequestIgnoredResponse.Externalizer());
+      internalExternalizers.add(new UnsuccessfulResponse.Externalizer());
+      internalExternalizers.add(new UnsureResponse.Externalizer());
 
-      internalExternalizers.add(ReplicableCommandExternalizer.class);
+      internalExternalizers.add(new ReplicableCommandExternalizer());
 
-      internalExternalizers.add(ImmortalCacheEntry.Externalizer.class);
-      internalExternalizers.add(MortalCacheEntry.Externalizer.class);
-      internalExternalizers.add(TransientCacheEntry.Externalizer.class);
-      internalExternalizers.add(TransientMortalCacheEntry.Externalizer.class);
-      internalExternalizers.add(ImmortalCacheValue.Externalizer.class);
-      internalExternalizers.add(MortalCacheValue.Externalizer.class);
-      internalExternalizers.add(TransientCacheValue.Externalizer.class);
-      internalExternalizers.add(TransientMortalCacheValue.Externalizer.class);
+      internalExternalizers.add(new ImmortalCacheEntry.Externalizer());
+      internalExternalizers.add(new MortalCacheEntry.Externalizer());
+      internalExternalizers.add(new TransientCacheEntry.Externalizer());
+      internalExternalizers.add(new TransientMortalCacheEntry.Externalizer());
+      internalExternalizers.add(new ImmortalCacheValue.Externalizer());
+      internalExternalizers.add(new MortalCacheValue.Externalizer());
+      internalExternalizers.add(new TransientCacheValue.Externalizer());
+      internalExternalizers.add(new TransientMortalCacheValue.Externalizer());
 
-      internalExternalizers.add(AtomicHashMap.Externalizer.class);
-      internalExternalizers.add(Bucket.Externalizer.class);
-      internalExternalizers.add(AtomicHashMapDelta.Externalizer.class);
-      internalExternalizers.add(PutOperation.Externalizer.class);
-      internalExternalizers.add(RemoveOperation.Externalizer.class);
-      internalExternalizers.add(ClearOperation.Externalizer.class);
-      internalExternalizers.add(DefaultConsistentHash.Externalizer.class);
-      internalExternalizers.add(UnionConsistentHash.Externalizer.class);
-      internalExternalizers.add(NodeTopologyInfo.Externalizer.class);
-      internalExternalizers.add(TopologyAwareConsistentHash.Externalizer.class);
-      internalExternalizers.add(ByteArrayKey.Externalizer.class);
+      internalExternalizers.add(new AtomicHashMap.Externalizer());
+      internalExternalizers.add(new Bucket.Externalizer());
+      internalExternalizers.add(new AtomicHashMapDelta.Externalizer());
+      internalExternalizers.add(new PutOperation.Externalizer());
+      internalExternalizers.add(new RemoveOperation.Externalizer());
+      internalExternalizers.add(new ClearOperation.Externalizer());
+      internalExternalizers.add(new DefaultConsistentHash.Externalizer());
+      internalExternalizers.add(new UnionConsistentHash.Externalizer());
+      internalExternalizers.add(new NodeTopologyInfo.Externalizer());
+      internalExternalizers.add(new TopologyAwareConsistentHash.Externalizer());
+      internalExternalizers.add(new ByteArrayKey.Externalizer());
    }
 
-   void addInternalExternalizer(Class<? extends Externalizer> extClass) {
-      internalExternalizers.add(extClass);
+   void addInternalExternalizer(Externalizer ext) {
+      internalExternalizers.add(ext);
    }
 
    public void start(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller, GlobalConfiguration globalCfg) {
@@ -256,21 +245,8 @@ class ExternalizerTable implements ObjectTable {
    }
 
    private void loadInternalMarshallables(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller) {
-      // TODO Remove once submodules can defined their own externalizers
-      for (String tmpExtClassName : TMP_EXTERNALIZERS) {
-         try {
-            Class<? extends Externalizer> tmpExtClass = Util.loadClassStrict(tmpExtClassName);
-            internalExternalizers.add(tmpExtClass);
-         } catch (ClassNotFoundException e) {
-            if (!tmpExtClassName.startsWith("org.infinispan")) {
-               if (log.isDebugEnabled()) log.debug("Unable to load class {0}", e.getMessage());
-            }
-         }
-      }
-
-      for (Class<? extends Externalizer> extClass : internalExternalizers) {
-         Marshalls marshalls = ReflectionUtil.getAnnotation(extClass, Marshalls.class);
-         Externalizer ext = Util.getInstance(extClass);
+      for (Externalizer ext : internalExternalizers) {
+         Marshalls marshalls = ReflectionUtil.getAnnotation(ext.getClass(), Marshalls.class);
          if (ext instanceof ReplicableCommandExternalizer)
             ((ReplicableCommandExternalizer) ext).inject(cmdFactory);
          if (ext instanceof MarshalledValue.Externalizer)

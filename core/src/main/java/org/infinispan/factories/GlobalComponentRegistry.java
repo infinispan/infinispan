@@ -156,4 +156,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          }
       }
    }
+
+   public final GlobalConfiguration getGlobalConfiguration() {
+      return globalConfiguration;
+   }
+
 }

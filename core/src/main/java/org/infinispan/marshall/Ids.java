@@ -33,28 +33,17 @@ public interface Ids {
    // No internal externalizer should use this upper limit Id or anything higher than that.
    static final int MAX_ID = 255;
 
-   /**
-    * ids for jdk classes *
-    */
-
    static final byte ARRAY_LIST = 0;
    static final byte LINKED_LIST = 1;
    static final byte MAPS = 2;
    static final byte JDK_SETS = 3;
    static final byte SINGLETON_LIST = 4;
-
-   /**
-    * ids for infinispan core classes *
-    */
-
    // responses
    static final byte SUCCESSFUL_RESPONSE = 5;
    static final byte EXTENDED_RESPONSE = 6;
    static final byte EXCEPTION_RESPONSE = 7;
    static final byte UNSUCCESSFUL_RESPONSE = 8;
    static final byte REQUEST_IGNORED_RESPONSE = 9;
-   static final byte UNSURE_RESPONSE = 54;
-
    // entries and values
    static final byte IMMORTAL_ENTRY = 10;
    static final byte MORTAL_ENTRY = 11;
@@ -64,11 +53,9 @@ public interface Ids {
    static final byte MORTAL_VALUE = 15;
    static final byte TRANSIENT_VALUE = 16;
    static final byte TRANSIENT_MORTAL_VALUE = 17;
-
    // internal collections (id=18 no longer in use, might get reused at a later stage)
    static final byte IMMUTABLE_MAP = 19;
    static final byte ATOMIC_HASH_MAP = 20;
-
    // others
    static final byte GLOBAL_TRANSACTION = 38;
    static final byte JGROUPS_ADDRESS = 39;
@@ -76,41 +63,20 @@ public interface Ids {
    static final byte TRANSACTION_LOG_ENTRY = 41;
    static final byte BUCKET = 42;
    static final byte DEADLOCK_DETECTING_GLOBAL_TRANSACTION = 43;
-
-   /**
-    * ids for infinispan tree classes *
-    */
-
-   static final byte NODE_KEY = 44;
-   static final byte FQN = 45;
+   // 44 and 45 no longer in use, used to belong to tree module
    static final byte ATOMIC_HASH_MAP_DELTA = 46;
-
-   /**
-    * ids for infinispan core classes *
-    */
-
    static final byte ATOMIC_PUT_OPERATION = 47;
    static final byte ATOMIC_REMOVE_OPERATION = 48;
    static final byte ATOMIC_CLEAR_OPERATION = 49;
    static final byte DEFAULT_CONSISTENT_HASH = 51;
    static final byte UNION_CONSISTENT_HASH = 52;
-
-   /*
-    * ids for server modules
-    */
-
-   static final byte SERVER_CACHE_VALUE = 55;
-   static final byte MEMCACHED_CACHE_VALUE = 56;
+   static final byte UNSURE_RESPONSE = 54;
+   // 55 - 56 no longer in use since server modules can now register their own externalizers
    static final byte BYTE_ARRAY_KEY = 57;
-   static final byte TOPOLOGY_ADDRESS = 58;
-   static final byte TOPOLOGY_VIEW = 59;
+   // 58 - 59 no longer in use since server modules can now register their own externalizers
    static final byte NODE_TOPOLOGY_INFO = 60;
    static final byte TOPOLOGY_AWARE_CH = 61;
-
-   /**
-    * ids for infinispan core classes *
-    */
-
    // commands (ids between 21 and 37 both inclusive and 50 and 53, are no longer in use, might get reused at a later stage)
    static final byte REPLICABLE_COMMAND = 62;
+
 }
