@@ -19,7 +19,10 @@ abstract class AbstractMarshallingTest {
 
    @BeforeTest
    def setUp {
-      marshaller.inject(Thread.currentThread.getContextClassLoader, new RemoteCommandsFactory, new GlobalConfiguration)
+      // Manual addition of externalizers to replication what happens in fully functional tests
+      val globalCfg = new GlobalConfiguration
+      new LifecycleCallbacks().addExternalizer(globalCfg)
+      marshaller.inject(Thread.currentThread.getContextClassLoader, new RemoteCommandsFactory, globalCfg)
       marshaller.start
    }
 

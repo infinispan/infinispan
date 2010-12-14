@@ -89,7 +89,7 @@ public class NodeKey {
             '}';
    }
 
-   @Marshalls(typeClasses = NodeKey.class, id = Ids.NODE_KEY)
+   @Marshalls(typeClasses = NodeKey.class)
    public static class Externalizer implements org.infinispan.marshall.Externalizer {
       private static final byte DATA_BYTE = 1;
       private static final byte STRUCTURE_BYTE = 2;

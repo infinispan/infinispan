@@ -25,8 +25,7 @@ class MemcachedValue(override val data: Array[Byte], override val version: Long,
 }
 
 object MemcachedValue {
-   // TODO: putting Ids.MEMCACHED_CACHE_VALUE fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
-   @Marshalls(typeClasses = Array(classOf[MemcachedValue]), id = 56)
+   @Marshalls(typeClasses = Array(classOf[MemcachedValue]))
    class Externalizer extends org.infinispan.marshall.Externalizer[MemcachedValue] {
       override def writeObject(output: ObjectOutput, cacheValue: MemcachedValue) {
          output.writeInt(cacheValue.data.length)

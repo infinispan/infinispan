@@ -35,7 +35,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
  * When using Maven, for example, <tt>infinispan-module.properties</tt> would typically be in the module's
  * <tt>src/main/resources</tt> directory so it gets packaged appropriately.
  * <p />
- * <u>infinispan-modules.properties</u>
+ * <u>infinispan-module.properties</u>
  * <p />
  * Currently, the following properties are supported:
  * <ul>

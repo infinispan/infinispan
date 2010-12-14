@@ -71,11 +71,11 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
    }
    
    public void testInternalDuplicateExternalizerId() throws Exception {
-      withExpectedInternalFailure(DuplicateIdClass.Externalizer.class, "Should have thrown a CacheException reporting the duplicate id");
+      withExpectedInternalFailure(new DuplicateIdClass.Externalizer(), "Should have thrown a CacheException reporting the duplicate id");
    }
 
    public void testInternalExternalIdLimit() {
-      withExpectedInternalFailure(TooHighIdClass.Externalizer.class, "Should have thrown a CacheException indicating that the Id is too high");
+      withExpectedInternalFailure(new TooHighIdClass.Externalizer(), "Should have thrown a CacheException indicating that the Id is too high");
    }
 
    public void testForeignExternalizerIdNegative() {
@@ -162,12 +162,12 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       return globalCfg;
    }
 
-   private void withExpectedInternalFailure(final Class extClass, String message) {
+   private void withExpectedInternalFailure(final Externalizer ext, String message) {
       JBossMarshaller jbmarshaller = new JBossMarshaller() {
          @Override
          protected ExternalizerTable createExternalizerTable(RemoteCommandsFactory f, StreamingMarshaller m, GlobalConfiguration g) {
             ExternalizerTable objectTable = new ExternalizerTable();
-            objectTable.addInternalExternalizer(extClass);
+            objectTable.addInternalExternalizer(ext);
             objectTable.start(f, m, g);
             return objectTable;
          }
