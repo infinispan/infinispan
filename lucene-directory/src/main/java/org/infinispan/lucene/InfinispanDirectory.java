@@ -304,7 +304,7 @@ public class InfinispanDirectory extends Directory {
          return new SingleChunkIndexInput(chunksCache, fileKey, fileMetadata);
       }
       else {
-         boolean locked = readLocks.aquireReadLock(name);
+         boolean locked = readLocks.acquireReadLock(name);
          if (!locked) {
             // safest reaction is to tell this file doesn't exist anymore.
             throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);

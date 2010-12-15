@@ -53,7 +53,7 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
    
    /**
     * Create a new LocalLockMergingSegmentReadLocker with special purpose caches
-    * @param locksCache the cache to be used to store ditributed locks
+    * @param locksCache the cache to be used to store distributed locks
     * @param chunksCache the cache containing the chunks, this is where the bulk of data is stored
     * @param metadataCache smaller cache for the metadata of stored elements
     * @param indexName
@@ -62,14 +62,19 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
       this.delegate = new DistributedSegmentReadLocker(locksCache, chunksCache, metadataCache, indexName);
    }
 
+   @Override @Deprecated
+   public boolean aquireReadLock(String filename) {
+      return acquireReadLock(filename);
+   }
+
    /**
     * {@inheritDoc}
     */
    @Override
-   public boolean aquireReadLock(String name) {
+   public boolean acquireReadLock(String name) {
       LocalReadLock localReadLock = getLocalLockByName(name);
-      boolean aquired = localReadLock.aquire();
-      if (aquired) {
+      boolean acquired = localReadLock.acquire();
+      if (acquired) {
          return true;
       }
       else {
@@ -109,9 +114,9 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
        * @return true if the lock was acquired, false if it's too late: the file
        * was deleted and this LocalReadLock should be removed too.
        */
-      synchronized boolean aquire() {
+      synchronized boolean acquire() {
          if (value == 0) {
-            boolean haveIt = delegate.aquireReadLock(name);
+            boolean haveIt = delegate.acquireReadLock(name);
             if (haveIt) {
                value = 1;
                return true;

@@ -74,7 +74,7 @@ public class PerformanceCompareStressTest {
 
    private static final String indexName = "tempIndexName";
 
-   private static final long DURATION_MS = 60 * 60 * 1000;
+   private static final long DURATION_MS = 2 * 60 * 1000;
 
    private Cache cache;
 
