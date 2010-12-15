@@ -68,7 +68,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       this.locksCache = locksCache.getAdvancedCache();
       this.chunksCache = chunksCache.getAdvancedCache();
       this.metadataCache = metadataCache.getAdvancedCache();
-      verifyCacheHasnoEviction(this.locksCache);
+      verifyCacheHasNoEviction(this.locksCache);
    }
 
    public DistributedSegmentReadLocker(Cache cache, String indexName) {
@@ -83,7 +83,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     * For removal of readLockKey the SKIP_CACHE_STORE is not used to make sure even
     * values eventually stored by a rehash are cleaned up.
     * 
-    * @see #aquireReadLock(String)
+    * @see #acquireReadLock(String)
     * @see InfinispanDirectory#deleteFile(String)
     */
    @Override
@@ -110,6 +110,11 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
          realFileDelete(readLockKey, locksCache, chunksCache, metadataCache);
       }
    }
+
+   @Override @Deprecated
+   public boolean aquireReadLock(String filename) {
+      return acquireReadLock(filename);
+   }
    
    /**
     * Acquires a readlock on all chunks for this file, to make sure chunks are not deleted while
@@ -122,11 +127,11 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     * so the value is treated as one if not found, but obviously it's also not found for non-existent
     * or concurrently deleted files.
     * 
-    * @param name the name of the "file" for which a readlock is requested 
+    * @param filename the name of the "file" for which a readlock is requested
     * 
     * @see #deleteOrReleaseReadLock(String)
     */
-   public boolean aquireReadLock(String filename) {
+   public boolean acquireReadLock(String filename) {
       FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename);
       Object lockValue = locksCache.withFlags(Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE).get(readLockKey);
       boolean done = false;
@@ -165,11 +170,13 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     * The {@link InfinispanDirectory#deleteFile(String)} is not deleting the elements from the cache
     * but instead flagging the file as deletable.
     * This method will really remove the elements from the cache; should be invoked only
-    * by {@link #releaseReadLock(FileReadLockKey, AdvancedCache)} after having verified that there
+    * by {@link #deleteOrReleaseReadLock(String)} after having verified that there
     * are no users left in need to read these chunks.
     * 
     * @param readLockKey the key representing the values to be deleted
-    * @param cache the cache containing the elements to be deleted
+    * @param locksCache the cache containing the locks
+    * @param chunksCache the cache containing the chunks to be deleted
+    * @param metadataCache the cache containing the metadata of elements to be deleted
     */
    static void realFileDelete(FileReadLockKey readLockKey, AdvancedCache locksCache, AdvancedCache chunksCache, AdvancedCache metadataCache) {
       final boolean trace = log.isTraceEnabled();
@@ -191,7 +198,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       locksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).removeAsync(readLockKey);
    }
    
-   private static void verifyCacheHasnoEviction(AdvancedCache cache) {
+   private static void verifyCacheHasNoEviction(AdvancedCache cache) {
       if (cache.getConfiguration().getEvictionStrategy().isEnabled())
          throw new IllegalArgumentException("DistributedSegmentReadLocker is not reliable when using a cache with eviction enabled, disable eviction on this cache instance");
    }
