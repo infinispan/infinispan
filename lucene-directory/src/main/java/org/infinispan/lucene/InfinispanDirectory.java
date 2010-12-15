@@ -335,6 +335,13 @@ public class InfinispanDirectory extends Directory {
    public String[] listAll() throws IOException {
       return list();
    }
+
+   /**
+    * @return The value of indexName, same constant as provided to the constructor.
+    */
+   public String getIndexName() {
+       return indexName;
+   }
    
    private static LockFactory makeDefaultLockFactory(Cache cache, String indexName) {
       checkNotNull(cache, "cache");
