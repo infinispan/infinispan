@@ -44,7 +44,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    public void testConfigSampleAllValidation() throws Exception {
       String schemaFileName = "infinispan-config-" + Version.getMajorVersion() + ".xsd";
-      InfinispanConfiguration.newInfinispanConfiguration("config-samples/all.xml", "schema/" + schemaFileName, new ConfigurationValidatingVisitor());
+      InfinispanConfiguration.newInfinispanConfiguration("config-samples/sample.xml", "schema/" + schemaFileName, new ConfigurationValidatingVisitor());
    }
 
    public void testNoNamedCaches() throws Exception {
