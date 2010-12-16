@@ -37,7 +37,7 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
       try {
          ClassLoader delegatingCl = new TestClassLoader(existingCl);
          Thread.currentThread().setContextClassLoader(delegatingCl);
-         String fileName = getFileName("/all.xml");
+         String fileName = getFileName("all.xml");
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
          convertor.parse(fileName, baos, XSLT_FILE);
 
