@@ -29,7 +29,7 @@ import java.util.Set;
 import static java.util.Collections.emptySet;
 
 /**
- * Cache loader that consults other members in the cluster for values. A <code>timeout</code> property is required, a
+ * Cache loader that consults other members in the cluster for values. A <code>remoteCallTimeout</code> property is required, a
  * <code>long</code> that specifies in milliseconds how long to wait for results before returning a null.
  *
  * @author Mircea.Markus@jboss.com
