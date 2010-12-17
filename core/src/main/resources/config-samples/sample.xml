@@ -108,7 +108,7 @@
          See:
 
             http://community.jboss.org/wiki/ClusteredConfigurationQuickStart
-            http://docs.jboss.org/infinispan/4.2/apidocs/org/infinispan/remoting/transport/jgroups/JGroupsTransport.html
+            http://docs.jboss.org/infinispan/5.0/apidocs/org/infinispan/remoting/transport/jgroups/JGroupsTransport.html
 
       -->
       <transport 
