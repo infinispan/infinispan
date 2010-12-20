@@ -21,7 +21,13 @@
  */
 package org.infinispan.lucene;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
+
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.Marshalls;
 
 /**
  * Header for Lucene files. Store only basic info about file. File data is divided into byte[]
@@ -42,6 +48,12 @@ public final class FileMetadata implements Serializable {
 
    public FileMetadata() {
       touch();
+   }
+
+   private FileMetadata(long lastModified, long size, int bufferSize) {
+      this.lastModified = lastModified;
+      this.size = size;
+      this.bufferSize = bufferSize;
    }
 
    public void touch() {
@@ -103,6 +115,26 @@ public final class FileMetadata implements Serializable {
    @Override
    public String toString() {
       return "FileMetadata{" + "lastModified=" + lastModified + ", size=" + size + '}';
+   }
+   
+   @Marshalls(typeClasses = FileMetadata.class, id = ExternalizerIds.FILE_METADATA)
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<FileMetadata> {
+
+      @Override
+      public void writeObject(ObjectOutput output, FileMetadata metadata) throws IOException {
+         UnsignedNumeric.writeUnsignedLong(output, metadata.lastModified);
+         UnsignedNumeric.writeUnsignedLong(output, metadata.size);
+         UnsignedNumeric.writeUnsignedInt(output, metadata.bufferSize);
+      }
+
+      @Override
+      public FileMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         long lastModified = UnsignedNumeric.readUnsignedLong(input);
+         long size = UnsignedNumeric.readUnsignedLong(input);
+         int bufferSize = UnsignedNumeric.readUnsignedInt(input);
+         return new FileMetadata(lastModified, size, bufferSize);
+      }
+
    }
    
 }

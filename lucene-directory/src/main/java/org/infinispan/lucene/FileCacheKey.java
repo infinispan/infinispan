@@ -21,7 +21,12 @@
  */
 package org.infinispan.lucene;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
+
+import org.infinispan.marshall.Marshalls;
 
 /**
  * Used as a key for file headers in a cache
@@ -97,6 +102,24 @@ public final class FileCacheKey implements Serializable {
    @Override
    public String toString() {
       return fileName + "|M|"+ indexName;
+   }
+   
+   @Marshalls(typeClasses = FileCacheKey.class, id = ExternalizerIds.FILE_CACHE_KEY)
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<FileCacheKey> {
+
+      @Override
+      public void writeObject(ObjectOutput output, FileCacheKey key) throws IOException {
+         output.writeUTF(key.indexName);
+         output.writeUTF(key.fileName);
+      }
+
+      @Override
+      public FileCacheKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         String indexName = input.readUTF();
+         String fileName = input.readUTF();
+         return new FileCacheKey(indexName, fileName);
+      }
+
    }
 
 }

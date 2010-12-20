@@ -21,7 +21,12 @@
  */
 package org.infinispan.lucene;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
+
+import org.infinispan.marshall.Marshalls;
 
 /**
  * Cache key for a list with current files in cache
@@ -80,6 +85,22 @@ public final class FileListCacheKey implements Serializable {
    @Override
    public String toString() {
       return "*|" + indexName;
+   }
+   
+   @Marshalls(typeClasses = FileListCacheKey.class, id = ExternalizerIds.FILE_LIST_CACHE_KEY)
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<FileListCacheKey> {
+
+      @Override
+      public void writeObject(ObjectOutput output, FileListCacheKey key) throws IOException {
+         output.writeUTF(key.indexName);
+      }
+
+      @Override
+      public FileListCacheKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         String indexName = input.readUTF();
+         return new FileListCacheKey(indexName);
+      }
+
    }
    
 }
