@@ -21,7 +21,13 @@
  */
 package org.infinispan.lucene;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
+
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.Marshalls;
 
 /**
  * Used as a key to distinguish file chunk in cache.
@@ -34,7 +40,7 @@ public final class ChunkCacheKey implements Serializable {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = 4429712073623290126L;
-   
+
    private final int chunkId;
    private final String indexName;
    private final String fileName;
@@ -75,7 +81,7 @@ public final class ChunkCacheKey implements Serializable {
    public String getFileName() {
       return fileName;
    }
-   
+
    @Override
    public int hashCode() {
       return hashCode;
@@ -106,11 +112,32 @@ public final class ChunkCacheKey implements Serializable {
 
    /**
     * Changing the encoding could break backwards compatibility
+    * 
     * @see LuceneKey2StringMapper#getKeyMapping(String)
     */
    @Override
    public String toString() {
       return fileName + "|" + chunkId + "|" + indexName;
    }
-   
+
+   @Marshalls(typeClasses = ChunkCacheKey.class, id = ExternalizerIds.CHUNK_CACHE_KEY)
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<ChunkCacheKey> {
+
+      @Override
+      public void writeObject(ObjectOutput output, ChunkCacheKey key) throws IOException {
+         output.writeUTF(key.indexName);
+         output.writeUTF(key.fileName);
+         UnsignedNumeric.writeUnsignedInt(output, key.chunkId);
+      }
+
+      @Override
+      public ChunkCacheKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         String indexName = input.readUTF();
+         String fileName = input.readUTF();
+         int chunkId = UnsignedNumeric.readUnsignedInt(input);
+         return new ChunkCacheKey(indexName, fileName, chunkId);
+      }
+
+   }
+
 }

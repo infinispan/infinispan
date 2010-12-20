@@ -21,7 +21,13 @@
  */
 package org.infinispan.lucene;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
+
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.Marshalls;
 
 /**
  * Lucene's index segment files are chunked, for safe deletion of elements a read lock is
@@ -97,6 +103,24 @@ public final class FileReadLockKey implements Serializable {
    @Override
    public String toString() {
       return fileName + "|RL|"+ indexName;
+   }
+   
+   @Marshalls(typeClasses = FileReadLockKey.class, id = ExternalizerIds.FILE_READLOCK_KEY)
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<FileReadLockKey> {
+
+      @Override
+      public void writeObject(ObjectOutput output, FileReadLockKey key) throws IOException {
+         output.writeUTF(key.indexName);
+         output.writeUTF(key.fileName);
+      }
+
+      @Override
+      public FileReadLockKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         String indexName = input.readUTF();
+         String fileName = input.readUTF();
+         return new FileReadLockKey(indexName, fileName);
+      }
+
    }
 
 }
