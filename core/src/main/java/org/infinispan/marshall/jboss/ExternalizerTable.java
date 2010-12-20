@@ -291,7 +291,7 @@ class ExternalizerTable implements ObjectTable {
          // as long as it's not default one (meaning, user did not set it).
          // If XML or programmatic config in use ignore @Marshalls annotation and use value in config.
          int id = marshalls.id();
-         if (config.getId() == null && id == Integer.MAX_VALUE)
+         if ((config.getId() == null || config.getId() == Integer.MAX_VALUE) && id == Integer.MAX_VALUE)
             throw new ConfigurationException(String.format(
                   "No externalizer identifier set for externalizer %s", ext.getClass().getName()));
          else if (config.getId() != null)
