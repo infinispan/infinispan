@@ -5,12 +5,12 @@ import org.infinispan.server.core._
 import transport._
 import OperationStatus._
 import org.infinispan.manager.EmbeddedCacheManager
-import java.io.StreamCorruptedException
 import org.infinispan.server.hotrod.ProtocolFlag._
 import org.infinispan.server.hotrod.OperationResponse._
 import java.nio.channels.ClosedChannelException
 import org.infinispan.{CacheException, Cache}
 import org.infinispan.util.ByteArrayKey
+import java.io.{IOException, StreamCorruptedException}
 
 /**
  * Top level Hot Rod decoder that after figuring out the version, delegates the rest of the reading to the
@@ -60,9 +60,13 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
          isError = false
          Some(header)
       } catch {
-         case e: Exception => {
+         case e: HotRodUnknownOperationException => {
             isError = true
             throw e
+         }
+         case e: Exception => {
+            isError = true
+            throw new RequestParsingException("Unable to parse header", messageId, e)
          }
       }
    }
@@ -135,6 +139,8 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
             (new HotRodException(new ErrorResponse(h.messageId, "", 1, UnknownOperation, 0, h.toString), e), true)
          case u: UnknownVersionException =>
             (new HotRodException(new ErrorResponse(u.messageId, "", 1, UnknownVersion, 0, u.toString), e), true)
+         case r: RequestParsingException =>
+            (new HotRodException(new ErrorResponse(r.messageId, "", 1, ParseError, 0, r.toString), e), true)
          case t: Throwable => (new HotRodException(h.get.decoder.createErrorResponse(h.get, t), e), false)
       }
    }
@@ -150,6 +156,8 @@ class UnknownVersionException(reason: String, val messageId: Long) extends Strea
 class HotRodUnknownOperationException(reason: String, val messageId: Long) extends UnknownOperationException(reason)
 
 class InvalidMagicIdException(reason: String) extends StreamCorruptedException(reason)
+
+class RequestParsingException(reason: String, val messageId: Long, cause: Exception) extends IOException(reason, cause)
 
 class HotRodHeader(override val op: Enumeration#Value, val messageId: Long, val cacheName: String,
                    val flag: ProtocolFlag, val clientIntel: Short, val topologyId: Int,
