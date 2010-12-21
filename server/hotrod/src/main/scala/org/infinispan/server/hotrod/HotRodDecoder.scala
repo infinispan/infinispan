@@ -140,7 +140,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
          case u: UnknownVersionException =>
             (new HotRodException(new ErrorResponse(u.messageId, "", 1, UnknownVersion, 0, u.toString), e), true)
          case r: RequestParsingException =>
-            (new HotRodException(new ErrorResponse(r.messageId, "", 1, ParseError, 0, r.toString), e), true)
+            (new HotRodException(new ErrorResponse(r.messageId, "", 1, ParseError, 0, "%s: %s".format(r.getMessage, r.getCause.toString)), e), true)
          case t: Throwable => (new HotRodException(h.get.decoder.createErrorResponse(h.get, t), e), false)
       }
    }
