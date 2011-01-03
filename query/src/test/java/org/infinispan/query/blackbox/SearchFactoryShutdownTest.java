@@ -55,9 +55,18 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
    private boolean isStopped(SearchFactoryImplementor sfi) {
       // this sucks - there is no public API to test the Search Factory's status!!!
       // This method may fail if used with future versions of Hibernate Search.
+      
+      if (sfi instanceof MutableSearchFactory) {
+         try {
+            Field delegateField = MutableSearchFactory.class.getDeclaredField("delegate");
+            delegateField.setAccessible(true);
+            sfi = (SearchFactoryImplementor) delegateField.get(sfi);
+         } catch (Exception e) {
+            throw new RuntimeException("Cannot test running state of the search factory", e);
+         }
+      }
 
       if (sfi instanceof ImmutableSearchFactory) {
-
          try {
             Field status = ImmutableSearchFactory.class.getDeclaredField("stopped");
             status.setAccessible(true); // to allow access to a private field
@@ -65,17 +74,6 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
             return b.get();
          } catch (Exception e) {
             throw new RuntimeException("Cannot test running state of the search factory", e);
-         }
-      } else {
-         if (sfi instanceof MutableSearchFactory) {
-            try {
-               Field delegateField = MutableSearchFactory.class.getDeclaredField("stopped");
-               delegateField.setAccessible(true);
-               SearchFactoryImplementor delegate = (SearchFactoryImplementor) delegateField.get(sfi);
-               return isStopped(delegate);
-            } catch (Exception e) {
-               throw new RuntimeException("Cannot test running state of the search factory", e);
-            }
          }
       }
 
