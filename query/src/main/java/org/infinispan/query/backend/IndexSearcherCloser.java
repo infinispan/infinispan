@@ -39,11 +39,12 @@ import java.util.Set;
  * @author Navin Surtani
  */
 public class IndexSearcherCloser {
+
    public static void closeSearcher(Searcher searcher, ReaderProvider readerProvider) {
       Set<IndexReader> indexReaders = getIndexReaders(searcher);
-
       for (IndexReader indexReader : indexReaders) {
          readerProvider.closeReader(indexReader);
       }
    }
+
 }

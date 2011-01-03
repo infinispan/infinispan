@@ -85,12 +85,12 @@ public class QueryInterceptor extends CommandInterceptor {
 
          // New entry so we will add it to the indexes.
          if(entry.isCreated()) {
-            if(log.isDebugEnabled()) log.debug("Entry is created");
+            log.debug("Entry is created");
             addToIndexes(extractValue(value), extractValue(key));
          }
          else{
             // This means that the entry is just modified so we need to update the indexes and not add to them.
-            if(log.isDebugEnabled()) log.debug("Entry is changed");
+            log.debug("Entry is changed");
             updateIndexes(extractValue(value), extractValue(key));
          }
 

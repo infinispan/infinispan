@@ -45,6 +45,9 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryIterator;
 import org.infinispan.query.backend.IndexSearcherCloser;
 import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.backend.TransactionalEventTransactionContext;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -85,7 +88,7 @@ public class CacheQueryImpl implements CacheQuery {
    private Set<Class<?>> targetedEntities;
    private Cache cache;
 
-   public org.infinispan.util.logging.Log log;
+   private static final Log log = LogFactory.getLog(CacheQueryImpl.class);
 
 
    public CacheQueryImpl(Query luceneQuery, SearchFactoryImplementor searchFactory, Cache cache, Class... classes) {

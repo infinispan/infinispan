@@ -42,7 +42,7 @@ public class LocalQueryInterceptor extends QueryInterceptor {
    @Inject
    public void init(SearchFactoryImplementor searchFactory, TransactionManager transactionManager) {
 
-      if (log.isDebugEnabled()) log.debug("Entered LocalQueryInterceptor.init()");
+      log.debug("Entered LocalQueryInterceptor.init()");
 
       // Fields on superclass.
 

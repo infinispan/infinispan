@@ -170,8 +170,8 @@ public class KeyTransformationHandler {
     *
     * @param keyClass key class to analyze
     * @return a Transformer for this key, or null if the key type is not properly annotated.
-    * @throws IllegalAccessException if a Transformer instance cannot be created vai reflection.
-    * @throws InstantiationException if a Transformer instance cannot be created vai reflection.
+    * @throws IllegalAccessException if a Transformer instance cannot be created via reflection.
+    * @throws InstantiationException if a Transformer instance cannot be created via reflection.
     */
    private static Transformer getTransformer(Class<?> keyClass) {
       Transformable t = keyClass.getAnnotation(Transformable.class);

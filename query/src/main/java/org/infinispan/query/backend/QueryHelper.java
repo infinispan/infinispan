@@ -62,7 +62,7 @@ public class QueryHelper {
    private Class[] classes;
    private SearchFactoryImplementor searchFactory;
 
-   Log log = LogFactory.getLog(getClass());
+   private static final Log log = LogFactory.getLog(QueryHelper.class);
 
    /**
     * Constructor that will take in 3 params and build the searchFactory for Hibernate Search.
@@ -80,7 +80,7 @@ public class QueryHelper {
       // assume cache is already created and running.
       // otherwise, start the cache!!
       if (cache.getStatus().needToInitializeBeforeStart()) {
-         if(log.isDebugEnabled()) log.debug("Cache not started.  Starting cache first.");
+         log.debug("Cache not started.  Starting cache first.");
          cache.start();
       }
 
@@ -122,7 +122,7 @@ public class QueryHelper {
     */
 
    private void applyProperties(Configuration cfg) {
-      if (log.isDebugEnabled()) log.debug("Entered QueryHelper.applyProperties()");
+      log.debug("Entered QueryHelper.applyProperties()");
 
       if (cfg.isIndexingEnabled()) {
 
