@@ -93,7 +93,7 @@ import org.rhq.helpers.pluginAnnotations.agent.Operation;
  * @since 4.0
  */
 @SurvivesRestarts
-@MBean(objectName = CacheDelegate.OBJECT_NAME, description = "Component that acts as a manager, factory and container for caches in the system.")
+@MBean(objectName = CacheDelegate.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCache<K, V> {
    public static final String OBJECT_NAME = "Cache";
    protected InvocationContextContainer icc;

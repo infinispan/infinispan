@@ -63,8 +63,8 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    private Set<Component> nonCacheComponents;
 
    @Inject
-   public void initialize(AdvancedCache cache, GlobalConfiguration globalConfig) {
-      this.cache = cache;
+   public void initialize(Cache cache, GlobalConfiguration globalConfig) {
+      this.cache = cache.getAdvancedCache();
       this.globalConfig = globalConfig;
    }
 
