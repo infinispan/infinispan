@@ -4,7 +4,6 @@ import org.infinispan.CacheException;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.marshall.AbstractMarshaller;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.ContextClassResolver;
@@ -38,13 +37,12 @@ import java.net.URL;
 public class GenericJBossMarshaller extends AbstractMarshaller {
 
    protected static final Log log = LogFactory.getLog(JBossMarshaller.class);
-   protected static final String DEFAULT_MARSHALLER_FACTORY = "org.jboss.marshalling.river.RiverMarshallerFactory";
    protected ClassLoader defaultCl = this.getClass().getClassLoader();
    protected MarshallingConfiguration configuration;
    protected MarshallerFactory factory;
 
    public GenericJBossMarshaller() {
-      factory = (MarshallerFactory) Util.getInstance(DEFAULT_MARSHALLER_FACTORY);
+      factory = Marshalling.getMarshallerFactory("river");
 
       configuration = new MarshallingConfiguration();
       configuration.setCreator(new SunReflectiveCreator());
