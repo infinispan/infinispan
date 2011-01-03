@@ -39,8 +39,11 @@ import org.infinispan.factories.GlobalComponentRegistry;
  * <p />
  * Currently, the following properties are supported:
  * <ul>
- * <li><tt>infinispan.module.name</tt> - the name of the module</li>
- * <li><tt>infinispan.module.lifecycle</tt> - the name of the class implementing {@link ModuleLifecycle}.  This implementation would typically reside in the module's codebase.</li>
+ * <li><tt>infinispan.module.name</tt> - the name of the module.  The aim of this property is to identify
+ * each individual module, so the contents can be any valid String as long as it does not clash with the
+ * module name of another module's life cycle properties. </li>
+ * <li><tt>infinispan.module.lifecycle</tt> - the name of the class implementing {@link ModuleLifecycle}.
+ * This implementation would typically reside in the module's codebase.</li>
  * </ul>
  *
  * @author Manik Surtani
