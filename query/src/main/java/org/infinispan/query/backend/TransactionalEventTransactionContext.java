@@ -24,6 +24,7 @@ package org.infinispan.query.backend;
 
 import org.hibernate.search.backend.TransactionContext;
 import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
@@ -45,8 +46,8 @@ import javax.transaction.TransactionManager;
  */
 public class TransactionalEventTransactionContext implements TransactionContext {
 
-   TransactionManager transactionManager;
-   Log log;
+   private final TransactionManager transactionManager;
+   private static final Log log = LogFactory.getLog(TransactionalEventTransactionContext.class);
 
    /**
     * Creates a new instance of NodeModifiedTransactionContext.

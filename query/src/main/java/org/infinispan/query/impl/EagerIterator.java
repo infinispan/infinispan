@@ -121,9 +121,7 @@ public class EagerIterator extends AbstractIterator {
 
          for (int i = 1; i < bufferSize; i++) {
             if (index + i > max) {
-               if (log.isDebugEnabled()) {
-                  log.debug("Your current index + bufferSize exceeds the size of your number of hits");
-               }
+               log.debug("Your current index + bufferSize exceeds the size of your number of hits");
                break;
             }
 
@@ -172,9 +170,7 @@ public class EagerIterator extends AbstractIterator {
 
          for (int i = 1; i < bufferSize; i++) {
             if (index - i < first) {
-               if (log.isDebugEnabled()) {
-                  log.debug("Your current index - bufferSize exceeds the size of your number of hits");
-               }
+               log.debug("Your current index - bufferSize exceeds the size of your number of hits");
                break;
             }
             Object toBuffer = cache.get(idList.get(index - i));

@@ -37,12 +37,12 @@ import org.infinispan.query.impl.CacheQueryImpl;
  */
 public class QueryFactory {
 
-   private Cache cache;
-   private SearchFactoryImplementor searchFactory;
+   private final Cache cache;
+   private final SearchFactoryImplementor searchFactory;
 
    public QueryFactory(Cache cache, QueryHelper qh) {
       this.cache = cache;
-      searchFactory = qh.getSearchFactory();
+      this.searchFactory = qh.getSearchFactory();
    }
 
 
@@ -76,7 +76,6 @@ public class QueryFactory {
     * @return {@link org.infinispan.query.CacheQuery} result
     */
    public CacheQuery getBasicQuery(String field, String search) throws org.apache.lucene.queryParser.ParseException {
-
       QueryParser parser = new QueryParser(field, new StandardAnalyzer());
       org.apache.lucene.search.Query luceneQuery = parser.parse(search);
       return new CacheQueryImpl(luceneQuery, searchFactory, cache);

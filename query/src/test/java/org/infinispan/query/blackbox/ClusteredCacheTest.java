@@ -51,6 +51,9 @@ import static org.infinispan.config.Configuration.CacheMode.REPL_SYNC;
  */
 @Test(groups = "functional")
 public class ClusteredCacheTest extends MultipleCacheManagersTest {
+
+   private static final Log log = LogFactory.getLog(Person.class);
+   
    Cache<String, Person> cache1, cache2;
    Person person1;
    Person person2;
@@ -64,7 +67,6 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    String key1 = "Navin";
    String key2 = "BigGoat";
    String key3 = "MiniGoat";
-   private static final Log log = LogFactory.getLog(Person.class);
 
    public ClusteredCacheTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
