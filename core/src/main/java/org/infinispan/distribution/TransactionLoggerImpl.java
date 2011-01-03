@@ -39,7 +39,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    private static final int DRAIN_LOCK_THRESHOLD = 10;
 
    public void enable() {
-      log.info("Starting transaction logging");
+      log.debug("Starting transaction logging");
       enabled = true;
    }
 
@@ -58,7 +58,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    public void unlockAndDisable() {
       enabled = false;
       Util.safeRelease(loggingLock.writeLock());
-      log.info("Stopping transaction logging");
+      log.debug("Stopping transaction logging");
    }
 
    public boolean logIfNeeded(WriteCommand command) {
