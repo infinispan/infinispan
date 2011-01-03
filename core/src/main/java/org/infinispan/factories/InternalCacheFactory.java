@@ -89,7 +89,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       // injection bootstrap stuff
       componentRegistry = new ComponentRegistry(cacheName, configuration, spi, globalComponentRegistry, reflectionCache);
       componentRegistry.registerDefaultClassLoader(defaultClassLoader);
-      componentRegistry.registerComponent(spi, AdvancedCache.class);
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class);
    }
 

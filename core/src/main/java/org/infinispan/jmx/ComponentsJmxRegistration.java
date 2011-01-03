@@ -89,14 +89,14 @@ public class ComponentsJmxRegistration {
             if (!mBeanServer.isRegistered(objectName)) {
                try {
                   mBeanServer.registerMBean(resource, objectName);
-                  if (trace) log.trace("Registered " + resource + " under " + objectName);
+                  if (trace) log.trace(String.format("Registered %s under %s", resource, objectName));
                } catch (InstanceAlreadyExistsException e) {
                   //this might happen if multiple instances are trying to concurrently register same objectName
                   log.info("Could not register object with name:" + objectName + "(" + e.getMessage() + ")");
                }
             } else {
-               if (log.isInfoEnabled())
-                  log.info("Could not register object with name: " + objectName);
+               if (log.isDebugEnabled())
+                  log.debug(String.format("Object name %s already registered"), objectName);
             }
          }
       }
