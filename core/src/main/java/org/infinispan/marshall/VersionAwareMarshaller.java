@@ -48,7 +48,7 @@ import java.io.OutputStream;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
+public class VersionAwareMarshaller extends AbstractMarshaller implements StreamingMarshaller {
    private static final Log log = LogFactory.getLog(VersionAwareMarshaller.class);
    private boolean trace = log.isTraceEnabled();
 
