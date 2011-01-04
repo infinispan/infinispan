@@ -1,8 +1,10 @@
 package org.infinispan.marshall;
 
 import org.infinispan.io.ByteBuffer;
+import org.infinispan.io.ExposedByteArrayOutputStream;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Abstract Marshaller implementation containing shared implementations.
@@ -47,6 +49,20 @@ public abstract class AbstractMarshaller implements Marshaller {
    @Override
    public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
       return objectFromByteBuffer(buf, 0, buf.length);
+   }
+
+   /**
+    * This method implements {@link StreamingMarshaller#objectFromInputStream(java.io.InputStream)}, but its
+    * implementation has been moved here rather that keeping under a class that implements StreamingMarshaller
+    * in order to avoid code duplication.
+    */
+   public Object objectFromInputStream(InputStream inputStream) throws IOException, ClassNotFoundException {
+      int len = inputStream.available();
+      ExposedByteArrayOutputStream bytes = new ExposedByteArrayOutputStream(len);
+      byte[] buf = new byte[Math.min(len, 1024)];
+      int bytesRead;
+      while ((bytesRead = inputStream.read(buf, 0, buf.length)) != -1) bytes.write(buf, 0, bytesRead);
+      return objectFromByteBuffer(bytes.getRawBuffer(), 0, bytes.size());
    }
 
 }

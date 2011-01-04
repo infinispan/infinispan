@@ -13,7 +13,7 @@ import java.io.*;
  *
  * @author Manik Surtani
  */
-public class TestObjectStreamMarshaller extends AbstractStreamingMarshaller {
+public class TestObjectStreamMarshaller extends AbstractMarshaller implements StreamingMarshaller {
    XStream xs = new XStream();
    boolean debugXml = false;
 

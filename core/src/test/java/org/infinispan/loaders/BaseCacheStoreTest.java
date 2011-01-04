@@ -464,8 +464,9 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    }
 
    public void testPurgeExpired() throws Exception {
-      long lifespan = 3000;
-      long idle = 2000;
+      // Increased lifespan and idle timeouts to accommodate slower cache stores
+      long lifespan = 6000;
+      long idle = 4000;
       cs.store(InternalEntryFactory.create("k1", "v1", lifespan));
       cs.store(InternalEntryFactory.create("k2", "v2", -1, idle));
       cs.store(InternalEntryFactory.create("k3", "v3", lifespan, idle));
@@ -666,7 +667,8 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.store(InternalEntryFactory.create("k1", "v1", 100));
       Thread.sleep(200);
       assert null == cs.load("k1");
-      cs.store(InternalEntryFactory.create("k1", "v2", 100));
+      // Increased lifespan to accommodate slower cache stores
+      cs.store(InternalEntryFactory.create("k1", "v2", 4000));
       assert cs.load("k1").getValue().equals("v2");
    }
 }
