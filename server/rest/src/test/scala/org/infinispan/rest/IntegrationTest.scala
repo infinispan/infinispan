@@ -2,17 +2,18 @@ package org.infinispan.rest
 
 
 import org.apache.commons.httpclient.methods._
-import org.apache.commons.httpclient.{Header, HttpClient}
-import org.infinispan.container.entries.CacheEntry
 import javax.servlet.http.{HttpServletResponse}
 import org.infinispan.remoting.MIMECacheEntry
 import java.io._
 import org.testng.annotations.Test
 import org.testng.Assert._
 import java.lang.reflect.Method
-import org.infinispan.manager.{CacheContainer, DefaultCacheManager}
+import org.infinispan.manager.CacheContainer
 import scala.math._
 import org.infinispan.test.TestingUtil
+import java.util.{Calendar, Locale}
+import java.text.SimpleDateFormat
+import org.apache.commons.httpclient.{HttpMethodBase, Header, HttpClient}
 
 /**
  * This tests using the Apache HTTP commons client library - but you could use anything
@@ -23,11 +24,14 @@ import org.infinispan.test.TestingUtil
  * @author Galder Zamarreño
  * @since 4.0
  */
+
 @Test(groups = Array("functional"), testName = "rest.IntegrationTest")
 class IntegrationTest {
    val HOST = "http://localhost:8888/"
    val cacheName = CacheContainer.DEFAULT_CACHE_NAME
    val fullPath = HOST + "rest/" + cacheName
+   val DATE_PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz";
+
    //val HOST = "http://localhost:8080/infinispan/"
 
    def testBasicOperation(m: Method) = {
@@ -99,11 +103,11 @@ class IntegrationTest {
       assertEquals(
          HttpServletResponse.SC_NOT_FOUND,
          Client.call(new GetMethod(HOST + "rest/" + cacheName + "/nodata")).getStatusCode
-         )
+      )
    }
 
    def testGet(m: Method) = {
-      val fullPathKey = fullPath + "/" + m.getName      
+      val fullPathKey = fullPath + "/" + m.getName
       val post = new PostMethod(fullPathKey)
       post.setRequestHeader("Content-Type", "application/text")
       post.setRequestBody("data")
@@ -263,9 +267,9 @@ class IntegrationTest {
 
       val obj = new MySer
       obj.name = "mic"
-      ManagerInstance getCache(CacheContainer.DEFAULT_CACHE_NAME) put (m.getName, obj)
-      ManagerInstance getCache(CacheContainer.DEFAULT_CACHE_NAME) put (m.getName + "2", "hola")
-      ManagerInstance getCache(CacheContainer.DEFAULT_CACHE_NAME) put (m.getName + "3", new MyNonSer)
+      ManagerInstance getCache (CacheContainer.DEFAULT_CACHE_NAME) put (m.getName, obj)
+      ManagerInstance getCache (CacheContainer.DEFAULT_CACHE_NAME) put (m.getName + "2", "hola")
+      ManagerInstance getCache (CacheContainer.DEFAULT_CACHE_NAME) put (m.getName + "3", new MyNonSer)
 
       //check we can get it back as an object...
       val get = new GetMethod(fullPathKey);
@@ -353,6 +357,66 @@ class IntegrationTest {
 
       assertEquals(serializedOnClient, bytesRead)
    }
+
+   def testIfUnmodifiedSince(m: Method) = {
+      put(m)
+      var result = get(m)
+      val dateLast = result.getResponseHeader("Last-Modified").getValue()
+      val dateMinus = addDay(dateLast, -1)
+      val datePlus = addDay(dateLast, 1)
+
+      result = get(m, Some(dateLast))
+      assertEquals(HttpServletResponse.SC_OK, result.getStatusCode)
+      assertNotNull(result.getResponseBodyAsString())
+      result = get(m, Some(datePlus))
+      assertEquals(HttpServletResponse.SC_OK, result.getStatusCode)
+      assertNotNull(result.getResponseBodyAsString())
+      result = get(m, Some(dateMinus))
+      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, result.getStatusCode)
+   }
+
+   def testETagChanges(m: Method) = {
+      put(m, "data1")
+      val eTagFirst = get(m).getResponseHeader("ETag").getValue()
+      // second get should get the same ETag
+      assertEquals(eTagFirst, get(m).getResponseHeader("ETag").getValue())
+      // do second PUT
+      put(m, "data2")
+      // get ETag again
+      val eTagSecond = get(m).getResponseHeader("ETag").getValue()
+      // println("etag1 %s; etag2 %s; equals? %b".format(eTagFirst, eTagSecond, eTagFirst.equals(eTagSecond)))
+      assertFalse(eTagFirst.equals(eTagSecond))
+   }
+
+   private def put(m: Method): HttpMethodBase = put(m, "data")
+
+   private def put(m: Method, data: String): HttpMethodBase = {
+      val put = new PutMethod(fullPathKey(m))
+      put.setRequestHeader("Content-Type", "application/text")
+      put.setRequestBody(data)
+      Client call put
+   }
+
+   private def get(m: Method): HttpMethodBase = get(m, None)
+
+   private def get(m: Method, unmodifiedSince: Option[String]): HttpMethodBase = {
+      val get = new GetMethod(fullPathKey(m))
+      if (unmodifiedSince != None)
+         get.setRequestHeader("If-Unmodified-Since", unmodifiedSince.get)
+
+      Client call get
+   }
+
+   private def fullPathKey(m: Method): String = fullPath + "/" + m.getName
+
+   def addDay(aDate: String, days: Int): String = {
+      val format = new SimpleDateFormat(DATE_PATTERN_RFC1123, Locale.US)
+      val date = format.parse(aDate)
+      val cal = Calendar.getInstance()
+      cal.setTime(date)
+      cal.add(Calendar.DATE, days)
+      format.format(cal.getTime())
+   }
 }
 
 
@@ -361,14 +425,19 @@ class MyNonSer {
 
    def getName = name
 
-   def setName(s: String) = {name = s}
+   def setName(s: String) = {
+      name = s
+   }
 }
 
 class MySer extends Serializable {
    var name: String = "mic"
 
    /**These are needed for Jackson to Do Its Thing */
+
    def getName = name
 
-   def setName(s: String) = {name = s}
+   def setName(s: String) = {
+      name = s
+   }
 }
