@@ -37,10 +37,11 @@ public class TreeStructureSupport extends AutoBatchSupport {
 
    protected final Cache<NodeKey, AtomicMap<?, ?>> cache;
    protected final InvocationContextContainer icc;
+   protected final TreeContextContainer tcc = new TreeContextContainer();
 
    @SuppressWarnings("unchecked")
    public TreeStructureSupport(Cache<?, ?> cache, BatchContainer batchContainer, InvocationContextContainer icc) {
-      this.cache = (Cache<NodeKey, AtomicMap<?, ?>>) cache;
+      this.cache = new CacheAdapter((Cache<NodeKey, AtomicMap<?, ?>>) cache, tcc, icc);
       this.batchContainer = batchContainer;
       this.icc = icc;
    }
@@ -124,4 +125,13 @@ public class TreeStructureSupport extends AutoBatchSupport {
    protected final <K, V> AtomicMap<K, V> getAtomicMap(NodeKey key) {
       return AtomicMapLookup.getAtomicMap(cache, key);
    }
+
+// This does not work cos code outside control of tree module will execute ops in cache, see CacheAdapter javadoc
+//
+//   protected final Cache<NodeKey, AtomicMap<?, ?>> withTreeFlags(Cache<NodeKey, AtomicMap<?, ?>> cache) {
+//      if (tcc.getTreeContext() != null)
+//         icc.createInvocationContext().setFlags(tcc.getTreeContext().getFlags());
+//      return cache;
+//   }
+//
 }

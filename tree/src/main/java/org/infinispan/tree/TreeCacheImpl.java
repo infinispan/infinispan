@@ -52,8 +52,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public Node<K, V> getRoot(Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return getRoot();
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return getRoot();
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public V put(String fqn, K key, V value) {
@@ -61,8 +65,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public V put(String fqn, K key, V value, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return put(fqn, key, value);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return put(fqn, key, value);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public void put(Fqn fqn, Map<? extends K, ? extends V> data) {
@@ -79,8 +87,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public void put(Fqn fqn, Map<? extends K, ? extends V> data, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      put(fqn, data);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         put(fqn, data);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public void put(String fqn, Map<? extends K, ? extends V> data) {
@@ -88,8 +100,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public void put(String fqn, Map<? extends K, ? extends V> data, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      put(fqn, data);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         put(fqn, data);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public V remove(Fqn fqn, K key) {
@@ -104,8 +120,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public V remove(Fqn fqn, K key, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return remove(fqn, key);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return remove(fqn, key);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public V remove(String fqn, K key) {
@@ -113,8 +133,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public V remove(String fqn, K key, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return remove(fqn, key);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return remove(fqn, key);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public boolean removeNode(Fqn fqn) {
@@ -134,8 +158,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public boolean removeNode(Fqn fqn, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return removeNode(fqn);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return removeNode(fqn);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public boolean removeNode(String fqn) {
@@ -143,8 +171,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public boolean removeNode(String fqn, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return removeNode(fqn);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return removeNode(fqn);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public Node<K, V> getNode(Fqn fqn) {
@@ -160,8 +192,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public Node<K, V> getNode(Fqn fqn, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return getNode(fqn);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return getNode(fqn);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public Node<K, V> getNode(String fqn) {
@@ -169,8 +205,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public Node<K, V> getNode(String fqn, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return getNode(fqn);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return getNode(fqn);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public V get(Fqn fqn, K key) {
@@ -180,8 +220,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public V get(Fqn fqn, K key, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return get(fqn, key);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return get(fqn, key);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public boolean exists(String f) {
@@ -189,13 +233,21 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public boolean exists(String fqn, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return exists(fqn);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return exists(fqn);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public boolean exists(Fqn fqn, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return exists(fqn);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return exists(fqn);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public V get(String fqn, K key) {
@@ -203,8 +255,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public V get(String fqn, K key, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return get(fqn, key);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return get(fqn, key);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public void move(Fqn nodeToMoveFqn, Fqn newParentFqn) throws NodeNotExistsException {
@@ -253,8 +309,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public void move(Fqn nodeToMove, Fqn newParent, Flag... flags) throws NodeNotExistsException {
-      icc.createInvocationContext().setFlags(flags);
-      move(nodeToMove, newParent);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         move(nodeToMove, newParent);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public void move(String nodeToMove, String newParent) throws NodeNotExistsException {
@@ -262,8 +322,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public void move(String nodeToMove, String newParent, Flag... flags) throws NodeNotExistsException {
-      icc.createInvocationContext().setFlags(flags);
-      move(nodeToMove, newParent);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         move(nodeToMove, newParent);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public Map<K, V> getData(Fqn fqn) {
@@ -277,8 +341,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public Map<K, V> getData(Fqn fqn, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return getData(fqn);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return getData(fqn);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public Set<K> getKeys(String fqn) {
@@ -286,8 +354,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public Set<K> getKeys(String fqn, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return getKeys(fqn);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return getKeys(fqn);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public Set<K> getKeys(Fqn fqn) {
@@ -301,8 +373,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public Set<K> getKeys(Fqn fqn, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return getKeys(fqn);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return getKeys(fqn);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public void clearData(String fqn) {
@@ -310,7 +386,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public void clearData(String fqn, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         clearData(fqn);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public void clearData(Fqn fqn) {
@@ -324,7 +405,12 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public void clearData(Fqn fqn, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         clearData(fqn);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public V put(Fqn fqn, K key, V value) {
@@ -342,12 +428,18 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public V put(Fqn fqn, K key, V value, Flag... flags) {
-      icc.createInvocationContext().setFlags(flags);
-      return put(fqn, key, value);
+      tcc.createTreeContext().setFlags(flags);
+      try {
+         return put(fqn, key, value);
+      } finally {
+         tcc.suspend();
+      }
    }
 
    public Cache<?, ?> getCache() {
-      return cache;
+      // Retrieve the advanced cache as a way to retrieve
+      // the cache behind the cache adapter.
+      return cache.getAdvancedCache();
    }
 
    // ------------------ nothing different; just delegate to the cache
