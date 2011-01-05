@@ -11,6 +11,7 @@ import org.infinispan.remoting.MIMECacheEntry
 import org.infinispan.manager._
 import org.codehaus.jackson.map.ObjectMapper
 import org.infinispan.{CacheException, Cache}
+import org.infinispan.util.hash.MurmurHash2
 
 /**
  * Integration server linking REST requests with Infinispan calls.
@@ -126,7 +127,7 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
       ManagerInstance.getCache(cacheName).clear
    }
 
-   def calcETAG(entry: MIMECacheEntry) = new EntityTag(entry.contentType + entry.lastModified + entry.data.length)
+   def calcETAG(entry: MIMECacheEntry) = new EntityTag(entry.contentType + MurmurHash2.hash(entry.data))
 
    private def protectCacheNotFound(request: Request, useAsync: Boolean) (op: (Request, Boolean) => Response): Response = {
       try {
