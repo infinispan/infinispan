@@ -10,8 +10,8 @@ import org.infinispan.util.ByteArrayKey;
  * <p />
  * Other implementations are documented on Wikipedia's <a href="http://en.wikipedia.org/wiki/MurmurHash">MurmurHash</a> page.
  * <p />
- * @see {@link http://en.wikipedia.org/wiki/MurmurHash}
- * @see {@link http://sites.google.com/site/murmurhash/}
+ * @see <a href="http://sites.google.com/site/murmurhash/">MurmurHash website</a>
+ * @see <a href="http://en.wikipedia.org/wiki/MurmurHash/">MurmurHash entry on Wikipedia</a>
  * @author Manik Surtani
  * @version 4.1
  */
