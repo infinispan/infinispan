@@ -158,6 +158,9 @@ public class TransactionXaAdapter implements XAResource {
 
    public void end(Xid xid, int i) throws XAException {
       if (trace) log.trace("end called on tx " + this.localTransaction.getGlobalTransaction());
+      // force a cleanup to release any objects held.  Some TMs don't call commit if it is a READ ONLY tx.  See ISPN-845
+      LocalTransaction localTransaction = txTable.getLocalTransaction(xid);
+      if (localTransaction != null && localTransaction.isReadOnly()) commit(xid, false);
    }
 
    public void forget(Xid xid) throws XAException {
