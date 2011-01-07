@@ -1084,7 +1084,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       if (clustering.mode.isDistributed() && clustering.stateRetrieval.fetchInMemoryState)
          throw new ConfigurationException("Cache cannot use DISTRIBUTION mode and have fetchInMemoryState set to true.  Perhaps you meant to enable rehashing?");
 
-      if (clustering.mode.isClustered() && (globalConfiguration.getTransportClass() == null || globalConfiguration.getTransportClass().length() == 0))
+      if (clustering.mode.isClustered() && (globalConfiguration != null
+            && (globalConfiguration.getTransportClass() == null || globalConfiguration.getTransportClass().length() == 0)))
          throw new ConfigurationException("Cache cannot use a clustered mode (" + clustering.mode + ") mode and not define a transport!");
    }
 
@@ -1732,6 +1733,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        */
       private static final long serialVersionUID = 3709234918426217096L;
 
+      // Do not switch default value to true, otherwise DIST caches have to explicitly disable it.
       @Dynamic
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setFetchInMemoryState")
       protected Boolean fetchInMemoryState = false;
