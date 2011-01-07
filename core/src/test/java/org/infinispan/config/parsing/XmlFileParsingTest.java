@@ -167,7 +167,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       Map<String, Configuration> namedCaches = parser.parseNamedConfigurations();
 
-      Configuration c = namedCaches.get("transactional");
+      Configuration c = getNamedCacheConfig(namedCaches, "transactional");
 
       assert !c.getCacheMode().isClustered();
       assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
@@ -175,37 +175,37 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.isEagerLockSingleNode();
       assert !c.isSyncRollbackPhase();
 
-      c = namedCaches.get("transactional2");
+      c = getNamedCacheConfig(namedCaches, "transactional2");
       assert c.getTransactionManagerLookupClass().equals("org.something.Lookup");
 
-      c = namedCaches.get("syncRepl");
+      c = getNamedCacheConfig(namedCaches, "syncRepl");
 
       assert c.getCacheMode() == Configuration.CacheMode.REPL_SYNC;
       assert !c.isFetchInMemoryState();
       assert c.getSyncReplTimeout() == 15000;
 
-      c = namedCaches.get("asyncRepl");
+      c = getNamedCacheConfig(namedCaches, "asyncRepl");
 
       assert c.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
       assert !c.isUseReplQueue();
       assert !c.isUseAsyncMarshalling();
       assert !c.isFetchInMemoryState();
 
-      c = namedCaches.get("asyncReplQueue");
+      c = getNamedCacheConfig(namedCaches, "asyncReplQueue");
 
       assert c.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
       assert c.isUseReplQueue();
       assert !c.isUseAsyncMarshalling();
       assert !c.isFetchInMemoryState();
 
-      c = namedCaches.get("txSyncRepl");
+      c = getNamedCacheConfig(namedCaches, "txSyncRepl");
 
       assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
       assert c.getCacheMode() == Configuration.CacheMode.REPL_SYNC;
       assert !c.isFetchInMemoryState();
       assert c.getSyncReplTimeout() == 15000;
 
-      c = namedCaches.get("overriding");
+      c = getNamedCacheConfig(namedCaches, "overriding");
 
       assert c.getTransactionManagerLookupClass() == null;
       assert c.getCacheMode() == Configuration.CacheMode.LOCAL;
@@ -214,10 +214,10 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getIsolationLevel() == IsolationLevel.REPEATABLE_READ;
       assert !c.isUseLazyDeserialization();
 
-      c = namedCaches.get("lazyDeserialization");
+      c = getNamedCacheConfig(namedCaches, "lazyDeserialization");
       assert c.isUseLazyDeserialization();
 
-      c = namedCaches.get("withLoader");
+      c = getNamedCacheConfig(namedCaches, "withLoader");
       CacheLoaderManagerConfig loaderManagerConfig = c.getCacheLoaderManagerConfig();
       assert loaderManagerConfig.isPreload();
       assert !loaderManagerConfig.isPassivation();
@@ -235,14 +235,14 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert csConf.getAsyncStoreConfig().getFlushLockTimeout() == 15000;
       assert csConf.getAsyncStoreConfig().isEnabled();
 
-      c = namedCaches.get("withouthJmxEnabled");
+      c = getNamedCacheConfig(namedCaches, "withouthJmxEnabled");
       assert !c.isExposeJmxStatistics();
       assert !gc.isExposeGlobalJmxStatistics();
       assert gc.isAllowDuplicateDomains();
       assert gc.getJmxDomain().equals("funky_domain");
       assert gc.getMBeanServerLookup().equals("org.infinispan.jmx.PerThreadMBeanServerLookup");
 
-      c = namedCaches.get("dist");
+      c = getNamedCacheConfig(namedCaches, "dist");
       assert c.getCacheMode() == Configuration.CacheMode.DIST_SYNC;
       assert c.getL1Lifespan() == 600000;
       assert c.getRehashWaitTime() == 120000;
@@ -250,21 +250,27 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getNumOwners() == 3;
       assert c.isL1CacheEnabled();
 
-      c = namedCaches.get("cacheWithCustomInterceptors");
+      c = getNamedCacheConfig(namedCaches, "cacheWithCustomInterceptors");
       assert !c.getCustomInterceptors().isEmpty();
       assert c.getCustomInterceptors().size() == 5;
 
-      c = namedCaches.get("evictionCache");
+      c = getNamedCacheConfig(namedCaches, "evictionCache");
       assert c.getEvictionMaxEntries() == 5000;
       assert c.getEvictionStrategy().equals(EvictionStrategy.FIFO);
       assert c.getExpirationLifespan() == 60000;
       assert c.getExpirationMaxIdle() == 1000;
       assert c.getEvictionThreadPolicy() == EvictionThreadPolicy.PIGGYBACK;
 
-      c = namedCaches.get("withDeadlockDetection");
+      c = getNamedCacheConfig(namedCaches, "withDeadlockDetection");
       assert c.isEnableDeadlockDetection();
       assert c.getDeadlockDetectionSpinDuration() == 1221;
       assert c.getCacheMode() == Configuration.CacheMode.DIST_SYNC;
+   }
+
+   private Configuration getNamedCacheConfig(Map<String, Configuration> namedCaches, String cacheName) {
+      Configuration c = namedCaches.get(cacheName);
+      c.assertValid();
+      return c;
    }
 
    private void testConfigurationMerging(XmlConfigurationParser parser) throws IOException {
@@ -273,7 +279,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       Map<String, Configuration> namedCaches = parser.parseNamedConfigurations();
 
       Configuration c = defaultCfg.clone();
-      c.applyOverrides(namedCaches.get("transactional"));
+      c.applyOverrides(getNamedCacheConfig(namedCaches, "transactional"));
 
       assert c.getCacheMode() == Configuration.CacheMode.LOCAL;
       assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
@@ -282,7 +288,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getIsolationLevel() == IsolationLevel.READ_COMMITTED;
 
       c = defaultCfg.clone();
-      c.applyOverrides(namedCaches.get("syncRepl"));
+      c.applyOverrides(getNamedCacheConfig(namedCaches, "syncRepl"));
 
       assert c.getTransactionManagerLookupClass() == null;
       assert c.getCacheMode() == Configuration.CacheMode.REPL_SYNC;
@@ -293,7 +299,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getConcurrencyLevel() == 100;
 
       c = defaultCfg.clone();
-      c.applyOverrides(namedCaches.get("asyncRepl"));
+      c.applyOverrides(getNamedCacheConfig(namedCaches, "asyncRepl"));
 
       assert c.getTransactionManagerLookupClass() == null;
       assert c.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
@@ -305,7 +311,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getConcurrencyLevel() == 100;
 
       c = defaultCfg.clone();
-      c.applyOverrides(namedCaches.get("asyncReplQueue"));
+      c.applyOverrides(getNamedCacheConfig(namedCaches, "asyncReplQueue"));
 
       assert c.getTransactionManagerLookupClass() == null;
       assert c.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
@@ -319,7 +325,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getConcurrencyLevel() == 100;
 
       c = defaultCfg.clone();
-      c.applyOverrides(namedCaches.get("txSyncRepl"));
+      c.applyOverrides(getNamedCacheConfig(namedCaches, "txSyncRepl"));
       assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
       assert c.getCacheMode() == Configuration.CacheMode.REPL_SYNC;
       assert !c.isFetchInMemoryState();
@@ -329,7 +335,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getConcurrencyLevel() == 100;
 
       c = defaultCfg.clone();
-      c.applyOverrides(namedCaches.get("overriding"));
+      c.applyOverrides(getNamedCacheConfig(namedCaches, "overriding"));
 
       assert c.getTransactionManagerLookupClass() == null;
       assert c.getCacheMode() == Configuration.CacheMode.LOCAL;
@@ -338,19 +344,19 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getIsolationLevel() == IsolationLevel.REPEATABLE_READ;
 
       c = defaultCfg.clone();
-      c.applyOverrides(namedCaches.get("lazyDeserialization"));
+      c.applyOverrides(getNamedCacheConfig(namedCaches, "lazyDeserialization"));
       assert c.isUseLazyDeserialization();
       assert !c.isExposeJmxStatistics();
 
       c = defaultCfg.clone();
-      c.applyOverrides(namedCaches.get("withReplicationQueue"));
+      c.applyOverrides(getNamedCacheConfig(namedCaches, "withReplicationQueue"));
       assert c.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
       assert c.isUseReplQueue();
       assert c.getReplQueueInterval() == 100;
       assert c.getReplQueueMaxElements() == 200;
 
       c = defaultCfg.clone();
-      Configuration configurationWL = namedCaches.get("withLoader");
+      Configuration configurationWL = getNamedCacheConfig(namedCaches, "withLoader");
       configurationWL.getCacheLoaderManagerConfig().setShared(true);
       FileCacheStoreConfig clc = (FileCacheStoreConfig)configurationWL.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig();
       clc.getSingletonStoreConfig().setPushStateTimeout(254L);
