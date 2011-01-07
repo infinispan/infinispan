@@ -8,6 +8,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.NamedCacheNotFoundException;
 import org.infinispan.marshall.StreamingMarshaller;
@@ -46,7 +47,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
 
    private boolean isDefined(String cacheName) {
       log.error("Defined caches: {0}", embeddedCacheManager.getCacheNames());
-      return embeddedCacheManager.getCacheNames().contains(cacheName);
+      return CacheContainer.DEFAULT_CACHE_NAME.equals(cacheName) || embeddedCacheManager.getCacheNames().contains(cacheName);
    }
 
    public Response handle(CacheRpcCommand cmd) throws Throwable {
