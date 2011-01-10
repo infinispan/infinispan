@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -191,9 +191,6 @@ class ExternalizerTable implements ObjectTable {
       Class clazz = o.getClass();
       Writer writer = writers.get(clazz);
       if (writer == null) {
-         if (log.isTraceEnabled())
-            log.trace("No externalizer available for {0}", clazz);
-
          if (Thread.currentThread().isInterrupted())
             throw new IOException(String.format(
                   "Cache manager is shutting down, so type write externalizer for type=%s cannot be resolved. Interruption being pushed up.",
