@@ -1,12 +1,14 @@
 package org.infinispan.container.entries;
 
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
 /**
  * A cache entry that is mortal.  I.e., has a lifespan.
@@ -108,8 +110,8 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       return clone;
    }
 
-   @Marshalls(typeClasses = MortalCacheEntry.class, id = Ids.MORTAL_ENTRY)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<MortalCacheEntry> {
+   public static class Externalizer extends AbstractExternalizer<MortalCacheEntry> {
+      @Override
       public void writeObject(ObjectOutput output, MortalCacheEntry mce) throws IOException {
          output.writeObject(mce.key);
          output.writeObject(mce.cacheValue.value);
@@ -117,13 +119,24 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
          output.writeLong(mce.cacheValue.lifespan); // could be negative so should not use unsigned longs
       }
 
+      @Override
       public MortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
          Long lifespan = input.readLong();
          return new MortalCacheEntry(k, v, lifespan, created);
-      }      
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.MORTAL_ENTRY;
+      }
+
+      @Override
+      public Set<Class<? extends MortalCacheEntry>> getTypeClasses() {
+         return Util.<Class<? extends MortalCacheEntry>>asSet(MortalCacheEntry.class);
+      }
    }
 
    @Override

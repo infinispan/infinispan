@@ -25,9 +25,11 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.util.Set;
 
 import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.util.Util;
 
 /**
  * Header for Lucene files. Store only basic info about file. File data is divided into byte[]
@@ -117,8 +119,7 @@ public final class FileMetadata implements Serializable {
       return "FileMetadata{" + "lastModified=" + lastModified + ", size=" + size + '}';
    }
    
-   @Marshalls(typeClasses = FileMetadata.class, id = ExternalizerIds.FILE_METADATA)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<FileMetadata> {
+   public static class Externalizer extends AbstractExternalizer<FileMetadata> {
 
       @Override
       public void writeObject(ObjectOutput output, FileMetadata metadata) throws IOException {
@@ -133,6 +134,16 @@ public final class FileMetadata implements Serializable {
          long size = UnsignedNumeric.readUnsignedLong(input);
          int bufferSize = UnsignedNumeric.readUnsignedInt(input);
          return new FileMetadata(lastModified, size, bufferSize);
+      }
+
+      @Override
+      public Integer getId() {
+         return ExternalizerIds.FILE_METADATA;
+      }
+
+      @Override
+      public Set<Class<? extends FileMetadata>> getTypeClasses() {
+         return Util.<Class<? extends FileMetadata>>asSet(FileMetadata.class);
       }
 
    }

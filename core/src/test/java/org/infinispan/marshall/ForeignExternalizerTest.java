@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
+
 package org.infinispan.marshall;
 
 import org.infinispan.Cache;
@@ -8,6 +30,7 @@ import org.infinispan.config.GlobalConfiguration.ExternalizersType;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -17,6 +40,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Tests configuration of user defined {@link Externalizer} implementations
@@ -92,8 +116,7 @@ public class ForeignExternalizerTest extends MultipleCacheManagersTest {
          return this;
       }
 
-      @Marshalls(typeClasses = IdViaConfigObj.class)
-      public static class Externalizer implements org.infinispan.marshall.Externalizer<IdViaConfigObj> {
+      public static class Externalizer extends AbstractExternalizer<IdViaConfigObj> {
          @Override
          public void writeObject(ObjectOutput output, IdViaConfigObj object) throws IOException {
             output.writeUTF(object.name);
@@ -102,6 +125,11 @@ public class ForeignExternalizerTest extends MultipleCacheManagersTest {
          @Override
          public IdViaConfigObj readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             return new IdViaConfigObj().setName(input.readUTF());
+         }
+
+         @Override
+         public Set<Class<? extends IdViaConfigObj>> getTypeClasses() {
+            return Util.<Class<? extends IdViaConfigObj>>asSet(IdViaConfigObj.class);
          }
       }
    }
@@ -114,8 +142,7 @@ public class ForeignExternalizerTest extends MultipleCacheManagersTest {
          return this;
       }
 
-      @Marshalls(typeClasses = IdViaAnnotationObj.class, id = 5678)
-      public static class Externalizer implements org.infinispan.marshall.Externalizer<IdViaAnnotationObj> {
+      public static class Externalizer extends AbstractExternalizer<IdViaAnnotationObj> {
          @Override
          public void writeObject(ObjectOutput output, IdViaAnnotationObj object) throws IOException {
             output.writeObject(object.date);
@@ -124,6 +151,16 @@ public class ForeignExternalizerTest extends MultipleCacheManagersTest {
          @Override
          public IdViaAnnotationObj readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             return new IdViaAnnotationObj().setDate((Date) input.readObject());
+         }
+
+         @Override
+         public Integer getId() {
+            return 5678;
+         }
+
+         @Override
+         public Set<Class<? extends IdViaAnnotationObj>> getTypeClasses() {
+            return Util.<Class<? extends IdViaAnnotationObj>>asSet(IdViaAnnotationObj.class);
          }
       }
    }
@@ -136,8 +173,7 @@ public class ForeignExternalizerTest extends MultipleCacheManagersTest {
          return this;
       }
 
-      @Marshalls(typeClasses = IdViaBothObj.class, id = 9012)
-      public static class Externalizer implements org.infinispan.marshall.Externalizer<IdViaBothObj> {
+      public static class Externalizer extends AbstractExternalizer<IdViaBothObj> {
          @Override
          public void writeObject(ObjectOutput output, IdViaBothObj object) throws IOException {
             output.writeInt(object.age);
@@ -146,6 +182,16 @@ public class ForeignExternalizerTest extends MultipleCacheManagersTest {
          @Override
          public IdViaBothObj readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             return new IdViaBothObj().setAge(input.readInt());
+         }
+
+         @Override
+         public Integer getId() {
+            return 9012;
+         }
+
+         @Override
+         public Set<Class<? extends IdViaBothObj>> getTypeClasses() {
+            return Util.<Class<? extends IdViaBothObj>>asSet(IdViaBothObj.class);
          }
       }
    }

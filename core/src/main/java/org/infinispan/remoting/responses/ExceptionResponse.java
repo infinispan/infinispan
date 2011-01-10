@@ -3,9 +3,11 @@ package org.infinispan.remoting.responses;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 
 /**
  * A response that encapsulates an exception
@@ -31,14 +33,25 @@ public class ExceptionResponse extends InvalidResponse {
       this.exception = exception;
    }
 
-   @Marshalls(typeClasses = ExceptionResponse.class, id = Ids.EXCEPTION_RESPONSE)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<ExceptionResponse> {
+   public static class Externalizer extends AbstractExternalizer<ExceptionResponse> {
+      @Override
       public void writeObject(ObjectOutput output, ExceptionResponse response) throws IOException {
          output.writeObject(response.exception);
       }
 
+      @Override
       public ExceptionResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new ExceptionResponse((Exception) input.readObject());
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.EXCEPTION_RESPONSE;
+      }
+
+      @Override
+      public Set<Class<? extends ExceptionResponse>> getTypeClasses() {
+         return Util.<Class<? extends ExceptionResponse>>asSet(ExceptionResponse.class);
       }
    }
 }

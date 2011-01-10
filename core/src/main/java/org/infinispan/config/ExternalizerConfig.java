@@ -22,8 +22,6 @@
 package org.infinispan.config;
 
 import org.infinispan.marshall.Externalizer;
-import org.infinispan.marshall.Marshalls;
-import org.infinispan.util.ReflectionUtil;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -74,10 +72,8 @@ public class ExternalizerConfig extends AbstractConfigurationBeanWithGCR {
    }
 
    public Integer getId() {
-      if (id == null && externalizer != null) {
-         Marshalls marshalls = ReflectionUtil.getAnnotation(externalizer.getClass(), Marshalls.class);
-         id = marshalls.id();
-      }
+      if (id == null && externalizer != null)
+         id = externalizer.getId();
       return id;
    }
 

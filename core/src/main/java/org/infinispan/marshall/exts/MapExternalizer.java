@@ -21,11 +21,11 @@
  */
 package org.infinispan.marshall.exts;
 
-import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.MarshallUtil;
-import org.infinispan.marshall.Marshalls;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.FastCopyHashMap;
+import org.infinispan.util.Util;
 import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
@@ -33,6 +33,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -42,8 +43,7 @@ import java.util.TreeMap;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Marshalls(typeClasses = {HashMap.class, TreeMap.class, FastCopyHashMap.class}, id = Ids.MAPS)
-public class MapExternalizer implements Externalizer<Map> {
+public class MapExternalizer extends AbstractExternalizer<Map> {
    private static final int HASHMAP = 0;
    private static final int TREEMAP = 1;
    private static final int FASTCOPYHASHMAP = 2;
@@ -55,12 +55,14 @@ public class MapExternalizer implements Externalizer<Map> {
       numbers.put(FastCopyHashMap.class, FASTCOPYHASHMAP);
    }
 
+   @Override
    public void writeObject(ObjectOutput output, Map map) throws IOException {
       int number = numbers.get(map.getClass(), -1);
       output.write(number);
       MarshallUtil.marshallMap(map, output);
    }
 
+   @Override
    public Map readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int magicNumber = input.readUnsignedByte();
       Map subject = null;
@@ -77,5 +79,16 @@ public class MapExternalizer implements Externalizer<Map> {
       }
       MarshallUtil.unmarshallMap(subject, input);
       return subject;
+   }
+
+   @Override
+   public Integer getId() {
+      return Ids.MAPS;
+   }
+
+   @Override
+   public Set<Class<? extends Map>> getTypeClasses() {
+      return Util.<Class<? extends Map>>asSet(
+            HashMap.class, TreeMap.class, FastCopyHashMap.class);
    }
 }

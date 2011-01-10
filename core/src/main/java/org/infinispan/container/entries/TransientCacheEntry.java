@@ -1,12 +1,14 @@
 package org.infinispan.container.entries;
 
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
 /**
  * A cache entry that is transient, i.e., it can be considered expired after a period of not being used.
@@ -110,8 +112,8 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       return clone;
    }
 
-   @Marshalls(typeClasses = TransientCacheEntry.class, id = Ids.TRANSIENT_ENTRY)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<TransientCacheEntry> {
+   public static class Externalizer extends AbstractExternalizer<TransientCacheEntry> {
+      @Override
       public void writeObject(ObjectOutput output, TransientCacheEntry tce) throws IOException {
          output.writeObject(tce.key);
          output.writeObject(tce.cacheValue.value);
@@ -119,12 +121,23 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
          output.writeLong(tce.cacheValue.maxIdle); // could be negative so should not use unsigned longs
       }
 
+      @Override
       public TransientCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          Long maxIdle = input.readLong();
          return new TransientCacheEntry(k, v, maxIdle, lastUsed);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.TRANSIENT_ENTRY;
+      }
+
+      @Override
+      public Set<Class<? extends TransientCacheEntry>> getTypeClasses() {
+         return Util.<Class<? extends TransientCacheEntry>>asSet(TransientCacheEntry.class);
       }
    }
 

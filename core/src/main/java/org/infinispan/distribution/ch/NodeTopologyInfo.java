@@ -1,13 +1,14 @@
 package org.infinispan.distribution.ch;
 
-import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
 /**
  * Holds topology information about a a node.
@@ -95,8 +96,7 @@ public class NodeTopologyInfo {
             '}';
    }
 
-   @Marshalls(typeClasses = NodeTopologyInfo.class, id = Ids.NODE_TOPOLOGY_INFO)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<NodeTopologyInfo> {
+   public static class Externalizer extends AbstractExternalizer<NodeTopologyInfo> {
       @Override
       public void writeObject(ObjectOutput output, NodeTopologyInfo nti) throws IOException {
          output.writeObject(nti.siteId);
@@ -112,6 +112,16 @@ public class NodeTopologyInfo {
          String machineId = (String) input.readObject();
          Address address = (Address) input.readObject();
          return new NodeTopologyInfo(machineId, rackId, siteId, address);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.NODE_TOPOLOGY_INFO;
+      }
+
+      @Override
+      public Set<Class<? extends NodeTopologyInfo>> getTypeClasses() {
+         return Util.<Class<? extends NodeTopologyInfo>>asSet(NodeTopologyInfo.class);
       }
    }
 }

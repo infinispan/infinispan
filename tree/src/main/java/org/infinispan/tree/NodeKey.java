@@ -29,9 +29,9 @@ import static org.infinispan.tree.NodeKey.Type.STRUCTURE;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.util.Util;
 
 /**
@@ -89,13 +89,12 @@ public class NodeKey {
             '}';
    }
 
-   @Marshalls(typeClasses = NodeKey.class)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+   public static class Externalizer extends AbstractExternalizer<NodeKey> {
       private static final byte DATA_BYTE = 1;
       private static final byte STRUCTURE_BYTE = 2;
 
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
-         NodeKey key = (NodeKey) object;
+      @Override
+      public void writeObject(ObjectOutput output, NodeKey key) throws IOException {
          output.writeObject(key.fqn);
          byte type = 0;
          switch (key.contents) {
@@ -109,7 +108,8 @@ public class NodeKey {
          output.write(type);
       }
       
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      @Override
+      public NodeKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Fqn fqn = (Fqn) input.readObject();
          int typeb = input.readUnsignedByte();
          NodeKey.Type type = null; 
@@ -122,6 +122,11 @@ public class NodeKey {
                break;
          }
          return new NodeKey(fqn, type);
+      }
+
+      @Override
+      public Set<Class<? extends NodeKey>> getTypeClasses() {
+         return Util.<Class<? extends NodeKey>>asSet(NodeKey.class);
       }
    }
 }

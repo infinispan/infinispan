@@ -25,8 +25,10 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.util.Set;
 
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.util.Util;
 
 /**
  * Cache key for a list with current files in cache
@@ -87,8 +89,7 @@ public final class FileListCacheKey implements Serializable {
       return "*|" + indexName;
    }
    
-   @Marshalls(typeClasses = FileListCacheKey.class, id = ExternalizerIds.FILE_LIST_CACHE_KEY)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<FileListCacheKey> {
+   public static class Externalizer extends AbstractExternalizer<FileListCacheKey> {
 
       @Override
       public void writeObject(ObjectOutput output, FileListCacheKey key) throws IOException {
@@ -99,6 +100,16 @@ public final class FileListCacheKey implements Serializable {
       public FileListCacheKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          String indexName = input.readUTF();
          return new FileListCacheKey(indexName);
+      }
+
+      @Override
+      public Integer getId() {
+         return ExternalizerIds.FILE_LIST_CACHE_KEY;
+      }
+
+      @Override
+      public Set<Class<? extends FileListCacheKey>> getTypeClasses() {
+         return Util.<Class<? extends FileListCacheKey>>asSet(FileListCacheKey.class);
       }
 
    }

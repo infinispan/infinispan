@@ -21,13 +21,15 @@
  */
 package org.infinispan.transaction.xa;
 
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 
@@ -126,8 +128,7 @@ public class GlobalTransaction implements Cloneable {
       }
    }
 
-   @Marshalls(typeClasses = GlobalTransaction.class, id = Ids.GLOBAL_TRANSACTION)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<GlobalTransaction> {
+   public static class Externalizer extends AbstractExternalizer<GlobalTransaction> {
       protected GlobalTransactionFactory gtxFactory;
 
       public Externalizer(GlobalTransactionFactory gtxFactory) {
@@ -138,16 +139,28 @@ public class GlobalTransaction implements Cloneable {
          gtxFactory = new GlobalTransactionFactory();
       }
 
+      @Override
       public void writeObject(ObjectOutput output, GlobalTransaction gtx) throws IOException {
          output.writeLong(gtx.id);
          output.writeObject(gtx.addr);      
       }
 
+      @Override
       public GlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          GlobalTransaction gtx = gtxFactory.instantiateGlobalTransaction();
          gtx.id = input.readLong();
          gtx.addr = (Address) input.readObject();
          return gtx;
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.GLOBAL_TRANSACTION;
+      }
+
+      @Override
+      public Set<Class<? extends GlobalTransaction>> getTypeClasses() {
+         return Util.<Class<? extends GlobalTransaction>>asSet(GlobalTransaction.class);
       }
    }
 }

@@ -1,8 +1,9 @@
 package org.infinispan.distribution.ch;
 
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -130,14 +131,15 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       return result;
    }
 
-   @Marshalls(typeClasses = DefaultConsistentHash.class, id = Ids.DEFAULT_CONSISTENT_HASH)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<DefaultConsistentHash> {
+   public static class Externalizer extends AbstractExternalizer<DefaultConsistentHash> {
+      @Override
       public void writeObject(ObjectOutput output, DefaultConsistentHash dch) throws IOException {
          output.writeObject(dch.addresses);
          output.writeObject(dch.positions);
          output.writeObject(dch.addressToHashIds);
       }
 
+      @Override
       @SuppressWarnings("unchecked")
       public DefaultConsistentHash readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          DefaultConsistentHash dch = new DefaultConsistentHash();
@@ -145,6 +147,16 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
          dch.positions = (SortedMap<Integer, Address>) unmarshaller.readObject();
          dch.addressToHashIds = (Map<Address, Integer>) unmarshaller.readObject();
          return dch;
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.DEFAULT_CONSISTENT_HASH;
+      }
+
+      @Override
+      public Set<Class<? extends DefaultConsistentHash>> getTypeClasses() {
+         return Util.<Class<? extends DefaultConsistentHash>>asSet(DefaultConsistentHash.class);
       }
    }
 

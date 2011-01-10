@@ -1,8 +1,9 @@
 package org.infinispan.transaction.xa;
 
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -142,10 +143,10 @@ public class DldGlobalTransaction extends GlobalTransaction {
       return this.locksAtOrigin;
    }
 
-   @Marshalls(typeClasses = DldGlobalTransaction.class, id = Ids.DEADLOCK_DETECTING_GLOBAL_TRANSACTION)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<DldGlobalTransaction> {
+   public static class Externalizer extends AbstractExternalizer<DldGlobalTransaction> {
       private final GlobalTransaction.Externalizer delegate = new GlobalTransaction.Externalizer(new GlobalTransactionFactory(true));
 
+      @Override
       public void writeObject(ObjectOutput output, DldGlobalTransaction ddGt) throws IOException {
          delegate.writeObject(output, ddGt);
          output.writeLong(ddGt.getCoinToss());
@@ -156,6 +157,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
          }
       }
 
+      @Override
       @SuppressWarnings("unchecked")
       public DldGlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          DldGlobalTransaction ddGt = (DldGlobalTransaction) delegate.readObject(input);
@@ -167,6 +169,16 @@ public class DldGlobalTransaction extends GlobalTransaction {
             ddGt.setLocksHeldAtOrigin((Set<Object>) locksAtOriginObj);
          }
          return ddGt;
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.DEADLOCK_DETECTING_GLOBAL_TRANSACTION;
+      }
+
+      @Override
+      public Set<Class<? extends DldGlobalTransaction>> getTypeClasses() {
+         return Util.<Class<? extends DldGlobalTransaction>>asSet(DldGlobalTransaction.class);
       }
    }
 }

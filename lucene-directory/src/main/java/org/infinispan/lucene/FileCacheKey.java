@@ -25,8 +25,10 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.util.Set;
 
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.util.Util;
 
 /**
  * Used as a key for file headers in a cache
@@ -104,8 +106,7 @@ public final class FileCacheKey implements Serializable {
       return fileName + "|M|"+ indexName;
    }
    
-   @Marshalls(typeClasses = FileCacheKey.class, id = ExternalizerIds.FILE_CACHE_KEY)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<FileCacheKey> {
+   public static class Externalizer extends AbstractExternalizer<FileCacheKey> {
 
       @Override
       public void writeObject(ObjectOutput output, FileCacheKey key) throws IOException {
@@ -120,6 +121,15 @@ public final class FileCacheKey implements Serializable {
          return new FileCacheKey(indexName, fileName);
       }
 
+      @Override
+      public Integer getId() {
+         return ExternalizerIds.FILE_CACHE_KEY;
+      }
+
+      @Override
+      public Set<Class<? extends FileCacheKey>> getTypeClasses() {
+         return Util.<Class<? extends FileCacheKey>>asSet(FileCacheKey.class);
+      }
    }
 
 }

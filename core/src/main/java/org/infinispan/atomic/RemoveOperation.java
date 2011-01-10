@@ -25,9 +25,11 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Map;
+import java.util.Set;
 
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 
 /**
  * An atomic remove operation.
@@ -58,16 +60,27 @@ public class RemoveOperation<K, V> extends Operation<K, V> {
       delegate.remove(key);
    }
 
-   @Marshalls(typeClasses = RemoveOperation.class, id = Ids.ATOMIC_REMOVE_OPERATION)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<RemoveOperation> {
+   public static class Externalizer extends AbstractExternalizer<RemoveOperation> {
+      @Override
       public void writeObject(ObjectOutput output, RemoveOperation remove) throws IOException {
          output.writeObject(remove.key);
       }
-      
+
+      @Override
       public RemoveOperation readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          RemoveOperation remove = new RemoveOperation();
          remove.key = input.readObject();
          return remove;
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.ATOMIC_REMOVE_OPERATION;
+      }
+
+      @Override
+      public Set<Class<? extends RemoveOperation>> getTypeClasses() {
+         return Util.<Class<? extends RemoveOperation>>asSet(RemoveOperation.class);
       }
    }
 }

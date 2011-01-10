@@ -24,15 +24,16 @@ package org.infinispan.marshall.exts;
 import net.jcip.annotations.Immutable;
 
 import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshallUtil;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.LinkedList;
+import java.util.Set;
 
 /**
  * LinkedListExternalizer.
@@ -41,13 +42,14 @@ import java.util.LinkedList;
  * @since 4.0
  */
 @Immutable
-@Marshalls(typeClasses = LinkedList.class, id = Ids.LINKED_LIST)
-public class LinkedListExternalizer implements Externalizer<LinkedList> {
+public class LinkedListExternalizer extends AbstractExternalizer<LinkedList> {
 
+   @Override
    public void writeObject(ObjectOutput output, LinkedList list) throws IOException {
       MarshallUtil.marshallCollection(list, output);
    }
 
+   @Override
    public LinkedList readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int size = UnsignedNumeric.readUnsignedInt(input);
       LinkedList l = new LinkedList();
@@ -55,4 +57,13 @@ public class LinkedListExternalizer implements Externalizer<LinkedList> {
       return l;
    }
 
+   @Override
+   public Integer getId() {
+      return Ids.LINKED_LIST;
+   }
+
+   @Override
+   public Set<Class<? extends LinkedList>> getTypeClasses() {
+      return Util.<Class<? extends LinkedList>>asSet(LinkedList.class);
+   }
 }

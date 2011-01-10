@@ -24,10 +24,10 @@ package org.infinispan.marshall.exts;
 import net.jcip.annotations.Immutable;
 
 import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshallUtil;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
@@ -44,8 +44,7 @@ import java.util.TreeSet;
  * @since 4.0
  */
 @Immutable
-@Marshalls(typeClasses = {HashSet.class, TreeSet.class}, id = Ids.JDK_SETS)
-public class SetExternalizer implements Externalizer<Set> {
+public class SetExternalizer extends AbstractExternalizer<Set> {
    private static final int HASHSET = 0;
    private static final int TREESET = 1;
    private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(2);
@@ -55,12 +54,14 @@ public class SetExternalizer implements Externalizer<Set> {
       numbers.put(TreeSet.class, TREESET);
    }
 
+   @Override
    public void writeObject(ObjectOutput output, Set set) throws IOException {
       int number = numbers.get(set.getClass(), -1);
       output.writeByte(number);
       MarshallUtil.marshallCollection(set, output);
    }
 
+   @Override
    public Set readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int magicNumber = input.readUnsignedByte();
       Set subject = null;
@@ -75,5 +76,15 @@ public class SetExternalizer implements Externalizer<Set> {
       int size = UnsignedNumeric.readUnsignedInt(input);
       for (int i = 0; i < size; i++) subject.add(input.readObject());
       return subject;
+   }
+
+   @Override
+   public Integer getId() {
+      return Ids.JDK_SETS;
+   }
+
+   @Override
+   public Set<Class<? extends Set>> getTypeClasses() {
+      return Util.<Class<? extends Set>>asSet(HashSet.class, TreeSet.class);
    }
 }

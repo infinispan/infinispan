@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -67,13 +67,16 @@ import java.lang.annotation.Target;
  * the value defined via XML/programmatically is the one that will be used.
  *
  * @author Galder Zamarreño
+ * @deprecated This annotation's information is now provided via
+ *             corresponding {@link Externalizer} method implementations.
  * @since 5.0
  */
 //ensure this annotation is available at runtime.
 @Retention(RetentionPolicy.RUNTIME)
 
 // only applies to classes.
-@Target(ElementType.TYPE) 
+@Target(ElementType.TYPE)
+@Deprecated
 public @interface Marshalls {
    
    Class[] typeClasses() default {};

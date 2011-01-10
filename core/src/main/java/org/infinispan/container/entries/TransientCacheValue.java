@@ -3,10 +3,12 @@ package org.infinispan.container.entries;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 
 /**
  * A transient cache value, to correspond with {@link org.infinispan.container.entries.TransientCacheEntry}
@@ -92,19 +94,30 @@ public class TransientCacheValue extends ImmortalCacheValue {
       return (TransientCacheValue) super.clone();
    }
 
-   @Marshalls(typeClasses = TransientCacheValue.class, id = Ids.TRANSIENT_VALUE)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<TransientCacheValue> {
+   public static class Externalizer extends AbstractExternalizer<TransientCacheValue> {
+      @Override
       public void writeObject(ObjectOutput output, TransientCacheValue tcv) throws IOException {
          output.writeObject(tcv.value);
          UnsignedNumeric.writeUnsignedLong(output, tcv.lastUsed);
          output.writeLong(tcv.maxIdle); // could be negative so should not use unsigned longs
       }
 
+      @Override
       public TransientCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          Long maxIdle = input.readLong();
          return new TransientCacheValue(v, maxIdle, lastUsed);
-      }      
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.TRANSIENT_VALUE;
+      }
+
+      @Override
+      public Set<Class<? extends TransientCacheValue>> getTypeClasses() {
+         return Util.<Class<? extends TransientCacheValue>>asSet(TransientCacheValue.class);
+      }
    }
 }

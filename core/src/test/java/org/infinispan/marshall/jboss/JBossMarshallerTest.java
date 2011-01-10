@@ -27,12 +27,13 @@ import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.ExternalizerConfig;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterTest;
@@ -44,6 +45,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.infinispan.marshall.ForeignExternalizerTest.*;
 
@@ -197,31 +199,52 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
    }
 
    static class DuplicateIdClass {
-      @Marshalls(typeClasses = DuplicateIdClass.class, id = Ids.ARRAY_LIST)
-      public static class Externalizer implements org.infinispan.marshall.Externalizer {
-         public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public static class Externalizer extends AbstractExternalizer<DuplicateIdClass> {
+         @Override
+         public DuplicateIdClass readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             return null;
          }
 
-         public void writeObject(ObjectOutput output, Object object) throws IOException {
+         @Override
+         public void writeObject(ObjectOutput output, DuplicateIdClass object) throws IOException {
+         }
+
+         @Override
+         public Integer getId() {
+            return Ids.ARRAY_LIST;
+         }
+
+         @Override
+         public Set<Class<? extends DuplicateIdClass>> getTypeClasses() {
+            return Util.<Class<? extends DuplicateIdClass>>asSet(DuplicateIdClass.class);
          }
       }
    }
 
    static class TooHighIdClass {
-      @Marshalls(typeClasses = TooHighIdClass.class, id = 255)
-      public static class Externalizer implements org.infinispan.marshall.Externalizer {
-         public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public static class Externalizer extends AbstractExternalizer<TooHighIdClass> {
+         @Override
+         public TooHighIdClass readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             return null;
          }
 
-         public void writeObject(ObjectOutput output, Object object) throws IOException {
+         @Override
+         public void writeObject(ObjectOutput output, TooHighIdClass object) throws IOException {
+         }
+
+         @Override
+         public Integer getId() {
+            return 255;
+         }
+
+         @Override
+         public Set<Class<? extends TooHighIdClass>> getTypeClasses() {
+            return Util.<Class<? extends TooHighIdClass>>asSet(TooHighIdClass.class);
          }
       }
    }
 
-   @Marshalls(typeClasses = {IdViaConfigObj.class, IdViaAnnotationObj.class, IdViaBothObj.class}, id = 767)
-   static class MultiIdViaClassExternalizer implements Externalizer<Object> {
+   static class MultiIdViaClassExternalizer extends AbstractExternalizer<Object> {
       private final Externalizer idViaConfigObjExt = new IdViaConfigObj.Externalizer();
       private final Externalizer idViaAnnotationObjExt = new IdViaAnnotationObj.Externalizer();
       private final Externalizer idViaBothObjExt = new IdViaBothObj.Externalizer();
@@ -267,11 +290,31 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
          }
          return ext.readObject(input);
       }
+
+      @Override
+      public Integer getId() {
+         return 767;
+      }
+
+      @Override
+      public Set<Class<? extends Object>> getTypeClasses() {
+         return Util.asSet(IdViaConfigObj.class, IdViaAnnotationObj.class, IdViaBothObj.class);
+      }
    }
 
-   @Marshalls(typeClassNames = {"org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj",
-                                "org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj",
-                                "org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj"})
    static class MultiIdViaClassNameExternalizer extends MultiIdViaClassExternalizer {
+      @Override
+      public Integer getId() {
+         // Revert to default so that it can be retrieved from config
+         return null;
+      }
+
+      @Override
+      public Set<String> getTypeClassNames() {
+         return Util.asSet(
+               "org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj",
+               "org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj",
+               "org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj");
+      }
    }
 }

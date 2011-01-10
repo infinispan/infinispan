@@ -25,9 +25,11 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Map;
+import java.util.Set;
 
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 
 /**
  * An atomic put operation.
@@ -63,18 +65,29 @@ public class PutOperation<K, V> extends Operation<K, V> {
       delegate.put(key, newValue);
    }
 
-   @Marshalls(typeClasses = PutOperation.class, id = Ids.ATOMIC_PUT_OPERATION)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<PutOperation> {
+   public static class Externalizer extends AbstractExternalizer<PutOperation> {
+      @Override
       public void writeObject(ObjectOutput output, PutOperation put) throws IOException {
          output.writeObject(put.key);
          output.writeObject(put.newValue);
       }
 
+      @Override
       public PutOperation readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          PutOperation put = new PutOperation();
          put.key = input.readObject();
          put.newValue = input.readObject();         
          return put;
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.ATOMIC_PUT_OPERATION;
+      }
+
+      @Override
+      public Set<Class<? extends PutOperation>> getTypeClasses() {
+         return Util.<Class<? extends PutOperation>>asSet(PutOperation.class);
       }
    }
 }

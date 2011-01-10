@@ -1,8 +1,9 @@
 package org.infinispan.server.hotrod
 
 import java.io.{ObjectInput, ObjectOutput}
-import org.infinispan.marshall.Marshalls
 import org.infinispan.remoting.transport.Address
+import org.infinispan.marshall.AbstractExternalizer
+import scala.collection.JavaConversions._
 
 /**
  * A Hot Rod topology address represents a Hot Rod endpoint that belongs to a Hot Rod cluster. It contains host/port
@@ -16,8 +17,7 @@ import org.infinispan.remoting.transport.Address
 case class TopologyAddress(val host: String, val port: Int, val hashIds: Map[String, Int], val clusterAddress: Address)
 
 object TopologyAddress {
-   @Marshalls(typeClasses = Array(classOf[TopologyAddress]))
-   class Externalizer extends org.infinispan.marshall.Externalizer[TopologyAddress] {
+   class Externalizer extends AbstractExternalizer[TopologyAddress] {
       override def writeObject(output: ObjectOutput, topologyAddress: TopologyAddress) {
          output.writeObject(topologyAddress.host)
          output.writeInt(topologyAddress.port)
@@ -32,5 +32,8 @@ object TopologyAddress {
          val clusterAddress = input.readObject.asInstanceOf[Address]
          TopologyAddress(host, port, hashIds, clusterAddress)
       }
+
+      override def getTypeClasses =
+         asJavaSet(Set[java.lang.Class[_ <: TopologyAddress]](classOf[TopologyAddress]))
    }
 }
