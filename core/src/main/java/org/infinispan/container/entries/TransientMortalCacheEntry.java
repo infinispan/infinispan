@@ -1,12 +1,14 @@
 package org.infinispan.container.entries;
 
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
 import static java.lang.Math.min;
 
@@ -132,8 +134,8 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
             "} " + super.toString();
    }
 
-   @Marshalls(typeClasses = TransientMortalCacheEntry.class, id = Ids.TRANSIENT_MORTAL_ENTRY)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<TransientMortalCacheEntry> {
+   public static class Externalizer extends AbstractExternalizer<TransientMortalCacheEntry> {
+      @Override
       public void writeObject(ObjectOutput output, TransientMortalCacheEntry entry) throws IOException {
          output.writeObject(entry.key);
          output.writeObject(entry.cacheValue.value);
@@ -143,6 +145,7 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
          output.writeLong(entry.cacheValue.maxIdle); // could be negative so should not use unsigned longs
       }
 
+      @Override
       public TransientMortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
@@ -151,6 +154,16 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          Long maxIdle = input.readLong();
          return new TransientMortalCacheEntry(k, v, maxIdle, lifespan, lastUsed, created);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.TRANSIENT_MORTAL_ENTRY;
+      }
+
+      @Override
+      public Set<Class<? extends TransientMortalCacheEntry>> getTypeClasses() {
+         return Util.<Class<? extends TransientMortalCacheEntry>>asSet(TransientMortalCacheEntry.class);
       }
    }
 }

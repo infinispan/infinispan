@@ -24,15 +24,16 @@ package org.infinispan.marshall.exts;
 import net.jcip.annotations.Immutable;
 
 import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshallUtil;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * List externalizer dealing with ArrayList and LinkedList implementations.
@@ -41,13 +42,14 @@ import java.util.ArrayList;
  * @since 4.0
  */
 @Immutable
-@Marshalls(typeClasses =  ArrayList.class, id = Ids.ARRAY_LIST)
-public class ArrayListExternalizer implements Externalizer<ArrayList> {
+public class ArrayListExternalizer extends AbstractExternalizer<ArrayList> {
 
+   @Override
    public void writeObject(ObjectOutput output, ArrayList list) throws IOException {
       MarshallUtil.marshallCollection(list, output);
    }
 
+   @Override
    public ArrayList readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int size = UnsignedNumeric.readUnsignedInt(input);
       ArrayList l = new ArrayList(size);
@@ -55,4 +57,13 @@ public class ArrayListExternalizer implements Externalizer<ArrayList> {
       return l;
    }
 
+   @Override
+   public Integer getId() {
+      return Ids.ARRAY_LIST;
+   }
+
+   @Override
+   public Set<Class<? extends ArrayList>> getTypeClasses() {
+      return Util.<Class<? extends ArrayList>>asSet(ArrayList.class);
+   }
 }

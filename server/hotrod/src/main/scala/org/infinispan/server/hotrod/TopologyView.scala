@@ -1,7 +1,8 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.marshall.Marshalls
 import java.io.{ObjectInput, ObjectOutput}
+import org.infinispan.marshall.AbstractExternalizer
+import scala.collection.JavaConversions._
 
 /**
  * A Hot Rod server topology view.
@@ -17,8 +18,7 @@ case class TopologyView(val topologyId: Int, val members: List[TopologyAddress])
 // TODO: The downside here is that you'd need to make multiple cache calls atomic via txs or similar.
 
 object TopologyView {
-   @Marshalls(typeClasses = Array(classOf[TopologyView]))
-   class Externalizer extends org.infinispan.marshall.Externalizer[TopologyView] {
+   class Externalizer extends AbstractExternalizer[TopologyView] {
       override def writeObject(output: ObjectOutput, topologyView: TopologyView) {
          output.writeInt(topologyView.topologyId)
          output.writeObject(topologyView.members.toArray) // Write arrays instead since writing Lists causes issues
@@ -29,5 +29,8 @@ object TopologyView {
          val members = input.readObject.asInstanceOf[Array[TopologyAddress]]
          TopologyView(topologyId, members.toList)
       }
+
+      override def getTypeClasses =
+         asJavaSet(Set[java.lang.Class[_ <: TopologyView]](classOf[TopologyView]))
    }
 }

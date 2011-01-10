@@ -3,9 +3,11 @@ package org.infinispan.remoting.responses;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
+import org.infinispan.util.Util;
 
 /**
  * A successful response
@@ -60,14 +62,25 @@ public class SuccessfulResponse extends ValidResponse {
             "} ";
    }
 
-   @Marshalls(typeClasses = SuccessfulResponse.class, id = Ids.SUCCESSFUL_RESPONSE)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<SuccessfulResponse> {
+   public static class Externalizer extends AbstractExternalizer<SuccessfulResponse> {
+      @Override
       public void writeObject(ObjectOutput output, SuccessfulResponse response) throws IOException {
          output.writeObject(response.responseValue);
       }
 
+      @Override
       public SuccessfulResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new SuccessfulResponse(input.readObject());
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.SUCCESSFUL_RESPONSE;
+      }
+
+      @Override
+      public Set<Class<? extends SuccessfulResponse>> getTypeClasses() {
+         return Util.<Class<? extends SuccessfulResponse>>asSet(SuccessfulResponse.class);
       }
    }
 

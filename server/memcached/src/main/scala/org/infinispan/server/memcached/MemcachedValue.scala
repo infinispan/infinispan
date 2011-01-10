@@ -3,7 +3,8 @@ package org.infinispan.server.memcached
 import org.infinispan.server.core.CacheValue
 import org.infinispan.util.Util
 import java.io.{ObjectOutput, ObjectInput}
-import org.infinispan.marshall.Marshalls
+import org.infinispan.marshall.AbstractExternalizer
+import scala.collection.JavaConversions._
 
 /**
  * Memcached value part of key/value pair containing flags on top the common byte array and version.
@@ -25,8 +26,7 @@ class MemcachedValue(override val data: Array[Byte], override val version: Long,
 }
 
 object MemcachedValue {
-   @Marshalls(typeClasses = Array(classOf[MemcachedValue]))
-   class Externalizer extends org.infinispan.marshall.Externalizer[MemcachedValue] {
+   class Externalizer extends AbstractExternalizer[MemcachedValue] {
       override def writeObject(output: ObjectOutput, cacheValue: MemcachedValue) {
          output.writeInt(cacheValue.data.length)
          output.write(cacheValue.data)
@@ -41,5 +41,8 @@ object MemcachedValue {
          val flags = input.readLong
          new MemcachedValue(data, version, flags)
       }
+
+      override def getTypeClasses =
+         asJavaSet(Set[java.lang.Class[_ <: MemcachedValue]](classOf[MemcachedValue]))
    }
 }

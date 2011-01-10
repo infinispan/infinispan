@@ -25,9 +25,10 @@ import net.jcip.annotations.NotThreadSafe;
 import org.infinispan.Cache;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
 import org.infinispan.util.FastCopyHashMap;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -210,16 +211,27 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       return delta;
    }
 
-   @Marshalls(typeClasses = AtomicHashMap.class, id = Ids.ATOMIC_HASH_MAP)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<AtomicHashMap> {
+   public static class Externalizer extends AbstractExternalizer<AtomicHashMap> {
+      @Override
       public void writeObject(ObjectOutput output, AtomicHashMap map) throws IOException {
          output.writeObject(map.delegate);
       }
 
+      @Override
       @SuppressWarnings("unchecked")
       public AtomicHashMap readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          FastCopyHashMap delegate = (FastCopyHashMap) input.readObject();
          return new AtomicHashMap(delegate);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.ATOMIC_HASH_MAP;
+      }
+
+      @Override
+      public Set<Class<? extends AtomicHashMap>> getTypeClasses() {
+         return Util.<Class<? extends AtomicHashMap>>asSet(AtomicHashMap.class);
       }
    }
 }

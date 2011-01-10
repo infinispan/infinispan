@@ -48,7 +48,6 @@ import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.exts.ArrayListExternalizer;
@@ -69,7 +68,6 @@ import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.Immutables;
-import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -246,28 +244,27 @@ class ExternalizerTable implements ObjectTable {
 
    private void loadInternalMarshallables(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller) {
       for (Externalizer ext : internalExternalizers) {
-         Marshalls marshalls = ReflectionUtil.getAnnotation(ext.getClass(), Marshalls.class);
          if (ext instanceof ReplicableCommandExternalizer)
             ((ReplicableCommandExternalizer) ext).inject(cmdFactory);
          if (ext instanceof MarshalledValue.Externalizer)
             ((MarshalledValue.Externalizer) ext).inject(ispnMarshaller);
 
-         int id = checkInternalIdLimit(marshalls.id(), ext);
-         updateExtReadersWritersWithTypes(marshalls, new ExternalizerAdapter(id, ext));
+         int id = checkInternalIdLimit(ext.getId(), ext);
+         updateExtReadersWritersWithTypes(new ExternalizerAdapter(id, ext));
       }
    }
 
-   private void updateExtReadersWritersWithTypes(Marshalls marshalls, ExternalizerAdapter adapter) {
-      updateExtReadersWritersWithTypes(marshalls, adapter, adapter.id);
+   private void updateExtReadersWritersWithTypes(ExternalizerAdapter adapter) {
+      updateExtReadersWritersWithTypes(adapter, adapter.id);
    }
 
-   private void updateExtReadersWritersWithTypes(Marshalls marshalls, ExternalizerAdapter adapter, int readerIndex) {
-      Class[] typeClasses = marshalls.typeClasses();
-      String[] typeClassNames = marshalls.typeClassNames();
-      if (typeClasses.length > 0) {
+   private void updateExtReadersWritersWithTypes(ExternalizerAdapter adapter, int readerIndex) {
+      Set<Class> typeClasses = adapter.externalizer.getTypeClasses();
+      Set<String> typeClassNames = adapter.externalizer.getTypeClassNames();
+      if (typeClasses.size() > 0) {
          for (Class typeClass : typeClasses)
             updateExtReadersWriters(adapter, typeClass, readerIndex);
-      } else if (typeClassNames.length > 0) {
+      } else if (typeClassNames.size() > 0) {
          for (String typeClassName : typeClassNames)
             updateExtReadersWriters(adapter, Util.loadClass(typeClassName), readerIndex);
       } else {
@@ -286,19 +283,18 @@ class ExternalizerTable implements ObjectTable {
          Externalizer ext = config.getExternalizer() != null ? config.getExternalizer()
                : (Externalizer) Util.getInstance(config.getExternalizerClass());
 
-         Marshalls marshalls = ReflectionUtil.getAnnotation(ext.getClass(), Marshalls.class);
          // If no XML or programmatic config, id in annotation is used
          // as long as it's not default one (meaning, user did not set it).
          // If XML or programmatic config in use ignore @Marshalls annotation and use value in config.
-         int id = marshalls.id();
-         if ((config.getId() == null || config.getId() == Integer.MAX_VALUE) && id == Integer.MAX_VALUE)
+         Integer id = ext.getId();
+         if (config.getId() == null && id == null)
             throw new ConfigurationException(String.format(
                   "No externalizer identifier set for externalizer %s", ext.getClass().getName()));
          else if (config.getId() != null)
             id = config.getId();
 
          id = checkForeignIdLimit(id, ext);
-         updateExtReadersWritersWithTypes(marshalls, new ForeignExternalizerAdapter(id, ext), generateForeignReaderIndex(id));
+         updateExtReadersWritersWithTypes(new ForeignExternalizerAdapter(id, ext), generateForeignReaderIndex(id));
       }
    }
 

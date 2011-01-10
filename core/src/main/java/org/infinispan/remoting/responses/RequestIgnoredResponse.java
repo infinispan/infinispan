@@ -24,9 +24,11 @@ package org.infinispan.remoting.responses;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 
 /**
  * Indicates that the request was ignored,
@@ -49,14 +51,25 @@ public class RequestIgnoredResponse extends InvalidResponse {
       return "RequestIgnoredResponse";
    }
 
-   @Marshalls(typeClasses = RequestIgnoredResponse.class, id = Ids.REQUEST_IGNORED_RESPONSE)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<RequestIgnoredResponse> {
+   public static class Externalizer extends AbstractExternalizer<RequestIgnoredResponse> {
+      @Override
       public void writeObject(ObjectOutput output, RequestIgnoredResponse object) throws IOException {
          // no-op
       }
-      
+
+      @Override
       public RequestIgnoredResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return INSTANCE;
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.REQUEST_IGNORED_RESPONSE;
+      }
+
+      @Override
+      public Set<Class<? extends RequestIgnoredResponse>> getTypeClasses() {
+         return Util.<Class<? extends RequestIgnoredResponse>>asSet(RequestIgnoredResponse.class);
       }
    }
 }

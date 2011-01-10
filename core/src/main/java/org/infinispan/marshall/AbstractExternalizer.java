@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -19,47 +19,34 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.exts;
 
-import net.jcip.annotations.Immutable;
+package org.infinispan.marshall;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 /**
- * SingletonListExternalizer.
+ * Base class for {@link Externalizer} implementations that offers default
+ * implementations for some of its methods.
  *
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 5.0
  */
-@Immutable
-public class SingletonListExternalizer extends AbstractExternalizer<List> {
+public abstract class AbstractExternalizer<T> implements Externalizer<T> {
 
    @Override
-   public void writeObject(ObjectOutput output, List list) throws IOException {
-      output.writeObject(list.get(0));
-   }
-
-   @Override
-   public List readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      return Collections.singletonList(input.readObject());
-   }
-
-   @Override
-   public Integer getId() {
-      return Ids.SINGLETON_LIST;
+   public Set<Class<? extends T>> getTypeClasses() {
+      return Collections.emptySet();
    }
 
    @Override
    public Set<String> getTypeClassNames() {
-      return Util.asSet("java.util.Collections$SingletonList");
+      return Collections.emptySet();
    }
+
+   @Override
+   public Integer getId() {
+      return null;
+   }
+
 }

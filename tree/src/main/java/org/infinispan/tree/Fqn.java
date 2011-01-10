@@ -23,8 +23,7 @@ package org.infinispan.tree;
 
 
 import net.jcip.annotations.Immutable;
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
@@ -32,6 +31,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A Fully Qualified Name (Fqn) is a list of names (typically Strings but can be any Object), which represent a path to
@@ -493,19 +493,24 @@ public class Fqn implements Comparable<Fqn> {
       return Fqn.fromRelativeFqn(newAncestor, subFqn);
    }
 
-   @Marshalls(typeClasses = Fqn.class)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
-         Fqn fqn = (Fqn) object;
+   public static class Externalizer extends AbstractExternalizer<Fqn> {
+      @Override
+      public void writeObject(ObjectOutput output, Fqn fqn) throws IOException {
          output.writeInt(fqn.elements.length);
          for (Object element : fqn.elements) output.writeObject(element);
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      @Override
+      public Fqn readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          int size = input.readInt();
          Object[] elements = new Object[size];
          for (int i = 0; i < size; i++) elements[i] = input.readObject();
          return new Fqn(elements);
+      }
+
+      @Override
+      public Set<Class<? extends Fqn>> getTypeClasses() {
+         return Util.<Class<? extends Fqn>>asSet(Fqn.class);
       }
    }
 }

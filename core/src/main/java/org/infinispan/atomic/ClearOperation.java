@@ -21,14 +21,16 @@
  */
 package org.infinispan.atomic;
 
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
 import org.infinispan.util.FastCopyHashMap;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * An atomic clear operation.
@@ -57,14 +59,25 @@ public class ClearOperation<K, V> extends Operation<K, V> {
       delegate.clear();
    }
 
-   @Marshalls(typeClasses = ClearOperation.class, id = Ids.ATOMIC_CLEAR_OPERATION)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
+   public static class Externalizer extends AbstractExternalizer<ClearOperation> {
+      @Override
+      public void writeObject(ObjectOutput output, ClearOperation object) throws IOException {
          // no-op
       }
 
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      @Override
+      public ClearOperation readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new ClearOperation();
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.ATOMIC_CLEAR_OPERATION;
+      }
+
+      @Override
+      public Set<Class<? extends ClearOperation>> getTypeClasses() {
+         return Util.<Class<? extends ClearOperation>>asSet(ClearOperation.class);
       }
    }
 }

@@ -24,9 +24,9 @@ package org.infinispan.util;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshallUtil;
-import org.infinispan.marshall.Marshalls;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -715,17 +715,28 @@ public class Immutables {
       }
    }
 
-   @Marshalls(typeClasses = ImmutableMapWrapper.class, id = Ids.IMMUTABLE_MAP)
-   public static class ImmutableMapWrapperExternalizer implements org.infinispan.marshall.Externalizer<Map> {
+   public static class ImmutableMapWrapperExternalizer extends AbstractExternalizer<Map> {
+      @Override
       public void writeObject(ObjectOutput output, Map map) throws IOException {
          MarshallUtil.marshallMap(map, output);
       }
 
+      @Override
       @SuppressWarnings("unchecked")
       public Map readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Map map = new HashMap();
          MarshallUtil.unmarshallMap(map, input);
          return Immutables.immutableMapWrap(map);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.IMMUTABLE_MAP;
+      }
+
+      @Override
+      public Set<Class<? extends Map>> getTypeClasses() {
+         return Util.<Class<? extends Map>>asSet(ImmutableMapWrapper.class);
       }
    }
 

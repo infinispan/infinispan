@@ -42,14 +42,15 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
 /**
  * ReplicableCommandExternalizer.
@@ -57,22 +58,14 @@ import java.io.ObjectOutput;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Marshalls(typeClasses = {LockControlCommand.class, RehashControlCommand.class,
-                          StateTransferControlCommand.class, GetKeyValueCommand.class,
-                          ClusteredGetCommand.class, MultipleRpcCommand.class,
-                          SingleRpcCommand.class, CommitCommand.class,
-                          PrepareCommand.class, RollbackCommand.class,
-                          ClearCommand.class, EvictCommand.class,
-                          InvalidateCommand.class, InvalidateL1Command.class,
-                          PutKeyValueCommand.class, PutMapCommand.class,
-                          RemoveCommand.class, ReplaceCommand.class}, id = Ids.REPLICABLE_COMMAND)
-public class ReplicableCommandExternalizer implements Externalizer<ReplicableCommand> {
+public class ReplicableCommandExternalizer extends AbstractExternalizer<ReplicableCommand> {
    private RemoteCommandsFactory cmdFactory;
    
    public void inject(RemoteCommandsFactory cmdFactory) {
       this.cmdFactory = cmdFactory;
    }
 
+   @Override
    public void writeObject(ObjectOutput output, ReplicableCommand command) throws IOException {
       output.writeShort(command.getCommandId());
       Object[] args = command.getParameters();
@@ -91,6 +84,7 @@ public class ReplicableCommandExternalizer implements Externalizer<ReplicableCom
       }
    }
 
+   @Override
    public ReplicableCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       short methodId = input.readShort();
       int numArgs = UnsignedNumeric.readUnsignedInt(input);
@@ -103,5 +97,24 @@ public class ReplicableCommandExternalizer implements Externalizer<ReplicableCom
          for (int i = 0; i < numArgs; i++) args[i] = input.readObject();
       }
       return cmdFactory.fromStream((byte) methodId, args);
-   }   
+   }
+
+   @Override
+   public Integer getId() {
+      return Ids.REPLICABLE_COMMAND;
+   }
+
+   @Override
+   public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
+      return Util.asSet(
+            LockControlCommand.class, RehashControlCommand.class,
+            StateTransferControlCommand.class, GetKeyValueCommand.class,
+            ClusteredGetCommand.class, MultipleRpcCommand.class,
+            SingleRpcCommand.class, CommitCommand.class,
+            PrepareCommand.class, RollbackCommand.class,
+            ClearCommand.class, EvictCommand.class,
+            InvalidateCommand.class, InvalidateL1Command.class,
+            PutKeyValueCommand.class, PutMapCommand.class,
+            RemoveCommand.class, ReplaceCommand.class);
+   }
 }

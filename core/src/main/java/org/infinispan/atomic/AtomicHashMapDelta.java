@@ -21,8 +21,9 @@
  */
 package org.infinispan.atomic;
 
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -31,6 +32,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Changes that have occurred on an AtomicHashMap
@@ -76,18 +78,29 @@ public class AtomicHashMapDelta implements Delta {
       return changeLog == null ? 0 : changeLog.size();
    }
 
-   @Marshalls(typeClasses = AtomicHashMapDelta.class, id = Ids.ATOMIC_HASH_MAP_DELTA)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<AtomicHashMapDelta> {
+   public static class Externalizer extends AbstractExternalizer<AtomicHashMapDelta> {
+      @Override
       public void writeObject(ObjectOutput output, AtomicHashMapDelta delta) throws IOException {
          if (trace) log.trace("Serializing changeLog " + delta.changeLog);
          output.writeObject(delta.changeLog);
       }
 
+      @Override
       public AtomicHashMapDelta readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          AtomicHashMapDelta delta = new AtomicHashMapDelta();
          delta.changeLog = (List<Operation>) input.readObject();
          if (trace) log.trace("Deserialized changeLog " + delta.changeLog);
          return delta;
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.ATOMIC_HASH_MAP_DELTA;
+      }
+
+      @Override
+      public Set<Class<? extends AtomicHashMapDelta>> getTypeClasses() {
+         return Util.<Class<? extends AtomicHashMapDelta>>asSet(AtomicHashMapDelta.class);
       }
    }
 }

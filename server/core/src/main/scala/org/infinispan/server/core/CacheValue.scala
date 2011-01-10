@@ -2,8 +2,9 @@ package org.infinispan.server.core
 
 import org.infinispan.util.Util
 import java.io.{ObjectOutput, ObjectInput}
-import org.infinispan.marshall.Marshalls
 import java.util.Arrays
+import org.infinispan.marshall.AbstractExternalizer
+import scala.collection.JavaConversions._
 
 /**
  * Represents the value part of a key/value pair stored in a protocol cache. With each value, a version is stored
@@ -38,8 +39,7 @@ class CacheValue(val data: Array[Byte], val version: Long) {
 }
 
 object CacheValue {
-   @Marshalls(typeClasses = Array(classOf[CacheValue]))
-   class Externalizer extends org.infinispan.marshall.Externalizer[CacheValue] {
+   class Externalizer extends AbstractExternalizer[CacheValue] {
       override def writeObject(output: ObjectOutput, cacheValue: CacheValue) {
          output.writeInt(cacheValue.data.length)
          output.write(cacheValue.data)
@@ -52,5 +52,8 @@ object CacheValue {
          val version = input.readLong
          new CacheValue(data, version)
       }
+
+      override def getTypeClasses =
+         asJavaSet(Set[java.lang.Class[_ <: CacheValue]](classOf[CacheValue]))
    }
 }

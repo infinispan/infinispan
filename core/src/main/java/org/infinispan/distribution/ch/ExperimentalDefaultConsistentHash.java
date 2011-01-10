@@ -1,7 +1,7 @@
 package org.infinispan.distribution.ch;
 
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 
@@ -38,19 +38,29 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
    private List<Entry> pool;
    private int poolSize;
 
-   @Marshalls(typeClasses = ExperimentalDefaultConsistentHash.class, id = Ids.DEFAULT_CONSISTENT_HASH)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
-         ExperimentalDefaultConsistentHash gch = (ExperimentalDefaultConsistentHash) object;
-         output.writeObject(gch.nodes);
+   public static class Externalizer extends AbstractExternalizer<ExperimentalDefaultConsistentHash> {
+      @Override
+      public void writeObject(ObjectOutput output, ExperimentalDefaultConsistentHash object) throws IOException {
+         output.writeObject(object.nodes);
       }
 
+      @Override
       @SuppressWarnings("unchecked")
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ExperimentalDefaultConsistentHash readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          List<Address> addresses = (List<Address>) input.readObject();
-         DefaultConsistentHash gch = new DefaultConsistentHash();
+         ExperimentalDefaultConsistentHash gch = new ExperimentalDefaultConsistentHash();
          gch.setCaches(addresses);
          return gch;
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.DEFAULT_CONSISTENT_HASH;
+      }
+
+      @Override
+      public Set<Class<? extends ExperimentalDefaultConsistentHash>> getTypeClasses() {
+         return Util.<Class<? extends ExperimentalDefaultConsistentHash>>asSet(ExperimentalDefaultConsistentHash.class);
       }
    }
 

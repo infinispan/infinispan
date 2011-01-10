@@ -3,10 +3,12 @@ package org.infinispan.container.entries;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 
 /**
  * A transient, mortal cache value to correspond with {@link org.infinispan.container.entries.TransientMortalCacheEntry}
@@ -94,8 +96,8 @@ public class TransientMortalCacheValue extends MortalCacheValue {
       return (TransientMortalCacheValue) super.clone();
    }
 
-   @Marshalls(typeClasses = TransientMortalCacheValue.class, id = Ids.TRANSIENT_MORTAL_VALUE)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<TransientMortalCacheValue> {
+   public static class Externalizer extends AbstractExternalizer<TransientMortalCacheValue> {
+      @Override
       public void writeObject(ObjectOutput output, TransientMortalCacheValue value) throws IOException {
          output.writeObject(value.value);
          UnsignedNumeric.writeUnsignedLong(output, value.created);
@@ -104,6 +106,7 @@ public class TransientMortalCacheValue extends MortalCacheValue {
          output.writeLong(value.maxIdle); // could be negative so should not use unsigned longs
       }
 
+      @Override
       public TransientMortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
@@ -111,6 +114,16 @@ public class TransientMortalCacheValue extends MortalCacheValue {
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          Long maxIdle = input.readLong();
          return new TransientMortalCacheValue(v, created, lifespan, maxIdle, lastUsed);
-      }      
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.TRANSIENT_MORTAL_VALUE;
+      }
+
+      @Override
+      public Set<Class<? extends TransientMortalCacheValue>> getTypeClasses() {
+         return Util.<Class<? extends TransientMortalCacheValue>>asSet(TransientMortalCacheValue.class);
+      }
    }
 }

@@ -24,6 +24,7 @@ package org.infinispan.marshall;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
 /**
  * One of the key aspects of Infinispan is that it often needs to marshall/unmarshall
@@ -53,10 +54,24 @@ import java.io.ObjectOutput;
  * implementation for {@link org.infinispan.remoting.transport.jgroups.JGroupsAddress} in
  * {@link org.infinispan.remoting.transport.jgroups.JGroupsAddress.Externalizer}
  *
- * Once the Externalizer implementations have been built, make sure you annotate each
- * Externalizer implementation with the {@link Marshalls} annotation so that the link between
- * the type of classes externalized and the Externalizer itself can be established. Please
- * see the annotation javadoc for more details on this.
+ * {@link AbstractExternalizer} provides default implementations for some of the methods
+ * defined in this interface and so it's generally recommended that implementations extend
+ * that abstract class instead of implementing {@link Externalizer} directly.
+ *
+ * {@link Externalizer#getTypeClasses()} and {@link Externalizer#getTypeClassNames()} are
+ * two methods that, in different ways, indicate which classes this Externalizer implementation
+ * marshalls. The difference between {@link Externalizer#getTypeClasses()} and
+ * {@link Externalizer#getTypeClassNames()} is how these type classes are defined. The first
+ * option takes {@link Class} instances, but there might sometimes where the classes your
+ * externalizing are private and hence you cannot reference the class instance. In this case,
+ * you should use {@link Externalizer#getTypeClassNames()} and indicate the fully qualified
+ * name of the class. You can find an example of this in {@link org.infinispan.marshall.exts.SingletonListExternalizer}
+ * that tries to provide a better way to serialize lists with a single element.
+ *
+ * Implementations of this interface must make sure they provide an implementation for
+ * {@link Externalizer#getTypeClassNames()} or {@link Externalizer#getTypeClassNames()} that
+ * return a non empty collection, otherwise an error will be reported. Currently preference
+ * is given to {@link Externalizer#getTypeClassNames()} if it returns a non-empty collection.
  *
  * @author Galder Zamarreño
  * @since 4.0
@@ -84,5 +99,56 @@ public interface Externalizer<T> {
     * @throws ClassNotFoundException if a class could not be found
     */
    T readObject(ObjectInput input) throws IOException, ClassNotFoundException;
+
+   /**
+    * Returns a collection of Class instances representing the types that this
+    * Externalizer can marshall.
+    *
+    * @return A set containing the Class instances that can be marshalled.
+    */
+   Set<Class<? extends T>> getTypeClasses();
+
+   /**
+    * Returns a collection of Strings representing the fully qualified class
+    * names of the types that this Externalizer can marshall. This method
+    * offers an alternative for situations where Class instances of the
+    * marshalled objects are private.
+    *
+    * @return A set containing the class names that can be marshalled.
+    */
+   Set<String> getTypeClassNames();
+
+   /**
+    * Returns an integer that identifies the externalizer type. This is used
+    * at read time to figure out which {@link Externalizer} should read the
+    * contents of the incoming buffer.
+    *
+    * Using a positive integer allows for very efficient variable length
+    * encoding of numbers, and it's much more efficient than shipping
+    * {@link Externalizer} implementation class information around. Negative
+    * values are not allowed.
+    *
+    * Implementers of this interface can use any positive integer as long as
+    * it does not clash with any other identifier in the system. You can find
+    * information on the pre-assigned identifier ranges in
+    * <a href="http://community.jboss.org/docs/DOC-16198">here</a>.
+    *
+    * It's highly recommended that maintaining of these identifiers is done
+    * in a centralized way and you can do so by making annotations reference
+    * a set of statically defined identifiers in a separate class or
+    * interface. Such class/interface gives a global view of the identifiers
+    * in use and so can make it easier to assign new ids.
+    *
+    * Implementors can optionally avoid giving a meaningful implementation to
+    * this method (i.e. return null) and instead rely on XML or programmatic
+    * configuration to provide the Externalizer id. If no id can be determined
+    * via the implementation or XML/programmatic configuration, an error will
+    * be reported. If an id has been defined both via the implementation and
+    * XML/programmatic configuration, the value defined via XML/programmatic
+    * configuration will be used ignoring the other.
+    *
+    * @return A positive identifier for the Externalizer.
+    */
+   Integer getId();
 
 }

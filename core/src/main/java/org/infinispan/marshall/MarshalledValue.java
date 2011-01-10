@@ -34,6 +34,7 @@ import java.io.NotSerializableException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
+import java.util.Set;
 
 /**
  * Wrapper that wraps cached data, providing lazy deserialization using the calling thread's context class loader.
@@ -235,14 +236,14 @@ public class MarshalledValue {
             ReplicableCommand.class.isAssignableFrom(type) || type.equals(MarshalledValue.class);
    }
 
-   @Marshalls(typeClasses = MarshalledValue.class, id = Ids.MARSHALLED_VALUE)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<MarshalledValue> {
+   public static class Externalizer extends AbstractExternalizer<MarshalledValue> {
       private StreamingMarshaller marshaller;
       
       public void inject(StreamingMarshaller marshaller) {
          this.marshaller = marshaller;
       }
-      
+
+      @Override
       public void writeObject(ObjectOutput output, MarshalledValue mv) throws IOException {
          byte[] raw = mv.getRaw();
          UnsignedNumeric.writeUnsignedInt(output, raw.length);
@@ -250,12 +251,23 @@ public class MarshalledValue {
          output.writeInt(mv.hashCode());      
       }
 
+      @Override
       public MarshalledValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          int length = UnsignedNumeric.readUnsignedInt(input);
          byte[] raw = new byte[length];
          input.readFully(raw);
          int hc = input.readInt();
          return new MarshalledValue(raw, hc, marshaller);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.MARSHALLED_VALUE;
+      }
+
+      @Override
+      public Set<Class<? extends MarshalledValue>> getTypeClasses() {
+         return Util.<Class<? extends MarshalledValue>>asSet(MarshalledValue.class);
       }
    }
 }

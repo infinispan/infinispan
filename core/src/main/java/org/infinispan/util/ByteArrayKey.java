@@ -1,12 +1,13 @@
 package org.infinispan.util;
 
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
+import java.util.Set;
 
 /**
  * Wrapper class for byte[] keys.
@@ -46,17 +47,28 @@ public class ByteArrayKey {
          .append("}").toString();
    }
 
-   @Marshalls(typeClasses = ByteArrayKey.class, id = Ids.BYTE_ARRAY_KEY)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<ByteArrayKey> {
+   public static class Externalizer extends AbstractExternalizer<ByteArrayKey> {
+      @Override
       public void writeObject(ObjectOutput output, ByteArrayKey key) throws IOException {
          output.writeInt(key.data.length);
          output.write(key.data);
       }
 
+      @Override
       public ByteArrayKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          byte[] data = new byte[input.readInt()];
          input.readFully(data);
          return new ByteArrayKey(data);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.BYTE_ARRAY_KEY;
+      }
+
+      @Override
+      public Set<Class<? extends ByteArrayKey>> getTypeClasses() {
+         return Util.<Class<? extends ByteArrayKey>>asSet(ByteArrayKey.class);
       }
    }
 

@@ -25,9 +25,11 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.util.Set;
 
 import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.util.Util;
 
 /**
  * Used as a key to distinguish file chunk in cache.
@@ -120,8 +122,7 @@ public final class ChunkCacheKey implements Serializable {
       return fileName + "|" + chunkId + "|" + indexName;
    }
 
-   @Marshalls(typeClasses = ChunkCacheKey.class, id = ExternalizerIds.CHUNK_CACHE_KEY)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<ChunkCacheKey> {
+   public static class Externalizer extends AbstractExternalizer<ChunkCacheKey> {
 
       @Override
       public void writeObject(ObjectOutput output, ChunkCacheKey key) throws IOException {
@@ -136,6 +137,16 @@ public final class ChunkCacheKey implements Serializable {
          String fileName = input.readUTF();
          int chunkId = UnsignedNumeric.readUnsignedInt(input);
          return new ChunkCacheKey(indexName, fileName, chunkId);
+      }
+
+      @Override
+      public Integer getId() {
+         return ExternalizerIds.CHUNK_CACHE_KEY;
+      }
+
+      @Override
+      public Set<Class<? extends ChunkCacheKey>> getTypeClasses() {
+         return Util.<Class<? extends ChunkCacheKey>>asSet(ChunkCacheKey.class);
       }
 
    }

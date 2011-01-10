@@ -24,10 +24,11 @@ package org.infinispan.transaction;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -37,6 +38,7 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -69,8 +71,8 @@ public class TransactionLog {
          return modifications;
       }
 
-      @Marshalls(typeClasses = LogEntry.class, id = Ids.TRANSACTION_LOG_ENTRY)
-      public static class Externalizer implements org.infinispan.marshall.Externalizer<TransactionLog.LogEntry> {
+      public static class Externalizer extends AbstractExternalizer<LogEntry> {
+         @Override
          public void writeObject(ObjectOutput output, TransactionLog.LogEntry le) throws IOException {
             output.writeObject(le.transaction);
             WriteCommand[] cmds = le.modifications;
@@ -78,12 +80,23 @@ public class TransactionLog {
             for (WriteCommand c : cmds) output.writeObject(c);
          }
 
+         @Override
          public TransactionLog.LogEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             GlobalTransaction gtx = (GlobalTransaction) input.readObject();
             int numCommands = UnsignedNumeric.readUnsignedInt(input);
             WriteCommand[] cmds = new WriteCommand[numCommands];
             for (int i = 0; i < numCommands; i++) cmds[i] = (WriteCommand) input.readObject();
             return new TransactionLog.LogEntry(gtx, cmds);
+         }
+
+         @Override
+         public Integer getId() {
+            return Ids.TRANSACTION_LOG_ENTRY;
+         }
+
+         @Override
+         public Set<Class<? extends LogEntry>> getTypeClasses() {
+            return Util.<Class<? extends LogEntry>>asSet(LogEntry.class);
          }
       }
    }

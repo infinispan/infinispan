@@ -3,10 +3,12 @@ package org.infinispan.remoting.transport.jgroups;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
 
 /**
  * An encapsulation of a JGroups Address
@@ -58,16 +60,27 @@ public class JGroupsAddress implements Address {
       this.address = address;
    }
 
-   @Marshalls(typeClasses = JGroupsAddress.class, id = Ids.JGROUPS_ADDRESS)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<JGroupsAddress> {
+   public static class Externalizer extends AbstractExternalizer<JGroupsAddress> {
+      @Override
       public void writeObject(ObjectOutput output, JGroupsAddress address) throws IOException {
          output.writeObject(address.address);
       }
 
+      @Override
       public JGroupsAddress readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          JGroupsAddress address = new JGroupsAddress();
          address.address = (org.jgroups.Address) unmarshaller.readObject();
          return address;
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.JGROUPS_ADDRESS;
+      }
+
+      @Override
+      public Set<Class<? extends JGroupsAddress>> getTypeClasses() {
+         return Util.<Class<? extends JGroupsAddress>>asSet(JGroupsAddress.class);
       }
    }
 }

@@ -1,8 +1,9 @@
 package org.infinispan.distribution.ch;
 
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -132,8 +133,7 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       return positions.get(ownerHash);
    }
 
-   @Marshalls(typeClasses = TopologyAwareConsistentHash.class, id = Ids.TOPOLOGY_AWARE_CH)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<TopologyAwareConsistentHash> {
+   public static class Externalizer extends AbstractExternalizer<TopologyAwareConsistentHash> {
       @Override
       public void writeObject(ObjectOutput output, TopologyAwareConsistentHash dch) throws IOException {
          output.writeObject(dch.addresses);
@@ -157,6 +157,16 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
             ch.topologyInfo.addNodeTopologyInfo(nti.getAddress(), nti);
          }
          return ch;
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.TOPOLOGY_AWARE_CH;
+      }
+
+      @Override
+      public Set<Class<? extends TopologyAwareConsistentHash>> getTypeClasses() {
+         return Util.<Class<? extends TopologyAwareConsistentHash>>asSet(TopologyAwareConsistentHash.class);
       }
    }
 }

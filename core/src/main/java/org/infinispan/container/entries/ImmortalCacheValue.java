@@ -3,9 +3,11 @@ package org.infinispan.container.entries;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
+import org.infinispan.util.Util;
 
 /**
  * An immortal cache value, to correspond with {@link org.infinispan.container.entries.ImmortalCacheEntry}
@@ -92,15 +94,26 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
       }
    }
 
-   @Marshalls(typeClasses = ImmortalCacheValue.class, id = Ids.IMMORTAL_VALUE)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<ImmortalCacheValue> {
+   public static class Externalizer extends AbstractExternalizer<ImmortalCacheValue> {
+      @Override
       public void writeObject(ObjectOutput output, ImmortalCacheValue icv) throws IOException {
          output.writeObject(icv.value);
       }
 
+      @Override
       public ImmortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
          return new ImmortalCacheValue(v);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.IMMORTAL_VALUE;
+      }
+
+      @Override
+      public Set<Class<? extends ImmortalCacheValue>> getTypeClasses() {
+         return Util.<Class<? extends ImmortalCacheValue>>asSet(ImmortalCacheValue.class);
       }
    }
 }

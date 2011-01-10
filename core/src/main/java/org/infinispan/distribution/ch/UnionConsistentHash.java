@@ -1,10 +1,11 @@
 package org.infinispan.distribution.ch;
 
 import org.infinispan.CacheException;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshalls;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -81,15 +82,26 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       return oldCH;
    }
 
-   @Marshalls(typeClasses = UnionConsistentHash.class, id = Ids.UNION_CONSISTENT_HASH)
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<UnionConsistentHash> {
+   public static class Externalizer extends AbstractExternalizer<UnionConsistentHash> {
+      @Override
       public void writeObject(ObjectOutput output, UnionConsistentHash uch) throws IOException {
          output.writeObject(uch.oldCH);
          output.writeObject(uch.newCH);
       }
 
+      @Override
       public UnionConsistentHash readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new UnionConsistentHash((ConsistentHash) input.readObject(), (ConsistentHash) input.readObject());
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.UNION_CONSISTENT_HASH;
+      }
+
+      @Override
+      public Set<Class<? extends UnionConsistentHash>> getTypeClasses() {
+         return Util.<Class<? extends UnionConsistentHash>>asSet(UnionConsistentHash.class);
       }
    }
 
