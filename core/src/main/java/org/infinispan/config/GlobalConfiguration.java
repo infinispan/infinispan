@@ -148,9 +148,24 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       globalJmxStatistics.setMBeanServerLookup(mBeanServerLookupClass);
    }
 
+   /**
+    * @deprecated Use {@link #setMBeanServerLookupInstance(org.infinispan.jmx.MBeanServerLookup)} instead.
+    */
    @XmlTransient
+   @Deprecated
    public void setMBeanServerLookup(MBeanServerLookup mBeanServerLookup) {
       globalJmxStatistics.setMBeanServerLookupInstance(mBeanServerLookup);
+   }
+
+   /**
+    * Sets the instance of the {@link MBeanServerLookup} class to be used to
+    * bound JMX MBeans to.
+    *
+    * @param mBeanServerLookupInstance An instance of {@link MBeanServerLookup}
+    */
+   @XmlTransient
+   public void setMBeanServerLookupInstance(MBeanServerLookup mBeanServerLookupInstance) {
+      globalJmxStatistics.setMBeanServerLookupInstance(mBeanServerLookupInstance);
    }
 
    public MBeanServerLookup getMBeanServerLookupInstance() {
