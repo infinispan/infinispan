@@ -58,21 +58,6 @@ import java.util.Set;
  * defined in this interface and so it's generally recommended that implementations extend
  * that abstract class instead of implementing {@link Externalizer} directly.
  *
- * {@link Externalizer#getTypeClasses()} and {@link Externalizer#getTypeClassNames()} are
- * two methods that, in different ways, indicate which classes this Externalizer implementation
- * marshalls. The difference between {@link Externalizer#getTypeClasses()} and
- * {@link Externalizer#getTypeClassNames()} is how these type classes are defined. The first
- * option takes {@link Class} instances, but there might sometimes where the classes your
- * externalizing are private and hence you cannot reference the class instance. In this case,
- * you should use {@link Externalizer#getTypeClassNames()} and indicate the fully qualified
- * name of the class. You can find an example of this in {@link org.infinispan.marshall.exts.SingletonListExternalizer}
- * that tries to provide a better way to serialize lists with a single element.
- *
- * Implementations of this interface must make sure they provide an implementation for
- * {@link Externalizer#getTypeClassNames()} or {@link Externalizer#getTypeClassNames()} that
- * return a non empty collection, otherwise an error will be reported. Currently preference
- * is given to {@link Externalizer#getTypeClassNames()} if it returns a non-empty collection.
- *
  * @author Galder Zamarreño
  * @since 4.0
  */
@@ -102,21 +87,11 @@ public interface Externalizer<T> {
 
    /**
     * Returns a collection of Class instances representing the types that this
-    * Externalizer can marshall.
+    * Externalizer can marshall. Clearly, empty sets are not allowed.
     *
     * @return A set containing the Class instances that can be marshalled.
     */
    Set<Class<? extends T>> getTypeClasses();
-
-   /**
-    * Returns a collection of Strings representing the fully qualified class
-    * names of the types that this Externalizer can marshall. This method
-    * offers an alternative for situations where Class instances of the
-    * marshalled objects are private.
-    *
-    * @return A set containing the class names that can be marshalled.
-    */
-   Set<String> getTypeClassNames();
 
    /**
     * Returns an integer that identifies the externalizer type. This is used

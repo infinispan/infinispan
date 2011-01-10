@@ -22,9 +22,6 @@
 
 package org.infinispan.marshall;
 
-import java.util.Collections;
-import java.util.Set;
-
 /**
  * Base class for {@link Externalizer} implementations that offers default
  * implementations for some of its methods.
@@ -33,16 +30,6 @@ import java.util.Set;
  * @since 5.0
  */
 public abstract class AbstractExternalizer<T> implements Externalizer<T> {
-
-   @Override
-   public Set<Class<? extends T>> getTypeClasses() {
-      return Collections.emptySet();
-   }
-
-   @Override
-   public Set<String> getTypeClassNames() {
-      return Collections.emptySet();
-   }
 
    @Override
    public Integer getId() {
