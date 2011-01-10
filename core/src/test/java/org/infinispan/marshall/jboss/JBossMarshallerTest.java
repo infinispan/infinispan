@@ -310,11 +310,11 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       }
 
       @Override
-      public Set<String> getTypeClassNames() {
-         return Util.asSet(
-               "org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj",
-               "org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj",
-               "org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj");
+      public Set<Class<? extends Object>> getTypeClasses() {
+         return Util.<Class<? extends Object>>asSet(
+               Util.loadClass("org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj"),
+               Util.loadClass("org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj"),
+               Util.loadClass("org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj"));
       }
    }
 }

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -260,16 +260,12 @@ class ExternalizerTable implements ObjectTable {
 
    private void updateExtReadersWritersWithTypes(ExternalizerAdapter adapter, int readerIndex) {
       Set<Class> typeClasses = adapter.externalizer.getTypeClasses();
-      Set<String> typeClassNames = adapter.externalizer.getTypeClassNames();
       if (typeClasses.size() > 0) {
          for (Class typeClass : typeClasses)
             updateExtReadersWriters(adapter, typeClass, readerIndex);
-      } else if (typeClassNames.size() > 0) {
-         for (String typeClassName : typeClassNames)
-            updateExtReadersWriters(adapter, Util.loadClass(typeClassName), readerIndex);
       } else {
          throw new ConfigurationException(String.format(
-               "Marshalls annotation in class %s must be populated with either typeClasses or typeClassNames",
+               "Externalizer's getTypeClasses must return a non-empty set",
                adapter.externalizer.getClass().getName()));
       }
    }
