@@ -31,6 +31,7 @@ import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.DistributedSync;
+import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -55,12 +56,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.util.Util.formatString;
 import static org.infinispan.util.Util.prettyPrintTime;
@@ -174,7 +175,6 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          // If this thread blocked during a NBST flush, then inform the sender
          // it needs to replay ignored messages
          boolean replayIgnored = sr == DistributedSync.SyncResponse.STATE_ACHIEVED;
-//         if (trace) log.trace("Enough waiting; replayIgnored = {0}, sr {1}", replayIgnored, sr); // to much noise!!
 
          Response resp = inboundInvocationHandler.handle(cmd);
 
@@ -285,7 +285,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                // This is possibly a remote GET.
                // These UNICASTs happen in parallel using sendMessageWithFuture.  Each future has a listener attached
                // (see FutureCollator) and the first successful response is used.
-               FutureCollator futureCollator = new FutureCollator(filter);
+               FutureCollator futureCollator = new FutureCollator(filter, targets.size(), timeout);
                for (Address a : targets) {
                   NotifyingFuture<Object> f = sendMessageWithFuture(constructMessage(buf, a), opts);
                   futureCollator.watchFuture(f, a);
@@ -367,11 +367,16 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    class FutureCollator implements FutureListener<Object> {
       final RspFilter filter;
-      RspList retval;
+      volatile RspList retval;
       final Map<Future<Object>, Address> futures = new HashMap<Future<Object>, Address>(4);
+      volatile Exception exception;
+      volatile int expectedResponses;
+      final long timeout;
 
-      FutureCollator(RspFilter filter) {
+      FutureCollator(RspFilter filter, int expectedResponses, long timeout) {
          this.filter = filter;
+         this.expectedResponses = expectedResponses;
+         this.timeout = timeout;
       }
 
       public void watchFuture(NotifyingFuture<Object> f, Address address) {
@@ -379,38 +384,58 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          f.setListener(this);
       }
 
-      public RspList getResponseList() throws InterruptedException {
+      public RspList getResponseList() throws Exception {
+         long giveupTime = System.currentTimeMillis() + timeout;
          synchronized (this) {
-            while (true) {
-               if (this.retval == null)
-                  this.wait();
-               else
-                  return this.retval;
-            }
+            while (giveupTime > System.currentTimeMillis() && expectedResponses > 0 && retval == null)
+               this.wait(timeout);
          }
+
+         // if we've got here, we either have the response we need or aren't expecting any more responses - or have run out of time.
+         if (retval != null)
+            return retval;
+         else if (exception != null)
+            throw exception;
+         else
+            throw new TimeoutException(format("TImed out waiting for %s for valid responses from either of %s", Util.prettyPrintTime(timeout), futures.values()));
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public void futureDone(Future<Object> objectFuture) {
-         try {
-            Object response = objectFuture.get();
-            Address a = futures.get(objectFuture);
-            filter.isAcceptable(response, a);
-            if (!filter.needMoreResponses()) {
-               synchronized (this) {
-                  retval = new RspList(Collections.singleton(new Rsp(a, response)));
-                  this.notify();
+         synchronized (this) {
+            Address sender = futures.get(objectFuture);
+            try {
+               if (retval == null) {
+                  Object response = objectFuture.get();
+                  filter.isAcceptable(response, sender);
+                  if (!filter.needMoreResponses())
+                     retval = new RspList(Collections.singleton(new Rsp(sender, response)));
+                  if (log.isTraceEnabled()) log.trace("Received response: {0} from {1}", response, sender);
+               } else {
+                  if (log.isDebugEnabled())
+                     log.debug("Skipping response from {0} since a valid response for this request has already been received", sender);
                }
-            }
-            if (log.isTraceEnabled()) log.trace("Received response: {0} from {1}", response, a);
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+               if (e.getCause() instanceof org.jgroups.TimeoutException)
+                  exception = new TimeoutException("Timeout!", e);
+               else if (e.getCause() instanceof Exception)
+                  exception = (Exception) e.getCause();
+               else
+                  log.info("Caught a Throwable.", e.getCause());
 
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-         } catch (ExecutionException e) {
-            if (e.getCause() instanceof org.jgroups.TimeoutException) throw new TimeoutException("Timeout!", e);
+               if (log.isDebugEnabled())
+                  log.debug("Caught exception {0} from sender {1}.  Will skip this response.", exception.getClass().getName(), sender);
+               if (trace) log.trace("Exception caught: ", exception);
+            } finally {
+               expectedResponses--;
+               this.notify();
+            }
          }
       }
+
    }
 }
 
