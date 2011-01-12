@@ -42,6 +42,8 @@ import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.util.Buffer;
+import org.jgroups.util.FutureListener;
+import org.jgroups.util.NotifyingFuture;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 
@@ -53,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -149,8 +152,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                return executeCommand((CacheRpcCommand) cmd, req);
             else
                return cmd.perform(null);
-         }
-         catch (Throwable x) {
+         } catch (Throwable x) {
             if (trace) log.trace("Problems invoking command.", x);
             return new ExceptionResponse(new CacheException("Problems invoking command.", x));
          }
@@ -172,7 +174,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          // If this thread blocked during a NBST flush, then inform the sender
          // it needs to replay ignored messages
          boolean replayIgnored = sr == DistributedSync.SyncResponse.STATE_ACHIEVED;
-         if (trace) log.trace("Enough waiting; replayIgnored = {0}, sr {1}", replayIgnored, sr);
+//         if (trace) log.trace("Enough waiting; replayIgnored = {0}, sr {1}", replayIgnored, sr); // to much noise!!
 
          Response resp = inboundInvocationHandler.handle(cmd);
 
@@ -238,8 +240,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          Buffer buf;
          try {
             buf = req_marshaller.objectToBuffer(command);
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             throw new RuntimeException("Failure to marshal argument(s)", e);
          }
          return buf;
@@ -282,24 +283,14 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             // if at all possible, try not to use JGroups' ANYCAST for now.  Multiple (parallel) UNICASTs are much faster.
             if (filter != null) {
                // This is possibly a remote GET.
-               // TODO this is sub-optimal and sequential (for now), until JGroups provides notifying futures - JGRP-1030
+               // These UNICASTs happen in parallel using sendMessageWithFuture.  Each future has a listener attached
+               // (see FutureCollator) and the first successful response is used.
+               FutureCollator futureCollator = new FutureCollator(filter);
                for (Address a : targets) {
-                  Object response;
-                  try {
-                     response = sendMessage(constructMessage(buf, a), opts);
-                     if (log.isTraceEnabled()) {
-                        log.trace("Received response: " + response);
-                     }
-                  } catch (org.jgroups.TimeoutException e) {
-                     throw new TimeoutException("Timeout!", e);
-                  }
-                  filter.isAcceptable(response, a);
-                  if (!filter.needMoreResponses()) {
-                     retval = new RspList(Collections.singleton(new Rsp(a, response)));
-                     break;
-                  }
+                  NotifyingFuture<Object> f = sendMessageWithFuture(constructMessage(buf, a), opts);
+                  futureCollator.watchFuture(f, a);
                }
-
+               retval = futureCollator.getResponseList();
             } else if (mode == GroupRequest.GET_ALL) {
                // A SYNC call that needs to go everywhere
                Map<Address, Future<Object>> futures = new HashMap<Address, Future<Object>>(targets.size());
@@ -327,14 +318,14 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          // we only bother parsing responses if we are not in ASYNC mode.
          if (mode != GroupRequest.GET_NONE) {
 
-            if (trace) log.trace("responses: {0}", retval);
+            if (trace) log.trace("Responses: {0}", retval);
 
             // a null response is 99% likely to be due to a marshalling problem - we throw a NSE, this needs to be changed when
             // JGroups supports http://jira.jboss.com/jira/browse/JGRP-193
             // the serialization problem could be on the remote end and this is why we cannot catch this above, when marshalling.
             if (retval == null)
                throw new NotSerializableException("RpcDispatcher returned a null.  This is most often caused by args for "
-                     + command.getClass().getSimpleName() + " not being serializable.");
+                                                        + command.getClass().getSimpleName() + " not being serializable.");
 
             if (supportReplay) {
                boolean replay = false;
@@ -373,4 +364,53 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          return retval;
       }
    }
+
+   class FutureCollator implements FutureListener<Object> {
+      final RspFilter filter;
+      RspList retval;
+      final Map<Future<Object>, Address> futures = new HashMap<Future<Object>, Address>(4);
+
+      FutureCollator(RspFilter filter) {
+         this.filter = filter;
+      }
+
+      public void watchFuture(NotifyingFuture<Object> f, Address address) {
+         futures.put(f, address);
+         f.setListener(this);
+      }
+
+      public RspList getResponseList() throws InterruptedException {
+         synchronized (this) {
+            while (true) {
+               if (this.retval == null)
+                  this.wait();
+               else
+                  return this.retval;
+            }
+         }
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public void futureDone(Future<Object> objectFuture) {
+         try {
+            Object response = objectFuture.get();
+            Address a = futures.get(objectFuture);
+            filter.isAcceptable(response, a);
+            if (!filter.needMoreResponses()) {
+               synchronized (this) {
+                  retval = new RspList(Collections.singleton(new Rsp(a, response)));
+                  this.notify();
+               }
+            }
+            if (log.isTraceEnabled()) log.trace("Received response: {0} from {1}", response, a);
+
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         } catch (ExecutionException e) {
+            if (e.getCause() instanceof org.jgroups.TimeoutException) throw new TimeoutException("Timeout!", e);
+         }
+      }
+   }
 }
+
