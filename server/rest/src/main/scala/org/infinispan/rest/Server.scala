@@ -22,6 +22,12 @@ import org.infinispan.util.hash.MurmurHash2
  */
 @Path("/rest")
 class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: Boolean) {
+
+   /**For dealing with binary entries in the cache */
+   lazy val variantList = Variant.VariantListBuilder.newInstance.mediaTypes(MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE).build
+   lazy val jsonMapper = new ObjectMapper
+   lazy val xstream = new XStream
+
    @GET
    @Path("/{cacheName}/{cacheKey}")
    def getEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String): Response = {
@@ -91,13 +97,7 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
          if (request.getMethod == "POST" && cache.containsKey(key)) {
             Response.status(Status.CONFLICT).build()
          } else {
-            val obj = if (mediaType == "application/x-java-serialized-object") {
-               try {
-                  new ObjectInputStream(new ByteArrayInputStream(data)).readObject
-               } catch {
-                  case e: Exception => data
-               }
-            } else new MIMECacheEntry(mediaType, data)
+            val obj = if (isBinaryType(mediaType)) data else new MIMECacheEntry(mediaType, data)
             (ttl, idleTime, useAsync) match {
                case (0, 0, false) => cache.put(key, obj)
                case (x, 0, false) => cache.put(key, obj, ttl, TimeUnit.SECONDS)
@@ -137,10 +137,8 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
       }
    }
 
-   /**For dealing with binary entries in the cache */
-   lazy val variantList = Variant.VariantListBuilder.newInstance.mediaTypes(MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE).build
-   lazy val jsonMapper = new ObjectMapper
-   lazy val xstream = new XStream
+   private def isBinaryType(mediaType: String) =
+      mediaType == "application/x-java-serialized-object"
 
 }
 
