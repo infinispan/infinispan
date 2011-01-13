@@ -11,9 +11,9 @@ import java.lang.reflect.Method
 import org.infinispan.manager.CacheContainer
 import scala.math._
 import org.infinispan.test.TestingUtil
-import java.util.{Calendar, Locale}
 import java.text.SimpleDateFormat
 import org.apache.commons.httpclient.{HttpMethodBase, Header, HttpClient}
+import java.util.{Arrays, Calendar, Locale}
 
 /**
  * This tests using the Apache HTTP commons client library - but you could use anything
@@ -24,7 +24,6 @@ import org.apache.commons.httpclient.{HttpMethodBase, Header, HttpClient}
  * @author Galder Zamarreño
  * @since 4.0
  */
-
 @Test(groups = Array("functional"), testName = "rest.IntegrationTest")
 class IntegrationTest {
    val HOST = "http://localhost:8888/"
@@ -147,7 +146,7 @@ class IntegrationTest {
       var get = Client.call(new GetMethod(fullPathKey))
       assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
       assertNotNull(get.getResponseHeader("ETag").getValue)
-      var lastMod = get.getResponseHeader("Last-Modified").getValue
+      val lastMod = get.getResponseHeader("Last-Modified").getValue
       assertNotNull(lastMod)
       assertEquals("application/text", get.getResponseHeader("Content-Type").getValue)
       assertEquals("data", get.getResponseBodyAsString)
@@ -306,17 +305,12 @@ class IntegrationTest {
       assertEquals("application/json", get3.getResponseHeader("Content-Type").getValue)
    }
 
-   def testInsertSerializableObjects(m: Method) = {
-      val fullPathKey = fullPath + "/" + m.getName
-      val put = new PutMethod(fullPathKey)
-      put.setRequestHeader("Content-Type", "application/x-java-serialized-object")
+   def testInsertSerializableObjects(m: Method) {
       val bout = new ByteArrayOutputStream
       new ObjectOutputStream(bout).writeObject(new MySer)
-      put.setRequestBody(new ByteArrayInputStream(bout.toByteArray))
-      Client.call(put)
-
-      val x = ManagerInstance.getCache(CacheContainer.DEFAULT_CACHE_NAME).get(m.getName).asInstanceOf[MySer]
-      assertTrue(x.name == "mic")
+      put(m, bout.toByteArray, "application/x-java-serialized-object")
+      ManagerInstance.getCache(CacheContainer.DEFAULT_CACHE_NAME)
+              .get(m.getName).asInstanceOf[Array[Byte]]
    }
 
    def testNonexistentCache(m: Method) = {
@@ -335,26 +329,19 @@ class IntegrationTest {
       assertEquals(HttpServletResponse.SC_NOT_FOUND, put.getStatusCode)
    }
 
-   def testSerializedObjects(m: Method) = {
-      // assume this has been serialized on the client.  So it is a byte array.
+   def testByteArrayAsSerializedObjects(m: Method) =
+      sendByteArrayAs(m, "application/x-java-serialized-object")
+
+   def testByteArrayAsOctecStreamObjects(m: Method) =
+      sendByteArrayAs(m, "application/octet-stream")
+
+   private def sendByteArrayAs(m: Method, contentType: String) {
       val serializedOnClient: Array[Byte] = Array(0x65, 0x66, 0x67)
-      val fullPathKey = fullPath + "/" + m.getName
-      val put = new PutMethod(fullPathKey)
-      put.setRequestHeader("Content-Type", "application/x-java-serialized-object")
-      put.setRequestBody(new ByteArrayInputStream(serializedOnClient))
-      Client call put
-      assertEquals(HttpServletResponse.SC_OK, put.getStatusCode)
-
-      val get = new GetMethod(fullPathKey)
-      get.setRequestHeader("Accept", "application/x-java-serialized-object")
-      Client call get
-      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
-
-      // lets assert that the byte array received is the same as what we put in
-      val dataRead = new BufferedInputStream(get.getResponseBodyAsStream)
+      put(m, serializedOnClient, contentType)
+      val dataRead = new BufferedInputStream(
+         get(m, None, Some(contentType)).getResponseBodyAsStream)
       val bytesRead = new Array[Byte](3)
       dataRead.read(bytesRead)
-
       assertEquals(serializedOnClient, bytesRead)
    }
 
@@ -364,15 +351,9 @@ class IntegrationTest {
       val dateLast = result.getResponseHeader("Last-Modified").getValue()
       val dateMinus = addDay(dateLast, -1)
       val datePlus = addDay(dateLast, 1)
-
-      result = get(m, Some(dateLast))
-      assertEquals(HttpServletResponse.SC_OK, result.getStatusCode)
-      assertNotNull(result.getResponseBodyAsString())
-      result = get(m, Some(datePlus))
-      assertEquals(HttpServletResponse.SC_OK, result.getStatusCode)
-      assertNotNull(result.getResponseBodyAsString())
-      result = get(m, Some(dateMinus))
-      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, result.getStatusCode)
+      assertNotNull(get(m, Some(dateLast)).getResponseBodyAsString())
+      assertNotNull(get(m, Some(datePlus)).getResponseBodyAsString())
+      result = get(m, Some(dateMinus), None, HttpServletResponse.SC_PRECONDITION_FAILED)
    }
 
    def testETagChanges(m: Method) = {
@@ -388,23 +369,59 @@ class IntegrationTest {
       assertFalse(eTagFirst.equals(eTagSecond))
    }
 
-   private def put(m: Method): HttpMethodBase = put(m, "data")
+   def testSerializedStringGetBytes(m: Method) {
+      val data = ("v-" + m.getName).getBytes("UTF-8")
 
-   private def put(m: Method, data: String): HttpMethodBase = {
+      val bout = new ByteArrayOutputStream()
+      val oo = new ObjectOutputStream(bout)
+      oo.writeObject(data)
+      oo.flush()
+
+      val bytes = bout.toByteArray()
+      put(m, bytes, "application/x-java-serialized-object")
+
+      val bytesRead = get(m, None, Some("application/x-java-serialized-object")).getResponseBody()
+      assertTrue(Arrays.equals(bytes, bytesRead))
+
+      val oin = new ObjectInputStream(new ByteArrayInputStream(bytesRead))
+      val dataBack = oin.readObject().asInstanceOf[Array[Byte]]
+      assertTrue(Arrays.equals(data, dataBack))
+   }
+
+   private def put(m: Method): HttpMethodBase = put(m, "data", "application/text")
+
+   private def put(m: Method, data: Any): HttpMethodBase = put(m, data, "application/text")
+
+   private def put(m: Method, data: Any, contentType: String): HttpMethodBase = {
       val put = new PutMethod(fullPathKey(m))
-      put.setRequestHeader("Content-Type", "application/text")
-      put.setRequestBody(data)
+      put.setRequestHeader("Content-Type", contentType)
+      val reqEntity = data match {
+         case s: String => new StringRequestEntity(s)
+         case b: Array[Byte] => new InputStreamRequestEntity(new ByteArrayInputStream(b))
+      }
+      put.setRequestEntity(reqEntity)
       Client call put
+      assertEquals(HttpServletResponse.SC_OK, put.getStatusCode)
+      put
    }
 
    private def get(m: Method): HttpMethodBase = get(m, None)
 
-   private def get(m: Method, unmodifiedSince: Option[String]): HttpMethodBase = {
-      val get = new GetMethod(fullPathKey(m))
-      if (unmodifiedSince != None)
-         get.setRequestHeader("If-Unmodified-Since", unmodifiedSince.get)
+   private def get(m: Method, unmodSince: Option[String]): HttpMethodBase =
+      get(m, unmodSince, None, HttpServletResponse.SC_OK)
 
+   private def get(m: Method, unmodSince: Option[String], acceptType: Option[String]): HttpMethodBase =
+      get(m, unmodSince, acceptType, HttpServletResponse.SC_OK)
+
+   private def get(m: Method, unmodSince: Option[String], acceptType: Option[String], expCode: Int): HttpMethodBase = {
+      val get = new GetMethod(fullPathKey(m))
+      if (unmodSince != None)
+         get.setRequestHeader("If-Unmodified-Since", unmodSince.get)
+      if (acceptType != None)
+         get.setRequestHeader("Accept", acceptType.get)
       Client call get
+      assertEquals(expCode, get.getStatusCode)
+      get
    }
 
    private def fullPathKey(m: Method): String = fullPath + "/" + m.getName
