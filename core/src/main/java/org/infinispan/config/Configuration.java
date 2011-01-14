@@ -35,7 +35,7 @@ import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.CacheException;
-import org.infinispan.util.hash.MurmurHash2;
+import org.infinispan.util.hash.MurmurHash3;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -1935,7 +1935,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       protected String consistentHashClass;
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setHashFunctionClass")
-      protected String hashFunctionClass = MurmurHash2.class.getName();
+      protected String hashFunctionClass = MurmurHash3.class.getName();
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setNumOwners")
       protected Integer numOwners = 2;

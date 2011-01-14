@@ -30,6 +30,7 @@ import java.lang.UnsupportedOperationException;
  * @author Manik Surtani
  * @author Patrick McFarland
  * @see MurmurHash2
+ * @see MurmurHash3
  */
 
 public abstract interface Hash {

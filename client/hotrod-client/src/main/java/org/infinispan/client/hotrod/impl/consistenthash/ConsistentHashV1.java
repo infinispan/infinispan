@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.consistenthash;
 
+import org.infinispan.util.hash.Hash;
 import org.infinispan.util.hash.MurmurHash2;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -22,7 +23,7 @@ public class ConsistentHashV1 implements ConsistentHash {
    private final SortedMap<Integer, InetSocketAddress> positions = new TreeMap<Integer, InetSocketAddress>();
 
    private volatile int hashSpace;
-   MurmurHash2 mmh = new MurmurHash2();
+   Hash mmh = new MurmurHash2();
 
    @Override
    public void init(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, int hashSpace) {

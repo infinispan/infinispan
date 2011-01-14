@@ -7,7 +7,7 @@ import org.infinispan.distribution.ch.TopologyInfo;
 
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.hash.MurmurHash2;
+import org.infinispan.util.hash.MurmurHash3;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.BeforeMethod;
@@ -47,7 +47,7 @@ public class TopologyAwareConsistentHashTest {
    @BeforeMethod
    public void setUp() {
       ti = new TopologyInfo();
-      ch = new TopologyAwareConsistentHash(new MurmurHash2());
+      ch = new TopologyAwareConsistentHash(new MurmurHash3());
       addresses = new ArrayList<Address>();
       for (int i = 0; i < 10; i++) {
           addresses.add(new TestAddress(i * 100));
@@ -59,7 +59,7 @@ public class TopologyAwareConsistentHashTest {
       }
 
       addresses.clear();
-      ch = new TopologyAwareConsistentHash(new MurmurHash2());
+      ch = new TopologyAwareConsistentHash(new MurmurHash3());
       ch.setTopologyInfo(ti);
    }
 

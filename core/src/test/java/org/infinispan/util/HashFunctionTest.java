@@ -4,6 +4,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.hash.Hash;
 import org.infinispan.util.hash.MurmurHash2;
 import org.infinispan.util.hash.MurmurHash2Compat;
+import org.infinispan.util.hash.MurmurHash3;
 import org.testng.annotations.Test;
 
 @Test(testName = "util.HashFunctionTest", groups = "unit")
@@ -15,6 +16,10 @@ public class HashFunctionTest extends AbstractInfinispanTest {
 
    public void testMurmurHash2CompatConsistency() {
       testHashConsistency(new MurmurHash2Compat());
+   }
+
+   public void testMurmurHash3Consistency() {
+      testHashConsistency(new MurmurHash3());
    }
 
    private void testHashConsistency(Hash hash) {
