@@ -54,6 +54,7 @@ public class DummyTransaction implements Transaction {
 
    protected Set<Synchronization> syncs;
    private List<XAResource> enlistedResources = new ArrayList<XAResource>();
+   private int prepareStatus;
 
    public DummyTransaction(DummyBaseTransactionManager tm) {
       tm_ = tm;
@@ -103,8 +104,7 @@ public class DummyTransaction implements Transaction {
             //notify synchronizations
             notifyAfterCompletion(status);
          }
-      }
-      finally {
+      } finally {
          // Disassociate tx from thread.
          tm_.setTransaction(null);
       }
@@ -124,8 +124,7 @@ public class DummyTransaction implements Transaction {
          runRollback();
          status = Status.STATUS_ROLLEDBACK;
          notifyAfterCompletion(Status.STATUS_ROLLEDBACK);
-      }
-      catch (Throwable t) {
+      } catch (Throwable t) {
          log.error(t);
          throw new IllegalStateException(t);
       }
@@ -252,7 +251,8 @@ public class DummyTransaction implements Transaction {
       Collection<XAResource> resources = transaction.getEnlistedResources();
       for (XAResource res : resources) {
          try {
-            res.prepare(xid);
+            int prepareStatus = res.prepare(xid);
+            transaction.setPrepareStatus(prepareStatus);
          } catch (XAException e) {
             log.trace("The resource wants to rollback!", e);
             return false;
@@ -264,6 +264,10 @@ public class DummyTransaction implements Transaction {
       return true;
    }
 
+   private void setPrepareStatus(int prepareStatus) {
+      this.prepareStatus = prepareStatus;
+   }
+
    protected void notifyAfterCompletion(int status) {
       if (syncs == null) return;
       for (Synchronization s : syncs) {
@@ -272,8 +276,7 @@ public class DummyTransaction implements Transaction {
          }
          try {
             s.afterCompletion(status);
-         }
-         catch (Throwable t) {
+         } catch (Throwable t) {
             log.error("afterCompletion() failed for " + s, t);
          }
       }
@@ -298,14 +301,18 @@ public class DummyTransaction implements Transaction {
 
    private void runCommitTx() throws HeuristicMixedException {
       DummyTransaction transaction = tm_.getTransaction();
-      Collection<XAResource> resources = transaction.getEnlistedResources();
-      for (XAResource res : resources) {
-         try {
-            //we only do 2-phase commits
-            res.commit(xid, false);
-         } catch (XAException e) {
-            log.warn("exception while committing", e);
-            throw new HeuristicMixedException(e.getMessage());
+      if (transaction.getPrepareStatus() == XAResource.XA_RDONLY) {
+         log.debug("This is a read-only tx");
+      } else {
+         Collection<XAResource> resources = transaction.getEnlistedResources();
+         for (XAResource res : resources) {
+            try {
+               //we only do 2-phase commits
+               res.commit(xid, false);
+            } catch (XAException e) {
+               log.warn("exception while committing", e);
+               throw new HeuristicMixedException(e.getMessage());
+            }
          }
       }
    }
@@ -320,5 +327,9 @@ public class DummyTransaction implements Transaction {
             "xid=" + xid +
             ", status=" + status +
             '}';
+   }
+
+   public int getPrepareStatus() {
+      return prepareStatus;
    }
 }
