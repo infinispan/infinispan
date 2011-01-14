@@ -45,7 +45,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
 
    private volatile RemoteCacheStoreConfig config;
    private volatile RemoteCacheManager remoteCacheManager;
-   private volatile RemoteCache remoteCache;
+   private volatile RemoteCache<Object, Object> remoteCache;
    private static final String LIFESPAN = "lifespan";
    private static final String MAXIDLE = "maxidle";
 
@@ -75,6 +75,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public void fromStream(ObjectInput inputStream) throws CacheLoaderException {
       Map result;
       try {
@@ -107,7 +108,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
 
    @Override
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
-      Map map = remoteCache.getBulk();
+      Map<Object, Object> map = remoteCache.getBulk();
       return convertToInternalCacheEntries(map);
    }
 
@@ -163,10 +164,10 @@ public class RemoteCacheStore extends AbstractCacheStore {
       return TimeUnit.MILLISECONDS.toSeconds(millis);
    }
 
-   private Set<InternalCacheEntry> convertToInternalCacheEntries(Map map) {
+   private Set<InternalCacheEntry> convertToInternalCacheEntries(Map<Object, Object> map) {
       Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>(map.size());
-      Set<Map.Entry> set = map.entrySet();
-      for (Map.Entry e : set) {
+      Set<Map.Entry<Object, Object>> set = map.entrySet();
+      for (Map.Entry<Object, Object> e : set) {
          result.add((InternalCacheEntry) e.getValue());
       }
       return result;

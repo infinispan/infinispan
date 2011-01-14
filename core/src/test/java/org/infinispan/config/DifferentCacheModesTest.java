@@ -1,8 +1,6 @@
 package org.infinispan.config;
 
 
-import org.infinispan.interceptors.InvocationContextInterceptor;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -12,7 +10,6 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 
 @Test(testName = "config.DifferentCacheModesTest", groups = "unit")
 public class DifferentCacheModesTest extends AbstractInfinispanTest {

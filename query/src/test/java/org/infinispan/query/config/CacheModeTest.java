@@ -1,15 +1,12 @@
 package org.infinispan.query.config;
 
-import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.query.backend.QueryHelper;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;

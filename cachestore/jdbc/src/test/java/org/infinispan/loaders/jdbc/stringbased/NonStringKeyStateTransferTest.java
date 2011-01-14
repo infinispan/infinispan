@@ -24,7 +24,7 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
          conf.setCacheMode(Configuration.CacheMode.REPL_SYNC);
 
          cm1 = TestCacheManagerFactory.createClusteredCacheManager(conf);
-         Cache c1 = cm1.getCache();
+         Cache<Person, String> c1 = cm1.getCache();
          Person mircea = new Person("markus", "mircea", 30);
          Person mircea2 = new Person("markus2", "mircea2", 30);
 
@@ -48,7 +48,7 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
          conf.setCacheMode(Configuration.CacheMode.DIST_SYNC);
 
          cm1 = TestCacheManagerFactory.createClusteredCacheManager(conf);
-         Cache c1 = cm1.getCache();
+         Cache<Person, String> c1 = cm1.getCache();
 
          for (int i = 0; i < 100; i++) {
             Person mircea = new Person("markus" +i , "mircea"+i, 30);
@@ -68,14 +68,14 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
    }
 
    public void testDistributedAndNoTwoWay() {
-      EmbeddedCacheManager cm1 = null;
+      EmbeddedCacheManager cm1;
 
       Configuration conf = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(), false, false);
       conf.setCacheMode(Configuration.CacheMode.DIST_SYNC);
 
       cm1 = TestCacheManagerFactory.createClusteredCacheManager(conf);
       try {
-         Cache c1 = cm1.getCache();
+         cm1.getCache();
       } finally {
          TestingUtil.killCacheManagers(cm1);
       }
