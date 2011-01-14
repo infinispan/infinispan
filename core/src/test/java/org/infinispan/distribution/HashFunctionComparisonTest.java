@@ -17,7 +17,7 @@ import static org.infinispan.util.Util.prettyPrintTime;
 /**
  * This test benchmarks different hash functions.
  */
-@Test (groups = "manual", enabled = true, testName = "distribution.HashFunctionComparisonTest")
+@Test (groups = "manual", enabled = false, testName = "distribution.HashFunctionComparisonTest")
 public class HashFunctionComparisonTest {
 
    private static final int MAX_STRING_SIZE = 16;
