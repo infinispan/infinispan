@@ -1,9 +1,9 @@
 package org.infinispan.distribution.ch;
 
-import org.infinispan.CacheException;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.hash.Hash;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -40,6 +40,12 @@ import static java.lang.Math.min;
  */
 @Marshallable(externalizer = TopologyAwareConsistentHash.Externalizer.class, id = Ids.TOPOLOGY_AWARE_CH)
 public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
+   public TopologyAwareConsistentHash() {
+   }
+
+   public TopologyAwareConsistentHash(Hash hash) {
+      setHashFunction(hash);
+   }
 
    public List<Address> locate(Object key, int replCount) {
       Address owner = getOwner(key);

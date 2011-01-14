@@ -127,7 +127,9 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
       ManagerInstance.getCache(cacheName).clear
    }
 
-   def calcETAG(entry: MIMECacheEntry) = new EntityTag(entry.contentType + MurmurHash2.hash(entry.data))
+   val hashFunc = new MurmurHash2()
+
+   def calcETAG(entry: MIMECacheEntry) = new EntityTag(entry.contentType + hashFunc.hash(entry.data))
 
    private def protectCacheNotFound(request: Request, useAsync: Boolean) (op: (Request, Boolean) => Response): Response = {
       try {

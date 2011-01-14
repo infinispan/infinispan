@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.consistenthash;
 
+import org.infinispan.util.hash.MurmurHash2;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -7,8 +8,6 @@ import java.net.InetSocketAddress;
 import java.util.LinkedHashMap;
 import java.util.SortedMap;
 import java.util.TreeMap;
-
-import static org.infinispan.util.hash.MurmurHash2.hash;
 
 /**
  * Version one consistent hash function based on {@link org.infinispan.util.hash.MurmurHash2};
@@ -23,6 +22,7 @@ public class ConsistentHashV1 implements ConsistentHash {
    private final SortedMap<Integer, InetSocketAddress> positions = new TreeMap<Integer, InetSocketAddress>();
 
    private volatile int hashSpace;
+   MurmurHash2 mmh = new MurmurHash2();
 
    @Override
    public void init(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, int hashSpace) {
@@ -36,7 +36,7 @@ public class ConsistentHashV1 implements ConsistentHash {
 
    @Override
    public InetSocketAddress getServer(byte[] key) {
-      int keyHashCode = hash(key);
+      int keyHashCode = mmh.hash(key);
       if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
       int hash = Math.abs(keyHashCode);
 

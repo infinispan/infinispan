@@ -2,7 +2,7 @@ package org.infinispan.distribution;
 
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.hash.MurmurHash2;
+import org.infinispan.util.hash.Hash;
 import org.testng.annotations.Test;
 
 import java.text.NumberFormat;
@@ -17,7 +17,7 @@ import static org.infinispan.util.Util.prettyPrintTime;
 /**
  * This test benchmarks different hash functions.
  */
-@Test (groups = "manual", enabled = false, testName = "distribution.HashFunctionComparisonTest")
+@Test (groups = "manual", enabled = true, testName = "distribution.HashFunctionComparisonTest")
 public class HashFunctionComparisonTest {
 
    private static final int MAX_STRING_SIZE = 16;
@@ -25,19 +25,30 @@ public class HashFunctionComparisonTest {
    private static final int NUM_KEYS_PER_TYPE = 1000 * 100;
    private static final int MODULUS_BASE = 1024;
    private static final NumberFormat nf = NumberFormat.getInstance();
-   private static final Random r = new Random();
 
+   private static List<HashFunction> getHashFunctions() {
+      List<HashFunction> functions = new LinkedList<HashFunction>();
+      functions.add(new MurmurHash2());
+      functions.add(new MurmurHash2Compat());
+      functions.add(new SuperFastHash());
+      return functions;
+   }
+
+
+   public void doTest() {
+      for (int i : Arrays.asList(10, 50, 100, 500, 1000)) {
+         System.out.printf("-----------------  Testing with %s nodes -----------------%n", i);
+         addressDistribution(i);
+      }
+   }
 
    /**
     * Tests how well JGroupsAddresses are distributed on a hash wheel.
     */
-   public void testAddressDistribution() {
-      int numAddresses = 10;
+   private void addressDistribution(int numAddresses) {
       int hashSpace = 10240;
 
-      Set<HashFunction> functions = new HashSet<HashFunction>();
-      functions.add(new MurmurHash());
-      functions.add(new SuperFastHash());
+      Collection<HashFunction> functions = getHashFunctions();
 
       System.out.printf("%s %s %s %s %s %n%n", padString("Function", 25), padString("Greatest dist", 15), padString("Smallest dist", 15), padString("Mean dist", 15), padString("Positions", 15));
 
@@ -54,8 +65,17 @@ public class HashFunctionComparisonTest {
                  padString(greatestDist(positions, hashSpace), 15),
                  padString(smallestDist(positions, hashSpace), 15),
                  padString(meanDist(positions, hashSpace), 15),
-                 positions);
+//                 positions);
+         "-");
       }
+
+      System.out.printf("%s %s %s %s %s %n%n",
+              padString("Perfectly Balanced", 25),
+              padString("-", 15),
+              padString("-", 15),
+              padString(Integer.toString(hashSpace / numAddresses), 15),
+              "-");
+
    }
 
    private String greatestDist(SortedMap<Integer, Address> pos, int hashSpace) {
@@ -107,10 +127,7 @@ public class HashFunctionComparisonTest {
 
 
    public void testHashFunctions() {
-
-      Set<HashFunction> functions = new HashSet<HashFunction>();
-      functions.add(new MurmurHash());
-      functions.add(new SuperFastHash());
+      Collection<HashFunction> functions = getHashFunctions();
 
       Set<Object> objectKeys = new HashSet<Object>(NUM_KEYS_PER_TYPE);
       Set<String> stringKeys = new HashSet<String>(NUM_KEYS_PER_TYPE);
@@ -133,7 +150,7 @@ public class HashFunctionComparisonTest {
       stats.addValue(hash % MODULUS_BASE);
    }
 
-   private void perform(Set<HashFunction> functions, Set<Object> objectKeys, Set<String> stringKeys, Set<byte[]> byteArrayKeys, boolean warmup) {
+   private void perform(Collection<HashFunction> functions, Set<Object> objectKeys, Set<String> stringKeys, Set<byte[]> byteArrayKeys, boolean warmup) {
 
       if (!warmup)
          System.out.printf("%s %s %s %s%n", padString("Function Impl", 25), padString("String keys", 18), padString("Byte array keys", 18), padString("Object keys", 18));
@@ -278,14 +295,26 @@ class SuperFastHash extends HashFunction {
    }
 }
 
-class MurmurHash extends HashFunction {
-
+class MurmurHash2 extends HashFunction {
+   org.infinispan.util.hash.MurmurHash2 h = new org.infinispan.util.hash.MurmurHash2();
    public String functionName() {
       return "MurmurHash2 (neutral)";
    }
 
    @Override
    public int hash(byte[] payload) {
-      return MurmurHash2.hash(payload);
+      return h.hash(payload);
+   }
+}
+
+class MurmurHash2Compat extends HashFunction {
+   org.infinispan.util.hash.MurmurHash2Compat h = new org.infinispan.util.hash.MurmurHash2Compat();
+   public String functionName() {
+      return "MurmurHash2Compat (neutral)";
+   }
+
+   @Override
+   public int hash(byte[] payload) {
+      return h.hash(payload);
    }
 }
