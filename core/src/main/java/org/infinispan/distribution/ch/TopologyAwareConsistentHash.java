@@ -4,6 +4,7 @@ import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
+import org.infinispan.util.hash.Hash;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -39,6 +40,12 @@ import static java.lang.Math.min;
  * @since 4.2
  */
 public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
+   public TopologyAwareConsistentHash() {
+   }
+
+   public TopologyAwareConsistentHash(Hash hash) {
+      setHashFunction(hash);
+   }
 
    public List<Address> locate(Object key, int replCount) {
       Address owner = getOwner(key);

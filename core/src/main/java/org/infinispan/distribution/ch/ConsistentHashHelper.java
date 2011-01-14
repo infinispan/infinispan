@@ -3,6 +3,7 @@ package org.infinispan.distribution.ch;
 import org.infinispan.config.Configuration;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
+import org.infinispan.util.hash.Hash;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,13 +33,30 @@ public class ConsistentHashHelper {
       if (ch instanceof UnionConsistentHash)
          return removeAddressFromUnionConsistentHash((UnionConsistentHash) ch, toRemove, c, topologyInfo);
       else {
-         ConsistentHash newCH = (ConsistentHash) Util.getInstance(c.getConsistentHashClass());
+         ConsistentHash newCH = constructConsistentHashInstance(c);
          List<Address> caches = new ArrayList<Address>(ch.getCaches());
          caches.remove(toRemove);
          newCH.setCaches(caches);
          newCH.setTopologyInfo(topologyInfo);
          return newCH;
       }
+   }
+
+   private static ConsistentHash constructConsistentHashInstance(Configuration c) {
+      ConsistentHash ch = (ConsistentHash) Util.getInstance(c.getConsistentHashClass());
+      if (ch instanceof AbstractWheelConsistentHash) {
+         Hash h = (Hash) Util.getInstance(c.getHashFunctionClass());
+         ((AbstractWheelConsistentHash) ch).setHashFunction(h);
+      }
+      return ch;
+   }
+
+   private static ConsistentHash constructConsistentHashInstance(Class<? extends ConsistentHash> clazz, Hash hash) {
+      ConsistentHash ch = Util.getInstance(clazz);
+      if (ch instanceof AbstractWheelConsistentHash) {
+         ((AbstractWheelConsistentHash) ch).setHashFunction(hash);
+      }
+      return ch;
    }
 
    /**
@@ -67,7 +85,7 @@ public class ConsistentHashHelper {
     * @return a new consistent hash instance
     */
    public static ConsistentHash createConsistentHash(Configuration c, List<Address> addresses, TopologyInfo topologyInfo) {
-      ConsistentHash ch = (ConsistentHash) Util.getInstance(c.getConsistentHashClass());
+      ConsistentHash ch = constructConsistentHashInstance(c);
       ch.setCaches(addresses);
       ch.setTopologyInfo(topologyInfo);
       return ch;
@@ -108,14 +126,17 @@ public class ConsistentHashHelper {
     * Creates a new consistent hash instance based on the type specified, and populates the consistent hash
     * with the collection of addresses passed in.
     *
-    * @param clazz     type of the consistent hash to create
+    * @param template An older consistent hash instance to clone
     * @param addresses with which to populate the consistent hash
     * @param topologyInfo
     * @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(Class<? extends ConsistentHash> clazz, List<Address> addresses, TopologyInfo topologyInfo) {
-      ConsistentHash ch;
-      ch = Util.getInstance(clazz);
+   public static ConsistentHash createConsistentHash(ConsistentHash template, List<Address> addresses, TopologyInfo topologyInfo) {
+      Hash hf = null;
+      if (template instanceof AbstractWheelConsistentHash) {
+         hf = ((AbstractWheelConsistentHash) template).hashFunction;
+      }
+      ConsistentHash ch = constructConsistentHashInstance(template.getClass(), hf);
       if (addresses != null && !addresses.isEmpty())  ch.setCaches(addresses);
       ch.setTopologyInfo(topologyInfo);
       return ch;
@@ -125,30 +146,14 @@ public class ConsistentHashHelper {
     * Creates a new consistent hash instance based on the type specified, and populates the consistent hash
     * with the collection of addresses passed in.
     *
-    * @param clazz         type of the consistent hash to create
+    * @param template  An older consistent hash instance to clone
     * @param addresses     with which to populate the consistent hash
     * @param topologyInfo
     *@param moreAddresses to add to the list of addresses  @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(Class<? extends ConsistentHash> clazz, List<Address> addresses, TopologyInfo topologyInfo, Address... moreAddresses) {
+   public static ConsistentHash createConsistentHash(ConsistentHash template, List<Address> addresses, TopologyInfo topologyInfo, Address... moreAddresses) {
       List<Address> list = new LinkedList<Address>(addresses);
       list.addAll(Arrays.asList(moreAddresses));
-      return createConsistentHash(clazz, list, topologyInfo);
-   }
-
-   /**
-    * Creates a new consistent hash instance based on the type specified, and populates the consistent hash
-    * with the collection of addresses passed in.
-    *
-    * @param clazz         type of the consistent hash to create
-    * @param addresses     with which to populate the consistent hash
-    * @param moreAddresses to add to the list of addresses
-    * @param topologyInfo
-    * @return a new consistent hash instance
-    */
-   public static ConsistentHash createConsistentHash(Class<? extends ConsistentHash> clazz, List<Address> addresses, Collection<Address> moreAddresses, TopologyInfo topologyInfo) {
-      List<Address> list = new LinkedList<Address>(addresses);
-      list.addAll(moreAddresses);
-      return createConsistentHash(clazz, list, topologyInfo);
+      return createConsistentHash(template, list, topologyInfo);
    }
 }

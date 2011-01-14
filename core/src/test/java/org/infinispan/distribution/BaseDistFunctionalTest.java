@@ -91,7 +91,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
    public static ConsistentHash createNewConsistentHash(List<Address> servers) {
       try {
-         return ConsistentHashHelper.createConsistentHash(DefaultConsistentHash.class, servers, new TopologyInfo());
+         return ConsistentHashHelper.createConsistentHash(new Configuration(), servers, new TopologyInfo());
       } catch (RuntimeException re) {
          throw re;
       } catch (Exception e) {

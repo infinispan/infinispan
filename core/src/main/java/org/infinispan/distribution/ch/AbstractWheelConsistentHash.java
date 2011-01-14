@@ -1,8 +1,10 @@
 package org.infinispan.distribution.ch;
 
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.hash.Hash;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jgroups.blocks.ReplCache;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-
-import static org.infinispan.util.hash.MurmurHash2.hash;
 
 /**
  * Abstract class for the wheel-based CH implementations.
@@ -26,8 +26,13 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    protected SortedMap<Integer, Address> positions;
    // TODO: Maybe address and addressToHashIds can be combined in a LinkedHashMap?
    protected Map<Address, Integer> addressToHashIds;
+   protected Hash hashFunction;
 
    final static int HASH_SPACE = 10240; // no more than 10k nodes?
+
+   public void setHashFunction(Hash h) {
+      hashFunction = h;
+   }
 
    public void setCaches(List<Address> caches) {
       super.setCaches(caches);
@@ -41,7 +46,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       addressToHashIds = new HashMap<Address, Integer>();
 
       for (Address a : addresses) {
-         int positionIndex = Math.abs(hash(a)) % HASH_SPACE;
+         int positionIndex = Math.abs(hashFunction.hash(a)) % HASH_SPACE;
          // this is deterministic since the address list is ordered and the order is consistent across the grid
          while (positions.containsKey(positionIndex)) positionIndex = positionIndex + 1 % HASH_SPACE;
          positions.put(positionIndex, a);
@@ -86,7 +91,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
 
    protected int getNormalizedHash(Object key) {
       // more efficient impl
-      int keyHashCode = hash(key);
+      int keyHashCode = hashFunction.hash(key);
       if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
       return Math.abs(keyHashCode) % HASH_SPACE;
    }

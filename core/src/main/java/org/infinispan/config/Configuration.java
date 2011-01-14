@@ -35,6 +35,7 @@ import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.CacheException;
+import org.infinispan.util.hash.MurmurHash2;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -750,6 +751,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
+    * A fully qualified name of the class providing a hash function, used as a bit spreader and a general hash code
+    * generator.  Typically used in conjunction with the many default {@link org.infinispan.distribution.ch.ConsistentHash}
+    * implementations shipped.
+    * @param hashFunctionClass
+    */
+   public void setHashFunctionClass(String hashFunctionClass) {
+      clustering.hash.hashFunctionClass = hashFunctionClass;
+   }
+
+   /**
     * Number of cluster-wide replicas for each cache entry.
     *
     * @param numOwners
@@ -944,6 +955,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          clustering.hash.consistentHashClass = globalConfiguration == null || globalConfiguration.hasTopologyInfo() ? TopologyAwareConsistentHash.class.getName() : DefaultConsistentHash.class.getName();
       }
       return clustering.hash.consistentHashClass;
+   }
+
+   public String getHashFunctionClass() {
+      return clustering.hash.hashFunctionClass;
    }
 
    public int getNumOwners() {
@@ -1919,6 +1934,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(name = "class", bean = Configuration.class, targetElement = "setConsistentHashClass")
       protected String consistentHashClass;
 
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "setHashFunctionClass")
+      protected String hashFunctionClass = MurmurHash2.class.getName();
+
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setNumOwners")
       protected Integer numOwners = 2;
 
@@ -1935,6 +1953,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setConsistentHashClass(String consistentHashClass) {
          testImmutability("consistentHashClass");
          this.consistentHashClass = consistentHashClass;
+      }
+
+      @XmlAttribute
+      public void setHashFunctionClass(String hashFunctionClass) {
+         testImmutability("hashFunctionClass");
+         this.hashFunctionClass = hashFunctionClass;
       }
 
       public void accept(ConfigurationBeanVisitor v) {
@@ -1974,6 +1998,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
          if (consistentHashClass != null ? !consistentHashClass.equals(hashType.consistentHashClass) : hashType.consistentHashClass != null)
             return false;
+         if (hashFunctionClass != null ? !hashFunctionClass.equals(hashType.hashFunctionClass) : hashType.hashFunctionClass != null)
+            return false;
          if (numOwners != null ? !numOwners.equals(hashType.numOwners) : hashType.numOwners != null) return false;
          if (rehashRpcTimeout != null ? !rehashRpcTimeout.equals(hashType.rehashRpcTimeout) : hashType.rehashRpcTimeout != null)
             return false;
@@ -1986,6 +2012,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public int hashCode() {
          int result = consistentHashClass != null ? consistentHashClass.hashCode() : 0;
+         result = 31 * result + (hashFunctionClass != null ? hashFunctionClass.hashCode() : 0);
          result = 31 * result + (numOwners != null ? numOwners.hashCode() : 0);
          result = 31 * result + (rehashWait != null ? rehashWait.hashCode() : 0);
          result = 31 * result + (rehashRpcTimeout != null ? rehashRpcTimeout.hashCode() : 0);
