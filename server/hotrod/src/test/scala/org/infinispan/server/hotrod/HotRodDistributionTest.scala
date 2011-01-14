@@ -79,7 +79,7 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
          assertAddressEquals(hashTopologyResp.view.members.tail.tail.head, newServer.getAddress,
             Map(cacheName -> consistentHash.getHashId(newServer.getAddress.clusterAddress)))
          assertEquals(hashTopologyResp.numOwners, 2)
-         assertEquals(hashTopologyResp.hashFunction, 1)
+         assertEquals(hashTopologyResp.hashFunction, EXPECTED_HASH_FUNCTION_VERSION)
          assertEquals(hashTopologyResp.hashSpace, 10240)
          log.trace("Get key and verify that's v6-*", null)
          assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v6-"))
@@ -100,7 +100,7 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
       assertAddressEquals(hashTopologyResp.view.members.tail.head, servers.tail.head.getAddress,
          Map(cacheName -> consistentHash.getHashId(servers.tail.head.getAddress.clusterAddress)))
       assertEquals(hashTopologyResp.numOwners, 2)
-      assertEquals(hashTopologyResp.hashFunction, 1)
+      assertEquals(hashTopologyResp.hashFunction, EXPECTED_HASH_FUNCTION_VERSION)
       assertEquals(hashTopologyResp.hashSpace, 10240)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v7-"))
    }

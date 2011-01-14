@@ -23,6 +23,8 @@ object HotRodTestingUtil extends Logging {
 
    import HotRodTestingUtil._
 
+   val EXPECTED_HASH_FUNCTION_VERSION: Byte = 2
+
    def host = "127.0.0.1"
 
    def startHotRodServer(manager: EmbeddedCacheManager): HotRodServer =
@@ -151,7 +153,7 @@ object HotRodTestingUtil extends Logging {
       assertAddressEquals(hashTopologyResp.view.members.head, servers.head.getAddress, hashIds.head)
       assertAddressEquals(hashTopologyResp.view.members.tail.head, servers.tail.head.getAddress, hashIds.tail.head)
       assertEquals(hashTopologyResp.numOwners, 2)
-      assertEquals(hashTopologyResp.hashFunction, 1)
+      assertEquals(hashTopologyResp.hashFunction, EXPECTED_HASH_FUNCTION_VERSION)
       assertEquals(hashTopologyResp.hashSpace, 10240)
    }
 

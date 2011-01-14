@@ -75,6 +75,8 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
       buffer
    }
 
+   val DEFAULT_HASH_FUNCTION_VERSION: Byte = 2
+
    private def getTopologyResponse(r: Response): AbstractTopologyResponse = {
       // If clustered, set up a cache for topology information
       if (isClustered) {
@@ -90,7 +92,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
                      // TODO: Retrieve hash function when we have specified functions
                      val hashSpace = cache.getAdvancedCache.getDistributionManager.getConsistentHash.getHashSpace
                      HashDistAwareResponse(TopologyView(currentTopologyView.topologyId, currentTopologyView.members),
-                           config.getNumOwners, 1, hashSpace)
+                           config.getNumOwners, DEFAULT_HASH_FUNCTION_VERSION, hashSpace)
                   }
                } else null
             }
