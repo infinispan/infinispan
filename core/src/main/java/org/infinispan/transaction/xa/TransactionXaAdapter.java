@@ -127,8 +127,12 @@ public class TransactionXaAdapter implements XAResource {
    /**
     * Same comment as for {@link #prepare(javax.transaction.xa.Xid)} applies for commit.
     */   
-   public void rollback(Xid xid) throws XAException {      
-      LocalTransaction localTransaction = getLocalTransactionAndValidate(xid);
+   public void rollback(Xid xid) throws XAException {
+      TransactionXaAdapter.rollbackImpl(xid, commandsFactory, icc, invoker, txTable);
+   }
+
+   public static void rollbackImpl(Xid xid, CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker, TransactionTable txTable) throws XAException {
+      LocalTransaction localTransaction = getLocalTransactionAndValidateImpl(xid, txTable);
       if (trace) log.trace("rollback transaction {0} ", localTransaction.getGlobalTransaction());
       RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
@@ -139,11 +143,15 @@ public class TransactionXaAdapter implements XAResource {
          log.error("Exception while rollback", e);
          throw new XAException(XAException.XA_HEURHAZ);
       } finally {
-         cleanup(localTransaction);
+         cleanupImpl(localTransaction, txTable, icc);
       }
    }
 
    private LocalTransaction getLocalTransactionAndValidate(Xid xid) throws XAException {
+      return TransactionXaAdapter.getLocalTransactionAndValidateImpl(xid, txTable);
+   }
+
+   private static LocalTransaction getLocalTransactionAndValidateImpl(Xid xid, TransactionTable txTable) throws XAException {
       LocalTransaction localTransaction = txTable.getLocalTransaction(xid);
       if  (localTransaction == null) {
          if (trace) log.trace("no tx found for {0}", xid);
@@ -217,6 +225,10 @@ public class TransactionXaAdapter implements XAResource {
    }
 
    private void cleanup(LocalTransaction localTransaction) {
+      TransactionXaAdapter.cleanupImpl(localTransaction, txTable, icc);
+   }
+
+   private static void cleanupImpl(LocalTransaction localTransaction, TransactionTable txTable, InvocationContextContainer icc) {
       txTable.removeLocalTransaction(localTransaction);
       icc.suspend();
    }   

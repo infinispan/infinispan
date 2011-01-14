@@ -42,6 +42,8 @@ import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.Xid;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -197,6 +199,15 @@ public class TxInterceptor extends CommandInterceptor {
          try {
             transaction.enlistResource(new TransactionXaAdapter(localTransaction, txTable, commandsFactory, configuration, invoker, icc));
          } catch (Exception e) {
+            Xid xid = localTransaction.getXid();
+            if (xid != null && !ctx.getLockedKeys().isEmpty()) {
+               log.debug("Attempting a rollback to clear stale resources!");
+               try {
+                  TransactionXaAdapter.rollbackImpl(xid, commandsFactory, icc, invoker, txTable);
+               } catch (XAException xae) {
+                  log.debug("Caught exception attempting to clean up " + xid, xae);
+               }
+            }
             log.error("Failed to enlist TransactionXaAdapter to transaction");
             throw new CacheException(e);
          }
