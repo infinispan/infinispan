@@ -131,22 +131,10 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       return result;
    }
 
-   public static class Externalizer extends AbstractExternalizer<DefaultConsistentHash> {
+   public static class Externalizer extends AbstractWheelConsistentHash.Externalizer<DefaultConsistentHash> {
       @Override
-      public void writeObject(ObjectOutput output, DefaultConsistentHash dch) throws IOException {
-         output.writeObject(dch.addresses);
-         output.writeObject(dch.positions);
-         output.writeObject(dch.addressToHashIds);
-      }
-
-      @Override
-      @SuppressWarnings("unchecked")
-      public DefaultConsistentHash readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         DefaultConsistentHash dch = new DefaultConsistentHash();
-         dch.addresses = (ArrayList<Address>) unmarshaller.readObject();
-         dch.positions = (SortedMap<Integer, Address>) unmarshaller.readObject();
-         dch.addressToHashIds = (Map<Address, Integer>) unmarshaller.readObject();
-         return dch;
+      protected DefaultConsistentHash instance() {
+         return new DefaultConsistentHash();
       }
 
       @Override

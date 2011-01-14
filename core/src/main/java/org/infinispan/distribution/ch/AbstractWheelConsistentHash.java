@@ -1,15 +1,22 @@
 package org.infinispan.distribution.ch;
 
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
 import org.infinispan.util.hash.Hash;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.blocks.ReplCache;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -86,7 +93,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       if (hashId == null)
          return -1;
       else
-         return hashId.intValue();
+         return hashId;
    }
 
    protected int getNormalizedHash(Object key) {
@@ -103,5 +110,30 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
             ", positions=" + positions +
             ", addressToHashIds=" + addressToHashIds +
             "} " + super.toString();
+   }
+
+   public static abstract class Externalizer<T extends AbstractWheelConsistentHash> extends AbstractExternalizer<T> {
+
+      protected abstract T instance();
+
+      @Override
+      public void writeObject(ObjectOutput output, T abstractWheelConsistentHash) throws IOException {
+         output.writeObject(abstractWheelConsistentHash.hashFunction.getClass().getName());
+         output.writeObject(abstractWheelConsistentHash.addresses);
+         output.writeObject(abstractWheelConsistentHash.positions);
+         output.writeObject(abstractWheelConsistentHash.addressToHashIds);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         T abstractWheelConsistentHash = instance();
+         String hashFuctionName = (String) unmarshaller.readObject();
+         abstractWheelConsistentHash.setHashFunction((Hash) Util.getInstance(hashFuctionName));
+         abstractWheelConsistentHash.addresses = (ArrayList<Address>) unmarshaller.readObject();
+         abstractWheelConsistentHash.positions = (SortedMap<Integer, Address>) unmarshaller.readObject();
+         abstractWheelConsistentHash.addressToHashIds = (Map<Address, Integer>) unmarshaller.readObject();
+         return abstractWheelConsistentHash;
+      }
    }
 }

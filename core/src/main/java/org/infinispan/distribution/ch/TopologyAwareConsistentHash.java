@@ -21,9 +21,8 @@ import java.util.SortedMap;
 import static java.lang.Math.min;
 
 /**
- * Consistent hash that is aware of cluster topology.
- * Design described here: http://community.jboss.org/wiki/DesigningServerHinting.
- * <p>
+ * Consistent hash that is aware of cluster topology. Design described here: http://community.jboss.org/wiki/DesigningServerHinting.
+ * <p/>
  * <pre>
  * Algorithm:
  * - place nodes on the hash wheel based address's hash code
@@ -31,7 +30,8 @@ import static java.lang.Math.min;
  *       - pick the first one based on key's hash code
  *       - for subsequent nodes, walk clockwise and pick nodes that have a different site id
  *       - if not enough nodes found repeat walk again and pick nodes that have different site id and rack id
- *       - if not enough nodes found repeat walk again and pick nodes that have different site id, rack id and machine id
+ *       - if not enough nodes found repeat walk again and pick nodes that have different site id, rack id and machine
+ * id
  *       - Ultimately cycle back to the first node selected, don't discard any nodes, regardless of machine id/rack
  * id/site id match.
  * </pre>
@@ -94,28 +94,28 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
          while (addrIt.hasNext()) {
             Address a = addrIt.next();
             switch (level) {
-               case 0 : { //site level
+               case 0: { //site level
                   if (!topologyInfo.isSameSite(address, a)) {
                      result.add(a);
                      addrIt.remove();
                   }
                   break;
                }
-               case 1 : { //rack level
+               case 1: { //rack level
                   if (!topologyInfo.isSameRack(address, a)) {
                      result.add(a);
                      addrIt.remove();
                   }
                   break;
                }
-               case 2 : { //machine level
+               case 2: { //machine level
                   if (!topologyInfo.isSameMachine(address, a)) {
                      result.add(a);
                      addrIt.remove();
                   }
                   break;
                }
-               case 3 : { //just add them in sequence
+               case 3: { //just add them in sequence
                   result.add(a);
                   addrIt.remove();
                   break;
@@ -140,23 +140,23 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       return positions.get(ownerHash);
    }
 
-   public static class Externalizer extends AbstractExternalizer<TopologyAwareConsistentHash> {
+   public static class Externalizer extends AbstractWheelConsistentHash.Externalizer<TopologyAwareConsistentHash> {
       @Override
-      public void writeObject(ObjectOutput output, TopologyAwareConsistentHash dch) throws IOException {
-         output.writeObject(dch.addresses);
-         output.writeObject(dch.positions);
-         output.writeObject(dch.addressToHashIds);
-         Collection<NodeTopologyInfo> infoCollection = dch.topologyInfo.getAllTopologyInfo();
+      protected TopologyAwareConsistentHash instance() {
+         return new TopologyAwareConsistentHash();
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, TopologyAwareConsistentHash topologyAwareConsistentHash) throws IOException {
+         super.writeObject(output, topologyAwareConsistentHash);
+         Collection<NodeTopologyInfo> infoCollection = topologyAwareConsistentHash.topologyInfo.getAllTopologyInfo();
          output.writeInt(infoCollection.size());
          for (NodeTopologyInfo nti : infoCollection) output.writeObject(nti);
       }
 
       @Override
       public TopologyAwareConsistentHash readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         TopologyAwareConsistentHash ch = new TopologyAwareConsistentHash();
-         ch.addresses = (ArrayList<Address>) unmarshaller.readObject();
-         ch.positions = (SortedMap<Integer, Address>) unmarshaller.readObject();
-         ch.addressToHashIds = (Map<Address, Integer>) unmarshaller.readObject();
+         TopologyAwareConsistentHash ch = super.readObject(unmarshaller);
          ch.topologyInfo = new TopologyInfo();
          int ntiCount = unmarshaller.readInt();
          for (int i = 0; i < ntiCount; i++) {
