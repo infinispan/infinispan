@@ -3,6 +3,8 @@ package org.infinispan.distribution.ch;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
+import org.infinispan.util.hash.Hash;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -131,21 +133,10 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       return result;
    }
 
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         DefaultConsistentHash dch = (DefaultConsistentHash) subject;
-         output.writeObject(dch.addresses);
-         output.writeObject(dch.positions);
-         output.writeObject(dch.addressToHashIds);
-      }
-
-      @SuppressWarnings("unchecked")
-      public Object readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         DefaultConsistentHash dch = new DefaultConsistentHash();
-         dch.addresses = (ArrayList<Address>) unmarshaller.readObject();
-         dch.positions = (SortedMap<Integer, Address>) unmarshaller.readObject();
-         dch.addressToHashIds = (Map<Address, Integer>) unmarshaller.readObject();
-         return dch;
+   public static class Externalizer extends AbstractWheelConsistentHash.Externalizer {
+      @Override
+      protected AbstractWheelConsistentHash instance() {
+         return new DefaultConsistentHash();
       }
    }
 

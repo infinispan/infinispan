@@ -139,14 +139,17 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       Integer ownerHash = map.firstKey();
       return positions.get(ownerHash);
    }
+   public static class Externalizer extends AbstractWheelConsistentHash.Externalizer {
 
-   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      @Override
+      protected AbstractWheelConsistentHash instance() {
+         return new TopologyAwareConsistentHash();
+      }
+
       @Override
       public void writeObject(ObjectOutput output, Object subject) throws IOException {
+         super.writeObject(output, subject);
          TopologyAwareConsistentHash dch = (TopologyAwareConsistentHash) subject;
-         output.writeObject(dch.addresses);
-         output.writeObject(dch.positions);
-         output.writeObject(dch.addressToHashIds);
          Collection<NodeTopologyInfo> infoCollection = dch.topologyInfo.getAllTopologyInfo();
          output.writeInt(infoCollection.size());
          for (NodeTopologyInfo nti : infoCollection) output.writeObject(nti);
@@ -154,10 +157,7 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
 
       @Override
       public Object readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         TopologyAwareConsistentHash ch = new TopologyAwareConsistentHash();
-         ch.addresses = (ArrayList<Address>) unmarshaller.readObject();
-         ch.positions = (SortedMap<Integer, Address>) unmarshaller.readObject();
-         ch.addressToHashIds = (Map<Address, Integer>) unmarshaller.readObject();
+         TopologyAwareConsistentHash ch = (TopologyAwareConsistentHash) super.readObject(unmarshaller);
          ch.topologyInfo = new TopologyInfo();
          int ntiCount = unmarshaller.readInt();
          for (int i = 0; i < ntiCount; i++) {
