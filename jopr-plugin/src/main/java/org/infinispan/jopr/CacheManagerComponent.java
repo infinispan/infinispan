@@ -81,6 +81,7 @@ public class CacheManagerComponent extends MBeanResourceComponent<MBeanResourceC
    /**
     * Start the resource connection
     */
+   @SuppressWarnings("unchecked")
    public void start(ResourceContext context) {
       // TODO: Call super.start() ?
       this.context = context;

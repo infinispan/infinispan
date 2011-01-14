@@ -43,7 +43,7 @@ public class CustomMBeanServerPropertiesTest extends AbstractInfinispanTest {
       try {
          GlobalConfiguration gc = new GlobalConfiguration();
          TestLookup mbsl = new TestLookup();
-         gc.setMBeanServerLookup(mbsl);
+         gc.setMBeanServerLookupInstance(mbsl);
          Properties p = new Properties();
          p.setProperty("key", "value");
          gc.setMBeanServerProperties(p);
