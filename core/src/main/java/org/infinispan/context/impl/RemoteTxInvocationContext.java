@@ -29,16 +29,18 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
       return null;
    }
 
+   @Override
+   public boolean isRunningTransactionValid() {
+      // this is always true since we are governed by the originator's transaction
+      return true;
+   }
+
    public Object getLockOwner() {
       return remoteTransaction.getGlobalTransaction();
    }
 
    public GlobalTransaction getGlobalTransaction() {
       return remoteTransaction.getGlobalTransaction();
-   }
-
-   public boolean isInTxScope() {
-      return true;
    }
 
    public boolean isOriginLocal() {

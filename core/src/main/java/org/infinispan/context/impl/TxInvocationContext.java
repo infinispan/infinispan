@@ -50,4 +50,11 @@ public interface TxInvocationContext extends InvocationContext {
     * Registers a new participant with the transaction.
     */
    void addAffectedKeys(Collection<Object> keys);
+
+   /**
+    *
+    * @return true if the current transaction is in a valid state to perform operations on (i.e.,RUNNING or PREPARING)
+    * or false otherwise.
+    */
+   boolean isRunningTransactionValid();
 }

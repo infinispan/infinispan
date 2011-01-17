@@ -38,6 +38,10 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
       }
    }
 
+   public boolean isInTxScope() {
+      return true;
+   }
+
    @Override
    public AbstractTxInvocationContext clone() {
       AbstractTxInvocationContext dolly = (AbstractTxInvocationContext) super.clone();

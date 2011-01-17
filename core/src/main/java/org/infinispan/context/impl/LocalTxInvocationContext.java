@@ -7,6 +7,8 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalTransaction;
 import org.infinispan.util.BidirectionalMap;
 
+import javax.transaction.Status;
+import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import java.util.Collection;
 import java.util.List;
@@ -26,11 +28,20 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
       return localTransaction.getTransaction();
    }
 
-   public boolean isOriginLocal() {
-      return true;
+   public boolean isRunningTransactionValid() {
+      Transaction t = getRunningTransaction();
+      int status = -1;
+      if (t != null) {
+         try {
+            status = t.getStatus();
+         } catch (SystemException e) {
+            // no op
+         }
+      }
+      return status == Status.STATUS_ACTIVE || status == Status.STATUS_PREPARING;
    }
 
-   public boolean isInTxScope() {
+   public boolean isOriginLocal() {
       return true;
    }
 
@@ -63,7 +74,7 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
-      for (Map.Entry<Object, CacheEntry> ce: lookedUpEntries.entrySet()) {
+      for (Map.Entry<Object, CacheEntry> ce : lookedUpEntries.entrySet()) {
          localTransaction.putLookedUpEntry(ce.getKey(), ce.getValue());
       }
    }
@@ -84,8 +95,8 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
    public void remoteLocksAcquired(Collection<Address> nodes) {
       localTransaction.locksAcquired(nodes);
    }
-   
-   public Collection<Address> getRemoteLocksAcquired(){
-	   return localTransaction.getRemoteLocksAcquired();
+
+   public Collection<Address> getRemoteLocksAcquired() {
+      return localTransaction.getRemoteLocksAcquired();
    }
 }
