@@ -26,6 +26,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
@@ -41,6 +42,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 
+import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.Iterator;
 import java.util.Map;
@@ -82,6 +84,15 @@ public class LockManagerImpl implements LockManager {
       if (trace) log.trace("Attempting to lock {0} with acquisition timeout of {1} millis", key, lockTimeout);
       if (lockContainer.acquireLock(key, lockTimeout, MILLISECONDS) != null) {
          // successfully locked!
+         if (ctx instanceof TxInvocationContext) {
+            TxInvocationContext tctx = (TxInvocationContext) ctx;
+            if (!tctx.isRunningTransactionValid()) {
+               Transaction tx = tctx.getRunningTransaction();
+               log.debug("Successfully acquired lock, but the transaction {0} is no longer valid!  Releasing lock.", tx);
+               lockContainer.releaseLock(key);
+               throw new IllegalStateException("Transaction "+tx+" appears to no longer be valid!");
+            }
+         }
          if (trace) log.trace("Successfully acquired lock!");         
          return true;
       }
