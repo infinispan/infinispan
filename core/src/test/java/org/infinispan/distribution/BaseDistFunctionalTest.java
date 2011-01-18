@@ -31,8 +31,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import java.util.concurrent.locks.LockSupport;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Test(groups = "functional", testName = "distribution.BaseDistFunctionalTest")
 public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
@@ -123,11 +124,35 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
          }
       }
 
+      public static void waitForRehashToComplete(Cache... caches) {
+         int gracetime = 120000; // 120 seconds?
+         long giveup = System.currentTimeMillis() + gracetime;
+         for (Cache c : caches) {
+            DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
+            while (dmi.isRehashInProgress()) {
+               if (System.currentTimeMillis() > giveup) {
+                  String message = "Timed out waiting for rehash to complete on node " + dmi.rpcManager.getAddress() + " !";
+                  log.error(message);
+                  throw new RuntimeException(message);
+               }
+               LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+            }
+            log.trace("Node " + dmi.rpcManager.getAddress() + " finished rehash task.");
+         }
+      }
+
       public static void waitForInitRehashToComplete(Collection<Cache> caches) {
          Set<Cache> cachesSet = new HashSet<Cache>();
          cachesSet.addAll(caches);
          waitForInitRehashToComplete(cachesSet.toArray(new Cache[cachesSet.size()]));
       }
+
+      public static void waitForRehashToComplete(Collection<Cache> caches) {
+         Set<Cache> cachesSet = new HashSet<Cache>();
+         cachesSet.addAll(caches);
+         waitForRehashToComplete(cachesSet.toArray(new Cache[cachesSet.size()]));
+      }
+
    }
 
    // only used if the CH impl does not order the hash ring based on the order of the view.
