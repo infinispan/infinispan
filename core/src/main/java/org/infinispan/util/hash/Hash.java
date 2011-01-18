@@ -22,8 +22,6 @@
 
 package org.infinispan.util.hash;
 
-import java.lang.UnsupportedOperationException;
-
 /**
  * Interface that governs implementations
  * 
