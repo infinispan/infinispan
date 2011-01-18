@@ -1,6 +1,8 @@
 package org.infinispan.tx.dld;
 
 import org.infinispan.config.Configuration;
+import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.testng.annotations.Test;
 
@@ -40,6 +42,7 @@ public class SameKeyDeadlockReplicationTest extends BaseDldTest {
       rpcManager0.setReplicationLatch(replicationLatch);
       rpcManager1.setReplicationLatch(replicationLatch);
 
+
       fork(new Runnable() {
          @Override
          public void run() {
@@ -70,6 +73,13 @@ public class SameKeyDeadlockReplicationTest extends BaseDldTest {
          }
       }, false);
 
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return lockManager(0).isLocked("k") && lockManager(1).isLocked("k");
+         }
+      });
+
       replicationLatch.countDown();     
 
       eventually(new Condition() {
@@ -82,7 +92,12 @@ public class SameKeyDeadlockReplicationTest extends BaseDldTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return xor(e0 instanceof DeadlockDetectedException, e1 instanceof DeadlockDetectedException);
+            boolean b = xor(e0 instanceof DeadlockDetectedException, e1 instanceof DeadlockDetectedException);
+            if (!b) {
+               log.error("e0" + e0, e0);
+               log.error("e1"+ e1, e1);               
+            }
+            return b;
          }
       }, 3000);
       assert xor(e0 == null, e1 == null);
