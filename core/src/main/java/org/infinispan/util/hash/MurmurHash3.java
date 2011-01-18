@@ -24,6 +24,8 @@ package org.infinispan.util.hash;
 
 import org.infinispan.util.ByteArrayKey;
 
+import java.nio.charset.Charset;
+
 /**
  * MurmurHash3 implementation in Java, based on Austin Appleby's
  * <a href="https://code.google.com/p/smhasher/source/browse/trunk/MurmurHash3.cpp">original in C</a>
@@ -39,6 +41,8 @@ import org.infinispan.util.ByteArrayKey;
  */
 
 public class MurmurHash3 implements Hash {
+   private static final Charset UTF8 = Charset.forName("UTF-8");
+
    static class State {
       long h1;
       long h2;
@@ -288,7 +292,7 @@ public class MurmurHash3 implements Hash {
      else if (o instanceof long[])
         return hash((long[]) o);
      else if (o instanceof String)
-        return hash(((String) o).getBytes());
+        return hash(((String) o).getBytes(UTF8));
      else if (o instanceof ByteArrayKey)
         return hash(((ByteArrayKey) o).getData());
      else
