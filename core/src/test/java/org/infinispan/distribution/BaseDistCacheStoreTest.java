@@ -34,7 +34,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
  * @since 4.0
  */
 public abstract class BaseDistCacheStoreTest extends BaseDistFunctionalTest {
-   boolean shared;
+   protected boolean shared;
    static int id;
 
    @Override
@@ -42,7 +42,8 @@ public abstract class BaseDistCacheStoreTest extends BaseDistFunctionalTest {
       Configuration cfg = new Configuration();
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       clmc.setShared(shared);
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg(getClass().getSimpleName() + "_" + id++));
+      int idToUse = shared ? 999 : id++;
+      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg(getClass().getSimpleName() + "_" + idToUse));
       cfg.setCacheLoaderManagerConfig(clmc);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       cacheManagers.add(cm);

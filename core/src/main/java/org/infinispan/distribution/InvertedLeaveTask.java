@@ -1,22 +1,5 @@
 package org.infinispan.distribution;
 
-import static org.infinispan.commands.control.RehashControlCommand.Type.PULL_STATE_LEAVE;
-import static org.infinispan.commands.control.RehashControlCommand.Type.LEAVE_REHASH_END;
-
-import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
-import static org.infinispan.remoting.rpc.ResponseMode.ASYNCHRONOUS;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
@@ -37,6 +20,22 @@ import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import static org.infinispan.commands.control.RehashControlCommand.Type.LEAVE_REHASH_END;
+import static org.infinispan.commands.control.RehashControlCommand.Type.PULL_STATE_LEAVE;
+import static org.infinispan.remoting.rpc.ResponseMode.ASYNCHRONOUS;
+import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
 
 /**
  *A task to handle rehashing for when a node leaves the cluster
@@ -131,6 +130,7 @@ public class InvertedLeaveTask extends RehashTask {
 
          for (Address addr : leaversHandled)
             dmi.topologyInfo.removeNodeInfo(addr);
+         dmi.rehashInProgress = false;
       }
    }
 

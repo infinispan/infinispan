@@ -6,6 +6,7 @@ import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.util.logging.Log;
@@ -13,6 +14,8 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -23,12 +26,21 @@ import java.util.concurrent.ConcurrentMap;
 public class DummyInMemoryCacheStore extends AbstractCacheStore {
    private static final Log log = LogFactory.getLog(DummyInMemoryCacheStore.class);
    private static final boolean trace = log.isTraceEnabled(); 
-   static final ConcurrentMap<String, Map> stores = new ConcurrentHashMap<String, Map>();
+   static final ConcurrentMap<String, Map<Object, InternalCacheEntry>> stores = new ConcurrentHashMap<String, Map<Object, InternalCacheEntry>>();
+   static final ConcurrentMap<String, Map<String, Integer>> storeStats = new ConcurrentHashMap<String, Map<String, Integer>>();
    String storeName = "__DEFAULT_STORES__";
    Map<Object, InternalCacheEntry> store;
+   Map<String, Integer> stats;
    Cfg config;
 
+
+   private void record(String method) {
+      int i = stats.get(method);
+      stats.put(method, i + 1);
+   }
+
    public void store(InternalCacheEntry ed) {
+      record("store");
       if (ed != null) {
          if (trace) log.trace("Store {0} in dummy map store@{1}", ed, Integer.toHexString(System.identityHashCode(store)));
          config.failIfNeeded(ed.getKey());
@@ -38,6 +50,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
 
    @SuppressWarnings("unchecked")
    public void fromStream(ObjectInput ois) throws CacheLoaderException {
+      record("fromStream");
       try {
          int numEntries = (Integer) marshaller.objectFromObjectStream(ois);
          for (int i = 0; i < numEntries; i++) {
@@ -51,6 +64,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    public void toStream(ObjectOutput oos) throws CacheLoaderException {
+      record("toStream");
       try {
          marshaller.objectToObjectStream(store.size(), oos);
          for (InternalCacheEntry se : store.values()) marshaller.objectToObjectStream(se, oos);
@@ -60,11 +74,13 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    public void clear() {
+      record("clear");
       if (trace) log.trace("Clear store");
       store.clear();
    }
 
    public boolean remove(Object key) {
+      record("remove");
       if (store.remove(key) != null) {
          if (trace) log.trace("Removed {0} from dummy store", key);
          return true;
@@ -88,6 +104,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    public InternalCacheEntry load(Object key) {
+      record("load");
       if (key == null) return null;
       InternalCacheEntry se = store.get(key);
       if (se == null) return null;
@@ -101,6 +118,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    public Set<InternalCacheEntry> loadAll() {
+      record("loadAll");
       Set<InternalCacheEntry> s = new HashSet<InternalCacheEntry>();
       for (Iterator<InternalCacheEntry> i = store.values().iterator(); i.hasNext();) {
          InternalCacheEntry se = i.next();
@@ -114,6 +132,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    public Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException {
+      record("load");
       if (numEntries < 0) return loadAll();
       Set<InternalCacheEntry> s = new HashSet<InternalCacheEntry>(numEntries);
       for (Iterator<InternalCacheEntry> i = store.values().iterator(); i.hasNext() && s.size() < numEntries;) {
@@ -130,6 +149,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
 
    @Override
    public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
+      record("loadAllKeys");
       Set<Object> set = new HashSet<Object>();
       for (Object key: store.keySet()) {
          if (keysToExclude == null || !keysToExclude.contains(key)) set.add(key);
@@ -138,20 +158,37 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
+      record("getConfigurationClass");
       return Cfg.class;
    }
 
-   @SuppressWarnings("unchecked")
    public void start() throws CacheLoaderException {
       super.start();
       storeName = config.getStore();
       if (cache != null) storeName += "_" + cache.getName();
-      Map m = new ConcurrentHashMap();
-      Map existing = stores.putIfAbsent(storeName, m);
+
+      Map<Object, InternalCacheEntry> m = new ConcurrentHashMap<Object, InternalCacheEntry>();
+      Map<Object, InternalCacheEntry> existing = stores.putIfAbsent(storeName, m);
       store = existing == null ? m : existing;
+
+      Map<String, Integer> s = newStatsMap();
+      Map<String, Integer> existingStats = storeStats.putIfAbsent(storeName, s);
+      stats = existingStats == null ? s : existingStats;
+
+      // record at the end!
+      record("start");
+   }
+
+   private Map<String, Integer> newStatsMap() {
+      Map<String, Integer> m = new ConcurrentHashMap<String, Integer>();
+      for (Method method: CacheStore.class.getMethods()) {
+         m.put(method.getName(), 0);
+      }
+      return m;
    }
 
    public void stop() {
+      record("stop");
       if (config.isCleanBetweenRestarts()) {
          stores.remove(config.getStore());
       }
@@ -159,6 +196,14 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
 
    public boolean isEmpty() {
       return store.isEmpty();
+   }
+
+   public Map<String, Integer> stats() {
+      return Collections.unmodifiableMap(stats);
+   }
+
+   public void clearStats() {
+      for (String k: stats.keySet()) stats.put(k, 0);
    }
 
    public static class Cfg extends AbstractCacheStoreConfig {
@@ -181,6 +226,11 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
 
       public Cfg(String name, boolean cleanBetweenRestarts) {
          this(name);
+         this.cleanBetweenRestarts = cleanBetweenRestarts;
+      }
+
+      public Cfg(boolean cleanBetweenRestarts) {
+         setCacheLoaderClassName(DummyInMemoryCacheStore.class.getName());
          this.cleanBetweenRestarts = cleanBetweenRestarts;
       }
 
