@@ -169,7 +169,11 @@ public class ExpiryTest extends AbstractInfinispanTest {
       cache.put("k", "v");
       assert cache.replace("k", "v", "v2", lifespan, MILLISECONDS);
       while (System.currentTimeMillis() < startTime + lifespan) {
-         assert cache.get("k").equals("v2");
+         Object val = cache.get("k");
+         //only run the assertion if the time condition still stands
+         if (System.currentTimeMillis() < startTime + lifespan) {
+            assert val.equals("v2");
+         }
          Thread.sleep(50);
       }
 
