@@ -281,6 +281,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       Cache<Object, Object> cache1, cache2, cache3;
       cache1 = createCacheManager().getCache(cacheName);
       cache3 = createCacheManager().getCache(cacheName);
+      TestingUtil.blockUntilViewsReceived(60000, cache1, cache3);
 
       writeInitialData(cache1);
 
