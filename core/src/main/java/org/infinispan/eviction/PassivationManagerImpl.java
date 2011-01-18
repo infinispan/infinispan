@@ -1,19 +1,22 @@
 package org.infinispan.eviction;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 public class PassivationManagerImpl implements PassivationManager {
 
@@ -26,12 +29,15 @@ public class PassivationManagerImpl implements PassivationManager {
    boolean enabled = false;
    private static final Log log = LogFactory.getLog(PassivationManagerImpl.class);
    private final AtomicLong passivations = new AtomicLong(0);
+   private DataContainer container;
+   private static final boolean trace = log.isTraceEnabled();
 
    @Inject
-   public void inject(CacheLoaderManager cacheLoaderManager, CacheNotifier notifier, Configuration cfg) {
+   public void inject(CacheLoaderManager cacheLoaderManager, CacheNotifier notifier, Configuration cfg, DataContainer container) {
       this.cacheLoaderManager = cacheLoaderManager;
       this.notifier = notifier;
       this.cfg = cfg;
+      this.container = container;
    }
 
    @Start(priority = 11)
@@ -59,12 +65,25 @@ public class PassivationManagerImpl implements PassivationManager {
          final Object value = entry != null ? entry.getValue() : null;
          // notify listeners that this entry is about to be passivated
          notifier.notifyCacheEntryPassivated(key, value, true, ctx);
-         log.trace("Passivating entry {0}", key);
+         if (trace) log.trace("Passivating entry {0}", key);
          cacheStore.store(entry);
          notifier.notifyCacheEntryPassivated(key, value, false, ctx);
          if (statsEnabled && entry != null) {
             passivations.getAndIncrement();
          }
+      }
+   }
+
+   @Stop(priority = 9)
+   public void passivateAll() throws CacheLoaderException {
+      if (enabled) {
+         long start = System.currentTimeMillis();
+         log.info("Passivating all entries to disk");
+         for (InternalCacheEntry e : container) {
+            if (trace) log.trace("Passivating {0}", e.getKey());
+            cacheStore.store(e);
+         }
+         log.info("Passivated {0} entries in {1}", container.size(), Util.prettyPrintTime(System.currentTimeMillis() - start));
       }
    }
 

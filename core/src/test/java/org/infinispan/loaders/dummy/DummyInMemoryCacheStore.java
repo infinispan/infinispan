@@ -184,6 +184,11 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
          this.cleanBetweenRestarts = cleanBetweenRestarts;
       }
 
+      public Cfg(boolean cleanBetweenRestarts) {
+         setCacheLoaderClassName(DummyInMemoryCacheStore.class.getName());
+         this.cleanBetweenRestarts = cleanBetweenRestarts;
+      }
+
       public boolean isDebug() {
          return debug;
       }

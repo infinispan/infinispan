@@ -21,6 +21,8 @@ public interface PassivationManager {
 
    void passivate(Object key, InternalCacheEntry entry, InvocationContext ctx) throws CacheLoaderException;
 
+   void passivateAll() throws CacheLoaderException;
+
    long getPassivationCount();
 
    void resetPassivationCount();   
