@@ -2,6 +2,8 @@ package org.infinispan.util.hash;
 
 import org.infinispan.util.ByteArrayKey;
 
+import java.nio.charset.Charset;
+
 /**
  * An implementation of Austin Appleby's MurmurHash2.0 algorithm, as documented on <a href="http://sites.google.com/site/murmurhash/">his website</a>.
  * <p />
@@ -20,6 +22,7 @@ public class MurmurHash2 implements Hash {
    private static final int M = 0x5bd1e995;
    private static final int R = 24;
    private static final int H = -1;
+   private static final Charset UTF8 = Charset.forName("UTF-8");
    
    /**
     * Hashes a byte array efficiently.
@@ -88,7 +91,7 @@ public class MurmurHash2 implements Hash {
       if (o instanceof byte[])
          return hash((byte[]) o);
       else if (o instanceof String)
-         return hash(((String) o).getBytes());
+         return hash(((String) o).getBytes(UTF8));
       else if (o instanceof ByteArrayKey)
          return hash(((ByteArrayKey) o).getData());
       else

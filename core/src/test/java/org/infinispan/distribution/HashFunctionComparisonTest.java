@@ -2,15 +2,21 @@ package org.infinispan.distribution;
 
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.hash.Hash;
 import org.testng.annotations.Test;
 
+import java.nio.charset.Charset;
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
-import static org.infinispan.profiling.testinternals.Generator.generateAddress;
-import static org.infinispan.profiling.testinternals.Generator.getRandomByteArray;
-import static org.infinispan.profiling.testinternals.Generator.getRandomString;
+import static org.infinispan.profiling.testinternals.Generator.*;
 import static org.infinispan.util.Util.padString;
 import static org.infinispan.util.Util.prettyPrintTime;
 
@@ -218,7 +224,7 @@ abstract class HashFunction {
    abstract int hash(byte[] payload);
 
    public int hash(String payload) {
-      return hash(payload.getBytes());
+      return hash(payload.getBytes(Charset.forName("UTF-8")));
    }
 
    public int hash(int hashcode) {

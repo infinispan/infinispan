@@ -8,12 +8,14 @@ import org.infinispan.util.Util;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import static java.lang.Math.min;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static java.lang.Math.min;
 
 /**
  * <a href = "http://weblogs.java.net/blog/tomwhite/archive/2007/11/consistent_hash.html">Consistent hashing
@@ -102,7 +104,7 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
       int hash;
       String nodeName = node.toString();
       for (int i = 0; i < count; i++) {
-         hash = hash((Integer.toString(i) + nodeName).getBytes());
+         hash = hash((Integer.toString(i) + nodeName).getBytes(Charset.forName("UTF-8")));
          pool.add(position++, new Entry(node, nodeName, i, hash));
       }
       return position;
