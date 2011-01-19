@@ -19,7 +19,7 @@ public class SharedCacheStoreTest extends MultipleCacheManagersTest {
       Configuration cfg = new Configuration();
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       clmc.setShared(true);
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg(false));
+      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg(SharedCacheStoreTest.class.getName(), false));
       cfg.setCacheLoaderManagerConfig(clmc);
       cfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
       createCluster(cfg, true, 3);
