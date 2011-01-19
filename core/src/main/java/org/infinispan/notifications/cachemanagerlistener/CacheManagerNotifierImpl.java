@@ -6,11 +6,13 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.AbstractListenerImpl;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
+import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.event.EventImpl;
+import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
@@ -38,6 +40,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       allowedListeners.put(CacheStarted.class, CacheStartedEvent.class);
       allowedListeners.put(CacheStopped.class, CacheStoppedEvent.class);
       allowedListeners.put(ViewChanged.class, ViewChangedEvent.class);
+      allowedListeners.put(Merged.class, MergeEvent.class);
    }
 
    final List<ListenerInvocation> cacheStartedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
@@ -51,6 +54,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       listenersMap.put(CacheStarted.class, cacheStartedListeners);
       listenersMap.put(CacheStopped.class, cacheStoppedListeners);
       listenersMap.put(ViewChanged.class, viewChangedListeners);
+      listenersMap.put(Merged.class, mergeListeners);
    }
 
    @Inject
@@ -73,7 +77,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
    }
 
    public void notifyMerge(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, boolean needsToRejoin, List<List<Address>> subgroupsMerged) {
-      if (!viewChangedListeners.isEmpty()) {
+      if (!mergeListeners.isEmpty()) {
          EventImpl e = new EventImpl();
          e.setLocalAddress(myAddress);
          e.setViewId(viewId);
