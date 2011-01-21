@@ -259,7 +259,7 @@ public class MurmurHash3 implements Hash {
     * @param payload a byte array to hash
     * @return a hash code for the byte array
     */
-   public static int hash(long[] payload) {
+   public int hash(long[] payload) {
       return MurmurHash3_x64_32(payload, 9001);
    }
 
