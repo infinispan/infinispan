@@ -23,12 +23,7 @@ public class MurmurHash2 implements Hash {
    private static final int R = 24;
    private static final int H = -1;
    private static final Charset UTF8 = Charset.forName("UTF-8");
-   
-   /**
-    * Hashes a byte array efficiently.
-    * @param payload a byte array to hash
-    * @return a hash code for the byte array
-    */
+
    public final int hash(byte[] payload) {
       int h = H;
       int len = payload.length;
@@ -66,12 +61,6 @@ public class MurmurHash2 implements Hash {
       return h;
    }
 
-   /**
-    * An incremental version of the hash function, that spreads a pre-calculated hash code, such as one derived from
-    * {@link Object#hashCode()}.
-    * @param hashcode an object's hashcode
-    * @return a spread and hashed version of the hashcode
-    */
    public final int hash(int hashcode) {
       byte[] b = new byte[4];
       b[0] = (byte) hashcode;
@@ -81,12 +70,6 @@ public class MurmurHash2 implements Hash {
       return hash(b);
    }
 
-   /**
-    * A helper that calculates the hashcode of an object, choosing the optimal mechanism of hash calculation after
-    * considering the type of the object (byte array, String or Object).
-    * @param o object to hash
-    * @return a hashcode
-    */
    public final int hash(Object o) {
       if (o instanceof byte[])
          return hash((byte[]) o);
