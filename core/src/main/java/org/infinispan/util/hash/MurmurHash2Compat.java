@@ -16,7 +16,7 @@ import org.infinispan.util.ByteArrayKey;
  * with existing clusters prior to 4.2.1, when the bug was identified and fixed.  See <a href="https://issues.jboss.org/browse/ISPN-873">ISPN-873</a> for more details.
  *
  * @see <a href="http://sites.google.com/site/murmurhash/">MurmurHash website</a>
- * @see <a href="http://en.wikipedia.org/wiki/MurmurHash/">MurmurHash entry on Wikipedia</a>
+ * @see <a href="http://en.wikipedia.org/wiki/MurmurHash">MurmurHash entry on Wikipedia</a>
  * @see MurmurHash2
  * @author Manik Surtani
  * @version 4.1

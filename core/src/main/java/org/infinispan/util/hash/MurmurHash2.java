@@ -13,7 +13,7 @@ import java.nio.charset.Charset;
  * Other implementations are documented on Wikipedia's <a href="http://en.wikipedia.org/wiki/MurmurHash">MurmurHash</a> page.
  * <p />
  * @see <a href="http://sites.google.com/site/murmurhash/">MurmurHash website</a>
- * @see <a href="http://en.wikipedia.org/wiki/MurmurHash/">MurmurHash entry on Wikipedia</a>
+ * @see <a href="http://en.wikipedia.org/wiki/MurmurHash">MurmurHash entry on Wikipedia</a>
  * @see MurmurHash2Compat
  * @author Manik Surtani
  * @version 4.1
