@@ -108,7 +108,7 @@ public class DualNodeJtaTransactionManagerImpl implements TransactionManager {
 
    public void resume(Transaction transaction) throws InvalidTransactionException,
             IllegalStateException, SystemException {
-      currentTransaction.set((DualNodeJtaTransactionImpl) transaction);
+      currentTransaction.set(transaction);
       log.trace(nodeId + ": Resumed " + transaction + " for thread "
                + Thread.currentThread().getName());
    }
@@ -147,7 +147,8 @@ public class DualNodeJtaTransactionManagerImpl implements TransactionManager {
       }
    }
 
-   public String toString() {
+   @Override
+public String toString() {
       StringBuffer sb = new StringBuffer(getClass().getName());
       sb.append("[nodeId=");
       sb.append(nodeId);

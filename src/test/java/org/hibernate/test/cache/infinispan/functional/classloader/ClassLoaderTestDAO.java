@@ -20,6 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 package org.hibernate.test.cache.infinispan.functional.classloader;
+
 import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.List;
@@ -156,16 +157,11 @@ public class ClassLoaderTestDAO {
 
    public Account getAccount(Integer id) throws Exception {
       log.debug("Getting account " + id);
-      tm.begin();
+      Session session = sessionFactory.openSession();
       try {
-         Session session = sessionFactory.getCurrentSession();
-         Account acct = (Account) session.get(acctClass, id);
-         tm.commit();
-         return acct;
-      } catch (Exception e) {
-         log.error("rolling back", e);
-         tm.rollback();
-         throw e;
+         return (Account) session.get(acctClass, id);
+      } finally {
+         session.close();
       }
    }
 
