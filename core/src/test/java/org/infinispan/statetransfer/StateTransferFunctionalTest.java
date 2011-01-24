@@ -4,6 +4,9 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
+import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
@@ -183,8 +186,12 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
       verifyInitialData(cache2);
 
-      final CacheContainer cm3 = createCacheManager();
-      final CacheContainer cm4 = createCacheManager();
+      final EmbeddedCacheManager cm3 = createCacheManager();
+      MergedViewListener l3 = new MergedViewListener();
+      cm3.addListener(l3);
+      final EmbeddedCacheManager cm4 = createCacheManager();
+      MergedViewListener l4 = new MergedViewListener();
+      cm4.addListener(l4);
 
       Thread t1 = new Thread(new Runnable() {
          public void run() {
@@ -209,8 +216,13 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache4 = cm4.getCache(cacheName);
 
       TestingUtil.blockUntilViewsReceived(120000, cache1, cache2, cache3, cache4);
-      verifyInitialData(cache3);
-      verifyInitialData(cache4);
+      //in the case of merges no state transfer happens so no point in verifying whether state was actually migrated
+      if (!l3.merged) {
+         verifyInitialData(cache3);
+      }
+      if (!l4.merged) {
+         verifyInitialData(cache4);
+      }
       logTestEnd(m);
    }
 
@@ -349,5 +361,17 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       for (int c = 0; c < count; c++)
          assert new Integer(c).equals(cache2.get("test" + c)) : "Entry under key [test" + c + "] was [" + cache2.get("test" + c) + "] but expected [" + c + "]";
+   }
+
+   @Listener
+   public static class MergedViewListener {
+
+      public volatile boolean merged;
+
+      @Merged
+      public void mergedView(MergeEvent me) {
+         log.info("View merged received {0}", me);
+         merged = true;
+      }
    }
 }
