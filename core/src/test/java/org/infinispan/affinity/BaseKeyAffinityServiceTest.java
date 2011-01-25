@@ -1,5 +1,6 @@
 package org.infinispan.affinity;
 
+import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.CacheContainer;
@@ -23,13 +24,13 @@ public class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
    protected KeyAffinityServiceImpl keyAffinityService;
 
    protected void assertMapsToAddress(Object o, Address addr) {
-      ConsistentHash hash = manager(0).getCache(cacheName).getAdvancedCache().getDistributionManager().getConsistentHash();
+      ConsistentHash hash = caches.get(0).getAdvancedCache().getDistributionManager().getConsistentHash();
       List<Address> addresses = hash.locate(o, numOwners);
       assertEquals("Expected key " + o + " to map to address " + addr + ". List of addresses is" + addresses, true, addresses.contains(addr));
    }
 
    protected List<Address> topology() {
-      return topology(caches.get(1).getCacheManager());
+      return topology(caches.get(0).getCacheManager());
    }
 
    protected List<Address> topology(CacheContainer cm) {
@@ -78,7 +79,7 @@ public class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
 
    protected void waitForClusterToResize() {
       TestingUtil.blockUntilViewsReceived(10000, caches);
-      RehashWaiter.waitForInitRehashToComplete(new HashSet(caches));
+      RehashWaiter.waitForInitRehashToComplete(new HashSet<Cache>(caches));
       assertEquals(caches.size(), topology().size());
    }
 }

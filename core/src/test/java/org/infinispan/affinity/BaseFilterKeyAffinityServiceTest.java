@@ -7,6 +7,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.Map;
@@ -24,8 +25,10 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
 
    protected EmbeddedCacheManager cacheManager;
 
+
    @Override
    protected void createCacheManagers() throws Throwable {
+      INIT_CLUSTER_SIZE = 2;
       super.createCacheManagers();
       createService();
    }
@@ -44,19 +47,18 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
    protected void testAddNewServer() throws Exception {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager();
       cm.defineConfiguration(cacheName, configuration);
-      Cache cache = cm.getCache(cacheName);
+      Cache<Object, String> cache = cm.getCache(cacheName);
       caches.add(cache);
       waitForClusterToResize();
       assertUnaffected();
    }
 
    protected void testRemoveServers() throws InterruptedException {
-      caches.get(4).getCacheManager().stop();
-      caches.get(3).getCacheManager().stop();
-      caches.remove(4);
-      caches.remove(3);
-      Assert.assertEquals(3, caches.size());
+      log.info("** before calling stop");
+      caches.get(2).getCacheManager().stop();
+      caches.remove(2);
       waitForClusterToResize();
+      Assert.assertEquals(2, caches.size());
       assertUnaffected();
    }
 
@@ -64,22 +66,25 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
       log.info("**** here it starts");
       caches.get(0).getCacheManager().stop();
       caches.remove(0);
-      Assert.assertEquals(2, caches.size());
+      Assert.assertEquals(1, caches.size());
       TestingUtil.blockUntilViewsReceived(10000, caches);
-      Assert.assertEquals(2, topology().size());
+      Assert.assertEquals(1, topology().size());
 
-      for (int i = 0; i < 10; i++) {
-         if (!keyAffinityService.isStarted()) break;
-         Thread.sleep(1000);
-      }
-      assert !keyAffinityService.isStarted();
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return !keyAffinityService.isStarted();
+         }
+      });
    }
 
    private void assertUnaffected() throws InterruptedException {
-      for (int i = 0; i < 10; i++) {
-         assert keyAffinityService.getAddress2KeysMapping().keySet().size() == getAddresses().size();
-         Thread.sleep(200);
-      }
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return keyAffinityService.getAddress2KeysMapping().keySet().size() == getAddresses().size();
+         }
+      });
       assertEventualFullCapacity(getAddresses());
       assertKeyAffinityCorrectness(getAddresses());
    }
