@@ -141,15 +141,22 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       testCount++;
       logTestStart(m);
       Cache<Object, Object> cache1, cache2;
-      cache1 = createCacheManager().getCache(cacheName);
+      EmbeddedCacheManager cm1 = createCacheManager();
+      cache1 = cm1.getCache(cacheName);
       writeInitialData(cache1);
 
-      cache2 = createCacheManager().getCache(cacheName);
+      EmbeddedCacheManager cm2 = createCacheManager();
+      MergedViewListener mv2 = new MergedViewListener();
+      cm2.addListener(mv2);
+      cache2 = cm2.getCache(cacheName);
 
       // Pause to give caches time to see each other
       TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
 
-      verifyInitialData(cache2);
+      if (!mv2.merged) {
+         verifyInitialData(cache2);
+      }
+
       logTestEnd(m);
    }
 
