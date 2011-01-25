@@ -27,8 +27,14 @@ public class JGroupsDistSync implements DistributedSync {
    private final AtomicInteger flushBlockGateCount = new AtomicInteger(0);
    private final AtomicInteger flushWaitGateCount = new AtomicInteger(0);
    private final ReclosableLatch flushWaitGate = new ReclosableLatch(false);
+   private final ReclosableLatch joinInProgress = new ReclosableLatch(false);
    private static final Log log = LogFactory.getLog(JGroupsDistSync.class);
    public static final boolean trace = log.isTraceEnabled();
+
+
+   public void blockUntilNoJoinsInProgress() throws InterruptedException {
+      joinInProgress.await();
+   }
 
    public SyncResponse blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException, InterruptedException {
       int initState = flushWaitGateCount.get();
@@ -75,5 +81,17 @@ public class JGroupsDistSync implements DistributedSync {
       } catch (IllegalMonitorStateException imse) {
          if (log.isTraceEnabled()) log.trace("Did not own lock!");
       }
+   }
+
+   public void signalJoinInProgress() {
+      if (trace)
+         log.trace("Closing joinInProgress gate");
+      joinInProgress.close();
+   }
+
+   public void signalJoinCompleted() {
+      if (trace)
+         log.trace("Releasing " + joinInProgress + " gate");
+      joinInProgress.open();
    }
 }
