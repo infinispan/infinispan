@@ -42,7 +42,7 @@ public class LocalTransaction extends AbstractCacheTransaction {
    }
 
    public void addModification(WriteCommand mod) {
-      if (trace) log.trace("Adding modification {0}. Mod list is {1}", mod, modifications);
+      if (trace) log.trace("Adding modification %s. Mod list is %s", mod, modifications);
       if (modifications == null) {
          modifications = new LinkedList<WriteCommand>();
       }

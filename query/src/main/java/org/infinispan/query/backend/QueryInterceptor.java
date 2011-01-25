@@ -165,7 +165,7 @@ public class QueryInterceptor extends CommandInterceptor {
    // Method that will be called when data needs to be added into Lucene.
 
    protected void addToIndexes(Object value, Object key) {
-      if (trace) log.trace("Adding to indexes for key [{0}] and value [{0}]", key, value);
+      if (trace) log.trace("Adding to indexes for key [%s] and value [%s]", key, value);
 
       // The key here is the String representation of the key that is stored in the cache.
       // The key is going to be the documentID for Lucene.

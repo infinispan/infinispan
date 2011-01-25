@@ -171,8 +171,8 @@ class ExternalizerTable implements ObjectTable {
       loadForeignMarshallables(globalCfg);
       started = true;
       if (log.isTraceEnabled()) {
-         log.trace("Constant object table was started and contains these externalizer readers: {0}", readers);
-         log.trace("The externalizer writers collection contains: {0}", writers);
+         log.trace("Constant object table was started and contains these externalizer readers: %s", readers);
+         log.trace("The externalizer writers collection contains: %s", writers);
       }
    }
 
@@ -206,7 +206,7 @@ class ExternalizerTable implements ObjectTable {
       if (adapter == null) {
          if (!started) {
             if (log.isTraceEnabled())
-               log.trace("Either the marshaller has stopped or hasn't started. Read externalizers are not propery populated: {0}", readers);
+               log.trace("Either the marshaller has stopped or hasn't started. Read externalizers are not propery populated: %s", readers);
 
             if (Thread.currentThread().isInterrupted())
                throw new IOException(String.format(
@@ -218,8 +218,8 @@ class ExternalizerTable implements ObjectTable {
                      readerIndex));
          } else {
             if (log.isTraceEnabled()) {
-               log.trace("Unknown type. Input stream has {0} to read", input.available());
-               log.trace("Check contents of read externalizers: {0}", readers);
+               log.trace("Unknown type. Input stream has %s to read", input.available());
+               log.trace("Check contents of read externalizers: %s", readers);
             }
 
             throw new CacheException(String.format(
@@ -303,7 +303,7 @@ class ExternalizerTable implements ObjectTable {
                adapter.id, typeClass, prevReader.externalizer.getClass().getName(), readerIndex));
 
       if (log.isTraceEnabled())
-         log.trace("Loaded externalizer {0} for {1} with id {2} and reader index {3}",
+         log.trace("Loaded externalizer %s for %s with id %s and reader index %s",
                    adapter.externalizer.getClass().getName(), typeClass, adapter.id, readerIndex);
 
    }

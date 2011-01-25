@@ -144,9 +144,9 @@ public class JoinTask extends RehashTask {
          if (!unlocked) transactionLogger.unlockAndDisable();
          dmi.setJoinComplete(true);
          if (trace)
-            log.info("{0} completed join rehash in {1}!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
+            log.info("%s completed join rehash in %s!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
          else
-            log.info("{0} completed join rehash!", self);
+            log.info("%s completed join rehash!", self);
       }
    }
 
@@ -194,7 +194,7 @@ public class JoinTask extends RehashTask {
                                 true);
                 addresses = parseResponses(resp);
                 if (log.isDebugEnabled())
-                    log.debug("Retrieved old consistent hash address list {0}", addresses);
+                    log.debug("Retrieved old consistent hash address list %s", addresses);
             } catch (TimeoutException te) {
                 // timed out waiting for responses; retry!
                 resp = null;
@@ -207,7 +207,7 @@ public class JoinTask extends RehashTask {
                 long time = rand.nextInt((int) (maxSleepTime - minSleepTime) / 10);
                 time = (time * 10) + minSleepTime;
                 if (trace)
-                    log.trace("Sleeping for {0}", Util.prettyPrintTime(time));
+                    log.trace("Sleeping for %s", Util.prettyPrintTime(time));
                 Thread.sleep(time); // sleep for a while and retry
             } else {
                 result = createConsistentHash(configuration, addresses, dmi.topologyInfo);

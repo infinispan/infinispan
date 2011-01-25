@@ -200,14 +200,14 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       if (old != null) {
          // if they are equal don't bother
          if (old.instance.equals(component)) {
-            getLog().trace("Attempting to register a component equal to one that already exists under the same name ({0}).  Not doing anything.", name);
+            getLog().trace("Attempting to register a component equal to one that already exists under the same name (%s).  Not doing anything.", name);
             return;
          }
       }
 
       Component c;
       if (old != null) {
-         getLog().trace("Replacing old component {0} with new instance {1}", old, component);
+         getLog().trace("Replacing old component %s with new instance %s", old, component);
          old.instance = component;
          old.methodsScanned = false;
          c = old;
@@ -224,7 +224,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       // inject dependencies for this component
       c.injectDependencies();
 
-      if (old == null) getLog().trace("Registering component {0} under name {1}", c, name);
+      if (old == null) getLog().trace("Registering component %s under name %s", c, name);
       if (state == ComponentStatus.RUNNING) populateLifeCycleMethods(c);
    }
 
@@ -246,7 +246,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       Annotation[][] parameterAnnotations = m.getParameterAnnotations();
       Object[] params = new Object[dependencies.length];
       if (getLog().isTraceEnabled())
-         getLog().trace("Injecting dependencies for method [{0}] on an instance of [{1}].", m, o.getClass().getName());
+         getLog().trace("Injecting dependencies for method [%s] on an instance of [%s].", m, o.getClass().getName());
       for (int i = 0; i < dependencies.length; i++) {
          params[i] = getOrCreateComponent(dependencies[i], getComponentName(dependencies[i], parameterAnnotations, i));
       }
@@ -323,7 +323,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             registerComponent(component, componentClass);
          } else if (attemptedFactoryConstruction) {
             if (getLog().isTraceEnabled())
-               getLog().trace("Registering a null for component {0}", componentClass.getSimpleName());
+               getLog().trace("Registering a null for component %s", componentClass.getSimpleName());
             registerNullComponent(componentClass);
          }
       }
@@ -443,7 +443,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    @SuppressWarnings("unchecked")
    protected <T> T getFromConfiguration(Class<T> componentClass) {
-      getLog().debug("Looking in configuration for an instance of {0} that may have been injected from an external source.", componentClass);
+      getLog().debug("Looking in configuration for an instance of %s that may have been injected from an external source.", componentClass);
       Method getter = BeanUtils.getterMethod(Configuration.class, componentClass);
       T returnValue = null;
 
@@ -452,7 +452,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             returnValue = (T) getter.invoke(getConfiguration());
          }
          catch (Exception e) {
-            getLog().warn("Unable to invoke getter {0} on Configuration.class!", e, getter);
+            getLog().warn("Unable to invoke getter %s on Configuration.class!", e, getter);
          }
       }
       return returnValue;
@@ -562,7 +562,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
 
       if (getLog().isTraceEnabled())
-         getLog().trace("Reset volatile components.  Registry now contains {0}", componentLookup.keySet());
+         getLog().trace("Reset volatile components.  Registry now contains %s", componentLookup.keySet());
    }
 
    // ------------------------------ START: Publicly available lifecycle methods -----------------------------

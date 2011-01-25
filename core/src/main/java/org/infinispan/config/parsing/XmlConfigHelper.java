@@ -164,7 +164,7 @@ public class XmlConfigHelper {
          }
       }
 
-      if (log.isDebugEnabled()) log.debug("getSubElement(): Does not exist for {0}", subElementName);
+      if (log.isDebugEnabled()) log.debug("getSubElement(): Does not exist for %s", subElementName);
       return null;
    }
 

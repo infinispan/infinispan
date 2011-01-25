@@ -67,7 +67,7 @@ public class CacheManagerComponent extends MBeanResourceComponent<MBeanResourceC
          EmsBean bean = queryCacheManagerBean(conn);
          if (bean != null) {
             bean.refreshAttributes();
-            if (trace) log.trace("Cache manager {0} could be found and attributes where refreshed, so it's up.", bean);
+            if (trace) log.trace("Cache manager %s could be found and attributes where refreshed, so it's up.", bean);
             return AvailabilityType.UP;
          }
          if (trace) log.trace("Cache manager could not be found, so cache manager is down");
@@ -101,23 +101,23 @@ public class CacheManagerComponent extends MBeanResourceComponent<MBeanResourceC
     */
    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
       boolean trace = log.isTraceEnabled();
-      if (trace) log.trace("Get values for these metrics: {0}", metrics);
+      if (trace) log.trace("Get values for these metrics: %s", metrics);
       EmsConnection conn = getEmsConnection();
-      if (trace) log.trace("Connection to ems server established: {0}", conn);
+      if (trace) log.trace("Connection to ems server established: %s", conn);
       EmsBean bean = queryCacheManagerBean(conn);
       bean.refreshAttributes();
-      if (trace) log.trace("Querying returned bean: {0}", bean);
+      if (trace) log.trace("Querying returned bean: %s", bean);
       for (MeasurementScheduleRequest req : metrics) {
          DataType type = req.getDataType();
          if (type == DataType.MEASUREMENT) {
             String tmp = (String) bean.getAttribute(req.getName()).getValue();
             Double val = Double.valueOf(tmp);
-            if (trace) log.trace("Metric ({0}) is measurement with value {1}", req.getName(), val);
+            if (trace) log.trace("Metric (%s) is measurement with value %s", req.getName(), val);
             MeasurementDataNumeric res = new MeasurementDataNumeric(req, val);
             report.addData(res);
          } else if (type == DataType.TRAIT) {
             String value = (String) bean.getAttribute(req.getName()).getValue();
-            if (trace) log.trace("Metric ({0}) is trait with value {1}", req.getName(), value);
+            if (trace) log.trace("Metric (%s) is trait with value %s", req.getName(), value);
             MeasurementDataTrait res = new MeasurementDataTrait(req, value);
             report.addData(res);
          }
@@ -126,12 +126,12 @@ public class CacheManagerComponent extends MBeanResourceComponent<MBeanResourceC
 
    private EmsBean queryCacheManagerBean(EmsConnection conn) {
       String pattern = cacheManagerPattern;
-      if (log.isTraceEnabled()) log.trace("Pattern to query is {0}", pattern);
+      if (log.isTraceEnabled()) log.trace("Pattern to query is %s", pattern);
       ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(pattern);
       List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
       if (beans.size() > 1) {
          // If more than one are returned, most likely is due to duplicate domains which is not the general case
-         log.warn("More than one bean returned from applying {0} pattern: {1}", pattern, beans);
+         log.warn("More than one bean returned from applying %s pattern: %s", pattern, beans);
       }
       return beans.get(0);
    }

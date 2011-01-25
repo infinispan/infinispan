@@ -81,14 +81,14 @@ public class LockManagerImpl implements LockManager {
 
    public boolean lockAndRecord(Object key, InvocationContext ctx) throws InterruptedException {
       long lockTimeout = getLockAcquisitionTimeout(ctx);
-      if (trace) log.trace("Attempting to lock {0} with acquisition timeout of {1} millis", key, lockTimeout);
+      if (trace) log.trace("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
       if (lockContainer.acquireLock(key, lockTimeout, MILLISECONDS) != null) {
          // successfully locked!
          if (ctx instanceof TxInvocationContext) {
             TxInvocationContext tctx = (TxInvocationContext) ctx;
             if (!tctx.isRunningTransactionValid()) {
                Transaction tx = tctx.getRunningTransaction();
-               log.debug("Successfully acquired lock, but the transaction {0} is no longer valid!  Releasing lock.", tx);
+               log.debug("Successfully acquired lock, but the transaction %s is no longer valid!  Releasing lock.", tx);
                lockContainer.releaseLock(key);
                throw new IllegalStateException("Transaction "+tx+" appears to no longer be valid!");
             }
@@ -165,7 +165,7 @@ public class LockManagerImpl implements LockManager {
       // unlocking needs to be done in reverse order.
       ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
       Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
-      if (trace) log.trace("Number of entries in context: {0}", entries.size());
+      if (trace) log.trace("Number of entries in context: %s", entries.size());
 
       while (it.hasNext()) {
          Map.Entry<Object, CacheEntry> e = it.next();
@@ -175,7 +175,7 @@ public class LockManagerImpl implements LockManager {
          // could be null with read-committed
          if (entry != null && entry.isChanged()) entry.rollback();
          else {
-            if (trace) log.trace("Entry for key {0} is null, not calling rollbackUpdate", key);
+            if (trace) log.trace("Entry for key %s is null, not calling rollbackUpdate", key);
          }
          // and then unlock
          if (needToUnlock) {

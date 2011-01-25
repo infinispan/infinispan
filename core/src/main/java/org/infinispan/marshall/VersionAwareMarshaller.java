@@ -127,7 +127,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
       ObjectOutput out = defaultMarshaller.startObjectOutput(os, isReentrant);
       try {
          out.writeShort(VERSION_500);
-         if (trace) log.trace("Wrote version {0}", VERSION_500);
+         if (trace) log.trace("Wrote version %s", VERSION_500);
       } catch (Exception e) {
          finishObjectOutput(out);
          log.error("Unable to read version id from first two bytes of stream, barfing.");
@@ -159,7 +159,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
       int versionId;
       try {
          versionId = in.readShort();
-         if (trace) log.trace("Read version {0}", versionId);
+         if (trace) log.trace("Read version %s", versionId);
       }
       catch (Exception e) {
          finishObjectInput(in);

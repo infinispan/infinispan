@@ -21,11 +21,9 @@
  */
 package org.infinispan.jmx;
 
-import org.infinispan.CacheDelegate;
 import org.infinispan.CacheException;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -89,14 +87,14 @@ public class ComponentsJmxRegistration {
             if (!mBeanServer.isRegistered(objectName)) {
                try {
                   mBeanServer.registerMBean(resource, objectName);
-                  if (trace) log.trace(String.format("Registered %s under %s", resource, objectName));
+                  if (trace) log.trace("Registered %s under %s", resource, objectName);
                } catch (InstanceAlreadyExistsException e) {
                   //this might happen if multiple instances are trying to concurrently register same objectName
                   log.info("Could not register object with name:" + objectName + "(" + e.getMessage() + ")");
                }
             } else {
                if (log.isDebugEnabled())
-                  log.debug(String.format("Object name %s already registered"), objectName);
+                  log.debug("Object name %s already registered", objectName);
             }
          }
       }

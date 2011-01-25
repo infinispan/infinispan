@@ -185,7 +185,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
          oos = (outputStream instanceof ObjectOutputStream) ? (ObjectOutputStream) outputStream :
                new ObjectOutputStream(outputStream);
          long recordCount = storedEntriesDb.count();
-         log.trace("writing {0} records to stream", recordCount);
+         log.trace("writing %s records to stream", recordCount);
          oos.writeLong(recordCount);
 
          cursor = storedEntriesDb.openCursor(null, null);
@@ -217,7 +217,7 @@ public class BdbjeLearningTest extends AbstractInfinispanTest {
          ois = (inputStream instanceof ObjectInputStream) ? (ObjectInputStream) inputStream :
                new ObjectInputStream(inputStream);
          long recordCount = ois.readLong();
-         log.info("reading {0} records from stream", recordCount);
+         log.info("reading %s records from stream", recordCount);
          log.info("clearing all records");
          cacheMap.clear();
          Cursor cursor = null;

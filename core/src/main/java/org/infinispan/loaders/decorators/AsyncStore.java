@@ -152,7 +152,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    @Override
    public void start() throws CacheLoaderException {
       state = newStateMap();
-      log.info("Async cache loader starting {0}", this);
+      log.info("Async cache loader starting %s", this);
       stopped.set(false);
       lastAsyncProcessorShutsDownExecutor = false;
       super.start();
@@ -233,7 +233,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    private void enqueue(Modification mod) {
       try {
          checkNotStopped();
-         if (trace) log.trace("Enqueuing modification {0}", mod);
+         if (trace) log.trace("Enqueuing modification %s", mod);
          changesDeque.add(mod);
       } catch (Exception e) {
          throw new CacheException("Unable to enqueue asynchronous task", e);
@@ -300,17 +300,17 @@ public class AsyncStore extends AbstractDelegatingStore {
                // AsyncStoreCoordinator doesn't need to acquired the same lock as values put by it
                // will never be overwritten (putIfAbsent below)
                for (Object key : swap.keySet()) {
-                  if (trace) log.trace("Going to process mod key: {0}", key);
+                  if (trace) log.trace("Going to process mod key: %s", key);
                   boolean acquired = false;
                   try {
                      acquired = lockContainer.acquireLock(key, 0, TimeUnit.NANOSECONDS) != null;
                   } catch (InterruptedException e) {
-                     log.error("interrupted on acquireLock {0}, 0 nanoseconds!", e);
+                     log.error("interrupted on acquireLock %s, 0 nanoseconds!", e);
                      Thread.currentThread().interrupt();
                      return;
                   }
                   if (trace)
-                     log.trace("Lock for key {0} was acquired={1}", key, acquired);
+                     log.trace("Lock for key %s was acquired=%s", key, acquired);
                   if (!acquired) {
                      Modification prev = swap.remove(key);
                      Modification didPut = state.putIfAbsent(key, prev); // don't overwrite more recently put work
@@ -334,13 +334,13 @@ public class AsyncStore extends AbstractDelegatingStore {
                return;
             } else {
                if (trace)
-                  log.trace("Apply {0} modifications", swap.size());
+                  log.trace("Apply %s modifications", swap.size());
                int maxRetries = 3;
                int attemptNumber = 0;
                boolean successful;
                do {
                   if (attemptNumber > 0 && log.isDebugEnabled())
-                     log.debug("Retrying due to previous failure. {0} attempts left.", maxRetries - attemptNumber);
+                     log.debug("Retrying due to previous failure. %s attempts left.", maxRetries - attemptNumber);
                   successful = put(swap);
                   attemptNumber++;
                } while (!successful && attemptNumber <= maxRetries);
@@ -377,7 +377,7 @@ public class AsyncStore extends AbstractDelegatingStore {
 
       void releaseLocks(Set<Object> keys) {
          for (Object key : keys) {
-            if (trace) log.trace("Release lock for key {0}", key);
+            if (trace) log.trace("Release lock for key %s", key);
             releaseLock(key);
          }
       }
@@ -413,7 +413,7 @@ public class AsyncStore extends AbstractDelegatingStore {
 
       private void handleSafely(Modification mod) {
          try {
-            if (trace) log.trace("taking from modification queue: {0}", mod);
+            if (trace) log.trace("taking from modification queue: %s", mod);
             handle(mod, false);
          } catch (Exception e) {
             log.error("Error while handling Modification in AsyncStore", e);
@@ -477,7 +477,7 @@ public class AsyncStore extends AbstractDelegatingStore {
             boolean successful = false;
             do {
                if (attemptNumber > 0 && log.isDebugEnabled())
-                  log.debug("Retrying clear() due to previous failure. {0} attempts left.", maxRetries - attemptNumber);
+                  log.debug("Retrying clear() due to previous failure. %s attempts left.", maxRetries - attemptNumber);
                successful = applyClear();
                attemptNumber++;
             } while (!successful && attemptNumber <= maxRetries);

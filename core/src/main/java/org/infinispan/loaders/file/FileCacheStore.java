@@ -106,7 +106,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
             BufferedInputStream bis = null;
             FileInputStream fileInStream = null;
             try {
-               if (trace) log.trace("Opening file in {0}", file);
+               if (trace) log.trace("Opening file in %s", file);
                fileInStream = new FileInputStream(file);
                int sz = fileInStream.available();
                bis = new BufferedInputStream(fileInStream);
@@ -136,7 +136,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       }
       for (File f : toDelete) {
          if (!deleteFile(f)) {
-            log.warn("Had problems removing file {0}", f);
+            log.warn("Had problems removing file %s", f);
          }
       }
    }
@@ -220,7 +220,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    public void updateBucket(Bucket b) throws CacheLoaderException {
       File f = new File(root, b.getBucketName());
       if (f.exists()) {
-         if (!deleteFile(f)) log.warn("Had problems removing file {0}", f);
+         if (!deleteFile(f)) log.warn("Had problems removing file %s", f);
       } else if (log.isTraceEnabled()) {
          log.trace("Successfully deleted file: '" + f.getName() + "'");
       }
@@ -272,7 +272,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    }
 
    private boolean deleteFile(File f) {
-      if (trace) log.trace("Really delete file {0}", f);
+      if (trace) log.trace("Really delete file %s", f);
       return f.delete();
    }
 

@@ -82,7 +82,7 @@ public class EntryFactoryImpl implements EntryFactory {
          if (trace) log.trace("Forcing lock on reading");
          return wrapEntryForWriting(ctx, key, false, false, false, false, false);
       } else if ((cacheEntry = ctx.lookupEntry(key)) == null) {
-         if (trace) log.trace("Key {0} is not in context, fetching from container.", key);
+         if (trace) log.trace("Key %s is not in context, fetching from container.", key);
          // simple implementation.  Peek the entry, wrap it, put wrapped entry in the context.
          cacheEntry = container.get(key);
 

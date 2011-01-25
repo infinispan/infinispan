@@ -91,7 +91,7 @@ public class EvictionManagerImpl implements EvictionManager {
             }
             dataContainer.purgeExpired();
             if (trace) {
-               log.trace("Purging data container completed in {0}", Util.prettyPrintTime(System.currentTimeMillis() - start));
+               log.trace("Purging data container completed in %s", Util.prettyPrintTime(System.currentTimeMillis() - start));
             }
          } catch (Exception e) {
             log.warn("Caught exception purging data container!", e);
@@ -107,7 +107,7 @@ public class EvictionManagerImpl implements EvictionManager {
                }
                cacheStore.purgeExpired();
                if (trace) {
-                  log.trace("Purging cache store completed in {0}", Util.prettyPrintTime(System.currentTimeMillis() - start));
+                  log.trace("Purging cache store completed in %s", Util.prettyPrintTime(System.currentTimeMillis() - start));
                }
             } catch (Exception e) {
                log.warn("Caught exception purging cache store!", e);
@@ -147,14 +147,14 @@ public class EvictionManagerImpl implements EvictionManager {
       try {
          acquireLock(context, key);
       } catch (Exception e) {
-         log.warn("Could not acquire lock for eviction of {0}", key, e);
+         log.warn("Could not acquire lock for eviction of %s", key, e);
       }
       cacheNotifier.notifyCacheEntryEvicted(key, entryValue, true, context);
 
       try {
          passivator.passivate(key, value, null);
       } catch (CacheLoaderException e) {
-         log.warn("Unable to passivate entry under {0}", key, e);
+         log.warn("Unable to passivate entry under %s", key, e);
       }
       cacheNotifier.notifyCacheEntryEvicted(key, entryValue, false, getInvocationContext());
       releaseLock(key);

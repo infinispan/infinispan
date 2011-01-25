@@ -64,11 +64,11 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
                   cr = gcr.getNamedComponentRegistry(cacheName);
                }
             } else {
-               log.info("Cache {0} is not defined.  No point in waiting.", cacheName);
+               log.info("Cache %s is not defined.  No point in waiting.", cacheName);
             }
          }
          if (cr == null) {
-            if (log.isInfoEnabled()) log.info("Cache named {0} does not exist on this cache manager!", cacheName);
+            if (log.isInfoEnabled()) log.info("Cache named %s does not exist on this cache manager!", cacheName);
             return new ExceptionResponse(new NamedCacheNotFoundException(cacheName));
          }
       }
@@ -79,7 +79,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          long giveupTime = System.currentTimeMillis() + localConfig.getStateRetrievalTimeout();
          while (cr.getStatus().startingUp() && System.currentTimeMillis() < giveupTime) Thread.sleep(100);
          if (!cr.getStatus().allowInvocations()) {
-            log.warn("Cache named [{0}] exists but isn't in a state to handle invocations.  Its state is {1}.", cacheName, cr.getStatus());
+            log.warn("Cache named [%s] exists but isn't in a state to handle invocations.  Its state is %s.", cacheName, cr.getStatus());
             return RequestIgnoredResponse.INSTANCE;
          }
       }
@@ -90,7 +90,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       commandsFactory.initializeReplicableCommand(cmd, true);
 
       try {
-         log.trace("Calling perform() on {0}", cmd);
+         log.trace("Calling perform() on %s", cmd);
          Object retval = cmd.perform(null);
          return cr.getComponent(ResponseGenerator.class).getResponse(cmd, retval);
       } catch (Exception e) {

@@ -164,7 +164,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    protected Response executeCommand(CacheRpcCommand cmd, Message req) throws Throwable {
       if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
-      if (trace) log.trace("Attempting to execute command: {0} [sender={1}]", cmd, req.getSrc());
+      if (trace) log.trace("Attempting to execute command: %s [sender=%s]", cmd, req.getSrc());
 
       boolean unlock = false;
       try {
@@ -304,7 +304,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                   try {
                      retval.addRsp(entry.getKey(), entry.getValue().get(timeout, MILLISECONDS));
                   } catch (java.util.concurrent.TimeoutException te) {
-                     throw new TimeoutException(formatString("Timed out after {0} waiting for a response from {1}",
+                     throw new TimeoutException(formatString("Timed out after %s waiting for a response from %s",
                                                              prettyPrintTime(timeout), entry.getKey()));
                   }
                }
@@ -318,7 +318,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          // we only bother parsing responses if we are not in ASYNC mode.
          if (mode != GroupRequest.GET_NONE) {
 
-            if (trace) log.trace("Responses: {0}", retval);
+            if (trace) log.trace("Responses: %s", retval);
 
             // a null response is 99% likely to be due to a marshalling problem - we throw a NSE, this needs to be changed when
             // JGroups supports http://jira.jboss.com/jira/browse/JGRP-193
@@ -397,7 +397,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          else if (exception != null)
             throw exception;
          else
-            throw new TimeoutException(format("TImed out waiting for %s for valid responses from either of %s", Util.prettyPrintTime(timeout), futures.values()));
+            throw new TimeoutException(format("Timed out waiting for %s for valid responses from either of %s", Util.prettyPrintTime(timeout), futures.values()));
       }
 
       @Override
@@ -411,10 +411,10 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                   filter.isAcceptable(response, sender);
                   if (!filter.needMoreResponses())
                      retval = new RspList(Collections.singleton(new Rsp(sender, response)));
-                  if (log.isTraceEnabled()) log.trace("Received response: {0} from {1}", response, sender);
+                  if (log.isTraceEnabled()) log.trace("Received response: %s from %s", response, sender);
                } else {
                   if (log.isDebugEnabled())
-                     log.debug("Skipping response from {0} since a valid response for this request has already been received", sender);
+                     log.debug("Skipping response from %s since a valid response for this request has already been received", sender);
                }
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
@@ -427,7 +427,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                   log.info("Caught a Throwable.", e.getCause());
 
                if (log.isDebugEnabled())
-                  log.debug("Caught exception {0} from sender {1}.  Will skip this response.", exception.getClass().getName(), sender);
+                  log.debug("Caught exception %s from sender %s.  Will skip this response.", exception.getClass().getName(), sender);
                if (trace) log.trace("Exception caught: ", exception);
             } finally {
                expectedResponses--;

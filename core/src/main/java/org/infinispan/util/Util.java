@@ -42,10 +42,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
@@ -319,15 +317,7 @@ public final class Util {
    public static String formatString(Object message, Object... params) {
       if (params.length == 0) return message == null ? "null" : message.toString();
 
-      StringBuilder value = new StringBuilder(String.valueOf(message));
-      for (int i = 0; i < params.length; i++) {
-         String placeholder = "{" + i + "}";
-         int phIndex;
-         if ((phIndex = value.indexOf(placeholder)) > -1) {
-            value = value.replace(phIndex, phIndex + placeholder.length(), String.valueOf(params[i]));
-         }
-      }
-      return value.toString();
+      return String.format(message.toString(), params);
    }
 
    public static String printArray(byte[] array, boolean withHash) {

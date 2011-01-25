@@ -293,7 +293,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    private void logTestLifecycle(Method m, String lifecycle) {
-      log.info("{0} {1} - {2}", m.getName(), lifecycle, testCount);
+      log.info("%s %s - %s", m.getName(), lifecycle, testCount);
    }
 
    private void thirdWritingCacheTest(boolean tx) throws InterruptedException {
@@ -377,7 +377,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       @Merged
       public void mergedView(MergeEvent me) {
-         log.info("View merged received {0}", me);
+         log.info("View merged received %s", me);
          merged = true;
       }
    }

@@ -101,7 +101,7 @@ public class DataContainerStressTest {
       Thread.sleep(warmup ? WARMUP_TIME_MILLIS : RUN_TIME_MILLIS);
       run.set(false);
       for (Thread t : threads) t.join();
-      if (!warmup) log.warn("{0}: Performance: {1}", dc.getClass().getSimpleName(), perf);
+      if (!warmup) log.warn("%s: Performance: %s", dc.getClass().getSimpleName(), perf);
    }
 
    private void waitForStart() {

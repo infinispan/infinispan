@@ -58,7 +58,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       i = 0;
       for (MagicKey key : keys) assertOnAllCachesAndOwnership(key, "v" + ++i);
 
-      log.info("Initialized with keys {0}", keys);
+      log.info("Initialized with keys %s", keys);
       return keys;
    }
 

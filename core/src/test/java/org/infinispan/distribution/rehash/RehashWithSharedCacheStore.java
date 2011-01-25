@@ -48,7 +48,7 @@ public class RehashWithSharedCacheStore extends BaseDistCacheStoreTest {
       c1.put(k, "v");
 
       Cache<Object, String>[] owners = getOwners(k);
-      log.info("Initial owners list for key {0}: {1}", k, Arrays.asList(owners));
+      log.info("Initial owners list for key %s: %s", k, Arrays.asList(owners));
 
       // Ensure the loader is shared!
       for (Cache<Object, String> c: Arrays.asList(c1, c2, c3)) {
@@ -63,7 +63,7 @@ public class RehashWithSharedCacheStore extends BaseDistCacheStoreTest {
          assert numWrites == 1 : "store() should have been invoked on the cache store once.  Was " + numWrites;
       }
 
-      log.info("Stopping node {0}", primaryOwner);
+      log.info("Stopping node %s", primaryOwner);
 
       caches.remove(primaryOwner);
       primaryOwner.stop();
@@ -76,7 +76,7 @@ public class RehashWithSharedCacheStore extends BaseDistCacheStoreTest {
 
       owners = getOwners(k);
 
-      log.info("After shutting one node down, owners list for key {0}: {1}", k, Arrays.asList(owners));
+      log.info("After shutting one node down, owners list for key %s: %s", k, Arrays.asList(owners));
 
       assert owners.length == 2;
 

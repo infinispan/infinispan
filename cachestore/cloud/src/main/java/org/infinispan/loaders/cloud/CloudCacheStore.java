@@ -156,9 +156,8 @@ public class CloudCacheStore extends BucketBasedCacheStore {
                String loc = cfg.getCloudServiceLocation().trim().toLowerCase();
                chosenLoc = idToLocation.get(loc);
                if (chosenLoc == null) {
-                  log.warn(
-                        String.format("Unable to use configured Cloud Service Location [%s].  Available locations for Cloud Service [%s] are %s",
-                                      loc, cfg.getCloudService(), idToLocation.keySet()));
+                  log.warn("Unable to use configured Cloud Service Location [%s].  Available locations for Cloud Service [%s] are %s",
+                                      loc, cfg.getCloudService(), idToLocation.keySet());
                }
             }
             blobStore.createContainerInLocation(chosenLoc, containerName);
@@ -190,7 +189,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          throw convertToCacheLoaderException("Error while reading from stream", e);
       }
       if (containerName.equals(source)) {
-         log.info("Attempt to load the same cloud bucket ({0}) ignored", source);
+         log.info("Attempt to load the same cloud bucket (%s) ignored", source);
       } else {
          // TODO implement stream handling. What's the JClouds API to "copy" one bucket to another?
       }
@@ -251,7 +250,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          if (bucket.removeExpiredEntries())
             updateBucket(bucket);
       } catch (CacheLoaderException e) {
-         log.warn("Unable to read blob at {0}", blobName, e);
+         log.warn("Unable to read blob at %s", blobName, e);
       }
    }
 
@@ -317,11 +316,11 @@ public class CloudCacheStore extends BucketBasedCacheStore {
             try {
                futures = asyncCommandFutures.get();
                if (log.isTraceEnabled())
-                  log.trace("Futures, in order: {0}", futures);
+                  log.trace("Futures, in order: %s", futures);
                for (Future<?> f : futures) {
                   Object o = f.get();
                   if (log.isTraceEnabled())
-                     log.trace("Future {0} returned {1}", f, o);
+                     log.trace("Future %s returned %s", f, o);
                }
             } catch (InterruptedException ie) {
                Thread.currentThread().interrupt();

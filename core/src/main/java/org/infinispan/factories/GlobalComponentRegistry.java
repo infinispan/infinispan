@@ -87,7 +87,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
             || globalConfiguration.getShutdownHookBehavior() == REGISTER;
 
       if (registerShutdownHook) {
-         log.trace("Registering a shutdown hook.  Configured behavior = {0}", globalConfiguration.getShutdownHookBehavior());
+         log.trace("Registering a shutdown hook.  Configured behavior = %s", globalConfiguration.getShutdownHookBehavior());
          shutdownHook = new Thread() {
             @Override
             public void run() {
@@ -104,7 +104,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          Runtime.getRuntime().addShutdownHook(shutdownHook);
       } else {
 
-         log.trace("Not registering a shutdown hook.  Configured behavior = {0}", globalConfiguration.getShutdownHookBehavior());
+         log.trace("Not registering a shutdown hook.  Configured behavior = %s", globalConfiguration.getShutdownHookBehavior());
       }
    }
 

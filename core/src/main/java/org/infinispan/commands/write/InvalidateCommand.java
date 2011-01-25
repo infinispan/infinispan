@@ -21,14 +21,14 @@
  */
 package org.infinispan.commands.write;
 
-import java.util.Arrays;
-import java.util.Collection;
-
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 
 /**
@@ -68,7 +68,7 @@ public class InvalidateCommand extends RemoveCommand {
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       if (trace) {
-         log.trace("Invalidating keys {0}", Arrays.toString(keys));
+         log.trace("Invalidating keys %s", Arrays.toString(keys));
       }
       for (Object k : keys) {
          invalidate(ctx, k);
