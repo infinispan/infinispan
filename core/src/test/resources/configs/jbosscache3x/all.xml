@@ -172,23 +172,11 @@
         <!--
            we can have multiple cache loaders, which get chained
         -->
-        <loader class="org.jboss.cache.loader.JDBCCacheLoader" async="true" fetchPersistentState="true"
+        <loader class="org.jboss.cache.loader.FileCacheLoader" async="true" fetchPersistentState="true"
                 ignoreModifications="true" purgeOnStartup="true">
 
             <properties>
-                cache.jdbc.table.name=jbosscache
-                cache.jdbc.table.create=true
-                cache.jdbc.table.drop=true
-                cache.jdbc.table.primarykey=jbosscache_pk
-                cache.jdbc.fqn.column=fqn
-                cache.jdbc.fqn.type=VARCHAR(255)
-                cache.jdbc.node.column=node
-                cache.jdbc.node.type=BINARY
-                cache.jdbc.parent.column=parent
-                cache.jdbc.driver=org.hsqldb.jdbcDriver
-                cache.jdbc.url=jdbc:hsqldb:mem:jbosscache
-                cache.jdbc.user=sa
-                cache.jdbc.password=
+                location=jbosscache
             </properties>
             <!-- alternatively use a connection from a datasource, as per the code sample below-->
             <!--<properties>-->

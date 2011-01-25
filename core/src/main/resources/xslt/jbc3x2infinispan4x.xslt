@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xsl:stylesheet xmlns="urn:infinispan:config:4.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:stylesheet xmlns="urn:infinispan:config:5.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
    <xsl:output method="xml" indent="yes" version="1.0" encoding="UTF-8" omit-xml-declaration="no"/>
 
    <xsl:template match="/jbosscache">
@@ -86,20 +86,22 @@
                      <xsl:value-of select="clustering/sync/@replTimeout"/>
                   </xsl:attribute>
                </xsl:if>
-               <xsl:if test="clustering/jgroupsConfig[@configFile]">
-                  <xsl:element name="property">
-                     <xsl:attribute name="name">configurationFile</xsl:attribute>
-                     <xsl:attribute name="value">
-                        <xsl:value-of select="clustering/jgroupsConfig/@configFile"/>
-                     </xsl:attribute>
-                  </xsl:element>
-               </xsl:if>
-               <xsl:if test="clustering/jgroupsConfig/*">
-                  <xsl:element name="property">
-                     <xsl:attribute name="name">configurationFile</xsl:attribute>
-                     <xsl:attribute name="value">jgroupsConfig.xml</xsl:attribute>
-                  </xsl:element>
-               </xsl:if>
+               <xsl:element name="properties">
+                  <xsl:if test="clustering/jgroupsConfig[@configFile]">
+                     <xsl:element name="property">
+                        <xsl:attribute name="name">configurationFile</xsl:attribute>
+                        <xsl:attribute name="value">
+                           <xsl:value-of select="clustering/jgroupsConfig/@configFile"/>
+                        </xsl:attribute>
+                     </xsl:element>
+                  </xsl:if>
+                  <xsl:if test="clustering/jgroupsConfig/*">
+                     <xsl:element name="property">
+                        <xsl:attribute name="name">configurationFile</xsl:attribute>
+                        <xsl:attribute name="value">jgroupsConfig.xml</xsl:attribute>
+                     </xsl:element>
+                  </xsl:if>
+               </xsl:element>
 
             </xsl:element>
 
@@ -332,16 +334,6 @@
                         <xsl:value-of select="@purgeOnStartup"/>
                      </xsl:attribute>
                   </xsl:if>
-                  <xsl:if test="@async">
-                     <async enabled="true"/>
-                  </xsl:if>
-                  <xsl:if test="properties">
-                     <xsl:message terminate="no">WARNING! Please configure cache loader props manually!</xsl:message>
-                     <properties>
-                        <!--<property name="TODO set name here..." value="...set value here..."/>-->
-                        <!--<property name="TODO set name here..." value="...set value here..."/>-->
-                     </properties>
-                  </xsl:if>
                   <xsl:if test="singletonStore">
                      <xsl:element name="singletonStore">
                         <xsl:if test="singletonStore[@enabled]">
@@ -354,7 +346,16 @@
                            </xsl:if>
                         </xsl:if>
                      </xsl:element>
-
+                  </xsl:if>
+                  <xsl:if test="@async">
+                     <async enabled="true"/>
+                  </xsl:if>
+                  <xsl:if test="properties">
+                     <xsl:message terminate="no">WARNING! Please configure cache loader props manually!</xsl:message>
+                     <!--<properties>-->
+                        <!--<property name="TODO set name here..." value="...set value here..."/>-->
+                        <!--<property name="TODO set name here..." value="...set value here..."/>-->
+                     <!--</properties>-->
                   </xsl:if>
                </xsl:element>
             </xsl:for-each>
