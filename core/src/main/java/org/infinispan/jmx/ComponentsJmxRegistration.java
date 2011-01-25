@@ -96,7 +96,7 @@ public class ComponentsJmxRegistration {
                }
             } else {
                if (log.isDebugEnabled())
-                  log.debug(String.format("Object name %s already registered"), objectName);
+                  log.debug(String.format("Object name %s already registered", objectName));
             }
          }
       }
