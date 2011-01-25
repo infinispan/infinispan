@@ -525,7 +525,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
             }
          }
 
-         if (!winningPartition.containsMember(channel.getAddress())) return true;
+         return winningPartition == null || !winningPartition.containsMember(channel.getAddress());
       }
       return false;
    }
