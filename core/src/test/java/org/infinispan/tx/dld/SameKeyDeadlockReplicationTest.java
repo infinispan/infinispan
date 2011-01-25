@@ -42,6 +42,7 @@ public class SameKeyDeadlockReplicationTest extends BaseDldTest {
       rpcManager0.setReplicationLatch(replicationLatch);
       rpcManager1.setReplicationLatch(replicationLatch);
 
+      log.trace("1 - Before locking");
 
       fork(new Runnable() {
          @Override
@@ -79,8 +80,11 @@ public class SameKeyDeadlockReplicationTest extends BaseDldTest {
             return lockManager(0).isLocked("k") && lockManager(1).isLocked("k");
          }
       });
+      log.trace("2 - Both are locked ");
 
-      replicationLatch.countDown();     
+      replicationLatch.countDown();
+
+      log.trace("3 - After countdown ");
 
       eventually(new Condition() {
          @Override
