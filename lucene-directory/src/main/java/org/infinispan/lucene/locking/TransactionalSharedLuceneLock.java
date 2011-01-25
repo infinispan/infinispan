@@ -73,14 +73,14 @@ class TransactionalSharedLuceneLock extends Lock {
       Object previousValue = cache.withFlags(lockFlags).putIfAbsent(keyOfLock, keyOfLock);
       if (previousValue == null) {
          if (log.isTraceEnabled()) {
-            log.trace("Lock: {0} acquired for index: {1}", lockName, indexName);
+            log.trace("Lock: %s acquired for index: %s", lockName, indexName);
          }
          // we own the lock:
          startTransaction();
          return true;
       } else {
          if (log.isTraceEnabled()) {
-            log.trace("Lock: {0} not aquired for index: {1}, was taken already.", lockName, indexName);
+            log.trace("Lock: %s not aquired for index: %s, was taken already.", lockName, indexName);
          }
          return false;
       }
@@ -106,7 +106,7 @@ class TransactionalSharedLuceneLock extends Lock {
    private void clearLock() {
       Object previousValue = cache.withFlags(lockFlags).remove(keyOfLock);
       if (previousValue!=null && log.isTraceEnabled()) {
-         log.trace("Lock removed for index: {0}", indexName);
+         log.trace("Lock removed for index: %s", indexName);
       }
    }
    
@@ -149,7 +149,7 @@ class TransactionalSharedLuceneLock extends Lock {
          throw new IOException("SharedLuceneLock could not start a transaction after having acquired the lock", e);
       }
       if (log.isTraceEnabled()) {
-         log.trace("Batch transaction started for index: {0}", indexName);
+         log.trace("Batch transaction started for index: %s", indexName);
       }
    }
    
@@ -167,7 +167,7 @@ class TransactionalSharedLuceneLock extends Lock {
          throw new IOException("SharedLuceneLock could not commit a transaction", e);
       }
       if (log.isTraceEnabled()) {
-         log.trace("Batch transaction commited for index: {0}", indexName);
+         log.trace("Batch transaction commited for index: %s", indexName);
       }
    }
 

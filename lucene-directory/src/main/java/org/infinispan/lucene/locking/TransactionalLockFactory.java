@@ -96,7 +96,7 @@ public class TransactionalLockFactory extends LockFactory {
          lock = new TransactionalSharedLuceneLock(cache, indexName, lockName, tm);
       }
       if (log.isTraceEnabled()) {
-         log.trace("Lock prepared, not acquired: {0} for index {1}", lockName, indexName);
+         log.trace("Lock prepared, not acquired: %s for index %s", lockName, indexName);
       }
       return lock;
    }
@@ -113,7 +113,7 @@ public class TransactionalLockFactory extends LockFactory {
          new TransactionalSharedLuceneLock(cache, indexName, lockName, tm).clearLockSuspending();
       }
       if (log.isTraceEnabled()) {
-         log.trace("Removed lock: {0} for index {1}", lockName, indexName);
+         log.trace("Removed lock: %s for index %s", lockName, indexName);
       }
    }
    

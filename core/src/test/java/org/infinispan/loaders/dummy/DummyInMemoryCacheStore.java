@@ -42,7 +42,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    public void store(InternalCacheEntry ed) {
       record("store");
       if (ed != null) {
-         if (trace) log.trace("Store {0} in dummy map store@{1}", ed, Integer.toHexString(System.identityHashCode(store)));
+         if (trace) log.trace("Store %s in dummy map store@%s", ed, Integer.toHexString(System.identityHashCode(store)));
          config.failIfNeeded(ed.getKey());
          store.put(ed.getKey(), ed);
       }
@@ -55,7 +55,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
          int numEntries = (Integer) marshaller.objectFromObjectStream(ois);
          for (int i = 0; i < numEntries; i++) {
             InternalCacheEntry e = (InternalCacheEntry) marshaller.objectFromObjectStream(ois);
-            if (trace) log.trace("Store {0} from stream in dummy store@{1}", e, Integer.toHexString(System.identityHashCode(store)));
+            if (trace) log.trace("Store %s from stream in dummy store@%s", e, Integer.toHexString(System.identityHashCode(store)));
             store.put(e.getKey(), e);
          }
       } catch (Exception e) {
@@ -82,11 +82,11 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    public boolean remove(Object key) {
       record("remove");
       if (store.remove(key) != null) {
-         if (trace) log.trace("Removed {0} from dummy store", key);
+         if (trace) log.trace("Removed %s from dummy store", key);
          return true;
       }
 
-      if (trace) log.trace("Key {0} not present in store, so don't remove", key);
+      if (trace) log.trace("Key %s not present in store, so don't remove", key);
       return false;
    }
 
@@ -109,7 +109,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       InternalCacheEntry se = store.get(key);
       if (se == null) return null;
       if (se.isExpired()) {
-         log.debug("Key {0} exists, but has expired.  Entry is {1}", key, se);
+         log.debug("Key %s exists, but has expired.  Entry is %s", key, se);
          store.remove(key);
          return null;
       }
@@ -123,7 +123,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       for (Iterator<InternalCacheEntry> i = store.values().iterator(); i.hasNext();) {
          InternalCacheEntry se = i.next();
          if (se.isExpired()) {
-            log.debug("Key {0} exists, but has expired.  Entry is {1}", se.getKey(), se);
+            log.debug("Key %s exists, but has expired.  Entry is %s", se.getKey(), se);
             i.remove();
          } else
             s.add(se);
@@ -138,7 +138,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       for (Iterator<InternalCacheEntry> i = store.values().iterator(); i.hasNext() && s.size() < numEntries;) {
          InternalCacheEntry se = i.next();
          if (se.isExpired()) {
-            log.debug("Key {0} exists, but has expired.  Entry is {1}", se.getKey(), se);
+            log.debug("Key %s exists, but has expired.  Entry is %s", se.getKey(), se);
             i.remove();
          } else if (s.size() < numEntries) {
             s.add(se);

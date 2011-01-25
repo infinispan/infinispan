@@ -150,11 +150,11 @@ public class RpcManagerImpl implements RpcManager {
                for (Address member : members) {
                   if (!member.equals(t.getAddress())) {
                      try {
-                        if (log.isInfoEnabled()) log.info("Trying to fetch state from {0}", member);
+                        if (log.isInfoEnabled()) log.info("Trying to fetch state from %s", member);
                         currentStateTransferSource = member;
                         if (t.retrieveState(cacheName, member, timeout)) {
                            if (log.isInfoEnabled())
-                              log.info("Successfully retrieved and applied state from {0}", member);
+                              log.info("Successfully retrieved and applied state from %s", member);
                            success = true;
                            break outer;
                         }
@@ -218,7 +218,7 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public final List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue, long timeout) throws ReplicationException {
-      if (trace) log.trace("{0} broadcasting call {1} to recipient list {2}", t.getAddress(), rpc, recipients);
+      if (trace) log.trace("%s broadcasting call %s to recipient list %s", t.getAddress(), rpc, recipients);
 
       if (useReplicationQueue(sync)) {
          replicationQueue.add(rpc);
@@ -243,7 +243,7 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public final void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l, final long timeout) {
-      if (trace) log.trace("{0} invoking in future call {1} to recipient list {2}", t.getAddress(), rpc, recipients); 
+      if (trace) log.trace("%s invoking in future call %s to recipient list %s", t.getAddress(), rpc, recipients);
       Callable<Object> c = new Callable<Object>() {
          public Object call() {
             invokeRemotely(recipients, rpc, true, usePriorityQueue, timeout);

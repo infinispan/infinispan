@@ -121,7 +121,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
       }
 
       if (log.isTraceEnabled())
-         log.trace("Start marshaller@{0} after retrieving marshaller from {1}",
+         log.trace("Start marshaller@%s after retrieving marshaller from %s",
                    Integer.toHexString(System.identityHashCode(marshaller)), isReentrant ? "factory" : "thread local");
 
       marshaller.start(Marshalling.createByteOutput(os));
@@ -131,7 +131,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
    public void finishObjectOutput(ObjectOutput oo) {
       try {
          if (log.isTraceEnabled())
-            log.trace("Stop marshaller@{0}", Integer.toHexString(System.identityHashCode(oo)));
+            log.trace("Stop marshaller@%s", Integer.toHexString(System.identityHashCode(oo)));
 
          ((org.jboss.marshalling.Marshaller) oo).finish();
       } catch (IOException ignored) {
@@ -161,7 +161,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
       }
 
       if (log.isTraceEnabled())
-         log.trace("Start unmarshaller@{0} after retrieving marshaller from {1}",
+         log.trace("Start unmarshaller@%s after retrieving marshaller from %s",
                    Integer.toHexString(System.identityHashCode(unmarshaller)), isReentrant ? "factory" : "thread local");
 
       unmarshaller.start(Marshalling.createByteInput(is));
@@ -175,7 +175,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
    public void finishObjectInput(ObjectInput oi) {
       try {
          if (log.isTraceEnabled())
-            log.trace("Stop unmarshaller@{0}", Integer.toHexString(System.identityHashCode(oi)));
+            log.trace("Stop unmarshaller@%s", Integer.toHexString(System.identityHashCode(oi)));
 
          if (oi != null) ((Unmarshaller) oi).finish();
       } catch (IOException ignored) {

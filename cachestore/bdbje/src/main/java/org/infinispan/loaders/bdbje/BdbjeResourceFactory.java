@@ -58,15 +58,15 @@ public class BdbjeResourceFactory {
         envConfig.setAllowCreate(true);
         envConfig.setTransactional(true);
         envConfig.setLockTimeout(config.getLockAcquistionTimeout(), TimeUnit.MILLISECONDS);
-        if (trace) log.trace("opening or creating je environment at {0}", envLocation);
+        if (trace) log.trace("opening or creating je environment at %s", envLocation);
         Environment env = new Environment(envLocation, envConfig);
-        log.debug("opened je environment at {0}", envLocation);
+        log.debug("opened je environment at %s", envLocation);
         return env;
     }
 
     public StoredClassCatalog createStoredClassCatalog(Database catalogDb) throws DatabaseException {
         StoredClassCatalog catalog = new StoredClassCatalog(catalogDb);
-        log.debug("created stored class catalog from database {0}", config.getCatalogDbName());
+        log.debug("created stored class catalog from database %s", config.getCatalogDbName());
         return catalog;
     }
 
@@ -79,9 +79,9 @@ public class BdbjeResourceFactory {
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setTransactional(true);
         dbConfig.setAllowCreate(true);
-        if (trace) log.trace("opening or creating database {0}", name);
+        if (trace) log.trace("opening or creating database %s", name);
         Database db = env.openDatabase(null, name, dbConfig);
-        log.debug("opened database {0}", name);
+        log.debug("opened database %s", name);
         return db;
     }
 

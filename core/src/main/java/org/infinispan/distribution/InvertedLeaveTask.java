@@ -82,7 +82,7 @@ public class InvertedLeaveTask extends RehashTask {
       ConsistentHash oldCH = ConsistentHashHelper.createConsistentHash(configuration, newCH.getCaches(), leaversHandled, dmi.topologyInfo);
 
       try {
-         log.debug("Starting leave rehash[enabled={0},isReceiver={1},isSender={2}] on node {3}",
+         log.debug("Starting leave rehash[enabled=%s,isReceiver=%s,isSender=%s] on node %s",
                   configuration.isRehashEnabled(), isReceiver, isSender, self);
 
          if (configuration.isRehashEnabled()) {
@@ -91,15 +91,15 @@ public class InvertedLeaveTask extends RehashTask {
                   RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE_LEAVE, self,
                            null, oldCH, newCH, leaversHandled);
 
-                  log.debug("I {0} am pulling state from {1}", self, providers);
+                  log.debug("I %s am pulling state from %s", self, providers);
                   List<Response> resps = rpcManager.invokeRemotely(providers, cmd, SYNCHRONOUS,
                            configuration.getRehashRpcTimeout(), true);
 
-                  log.debug("I {0} received response {1} ", self, resps);
+                  log.debug("I %s received response %s ", self, resps);
                   for (Response r : resps) {
                      if (r instanceof SuccessfulResponse) {
                         Map<Object, InternalCacheValue> state = getStateFromResponse((SuccessfulResponse) r);
-                        log.debug("I {0} am applying state {1} ", self, state);
+                        log.debug("I %s am applying state %s ", self, state);
                         dmi.applyState(newCH, state);
                      }
                   }
@@ -123,10 +123,10 @@ public class InvertedLeaveTask extends RehashTask {
       } finally {
          leavers.removeAll(leaversHandled);
          if (trace)
-            log.info("Completed leave rehash on node {0} in {1}", self,
+            log.info("Completed leave rehash on node %s in %s", self,
                      Util.prettyPrintTime(System.currentTimeMillis() - start));
          else
-            log.info("Completed leave rehash on node {0}", self);
+            log.info("Completed leave rehash on node %s", self);
 
          for (Address addr : leaversHandled)
             dmi.topologyInfo.removeNodeInfo(addr);
@@ -143,10 +143,10 @@ public class InvertedLeaveTask extends RehashTask {
          log.trace("Processing transaction log iteratively: " + transactionLogger);
       while (transactionLogger.shouldDrainWithoutLock()) {
          if (trace)
-            log.trace("Processing transaction log, iteration {0}", i++);
+            log.trace("Processing transaction log, iteration %s", i++);
          c = transactionLogger.drain();
          if (trace)
-            log.trace("Found {0} modifications", c.size());
+            log.trace("Found %s modifications", c.size());
          apply(oldCH, newCH, replCount, c);
       }
 
@@ -154,7 +154,7 @@ public class InvertedLeaveTask extends RehashTask {
          log.trace("Processing transaction log: final drain and lock");
       c = transactionLogger.drainAndLock();
       if (trace)
-         log.trace("Found {0} modifications", c.size());
+         log.trace("Found %s modifications", c.size());
       apply(oldCH, newCH, replCount, c);
 
       if (trace)
@@ -162,17 +162,17 @@ public class InvertedLeaveTask extends RehashTask {
       PendingPreparesMap state = new PendingPreparesMap(leavers, oldCH, newCH, replCount);
       Collection<PrepareCommand> pendingPrepares = transactionLogger.getPendingPrepares();
       if (trace)
-         log.trace("Found {0} pending prepares", pendingPrepares.size());
+         log.trace("Found %s pending prepares", pendingPrepares.size());
       for (PrepareCommand pc : pendingPrepares)
          state.addState(pc);
 
       if (trace)
-         log.trace("State map for pending prepares is {0}", state.getState());
+         log.trace("State map for pending prepares is %s", state.getState());
 
       Set<Future<Object>> pushFutures = new HashSet<Future<Object>>();
       for (Map.Entry<Address, List<PrepareCommand>> e : state.getState().entrySet()) {
          if (log.isDebugEnabled())
-            log.debug("Pushing {0} uncommitted prepares to {1}", e.getValue().size(), e.getKey());
+            log.debug("Pushing %s uncommitted prepares to %s", e.getValue().size(), e.getKey());
          RehashControlCommand push = cf.buildRehashControlCommandTxLogPendingPrepares(self, e.getValue());
          NotifyingNotifiableFuture<Object> f = new NotifyingFutureImpl(null);
          pushFutures.add(f);
@@ -201,12 +201,12 @@ public class InvertedLeaveTask extends RehashTask {
          state.addState(c);
 
       if (trace)
-         log.trace("State map for modifications is {0}", state.getState());
+         log.trace("State map for modifications is %s", state.getState());
 
       Set<Future<Object>> pushFutures = new HashSet<Future<Object>>();
       for (Map.Entry<Address, List<WriteCommand>> entry : state.getState().entrySet()) {
          if (log.isDebugEnabled())
-            log.debug("Pushing {0} modifications to {1}", entry.getValue().size(), entry.getKey());
+            log.debug("Pushing %s modifications to %s", entry.getValue().size(), entry.getKey());
          RehashControlCommand push = cf.buildRehashControlCommandTxLog(self, entry.getValue());
          NotifyingNotifiableFuture<Object> f = new NotifyingFutureImpl(null);
          pushFutures.add(f);

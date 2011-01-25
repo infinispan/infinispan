@@ -59,7 +59,7 @@ public class PassivationManagerImpl implements PassivationManager {
          final Object value = entry != null ? entry.getValue() : null;
          // notify listeners that this entry is about to be passivated
          notifier.notifyCacheEntryPassivated(key, value, true, ctx);
-         log.trace("Passivating entry {0}", key);
+         log.trace("Passivating entry %s", key);
          cacheStore.store(entry);
          notifier.notifyCacheEntryPassivated(key, value, false, ctx);
          if (statsEnabled && entry != null) {

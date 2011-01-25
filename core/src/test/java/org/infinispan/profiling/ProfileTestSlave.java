@@ -73,7 +73,7 @@ public class ProfileTestSlave extends AbstractProfileTest {
    }
 
    protected void testWith(String cachename) throws Exception {
-      log.warn("Starting slave, cache name = {0}", cachename);
+      log.warn("Starting slave, cache name = %s", cachename);
       initTest();
       cache = cacheManager.getCache(cachename);
       System.out.println("Waiting for members to join.");

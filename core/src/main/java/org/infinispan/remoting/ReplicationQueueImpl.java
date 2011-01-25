@@ -73,7 +73,7 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    @Start
    public void start() {
       long interval = configuration.getReplQueueInterval();
-      log.trace("Starting replication queue, with interval {0} and maxElements {1}", interval, maxElements);
+      log.trace("Starting replication queue, with interval %s and maxElements %s", interval, maxElements);
       this.maxElements = configuration.getReplQueueMaxElements();
       // check again
       enabled = configuration.isUseReplQueue();
@@ -114,12 +114,12 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    @Override
    public synchronized int flush() {
       List<ReplicableCommand> toReplicate = drainReplQueue();
-      if (log.isTraceEnabled()) log.trace("flush(): flushing repl queue (num elements={0})", toReplicate.size());
+      if (log.isTraceEnabled()) log.trace("flush(): flushing repl queue (num elements=%s)", toReplicate.size());
 
       int toReplicateSize = toReplicate.size();
       if (toReplicateSize > 0) {
          try {
-            log.trace("Flushing {0} elements", toReplicateSize);
+            log.trace("Flushing %s elements", toReplicateSize);
             MultipleRpcCommand multipleRpcCommand = commandsFactory.buildReplicateCommand(toReplicate);
             // send to all live caches in the cluster
             rpcManager.invokeRemotely(null, multipleRpcCommand, ResponseMode.getAsyncResponseMode(configuration), configuration.getSyncReplTimeout());

@@ -167,7 +167,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       }
       address = new JGroupsAddress(channel.getAddress());
       if (log.isInfoEnabled())
-         log.info("Cache local address is {0}, physical addresses are {1}", getAddress(), getPhysicalAddresses());
+         log.info("Cache local address is %s, physical addresses are %s", getAddress(), getPhysicalAddresses());
    }
 
    public int getViewId() {
@@ -276,7 +276,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       }
 
       if (channel == null) {
-         log.info("Unable to use any JGroups configuration mechanisms provided in properties {0}.  Using default JGroups configuration!", props);
+         log.info("Unable to use any JGroups configuration mechanisms provided in properties %s.  Using default JGroups configuration!", props);
          try {
             channel = new JChannel(new FileLookup().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE));
          } catch (ChannelException e) {
@@ -385,7 +385,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          return Collections.emptyList();
       }
 
-      if (trace) log.trace("dests={0}, command={1}, mode={2}, timeout={3}", recipients, rpcCommand, mode, timeout);
+      if (trace) log.trace("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
 
       // Acquire a "processing" lock so that any other code is made aware of a network call in progress
       // make sure this is non-exclusive since concurrent network calls are valid for most situations.
@@ -403,7 +403,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          if (mode.isAsynchronous()) return Collections.emptyList();// async case
 
 //         if (trace)
-//            log.trace("Cache [{0}], is caller thread interupted? {3}: responses for command {1}:\n{2}", getAddress(), rpcCommand.getClass().getSimpleName(), rsps, Thread.currentThread().isInterrupted());
+//            log.trace("Cache [%s], is caller thread interupted? %s: responses for command %s:\n%s", getAddress(), rpcCommand.getClass().getSimpleName(), rsps, Thread.currentThread().isInterrupted());
 
          // short-circuit no-return-value calls.
          if (rsps == null) return Collections.emptyList();
@@ -484,11 +484,11 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       if (hasNotifier) {
          if (newView instanceof MergeView) {
             if (log.isInfoEnabled())
-               log.info("Received new, MERGED cluster view: {0}", newView);
+               log.info("Received new, MERGED cluster view: %s", newView);
             n = new NotifyMerge();
          } else {
             if (log.isInfoEnabled())
-               log.info("Received new cluster view: {0}", newView);
+               log.info("Received new cluster view: %s", newView);
             n = new NotifyViewChange();
          }
       }
@@ -572,7 +572,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
    public void getState(String cacheName, OutputStream ostream) {
       if (trace)
-         log.trace("Received request to generate state for cache named '{0}'.  Attempting to generate state.", cacheName);
+         log.trace("Received request to generate state for cache named '%s'.  Attempting to generate state.", cacheName);
       try {
          inboundInvocationHandler.generateState(cacheName, ostream);
       } catch (StateTransferException e) {
@@ -589,7 +589,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    public void setState(String cacheName, InputStream istream) {
       StateTransferMonitor mon = null;
       try {
-         if (trace) log.trace("Received state for cache named '{0}'.  Attempting to apply state.", cacheName);
+         if (trace) log.trace("Received state for cache named '%s'.  Attempting to apply state.", cacheName);
          mon = stateTransfersInProgress.get(cacheName);
          inboundInvocationHandler.applyState(cacheName, istream);
          mon.notifyStateReceiptSucceeded();

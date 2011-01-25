@@ -69,7 +69,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       this.file.setBufferSize(bufferSize);
       trace = log.isTraceEnabled();
       if (trace) {
-         log.trace("Opened new IndexOutput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
+         log.trace("Opened new IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
       }
    }
    
@@ -192,7 +192,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       filePosition = 0;
       buffer = null;
       if (trace) {
-         log.trace("Closed IndexOutput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
+         log.trace("Closed IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
       }
    }
 

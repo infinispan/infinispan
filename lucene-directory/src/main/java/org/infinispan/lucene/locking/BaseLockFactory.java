@@ -69,7 +69,7 @@ public class BaseLockFactory extends LockFactory {
          lock = new BaseLuceneLock(cache, indexName, lockName);
       }
       if (log.isTraceEnabled()) {
-         log.trace("Lock prepared, not acquired: {0} for index {1}", lockName, indexName);
+         log.trace("Lock prepared, not acquired: %s for index %s", lockName, indexName);
       }
       return lock;
    }
@@ -86,7 +86,7 @@ public class BaseLockFactory extends LockFactory {
          new BaseLuceneLock(cache, indexName, lockName).clearLock();
       }
       if (log.isTraceEnabled()) {
-         log.trace("Removed lock: {0} for index {1}", lockName, indexName);
+         log.trace("Removed lock: %s for index %s", lockName, indexName);
       }
    }
    

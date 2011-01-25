@@ -229,7 +229,7 @@ public class InfinispanDirectory extends Directory {
       fileOps.deleteFileName(name);
       readLocks.deleteOrReleaseReadLock(name);
       if (log.isDebugEnabled()) {
-         log.debug("Removed file: {0} from index: {1}", name, indexName);
+         log.debug("Removed file: %s from index: %s", name, indexName);
       }
    }
 
@@ -263,7 +263,7 @@ public class InfinispanDirectory extends Directory {
       // now trigger deletion of old file chunks:
       readLocks.deleteOrReleaseReadLock(from);
       if (log.isTraceEnabled()) {
-         log.trace("Renamed file from: {0} to: {1} in index {2}", from, to, indexName);
+         log.trace("Renamed file from: %s to: %s in index %s", from, to, indexName);
       }
    }
 

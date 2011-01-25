@@ -129,7 +129,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 			}
 			return ice;
 		} catch (NotFoundException nfe) {
-			log.debug("Key '{0}' not found", hashKey);
+			log.debug("Key '%s' not found", hashKey);
 			return null;
 		} catch (Exception e) {
 			throw new CacheLoaderException(e);
@@ -169,13 +169,13 @@ public class CassandraCacheStore extends AbstractCacheStore {
 					List<ColumnOrSuperColumn> columns = keySlice.getColumns();
 					if (columns.size() > 0) {
 						if (log.isDebugEnabled()) {
-							log.debug("Loading {0}", key);
+							log.debug("Loading %s", key);
 						}
 						byte[] value = columns.get(0).getColumn().getValue();
 						InternalCacheEntry ice = unmarshall(value, key);
 						s.add(ice);
 					} else if (log.isDebugEnabled()) {
-						log.debug("Skipping empty key {0}", key);
+						log.debug("Skipping empty key %s", key);
 					}
 				}
 				if (keySlices.size() < sliceSize) {
@@ -290,7 +290,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	@Override
 	public boolean remove(Object key) throws CacheLoaderException {
 		if (trace)
-			log.trace("remove(\"{0}\") ", key);
+			log.trace("remove(\"%s\") ", key);
 		Cassandra.Client cassandraClient = null;
 		try {
 			cassandraClient = dataSource.getConnection();
@@ -341,7 +341,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	private void store0(InternalCacheEntry entry, Map<String, Map<String, List<Mutation>>> mutationMap) throws IOException, UnsupportedKeyTypeException {
 		Object key = entry.getKey();
 		if (trace)
-			log.trace("store(\"{0}\") ", key);
+			log.trace("store(\"%s\") ", key);
 		String cassandraKey = hashKey(key);
 		try {
 			addMutation(mutationMap, cassandraKey, config.entryColumnFamily, entryColumnPath.getColumn(), marshall(entry));

@@ -53,17 +53,17 @@ public class CacheManagerDiscovery extends MBeanResourceDiscoveryComponent<JMXCo
     */
    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> ctx) {
       boolean trace = log.isTraceEnabled();
-      if (trace) log.trace("Discover resources with context: {0}", ctx);
+      if (trace) log.trace("Discover resources with context: %s", ctx);
       Set<DiscoveredResourceDetails> discoveredResources;
       List<Configuration> manualCfgs = ctx.getPluginConfigurations();
       if (!manualCfgs.isEmpty()) {
          // TODO: Remove this?
          discoveredResources = createDiscoveredResource(ctx, CACHE_MANAGER_OBJECTS);
-         if (trace) log.trace("Manually discovered resources are {0}", discoveredResources);
+         if (trace) log.trace("Manually discovered resources are %s", discoveredResources);
       } else {
          // Process auto discovered resource
          discoveredResources = createDiscoveredResource(ctx, CACHE_MANAGER_OBJECTS);
-         if (trace) log.trace("Automatically discovered resources are {0}", discoveredResources);
+         if (trace) log.trace("Automatically discovered resources are %s", discoveredResources);
       }
       return discoveredResources;
    }
@@ -73,12 +73,12 @@ public class CacheManagerDiscovery extends MBeanResourceDiscoveryComponent<JMXCo
       JMXComponent parentComponent = ctx.getParentResourceComponent();
       EmsConnection conn = parentComponent.getEmsConnection();
       if (conn != null) {
-         if (trace) log.trace("Connection to ems server established: {0}", conn);
+         if (trace) log.trace("Connection to ems server established: %s", conn);
 
          // Run query for manager_object
          ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(objectName);
          List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
-         if (trace) log.trace("Querying [{0}] returned beans: {1}", queryUtility.getTranslatedQuery(), beans);
+         if (trace) log.trace("Querying [%s] returned beans: %s", queryUtility.getTranslatedQuery(), beans);
 
          Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
          for (EmsBean bean : beans) {
@@ -86,7 +86,7 @@ public class CacheManagerDiscovery extends MBeanResourceDiscoveryComponent<JMXCo
             String resourceName = bean.getAttribute("Name").getValue().toString();
             String version = bean.getAttribute("Version").getValue().toString();
             /* A discovered resource must have a unique key, that must stay the same when the resource is discovered the next time */
-            if (trace) log.trace("Add resource with version '{1}' and type {2}", version, ctx.getResourceType());
+            if (trace) log.trace("Add resource with version '%s' and type %s", version, ctx.getResourceType());
             DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                   ctx.getResourceType(), // Resource type
                   resourceName, // Resource key
@@ -96,7 +96,7 @@ public class CacheManagerDiscovery extends MBeanResourceDiscoveryComponent<JMXCo
                   null, // Plugin config
                   null // Process info from a process scan
             );
-            log.info("Discovered Infinispan instance with key {0} and name {1}", resourceName, managerName);
+            log.info("Discovered Infinispan instance with key %s and name %s", resourceName, managerName);
             discoveredResources.add(detail);
          }
          return discoveredResources;

@@ -54,7 +54,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
 
    public boolean lockAndRecord(Object key, InvocationContext ctx) throws InterruptedException {
       long lockTimeout = getLockAcquisitionTimeout(ctx);
-      if (trace) log.trace("Attempting to lock {0} with acquisition timeout of {1} millis", key, lockTimeout);
+      if (trace) log.trace("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
 
 
       if (ctx.isInTxScope()) {
@@ -111,7 +111,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
 
       //if we are here then 1) the other tx has a lock on this local key AND 2) I have a lock on the same key remotely
       if (iHaveRemoteLock && otherHasLocalLock) {
-         if (trace) log.trace("Same key deadlock between {0} and {1} on key {2}.", thisTx, lockOwnerTx, key);
+         if (trace) log.trace("Same key deadlock between %s and %s on key %s.", thisTx, lockOwnerTx, key);
          return true;
       }
       return false;

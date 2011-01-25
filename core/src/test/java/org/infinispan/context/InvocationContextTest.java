@@ -159,7 +159,7 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       @CacheEntryModified
       public void entryModified(CacheEntryModifiedEvent event) {
          if (!event.isPre()) {
-            log.debug("Entry modified: {0}, let's throw an NPE!!", event);
+            log.debug("Entry modified: %s, let's throw an NPE!!", event);
             throw new NullPointerException();
          }
       }

@@ -72,7 +72,7 @@ public class InvalidateCommand extends RemoveCommand {
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       if (trace) {
-         log.trace("Invalidating keys {0}", Arrays.toString(keys));
+         log.trace("Invalidating keys %s", Arrays.toString(keys));
       }
       for (Object k : keys) {
          invalidate(ctx, k);
@@ -105,7 +105,7 @@ public class InvalidateCommand extends RemoveCommand {
    @Override
    public Object[] getParameters() {
       if (keys == null || keys.length == 0) {
-         return new Object[]{0};
+         return new Object[]{};
       } else if (keys.length == 1) {
          return new Object[]{1, keys[0]};
       } else {

@@ -293,7 +293,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    private void logTestLifecycle(Method m, String lifecycle) {
-      log.info("{0} {1} - {2}", m.getName(), lifecycle, testCount);
+      log.info("%s %s - %s", m.getName(), lifecycle, testCount);
    }
 
    private void thirdWritingCacheTest(boolean tx) throws InterruptedException {

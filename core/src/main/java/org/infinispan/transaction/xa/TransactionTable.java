@@ -109,7 +109,7 @@ public class TransactionTable {
       public void onViewChange(ViewChangedEvent vce) {
          final List<Address> leavers = MembershipArithmetic.getMembersLeft(vce.getOldMembers(), vce.getNewMembers());
          if (!leavers.isEmpty()) {
-            if (trace) log.trace("Saw {0} leavers - kicking off a lock breaking task", leavers.size());
+            if (trace) log.trace("Saw %s leavers - kicking off a lock breaking task", leavers.size());
             cleanTxForWhichTheOwnerLeft(leavers);
             if (configuration.isUseEagerLocking() && configuration.isEagerLockSingleNode() && configuration.getCacheMode().isDistributed()) {
                for (LocalTransaction localTx : localTransactions.values()) {
@@ -131,15 +131,15 @@ public class TransactionTable {
                   }
 
                   if (trace)
-                     log.trace("Global transactions {0} pertain to leavers list {1} and need to be killed", toKill, leavers);
+                     log.trace("Global transactions %s pertain to leavers list %s and need to be killed", toKill, leavers);
 
                   for (GlobalTransaction gtx : toKill) {
-                     if (trace) log.trace("Killing {0}", gtx);
+                     if (trace) log.trace("Killing %s", gtx);
                      RollbackCommand rc = new RollbackCommand(gtx);
                      rc.init(invoker, icc, TransactionTable.this);
                      try {
                         rc.perform(null);
-                        if (trace) log.trace("Rollback of {0} complete.", gtx);
+                        if (trace) log.trace("Rollback of %s complete.", gtx);
                      } catch (Throwable e) {
                         log.warn("Unable to roll back gtx " + gtx, e);
                      } finally {
@@ -212,7 +212,7 @@ public class TransactionTable {
       if (current == null) {
          Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
          GlobalTransaction tx = gtf.newGlobalTransaction(localAddress, false);
-         if (trace) log.trace("Created a new GlobalTransaction {0}", tx);
+         if (trace) log.trace("Created a new GlobalTransaction %s", tx);
          current = new LocalTransaction(transaction, tx);
          localTransactions.put(transaction, current);
          notifier.notifyTransactionRegistered(tx, ctx);

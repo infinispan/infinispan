@@ -46,7 +46,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    public List<WriteCommand> drain() {
       List<WriteCommand> list = new LinkedList<WriteCommand>();
       commandQueue.drainTo(list);
-      if (trace) log.trace("Drained transaction log to {0}", list);
+      if (trace) log.trace("Drained transaction log to %s", list);
       return list;
    }
 
@@ -86,7 +86,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
             loggingLock.readLock().lock();
             try {
                if (enabled) {
-                  if (trace) log.trace("Logging 1PC prepare for tx {0}", command.getGlobalTransaction());
+                  if (trace) log.trace("Logging 1PC prepare for tx %s", command.getGlobalTransaction());
                   logModificationsInTransaction(command);
                }
             } finally {
@@ -94,7 +94,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
             }
          }
       } else {
-         if (trace) log.trace("Logging 2PC prepare for tx {0}", command.getGlobalTransaction());
+         if (trace) log.trace("Logging 2PC prepare for tx %s", command.getGlobalTransaction());
          uncommittedPrepares.put(command.getGlobalTransaction(), command);
       }
    }
@@ -115,7 +115,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
          loggingLock.readLock().lock();
          try {
             if (enabled) {
-               if (trace) log.trace("Logging commit for tx {0}", command.getGlobalTransaction());
+               if (trace) log.trace("Logging commit for tx %s", command.getGlobalTransaction());
                logModificationsInTransaction(pc);
             }
          } finally {
@@ -125,7 +125,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    }
 
    public void logIfNeeded(RollbackCommand command) {
-      if (trace) log.trace("Logging rollback for tx {0}", command.getGlobalTransaction());
+      if (trace) log.trace("Logging rollback for tx %s", command.getGlobalTransaction());
       uncommittedPrepares.remove(command.getGlobalTransaction());
    }
 

@@ -9,14 +9,14 @@ package org.infinispan.util.logging;
  * can be used to generate log messages either to Log4J (if the libraries are present) or (if not) the built-in JDK
  * logger.
  * <p/>
- * In addition to the 6 log levels available, this framework also supports parameter interpolation, inspired by <a
- * href="http://www.seamframework.org">SEAM</a>'s similar approach.  What this means is, that the following block:
+ * In addition to the 6 log levels available, this framework also supports parameter interpolation, similar to the JDKs
+ * {@link String#format(String, Object...)} method.  What this means is, that the following block:
  * <code> if (log.isTraceEnabled()) { log.trace("This is a message " + message + " and some other value is " + value); }
  * </code>
  * <p/>
  * ... could be replaced with ...
  * <p/>
- * <code> if (log.isTraceEnabled()) log.trace("This is a message {0} and some other value is {1}", message, value);
+ * <code> if (log.isTraceEnabled()) log.trace("This is a message %s and some other value is %s", message, value);
  * </code>
  * <p/>
  * This greatly enhances code readability.

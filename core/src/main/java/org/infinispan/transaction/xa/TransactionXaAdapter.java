@@ -64,7 +64,7 @@ public class TransactionXaAdapter implements XAResource {
       validateNotMarkedForRollback(localTransaction);
 
       if (configuration.isOnePhaseCommit()) {
-         if (trace) log.trace("Received prepare for tx: {0}. Skipping call as 1PC will be used.", xid);
+         if (trace) log.trace("Received prepare for tx: %s. Skipping call as 1PC will be used.", xid);
          return XA_OK;
       }
 
@@ -95,7 +95,7 @@ public class TransactionXaAdapter implements XAResource {
    public void commit(Xid xid, boolean isOnePhase) throws XAException {
       LocalTransaction localTransaction = getLocalTransactionAndValidate(xid);
 
-      if (trace) log.trace("committing transaction {0}" + localTransaction.getGlobalTransaction());
+      if (trace) log.trace("committing transaction %s" + localTransaction.getGlobalTransaction());
       try {
          LocalTxInvocationContext ctx = icc.createTxInvocationContext();
          ctx.setLocalTransaction(localTransaction);
@@ -133,7 +133,7 @@ public class TransactionXaAdapter implements XAResource {
 
    public static void rollbackImpl(Xid xid, CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker, TransactionTable txTable) throws XAException {
       LocalTransaction localTransaction = getLocalTransactionAndValidateImpl(xid, txTable);
-      if (trace) log.trace("rollback transaction {0} ", localTransaction.getGlobalTransaction());
+      if (trace) log.trace("rollback transaction %s ", localTransaction.getGlobalTransaction());
       RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
       ctx.setLocalTransaction(localTransaction);
@@ -154,7 +154,7 @@ public class TransactionXaAdapter implements XAResource {
    private static LocalTransaction getLocalTransactionAndValidateImpl(Xid xid, TransactionTable txTable) throws XAException {
       LocalTransaction localTransaction = txTable.getLocalTransaction(xid);
       if  (localTransaction == null) {
-         if (trace) log.trace("no tx found for {0}", xid);
+         if (trace) log.trace("no tx found for %s", xid);
          throw new XAException(XAException.XAER_NOTA);
       }
       return localTransaction;
@@ -219,7 +219,7 @@ public class TransactionXaAdapter implements XAResource {
 
    private void validateNotMarkedForRollback(LocalTransaction localTransaction) throws XAException {
       if (localTransaction.isMarkedForRollback()) {
-         if (trace) log.trace("Transaction already marked for rollback: {0}", localTransaction);
+         if (trace) log.trace("Transaction already marked for rollback: %s", localTransaction);
          throw new XAException(XAException.XA_RBROLLBACK);
       }
    }

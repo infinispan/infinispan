@@ -272,7 +272,7 @@ public class LockingInterceptor extends CommandInterceptor {
                try {
                   entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false, false);
                } catch (TimeoutException te){
-            	  log.warn("Could not lock key {0} in order to invalidate from L1 at node {1}, skipping....",key,transport.getAddress()); 
+            	  log.warn("Could not lock key %s in order to invalidate from L1 at node %s, skipping....",key,transport.getAddress());
                   keysCopy.remove(key);
                   if(keysCopy.isEmpty())
                      return null;
@@ -364,9 +364,9 @@ public class LockingInterceptor extends CommandInterceptor {
 
                if (!keysToRemove.isEmpty()) {
                   if (trace)
-                     log.trace("Removing keys {0} since they have not been modified.  Context currently contains {1} keys", keysToRemove, ctx.getLookedUpEntries().size());
+                     log.trace("Removing keys %s since they have not been modified.  Context currently contains %s keys", keysToRemove, ctx.getLookedUpEntries().size());
                   for (Object key : keysToRemove) ctx.removeLookedUpEntry(key);
-                  if (trace) log.trace("After removal, context contains {0} keys", ctx.getLookedUpEntries().size());
+                  if (trace) log.trace("After removal, context contains %s keys", ctx.getLookedUpEntries().size());
                }
             }
          }
@@ -384,7 +384,7 @@ public class LockingInterceptor extends CommandInterceptor {
          Object owner = ctx.getLockOwner();
          ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
          Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
-         if (trace) log.trace("Number of entries in context: {0}", entries.size());
+         if (trace) log.trace("Number of entries in context: %s", entries.size());
          while (it.hasNext()) {
             Map.Entry<Object, CacheEntry> e = it.next();
             CacheEntry entry = e.getValue();
@@ -394,7 +394,7 @@ public class LockingInterceptor extends CommandInterceptor {
             if (entry != null && entry.isChanged()) {
                commitEntry(entry);
             } else {
-               if (trace) log.trace("Entry for key {0} is null, not calling commitUpdate", key);
+               if (trace) log.trace("Entry for key %s is null, not calling commitUpdate", key);
             }
 
             // and then unlock

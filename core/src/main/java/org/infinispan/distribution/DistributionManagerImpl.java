@@ -226,14 +226,14 @@ public class DistributionManagerImpl implements DistributionManager {
    public void rehash(List<Address> newMembers, List<Address> oldMembers) {
       boolean join = oldMembers.size() < newMembers.size();
       // on view change, we should update our view
-      log.info("Detected a view change.  Member list changed from {0} to {1}", oldMembers, newMembers);
+      log.info("Detected a view change.  Member list changed from %s to %s", oldMembers, newMembers);
 
       if (join) {
          Address joiner = MembershipArithmetic.getMemberJoined(oldMembers, newMembers);
          log.info("This is a JOIN event!  Wait for notification from new joiner " + joiner);
       } else {
          Address leaver = MembershipArithmetic.getMemberLeft(oldMembers, newMembers);
-         log.info("This is a LEAVE event!  Node {0} has just left", leaver);
+         log.info("This is a LEAVE event!  Node %s has just left", leaver);
 
 
          try {
@@ -253,7 +253,7 @@ public class DistributionManagerImpl implements DistributionManager {
          boolean willReceiveLeaverState = receiversOfLeaverState.contains(self);
          boolean willProvideState = stateProviders.contains(self);    
          if (willReceiveLeaverState || willProvideState) {
-            log.info("I {0} am participating in rehash, state providers {1}, state receivers {2}",
+            log.info("I %s am participating in rehash, state providers %s, state receivers %s",
                      rpcManager.getTransport().getAddress(), stateProviders, receiversOfLeaverState);               
             transactionLogger.enable();
 
@@ -280,19 +280,19 @@ public class DistributionManagerImpl implements DistributionManager {
       List<Address> result = new ArrayList<Address>();
       for (Address addr : oldConsistentHash.getCaches()) {
          List<Address> backups = oldConsistentHash.getBackupsForNode(addr, getReplCount());
-         log.trace("Backups for {0} are {1}", addr, backups);
+         log.trace("Backups for %s are %s", addr, backups);
          if (addr.equals(leaver)) {
             if (backups.size() > 1) {
                Address mainBackup = backups.get(1);
                result.add(mainBackup);
-               log.trace("Leaver's ({0}) main backup({1}) is looking for another backup as well.", leaver, mainBackup);
+               log.trace("Leaver's (%s) main backup(%s) is looking for another backup as well.", leaver, mainBackup);
             }
          } else if (backups.contains(leaver)) {
-            log.trace("{0} is looking for a new backup to replace {1}", addr, leaver);
+            log.trace("%s is looking for a new backup to replace %s", addr, leaver);
             result.add(addr);
          }
       }
-      log.trace("Nodes that need new backups are: {0}", result);
+      log.trace("Nodes that need new backups are: %s", result);
       return result;
    }
 
@@ -358,7 +358,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public void setConsistentHash(ConsistentHash consistentHash) {
-      log.trace("Installing new consistent hash {0}", consistentHash);
+      log.trace("Installing new consistent hash %s", consistentHash);
       this.consistentHash = consistentHash;
    }
 
@@ -378,16 +378,16 @@ public class DistributionManagerImpl implements DistributionManager {
 
    public List<Address> requestPermissionToJoin(Address a) {
       if (JOINER_CAS.compareAndSet(this, null, a)) {
-         log.trace("Allowing {0} to join", a);
+         log.trace("Allowing %s to join", a);
          return new LinkedList<Address>(consistentHash.getCaches());
       } else {
-         log.trace("Not alowing {0} to join since there is a join already in progress for node {1}", a, joiner);
+         log.trace("Not alowing %s to join since there is a join already in progress for node %s", a, joiner);
          return null;
       }
    }
 
    public NodeTopologyInfo informRehashOnJoin(Address a, boolean starting, NodeTopologyInfo nodeTopologyInfo) {
-      log.trace("Informed of a JOIN by {0}.  Starting? {1}", a, starting);
+      log.trace("Informed of a JOIN by %s.  Starting? %s", a, starting);
       if (!starting) {
          if (consistentHash instanceof UnionConsistentHash) {
             UnionConsistentHash uch = (UnionConsistentHash) consistentHash;
@@ -397,7 +397,7 @@ public class DistributionManagerImpl implements DistributionManager {
          joiner = null;            
       } else {
          topologyInfo.addNodeTopologyInfo(a, nodeTopologyInfo);
-         log.trace("Node topology info added({0}).  Topology info is {1}", nodeTopologyInfo, topologyInfo);         
+         log.trace("Node topology info added(%s).  Topology info is %s", nodeTopologyInfo, topologyInfo);
          ConsistentHash chOld = consistentHash;
          if (chOld instanceof UnionConsistentHash) throw new RuntimeException("Not expecting a union CH!");
          oldConsistentHash = chOld;
@@ -405,7 +405,7 @@ public class DistributionManagerImpl implements DistributionManager {
          ConsistentHash chNew = ConsistentHashHelper.createConsistentHash(configuration, chOld.getCaches(), topologyInfo, a);
          consistentHash = new UnionConsistentHash(chOld, chNew);
       }
-      log.trace("New CH is {0}", consistentHash);
+      log.trace("New CH is %s", consistentHash);
       return topologyInfo.getNodeTopologyInfo(rpcManager.getAddress());
    }
    
@@ -414,7 +414,7 @@ public class DistributionManagerImpl implements DistributionManager {
       leaveAcksLock.lock();
       try {
          leaveRehashAcks.add(sender);         
-         log.trace("Received and processed LEAVE_REHASH_END from {0}, received {1} ", self, leaveRehashAcks);
+         log.trace("Received and processed LEAVE_REHASH_END from %s, received %s ", self, leaveRehashAcks);
          acksArrived.signalAll();
       }
       finally{

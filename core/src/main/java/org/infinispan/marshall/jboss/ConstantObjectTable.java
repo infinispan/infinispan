@@ -211,7 +211,7 @@ public class ConstantObjectTable implements ObjectTable {
             readers.put(id, adapter);
          } catch (Exception e) {
             if (log.isDebugEnabled()) {
-               log.debug("Unable to load class {0}", e.getMessage());
+               log.debug("Unable to load class %s", e.getMessage());
             }
          }
       }
@@ -239,7 +239,7 @@ public class ConstantObjectTable implements ObjectTable {
             }
          } catch (ClassNotFoundException e) {
             if (!marshallableClass.startsWith("org.infinispan")) {
-               if (log.isDebugEnabled()) log.debug("Unable to load class {0}", e.getMessage());
+               if (log.isDebugEnabled()) log.debug("Unable to load class %s", e.getMessage());
             }
          }
       }
@@ -247,7 +247,7 @@ public class ConstantObjectTable implements ObjectTable {
       started = true;
 
       if (log.isTraceEnabled())
-         log.trace("Constant object table was started and contains these externalizer readers: {0}", readers);
+         log.trace("Constant object table was started and contains these externalizer readers: %s", readers);
    }
 
    public void stop() {
@@ -263,7 +263,7 @@ public class ConstantObjectTable implements ObjectTable {
       Writer writer = writers.get(clazz);
       if (writer == null && (MARSHALLABLES.contains(clazz.getName()) || JDK_EXTERNALIZERS.containsKey(clazz.getName()))) {
          if (log.isTraceEnabled())
-            log.trace("Either the marshaller has stopped or hasn't started. Write externalizers are not propery populated: {0}", writers);
+            log.trace("Either the marshaller has stopped or hasn't started. Write externalizers are not propery populated: %s", writers);
 
          if (Thread.currentThread().isInterrupted())
             throw new IOException("Cache manager is shutting down, " +
@@ -282,7 +282,7 @@ public class ConstantObjectTable implements ObjectTable {
       if (adapter == null) {
          if (!started) {
             if (log.isTraceEnabled())
-               log.trace("Either the marshaller has stopped or hasn't started. Read externalizers are not propery populated: {0}", readers);
+               log.trace("Either the marshaller has stopped or hasn't started. Read externalizers are not propery populated: %s", readers);
 
             if (Thread.currentThread().isInterrupted())
                throw new IOException("Cache manager is shutting down, " +
@@ -292,8 +292,8 @@ public class ConstantObjectTable implements ObjectTable {
                      "so type (id=" + readerIndex + ") cannot be resolved.");
          } else {
             if (log.isTraceEnabled()) {
-               log.trace("Unknown type. Input stream has {0} to read", input.available());
-               log.trace("Check contents of read externalizers: {0}", readers);
+               log.trace("Unknown type. Input stream has %s to read", input.available());
+               log.trace("Check contents of read externalizers: %s", readers);
             }
 
             throw new CacheException("Type of data read is unknown. Id=" + readerIndex + " " +

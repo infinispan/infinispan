@@ -126,7 +126,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
          if (ctx.hasModifications()) {
             // this is a commit call.
             GlobalTransaction tx = ctx.getGlobalTransaction();
-            if (trace) log.trace("Calling loader.commit() for transaction {0}", tx);
+            if (trace) log.trace("Calling loader.commit() for transaction %s", tx);
             try {
                store.commit(tx);
             }
@@ -183,7 +183,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       if (!skip(ctx, command) && !ctx.isInTxScope() && command.isSuccessful()) {
          Object key = command.getKey();
          boolean resp = store.remove(key);
-         if (trace) log.trace("Removed entry under key {0} and got response {1} from CacheStore", key, resp);
+         if (trace) log.trace("Removed entry under key %s and got response %s from CacheStore", key, resp);
       }
       return retval;
    }
@@ -205,7 +205,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       Object key = command.getKey();
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
-      if (trace) log.trace("Stored entry {0} under key {1}", se, key);
+      if (trace) log.trace("Stored entry %s under key %s", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
 
       return returnValue;
@@ -219,7 +219,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       Object key = command.getKey();
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
-      if (trace) log.trace("Stored entry {0} under key {1}", se, key);
+      if (trace) log.trace("Stored entry %s under key %s", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
 
       return returnValue;
@@ -234,7 +234,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       for (Object key : map.keySet()) {
          InternalCacheEntry se = getStoredEntry(key, ctx);
          store.store(se);
-         if (trace) log.trace("Stored entry {0} under key {1}", se, key);
+         if (trace) log.trace("Stored entry %s under key %s", se, key);
       }
       if (getStatisticsEnabled()) cacheStores.getAndAdd(map.size());
       return returnValue;
@@ -250,11 +250,11 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
          if (trace) log.trace("Transaction has not logged any modifications!");
          return;
       }
-      if (trace) log.trace("Cache loader modification list: {0}", modifications);
+      if (trace) log.trace("Cache loader modification list: %s", modifications);
       StoreModificationsBuilder modsBuilder = new StoreModificationsBuilder(getStatisticsEnabled());
       for (WriteCommand cacheCommand : modifications) cacheCommand.acceptVisitor(ctx, modsBuilder);
       int numMods = modsBuilder.modifications.size();
-      if (trace) log.trace("Converted method calls to cache loader modifications.  List size: {0}", numMods);
+      if (trace) log.trace("Converted method calls to cache loader modifications.  List size: %s", numMods);
 
       if (numMods > 0) {
          GlobalTransaction tx = transactionContext.getGlobalTransaction();

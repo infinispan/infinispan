@@ -121,7 +121,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             boolean debugTiming = log.isDebugEnabled();
             if (debugTiming) {
                start = System.currentTimeMillis();
-               log.debug("Preloading transient state from cache loader {0}", loader);
+               log.debug("Preloading transient state from cache loader %s", loader);
             }
             Set<InternalCacheEntry> state;
             try {
@@ -144,7 +144,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
 
             if (debugTiming) {
                long stop = System.currentTimeMillis();
-               log.debug("Preloaded {0} keys in {1} milliseconds", state.size(), stop - start);
+               log.debug("Preloaded %s keys in %s milliseconds", state.size(), stop - start);
             }
          }
       }
