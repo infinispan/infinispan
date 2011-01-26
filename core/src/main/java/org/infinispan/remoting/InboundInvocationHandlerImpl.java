@@ -46,7 +46,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    }
 
    private boolean isDefined(String cacheName) {
-      log.error("Defined caches: {0}", embeddedCacheManager.getCacheNames());
       return CacheContainer.DEFAULT_CACHE_NAME.equals(cacheName) || embeddedCacheManager.getCacheNames().contains(cacheName);
    }
 
