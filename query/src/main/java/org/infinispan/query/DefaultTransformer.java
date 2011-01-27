@@ -21,7 +21,7 @@
  */
 package org.infinispan.query;
 
-import org.jboss.util.Base64;
+import org.infinispan.util.Base64;
 
 import java.io.Serializable;
 

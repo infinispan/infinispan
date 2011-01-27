@@ -40,12 +40,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.jboss</groupId>
-         <artifactId>jboss-common-core</artifactId>
-         <version>${version.jboss.common.core}</version>
-      </dependency>
-
-      <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>marshalling-api</artifactId>
          <version>${version.jboss.marshalling}</version>
@@ -55,6 +49,13 @@
          <groupId>org.rhq.helpers</groupId>
          <artifactId>rhq-pluginAnnotations</artifactId>
          <version>${version.rhq.pluginAnnotations}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>jboss-common-core</artifactId>
+         <scope>test</scope>
+         <version>${version.jboss.common.core}</version>
       </dependency>
 
       <dependency>
