@@ -254,9 +254,6 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          // Replay capability requires responses from all members!
          int mode = supportReplay ? GroupRequest.GET_ALL : this.mode;
 
-         // if there is a JOIN in progress, wait for this to complete.
-         // See ISPN-83 for more details.  Once ISPN-83 is addressed, this may no longer be needed.
-         distributedSync.blockUntilNoJoinsInProgress();
 
          if (filter != null) mode = GroupRequest.GET_FIRST;
 
