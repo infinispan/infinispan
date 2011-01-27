@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -48,9 +49,9 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    private Configuration configuration;
    private boolean enabled;
    private CommandsFactory commandsFactory;
+   private volatile ScheduledFuture<?> scheduledFuture;
 
    /**
-    *
     * @return true if this replication queue is enabled, false otherwise.
     */
    @Override
@@ -59,7 +60,7 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    }
 
    @Inject
-   private void injectDependencies(@ComponentName(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR) ScheduledExecutorService executor,
+   public void injectDependencies(@ComponentName(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR) ScheduledExecutorService executor,
                                    RpcManager rpcManager, Configuration configuration, CommandsFactory commandsFactory) {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
@@ -78,7 +79,7 @@ public class ReplicationQueueImpl implements ReplicationQueue {
       // check again
       enabled = configuration.isUseReplQueue();
       if (enabled && interval > 0) {
-         scheduledExecutor.scheduleWithFixedDelay(new Runnable() {
+         scheduledFuture = scheduledExecutor.scheduleWithFixedDelay(new Runnable() {
             public void run() {
                flush();
             }
@@ -92,12 +93,14 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    @Stop(priority = 9)
    // Stop before transport
    public void stop() {
-      if (scheduledExecutor != null) {
-         scheduledExecutor.shutdownNow();
+      if (scheduledFuture != null) scheduledFuture.cancel(true);
+      try {
+         flush();
+      } catch (Exception e) {
+         log.debug("Unable to perform final flush before shutting down", e);
       }
       scheduledExecutor = null;
    }
-
 
    @Override
    public void add(ReplicableCommand job) {
@@ -123,8 +126,7 @@ public class ReplicationQueueImpl implements ReplicationQueue {
             MultipleRpcCommand multipleRpcCommand = commandsFactory.buildReplicateCommand(toReplicate);
             // send to all live caches in the cluster
             rpcManager.invokeRemotely(null, multipleRpcCommand, ResponseMode.getAsyncResponseMode(configuration), configuration.getSyncReplTimeout());
-         }
-         catch (Throwable t) {
+         } catch (Throwable t) {
             log.error("failed replicating " + toReplicate.size() + " elements in replication queue", t);
          }
       }
