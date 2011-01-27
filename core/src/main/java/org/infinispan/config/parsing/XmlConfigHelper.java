@@ -26,7 +26,7 @@ import org.infinispan.util.BeanUtils;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.util.StringPropertyReplacer;
+import org.infinispan.util.StringPropertyReplacer;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
