@@ -67,16 +67,6 @@ public abstract class RemoteCacheSupport<K,V> extends CacheSupport<K,V> implemen
    }
 
    @Override
-   public int size() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public boolean isEmpty() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
    public boolean containsValue(Object value) {
       throw new UnsupportedOperationException();
    }
