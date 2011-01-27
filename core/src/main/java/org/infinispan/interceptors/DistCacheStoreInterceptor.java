@@ -91,7 +91,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
 
       Map<Object, Object> map = command.getMap();
       for (Object key : map.keySet()) {
-         if (!skip(key)) {
+         if (!skipKey(key)) {
             InternalCacheEntry se = getStoredEntry(key, ctx);
             store.store(se);
             log.trace("Stored entry %s under key %s", se, key);
@@ -160,7 +160,8 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
     * Method that skips invocation if: - The store is a shared one and node storing the key is not the 1st owner of the
     * key or, - This is an L1 put operation.
     */
-   private boolean skip(Object key) {
+   @Override
+   protected boolean skipKey(Object key) {
       List<Address> addresses = dm.locate(key);
       if ((loaderConfig.isShared() && !isFirstOwner(addresses)) || isL1Put(addresses)) {
          if (trace)
@@ -180,4 +181,5 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
       if (address == null) throw new NullPointerException("Local address cannot be null!");
       return addresses.get(0).equals(address);
    }
+
 }
