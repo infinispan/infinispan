@@ -55,24 +55,34 @@ public class HotRodStatisticsTest {
       assertEquals(statsMap.get(ServerStatistics.REMOVE_MISSES),"0");
       assertEquals(statsMap.get(ServerStatistics.RETRIEVALS),"0");
       assertEquals(statsMap.get(ServerStatistics.TOTAL_NR_OF_ENTRIES),"0");
+      assert 0 == remoteCache.size();
+      assert remoteCache.isEmpty();
 
       Integer number = serverStatistics.getIntStatistic(ServerStatistics.TIME_SINCE_START);
       assertTrue(number >= 0);
    }
 
    public void testStoresAndEntries() {
+      assert 0 == remoteCache.size();
+      assert remoteCache.isEmpty();
       remoteCache.put("a","v");
       assertEquals((Integer)1, remoteCache.stats().getIntStatistic(ServerStatistics.STORES));
       assertEquals((Integer)1, remoteCache.stats().getIntStatistic(ServerStatistics.CURRENT_NR_OF_ENTRIES));
+      assert 1 == remoteCache.size();
+      assert !remoteCache.isEmpty();
       assertEquals((Integer)1, remoteCache.stats().getIntStatistic(ServerStatistics.TOTAL_NR_OF_ENTRIES));
       remoteCache.put("a2","v2");
       assertEquals((Integer)2, remoteCache.stats().getIntStatistic(ServerStatistics.STORES));
       assertEquals((Integer)2, remoteCache.stats().getIntStatistic(ServerStatistics.CURRENT_NR_OF_ENTRIES));
       assertEquals((Integer)2, remoteCache.stats().getIntStatistic(ServerStatistics.TOTAL_NR_OF_ENTRIES));
+      assert 2 == remoteCache.size();
+      assert !remoteCache.isEmpty();
       remoteCache.put("a2","v3");
       assertEquals((Integer)3, remoteCache.stats().getIntStatistic(ServerStatistics.STORES));
       assertEquals((Integer)2, remoteCache.stats().getIntStatistic(ServerStatistics.CURRENT_NR_OF_ENTRIES));
       assertEquals((Integer)3, remoteCache.stats().getIntStatistic(ServerStatistics.TOTAL_NR_OF_ENTRIES));
+      assert 2 == remoteCache.size();
+      assert !remoteCache.isEmpty();
    }
 
    public void testHitsAndMisses() {
