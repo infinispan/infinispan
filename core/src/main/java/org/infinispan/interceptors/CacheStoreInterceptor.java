@@ -108,10 +108,11 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    public final boolean skip(InvocationContext ctx, VisitableCommand command) {
       if (store == null) return true;  // could be because the cache loader does not implement cache store
       if ((!ctx.isOriginLocal() && loaderConfig.isShared()) || ctx.hasFlag(SKIP_CACHE_STORE)) {
-         if (trace) log.trace("Passing up method call and bypassing this interceptor since the cache loader is shared and this call originated remotely.");
+         if (trace)
+            log.trace("Passing up method call and bypassing this interceptor since the cache loader is shared and this call originated remotely.");
          return true;
       }
-      
+
       if (loaderConfig.isShared() && ctx.hasFlag(SKIP_SHARED_CACHE_STORE)) {
          if (trace) log.trace("Explicitly requested to skip storage if cache store is shared - and it is.");
          return true;
@@ -129,8 +130,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
             if (trace) log.trace("Calling loader.commit() for transaction %s", tx);
             try {
                store.commit(tx);
-            }
-            catch (Throwable t) {
+            } catch (Throwable t) {
                preparingTxs.remove(tx);
                throw t;
             }
@@ -267,6 +267,10 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       }
    }
 
+   protected boolean skipKey(Object key) {
+      return false;
+   }
+
    public class StoreModificationsBuilder extends AbstractVisitor {
 
       boolean generateStatistics;
@@ -284,9 +288,12 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       @Override
       @SuppressWarnings("unchecked")
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         if (generateStatistics) putCount++;
-         modifications.add(new Store(getStoredEntry(command.getKey(), ctx)));
-         affectedKeys.add(command.getKey());
+         Object key = command.getKey();
+         if (!skipKey(key)) {
+            if (generateStatistics) putCount++;
+            modifications.add(new Store(getStoredEntry(key, ctx)));
+            affectedKeys.add(command.getKey());
+         }
          return null;
       }
 
@@ -294,17 +301,24 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       @SuppressWarnings("unchecked")
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
          Map<Object, Object> map = command.getMap();
-         if (generateStatistics) putCount += map.size();
-         affectedKeys.addAll(map.keySet());
-         for (Object key : map.keySet()) modifications.add(new Store(getStoredEntry(key, ctx)));
+         for (Object key : map.keySet()) {
+            if (!skipKey(key)) {
+               modifications.add(new Store(getStoredEntry(key, ctx)));
+               affectedKeys.add(key);
+               if (generateStatistics) putCount ++;
+            }
+         }
          return null;
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-         modifications.add(new Remove(command.getKey()));
-         affectedKeys.add(command.getKey());
+         Object key = command.getKey();
+         if (!skipKey(key)) {
+            modifications.add(new Remove(key));
+            affectedKeys.add(command.getKey());
+         }
          return null;
       }
 

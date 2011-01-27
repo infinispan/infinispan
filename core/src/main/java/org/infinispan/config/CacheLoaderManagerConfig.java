@@ -50,7 +50,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 @ConfigurationDoc(name="loaders",desc="Holds the configuration for cache loaders and stores")
 public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBean {
-   
+
    private static final long serialVersionUID = 2210349340378984424L;
 
    @ConfigurationDocRef(bean=CacheLoaderManagerConfig.class,targetElement="setPassivation")
@@ -63,6 +63,13 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
    protected Boolean shared = false;
 
    protected List<CacheLoaderConfig> cacheLoaderConfigs = new LinkedList<CacheLoaderConfig>();
+
+   public CacheLoaderManagerConfig() {
+   }
+
+   public CacheLoaderManagerConfig(CacheLoaderConfig clc) {
+      addCacheLoaderConfig(clc);
+   }
 
    public Boolean isPreload() {
       return preload;
