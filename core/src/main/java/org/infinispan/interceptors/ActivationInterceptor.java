@@ -1,7 +1,5 @@
 package org.infinispan.interceptors;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -18,6 +16,8 @@ import org.infinispan.loaders.CacheStore;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 @MBean(objectName = "Activation", description = "Component that handles activating entries that have been passivated to a CacheStore by loading them into memory.")
 public class ActivationInterceptor extends CacheLoaderInterceptor {
@@ -72,10 +72,14 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    }
 
    private void removeFromStore(Object... keys) throws CacheLoaderException {
-      for (Object k : keys) {
-         if (store.remove(k) && getStatisticsEnabled()) {
-            activations.incrementAndGet();
+      if (!clm.isShared()) {
+         for (Object k : keys) {
+            if (store.remove(k) && getStatisticsEnabled()) {
+               activations.incrementAndGet();
+            }
          }
+      } else {
+         if (trace) log.trace("CacheStore is shared; will not remove from store when passivating!");
       }
    }
 
