@@ -18,7 +18,7 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.util.stream.Streams;
+import org.infinispan.util.stream.Streams;
 import org.jclouds.blobstore.AsyncBlobStore;
 import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;

@@ -27,7 +27,7 @@ import org.infinispan.config.parsing.XmlConfigurationParser;
 import org.infinispan.util.FileLookup;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.util.StringPropertyReplacer;
+import org.infinispan.util.StringPropertyReplacer;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLFilter;
 import org.xml.sax.XMLReader;
