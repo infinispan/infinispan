@@ -3,7 +3,6 @@ package org.infinispan.util;
 import org.infinispan.config.TypedPropertiesAdapter;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.util.StringPropertyReplacer;
 
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
