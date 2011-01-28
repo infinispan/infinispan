@@ -21,6 +21,7 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.config.Configuration.EvictionType;
 import org.infinispan.config.GlobalConfiguration.TransportType;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 
@@ -33,8 +34,6 @@ import org.infinispan.loaders.decorators.SingletonStoreConfig;
  */
 public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVisitor {
    private TransportType tt = null;
-   private CacheLoaderManagerConfig clmc = null;
-   private Configuration.EvictionType eviction = null;
 
    @Override
    public void visitSingletonStoreConfig(SingletonStoreConfig ssc) {
@@ -57,5 +56,10 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
 
       if (clusteringType.mode.isSynchronous() && clusteringType.async.useReplQueue)
          throw new ConfigurationException("Use of the replication queue is only allowed with an ASYNCHRONOUS cluster mode.");
+   }
+   
+   public void visitEvictionType(EvictionType et) {
+      if (et.strategy.isEnabled() && et.maxEntries <= 0)
+         throw new ConfigurationException("Eviction maxEntries value cannot be less than or equal to zero if eviction is enabled");
    }
 }

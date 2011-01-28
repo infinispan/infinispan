@@ -86,6 +86,19 @@ public class ConfigurationValidationTest extends AbstractInfinispanTest {
          TestingUtil.killCacheManagers(ecm);
       }
    }
+   
+   @Test (expectedExceptions = ConfigurationException.class)
+   public void testEvictionOnButWithoutMaxEntries() {
+      EmbeddedCacheManager ecm = null;
+      try {
+         Configuration c = new Configuration();
+         c.setEvictionStrategy("LRU");
+         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
+         ecm.getCache();
+      } finally {
+         TestingUtil.killCacheManagers(ecm);
+      }
+   }
 
    private EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfiguration gc = GlobalConfiguration.getNonClusteredDefault();
