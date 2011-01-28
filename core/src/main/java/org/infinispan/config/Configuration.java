@@ -555,7 +555,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    public void setTransactionManagerLookup(TransactionManagerLookup transactionManagerLookup) {
-      this.transaction.transactionManagerLookup = transactionManagerLookup;
+      this.transaction.setTransactionManagerLookup(transactionManagerLookup);
    }
 
    public void setCacheLoaderManagerConfig(CacheLoaderManagerConfig cacheLoaderManagerConfig) {
@@ -1179,6 +1179,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          testImmutability("useEagerLocking");
          this.useEagerLocking = useEagerLocking;
 
+      }
+
+      public void setTransactionManagerLookup(TransactionManagerLookup transactionManagerLookup) {
+         testImmutability("transactionManagerLookup");
+         this.transactionManagerLookup = transactionManagerLookup;
       }
 
       @XmlAttribute
