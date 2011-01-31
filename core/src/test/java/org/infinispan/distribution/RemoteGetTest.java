@@ -47,4 +47,9 @@ public class RemoteGetTest extends MultipleCacheManagersTest {
       owner1.put(k, "value");
       assert "value".equals(nonOwner.get(k));
    }
+
+   public void testGetOfNonexistentKey() {
+      Object v = cache(0).get("__ doesn't exist ___");
+      assert v == null : "Should get a null response";
+   }
 }
