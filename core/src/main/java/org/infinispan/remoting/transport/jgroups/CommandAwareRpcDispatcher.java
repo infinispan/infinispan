@@ -74,14 +74,13 @@ import static org.infinispan.util.Util.rewrapAsCacheException;
  * @since 4.0
  */
 public class CommandAwareRpcDispatcher extends RpcDispatcher {
-   protected boolean trace;
    ExecutorService asyncExecutor;
    InboundInvocationHandler inboundInvocationHandler;
    JGroupsDistSync distributedSync;
    long distributedSyncTimeout;
-   private Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
+   private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
+   private static final boolean trace = log.isTraceEnabled();
    AtomicBoolean newCacheStarting = new AtomicBoolean(false);
-   AtomicBoolean newCacheStarted = new AtomicBoolean(false);
    private static final boolean FORCE_MCAST = Boolean.getBoolean("infinispan.unsafe.force_multicast");
 
    public CommandAwareRpcDispatcher() {
@@ -96,13 +95,12 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       this.asyncExecutor = asyncExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
       this.distributedSync = distributedSync;
-      trace = log.isTraceEnabled();
       this.distributedSyncTimeout = distributedSyncTimeout;
    }
 
    protected final boolean isValid(Message req) {
       if (req == null || req.getLength() == 0) {
-         log.error("message or message buffer is null");
+         log.error("Message or message buffer is null or empty.");
          return false;
       }
 
@@ -247,12 +245,10 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
 
       public RspList call() throws Exception {
-         if (log.isTraceEnabled()) {
-            log.trace("Replication task sending " + command + " to addresses " + dests);
-         }
+         if (trace) log.trace("Replication task sending %s to addresses %s", command, dests);
 
          // Replay capability requires responses from all members!
-         int mode = supportReplay ? GroupRequest.GET_ALL : this.mode;        
+         int mode = supportReplay ? GroupRequest.GET_ALL : this.mode;
 
          if (filter != null) mode = GroupRequest.GET_FIRST;
 
@@ -361,10 +357,27 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
+   static class SenderContainer {
+      final Address address;
+      volatile boolean processed = false;
+
+      SenderContainer(Address address) {
+         this.address = address;
+      }
+
+      @Override
+      public String toString() {
+         return "Sender{" +
+               "address=" + address +
+               ", responded=" + processed +
+               '}';
+      }
+   }
+
    class FutureCollator implements FutureListener<Object> {
       final RspFilter filter;
       volatile RspList retval;
-      final Map<Future<Object>, Address> futures = new HashMap<Future<Object>, Address>(4);
+      final Map<Future<Object>, SenderContainer> futures = new HashMap<Future<Object>, SenderContainer>(4);
       volatile Exception exception;
       volatile int expectedResponses;
       final long timeout;
@@ -376,7 +389,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
 
       public void watchFuture(NotifyingFuture<Object> f, Address address) {
-         futures.put(f, address);
+         futures.put(f, new SenderContainer(address));
          f.setListener(this);
       }
 
@@ -393,41 +406,49 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          else if (exception != null)
             throw exception;
          else
-            throw new TimeoutException(format("Timed out waiting for %s for valid responses from either of %s", Util.prettyPrintTime(timeout), futures.values()));
+            throw new TimeoutException(format("Timed out waiting for %s for valid responses from any of %s.", Util.prettyPrintTime(timeout), futures.values()));
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public void futureDone(Future<Object> objectFuture) {
          synchronized (this) {
-            Address sender = futures.get(objectFuture);
-            try {
-               if (retval == null) {
-                  Object response = objectFuture.get();
-                  filter.isAcceptable(response, sender);
-                  if (!filter.needMoreResponses())
-                     retval = new RspList(Collections.singleton(new Rsp(sender, response)));
-                  if (log.isTraceEnabled()) log.trace("Received response: %s from %s", response, sender);
-               } else {
-                  if (log.isDebugEnabled())
-                     log.debug("Skipping response from %s since a valid response for this request has already been received", sender);
-               }
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-            } catch (ExecutionException e) {
-               if (e.getCause() instanceof org.jgroups.TimeoutException)
-                  exception = new TimeoutException("Timeout!", e);
-               else if (e.getCause() instanceof Exception)
-                  exception = (Exception) e.getCause();
-               else
-                  log.info("Caught a Throwable.", e.getCause());
+            SenderContainer sc = futures.get(objectFuture);
+            if (sc.processed) {
+               // This can happen - it is a race condition in JGroups' NotifyingFuture.setListener() where a listener
+               // could be notified twice.
+               if (trace) log.trace("Not processing callback; already processed callback for sender %s", sc.address);
+            } else {
+               sc.processed = true;
+               Address sender = sc.address;
+               try {
+                  if (retval == null) {
+                     Object response = objectFuture.get();
+                     if (trace) log.trace("Received response: %s from %s", response, sender);
+                     filter.isAcceptable(response, sender);
+                     if (!filter.needMoreResponses())
+                        retval = new RspList(Collections.singleton(new Rsp(sender, response)));
+                  } else {
+                     if (log.isDebugEnabled())
+                        log.debug("Skipping response from %s since a valid response for this request has already been received", sender);
+                  }
+               } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+               } catch (ExecutionException e) {
+                  if (e.getCause() instanceof org.jgroups.TimeoutException)
+                     exception = new TimeoutException("Timeout!", e);
+                  else if (e.getCause() instanceof Exception)
+                     exception = (Exception) e.getCause();
+                  else
+                     log.info("Caught a Throwable.", e.getCause());
 
-               if (log.isDebugEnabled())
-                  log.debug("Caught exception %s from sender %s.  Will skip this response.", exception.getClass().getName(), sender);
-               if (trace) log.trace("Exception caught: ", exception);
-            } finally {
-               expectedResponses--;
-               this.notify();
+                  if (log.isDebugEnabled())
+                     log.debug("Caught exception %s from sender %s.  Will skip this response.", exception.getClass().getName(), sender);
+                  if (trace) log.trace("Exception caught: ", exception);
+               } finally {
+                  expectedResponses--;
+                  this.notify();
+               }
             }
          }
       }
