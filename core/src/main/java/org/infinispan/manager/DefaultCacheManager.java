@@ -461,8 +461,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * {@inheritDoc}
     */
    public List<Address> getMembers() {
-      if (globalComponentRegistry == null) return null;
-      Transport t = globalComponentRegistry.getComponent(Transport.class);
+      Transport t = getTransport();
       return t == null ? null : t.getMembers();
    }
 
@@ -470,8 +469,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * {@inheritDoc}
     */
    public Address getAddress() {
-      if (globalComponentRegistry == null) return null;
-      Transport t = globalComponentRegistry.getComponent(Transport.class);
+      Transport t = getTransport();
       return t == null ? null : t.getAddress();
    }
 
@@ -479,8 +477,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * {@inheritDoc}
     */
    public Address getCoordinator() {
-      if (globalComponentRegistry == null) return null;
-      Transport t = globalComponentRegistry.getComponent(Transport.class);
+      Transport t = getTransport();
       return t == null ? null : t.getCoordinator();
    }
 
@@ -488,8 +485,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * {@inheritDoc}
     */
    public boolean isCoordinator() {
-      if (globalComponentRegistry == null) return false;
-      Transport t = globalComponentRegistry.getComponent(Transport.class);
+      Transport t = getTransport();
       return t != null && t.isCoordinator();
    }
 
@@ -607,11 +603,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       return isRunning(DEFAULT_CACHE_NAME);
    }
 
-   private void assertIsNotTerminated() {
-      if (globalComponentRegistry.getStatus().isTerminated())
-         throw new IllegalStateException("Cache container has been stopped and cannot be reused. Recreate the cache container.");
-   }
-
    @ManagedAttribute(description = "The status of the cache manager instance.")
    @Metric(displayName = "Cache manager status", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
    public String getCacheManagerStatus() {
@@ -678,9 +669,52 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       getCache(cacheName);
    }
 
+   @ManagedAttribute(description = "The network address associated with this instance")
+   @Metric(displayName = "Network address", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   public String getNodeAddress() {
+      return getLogicalAddressString();
+   }
+
+   @ManagedAttribute(description = "The physical network addresses associated with this instance")
+   @Metric(displayName = "Physical network addresses", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   public String getPhysicalAddresses() {
+      Transport t = getTransport();
+      if (t == null) return "local";
+      List<Address> address = t.getPhysicalAddresses();
+      return address == null ? "local" : address.toString();
+   }
+
+   @ManagedAttribute(description = "List of members in the cluster")
+   @Metric(displayName = "Cluster members", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   public String getClusterMembers() {
+      Transport t = getTransport();
+      if (t == null) return "local";
+      List<Address> addressList = t.getMembers();
+      return addressList.toString();
+   }
+
+   @ManagedAttribute(description = "Size of the cluster in number of nodes")
+   @Metric(displayName = "Cluster size", displayType = DisplayType.SUMMARY)
+   public int getClusterSize() {
+      Transport t = getTransport();
+      if (t == null) return 1;
+      return t.getMembers().size();
+   }
+
    private String getLogicalAddressString() {
       return getAddress() == null ? "local" : getAddress().toString();
    }
+
+   private void assertIsNotTerminated() {
+      if (globalComponentRegistry.getStatus().isTerminated())
+         throw new IllegalStateException("Cache container has been stopped and cannot be reused. Recreate the cache container.");
+   }
+
+   private Transport getTransport() {
+      if (globalComponentRegistry == null) return null;
+      return globalComponentRegistry.getComponent(Transport.class);
+   }
+
 
    @Override
    public String toString() {

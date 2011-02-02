@@ -322,36 +322,6 @@ public class RpcManagerImpl implements RpcManager {
       this.statisticsEnabled = statisticsEnabled;
    }
 
-   @ManagedAttribute(description = "The network address associated with this instance")
-   @Metric(displayName = "Network address", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
-   public String getNodeAddress() {
-      if (t == null || !isStatisticsEnabled()) return "N/A";
-      Address address = t.getAddress();
-      return address == null ? "N/A" : address.toString();
-   }
-
-   @ManagedAttribute(description = "The physical network addresses associated with this instance")
-   @Metric(displayName = "Physical network addresses", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
-   public String getPhysicalAddresses() {
-      if (t == null || !isStatisticsEnabled()) return "N/A";
-      List<Address> address = t.getPhysicalAddresses();
-      return address == null ? "N/A" : address.toString();
-   }
-
-   @ManagedAttribute(description = "List of members in the cluster")
-   @Metric(displayName = "Cluster members", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
-   public String getMembers() {
-      if (t == null || !isStatisticsEnabled()) return "N/A";
-      List<Address> addressList = t.getMembers();
-      return addressList.toString();
-   }
-
-   @ManagedAttribute(description = "Size of the cluster in number of nodes")
-   @Metric(displayName = "Cluster size", displayType = DisplayType.SUMMARY)
-   public int getClusterSize() {
-      return t.getMembers().size();
-   }
-
    @ManagedAttribute(description = "Successful replications as a ratio of total replications")
    public String getSuccessRatio() {
       if (replicationCount.get() == 0 || !statisticsEnabled) {

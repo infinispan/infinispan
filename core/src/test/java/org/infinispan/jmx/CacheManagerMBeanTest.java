@@ -107,4 +107,11 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       }
    }
 
+   public void testAddressInformation() throws Exception {
+      assert server.getAttribute(name, "NodeAddress").equals("local");
+      assert server.getAttribute(name, "ClusterMembers").equals("local");
+      assert server.getAttribute(name, "PhysicalAddresses").equals("local");
+      assert server.getAttribute(name, "ClusterSize").equals(1);
+   }
+
 }
