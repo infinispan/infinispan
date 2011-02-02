@@ -94,7 +94,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
       // available.  It could just have been removed in the same tx beforehand.
       if (needsRemoteGet(ctx, command.getKey(), returnValue == null))
-         returnValue = remoteGetAndStoreInL1(ctx, command.getKey(), isRehashInProgress);
+         returnValue = remoteGetAndStoreInL1(ctx, command.getKey(), isRehashInProgress, false);
       return returnValue;
    }
 
@@ -118,17 +118,17 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     *
     * @throws Throwable if there are problems
     */
-   private Object remoteGetAndStoreInL1(InvocationContext ctx, Object key, boolean dmWasRehashingDuringLocalLookup) throws Throwable {
+   private Object remoteGetAndStoreInL1(InvocationContext ctx, Object key, boolean dmWasRehashingDuringLocalLookup, boolean isWrite) throws Throwable {
       boolean isMappedToLocalNode = false;
       if (ctx.isOriginLocal() && !(isMappedToLocalNode = dm.isLocal(key)) && isNotInL1(key)) {
-         return realRemoteGet(ctx, key, true);
+         return realRemoteGet(ctx, key, true, isWrite);
       } else {
          // maybe we are still rehashing as a joiner? ISPN-258
          if (isMappedToLocalNode && dmWasRehashingDuringLocalLookup) {
             if (trace)
                log.trace("Key is mapped to local node, but a rehash is in progress so may need to look elsewhere");
             // try a remote lookup all the same
-            return realRemoteGet(ctx, key, false);
+            return realRemoteGet(ctx, key, false, isWrite);
          } else {
             if (trace)
                log.trace("Not doing a remote get for key %s since entry is mapped to current node, or is in L1", key);
@@ -137,7 +137,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return null;
    }
 
-   private Object realRemoteGet(InvocationContext ctx, Object key, boolean storeInL1) throws Throwable {
+   private Object realRemoteGet(InvocationContext ctx, Object key, boolean storeInL1, boolean isWrite) throws Throwable {
       if (trace) log.trace("Doing a remote get for key %s", key);
       // attempt a remote lookup
       InternalCacheEntry ice = dm.retrieveFromRemoteSource(key);
@@ -153,10 +153,14 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             } else {
                CacheEntry ce = ctx.lookupEntry(key);
                if (ce == null || ce.isNull() || ce.isLockPlaceholder()) {
-                  if (ce != null && ce.isChanged())
+                  if (ce != null && ce.isChanged()) {
                      ce.setValue(ice.getValue());
-                  else
-                     ctx.putLookedUpEntry(key, ice);
+                  } else {
+                     if (isWrite)
+                        entryFactory.wrapEntryForWriting(ctx, ice, true, false, ctx.hasLockedKey(key), false, false);
+                     else
+                        ctx.putLookedUpEntry(key, ice);
+                  }
                }
             }
          } else {
@@ -296,7 +300,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
       boolean isStillRehashingOnJoin = !dm.isJoinComplete();
       if (isNeedReliableReturnValues(ctx) || (isConditionalCommand && ctx.isInTxScope())) {
-         for (Object k : keygen.getKeys()) remoteGetAndStoreInL1(ctx, k, isStillRehashingOnJoin);
+         for (Object k : keygen.getKeys()) remoteGetAndStoreInL1(ctx, k, isStillRehashingOnJoin, true);
       }
    }
 
