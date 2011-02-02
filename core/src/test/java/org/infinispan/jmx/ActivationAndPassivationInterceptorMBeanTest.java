@@ -93,8 +93,8 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       cacheStore.store(InternalEntryFactory.create(k(m), v(m)));
       assert cacheStore.containsKey(k(m));
-      cache.put(k(m), v(m, "2"));
-      assert cache.get(k(m)).equals(v(m, "2"));
+      cache.put(k(m), v(m, 2));
+      assert cache.get(k(m)).equals(v(m, 2));
       assertActivationCount(1);
       assert !cacheStore.containsKey(k(m)) : "this should only be persisted on evict";
    }
@@ -116,7 +116,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       cacheStore.store(InternalEntryFactory.create(k(m), v(m)));
       assert cacheStore.containsKey(k(m));
-      assert cache.replace(k(m), v(m, "2")).equals(v(m));
+      assert cache.replace(k(m), v(m, 2)).equals(v(m));
       assertActivationCount(1);
       assert !cacheStore.containsKey(k(m));
    }
@@ -129,20 +129,20 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assert cacheStore.containsKey(k(m));
 
       Map toAdd = new HashMap();
-      toAdd.put(k(m), v(m, "2"));
+      toAdd.put(k(m), v(m, 2));
       cache.putAll(toAdd);
       assertActivationCount(1);
-      assert cache.get(k(m)).equals(v(m, "2"));
+      assert cache.get(k(m)).equals(v(m, 2));
       assert !cacheStore.containsKey(k(m));
    }
 
    public void testPassivationOnEvict(Method m) throws Exception {
       assertPassivationCount(0);
       cache.put(k(m), v(m));
-      cache.put(k(m, "2"), v(m, "2"));
+      cache.put(k(m, 2), v(m, 2));
       cache.evict(k(m));
       assertPassivationCount(1);
-      cache.evict(k(m, "2"));
+      cache.evict(k(m, 2));
       assertPassivationCount(2);
       cache.evict("not_existing_key");
       assertPassivationCount(2);

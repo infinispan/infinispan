@@ -1,9 +1,8 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
- * individual contributors as indicated by the @author tags. See the
- * copyright.txt file in the distribution for a full listing of
- * individual contributors.
+ * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -20,47 +19,47 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.config.Configuration;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Random;
 
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
-@Test(groups = "functional", testName = "distribution.DisabledL1Test")
-public class DisabledL1Test extends BaseDistFunctionalTest {
+/**
+ * Test distribution when L1 is disabled and return values are needed.
+ *
+ * @author Galder Zamarreño
+ * @since 4.2
+ * @since 5.0
+ */
+@Test(groups = "functional", testName = "distribution.DisabledL1WithRetValsTest")
+public class DisabledL1WithRetValsTest extends BaseDistFunctionalTest {
 
-   public DisabledL1Test () {
-      sync = true;
-      tx = false;
-      testRetVals = false;
+   public DisabledL1WithRetValsTest() {
       l1CacheEnabled = false;
-   }
-   
-   public void testRemoveFromNonOwner() {
-      for (Cache<Object, String> c : caches) assert c.isEmpty();
-      
-      Object retval = getFirstNonOwner("k1").put("k1", "value");
-      asyncWait("k1", PutKeyValueCommand.class, getSecondNonOwner("k1"));
-      if (testRetVals) assert retval == null;
-      
-      retval = getOwners("k1")[0].remove("k1");
-      asyncWait("k1", RemoveCommand.class, getFirstNonOwner("k1"));
-      if (testRetVals) assert "value".equals(retval);
-
-      assertOnAllCachesAndOwnership("k1", null);
+      testRetVals = true;
+      numOwners = 1;
+      INIT_CLUSTER_SIZE = 2;
    }
 
    public void testReplaceFromNonOwner(Method m) {
       final String k = k(m);
       final String v = v(m);
-      getOwners(k)[0].put(k, v);
-      getNonOwners(k)[0].replace(k, v(m, 1));
+      Cache<Object, String> ownerCache = getOwners(k, 1)[0];
+      ownerCache.put(k, v);
+      Cache<Object, String> nonOwnerCache = getNonOwners(k, 1)[0];
+      nonOwnerCache.replace(k, v(m, 1));
    }
 
 }
