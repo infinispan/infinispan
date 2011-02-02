@@ -204,19 +204,4 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       }
    }
 
-   @Test(dependsOnMethods = "testSuccessRatio")
-   public void testAddressInformation() throws Exception {
-      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      ObjectName rpcManager1 = getCacheObjectName(JMX_DOMAIN, cachename + "(repl_sync)", "RpcManager");
-      ObjectName rpcManager2 = getCacheObjectName(JMX_DOMAIN2, cachename + "(repl_sync)", "RpcManager");
-      String cm1Address = manager(0).getAddress().toString();
-      String cm2Address = manager(1).getAddress().toString();
-      assert mBeanServer.getAttribute(rpcManager1, "NodeAddress").equals(cm1Address);
-      assert mBeanServer.getAttribute(rpcManager2, "NodeAddress").equals(cm2Address);
-
-      String cm1Members = mBeanServer.getAttribute(rpcManager1, "Members").toString();
-      assert cm1Members.contains(cm1Address);
-      assert cm1Members.contains(cm2Address);
-      assert !mBeanServer.getAttribute(rpcManager2, "Members").equals("N/A");
-   }
 }
