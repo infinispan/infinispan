@@ -859,22 +859,22 @@ public class TestingUtil {
       return prefix + TEST_PATH + separator + test.getClass().getSimpleName();
    }
 
-   public static String k(Method method, String index) {
+   public static String k(Method method, int index) {
       return new StringBuilder().append("k").append(index).append('-')
               .append(method.getName()).toString();
    }
 
-   public static String v(Method method, String index) {
+   public static String v(Method method, int index) {
       return new StringBuilder().append("v").append(index).append('-')
               .append(method.getName()).toString();
    }
 
    public static String k(Method method) {
-      return k(method, "");
+      return k(method, 0);
    }
 
-   public static Object v(Method method) {
-      return v(method, "");
+   public static String v(Method method) {
+      return v(method, 0);
    }
 
    public static TransactionTable getTransactionTable(Cache<Object, Object> cache) {
