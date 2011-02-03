@@ -5,6 +5,7 @@ import org.infinispan.config.ConfigurationDoc;
 import org.infinispan.config.ConfigurationDocRef;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
+import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 
 import javax.xml.bind.annotation.*;
@@ -30,7 +31,7 @@ import javax.xml.bind.annotation.*;
  * @see <a href="../../../config.html#ce_loaders_loader">Configuration reference</a>
  */
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
-@XmlType(propOrder= {"singletonStoreConfig", "asyncStoreConfig"})
+@XmlType(propOrder= {})
 @ConfigurationDoc(name="loader",desc="Responsible for loading/storing cache data from/to an external source.")
 public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implements CacheStoreConfig {
 
@@ -64,6 +65,15 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
    @XmlAttribute
    public Integer getPurgerThreads() {
       return purgerThreads;
+   }
+   
+   @XmlElement(name="properties")
+   public TypedProperties getTypedProperties(){
+      return properties;      
+   }
+   
+   public void setTypedProperties (TypedProperties tp){
+      this.properties = tp;
    }
 
    /**
