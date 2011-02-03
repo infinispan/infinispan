@@ -8,7 +8,7 @@ package org.infinispan.loaders.modifications;
  */
 public interface Modification {
    public static enum Type {
-      STORE, REMOVE, CLEAR, PURGE_EXPIRED, PREPARE, COMMIT, LIST
+      STORE, REMOVE, CLEAR, PURGE_EXPIRED, LIST
    }
 
    Type getType();
