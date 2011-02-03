@@ -5,9 +5,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 
 import org.infinispan.CacheException;
+import org.infinispan.config.AbstractNamedCacheConfigurationBean;
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationDocRef;
-import org.infinispan.config.PluggableConfigurationComponent;
 
 /**
  * Abstract base class for CacheLoaderConfigs.
@@ -19,7 +19,7 @@ import org.infinispan.config.PluggableConfigurationComponent;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class AbstractCacheLoaderConfig extends PluggableConfigurationComponent implements CacheLoaderConfig {
+public class AbstractCacheLoaderConfig extends AbstractNamedCacheConfigurationBean implements CacheLoaderConfig {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = -4303705423800914433L;
