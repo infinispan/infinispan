@@ -33,6 +33,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.transaction.xa.TransactionTable;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;
@@ -41,16 +42,19 @@ import javax.transaction.TransactionManager;
 
 /**
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  */
 public class InvocationContextInterceptor extends CommandInterceptor {
 
    private TransactionManager tm;
    private ComponentRegistry componentRegistry;
+   private TransactionTable txTable;
 
    @Inject
-   public void init(TransactionManager tm, ComponentRegistry componentRegistry) {
+   public void init(TransactionManager tm, ComponentRegistry componentRegistry, TransactionTable txTable) {
       this.tm = tm;
       this.componentRegistry = componentRegistry;
+      this.txTable = txTable;
    }
 
    @Override
@@ -69,11 +73,15 @@ public class InvocationContextInterceptor extends CommandInterceptor {
 
       ComponentStatus status = componentRegistry.getStatus();
       if (status.isTerminated()) {
-         String cacheName = componentRegistry.getCacheName();
-         String prefix = "Cache '" + cacheName + "'";
-         if (cacheName.equals(CacheContainer.DEFAULT_CACHE_NAME))
-            prefix = "Default cache";
-         throw new IllegalStateException(prefix + " is in 'TERMINATED' state and so it does not accept new invocations. Either restart it or recreate the cache container.");
+         throw new IllegalStateException(String.format(
+               "%s is in 'TERMINATED' state and so it does not accept new invocations. " +
+                     "Either restart it or recreate the cache container.",
+               getCacheNamePrefix()));
+      } else if (stoppingAndNotAllowed(status, ctx)) {
+         throw new IllegalStateException(String.format(
+               "%s is in 'STOPPING' state and this is an invocation not belonging to an on-going transaction, so it does not accept new invocations. " +
+                     "Either restart it or recreate the cache container.",
+               getCacheNamePrefix()));
       }
 
       if (trace) log.trace("Invoked with command " + command + " and InvocationContext [" + ctx + "]");
@@ -102,6 +110,26 @@ public class InvocationContextInterceptor extends CommandInterceptor {
       } finally {
          ctx.reset();
       }
+   }
+
+   private String getCacheNamePrefix() {
+      String cacheName = componentRegistry.getCacheName();
+      String prefix = "Cache '" + cacheName + "'";
+      if (cacheName.equals(CacheContainer.DEFAULT_CACHE_NAME))
+         prefix = "Default cache";
+      return prefix;
+   }
+
+   /**
+    * If the cache is STOPPING, non-transaction invocations, or transactional
+    * invocations for transaction others than the ongoing ones, are no allowed.
+    * This method returns true if under this circumstances meet.
+    * Otherwise, it returns false.
+    */
+   private boolean stoppingAndNotAllowed(ComponentStatus status, InvocationContext ctx) throws Exception {
+      return status.isStopping() &&
+         (!ctx.isInTxScope() ||
+                (ctx.isInTxScope() && txTable.getLocalTransaction(tm.getTransaction()) == null));
    }
 
    private Object markTxForRollbackAndRethrow(InvocationContext ctx, Throwable te) throws Throwable {

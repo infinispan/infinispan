@@ -612,6 +612,20 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
+    * If there are any ongoing transactions when a cache is stopped,
+    * Infinispan waits for ongoing remote and local transactions to finish.
+    * The amount of time to wait for is defined by the cache stop timeout.
+    * It is recommended that this value does not exceed the transaction
+    * timeout because even if a new transaction was started just before the
+    * cache was stopped, this could only last as long as the transaction
+    * timeout allows it.
+    */
+   public Configuration setCacheStopTimeout(int cacheStopTimeout) {
+      this.transaction.setCacheStopTimeout(cacheStopTimeout);
+      return this;
+   }
+
+   /**
     * If true, this forces all async communications to be queued up and sent out periodically as a batch.
     *
     * @param useReplQueue
@@ -910,6 +924,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return transaction.eagerLockSingleNode;
    }
 
+   public int getCacheStopTimeout() {
+      return transaction.cacheStopTimeout;
+   }
+
    public long getStateRetrievalTimeout() {
       return clustering.stateRetrieval.timeout;
    }
@@ -1143,6 +1161,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setEagerLockSingleNode")
       protected Boolean eagerLockSingleNode = false;
 
+      @Dynamic
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "setCacheStopTimeout")
+      protected Integer cacheStopTimeout = 30000;
 
       public TransactionType(String transactionManagerLookupClass) {
          this.transactionManagerLookupClass = transactionManagerLookupClass;
@@ -1192,6 +1213,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.eagerLockSingleNode = eagerLockSingleNode;
       }
 
+      @XmlAttribute
+      public void setCacheStopTimeout(Integer cacheStopTimeout) {
+         testImmutability("cacheStopTimeout");
+         this.cacheStopTimeout = cacheStopTimeout;
+      }
+
       @Override
       public boolean equals(Object o) {
          if (this == o) return true;
@@ -1209,6 +1236,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             return false;
          if (useEagerLocking != null ? !useEagerLocking.equals(that.useEagerLocking) : that.useEagerLocking != null)
             return false;
+         if (cacheStopTimeout != null ? !cacheStopTimeout.equals(that.cacheStopTimeout) : that.cacheStopTimeout != null)
+            return false;
 
          return true;
       }
@@ -1220,6 +1249,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          result = 31 * result + (syncCommitPhase != null ? syncCommitPhase.hashCode() : 0);
          result = 31 * result + (syncRollbackPhase != null ? syncRollbackPhase.hashCode() : 0);
          result = 31 * result + (useEagerLocking != null ? useEagerLocking.hashCode() : 0);
+         result = 31 * result + (cacheStopTimeout != null ? cacheStopTimeout.hashCode() : 0);
          return result;
       }
 

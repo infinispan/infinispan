@@ -166,6 +166,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       c = namedCaches.get("transactional2");
       assert c.getTransactionManagerLookupClass().equals("org.something.Lookup");
+      assert c.getCacheStopTimeout() == 10000;
 
       c = namedCaches.get("syncRepl");
 
