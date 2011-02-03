@@ -106,4 +106,9 @@ public enum ComponentStatus {
    public boolean isTerminated() {
       return this == ComponentStatus.TERMINATED;
    }
+
+   public boolean isStopping() {
+      return this == ComponentStatus.STOPPING;
+   }
+
 }
