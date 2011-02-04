@@ -25,6 +25,8 @@ import javax.transaction.TransactionManager;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 
 /**
  * Tests the interceptor chain and surrounding logic
@@ -391,6 +393,28 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
       assertInCacheAndStore("k1", "v1");
       assertInCacheAndStore("k2", "v2", lifespan);
+   }
+
+   public void testTransactionalReplace(Method m) throws Exception {
+      assert cache.getStatus() == ComponentStatus.RUNNING;
+      assertNotInCacheAndStore(k(m, 1));
+      assertNotInCacheAndStore(k(m, 2));
+
+      cache.put(k(m, 2), v(m));
+
+      tm.begin();
+      cache.put(k(m, 1), v(m, 1));
+      cache.replace(k(m, 2), v(m, 1));
+      Transaction t = tm.suspend();
+
+      assertNotInCacheAndStore(k(m, 1));
+      assertInCacheAndStore(k(m, 2), v(m));
+
+      tm.resume(t);
+      tm.commit();
+
+      assertInCacheAndStore(k(m, 1), v(m, 1));
+      assertInCacheAndStore(k(m, 2), v(m, 1));
    }
 
    public void testEvictAndRemove() throws CacheLoaderException {
