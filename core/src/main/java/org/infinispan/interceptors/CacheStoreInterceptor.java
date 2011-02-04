@@ -22,6 +22,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.AbstractVisitor;
+import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -288,26 +289,21 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       @Override
       @SuppressWarnings("unchecked")
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         Object key = command.getKey();
-         if (!skipKey(key)) {
-            if (generateStatistics) putCount++;
-            modifications.add(new Store(getStoredEntry(key, ctx)));
-            affectedKeys.add(command.getKey());
-         }
-         return null;
+         return visitSingleStore(ctx, command.getKey());
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+         return visitSingleStore(ctx, command.getKey());
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
          Map<Object, Object> map = command.getMap();
-         for (Object key : map.keySet()) {
-            if (!skipKey(key)) {
-               modifications.add(new Store(getStoredEntry(key, ctx)));
-               affectedKeys.add(key);
-               if (generateStatistics) putCount ++;
-            }
-         }
+         for (Object key : map.keySet())
+            visitSingleStore(ctx, key);
          return null;
       }
 
@@ -326,6 +322,15 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       @SuppressWarnings("unchecked")
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
          modifications.add(new Clear());
+         return null;
+      }
+
+      private Object visitSingleStore(InvocationContext ctx, Object key) throws Throwable {
+         if (!skipKey(key)) {
+            if (generateStatistics) putCount++;
+            modifications.add(new Store(getStoredEntry(key, ctx)));
+            affectedKeys.add(key);
+         }
          return null;
       }
    }
