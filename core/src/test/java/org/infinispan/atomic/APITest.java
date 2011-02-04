@@ -79,6 +79,7 @@ public class APITest extends AbstractInfinispanTest {
 
       assertIsEmpty(map);
       assertIsEmptyMap(cache, "map");
+      assert cache.containsKey("map");
 
       map.put("blah", "blah");
       assert map.size() == 1;
@@ -89,8 +90,11 @@ public class APITest extends AbstractInfinispanTest {
 
       assertIsEmpty(map);
       assertIsEmptyMap(cache, "map");
-   }
+      assert cache.containsKey("map");
 
+      AtomicMapLookup.removeAtomicMap(cache, "map");
+      assert !cache.containsKey("map");
+   }
 
    public void testReadSafetyEmptyCache() throws Exception {
       AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "map");
@@ -165,4 +169,5 @@ public class APITest extends AbstractInfinispanTest {
       assertIsEmpty(map);
       assertIsEmptyMap(cache, "map");
    }
+
 }
