@@ -74,4 +74,17 @@ public class AtomicMapLookup {
       else
          return immutableMapWrap(am);
    }
+
+   /**
+    * Removes the atomic map associated with the given key
+    * from the underlying cache.
+    *
+    * @param cache underlying cache
+    * @param key key under which the atomic map exists
+    * @param <MK> key param of the cache
+    */
+   public static <MK> void removeAtomicMap(Cache<MK, ?> cache, MK key) {
+      cache.remove(key);
+   }
+
 }
