@@ -22,11 +22,13 @@
 package org.infinispan.factories;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.util.Util;
 
 /**
  * Constructs the data container
@@ -41,26 +43,34 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
 
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
-      EvictionStrategy st = configuration.getEvictionStrategy();
-      int level = configuration.getConcurrencyLevel();
-     
-      switch (st) {
-         case NONE:         
-            return (T) DefaultDataContainer.unBoundedDataContainer(level);
-         case UNORDERED:   
-         case LRU:
-         case FIFO:
-         case LIRS:
-            int maxEntries = configuration.getEvictionMaxEntries();
-            //handle case when < 0 value signifies unbounded container 
-            if(maxEntries < 0) {
-                return (T) DefaultDataContainer.unBoundedDataContainer(level);
-            }
-            EvictionThreadPolicy policy = configuration.getEvictionThreadPolicy();
-            return (T) DefaultDataContainer.boundedDataContainer(level, maxEntries, st, policy);
-         default:
-            throw new ConfigurationException("Unknown eviction strategy "
-                     + configuration.getEvictionStrategy());
+      if (configuration.getDataContainer() != null) {
+         return (T) configuration.getDataContainer();
+      } else if (configuration.getDataContainerClass() == DefaultDataContainer.class.getName()) {
+         EvictionStrategy st = configuration.getEvictionStrategy();
+         int level = configuration.getConcurrencyLevel();
+        
+         switch (st) {
+            case NONE:         
+               return (T) DefaultDataContainer.unBoundedDataContainer(level);
+            case UNORDERED:   
+            case LRU:
+            case FIFO:
+            case LIRS:
+               int maxEntries = configuration.getEvictionMaxEntries();
+               //handle case when < 0 value signifies unbounded container 
+               if(maxEntries < 0) {
+                   return (T) DefaultDataContainer.unBoundedDataContainer(level);
+               }
+               EvictionThreadPolicy policy = configuration.getEvictionThreadPolicy();
+               return (T) DefaultDataContainer.boundedDataContainer(level, maxEntries, st, policy);
+            default:
+               throw new ConfigurationException("Unknown eviction strategy "
+                        + configuration.getEvictionStrategy());
+         }
+      } else {
+         DataContainer dataContainer = DataContainer.class.cast(Util.getInstance(configuration.getDataContainerClass()));
+         XmlConfigHelper.setValues(dataContainer, configuration.getDataContainerProperties(), false, true);
+         return (T) dataContainer;
       }
    }
 }
