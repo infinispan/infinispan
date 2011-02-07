@@ -145,6 +145,7 @@
         </default>
         <region name="/org/jboss/data1">
             <property name="timeToLive" value="2002"/>
+            <property name="maxNodes" value="3002"/>
         </region>
         <region name="/org/jboss/data2" algorithmClass="org.jboss.cache.eviction.FIFOAlgorithm" eventQueueSize="100000">
             <property name="maxNodes" value="3003"/>
