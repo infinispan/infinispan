@@ -24,17 +24,14 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
+      super.INIT_CLUSTER_SIZE = 2;
       super.createCacheManagers();
-      assertEquals(4, topology(caches.get(0).getCacheManager()).size());
-      assertEquals(4, topology(caches.get(1).getCacheManager()).size());
-      assertEquals(4, topology(caches.get(2).getCacheManager()).size());
-      assertEquals(4, topology(caches.get(3).getCacheManager()).size());
+      assertEquals(2, topology(caches.get(0).getCacheManager()).size());
+      assertEquals(2, topology(caches.get(1).getCacheManager()).size());
 
       cache(0, cacheName).put("k", "v");
       assertEquals("v", cache(0, cacheName).get("k"));
       assertEquals("v", cache(1, cacheName).get("k"));
-      assertEquals("v", cache(2, cacheName).get("k"));
-      assertEquals("v", cache(3, cacheName).get("k"));
 
 
       ThreadFactory tf = new ThreadFactory() {
@@ -81,13 +78,13 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
       Cache cache = cm.getCache(cacheName);
       caches.add(cache);
       waitForClusterToResize();
-      for (int i = 0; i < 10; i++) {
-         if (keyAffinityService.getAddress2KeysMapping().keySet().size() == 5) {
-            break;
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+           return keyAffinityService.getAddress2KeysMapping().keySet().size() == 3;
          }
-         Thread.sleep(500);
-      }
-      assertEquals(5, keyAffinityService.getAddress2KeysMapping().keySet().size());
+      });
+      assertEquals(3, keyAffinityService.getAddress2KeysMapping().keySet().size());
       assertEventualFullCapacity();
       assertKeyAffinityCorrectness();
    }
@@ -95,16 +92,16 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
    @Test(dependsOnMethods = "testServerAdded")
    public void testServersDropped() throws InterruptedException {
       log.info("*** Here it is");
-      caches.get(4).getCacheManager().stop();
-      caches.remove(4);
+      caches.get(2).getCacheManager().stop();
+      caches.remove(2);
       waitForClusterToResize();
-      for (int i = 0; i < 10; i++) {
-         if (keyAffinityService.getAddress2KeysMapping().keySet().size() == 3) {
-            break;
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return keyAffinityService.getAddress2KeysMapping().keySet().size() == 2;
          }
-         Thread.sleep(500);
-      }
-      assertEquals(4, keyAffinityService.getAddress2KeysMapping().keySet().size());
+      });
+      assertEquals(2, keyAffinityService.getAddress2KeysMapping().keySet().size());
       assertEventualFullCapacity();
       assertKeyAffinityCorrectness();
    }
