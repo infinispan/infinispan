@@ -21,6 +21,8 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
@@ -32,6 +34,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.ReplicationQueueImpl;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.CacheException;
@@ -98,6 +101,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    @XmlElement
    private CustomInterceptorsType customInterceptors = new CustomInterceptorsType();
+   
+   @XmlElement
+   private DataContainerType dataContainer = new DataContainerType();
 
    @XmlElement
    private EvictionType eviction = new EvictionType();
@@ -422,7 +428,36 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void setCacheModeString(String cacheMode) {
       setCacheMode(cacheMode);
    }
+   
+   public void setDataContainerClass(Class<? extends DataContainer> dataContainerClass) {
+      this.dataContainer.setClass(dataContainerClass.getName());
+   }
+   
+   public void setDataContainerClass(String dataContainerClass) {
+      this.dataContainer.setClass(dataContainerClass);
+   }
+   
+   public String getDataContainerClass() {
+      return dataContainer.dataContainerClass;
+   }
+   
+   public void setDataContainer(DataContainer dataContainer) {
+      this.dataContainer.setDataContainer(dataContainer);
+   }
+   
+   public DataContainer getDataContainer() {
+      return dataContainer.dataContainer;
+   }
 
+   public void setDataContainerProperties(TypedProperties properties) {
+   	this.dataContainer.setProperties(properties);
+   }
+   
+   public TypedProperties getDataContainerProperties()
+   {
+   	return dataContainer.properties;
+   }
+   
    /**
     * Eviction thread wake up interval, in milliseconds.
     */
@@ -1002,6 +1037,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void accept(ConfigurationBeanVisitor v) {
       clustering.accept(v);
       customInterceptors.accept(v);
+      dataContainer.accept(v);
       deadlockDetection.accept(v);
       eviction.accept(v);
       expiration.accept(v);
@@ -1026,6 +1062,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       if (clustering != null ? !clustering.equals(that.clustering) : that.clustering != null) return false;
       if (customInterceptors != null ? !customInterceptors.equals(that.customInterceptors) : that.customInterceptors != null)
          return false;
+      if (dataContainer != null ? !dataContainer.equals(that.dataContainer) : that.dataContainer != null) return false;
       if (deadlockDetection != null ? !deadlockDetection.equals(that.deadlockDetection) : that.deadlockDetection != null)
          return false;
       if (eviction != null ? !eviction.equals(that.eviction) : that.eviction != null) return false;
@@ -1054,6 +1091,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       result = 31 * result + (loaders != null ? loaders.hashCode() : 0);
       result = 31 * result + (transaction != null ? transaction.hashCode() : 0);
       result = 31 * result + (customInterceptors != null ? customInterceptors.hashCode() : 0);
+      result = 31 * result + (dataContainer != null ? dataContainer.hashCode() : 0);
       result = 31 * result + (eviction != null ? eviction.hashCode() : 0);
       result = 31 * result + (expiration != null ? expiration.hashCode() : 0);
       result = 31 * result + (unsafe != null ? unsafe.hashCode() : 0);
@@ -1075,6 +1113,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (loaders != null) dolly.loaders = loaders.clone();
          if (transaction != null) dolly.transaction = (TransactionType) transaction.clone();
          if (customInterceptors != null) dolly.customInterceptors = customInterceptors.clone();
+         if (dataContainer != null) dolly.dataContainer = (DataContainerType) dataContainer.clone();
          if (eviction != null) dolly.eviction = (EvictionType) eviction.clone();
          if (expiration != null) dolly.expiration = (ExpirationType) expiration.clone();
          if (unsafe != null) dolly.unsafe = (UnsafeType) unsafe.clone();
@@ -1764,6 +1803,68 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
          result = 31 * result + (threadPolicy != null ? threadPolicy.hashCode() : 0);
          result = 31 * result + (maxEntries != null ? maxEntries.hashCode() : 0);
+         return result;
+      }
+   }
+   
+   /**
+    * This element controls the data container for the cache.
+    *
+    * @see <a href="../../../config.html#todo">Configuration reference</a>
+    */
+   @XmlAccessorType(XmlAccessType.PROPERTY)
+   @ConfigurationDoc(name = "dataContainer")
+   public static class DataContainerType extends AbstractNamedCacheConfigurationBean {
+
+      /**
+       * The serialVersionUID
+       */
+      private static final long serialVersionUID = -959027510815676570L;
+
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "setDataContainerClass")
+      protected String dataContainerClass = DefaultDataContainer.class.getName();
+      
+      @XmlElement(name = "properties")
+      protected TypedProperties properties = EMPTY_PROPERTIES;
+      
+      protected DataContainer dataContainer;
+
+      @XmlAttribute
+      public void setClass(String dataContainerClass) {
+         testImmutability("dataContainerClass");
+         this.dataContainerClass = dataContainerClass;
+      }
+      
+      public void setDataContainer(DataContainer dataContainer) {
+         this.dataContainer = dataContainer;
+      }
+      
+      public void setProperties(TypedProperties properties) {
+      	testImmutability("properties");
+	      this.properties = properties;
+      }
+
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitDataContainerType(this);
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof DataContainerType)) return false;
+
+         DataContainerType that = (DataContainerType) o;
+
+         if (dataContainerClass != null ? !dataContainerClass.equals(that.dataContainerClass) : that.dataContainerClass != null) return false;
+         if (dataContainer != null ? !dataContainer.equals(that.dataContainer) : that.dataContainer != null) return false;
+         
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = dataContainerClass != null ? dataContainerClass.hashCode() : 0;
+         result = 31 * result + ( dataContainer != null ? dataContainer.hashCode() : 0 );
          return result;
       }
    }
