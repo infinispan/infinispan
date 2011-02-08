@@ -226,6 +226,11 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected void assertOnAllCachesAndOwnership(Object key, String value) {
+      assertOnAllCaches(key, value);
+      if (value != null) assertOwnershipAndNonOwnership(key);
+   }
+
+   protected void assertOnAllCaches(Object key, String value) {
       for (Cache<Object, String> c : caches) {
          Object realVal = c.get(key);
          if (value == null) {
@@ -236,20 +241,19 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
                   + addressOf(c) + "] but was [" + realVal + "]";
          }
       }
-      if (value != null) assertOwnershipAndNonOwnership(key);
    }
 
    protected void assertOwnershipAndNonOwnership(Object key) {
       for (Cache<Object, String> c : caches) {
          DataContainer dc = c.getAdvancedCache().getDataContainer();
+         InternalCacheEntry ice = dc.get(key);
          if (isOwner(c, key)) {
-            InternalCacheEntry ice = dc.get(key);
             assert ice != null : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned null!";
-            assert ice instanceof ImmortalCacheEntry : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(dc.get(key));
+            assert ice instanceof ImmortalCacheEntry : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
          } else {
             if (dc.containsKey(key)) {
-               assert dc.get(key) instanceof MortalCacheEntry : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(dc.get(key));
-               assert dc.get(key).getLifespan() == c1.getConfiguration().getL1Lifespan();
+               assert ice instanceof MortalCacheEntry : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
+               assert ice.getLifespan() == c1.getConfiguration().getL1Lifespan();
             }
          }
       }
