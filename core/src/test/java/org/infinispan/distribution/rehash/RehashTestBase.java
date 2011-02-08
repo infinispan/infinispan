@@ -3,6 +3,7 @@ package org.infinispan.distribution.rehash;
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.statetransfer.StateTransferFunctionalTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -17,6 +18,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.testng.Assert.assertEquals;
 
 /**
  * A base test for all rehashing tests
@@ -48,10 +51,12 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
    }
 
    protected List<MagicKey> init() {
+
       List<MagicKey> keys = new ArrayList<MagicKey>(Arrays.asList(
             new MagicKey(c1, "k1"), new MagicKey(c2, "k2"),
             new MagicKey(c3, "k3"), new MagicKey(c4, "k4")
       ));
+      assertEquals(caches.size(), keys.size(), "Received caches" + caches);
 
       int i = 0;
       for (Cache<Object, String> c : caches) c.put(keys.get(i++), "v" + i);
@@ -89,6 +94,12 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       final List<MagicKey> keys = init();
       final CountDownLatch l = new CountDownLatch(1);
       final AtomicBoolean rollback = new AtomicBoolean(false);
+
+      StateTransferFunctionalTest.MergedViewListener mergedViewListener = new StateTransferFunctionalTest.MergedViewListener();
+      cacheManagers.get(0).addListener(mergedViewListener);
+      cacheManagers.get(1).addListener(mergedViewListener);
+      cacheManagers.get(2).addListener(mergedViewListener);
+      cacheManagers.get(3).addListener(mergedViewListener);
 
       Thread th = new Thread("Updater") {
          @Override
@@ -137,11 +148,13 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
          assertOnAllCaches(keys.get(3), "v" + 4);
 
          //ownership can only be verified after the rehashing has completed
-         RehashWaiter.waitForInitRehashToComplete(new ArrayList<Cache>(caches));
-         assertOwnershipAndNonOwnership(keys.get(0));
-         assertOwnershipAndNonOwnership(keys.get(1));
-         assertOwnershipAndNonOwnership(keys.get(2));
-         assertOwnershipAndNonOwnership(keys.get(3));
+         if (!mergedViewListener.merged) {
+            RehashWaiter.waitForInitRehashToComplete(new ArrayList<Cache>(caches));
+            assertOwnershipAndNonOwnership(keys.get(0));
+            assertOwnershipAndNonOwnership(keys.get(1));
+            assertOwnershipAndNonOwnership(keys.get(2));
+            assertOwnershipAndNonOwnership(keys.get(3));
+         }
 
          assertProperConsistentHashOnAllCaches();
       }
