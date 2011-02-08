@@ -303,7 +303,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    }
 
    public List<Address> getMembers() {
-      return members;
+      return members != null ? members : Collections.<Address>emptyList();
    }
 
    public boolean retrieveState(String cacheName, Address address, long timeout) throws StateTransferException {
