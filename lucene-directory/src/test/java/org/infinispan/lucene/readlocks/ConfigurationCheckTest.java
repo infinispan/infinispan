@@ -41,6 +41,7 @@ public class ConfigurationCheckTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration configuration = new Configuration();
       configuration.setEvictionStrategy(EvictionStrategy.FIFO);
+      configuration.setEvictionMaxEntries(10);
       return TestCacheManagerFactory.createCacheManager(configuration, false);
    }
    
