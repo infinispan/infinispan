@@ -152,7 +152,6 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
             RehashWaiter.waitForInitRehashToComplete(new ArrayList<Cache>(caches));
             assertOwnershipAndNonOwnership(keys.get(0));
             assertOwnershipAndNonOwnership(keys.get(1));
-            assertOwnershipAndNonOwnership(keys.get(2));
             assertOwnershipAndNonOwnership(keys.get(3));
          }
 
