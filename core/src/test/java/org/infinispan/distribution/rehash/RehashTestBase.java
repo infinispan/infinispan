@@ -12,6 +12,7 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -128,13 +129,19 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
       //only check for these values if tx was not rolled back
       if (!rollback.get()) {
-
          // lets first see what the value of k1 is on c1 ...
 
-         assertOnAllCachesAndOwnership(keys.get(0), "transactionally_replaced");
-         assertOnAllCachesAndOwnership(keys.get(1), "v" + 2);
-         assertOnAllCachesAndOwnership(keys.get(2), "v" + 3);
-         assertOnAllCachesAndOwnership(keys.get(3), "v" + 4);
+         assertOnAllCaches(keys.get(0), "transactionally_replaced");
+         assertOnAllCaches(keys.get(1), "v" + 2);
+         assertOnAllCaches(keys.get(2), "v" + 3);
+         assertOnAllCaches(keys.get(3), "v" + 4);
+
+         //ownership can only be verified after the rehashing has completed
+         RehashWaiter.waitForInitRehashToComplete(new ArrayList<Cache>(caches));
+         assertOwnershipAndNonOwnership(keys.get(0));
+         assertOwnershipAndNonOwnership(keys.get(1));
+         assertOwnershipAndNonOwnership(keys.get(2));
+         assertOwnershipAndNonOwnership(keys.get(3));
 
          assertProperConsistentHashOnAllCaches();
       }
