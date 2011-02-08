@@ -26,6 +26,10 @@ package org.hibernate.test.cache.infinispan;
 import java.util.Set;
 import org.hibernate.cache.RegionFactory;
 import org.hibernate.cache.infinispan.util.CacheHelper;
+<<<<<<< HEAD
+=======
+import org.hibernate.testing.junit.UnitTestCase;
+>>>>>>> HHH-5903 - Rename ServicesRegistry to ServiceRegistry
 import org.hibernate.test.cache.infinispan.util.CacheTestSupport;
 import org.hibernate.testing.junit.UnitTestCase;
 import org.infinispan.Cache;
