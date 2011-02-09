@@ -130,6 +130,10 @@ public class EagerLockingSingleLockTest extends MultipleCacheManagersTest {
       cache(1).put(k, "1stValue");
       TransactionManager tm = cache(0).getAdvancedCache().getTransactionManager();
 
+
+
+
+
       tm.begin();
       cache(1).put(k, "2ndValue");//this acquires a local cache only
 
@@ -166,7 +170,7 @@ public class EagerLockingSingleLockTest extends MultipleCacheManagersTest {
 
       manager(3).stop();
       TestingUtil.blockUntilViewReceived(cache(0), 3, 10000);
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0), cache(1), cache(2));
+      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(0), cache(1), cache(2));
 
       try {
          log.trace("here it begins");
