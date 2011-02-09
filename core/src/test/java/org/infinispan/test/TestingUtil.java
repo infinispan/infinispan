@@ -48,13 +48,11 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 
 import static java.io.File.separator;
 
@@ -915,6 +913,15 @@ public class TestingUtil {
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < numberOfChars; i++) sb.append((char) (64 + r.nextInt(26)));
       return sb.toString();
+   }
+
+   /**
+    * Verifies the cache doesn't contain any lock
+    * @param cache
+    */
+   public static void assertNoLocks(Cache<?,?> cache) {
+      LockManager lm = TestingUtil.extractLockManager(cache);
+      for (Object key : cache.keySet()) assert !lm.isLocked(key);
    }
 
 }

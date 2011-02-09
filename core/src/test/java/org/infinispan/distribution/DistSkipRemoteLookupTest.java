@@ -10,6 +10,7 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
 
    public DistSkipRemoteLookupTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
+      batchingEnabled = true;
    }
 
    public void testSkipLookupOnGet() {
@@ -116,9 +117,5 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
 
       assert null == c4.getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(k1).get();
    }
-   
-   @Override
-   protected boolean batchingEnabled() {
-      return true;
-   }
+
 }
