@@ -26,6 +26,9 @@ import net.jcip.annotations.ThreadSafe;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import static org.infinispan.util.Util.safeRelease;
 
 /**
@@ -36,6 +39,9 @@ import static org.infinispan.util.Util.safeRelease;
  */
 @ThreadSafe
 public abstract class AbstractStripedLockContainer implements LockContainer {
+   
+   private static final Log log = LogFactory.getLog(AbstractStripedLockContainer.class);
+   
    private int lockSegmentMask;
    private int lockSegmentShift;
 
@@ -94,6 +100,13 @@ public abstract class AbstractStripedLockContainer implements LockContainer {
    }
 
    public void releaseLock(Object key) {
-      getLock(key).unlock();
+      final Lock lock = getLock(key);
+      try {
+         lock.unlock();
+      } catch (IllegalMonitorStateException imse) {
+         // See javadoc of org.infinispan.util.concurrent.locks.LockManager.possiblyLocked(CacheEntry):
+         // it's possible that we attempt to unlock Locks which we didn't actually obtain.
+         log.debug("Attempted to unlock a lock we didn't own - swallowing an IllegalMonitorStateException");
+      }
    }
 }
