@@ -46,7 +46,7 @@ import org.infinispan.util.logging.LogFactory;
  * This can be a local filesystem, a network filesystem, a database or custom cloud stores like S3. See Infinispan's core documentation for a full list of available implementations, or {@link org.infinispan.loaders.CacheStore} to implement more.</p>
  * <p><b>Non-volatile memory</b> The contents of the index can be stored in it's entirety in such a store, so that on shutdown or crash of the system data is not lost.
  * A copy of the index will be copied to the store in sync or async depending on configuration; In case you enable
- * Infinispan's clustering even in case of async the segments are always duplicated synchronosly to other nodes, so you can
+ * Infinispan's clustering even in case of async the segments are always duplicated synchronously to other nodes, so you can
  * benefit from good reliability even while choosing the asynchronous mode to write the index to the slowest store implementations.</p>
  * <p><b>Real-time change propagation</b> All changes done on a node are propagated at low latency to other nodes of the cluster; this was designed especially for
  * interactive usage of Lucene, so that after an IndexWriter commits on one node new IndexReaders opened on any node of the cluster
