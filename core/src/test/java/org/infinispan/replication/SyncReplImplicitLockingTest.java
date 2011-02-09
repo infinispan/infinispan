@@ -25,7 +25,6 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.concurrent.locks.LockManager;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
@@ -36,6 +35,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.test.TestingUtil.assertNoLocks;
 
 /**
  * Tests for implicit locking
@@ -231,9 +232,4 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
       cache2.remove(key4);     
    }
 
-   @SuppressWarnings("unchecked")
-   protected void assertNoLocks(Cache cache) {
-      LockManager lm = TestingUtil.extractLockManager(cache);
-      for (Object key : cache.keySet()) assert !lm.isLocked(key);
-   }
 }

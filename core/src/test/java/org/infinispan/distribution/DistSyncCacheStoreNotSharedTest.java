@@ -22,15 +22,11 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.context.Flag;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -40,11 +36,14 @@ import java.util.Map;
  * DistSyncSharedTest.
  *
  * @author Galder Zamarreño
+ * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 4.0
  */
 @Test(groups = "functional", testName = "distribution.DistSyncCacheStoreNotSharedTest")
 public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
-   private static final Log log = LogFactory.getLog(DistSyncCacheStoreNotSharedTest.class);
+   
+   private static final String k1 = "1", v1 = "one", k2 = "2", v2 = "two", k3 = "3", v3 = "three", k4 = "4", v4 = "four";
+   private static final String[] keys = new String[]{k1, k2, k3, k4};
 
    public DistSyncCacheStoreNotSharedTest() {
       sync = true;
@@ -57,11 +56,46 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       String key = "k2", value = "value2";
       for (Cache<Object, String> c : caches) assert c.isEmpty();
       Cache<Object, String> nonOwner = getFirstNonOwner(key);
+      Cache<Object, String> owner = getFirstOwner(key);
       CacheStore nonOwnerStore = TestingUtil.extractComponent(nonOwner, CacheLoaderManager.class).getCacheStore();
+      CacheStore ownerStore = TestingUtil.extractComponent(owner, CacheLoaderManager.class).getCacheStore();
       assert !nonOwnerStore.containsKey(key);
+      assert !ownerStore.containsKey(key);
       Object retval = nonOwner.put(key, value);
-      asyncWait(key, PutKeyValueCommand.class, getSecondNonOwner(key));
       assert !nonOwnerStore.containsKey(key);
+      assert ownerStore.containsKey(key);
+      if (testRetVals) assert retval == null;
+      assertOnAllCachesAndOwnership(key, value);
+   }
+   
+   public void testGetFromNonOwnerWithFlags() throws Exception {
+      String key = "k2", value = "value2";
+      for (Cache<Object, String> c : caches) assert c.isEmpty();
+      Cache<Object, String> nonOwner = getFirstNonOwner(key);
+      Cache<Object, String> owner = getFirstOwner(key);
+      CacheStore ownerStore = TestingUtil.extractComponent(owner, CacheLoaderManager.class).getCacheStore();
+      owner.put(key, value);
+      assert value.equals(ownerStore.load(key).getValue());
+      owner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
+      assert value.equals(ownerStore.load(key).getValue());
+      assert owner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).get(key) == null;
+      assert nonOwner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).get(key) == null;
+      assert value.equals(nonOwner.get(key));
+      assertOnAllCachesAndOwnership(key, value);
+   }
+   
+   public void testPutFromNonOwnerWithFlags() throws Exception {
+      String key = "k2", value = "value2";
+      for (Cache<Object, String> c : caches) assert c.isEmpty();
+      Cache<Object, String> nonOwner = getFirstNonOwner(key);
+      Cache<Object, String> owner = getFirstOwner(key);
+      CacheStore nonOwnerStore = TestingUtil.extractComponent(nonOwner, CacheLoaderManager.class).getCacheStore();
+      CacheStore ownerStore = TestingUtil.extractComponent(owner, CacheLoaderManager.class).getCacheStore();
+      assert !nonOwnerStore.containsKey(key);
+      assert !ownerStore.containsKey(key);
+      Object retval = nonOwner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).put(key, value);
+      assert !nonOwnerStore.containsKey(key);
+      assert !ownerStore.containsKey(key);
       if (testRetVals) assert retval == null;
       assertOnAllCachesAndOwnership(key, value);
    }
@@ -70,7 +104,6 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       String key = "k3", value = "value3";
       for (Cache<Object, String> c : caches) assert c.isEmpty();
       getOwners(key)[0].put(key, value);
-      asyncWait(key, PutKeyValueCommand.class, getNonOwners(key));
       for (Cache<Object, String> c : caches) {
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
          if (isOwner(c, key)) {
@@ -84,24 +117,32 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
    }
 
    public void testPutAll() throws Exception {
-      String k1 = "1", v1 = "one", k2 = "2", v2 = "two", k3 = "3", v3 = "three", k4 = "4", v4 = "four";
-      String[] keys = new String[]{k1, k2, k3, k4};
-      Map<String, String> data = new HashMap<String, String>();
-      data.put(k1, v1);
-      data.put(k2, v2);
-      data.put(k3, v3);
-      data.put(k4, v4);
 
-      c1.putAll(data);
+      c1.putAll(makePutAllTestData());
 
-      for (String key : keys) {
-         for (Cache<Object, String> c : caches) {
-            CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
+      for (Cache<Object, String> c : caches) {
+         CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
+         for (String key : keys) {
             if (isOwner(c, key)) {
                assertIsInContainerImmortal(c, key);
                assert store.containsKey(key);
             } else {
                assert !store.containsKey(key);
+            }
+         }
+      }
+   }
+
+   public void testPutAllWithFlags() throws Exception {
+      Map<String, String> data = makePutAllTestData();
+      c1.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).putAll(data);
+
+      for (Cache<Object, String> c : caches) {
+         CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
+         for (String key : keys) {
+            assert !store.containsKey(key);
+            if (isOwner(c, key)) {
+               assertIsInContainerImmortal(c, key);
             }
          }
       }
@@ -122,11 +163,23 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       }
 
       Object retval = getFirstNonOwner(key).remove(key);
-      asyncWait("k1", RemoveCommand.class, getSecondNonOwner("k1"));
       if (testRetVals) assert "value".equals(retval);
       for (Cache<Object, String> c : caches) {
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
          assert !store.containsKey(key);
+      }
+   }
+   
+   public void testRemoveFromNonOwnerWithFlags() throws Exception {
+      String key = "k1", value = "value";
+      initAndTest();
+      Object retval = getFirstNonOwner(key).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).remove(key);
+      if (testRetVals) assert value.equals(retval);
+      for (Cache<Object, String> c : caches) {
+         if (isOwner(c, key)) {
+            CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
+            assert store.containsKey(key);
+         }
       }
    }
 
@@ -145,30 +198,105 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       }
 
       Object retval = getFirstNonOwner(key).replace(key, value2);
-      asyncWait(key, ReplaceCommand.class, getSecondNonOwner(key));
       if (testRetVals) assert value.equals(retval);
       for (Cache<Object, String> c : caches) {
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
          if (isOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
+            assert c.get(key).equals(value2);
             assert store.load(key).getValue().equals(value2);
          } else {
             assert !store.containsKey(key);
          }
       }
    }
+   
+   public void testReplaceFromNonOwnerWithFlag() throws Exception {
+      String key = "k1", value = "value", value2 = "v2";
+      initAndTest();
+      Object retval = getFirstNonOwner(key).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).replace(key, value2);
+      if (testRetVals) assert value.equals(retval);
+      for (Cache<Object, String> c : caches) {
+         CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
+         if (isOwner(c, key)) {
+            assertIsInContainerImmortal(c, key);
+            assert c.get(key).equals(value2);
+            assert store.load(key).getValue().equals(value);
+         } else {
+            assert !store.containsKey(key);
+         }
+      }
+   }
+   
+   public void testAtomicReplaceFromNonOwner() throws Exception {
+      String key = "k1", value = "value", value2 = "v2";
+      initAndTest();
+      boolean replaced = getFirstNonOwner(key).replace(key, value2, value);
+      assert !replaced;
+      replaced = getFirstNonOwner(key).replace(key, value, value2);
+      assert replaced;
+      for (Cache<Object, String> c : caches) {
+         c.get(key).equals(value2);
+         if (isOwner(c, key)) {
+            CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
+            assert store.containsKey(key);
+            assert store.load(key).getValue().equals(value2);
+         }
+      }
+   }
+   
+   public void testAtomicReplaceFromNonOwnerWithFlag() throws Exception {
+      String key = "k1", value = "value", value2 = "v2";
+      initAndTest();
+      boolean replaced = getFirstNonOwner(key).replace(key, value2, value);
+      assert !replaced;
+      replaced = getFirstNonOwner(key).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).replace(key, value, value2);
+      assert replaced;
+      for (Cache<Object, String> c : caches) {
+         c.get(key).equals(value2);
+         if (isOwner(c, key)) {
+            CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
+            assert store.containsKey(key);
+            assert store.load(key).getValue().equals(value);
+         }
+      }
+   }
+   
+   public void testAtomicPutIfAbsentFromNonOwner() throws Exception {
+      String key = "k1", value = "value", value2 = "v2";
+      for (Cache<Object, String> c : caches) assert c.isEmpty();
+      String replaced = getFirstNonOwner(key).putIfAbsent("k1", value);
+      assert replaced == null;
+      replaced = getFirstNonOwner(key).putIfAbsent("k1", value2);
+      assert value.equals(replaced);
+      for (Cache<Object, String> c : caches) {
+         c.get(key).equals(replaced);
+         if (isOwner(c, key)) {
+            CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
+            assert store.containsKey(key);
+            assert store.load(key).getValue().equals(value);
+         }
+      }
+   }
+   
+   public void testAtomicPutIfAbsentFromNonOwnerWithFlag() throws Exception {
+      String key = "k1", value = "value";
+      for (Cache<Object, String> c : caches) assert c.isEmpty();
+      String replaced = getFirstNonOwner(key).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).putIfAbsent("k1", value);
+      assert replaced == null;
+      //interesting case: fails to put as value exists, put actually missing in Store
+      replaced = getFirstNonOwner(key).putIfAbsent("k1", value);
+      assert value.equals(replaced);
+      for (Cache<Object, String> c : caches) {
+         c.get(key).equals(replaced);
+         CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
+         assert !store.containsKey(key);
+      }
+   }
 
    public void testClear() throws Exception {
-      for (Cache<Object, String> c : caches) assert c.isEmpty();
-      for (int i = 0; i < 5; i++) {
-         getOwners("k" + i)[0].put("k" + i, "value" + i);
-         asyncWait("k" + i, PutKeyValueCommand.class, getNonOwners("k" + i));
-      }
-      // this will fill up L1 as well
-      for (int i = 0; i < 5; i++) assertOnAllCachesAndOwnership("k" + i, "value" + i);
-      for (Cache<Object, String> c : caches) assert !c.isEmpty();
+      prepareClearTest();
       c1.clear();
-      asyncWait(null, ClearCommand.class);
       for (Cache<Object, String> c : caches) assert c.isEmpty();
       for (int i = 0; i < 5; i++) {
          String key = "k" + i;
@@ -178,4 +306,51 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
          }
       }
    }
+   
+
+   public void testClearWithFlag() throws Exception {
+      prepareClearTest();
+      c1.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
+      for (Cache<Object, String> c : caches) {
+         assert c.isEmpty();
+         CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
+         for (int i = 0; i < 5; i++) {
+            String key = "k" + i;
+            if (isOwner(c, key)) {
+               assert store.containsKey(key);
+            }
+         }
+      }
+   }
+   
+   /*---    test helpers      ---*/
+
+   private Map<String, String> makePutAllTestData() {
+      Map<String, String> data = new HashMap<String, String>();
+      data.put(k1, v1);
+      data.put(k2, v2);
+      data.put(k3, v3);
+      data.put(k4, v4);
+      return data;
+   }
+   
+   private void prepareClearTest() throws CacheLoaderException {
+      for (Cache<Object, String> c : caches) assert c.isEmpty();
+      for (int i = 0; i < 5; i++) {
+         getOwners("k" + i)[0].put("k" + i, "value" + i);
+      }
+      // this will fill up L1 as well
+      for (int i = 0; i < 5; i++) assertOnAllCachesAndOwnership("k" + i, "value" + i);
+      for (Cache<Object, String> c : caches) {
+         assert !c.isEmpty();
+         CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
+         for (int i = 0; i < 5; i++) {
+            String key = "k" + i;
+            if (isOwner(c, key)) {
+               assert store.containsKey(key);
+            }
+         }
+      }
+   }
+   
 }

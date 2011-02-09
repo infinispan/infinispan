@@ -49,6 +49,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected boolean l1CacheEnabled = true;
    protected boolean l1OnRehash = false;
    protected boolean performRehashing = false;
+   protected boolean batchingEnabled = false;
    protected int numOwners = 2;
    protected int lockTimeout = 45;
 
@@ -63,7 +64,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
          // tests repeatedly queries changes
          configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
       }
-      configuration.setInvocationBatchingEnabled(batchingEnabled());
+      configuration.setInvocationBatchingEnabled(batchingEnabled);
       configuration.setSyncReplTimeout(60, TimeUnit.SECONDS);
       configuration.setLockAcquisitionTimeout(lockTimeout, TimeUnit.SECONDS);
       configuration.setL1CacheEnabled(l1CacheEnabled);
@@ -85,10 +86,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
       RehashWaiter.waitForInitRehashToComplete(caches.toArray(new Cache[INIT_CLUSTER_SIZE]));
 
-   }
-
-   protected boolean batchingEnabled() {
-      return false;
    }
 
    public static ConsistentHash createNewConsistentHash(List<Address> servers) {
@@ -220,6 +217,10 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
    protected Cache<Object, String> getFirstNonOwner(String key) {
       return getNonOwners(key)[0];
+   }
+   
+   protected Cache<Object, String> getFirstOwner(String key) {
+      return getOwners(key)[0];
    }
 
    protected Cache<Object, String> getSecondNonOwner(String key) {
