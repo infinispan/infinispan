@@ -107,4 +107,31 @@ public class LocalTransaction extends AbstractCacheTransaction {
    public boolean isEnlisted() {
       return xid != null;
    }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      LocalTransaction that = (LocalTransaction) o;
+
+      if (xid != null ? !xid.equals(that.xid) : that.xid != null) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      return xid != null ? xid.hashCode() : 0;
+   }
+
+   @Override
+   public String toString() {
+      return "LocalTransaction{" +
+            "remoteLockedNodes=" + remoteLockedNodes +
+            ", isMarkedForRollback=" + isMarkedForRollback +
+            ", transaction=" + transaction +
+            ", xid=" + xid +
+            "} " + super.toString();
+   }
 }
