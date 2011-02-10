@@ -21,7 +21,6 @@
  */
 package org.infinispan.query.blackbox;
 
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
@@ -29,6 +28,7 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.PrefixFilter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
@@ -43,6 +43,7 @@ import org.testng.annotations.AfterMethod;
 import java.util.List;
 
 import static java.util.Arrays.asList;
+import static org.infinispan.query.helper.TestQueryHelperFactory.*;
 
 public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
    protected Person person1;
@@ -70,7 +71,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
    }
 
    public void testSimple() throws ParseException {
-      cacheQuery = new QueryFactory(cache, qh).getBasicQuery("blurb", "playing");
+      cacheQuery = createCacheQuery(cache, qh, "blurb", "playing" );
 
       found = cacheQuery.list();
 
@@ -83,8 +84,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
 
    public void testEagerIterator() throws ParseException {
 
-      cacheQuery = new QueryFactory(cache, qh).
-            getBasicQuery("blurb", "playing");
+      cacheQuery = createCacheQuery(cache, qh, "blurb", "playing" );
 
       QueryIterator found = cacheQuery.iterator();
 
@@ -94,7 +94,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
 
    public void testMultipleResults() throws ParseException {
 
-      queryParser = new QueryParser("name", new StandardAnalyzer());
+      queryParser = createQueryParser("name");
 
       luceneQuery = queryParser.parse("goat");
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
@@ -107,7 +107,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
    }
 
    public void testModified() throws ParseException {
-      queryParser = new QueryParser("blurb", new StandardAnalyzer());
+      queryParser = createQueryParser("blurb");
       luceneQuery = queryParser.parse("playing");
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
 
@@ -119,7 +119,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
       person1.setBlurb("Likes pizza");
       cache.put(key1, person1);
 
-      queryParser = new QueryParser("blurb", new StandardAnalyzer());
+      queryParser = createQueryParser("blurb");
       luceneQuery = queryParser.parse("pizza");
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
 
@@ -131,7 +131,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
    }
 
    public void testAdded() throws ParseException {
-      queryParser = new QueryParser("name", new StandardAnalyzer());
+      queryParser = createQueryParser("name");
 
       luceneQuery = queryParser.parse("Goat");
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
@@ -159,7 +159,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
    }
 
    public void testRemoved() throws ParseException {
-      queryParser = new QueryParser("name", new StandardAnalyzer());
+      queryParser = createQueryParser("name");
 
       luceneQuery = queryParser.parse("Goat");
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
@@ -181,7 +181,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
    }
 
    public void testUpdated() throws ParseException{
-      queryParser = new QueryParser("name", new StandardAnalyzer());
+      queryParser = createQueryParser("name");
 
       luceneQuery = queryParser.parse("Goat");
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
@@ -199,17 +199,15 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
       assert found.size() == 1 : "Size of list should be 1";
       assert !found.contains(person2) : "Person 2 should not be found now";
       assert !found.contains(person1) : "Person 1 should not be found because it does not meet the search criteria";
-
    }
-
 
    public void testSetSort() throws ParseException {
       person2.setAge(35);
       person3.setAge(12);
 
-      Sort sort = new Sort("age");
+      Sort sort = new Sort( new SortField("age", SortField.STRING));
 
-      queryParser = new QueryParser("name", new StandardAnalyzer());
+      queryParser = createQueryParser("name");
 
       luceneQuery = queryParser.parse("Goat");
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
@@ -227,7 +225,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
    }
 
    public void testSetFilter() throws ParseException {
-      queryParser = new QueryParser("name", new StandardAnalyzer());
+      queryParser = createQueryParser("name");
 
       luceneQuery = queryParser.parse("goat");
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
@@ -242,11 +240,10 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
       found = cacheQuery.list();
 
       assert found.size() == 1;
-
    }
 
    public void testLazyIterator() throws ParseException {
-      queryParser = new QueryParser("blurb", new StandardAnalyzer());
+      queryParser = createQueryParser("blurb");
       luceneQuery = queryParser.parse("playing");
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
 
@@ -254,12 +251,11 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
 
       assert found.isFirst();
       assert found.isLast();
-
    }
 
    public void testGetResultSize() throws ParseException {
 
-      queryParser = new QueryParser("blurb", new StandardAnalyzer());
+      queryParser = createQueryParser("blurb");
       luceneQuery = queryParser.parse("playing");
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
 
@@ -294,7 +290,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
    }
 
    public void testTypeFiltering() throws ParseException {
-      queryParser = new QueryParser("blurb", new StandardAnalyzer());
+      queryParser = createQueryParser("blurb");
       luceneQuery = queryParser.parse("grass");
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
 
@@ -303,7 +299,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
       assert found.size() == 2;
       assert found.containsAll(asList(person2, anotherGrassEater));
 
-      queryParser = new QueryParser("blurb", new StandardAnalyzer());
+      queryParser = createQueryParser("blurb");
       luceneQuery = queryParser.parse("grass");
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery, AnotherGrassEater.class);
 

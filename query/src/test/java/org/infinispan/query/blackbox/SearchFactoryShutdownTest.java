@@ -6,7 +6,6 @@ import org.hibernate.search.impl.MutableSearchFactory;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.query.backend.QueryHelper;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
@@ -29,6 +28,7 @@ import static org.infinispan.config.Configuration.CacheMode.LOCAL;
  */
 @Test(testName = "query.blackbox.SearchFactoryShutdownTest", groups = "functional")
 public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
+   
    public void testCorrectShutdown() throws NoSuchFieldException, IllegalAccessException {
       CacheContainer cc = null;
 
@@ -38,7 +38,7 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
          c.setIndexLocalOnly(false);
          cc = TestCacheManagerFactory.createCacheManager(c, true);
          Cache<?, ?> cache = cc.getCache();
-         QueryHelper qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class, AnotherGrassEater.class);
+         TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class, AnotherGrassEater.class);
          SearchFactoryImplementor sfi = TestingUtil.extractComponent(cache, SearchFactoryImplementor.class);
 
          assert !isStopped(sfi);

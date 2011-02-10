@@ -110,12 +110,10 @@ public class LazyIteratorTest {
       keyList.add("S:key8");
       keyList.add("S:key9");
       keyList.add("S:key10");
-
-
    }
 
    @BeforeMethod
-   public void setUp() throws ParseException {
+   public void setUp() throws ParseException, IOException {
 
       // Setting up the cache mock instance
       cache = createMock(Cache.class);
@@ -128,37 +126,28 @@ public class LazyIteratorTest {
          }
       }).anyTimes();
 
-
       // Create mock instances of other things required to create a lazy iterator.
 
       SearchFactoryImplementor searchFactory = createMock(SearchFactoryImplementor.class);
 
       DocumentExtractor extractor = org.easymock.classextension.EasyMock.createMock(DocumentExtractor.class);
 
-
-      try {
          org.easymock.classextension.EasyMock.expect(extractor.extract(anyInt())).andAnswer(new IAnswer<EntityInfo>() {
 
             public EntityInfo answer() throws Throwable {
                int index = (Integer) getCurrentArguments()[0];
                String keyString = keyList.get(index);
-               return new EntityInfo(Person.class, keyString, null);
+               return new EntityInfo(Person.class, keyString, keyString, new String[0]);
             }
          }).anyTimes();
 
-
-      } catch (IOException e) {
-         e.printStackTrace();
-      }
       IndexSearcher searcher = org.easymock.classextension.EasyMock.createMock(IndexSearcher.class);
 
       EasyMock.replay(cache, searchFactory);
       org.easymock.classextension.EasyMock.replay(searcher, extractor);
 
       iterator = new LazyIterator(extractor, cache, searcher, searchFactory, 0, 9, fetchSize);
-
    }
-
 
    @AfterMethod (alwaysRun = true)
    public void tearDown() {
@@ -179,7 +168,6 @@ public class LazyIteratorTest {
       assert iterator.isBeforeLast();
    }
 
-
    @Test(expectedExceptions = IndexOutOfBoundsException.class)
    public void testOutOfBoundsBelow() {
       iterator.jumpToResult(-1);
@@ -189,7 +177,6 @@ public class LazyIteratorTest {
    public void testOutOfBoundsAbove() {
       iterator.jumpToResult(keyList.size() + 1);
    }
-
 
    public void testFirst() {
       assert iterator.isFirst() : "We should be pointing at the first element";
@@ -205,7 +192,6 @@ public class LazyIteratorTest {
       next = iterator.next();
       assert next == person1;
       assert !iterator.isFirst();
-
    }
 
    public void testLast() {

@@ -53,7 +53,6 @@ import static org.infinispan.query.backend.KeyTransformationHandler.keyToString;
  * @author Navin Surtani
  * @since 4.0
  */
-
 public class QueryInterceptor extends CommandInterceptor {
 
    protected SearchFactoryImplementor searchFactory;
@@ -109,7 +108,6 @@ public class QueryInterceptor extends CommandInterceptor {
       return valueRemoved;
    }
 
-
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object valueReplaced = invokeNextInterceptor(ctx, command);
@@ -161,9 +159,7 @@ public class QueryInterceptor extends CommandInterceptor {
       return returnValue;
    }
 
-
    // Method that will be called when data needs to be added into Lucene.
-
    protected void addToIndexes(Object value, Object key) {
       if (trace) log.trace("Adding to indexes for key [%s] and value [%s]", key, value);
 
@@ -175,9 +171,7 @@ public class QueryInterceptor extends CommandInterceptor {
       searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.ADD), transactionContext);
    }
 
-
    // Method that will be called when data needs to be removed from Lucene.
-
    protected void removeFromIndexes(Object value, Object key) {
 
       // The key here is the String representation of the key that is stored in the cache.
@@ -195,7 +189,6 @@ public class QueryInterceptor extends CommandInterceptor {
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
       TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager);
       searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.UPDATE), transactionContext);
-
    }
 
    private Object extractValue(Object wrappedValue) {

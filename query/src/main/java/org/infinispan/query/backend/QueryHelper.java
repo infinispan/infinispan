@@ -23,7 +23,7 @@ package org.infinispan.query.backend;
 
 import org.hibernate.search.cfg.SearchConfiguration;
 import org.hibernate.search.engine.SearchFactoryImplementor;
-import org.hibernate.search.impl.SearchFactoryBuilder;
+import org.hibernate.search.spi.SearchFactoryBuilder;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
@@ -50,19 +50,19 @@ import java.util.Properties;
  * <p/>
  * This class must be instantiated only once however.
  * <p/>
- * However, only one instan This class WILL be removed once other hooks come into Infinispan for versions 4.1 etc.
+ * This class WILL be removed once other hooks come into Infinispan for versions 4.1 etc.
  *
  * @author Navin Surtani
  * @since 4.0
  */
 public class QueryHelper {
 
+   private static final Log log = LogFactory.getLog(QueryHelper.class);
+
    private Cache cache;
    private Properties properties;
    private Class[] classes;
    private SearchFactoryImplementor searchFactory;
-
-   private static final Log log = LogFactory.getLog(QueryHelper.class);
 
    /**
     * Constructor that will take in 3 params and build the searchFactory for Hibernate Search.
@@ -109,23 +109,15 @@ public class QueryHelper {
    /**
     * This method MUST be called if running the query module and you want to index objects in the cache.
     * <p/>
-    * <p/>
-    * <p/>
     * e.g.:- QueryHelper.applyQueryProperties(); has to be used BEFORE any objects are put in the cache so that they can
     * be indexed.
-    * <p/>
-    * <p/>
-    * <p/>
     * <p/>
     * Anything put before calling this method will NOT not be picked up by the {@link QueryInterceptor} and hence not be
     * indexed.
     */
-
    private void applyProperties(Configuration cfg) {
       log.debug("Entered QueryHelper.applyProperties()");
-
       if (cfg.isIndexingEnabled()) {
-
          try {
             if (cfg.isIndexLocalOnly()) {
                // Add a LocalQueryInterceptor to the chain
@@ -141,41 +133,19 @@ public class QueryHelper {
       }
    }
 
-   /**
-    * Simple getter.
-    *
-    * @return the {@link org.hibernate.search.engine.SearchFactoryImplementor} instance being used.
-    */
-
    public SearchFactoryImplementor getSearchFactory() {
       return searchFactory;
    }
-
-   /**
-    * Simple getter.
-    *
-    * @return the class[].
-    */
-
 
    public Class[] getClasses() {
       return classes;
    }
 
-   /**
-    * Simple getter.
-    *
-    * @return {@link java.util.Properties}
-    */
-
    public Properties getProperties() {
       return properties;
    }
 
-
    // Private method that adds the interceptor from the classname parameter.
-
-
    private void initComponents(Configuration cfg, Class<? extends QueryInterceptor> interceptorClass)
          throws IllegalAccessException, InstantiationException {
 
@@ -219,21 +189,15 @@ public class QueryHelper {
       }
    }
 
-
    private void checkInterceptorChain(Cache cache) {
       // Check if there are any QueryInterceptors already added onto the chain.
       // If there already is one then throw a CacheException
-
       AdvancedCache advanced = cache.getAdvancedCache();
-
       List<CommandInterceptor> interceptorList = advanced.getInterceptorChain();
-
       for (CommandInterceptor inter : interceptorList) {
-
          if (inter.getClass().equals(QueryInterceptor.class) || inter.getClass().equals(LocalQueryInterceptor.class)) {
             throw new CacheException("There is already an instance of the QueryInterceptor running");
          }
-
       }
    }
 }

@@ -25,7 +25,9 @@ package org.infinispan.query.backend;
 import org.hibernate.annotations.common.reflection.ReflectionManager;
 import org.hibernate.search.cfg.SearchConfiguration;
 import org.hibernate.search.cfg.SearchMapping;
+import org.hibernate.search.spi.ServiceProvider;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -82,5 +84,10 @@ public class SearchableCacheConfiguration implements SearchConfiguration {
    public SearchMapping getProgrammaticMapping() {
       // TODO What does Hibernate Search expect here?
       return null;
+   }
+
+   @Override
+   public Map<Class<? extends ServiceProvider<?>>, Object> getProvidedServices() {
+      return Collections.emptyMap();
    }
 }

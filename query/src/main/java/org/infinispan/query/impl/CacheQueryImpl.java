@@ -36,7 +36,9 @@ import org.hibernate.search.filter.ChainedFilter;
 import org.hibernate.search.filter.FilterKey;
 import org.hibernate.search.filter.StandardFilterKey;
 import org.hibernate.search.query.FullTextFilterImpl;
+import org.hibernate.search.query.IndexSearcherWithPayload;
 import org.hibernate.search.query.QueryHits;
+import org.hibernate.search.query.TimeoutManager;
 import org.hibernate.search.reader.ReaderProvider;
 import org.hibernate.search.store.DirectoryProvider;
 import org.hibernate.transform.ResultTransformer;
@@ -45,14 +47,12 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryIterator;
 import org.infinispan.query.backend.IndexSearcherCloser;
 import org.infinispan.query.backend.KeyTransformationHandler;
-import org.infinispan.query.backend.TransactionalEventTransactionContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -71,6 +71,9 @@ import static org.hibernate.search.util.FilterCacheModeTypeHelper.cacheResults;
  * @author Navin Surtani
  */
 public class CacheQueryImpl implements CacheQuery {
+
+   private static final Log log = LogFactory.getLog(CacheQueryImpl.class);
+   
    private Sort sort;
    private Filter filter;
    private Map<String, FullTextFilterImpl> filterDefinitions;
@@ -88,9 +91,6 @@ public class CacheQueryImpl implements CacheQuery {
    private Set<Class<?>> targetedEntities;
    private Cache cache;
 
-   private static final Log log = LogFactory.getLog(CacheQueryImpl.class);
-
-
    public CacheQueryImpl(Query luceneQuery, SearchFactoryImplementor searchFactory, Cache cache, Class... classes) {
       this.luceneQuery = luceneQuery;
       this.cache = cache;
@@ -102,17 +102,14 @@ public class CacheQueryImpl implements CacheQuery {
       }
    }
 
-
    /**
     * Takes in a lucene filter and sets it to the filter field in the class.
     *
     * @param f - lucene filter
     */
-
    public void setFilter(Filter f) {
       filter = f;
    }
-
 
    /**
     * @return The result size of the query.
@@ -155,11 +152,9 @@ public class CacheQueryImpl implements CacheQuery {
       }
    }
 
-
    public void setSort(Sort s) {
       sort = s;
    }
-
 
    /**
     * Enable a given filter by its name.
@@ -204,7 +199,6 @@ public class CacheQueryImpl implements CacheQuery {
          throw new IllegalArgumentException("'first' pagination parameter less than 0");
       }
       this.firstResult = firstResult;
-
    }
 
    public QueryIterator iterator() throws SearchException {
@@ -240,15 +234,10 @@ public class CacheQueryImpl implements CacheQuery {
       }
       catch (IOException e) {
          throw new SearchException("Unable to query Lucene index", e);
-
       }
-
       finally {
-
          IndexSearcherCloser.closeSearcher(searcher, searchFactory.getReaderProvider());
-
       }
-
       return new EagerIterator(keyList, cache, fetchSize);
    }
 
@@ -276,9 +265,7 @@ public class CacheQueryImpl implements CacheQuery {
             //we have the initial issue already
          }
          throw new SearchException("Unable to query Lucene index", e);
-
       }
-
    }
 
    public List<Object> list() throws SearchException {
@@ -319,19 +306,14 @@ public class CacheQueryImpl implements CacheQuery {
             return listToReturn;
          } else {
             return resultTransformer.transformList(listToReturn);
-
          }
-
       }
       catch (IOException e) {
          throw new SearchException("Unable to query Lucene index", e);
-
       }
       finally {
          IndexSearcherCloser.closeSearcher(searcher, searchFactory.getReaderProvider());
-
       }
-
    }
 
    private int max(int first, int totalHits) {
@@ -350,14 +332,16 @@ public class CacheQueryImpl implements CacheQuery {
             0;
    }
 
-   private QueryHits getQueryHits(Searcher searcher, Integer n) throws IOException {
+   private QueryHits getQueryHits(IndexSearcher searcher, Integer n) throws IOException {
       org.apache.lucene.search.Query query = filterQueryByClasses(luceneQuery);
       buildFilters();
+      IndexSearcherWithPayload realSearcher = new IndexSearcherWithPayload(searcher, false, false);
+      TimeoutManager timeoutManager = new TimeoutManager( );
       QueryHits queryHits;
       if (n == null) { // try to make sure that we get the right amount of top docs
-         queryHits = new QueryHits(searcher, query, filter, sort);
+         queryHits = new QueryHits(realSearcher, query, filter, sort, timeoutManager);
       } else {
-         queryHits = new QueryHits(searcher, query, filter, sort, n);
+         queryHits = new QueryHits(realSearcher, query, filter, sort, n, timeoutManager);
       }
       resultSize = queryHits.totalHits;
       return queryHits;
@@ -370,7 +354,6 @@ public class CacheQueryImpl implements CacheQuery {
          return first() + maxResults;
       }
    }
-
 
    public void setMaxResults(int maxResults) {
       if (maxResults < 0) {
@@ -466,20 +449,16 @@ public class CacheQueryImpl implements CacheQuery {
       return is;
    }
 
-
    private Similarity checkSimilarity(Similarity similarity, DocumentBuilderIndexedEntity builder) {
       if (similarity == null) {
          similarity = builder.getSimilarity();
       } else if (!similarity.getClass().equals(builder.getSimilarity().getClass())) {
          throw new SearchException("Cannot perform search on two entities with differing Similarity implementations (" + similarity.getClass().getName() + " & " + builder.getSimilarity().getClass().getName() + ")");
       }
-
       return similarity;
    }
 
-   private void populateDirectories(List<DirectoryProvider> directories, DirectoryProvider[] directoryProviders)
-
-   {
+   private void populateDirectories(List<DirectoryProvider> directories, DirectoryProvider[] directoryProviders) {
       for (DirectoryProvider provider : directoryProviders) {
          if (!directories.contains(provider)) {
             directories.add(provider);
@@ -487,13 +466,12 @@ public class CacheQueryImpl implements CacheQuery {
       }
    }
 
-
    private org.apache.lucene.search.Query filterQueryByClasses(org.apache.lucene.search.Query luceneQuery) {
       if (!needClassFilterClause) {
          return luceneQuery;
       } else {
          //A query filter is more practical than a manual class filtering post query (esp on scrollable resultsets)
-         //it also probably minimise the memory footprint
+         //it also probably minimize the memory footprint
          BooleanQuery classFilter = new BooleanQuery();
          //annihilate the scoring impact of DocumentBuilder.CLASS_FIELDNAME
          classFilter.setBoost(0);
@@ -508,7 +486,6 @@ public class CacheQueryImpl implements CacheQuery {
          return filteredQuery;
       }
    }
-
 
    // Method changed by Navin Surtani on Dec 16th 2008. Copied out from FullTextQueryImpl from Hibernate Search code like
    // previously done. Also copied in methods like buildLuceneFilter(), createFilter() and those methods that follow down
@@ -618,7 +595,6 @@ public class CacheQueryImpl implements CacheQuery {
       return instance;
    }
 
-
    private FilterKey createFilterKey(FilterDef def, Object instance) {
       FilterKey key = null;
       if (!cacheInstance(def.getCacheMode())) {
@@ -676,9 +652,7 @@ public class CacheQueryImpl implements CacheQuery {
          int cachingWrapperFilterSize = searchFactory.getFilterCacheBitResultsSize();
          filter = new org.hibernate.search.filter.CachingWrapperFilter(filter, cachingWrapperFilterSize);
       }
-
       return filter;
    }
 
 }
-

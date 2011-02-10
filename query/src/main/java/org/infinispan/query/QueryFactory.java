@@ -24,6 +24,7 @@ package org.infinispan.query;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.util.Version;
 import org.hibernate.search.engine.SearchFactoryImplementor;
 import org.infinispan.Cache;
 import org.infinispan.query.backend.QueryHelper;
@@ -75,11 +76,15 @@ public class QueryFactory {
     * @param search - the String that you want to be using to search
     * @return {@link org.infinispan.query.CacheQuery} result
     */
-   public CacheQuery getBasicQuery(String field, String search) throws org.apache.lucene.queryParser.ParseException {
-      QueryParser parser = new QueryParser(field, new StandardAnalyzer());
+   public CacheQuery getBasicQuery(String field, String search, Version luceneVersion) throws org.apache.lucene.queryParser.ParseException {
+      QueryParser parser = new QueryParser(luceneVersion, field, new StandardAnalyzer(luceneVersion));
       org.apache.lucene.search.Query luceneQuery = parser.parse(search);
       return new CacheQueryImpl(luceneQuery, searchFactory, cache);
-
+   }
+   
+   @Deprecated
+   public CacheQuery getBasicQuery(String field, String search) throws org.apache.lucene.queryParser.ParseException {
+      return getBasicQuery(field, search, Version.LUCENE_CURRENT);
    }
    
 }

@@ -24,7 +24,6 @@ package org.infinispan.query.config;
 import org.apache.lucene.queryParser.ParseException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
-import org.infinispan.query.QueryFactory;
 import org.infinispan.query.backend.QueryHelper;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;
@@ -40,8 +39,6 @@ import java.util.List;
 @Test(testName = "query.config.DeclarativeConfigTest", groups = "functional")
 public class DeclarativeConfigTest extends SingleCacheManagerTest {
 
-   QueryFactory qf;
-
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       String config = TestingUtil.INFINISPAN_START_TAG +
@@ -52,14 +49,13 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
       InputStream is = new ByteArrayInputStream(config.getBytes());
       cacheManager = TestCacheManagerFactory.fromStream(is);
       cache = cacheManager.getCache();
-      QueryHelper qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class);
-      qf = new QueryFactory(cache, qh);
       return cacheManager;
    }
 
    public void simpleIndexTest() throws ParseException {
+      QueryHelper qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class);
       cache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
-      CacheQuery cq = qf.getBasicQuery("name", "Person");
+      CacheQuery cq = TestQueryHelperFactory.createCacheQuery(cache, qh, "name", "Person");
       assert cq.getResultSize() == 1;
       List<Object> l =  cq.list();
       assert l.size() == 1;

@@ -31,8 +31,6 @@ import org.testng.annotations.Test;
  * @author Navin Surtani
  * @since 4.0
  */
-
-
 @Test(groups="functional", testName = "query.blackbox.MarshalledValueQueryTest")
 public class MarshalledValueQueryTest extends LocalCacheTest {
    @Override

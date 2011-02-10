@@ -33,10 +33,9 @@ public class CacheModeTest extends AbstractInfinispanTest {
 
    private void doTest(Configuration.CacheMode m) {
       CacheContainer cc = null;
-
       try {
          cc = TestCacheManagerFactory.createCacheManager(m, true);
-         QueryHelper qh = new QueryHelper(cc.getCache(), new Properties(), Person.class);
+         new QueryHelper(cc.getCache(), new Properties(), Person.class);
          boolean found = false;
          for (CommandInterceptor i : cc.getCache().getAdvancedCache().getInterceptorChain()) {
             System.out.println("  Testing " + i.getClass().getSimpleName());
@@ -45,6 +44,6 @@ public class CacheModeTest extends AbstractInfinispanTest {
          assert found : "Didn't find a query interceptor in the chain!!";
       } finally {
          TestingUtil.killCacheManagers(cc);
-      }      
+      }
    }
 }

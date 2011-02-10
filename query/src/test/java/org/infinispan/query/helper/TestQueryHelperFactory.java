@@ -21,7 +21,14 @@
  */
 package org.infinispan.query.helper;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.queryParser.ParseException;
+import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.util.Version;
 import org.infinispan.Cache;
+import org.infinispan.query.CacheQuery;
+import org.infinispan.query.QueryFactory;
 import org.infinispan.query.backend.QueryHelper;
 
 import java.util.Properties;
@@ -30,13 +37,32 @@ import java.util.Properties;
  * Creates a test query helper
  *
  * @author Manik Surtani
+ * @author Sanne Grinovero
  * @since 4.0
  */
 public class TestQueryHelperFactory {
+   
+   public static final Analyzer STANDARD_ANALYZER = new StandardAnalyzer(getLuceneVersion());
+   
    public static QueryHelper createTestQueryHelperInstance(Cache<?, ?> cache, Class... classes) {
       if (cache == null) throw new NullPointerException("Cache should not be null!");
       Properties p = new Properties();
       p.setProperty("hibernate.search.default.directory_provider", "org.hibernate.search.store.RAMDirectoryProvider");
       return new QueryHelper(cache, p, classes);
    }
+   
+   public static QueryParser createQueryParser(String defaultFieldName) {
+      return new QueryParser(getLuceneVersion(), defaultFieldName, STANDARD_ANALYZER);
+   }
+   
+   public static Version getLuceneVersion() {
+      return Version.LUCENE_30; //Change as needed
+   }
+
+   public static CacheQuery createCacheQuery(Cache m_cache, QueryHelper m_queryHelper, String fieldName, String searchString) throws ParseException {
+      QueryFactory queryFactory = new QueryFactory(m_cache, m_queryHelper);
+      CacheQuery cacheQuery = queryFactory.getBasicQuery(fieldName, searchString, getLuceneVersion());
+      return cacheQuery;
+   }
+   
 }
