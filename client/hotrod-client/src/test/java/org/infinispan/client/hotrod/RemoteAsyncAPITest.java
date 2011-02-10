@@ -95,7 +95,6 @@ public class RemoteAsyncAPITest extends SingleCacheManagerTest {
       assert c.get("k") == null;
    }
 
-
    public void testPutIfAbsentAsync() throws Exception {
       Future f = c.putIfAbsentAsync("k", "v4");
       assert f != null;
@@ -105,6 +104,20 @@ public class RemoteAsyncAPITest extends SingleCacheManagerTest {
       assert c.get("k").equals("v4");
    }
 
+   public void testAsyncGet() throws Exception {
+      // put
+      Future<String> f = c.putAsync("k", "v");
+      assert f != null;
+      assert !f.isCancelled();
+      assert f.get() == null;
+      assert c.get("k").equals("v");
+
+      f = c.getAsync("k");
+      assert f != null;
+      assert !f.isCancelled();
+      assert f.get().equals("v") : "Obtained " + f.get();
+      assert c.get("k").equals("v");
+   }
 
    public void testVersionedRemove() throws Exception {
 

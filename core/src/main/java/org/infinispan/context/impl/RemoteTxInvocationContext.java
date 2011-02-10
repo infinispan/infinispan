@@ -24,13 +24,13 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    public RemoteTxInvocationContext() {
    }
 
-   public Transaction getRunningTransaction() {
+   public Transaction getTransaction() {
       // this method is only valid for locally originated transactions!
       return null;
    }
 
    @Override
-   public boolean isRunningTransactionValid() {
+   public boolean isTransactionValid() {
       // this is always true since we are governed by the originator's transaction
       return true;
    }

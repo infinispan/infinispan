@@ -44,7 +44,7 @@ public interface TxInvocationContext extends InvocationContext {
     * started.
     * @throws IllegalStateException if the call is performed from a {@link #isOriginLocal()}==false context.
     */
-   Transaction getRunningTransaction();
+   Transaction getTransaction();
 
    /**
     * Registers a new participant with the transaction.
@@ -56,5 +56,5 @@ public interface TxInvocationContext extends InvocationContext {
     * @return true if the current transaction is in a valid state to perform operations on (i.e.,RUNNING or PREPARING)
     * or false otherwise.
     */
-   boolean isRunningTransactionValid();
+   boolean isTransactionValid();
 }

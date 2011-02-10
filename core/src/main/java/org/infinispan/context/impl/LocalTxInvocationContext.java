@@ -24,12 +24,8 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
 
    private volatile LocalTransaction localTransaction;
 
-   public Transaction getRunningTransaction() {
-      return localTransaction.getTransaction();
-   }
-
-   public boolean isRunningTransactionValid() {
-      Transaction t = getRunningTransaction();
+   public boolean isTransactionValid() {
+      Transaction t = getTransaction();
       int status = -1;
       if (t != null) {
          try {

@@ -11,5 +11,5 @@ import java.util.concurrent.Future;
 public interface NotifyingNotifiableFuture<Object> extends NotifyingFuture<Object> {
    void notifyDone();
 
-   void setNetworkFuture(Future<java.lang.Object> future);
+   void setNetworkFuture(Future<Object> future);
 }

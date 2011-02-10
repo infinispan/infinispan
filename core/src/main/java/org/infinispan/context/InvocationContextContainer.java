@@ -7,6 +7,8 @@ import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
+import javax.transaction.Transaction;
+
 /**
  * Manages the association between an {@link org.infinispan.context.InvocationContext} and the
  * calling thread. Also acts as a factory for creating various types of
@@ -29,6 +31,14 @@ public interface InvocationContextContainer {
     * will return same instance.
     */
    InvocationContext createInvocationContext();
+
+   /**
+    * Creates an invocation context
+    *
+    * @param tx
+    * @return
+    */
+   InvocationContext createInvocationContext(Transaction tx);
 
    /**
     * Will create an {@link org.infinispan.context.impl.NonTxInvocationContext} with the

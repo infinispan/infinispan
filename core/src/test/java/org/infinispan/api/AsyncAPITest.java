@@ -21,8 +21,16 @@ public class AsyncAPITest extends SingleCacheManagerTest {
    }
   
    public void testAsyncMethods() throws ExecutionException, InterruptedException {
+      // get
+      Future<String> f = c.getAsync("k");
+      assert f != null;
+      assert f.isDone();
+      assert !f.isCancelled();
+      assert f.get() == null;
+      assert c.get("k") == null;
+
       // put
-      Future<String> f = c.putAsync("k", "v");
+      f = c.putAsync("k", "v");
       assert f != null;
       assert f.isDone();
       assert !f.isCancelled();
@@ -66,6 +74,14 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert f.isDone();
       assert !f.isCancelled();
       assert f.get() == null;
+      assert c.get("k").equals("v4");
+
+      // get
+      f = c.getAsync("k");
+      assert f != null;
+      assert f.isDone();
+      assert !f.isCancelled();
+      assert f.get().equals("v4");
       assert c.get("k").equals("v4");
 
       // removecond

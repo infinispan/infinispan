@@ -54,7 +54,11 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
    }
 
    public InvocationContext createInvocationContext() {
-      Transaction tx = getRunningTx();
+      return createInvocationContext(getRunningTx());
+   }
+
+   @Override
+   public InvocationContext createInvocationContext(Transaction tx) {
       InvocationContext existing = icTl.get();
       if (tx != null) {
          LocalTxInvocationContext localContext;
@@ -66,6 +70,7 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
          }
          LocalTransaction localTransaction = transactionTable.getLocalTransaction(tx);
          localContext.setLocalTransaction(localTransaction);
+         localContext.setTransaction(tx);
          return localContext;
       } else {
          NonTxInvocationContext nonTxContext;

@@ -534,6 +534,23 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     */
    NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
+   /**
+    * Asynchronous version of {@link #get(Object)} that allows user code to
+    * retrieve the value associated with a key at a later stage, hence allowing
+    * multiple parallel get requests to be sent. Normally, when this method
+    * detects that the value is likely to be retrieved from from a remote
+    * entity, it will span a different thread in order to allow the
+    * asynchronous get call to return immediately. If the call will definitely
+    * resolve locally, for example when the cache is configured with LOCAL mode
+    * and no cache loaders are configured, the get asynchronous call will act
+    * sequentially and will have no different to {@link #get(Object)}.
+    *
+    * @param key key to retrieve
+    * @return a future that can be used to retrieve value associated with the
+    * key when this is available. The actual value returned by the future
+    * follows the same rules as {@link #get(Object)}
+    */
+   NotifyingFuture<V> getAsync(K key);
 
    AdvancedCache<K, V> getAdvancedCache();
 

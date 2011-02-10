@@ -189,7 +189,7 @@ public class TxInterceptor extends CommandInterceptor {
    }
 
    public LocalTransaction enlist(InvocationContext ctx) throws SystemException, RollbackException {
-      Transaction transaction = tm.getTransaction();
+      Transaction transaction = ((TxInvocationContext) ctx).getTransaction();
       if (transaction == null) throw new IllegalStateException("This should only be called in an tx scope");
       int status = transaction.getStatus();
       if (isNotValid(status)) throw new IllegalStateException("Transaction " + transaction +
