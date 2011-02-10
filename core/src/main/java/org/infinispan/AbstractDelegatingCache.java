@@ -266,4 +266,9 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    public Set<Object> getListeners() {
       return cache.getListeners();
    }
+
+   @Override
+   public NotifyingFuture<V> getAsync(K key) {
+      return cache.getAsync(key);
+   }
 }

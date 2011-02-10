@@ -86,8 +86,8 @@ public class LockManagerImpl implements LockManager {
          // successfully locked!
          if (ctx instanceof TxInvocationContext) {
             TxInvocationContext tctx = (TxInvocationContext) ctx;
-            if (!tctx.isRunningTransactionValid()) {
-               Transaction tx = tctx.getRunningTransaction();
+            if (!tctx.isTransactionValid()) {
+               Transaction tx = tctx.getTransaction();
                log.debug("Successfully acquired lock, but the transaction %s is no longer valid!  Releasing lock.", tx);
                lockContainer.releaseLock(key);
                throw new IllegalStateException("Transaction "+tx+" appears to no longer be valid!");

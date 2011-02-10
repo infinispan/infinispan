@@ -19,6 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.infinispan.tree;
 
 import org.infinispan.AdvancedCache;
@@ -358,6 +359,11 @@ public class CacheAdapter implements Cache {
    @Override
    public Set<Object> getListeners() {
       return cache.getListeners();
+   }
+
+   @Override
+   public NotifyingFuture getAsync(Object key) {
+      return cache.getAsync(key);
    }
 
    private Cache withFlags() {

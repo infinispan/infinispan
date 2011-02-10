@@ -29,9 +29,12 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
@@ -59,6 +62,8 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.interceptors.InterceptorChain;
@@ -78,7 +83,9 @@ import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.stats.StatsImpl;
 import org.infinispan.util.concurrent.AbstractInProcessNotifyingFuture;
+import org.infinispan.util.concurrent.DeferredReturnFuture;
 import org.infinispan.util.concurrent.NotifyingFuture;
+import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
@@ -117,6 +124,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    private ResponseGenerator responseGenerator;
    private DistributionManager distributionManager;
    private final ThreadLocal<PreInvocationContext> flagHolder = new ThreadLocal<PreInvocationContext>();
+   private ExecutorService asyncExecutor;
 
    public CacheDelegate(String name) {
       this.name = name;
@@ -135,7 +143,8 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
                                   RpcManager rpcManager, DataContainer dataContainer,
                                   StreamingMarshaller marshaller, ResponseGenerator responseGenerator,
                                   DistributionManager distributionManager,
-                                  EmbeddedCacheManager cacheManager, StateTransferManager stateTransferManager) {
+                                  EmbeddedCacheManager cacheManager, StateTransferManager stateTransferManager,
+                                  @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor) {
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.config = configuration;
@@ -152,6 +161,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       this.stateTransferManager = stateTransferManager;
       this.icc = icc;
       this.distributionManager = distributionManager;
+      this.asyncExecutor = asyncExecutor;
    }
 
    private void assertKeyNotNull(Object key) {
@@ -242,9 +252,10 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    public final void putForExternalRead(K key, V value) {
       Transaction ongoingTransaction = null;
       try {
-         if (transactionManager != null && (ongoingTransaction = transactionManager.getTransaction()) != null) {
+         ongoingTransaction = getOngoingTransaction();
+         if (ongoingTransaction != null)
             transactionManager.suspend();
-         }
+
          // if the entry exists then this should be a no-op.
          withFlags(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ).putIfAbsent(key, value);
       }
@@ -290,6 +301,15 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
 
    private InvocationContext getInvocationContext(boolean forceNonTransactional) {
       InvocationContext ctx = forceNonTransactional ? icc.createNonTxInvocationContext() : icc.createInvocationContext();
+      return setInvocationContextFlags(ctx);
+   }
+
+   private InvocationContext getInvocationContext(Transaction tx) {
+      InvocationContext ctx = icc.createInvocationContext(tx);
+      return setInvocationContextFlags(ctx);
+   }
+
+   private InvocationContext setInvocationContextFlags(InvocationContext ctx) {
       PreInvocationContext pic = flagHolder.get();
       if (pic != null && !pic.flags.isEmpty()) {
          ctx.setFlags(pic.flags);
@@ -565,6 +585,51 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
+   @Override
+   public NotifyingFuture<V> getAsync(final K key) {
+      final Transaction tx = getOngoingTransaction();
+      final NotifyingNotifiableFuture f = new DeferredReturnFuture();
+      final EnumSet<Flag> flags = flagHolder.get() == null ? null : flagHolder.get().flags;
+
+      // Optimisations to not start a new thread:
+      // 1. If distribution and no cache loader, and either SKIP_REMOTE_LOOKUP or key is local,
+      // 2. If no cache loader config, or config is present and, SKIP_CACHE_STORE or SKIP_CACHE_LOAD flags are passed
+      boolean isSkipLoader = isSkipLoader(flags);
+      if (isDistributedAndLocal(flags, key, isSkipLoader) || isSkipLoader) {
+         return wrapInFuture(get(key));
+      } else {
+         Callable<V> c = new Callable<V>() {
+            @Override
+            public V call() throws Exception {
+               assertKeyNotNull(key);
+               InvocationContext ctx = getInvocationContext(tx);
+               if (flags != null)
+                  ctx.setFlags(flags);
+
+               GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key);
+               Object ret = invoker.invoke(ctx, command);
+               f.notifyDone();
+               return (V) ret;
+            }
+         };
+         f.setNetworkFuture(asyncExecutor.submit(c));
+         return f;
+      }
+   }
+
+   private boolean isDistributedAndLocal(EnumSet<Flag> flags, K key, boolean isSkipLoader) {
+      return config.getCacheMode().isDistributed()
+            && isSkipLoader
+            && ((flags != null && flags.contains(Flag.SKIP_REMOTE_LOOKUP))
+                      || distributionManager.isLocal(key));
+   }
+
+   private boolean isSkipLoader(EnumSet<Flag> flags) {
+      boolean hasCacheLoaderConfig = config.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig() != null;
+      return !hasCacheLoaderConfig
+            || (hasCacheLoaderConfig && flags != null && (flags.contains(Flag.SKIP_CACHE_LOAD) || flags.contains(Flag.SKIP_CACHE_STORE)));
+   }
+
    public AdvancedCache<K, V> getAdvancedCache() {
       return this;
    }
@@ -594,6 +659,14 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
          }
       }
       return this;
+   }
+
+   private Transaction getOngoingTransaction() {
+      try {
+         return transactionManager != null ? transactionManager.getTransaction() : null;
+      } catch (SystemException e) {
+         throw new CacheException("Unable to get transaction", e);
+      }
    }
 
    private static final class PreInvocationContext {

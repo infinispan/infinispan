@@ -1,11 +1,6 @@
 package org.infinispan.context.impl;
 
-import org.infinispan.CacheException;
-
-import javax.transaction.Status;
-import javax.transaction.SystemException;
 import javax.transaction.Transaction;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -20,6 +15,7 @@ import java.util.Set;
 public abstract class AbstractTxInvocationContext extends AbstractInvocationContext implements TxInvocationContext {
 
    protected Set<Object> affectedKeys = null;
+   private Transaction transaction;
 
    public boolean hasModifications() {
       return getModifications() != null && !getModifications().isEmpty();
@@ -40,6 +36,15 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
 
    public boolean isInTxScope() {
       return true;
+   }
+
+   public TxInvocationContext setTransaction(Transaction transaction) {
+      this.transaction = transaction;
+      return this;
+   }
+
+   public Transaction getTransaction() {
+      return transaction;
    }
 
    @Override

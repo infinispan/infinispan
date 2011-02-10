@@ -50,6 +50,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected boolean l1OnRehash = false;
    protected boolean performRehashing = false;
    protected int numOwners = 2;
+   protected int lockTimeout = 45;
 
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
@@ -64,7 +65,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       }
       configuration.setInvocationBatchingEnabled(batchingEnabled());
       configuration.setSyncReplTimeout(60, TimeUnit.SECONDS);
-      configuration.setLockAcquisitionTimeout(45, TimeUnit.SECONDS);
+      configuration.setLockAcquisitionTimeout(lockTimeout, TimeUnit.SECONDS);
       configuration.setL1CacheEnabled(l1CacheEnabled);
       if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);      
       caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration);

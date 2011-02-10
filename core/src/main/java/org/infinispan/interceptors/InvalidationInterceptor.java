@@ -133,7 +133,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
       // fetch the modifications before the transaction is committed (and thus removed from the txTable)
       if (shouldInvokeRemoteTxCommand(ctx)) {
          List<WriteCommand> mods = Arrays.asList(command.getModifications());
-         Transaction runningTransaction = ctx.getRunningTransaction();
+         Transaction runningTransaction = ctx.getTransaction();
          if (runningTransaction == null) throw new IllegalStateException("we must have an associated transaction");
          broadcastInvalidateForPrepare(mods, runningTransaction, ctx);
       } else {

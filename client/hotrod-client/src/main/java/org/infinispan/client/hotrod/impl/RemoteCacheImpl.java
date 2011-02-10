@@ -261,7 +261,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
          }
       });
       result.setExecuting(future);
-      return result;      
+      return result;
    }
 
    @Override
@@ -364,6 +364,21 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return this;
    }
 
+   @Override
+   public NotifyingFuture<V> getAsync(final K key) {
+      assertRemoteCacheManagerIsStarted();
+      final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
+      Future future = executorService.submit(new Callable() {
+         @Override
+         public Object call() throws Exception {
+            V toReturn = get(key);
+            result.notifyFutureCompletion();
+            return toReturn;
+         }
+      });
+      result.setExecuting(future);
+      return result;
+   }
 
    private byte[] obj2bytes(Object o, boolean isKey) {
       try {
