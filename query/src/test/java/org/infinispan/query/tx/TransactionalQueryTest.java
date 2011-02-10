@@ -28,7 +28,6 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
-import org.infinispan.query.QueryFactory;
 import org.infinispan.query.backend.QueryHelper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -37,6 +36,7 @@ import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 import java.util.Properties;
+import static org.infinispan.query.helper.TestQueryHelperFactory.*;
 
 @Test(groups = "functional", testName = "query.tx.TransactionalQueryTest")
 public class TransactionalQueryTest extends SingleCacheManagerTest {
@@ -57,48 +57,37 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
    }
 
    @BeforeMethod
-   public void initialize() {
-      try {
-         // Make the hibernate cache an in memory cache
-         Properties properties = new Properties();
-         properties.put("hibernate.search.default.directory_provider", "org.hibernate.search.store.RAMDirectoryProvider");
+   public void initialize() throws Exception {
+      // Make the hibernate cache an in memory cache
+      Properties properties = new Properties();
+      properties.put("hibernate.search.default.directory_provider", "org.hibernate.search.store.RAMDirectoryProvider");
 
-         // Initialze the query helper.
-         m_queryHelper = new QueryHelper(m_cache, properties, Session.class);
+      // Initialize the query helper.
+      m_queryHelper = new QueryHelper(m_cache, properties, Session.class);
 
-         // Initialize the cache
-         m_transactionManager.begin();
-         for (int i = 0; i < 100; i++) {
-            m_cache.put(String.valueOf(i), new Session(String.valueOf(i)));
-         }
-         m_transactionManager.commit();
+      // Initialize the cache
+      m_transactionManager.begin();
+      for (int i = 0; i < 100; i++) {
+         m_cache.put(String.valueOf(i), new Session(String.valueOf(i)));
       }
-      catch (Exception e) {
-         e.printStackTrace();
-      }
+      m_transactionManager.commit();
    }
 
-   public void run() {
-      try {
-         // Verify querying works
-         QueryFactory queryFactory = new QueryFactory(m_cache, m_queryHelper);
-         CacheQuery cacheQuery = queryFactory.getBasicQuery("", "Id:2?");
-         System.out.println("Hits: " + cacheQuery.getResultSize());
+   public void run() throws Exception {
+      // Verify querying works
+      CacheQuery cacheQuery = createCacheQuery(m_cache, m_queryHelper, "", "Id:2?");
+      System.out.println("Hits: " + cacheQuery.getResultSize());
 
-         // Remove something that exists
-         m_transactionManager.begin();
-         m_cache.remove("50");
-         m_transactionManager.commit();
+      // Remove something that exists
+      m_transactionManager.begin();
+      m_cache.remove("50");
+      m_transactionManager.commit();
 
-         // Remove something that doesn't exist with a transaction
-         // This also fails without using a transaction
-         m_transactionManager.begin();
-         m_cache.remove("200");
-         m_transactionManager.commit();
-      }
-      catch (Exception e) {
-         e.printStackTrace();
-      }
+      // Remove something that doesn't exist with a transaction
+      // This also fails without using a transaction
+      m_transactionManager.begin();
+      m_cache.remove("200");
+      m_transactionManager.commit();
    }
 
    @ProvidedId

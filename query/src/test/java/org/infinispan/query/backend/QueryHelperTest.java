@@ -24,7 +24,6 @@ package org.infinispan.query.backend;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.TestingUtil;
@@ -53,7 +52,6 @@ public class QueryHelperTest {
       cfg = new Configuration();
       cfg.setIndexingEnabled(true);
       cfg.setIndexLocalOnly(true);
-
       cacheContainers = new LinkedList<EmbeddedCacheManager>();
    }
 
@@ -93,8 +91,8 @@ public class QueryHelperTest {
    public void testTwoQueryHelpersWithTwoCaches() {
       Cache c1 = createCache(cfg);
       Cache c2 = createCache(cfg);
-
       QueryHelper qh1 = new QueryHelper(c1, null, Person.class);
       QueryHelper qh2 = new QueryHelper(c2, null, Person.class);
    }
+
 }

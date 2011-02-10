@@ -38,7 +38,6 @@ public class BrokenProvided {
    public void setBoth(String name, int age) {
       this.name = name;
       this.age = age;
-
    }
 
 }
