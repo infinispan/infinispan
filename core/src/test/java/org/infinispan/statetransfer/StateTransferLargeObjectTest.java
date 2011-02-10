@@ -63,7 +63,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
          assert c2.get(i) instanceof BigObject;
          assert c3.get(i) instanceof BigObject;
       }
-      System.out.println("Before stopping a cache!");
+      log.info("Before stopping a cache!");
 
       Thread thread = new Thread() {
          @Override
@@ -71,7 +71,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
             log.info("About to stop " + c3.getAdvancedCache().getRpcManager().getAddress());
             c3.stop();
             c3.getCacheManager().stop();
-            System.out.println("Cache stopped async!");
+            log.info("Cache stopped async!");
          }
       };
       thread.start();
@@ -80,7 +80,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
 
 
       for (int i = 0; i < num; i++) {
-         log.info("----Runnign a ger on " + i);
+         log.info("----Running a get on " + i);
          try {
             Object o = c0.get(i);
             assertValue(i, o);
@@ -100,7 +100,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
          }
          if (i % 100 ==0) System.out.println("i = " + i);
       }
-      System.out.println("failureCount = " + failureCount);
+      log.info("failureCount = " + failureCount);
       log.info("Before stopping cache managers!");
       TestingUtil.killCacheManagers(manager(2));
       log.info("2 killed");
