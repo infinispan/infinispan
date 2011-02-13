@@ -22,6 +22,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -50,7 +51,7 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
 
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       if (!(isCacheReady() && isLocalCall())) return null;
-      ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(key, cache.getName());
+      ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(key, cache.getName(), Collections.EMPTY_SET);
       List<Response> response = doRemoteCall(clusteredGetCommand);
       if (response.isEmpty()) return null;
       if (response.size() > 1)

@@ -21,7 +21,10 @@
  */
 package org.infinispan.commands.remote;
 
+import java.util.Set;
+
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -29,9 +32,9 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.util.logging.Log;
@@ -45,7 +48,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ClusteredGetCommand implements CacheRpcCommand {
+public class ClusteredGetCommand implements CacheRpcCommand, FlagAffectedCommand {
 
    public static final byte COMMAND_ID = 16;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);
@@ -60,13 +63,15 @@ public class ClusteredGetCommand implements CacheRpcCommand {
    private InterceptorChain invoker;
 
    private DistributionManager distributionManager;
+   private Set<Flag> flags;
 
    public ClusteredGetCommand() {
    }
 
-   public ClusteredGetCommand(Object key, String cacheName) {
+   public ClusteredGetCommand(Object key, String cacheName, Set<Flag> flags) {
       this.key = key;
       this.cacheName = cacheName;
+      this.flags = flags;
    }
 
    public void initialize(DataContainer dataContainer, InvocationContextContainer icc, CommandsFactory commandsFactory, InterceptorChain interceptorChain) {
@@ -84,10 +89,9 @@ public class ClusteredGetCommand implements CacheRpcCommand {
     */
    public InternalCacheValue perform(InvocationContext context) throws Throwable {
       if (distributionManager != null && distributionManager.isAffectedByRehash(key)) return null;
-
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key);
+      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, flags);
       command.setReturnCacheEntry(true);
-      NonTxInvocationContext invocationContext = icc.createRemoteInvocationContext();
+      InvocationContext invocationContext = icc.createRemoteInvocationContextForCommand(command);
       CacheEntry cacheEntry = (CacheEntry) invoker.invoke(invocationContext, command);
       if (cacheEntry == null) {
          if (trace) log.trace("Did not find anything, returning null");
@@ -109,12 +113,15 @@ public class ClusteredGetCommand implements CacheRpcCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{key, cacheName};
+      return new Object[]{key, cacheName, flags};
    }
 
    public void setParameters(int commandId, Object[] args) {
       key = args[0];
       cacheName = (String) args[1];
+      if (args.length>2) {
+         this.flags = (Set<Flag>) args[2];
+      }
    }
 
    @Override
@@ -136,10 +143,12 @@ public class ClusteredGetCommand implements CacheRpcCommand {
 
    @Override
    public String toString() {
-      return "ClusteredGetCommand{" +
-            "key=" + key +
-            ", dataContainer=" + dataContainer +
-            '}';
+      return new StringBuilder()
+         .append("ClusteredGetCommand{key=")
+         .append(key)
+         .append(", flags=").append(flags)
+         .append("}")
+         .toString();
    }
 
    public String getCacheName() {
@@ -148,5 +157,15 @@ public class ClusteredGetCommand implements CacheRpcCommand {
 
    public Object getKey() {
       return key;
+   }
+
+   @Override
+   public Set<Flag> getFlags() {
+      return flags;
+   }
+
+   @Override
+   public void setFlags(Set<Flag> flags) {
+      this.flags = flags;
    }
 }

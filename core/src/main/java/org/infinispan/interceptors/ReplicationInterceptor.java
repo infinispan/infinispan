@@ -105,6 +105,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
    private Object handleCrudMethod(final InvocationContext ctx, final WriteCommand command) throws Throwable {
       // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to replicate.
       final Object returnValue = invokeNextInterceptor(ctx, command);
+      populateCommandFlags(command, ctx);
       if (!isLocalModeForced(ctx) && command.isSuccessful() && ctx.isOriginLocal() && !ctx.isInTxScope()) {
          if (ctx.isUseFutureReturnType()) {
             NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl(returnValue);
@@ -115,5 +116,12 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
          }
       }
       return returnValue;
+   }
+
+   /**
+    * Makes sure the context Flags are bundled in the command, so that they are re-read remotely
+    */
+   private void populateCommandFlags(WriteCommand command, InvocationContext ctx) {
+      command.setFlags(ctx.getFlags());
    }
 }

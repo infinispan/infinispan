@@ -44,6 +44,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -53,6 +54,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A factory to build commands, initializing and injecting dependencies accordingly.  Commands built for a specific,
@@ -75,7 +77,7 @@ public interface CommandsFactory {
     * @param maxIdleTimeMillis max idle time in milliseconds.  -1 if maxIdle is not used.
     * @return a PutKeyValueCommand
     */
-   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis);
+   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags);
 
    /**
     * Builds a RemoveCommand
@@ -83,7 +85,7 @@ public interface CommandsFactory {
     * @param value value to check for ina  conditional remove, or null for an unconditional remove.
     * @return a RemoveCommand
     */
-   RemoveCommand buildRemoveCommand(Object key, Object value);
+   RemoveCommand buildRemoveCommand(Object key, Object value, Set<Flag> flags);
 
    /**
     * Builds an InvalidateCommand
@@ -117,7 +119,7 @@ public interface CommandsFactory {
     * @param maxIdleTimeMillis max idle time in milliseconds.  -1 if maxIdle is not used.
     * @return a ReplaceCommand
     */
-   ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis);
+   ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags);
 
    /**
     * Builds a SizeCommand
@@ -130,7 +132,7 @@ public interface CommandsFactory {
     * @param key key to get
     * @return a GetKeyValueCommand
     */
-   GetKeyValueCommand buildGetKeyValueCommand(Object key);
+   GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags);
 
    /**
     * Builds a KeySetCommand
@@ -157,13 +159,13 @@ public interface CommandsFactory {
     * @param maxIdleTimeMillis max idle time in milliseconds.  -1 if maxIdle is not used.
     * @return a PutMapCommand
     */
-   PutMapCommand buildPutMapCommand(Map map, long lifespanMillis, long maxIdleTimeMillis);
+   PutMapCommand buildPutMapCommand(Map map, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags);
 
    /**
     * Builds a ClearCommand
     * @return a ClearCommand
     */
-   ClearCommand buildClearCommand();
+   ClearCommand buildClearCommand(Set<Flag> flags);
 
    /**
     * Builds an EvictCommand
@@ -234,7 +236,7 @@ public interface CommandsFactory {
     * @param key key to look up
     * @return a ClusteredGetCommand
     */
-   ClusteredGetCommand buildClusteredGetCommand(Object key);
+   ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags);
 
    /**
     * Builds a LockControlCommand to control explicit remote locking
@@ -242,7 +244,7 @@ public interface CommandsFactory {
     * @param implicit whether the lock command was implicit (triggered internally) or explicit (triggered by an API call)
     * @return a LockControlCommand
     */
-   LockControlCommand buildLockControlCommand(Collection keys, boolean implicit);
+   LockControlCommand buildLockControlCommand(Collection keys, boolean implicit, Set<Flag> flags);
 
    /**
     * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a simple

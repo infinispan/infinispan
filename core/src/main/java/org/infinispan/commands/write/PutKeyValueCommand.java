@@ -21,10 +21,14 @@
  */
 package org.infinispan.commands.write;
 
+import java.util.Collections;
+import java.util.Set;
+
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
@@ -47,8 +51,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
    public PutKeyValueCommand() {
    }
 
-   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis) {
-      super(key);
+   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
+      super(key, flags);
       this.value = value;
       this.putIfAbsent = putIfAbsent;
       this.notifier = notifier;
@@ -111,7 +115,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis};
+      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, flags};
    }
 
    public void setParameters(int commandId, Object[] parameters) {
@@ -120,6 +124,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       value = parameters[1];
       lifespanMillis = (Long) parameters[2];
       maxIdleTimeMillis = (Long) parameters[3];
+      flags = (Set<Flag>) (parameters.length>4 ? parameters[4] : Collections.EMPTY_SET); //TODO remove conditional check in future - eases migration for now
    }
 
    public boolean isPutIfAbsent() {
@@ -167,9 +172,10 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
    @Override
    public String toString() {
       return new StringBuilder()
-            .append("PutKeyValueCommand{")
-            .append("key=").append(key)
+            .append("PutKeyValueCommand{key=")
+            .append(key)
             .append(", value=").append(value)
+            .append(", flags=").append(flags)
             .append(", putIfAbsent=").append(putIfAbsent)
             .append(", lifespanMillis=").append(lifespanMillis)
             .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
