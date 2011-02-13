@@ -21,5 +21,4 @@ public interface FlagContainer {
 
    void reset();
 
-   boolean isFlagsUninitialized();
 }

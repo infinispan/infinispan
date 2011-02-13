@@ -58,6 +58,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       if (ctx.isOriginLocal()) {
          //unlock will happen async as it is a best effort
          boolean sync = !command.isUnlock();
+         command.setFlags(ctx.getFlags());
          rpcManager.broadcastRpcCommand(command, sync, false);
       }
       return retVal;

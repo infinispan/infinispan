@@ -89,6 +89,7 @@ import org.rhq.helpers.pluginAnnotations.agent.Operation;
 /**
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
+ * @author Sanne Grinovero
  * @author <a href="http://gleamynode.net/">Trustin Lee</a>
  * @since 4.0
  */
@@ -174,7 +175,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    public final boolean remove(Object key, Object value) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContext(false);
-      RemoveCommand command = commandsFactory.buildRemoveCommand(key, value);
+      RemoveCommand command = commandsFactory.buildRemoveCommand(key, value, ctx.getFlags());
       return (Boolean) invoker.invoke(ctx, command);
    }
 
@@ -190,7 +191,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    public final boolean containsKey(Object key) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContext(false);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key);
+      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, ctx.getFlags());
       Object response = invoker.invoke(ctx, command);
       return response != null;
    }
@@ -203,7 +204,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    public final V get(Object key) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContext(false);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key);
+      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, ctx.getFlags());
       return (V) invoker.invoke(ctx, command);
    }
 
@@ -211,32 +212,35 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    public final V remove(Object key) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContext(false);
-      RemoveCommand command = commandsFactory.buildRemoveCommand(key, null);
+      RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, ctx.getFlags());
       return (V) invoker.invoke(ctx, command);
    }
 
    public final void clear() {
       InvocationContext ctx = getInvocationContext(false);
-      ClearCommand command = commandsFactory.buildClearCommand();
+      ClearCommand command = commandsFactory.buildClearCommand(ctx.getFlags());
       invoker.invoke(ctx, command);
    }
 
    @SuppressWarnings("unchecked")
    public Set<K> keySet() {
+      InvocationContext ctx = getInvocationContext(false);
       KeySetCommand command = commandsFactory.buildKeySetCommand();
-      return (Set<K>) invoker.invoke(getInvocationContext(false), command);
+      return (Set<K>) invoker.invoke(ctx, command);
    }
 
    @SuppressWarnings("unchecked")
    public Collection<V> values() {
+      InvocationContext ctx = getInvocationContext(false);
       ValuesCommand command = commandsFactory.buildValuesCommand();
-      return (Collection<V>) invoker.invoke(getInvocationContext(false), command);
+      return (Collection<V>) invoker.invoke(ctx, command);
    }
 
    @SuppressWarnings("unchecked")
    public Set<Map.Entry<K, V>> entrySet() {
+      InvocationContext ctx = getInvocationContext(false);
       EntrySetCommand command = commandsFactory.buildEntrySetCommand();
-      return (Set<Map.Entry<K, V>>) invoker.invoke(getInvocationContext(false), command);
+      return (Set<Map.Entry<K, V>>) invoker.invoke(ctx, command);
    }
 
    public final void putForExternalRead(K key, V value) {
@@ -307,8 +311,9 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       if (keys == null || keys.isEmpty()) {
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       }
-      LockControlCommand command = commandsFactory.buildLockControlCommand(keys, false);
-      return (Boolean) invoker.invoke(getInvocationContext(false), command);
+      InvocationContext ctx = getInvocationContext(false);
+      LockControlCommand command = commandsFactory.buildLockControlCommand(keys, false, ctx.getFlags());
+      return (Boolean) invoker.invoke(ctx, command);
    }
 
    @ManagedOperation(description = "Starts the cache.")
@@ -440,30 +445,31 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    public final V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContext(false);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), ctx.getFlags());
       return (V) invoker.invoke(ctx, command);
    }
 
    @SuppressWarnings("unchecked")
    public final V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
       assertKeyNotNull(key);
-      InvocationContext context = getInvocationContext(false);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
+      InvocationContext ctx = getInvocationContext(false);
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), ctx.getFlags());
       command.setPutIfAbsent(true);
-      return (V) invoker.invoke(context, command);
+      return (V) invoker.invoke(ctx, command);
    }
 
    public final void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
       assertKeysNotNull(map);
-      PutMapCommand command = commandsFactory.buildPutMapCommand(map, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
-      invoker.invoke(getInvocationContext(false), command);
+      InvocationContext ctx = getInvocationContext(false);
+      PutMapCommand command = commandsFactory.buildPutMapCommand(map, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), ctx.getFlags());
+      invoker.invoke(ctx, command);
    }
 
    @SuppressWarnings("unchecked")
    public final V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContext(false);
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
+      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), ctx.getFlags());
       return (V) invoker.invoke(ctx, command);
 
    }
@@ -471,7 +477,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    public final boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContext(false);
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
+      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), ctx.getFlags());
       return (Boolean) invoker.invoke(ctx, command);
    }
 
@@ -505,7 +511,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), ctx.getFlags());
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
@@ -513,14 +519,14 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       assertKeysNotNull(data);
       InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
-      PutMapCommand command = commandsFactory.buildPutMapCommand(data, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
+      PutMapCommand command = commandsFactory.buildPutMapCommand(data, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), ctx.getFlags());
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
    public final NotifyingFuture<Void> clearAsync() {
       InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
-      ClearCommand command = commandsFactory.buildClearCommand();
+      ClearCommand command = commandsFactory.buildClearCommand(ctx.getFlags());
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
@@ -528,7 +534,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), ctx.getFlags());
       command.setPutIfAbsent(true);
       return wrapInFuture(invoker.invoke(ctx, command));
    }
@@ -537,7 +543,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
-      RemoveCommand command = commandsFactory.buildRemoveCommand(key, null);
+      RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, ctx.getFlags());
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
@@ -545,7 +551,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
-      RemoveCommand command = commandsFactory.buildRemoveCommand(key, value);
+      RemoveCommand command = commandsFactory.buildRemoveCommand(key, value, ctx.getFlags());
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
@@ -553,7 +559,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
+      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), ctx.getFlags());
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
@@ -561,7 +567,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, newValue, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
+      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, newValue, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), ctx.getFlags());
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 

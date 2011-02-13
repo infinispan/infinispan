@@ -21,9 +21,13 @@
  */
 package org.infinispan.commands.write;
 
+import java.util.Collections;
+import java.util.Set;
+
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
@@ -53,8 +57,8 @@ public class RemoveCommand extends AbstractDataWriteCommand {
     */
    protected transient Object value;
 
-   public RemoveCommand(Object key, Object value, CacheNotifier notifier) {
-      super(key);
+   public RemoveCommand(Object key, Object value, CacheNotifier notifier, Set<Flag> flags) {
+      super(key, flags);
       this.value = value;
       this.notifier = notifier;
    }
@@ -146,10 +150,13 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
    @Override
    public String toString() {
-      return getClass().getSimpleName() + "{" +
-            "key=" + key +
-            ", value=" + value +
-            '}';
+      return new StringBuilder()
+         .append("RemoveCommand{key=")
+         .append(key)
+         .append(", value=").append(value)
+         .append(", flags=").append(flags)
+         .append("}")
+         .toString();
    }
 
    public boolean isSuccessful() {
@@ -162,5 +169,17 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
    public boolean isNonExistent() {
       return nonExistent;
+   }
+
+   @Override
+   public void setParameters(int commandId, Object[] parameters) {
+      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
+      key = parameters[0];
+      flags = (Set<Flag>) (parameters.length>1 ? parameters[1] : Collections.EMPTY_SET); //TODO remove conditional check in future - eases migration for now
+   }
+
+   @Override
+   public Object[] getParameters() {
+      return new Object[]{key, flags};
    }
 }

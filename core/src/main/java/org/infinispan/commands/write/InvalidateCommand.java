@@ -97,8 +97,8 @@ public class InvalidateCommand extends RemoveCommand {
 
    @Override
    public String toString() {
-      return getClass().getSimpleName() + "{" +
-            "keys=" + Arrays.toString(keys) +
+      return "InvalidateCommand{keys=" +
+            Arrays.toString(keys) +
             '}';
    }
 
@@ -118,6 +118,7 @@ public class InvalidateCommand extends RemoveCommand {
 
    @Override
    public void setParameters(int commandId, Object[] args) {
+      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
       int size = (Integer) args[0];
       keys = new Object[size];
       if (size == 1) {

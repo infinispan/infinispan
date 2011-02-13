@@ -21,15 +21,21 @@
  */
 package org.infinispan.commands.read;
 
+import java.util.Set;
+
 import org.infinispan.commands.DataCommand;
+import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 
 /**
  * @author Mircea.Markus@jboss.com
+ * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 4.0
  */
-public abstract class AbstractDataCommand implements DataCommand {
+public abstract class AbstractDataCommand implements DataCommand, FlagAffectedCommand {
    protected Object key;
+   protected Set<Flag> flags;
 
    public Object getKey() {
       return key;
@@ -38,45 +44,66 @@ public abstract class AbstractDataCommand implements DataCommand {
    public void setKey(Object key) {
       this.key = key;
    }
+   
+   public Set<Flag> getFlags() {
+      return flags;
+   }
+   
+   public void setFlags(Set<Flag> flags) {
+      this.flags = flags;
+   }
 
-   protected AbstractDataCommand(Object key) {
+   protected AbstractDataCommand(Object key, Set<Flag> flags) {
       this.key = key;
+      this.flags = flags;
    }
 
    protected AbstractDataCommand() {
    }
 
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != getCommandId()) throw new IllegalStateException("Invalid method id");
-      key = parameters[0];
-   }
+   public abstract void setParameters(int commandId, Object[] parameters);
 
-   public Object[] getParameters() {
-      return new Object[]{key};
-   }
+   public abstract Object[] getParameters();
 
    public boolean shouldInvoke(InvocationContext ctx) {
       return true;
    }
-
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      AbstractDataCommand that = (AbstractDataCommand) o;
-
-      if (key != null ? !key.equals(that.key) : that.key != null) return false;
-
+   
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (getClass() != obj.getClass())
+         return false;
+      AbstractDataCommand other = (AbstractDataCommand) obj;
+      if (key == null) {
+         if (other.key != null)
+            return false;
+      } else if (!key.equals(other.key))
+         return false;
+      if (flags == null) {
+         if (other.flags != null)
+            return false;
+      } else if (!flags.equals(other.flags))
+         return false;
       return true;
    }
-
+   
+   @Override
    public int hashCode() {
       return (key != null ? key.hashCode() : 0);
    }
-
+   
+   @Override
    public String toString() {
-      return getClass().getSimpleName() + "{" +
-            "key=" + key +
-            '}';
+      return new StringBuilder()
+         .append("AbstractDataCommand{key=")
+         .append(key)
+         .append(", flags=").append(flags)
+         .append("}")
+         .toString();
    }
+
 }

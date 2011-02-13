@@ -1,5 +1,9 @@
 package org.infinispan.context;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.AdvancedCache;
@@ -93,8 +97,9 @@ public enum Flag {
     */
    SKIP_CACHE_LOAD,
    /**
-    * Swallows any exceptions, logging them instead at a low log level.  Will prevent a failing operation from
-    * affecting any ongoing JTA transactions as well.
+    * <p>Swallows any exceptions, logging them instead at a low log level.  Will prevent a failing operation from
+    * affecting any ongoing JTA transactions as well.</p>
+    * <p>This Flag will not be replicated to remote nodes, but it will still protect the invoker from remote exceptions.</p>
     */
    FAIL_SILENTLY,
    /**
@@ -113,5 +118,28 @@ public enum Flag {
    /**
     * If this flag is enabled, if a cache store is shared, then storage to the store is skipped.
     */
-   SKIP_SHARED_CACHE_STORE
+   SKIP_SHARED_CACHE_STORE;
+   
+   /**
+    * Creates a copy of a Flag Set removing instances of FAIL_SILENTLY.
+    * The copy might be the same instance if no change is required,
+    * and should be considered immutable.
+    * @param flags
+    * @return might return the same instance
+    */
+   protected static Set<Flag> copyWithouthRemotableFlags(Set<Flag> flags) {
+      //FAIL_SILENTLY should not be sent to remote nodes
+      if (flags.contains(Flag.FAIL_SILENTLY)) {
+         EnumSet<Flag> copy = EnumSet.copyOf(flags);
+         copy.remove(Flag.FAIL_SILENTLY);
+         if (copy.isEmpty()) {
+            return Collections.emptySet();
+         }
+         else {
+            return copy;
+         }
+      } else {
+         return flags;
+      }
+   }
 }

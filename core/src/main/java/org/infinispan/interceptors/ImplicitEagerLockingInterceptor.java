@@ -87,7 +87,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
    }
 
    private Object lockEagerly(InvocationContext ctx, Collection<Object> keys) throws Throwable {
-      LockControlCommand lcc = cf.buildLockControlCommand(keys, true);
+      LockControlCommand lcc = cf.buildLockControlCommand(keys, true, ctx.getFlags());
       return invokeNextInterceptor(ctx, lcc);
    }
 
