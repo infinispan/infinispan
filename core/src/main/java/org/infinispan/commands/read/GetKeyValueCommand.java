@@ -21,8 +21,12 @@
  */
 package org.infinispan.commands.read;
 
+import java.util.Collections;
+import java.util.Set;
+
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
@@ -42,9 +46,10 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    private CacheNotifier notifier;
    private boolean returnCacheEntry;
 
-   public GetKeyValueCommand(Object key, CacheNotifier notifier) {
+   public GetKeyValueCommand(Object key, CacheNotifier notifier, Set<Flag> flags) {
       this.key = key;
       this.notifier = notifier;
+      this.flags = flags;
    }
 
    public GetKeyValueCommand() {
@@ -91,5 +96,17 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
+   }
+
+   @Override
+   public void setParameters(int commandId, Object[] parameters) {
+      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
+      key = parameters[0];
+      flags = (Set<Flag>) (parameters.length>1 ? parameters[1] : Collections.EMPTY_SET); //TODO remove conditional check in future - eases migration for now
+   }
+
+   @Override
+   public Object[] getParameters() {
+      return new Object[]{key, flags};
    }
 }

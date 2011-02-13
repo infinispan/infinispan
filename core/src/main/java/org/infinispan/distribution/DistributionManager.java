@@ -2,6 +2,7 @@ package org.infinispan.distribution;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.factories.scopes.Scope;
@@ -67,10 +68,11 @@ public interface DistributionManager {
     * rehash in progress, involving nodes that the key maps to.
     *
     * @param key key to look up
+    * @param ctx 
     * @return an internal cache entry, or null if it cannot be located
     * @throws Exception if something bad happens 
     */
-   InternalCacheEntry retrieveFromRemoteSource(Object key) throws Exception;
+   InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx) throws Exception;
 
    /**
     * Retrieves the consistent hash instance currently in use, which may be an instance of the configured ConsistentHash

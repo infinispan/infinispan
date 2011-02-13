@@ -64,4 +64,15 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
    public byte getCommandId() {
       return -1; // these are not meant for replication!
    }
+   
+   @Override
+   public String toString() {
+      return new StringBuilder()
+         .append("EvictCommand{key=")
+         .append(key)
+         .append(", value=").append(value)
+         .append(", flags=").append(flags)
+         .append("}")
+         .toString();
+   }
 }

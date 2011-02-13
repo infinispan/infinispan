@@ -109,7 +109,7 @@ public class DistTxInterceptor extends TxInterceptor {
 
    class ReplayCommandVisitor extends AbstractVisitor {
       @Override
-      public Object visitPutMapCommand(InvocationContext ignored, PutMapCommand command) {
+      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
          Map newMap = new HashMap();
          for (Map.Entry entry : command.getMap().entrySet()) {
             if (dm.isLocal(entry.getKey())) newMap.put(entry.getKey(), entry.getValue());
@@ -117,7 +117,7 @@ public class DistTxInterceptor extends TxInterceptor {
 
          if (newMap.isEmpty()) return null;
          if (newMap.size() == command.getMap().size()) return command;
-         return commandsFactory.buildPutMapCommand(newMap, command.getLifespanMillis(), command.getMaxIdleTimeMillis());
+         return commandsFactory.buildPutMapCommand(newMap, command.getLifespanMillis(), command.getMaxIdleTimeMillis(), ctx.getFlags());
       }
 
       @Override

@@ -21,9 +21,12 @@
  */
 package org.infinispan.commands.control;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.TransactionalInvocationContextFlagsOverride;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -47,7 +50,7 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class LockControlCommand extends AbstractTransactionBoundaryCommand {
+public class LockControlCommand extends AbstractTransactionBoundaryCommand implements FlagAffectedCommand {
 
    private static Log log = LogFactory.getLog(LockControlCommand.class);
 
@@ -56,15 +59,16 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    private Object singleKey;
    private boolean implicit = false;
    private boolean unlock = false;
+   private Set<Flag> flags;
 
    public LockControlCommand() {
    }
 
-   public LockControlCommand(Collection<Object> keys, String cacheName) {
-      this(keys, cacheName, false);
+   public LockControlCommand(Collection<Object> keys, String cacheName, Set<Flag> flags) {
+      this(keys, cacheName, flags, false);
    }
 
-   public LockControlCommand(Collection<Object> keys, String cacheName, boolean implicit) {
+   public LockControlCommand(Collection<Object> keys, String cacheName, Set<Flag> flags, boolean implicit) {
       this.cacheName = cacheName;
       this.keys = null;
       this.singleKey = null;
@@ -75,8 +79,8 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
             // defensive copy
             this.keys = new HashSet<Object>(keys);
          }
-
       }
+      this.flags = flags;
       this.implicit = implicit;
    }
 
@@ -157,7 +161,11 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
          transaction = txTable.createRemoteTransaction(globalTx);
       }
       ctxt.setRemoteTransaction(transaction);
-      return invoker.invoke(ctxt, this);
+      TxInvocationContext ctx = ctxt;
+      if (flags != null && !flags.isEmpty()) {
+         ctx = new TransactionalInvocationContextFlagsOverride(ctxt, flags);
+      }
+      return invoker.invoke(ctx, this);
    }
 
    public byte getCommandId() {
@@ -167,11 +175,11 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    public Object[] getParameters() {
       if (keys == null || keys.isEmpty()) {
          if (singleKey == null)
-            return new Object[]{globalTx, cacheName, unlock, (byte) 1};
+            return new Object[]{globalTx, cacheName, unlock, (byte) 1, flags};
          else
-            return new Object[]{globalTx, cacheName, unlock, (byte) 2, singleKey};
+            return new Object[]{globalTx, cacheName, unlock, (byte) 2, singleKey, flags};
       }
-      return new Object[]{globalTx, cacheName, unlock, (byte) 3, keys};
+      return new Object[]{globalTx, cacheName, unlock, (byte) 3, keys, flags};
    }
 
    @SuppressWarnings("unchecked")
@@ -180,19 +188,25 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
          throw new IllegalStateException("Unusupported command id:" + commandId);
       globalTx = (GlobalTransaction) args[0];
       cacheName = (String) args[1];
-      unlock = (Boolean)args[2];
+      unlock = (Boolean) args[2];
 
       keys = null;
       singleKey = null;
       byte mode = (Byte) args[3];
       switch (mode) {
          case 1:
-            break; // do nothing
+            if (args.length == 5)
+               this.flags = (Set<Flag>) args[4];
+            break;
          case 2:
             singleKey = args[4];
+            if (args.length == 6)
+               this.flags = (Set<Flag>) args[5];
             break;
          case 3:
             keys = (Set<Object>) args[4];
+            if (args.length == 6)
+               this.flags = (Set<Flag>) args[5];
             break;
       }
    }
@@ -227,12 +241,24 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
 
    @Override
    public String toString() {
-      return "LockControlCommand {" +
-            "gtx=" + globalTx +
-            ", cacheName='" + cacheName +
-            ", implicit='" + implicit +
-            ", keys=" + keys +
-            ", unlock=" + unlock +
-            ", singleKey=" + singleKey + '}';
+      return new StringBuilder()
+         .append("LockControlCommand{keys=").append(keys)
+         .append(", cacheName='").append(cacheName)
+         .append(", flags=").append(flags)
+         .append("', implicit=").append(implicit)
+         .append(", unlock=").append(unlock)
+         .append(", singleKey='").append(singleKey)
+         .append("'}")
+         .toString();
+   }
+
+   @Override
+   public Set<Flag> getFlags() {
+      return flags;
+   }
+
+   @Override
+   public void setFlags(Set<Flag> flags) {
+      this.flags = flags;
    }
 }
