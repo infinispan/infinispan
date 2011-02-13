@@ -334,8 +334,8 @@ public class DistributionManagerImpl implements DistributionManager {
          entry.setLifespan(configuration.getL1Lifespan());
    }
 
-   public InternalCacheEntry retrieveFromRemoteSource(Object key) throws Exception {
-      ClusteredGetCommand get = cf.buildClusteredGetCommand(key);
+   public InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx) throws Exception {
+      ClusteredGetCommand get = cf.buildClusteredGetCommand(key, ctx.getFlags());
 
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(locate(key));
       List<Response> responses = rpcManager.invokeRemotely(locate(key), get, ResponseMode.SYNCHRONOUS,
@@ -427,9 +427,9 @@ public class DistributionManagerImpl implements DistributionManager {
       for (Map.Entry<Object, InternalCacheValue> e : state.entrySet()) {
          if (consistentHash.locate(e.getKey(), configuration.getNumOwners()).contains(self)) {
             InternalCacheValue v = e.getValue();
-            PutKeyValueCommand put = cf.buildPutKeyValueCommand(e.getKey(), v.getValue(), v.getLifespan(), v.getMaxIdle());
             InvocationContext ctx = icc.createInvocationContext();
             ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_SHARED_CACHE_STORE);
+            PutKeyValueCommand put = cf.buildPutKeyValueCommand(e.getKey(), v.getValue(), v.getLifespan(), v.getMaxIdle(), ctx.getFlags());
             interceptorChain.invoke(ctx, put);
          }
       }

@@ -21,8 +21,12 @@
  */
 package org.infinispan.commands.write;
 
+import java.util.Collections;
+import java.util.Set;
+
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
@@ -47,8 +51,8 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
    public ReplaceCommand() {
    }
 
-   public ReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis) {
-      super(key);
+   public ReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
+      super(key, flags);
       this.oldValue = oldValue;
       this.newValue = newValue;
       this.lifespanMillis = lifespanMillis;
@@ -99,7 +103,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis};
+      return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis, flags};
    }
 
    public void setParameters(int commandId, Object[] parameters) {
@@ -109,6 +113,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       newValue = parameters[2];
       lifespanMillis = (Long) parameters[3];
       maxIdleTimeMillis = (Long) parameters[4];
+      flags = (Set<Flag>) (parameters.length>5 ? parameters[5] : Collections.EMPTY_SET); //TODO remove conditional check in future - eases migration for now
    }
 
    @Override
@@ -174,6 +179,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       return "ReplaceCommand{" +
             "oldValue=" + oldValue +
             ", newValue=" + newValue +
+            ", flags=" + flags +
             ", successful=" + successful +
             '}';
    }

@@ -1,5 +1,6 @@
 package org.infinispan.context;
 
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
@@ -56,7 +57,14 @@ public interface InvocationContextContainer {
     * The context is also associated with the current thread, so further calls to
     * {@link #getInvocationContext()} will return same instance.
     */
-   NonTxInvocationContext createRemoteInvocationContext();
+   InvocationContext createRemoteInvocationContext();
+
+   /**
+    * As {@link #createRemoteInvocationContext()}, but returning the flags to the context from
+    * the Command if any Flag was set.
+    * @param cacheCommand
+    */
+   InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand);
 
    /**
     * Returns the {@link InvocationContext} that is currently associated with the calling thread.
@@ -77,4 +85,5 @@ public interface InvocationContextContainer {
     * Associates the supplied {@link InvocationContext} with the calling thread.
     */
    void resume(InvocationContext ic);
+
 }

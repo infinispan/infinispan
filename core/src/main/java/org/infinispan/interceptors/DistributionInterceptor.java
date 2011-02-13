@@ -140,14 +140,14 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    private Object realRemoteGet(InvocationContext ctx, Object key, boolean storeInL1, boolean isWrite) throws Throwable {
       if (trace) log.trace("Doing a remote get for key %s", key);
       // attempt a remote lookup
-      InternalCacheEntry ice = dm.retrieveFromRemoteSource(key);
+      InternalCacheEntry ice = dm.retrieveFromRemoteSource(key, ctx);
 
       if (ice != null) {
          if (storeInL1) {
             if (isL1CacheEnabled) {
                if (trace) log.trace("Caching remotely retrieved entry for key %s in L1", key);
                long lifespan = ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(), configuration.getL1Lifespan());
-               PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1);
+               PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1, ctx.getFlags());
                entryFactory.wrapEntryForWriting(ctx, key, true, false, ctx.hasLockedKey(key), false, false);
                invokeNextInterceptor(ctx, put);
             } else {

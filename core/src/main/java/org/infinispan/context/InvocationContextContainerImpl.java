@@ -21,7 +21,11 @@
  */
 package org.infinispan.context;
 
+import java.util.Set;
+
 import org.infinispan.CacheException;
+import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
@@ -111,6 +115,19 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
       icTl.set(remoteTxContext);
       return remoteTxContext;
    }
+   
+   @Override
+   public InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand) {
+      InvocationContext context = createRemoteInvocationContext();
+      if (cacheCommand != null && cacheCommand instanceof FlagAffectedCommand) {
+         FlagAffectedCommand command = (FlagAffectedCommand) cacheCommand;
+         Set<Flag> flags = command.getFlags();
+         if (flags != null && !flags.isEmpty()) {
+            return new InvocationContextFlagsOverride(context, flags);
+         }
+      }
+      return context;
+   }
 
    public NonTxInvocationContext createRemoteInvocationContext() {
       InvocationContext existing = icTl.get();
@@ -149,4 +166,5 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
          throw new CacheException(e);
       }
    }
+
 }

@@ -240,6 +240,7 @@ public class EntryFactoryImpl implements EntryFactory {
       return false;
    }
 
+   //TODO resolve code duplication with org.infinispan.util.concurrent.locks.LockManagerImpl.getLockAcquisitionTimeout(InvocationContext)
    private long getLockAcquisitionTimeout(InvocationContext ctx) {
       return ctx.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
             0 : configuration.getLockAcquisitionTimeout();

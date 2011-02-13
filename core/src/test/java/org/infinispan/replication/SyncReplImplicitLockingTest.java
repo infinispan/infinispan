@@ -56,7 +56,7 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
 
    protected Configuration.CacheMode getCacheMode() {
       return Configuration.CacheMode.REPL_SYNC;
-   }   
+   }
 
    protected void createCacheManagers() throws Throwable {
       Configuration cfg = getDefaultClusteredConfig(getCacheMode(), true);
@@ -228,7 +228,7 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
       cache2.remove(k);
       cache2.remove(key2);
       cache2.remove(key3);
-      cache2.remove(key4);     
+      cache2.remove(key4);
    }
 
 }

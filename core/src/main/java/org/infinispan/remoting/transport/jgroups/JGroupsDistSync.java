@@ -74,7 +74,7 @@ public class JGroupsDistSync implements DistributedSync {
             processingLock.readLock().unlock();
          }
       } catch (IllegalMonitorStateException imse) {
-         if (log.isTraceEnabled()) log.trace("Did not own lock!");
+         if (trace) log.trace("Did not own lock!");
       }
    }
 }

@@ -50,6 +50,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.DistributionManager;
@@ -73,6 +74,7 @@ import java.util.Set;
 /**
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
+ * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 4.0
  */
 public class CommandsFactoryImpl implements CommandsFactory {
@@ -117,12 +119,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
       cacheName = cache.getName();
    }
 
-   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis) {
-      return new PutKeyValueCommand(key, value, false, notifier, lifespanMillis, maxIdleTimeMillis);
+   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
+      return new PutKeyValueCommand(key, value, false, notifier, lifespanMillis, maxIdleTimeMillis, flags);
    }
 
-   public RemoveCommand buildRemoveCommand(Object key, Object value) {
-      return new RemoveCommand(key, value, notifier);
+   public RemoveCommand buildRemoveCommand(Object key, Object value, Set<Flag> flags) {
+      return new RemoveCommand(key, value, notifier, flags);
    }
 
    public InvalidateCommand buildInvalidateCommand(Object... keys) {
@@ -137,8 +139,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, keys);
    }
 
-   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespan, long maxIdleTimeMillis) {
-      return new ReplaceCommand(key, oldValue, newValue, lifespan, maxIdleTimeMillis);
+   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespan, long maxIdleTimeMillis, Set<Flag> flags) {
+      return new ReplaceCommand(key, oldValue, newValue, lifespan, maxIdleTimeMillis, flags);
    }
 
    public SizeCommand buildSizeCommand() {
@@ -169,16 +171,16 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return cachedEntrySetCommand;
    }
 
-   public GetKeyValueCommand buildGetKeyValueCommand(Object key) {
-      return new GetKeyValueCommand(key, notifier);
+   public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags) {
+      return new GetKeyValueCommand(key, notifier, flags);
    }
 
-   public PutMapCommand buildPutMapCommand(Map map, long lifespan, long maxIdleTimeMillis) {
-      return new PutMapCommand(map, notifier, lifespan, maxIdleTimeMillis);
+   public PutMapCommand buildPutMapCommand(Map map, long lifespan, long maxIdleTimeMillis, Set<Flag> flags) {
+      return new PutMapCommand(map, notifier, lifespan, maxIdleTimeMillis, flags);
    }
 
-   public ClearCommand buildClearCommand() {
-      return new ClearCommand(notifier);
+   public ClearCommand buildClearCommand(Set<Flag> flags) {
+      return new ClearCommand(notifier, flags);
    }
 
    public EvictCommand buildEvictCommand(Object key) {
@@ -215,8 +217,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new StateTransferControlCommand(block);
    }
 
-   public ClusteredGetCommand buildClusteredGetCommand(Object key) {
-      return new ClusteredGetCommand(key, cacheName);
+   public ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags) {
+      return new ClusteredGetCommand(key, cacheName, flags);
    }
 
    /**
@@ -319,8 +321,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       }
    }
 
-   public LockControlCommand buildLockControlCommand(Collection keys, boolean implicit) {
-      return new LockControlCommand(keys, cacheName, implicit);
+   public LockControlCommand buildLockControlCommand(Collection keys, boolean implicit, Set<Flag> flags) {
+      return new LockControlCommand(keys, cacheName, flags, implicit);
    }
 
    public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type, Address sender) {

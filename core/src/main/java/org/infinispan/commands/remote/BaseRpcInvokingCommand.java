@@ -1,5 +1,6 @@
 package org.infinispan.commands.remote;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
@@ -35,8 +36,14 @@ public abstract class BaseRpcInvokingCommand extends BaseRpcCommand {
 
    protected final Object processVisitableCommand(ReplicableCommand cacheCommand) throws Throwable {
       if (cacheCommand instanceof VisitableCommand) {
-         InvocationContext ctx = icc.createRemoteInvocationContext();
          VisitableCommand vc = (VisitableCommand) cacheCommand;
+         final InvocationContext ctx;
+         if (vc instanceof FlagAffectedCommand) {
+            ctx = icc.createRemoteInvocationContextForCommand(vc);
+         }
+         else {
+            ctx = icc.createRemoteInvocationContext();
+         }
          if (vc.shouldInvoke(ctx)) {
             if (trace) log.trace("Invoking command " + cacheCommand + ", with originLocal flag set to " + ctx.isOriginLocal() + ".");
             return interceptorChain.invoke(ctx, vc);

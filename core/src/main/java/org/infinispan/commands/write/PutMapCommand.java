@@ -23,12 +23,14 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -45,15 +47,17 @@ public class PutMapCommand implements WriteCommand {
    CacheNotifier notifier;
    long lifespanMillis = -1;
    long maxIdleTimeMillis = -1;
+   Set<Flag> flags;
 
    public PutMapCommand() {
    }
 
-   public PutMapCommand(Map map, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis) {
+   public PutMapCommand(Map map, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
       this.map = map;
       this.notifier = notifier;
       this.lifespanMillis = lifespanMillis;
       this.maxIdleTimeMillis = maxIdleTimeMillis;
+      this.flags = flags;
    }
 
    public void init(CacheNotifier notifier) {
@@ -94,13 +98,16 @@ public class PutMapCommand implements WriteCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{map, lifespanMillis, maxIdleTimeMillis};
+      return new Object[]{map, lifespanMillis, maxIdleTimeMillis, flags};
    }
 
    public void setParameters(int commandId, Object[] parameters) {
       map = (Map) parameters[0];
       lifespanMillis = (Long) parameters[1];
       maxIdleTimeMillis = (Long) parameters[2];
+      if (parameters.length>3) {
+         this.flags = (Set<Flag>) parameters[3];
+      }
    }
 
    @Override
@@ -127,9 +134,14 @@ public class PutMapCommand implements WriteCommand {
 
    @Override
    public String toString() {
-      return "PutMapCommand{" +
-            "map=" + map +
-            '}';
+      return new StringBuilder()
+         .append("PutMapCommand{map=")
+         .append(map)
+         .append(", flags=").append(flags)
+         .append(", lifespanMillis=").append(lifespanMillis)
+         .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
+         .append("}")
+         .toString();
    }
 
    public boolean shouldInvoke(InvocationContext ctx) {
@@ -154,5 +166,15 @@ public class PutMapCommand implements WriteCommand {
 
    public long getMaxIdleTimeMillis() {
       return maxIdleTimeMillis;
+   }
+
+   @Override
+   public Set<Flag> getFlags() {
+      return flags;
+   }
+
+   @Override
+   public void setFlags(Set<Flag> flags) {
+      this.flags = flags;
    }
 }

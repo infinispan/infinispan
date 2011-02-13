@@ -24,6 +24,7 @@ package org.infinispan.commands.write;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
@@ -39,15 +40,17 @@ import java.util.Set;
  */
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.CLEAR_COMMAND)
 public class ClearCommand implements WriteCommand {
-   private static final Object[] params = new Object[0];
+   
    public static final byte COMMAND_ID = 5;
    CacheNotifier notifier;
+   private Set<Flag> flags;
 
    public ClearCommand() {
    }
 
-   public ClearCommand(CacheNotifier notifier) {
+   public ClearCommand(CacheNotifier notifier, Set<Flag> flags) {
       this.notifier = notifier;
+      this.flags = flags;
    }
 
    public void init(CacheNotifier notifier) {
@@ -73,7 +76,7 @@ public class ClearCommand implements WriteCommand {
    }
 
    public Object[] getParameters() {
-      return params;
+      return new Object[]{flags};
    }
 
    public byte getCommandId() {
@@ -82,6 +85,9 @@ public class ClearCommand implements WriteCommand {
 
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid command id");
+      if (parameters.length > 0) {
+         this.flags = (Set<Flag>) parameters[0];
+      }
    }
 
    public boolean shouldInvoke(InvocationContext ctx) {
@@ -90,7 +96,11 @@ public class ClearCommand implements WriteCommand {
 
    @Override
    public String toString() {
-      return "ClearCommand";
+      return new StringBuilder()
+         .append("ClearCommand{flags=")
+         .append(flags)
+         .append("}")
+         .toString();
    }
 
    public boolean isSuccessful() {
@@ -103,5 +113,15 @@ public class ClearCommand implements WriteCommand {
 
    public Set<Object> getAffectedKeys() {
       return Collections.emptySet();
+   }
+
+   @Override
+   public Set<Flag> getFlags() {
+      return flags;
+   }
+
+   @Override
+   public void setFlags(Set<Flag> flags) {
+      this.flags = flags;
    }
 }
