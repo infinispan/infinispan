@@ -139,7 +139,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          CacheContainer cacheContainer = hrServ2CacheManager.get(serverAddress);
          assertNotNull("For server address " + serverAddress + " found " + cacheContainer + ". Map is: " + hrServ2CacheManager, cacheContainer);
          DistributionManager distributionManager = cacheContainer.getCache().getAdvancedCache().getDistributionManager();
-         assert distributionManager.isLocal(key);
+         assert distributionManager.isLocal(key).isLocal();
          tcpConnectionFactory.releaseTransport(transport);
       }
    }

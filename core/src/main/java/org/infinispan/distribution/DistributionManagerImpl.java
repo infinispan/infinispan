@@ -65,6 +65,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * The default distribution manager implementation
@@ -98,6 +99,11 @@ public class DistributionManagerImpl implements DistributionManager {
     * Rehash flag set by a rehash task associated with this DistributionManager
     */
    volatile boolean rehashInProgress = false;
+   /**
+    * https://issues.jboss.org/browse/ISPN-925
+    * This makes sure that leavers list and consistent hash is updated atomically.
+    */
+   private final ReentrantReadWriteLock chSwitchLock = new ReentrantReadWriteLock(true);
    
    
    /**
@@ -242,7 +248,7 @@ public class DistributionManagerImpl implements DistributionManager {
             }  else {
                oldConsistentHash = ((UnionConsistentHash) consistentHash).getNewCH();
             }
-            consistentHash = ConsistentHashHelper.removeAddress(consistentHash, leaver, configuration, topologyInfo);
+            addLeaverAndUpdatedConsistentHash(leaver);
          } catch (Exception e) {
             log.fatal("Unable to process leaver!!", e);
             throw new CacheException(e);
@@ -265,14 +271,45 @@ public class DistributionManagerImpl implements DistributionManager {
                leaveTaskFuture.cancel(true);
             }
 
-            leavers.add(leaver);
             InvertedLeaveTask task = new InvertedLeaveTask(this, rpcManager, configuration, cf,
-                    dataContainer, leavers, stateProviders, receiversOfLeaverState, willReceiveLeaverState);
+                    dataContainer, this, stateProviders, receiversOfLeaverState, willReceiveLeaverState);
             leaveTaskFuture = rehashExecutor.submit(task);          
          } else {
             log.info("Not in same subspace, so ignoring leave event");
             topologyInfo.removeNodeInfo(leaver);
+            removeLeaver(leaver);
          }
+      }
+   }
+
+   public List<Address> getLeavers() {
+      chSwitchLock.readLock().lock();
+      try {
+         return Collections.unmodifiableList(leavers);
+      } finally {
+         chSwitchLock.readLock().unlock();
+      }
+   }
+
+   private void addLeaverAndUpdatedConsistentHash(Address leaver) {
+      chSwitchLock.writeLock().lock();
+      try {
+         leavers.add(leaver);
+         if (log.isTraceEnabled()) log.trace("Added new leaver %s, leavers list is %s", leaver, leavers);
+         consistentHash = ConsistentHashHelper.removeAddress(consistentHash, leaver, configuration, topologyInfo);
+      } finally {
+         chSwitchLock.writeLock().unlock();
+      }
+   }
+
+   public boolean removeLeaver(Address leaver) {
+      chSwitchLock.writeLock().lock();
+      try {
+         //if we are affected by the rehash then levers are removed within the InvertedLeaveTask
+         return leavers.remove(leaver);
+      } finally {
+         if (log.isTraceEnabled()) log.trace("After removing leaver[ %s ] leavers list is %s", leaver, leavers);
+         chSwitchLock.writeLock().unlock();
       }
    }
 
@@ -306,9 +343,32 @@ public class DistributionManagerImpl implements DistributionManager {
       return result;
    }
 
-   public boolean isLocal(Object key) {
-      return consistentHash == null || consistentHash.isKeyLocalToAddress(self, key, getReplCount());
+   public IsLocalRes isLocal(Object key) {
+      chSwitchLock.readLock().lock();
+      try {
+         if (consistentHash == null) {
+            return LOCAL_NO_REHASHING;
+         }
+         boolean local = consistentHash.isKeyLocalToAddress(self, key, getReplCount());
+         if (isRehashInProgress()) {
+            if (local) {
+               return LOCAL_WITH_REHASHING;
+            } else {
+               return NOT_LOCAL_WITH_REHASHING;
+            }
+         } else {
+            if (local) {
+               return LOCAL_NO_REHASHING;
+            } else {
+               return NOT_LOCAL_NO_REHASHING;
+            }
+         }
+
+      } finally {
+         chSwitchLock.readLock().unlock();
+      }
    }
+
 
    public List<Address> locate(Object key) {
       if (consistentHash == null) return Collections.singletonList(self);
@@ -442,6 +502,17 @@ public class DistributionManagerImpl implements DistributionManager {
       }
    }
 
+   public void removeLeavers(List<Address> leaversHandled) {
+      chSwitchLock.writeLock().lock();
+      try {
+         if (log.isTraceEnabled())
+            log.trace("Removing leavers %s from leavers %s", leaversHandled, leaversHandled);
+         leavers.removeAll(leaversHandled);
+      } finally {
+         chSwitchLock.writeLock().unlock();
+      }
+   }
+
    @Listener
    public class ViewChangeListener {
       
@@ -478,7 +549,15 @@ public class DistributionManagerImpl implements DistributionManager {
    @ManagedAttribute(description = "Checks whether the node is involved in a rehash.")
    @Metric(displayName = "Is rehash in progress?", dataType = DataType.TRAIT)
    public boolean isRehashInProgress() {
-      return !leavers.isEmpty() || rehashInProgress;
+      chSwitchLock.readLock().lock();
+      boolean nodeLeaving;
+      try {
+         nodeLeaving = !leavers.isEmpty();
+         if (log.isTraceEnabled()) log.trace("Node leaving? %s RehashInProgress? %s Leavers = %s", nodeLeaving, rehashInProgress, leavers);
+      } finally {
+         chSwitchLock.readLock().unlock();
+      }
+      return nodeLeaving || rehashInProgress;
    }
 
    public boolean isJoinComplete() {
@@ -527,7 +606,7 @@ public class DistributionManagerImpl implements DistributionManager {
    @ManagedOperation(description = "Tells you whether a given key is local to this instance of the cache.  Only works with String keys.")
    @Operation(displayName = "Is key local?")
    public boolean isLocatedLocally(@Parameter(name = "key", description = "Key to query") String key) {
-      return isLocal(key);
+      return isLocal(key).isLocal();
    }
 
    @ManagedOperation(description = "Locates an object in a cluster.  Only works with String keys.")

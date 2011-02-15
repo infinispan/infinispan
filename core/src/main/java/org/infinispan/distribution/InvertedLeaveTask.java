@@ -48,7 +48,7 @@ public class InvertedLeaveTask extends RehashTask {
 
    private static final Log log = LogFactory.getLog(InvertedLeaveTask.class);
    private static final boolean trace = log.isTraceEnabled();
-   private final List<Address> leavers;
+   private final DistributionManagerImpl distributionManager;
    private final Address self;
    private final List<Address> leaversHandled;
    private final List<Address> providers;
@@ -57,11 +57,11 @@ public class InvertedLeaveTask extends RehashTask {
    private final boolean isSender;
 
    public InvertedLeaveTask(DistributionManagerImpl dmi, RpcManager rpcManager, Configuration conf,
-            CommandsFactory commandsFactory, DataContainer dataContainer, List<Address> leavers,
+            CommandsFactory commandsFactory, DataContainer dataContainer, DistributionManagerImpl leavers,
             List<Address> stateProviders, List<Address> stateReceivers, boolean isReceiver) {
       super(dmi, rpcManager, conf, commandsFactory, dataContainer);
-      this.leavers = leavers;
-      this.leaversHandled = new LinkedList<Address>(leavers);
+      this.distributionManager = leavers;
+      this.leaversHandled = distributionManager.getLeavers();
       this.providers = stateProviders;
       this.receivers = stateReceivers;
       this.isReceiver = isReceiver;      
@@ -121,7 +121,7 @@ public class InvertedLeaveTask extends RehashTask {
       } catch (Exception e) {
          throw new CacheException("Unexpected exception", e);
       } finally {
-         leavers.removeAll(leaversHandled);
+         distributionManager.removeLeavers(leaversHandled);
          if (trace)
             log.info("Completed leave rehash on node %s in %s", self,
                      Util.prettyPrintTime(System.currentTimeMillis() - start));
@@ -159,7 +159,7 @@ public class InvertedLeaveTask extends RehashTask {
 
       if (trace)
          log.trace("Handling pending prepares");
-      PendingPreparesMap state = new PendingPreparesMap(leavers, oldCH, newCH, replCount);
+      PendingPreparesMap state = new PendingPreparesMap(Collections.unmodifiableList(distributionManager.getLeavers()), oldCH, newCH, replCount);
       Collection<PrepareCommand> pendingPrepares = transactionLogger.getPendingPrepares();
       if (trace)
          log.trace("Found %s pending prepares", pendingPrepares.size());
@@ -196,7 +196,7 @@ public class InvertedLeaveTask extends RehashTask {
 
    private void apply(ConsistentHash oldCH, ConsistentHash newCH, int replCount, List<WriteCommand> wc) {
       // need to create another "state map"
-      TransactionLogMap state = new TransactionLogMap(leavers, oldCH, newCH, replCount);
+      TransactionLogMap state = new TransactionLogMap(Collections.unmodifiableList(distributionManager.getLeavers()), oldCH, newCH, replCount);
       for (WriteCommand c : wc)
          state.addState(c);
 
