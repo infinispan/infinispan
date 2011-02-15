@@ -1,5 +1,8 @@
 package org.infinispan.commands.write;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 import org.infinispan.commands.Visitor;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
@@ -11,7 +14,6 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collection;
 import java.util.concurrent.locks.LockSupport;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -65,7 +67,7 @@ public class InvalidateL1Command extends InvalidateCommand {
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-
+		if (log.isTraceEnabled()) log.trace("Preparing to invalidate keys %s", Arrays.asList(keys));
       for (Object k : getKeys()) {
          InternalCacheEntry ice = dataContainer.get(k);
          if (ice != null) {
@@ -81,6 +83,7 @@ public class InvalidateL1Command extends InvalidateCommand {
                   if (log.isTraceEnabled()) log.trace("Not removing, instead putting entry into L1.");
                   dataContainer.put(k, ice.getValue(), config.getL1Lifespan(), config.getExpirationMaxIdle());
                } else {
+               	if (log.isTraceEnabled()) log.trace("Invalidating key %s.", k);
                   invalidate(ctx, k);
                }
             }
