@@ -5,11 +5,13 @@
       xmlns="urn:infinispan:config:4.0">
    <global>
       <transport clusterName="WebDavGridFS" />
+      <globalJmxStatistics enabled="true"/>
    </global>
 
    <default>
       <locking concurrencyLevel="1000" lockAcquisitionTimeout="60000" />
       <lazyDeserialization enabled="true" />
+      <jmxStatistics enabled="true"/>
    </default>
 
    <namedCache name="data">

@@ -6,9 +6,11 @@
 
    <global>
       <transport clusterName="luceneDemoCluster" />
+      <globalJmxStatistics enabled="true"/>
    </global>
 
    <default>
+      <jmxStatistics enabled="true"/>
       <clustering mode="distribution">
          <l1 enabled="true" lifespan="60000" />
          <hash numOwners="2" rehashRpcTimeout="120000" />
