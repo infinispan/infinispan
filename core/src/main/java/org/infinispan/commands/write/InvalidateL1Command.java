@@ -1,5 +1,8 @@
 package org.infinispan.commands.write;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 import org.infinispan.commands.Visitor;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
@@ -9,8 +12,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
 
 /**
  * Invalidates an entry in a L1 cache (used with DIST mode)
@@ -61,6 +62,7 @@ public class InvalidateL1Command extends InvalidateCommand {
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
+   	if (log.isTraceEnabled()) log.trace("Preparing to invalidate keys %s", Arrays.asList(keys));
       if (forRehash && config.isL1OnRehash()) {
          for (Object k : getKeys()) {
             InternalCacheEntry ice = dataContainer.get(k);
@@ -71,6 +73,7 @@ public class InvalidateL1Command extends InvalidateCommand {
          }
       } else {
          for (Object k : getKeys()) {
+         	if (log.isTraceEnabled()) log.trace("Invalidating key %s.", k);
             if (!dm.getLocality(k).isLocal()) invalidate(ctx, k);
          }
       }
