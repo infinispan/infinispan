@@ -627,7 +627,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       return config.getCacheMode().isDistributed()
             && isSkipLoader
             && ((flags != null && flags.contains(Flag.SKIP_REMOTE_LOOKUP))
-                      || distributionManager.isLocal(key));
+                      || distributionManager.isLocal(key).isLocal());
    }
 
    private boolean isSkipLoader(EnumSet<Flag> flags) {
