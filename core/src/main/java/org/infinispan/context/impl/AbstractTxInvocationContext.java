@@ -1,8 +1,10 @@
 package org.infinispan.context.impl;
 
 import javax.transaction.Transaction;
+
+import org.infinispan.transaction.xa.AbstractCacheTransaction;
+
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,11 +12,11 @@ import java.util.Set;
  * Support class for {@link org.infinispan.context.impl.TxInvocationContext}.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public abstract class AbstractTxInvocationContext extends AbstractInvocationContext implements TxInvocationContext {
 
-   protected Set<Object> affectedKeys = null;
    private Transaction transaction;
 
    public boolean hasModifications() {
@@ -22,15 +24,17 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
    }
 
    public Set<Object> getAffectedKeys() {
-      return affectedKeys == null ? Collections.emptySet() : affectedKeys;
+      return getCacheTrasaction().getAffectedKeys();
    }
 
    public void addAffectedKeys(Collection<Object> keys) {
       if (keys != null && !keys.isEmpty()) {
-         if (affectedKeys == null) {
+         Set<Object> affectedKeys = getCacheTrasaction().getAffectedKeys();
+         if (affectedKeys == null || affectedKeys.isEmpty()) {
             affectedKeys = new HashSet<Object>();
          }
          affectedKeys.addAll(keys);
+         getCacheTrasaction().setAffectedKeys(affectedKeys);
       }
    }
 
@@ -47,12 +51,6 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
       return transaction;
    }
 
-   @Override
-   public AbstractTxInvocationContext clone() {
-      AbstractTxInvocationContext dolly = (AbstractTxInvocationContext) super.clone();
-      if (this.affectedKeys != null) {
-         dolly.affectedKeys = new HashSet<Object>(affectedKeys);
-      }
-      return dolly;
-   }
+   public abstract AbstractCacheTransaction getCacheTrasaction();
+
 }
