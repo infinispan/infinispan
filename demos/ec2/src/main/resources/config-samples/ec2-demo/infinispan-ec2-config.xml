@@ -30,7 +30,7 @@
             <property name="threadNamePrefix" value="ReplicationQueueThread"/>
          </properties>
       </replicationQueueScheduledExecutor>
-      <globalJmxStatistics enabled="true" jmxDomain="infinispan"/>
+      <globalJmxStatistics enabled="true"/>
 
       <transport clusterName="infinispan-cluster"
                  distributedSyncTimeout="50000"
@@ -48,6 +48,7 @@
    <!-- Default "template" settings -->
    <!-- *************************** -->
    <default>
+      <jmxStatistics enabled="true"/>
       <invocationBatching enabled="true"/>
       <clustering mode="distribution">
          <sync replTimeout="200000"/>
