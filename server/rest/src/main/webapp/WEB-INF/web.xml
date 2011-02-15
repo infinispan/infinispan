@@ -22,7 +22,7 @@
       <!-- Specify your cache configuration file -->
       <init-param>
          <param-name>infinispan.config</param-name>
-         <param-value>infinispan.xml</param-value>
+         <param-value>config-samples/sample.xml</param-value>
       </init-param>
 
       <!-- Managed bean name to look up when the REST server is running an app server -->

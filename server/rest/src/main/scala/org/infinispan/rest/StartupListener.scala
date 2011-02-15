@@ -56,18 +56,18 @@ class StartupListener extends HttpServlet with Logging {
          var beanName = cfg.getInitParameter("infinispan.cachemanager.bean")
          if (beanName == null)
             beanName = "DefaultCacheManager"
-         
-         val kernelRegEntry = kernelRegCl.getMethod("getEntry", classOf[Object]).invoke(kernelReg, beanName)
+
+         val kernelRegEntry = kernelRegCl.getMethod("findEntry", classOf[Object]).invoke(kernelReg, beanName)
          if (kernelRegEntry != null) {
             val kernelRegEntryCl = loadClass("org.jboss.kernel.spi.registry.KernelRegistryEntry")
             if (isDebug) debug("Retrieving cache manager from JBoss Microcontainer")
             return kernelRegEntryCl.getMethod("getTarget").invoke(kernelRegEntry).asInstanceOf[EmbeddedCacheManager]
          } else {
             if (isDebug) debug("Running within JBoss Microcontainer but cache manager bean not present")
-            null
+            return null
          }
       }
-      null
+      return null
    }
 
    private def loadClass(name: String): Class[_] = {
