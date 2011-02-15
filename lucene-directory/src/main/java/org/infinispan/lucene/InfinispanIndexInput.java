@@ -44,12 +44,12 @@ import org.infinispan.util.logging.LogFactory;
 public class InfinispanIndexInput extends IndexInput {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexInput.class);
+   private final boolean trace = log.isTraceEnabled();
 
    private final AdvancedCache chunksCache;
    private final FileCacheKey fileKey;
    private final int chunkSize;
    private final SegmentReadLocker readLocks;
-   private final boolean trace;
    private final String filename;
    private final long fileLength;
 
@@ -67,7 +67,6 @@ public class InfinispanIndexInput extends IndexInput {
       this.fileLength = fileMetadata.getSize();
       this.readLocks = readLocks;
       this.filename = fileKey.getFileName();
-      trace = log.isTraceEnabled();
       if (trace) {
          log.trace("Opened new IndexInput for file:%s in index: %s", filename, fileKey.getIndexName());
       }
