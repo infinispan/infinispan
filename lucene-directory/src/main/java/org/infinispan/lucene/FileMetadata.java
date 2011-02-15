@@ -36,12 +36,11 @@ public final class FileMetadata implements Serializable {
    /** The serialVersionUID */
    private static final long serialVersionUID = -7150923427362644166L;
    
-   private long lastModified;
+   private long lastModified = 0;
    private long size = 0;
    private int bufferSize;
 
    public FileMetadata() {
-      touch();
    }
 
    public void touch() {
