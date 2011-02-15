@@ -6,7 +6,9 @@ import org.infinispan.util.BidirectionalLinkedHashMap;
 import org.infinispan.util.BidirectionalMap;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Base class for local and remote transaction.
@@ -15,6 +17,7 @@ import java.util.List;
  * modifications list at creation time.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @since 4.2
  */
 public abstract class AbstractCacheTransaction implements CacheTransaction {
@@ -22,7 +25,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    protected List<WriteCommand> modifications;
    protected BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries;
    protected GlobalTransaction tx;
-
+   // TODO Couldn't affected keys be derived from modifications?
+   protected Set<Object> affectedKeys = null;
 
    public GlobalTransaction getGlobalTransaction() {
       return tx;
@@ -51,5 +55,13 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    public void clearLookedUpEntries() {
       if (lookedUpEntries != null) lookedUpEntries.clear();
+   }
+
+   public Set<Object> getAffectedKeys() {
+      return affectedKeys == null ? Collections.emptySet() : affectedKeys;
+   }
+
+   public void setAffectedKeys(Set<Object> affectedKeys) {
+      this.affectedKeys = affectedKeys;
    }
 }

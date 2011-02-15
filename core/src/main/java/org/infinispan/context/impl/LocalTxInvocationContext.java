@@ -3,6 +3,7 @@ package org.infinispan.context.impl;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.xa.AbstractCacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalTransaction;
 import org.infinispan.util.BidirectionalMap;
@@ -18,6 +19,7 @@ import java.util.Map;
  * Invocation context to be used for locally originated transactions.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public class LocalTxInvocationContext extends AbstractTxInvocationContext {
@@ -99,4 +101,10 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
    public Collection<Address> getRemoteLocksAcquired() {
       return localTransaction.getRemoteLocksAcquired();
    }
+
+   @Override
+   public AbstractCacheTransaction getCacheTrasaction() {
+      return localTransaction;
+   }
+
 }

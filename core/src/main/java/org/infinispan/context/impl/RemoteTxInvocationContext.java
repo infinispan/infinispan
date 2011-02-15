@@ -2,6 +2,7 @@ package org.infinispan.context.impl;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.transaction.xa.AbstractCacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.RemoteTransaction;
 import org.infinispan.util.BidirectionalMap;
@@ -14,6 +15,7 @@ import java.util.Map;
  * Context to be used for transaction that originated remotelly.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
@@ -99,5 +101,10 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
       RemoteTxInvocationContext dolly = (RemoteTxInvocationContext) super.clone();
       dolly.remoteTransaction = (RemoteTransaction) remoteTransaction.clone();
       return dolly;
+   }
+
+   @Override
+   public AbstractCacheTransaction getCacheTrasaction() {
+      return remoteTransaction;
    }
 }

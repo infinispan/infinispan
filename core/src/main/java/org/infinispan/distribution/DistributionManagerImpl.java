@@ -592,7 +592,10 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public List<Address> getAffectedNodes(Set<Object> affectedKeys) {
-      if (affectedKeys == null || affectedKeys.isEmpty()) return Collections.emptyList();
+      if (affectedKeys == null || affectedKeys.isEmpty()) {
+         if (log.isTraceEnabled()) log.trace("Affected keys are empty");
+         return Collections.emptyList();
+      }
 
       Set<Address> an = new HashSet<Address>();
       for (List<Address> addresses : locateAll(affectedKeys).values()) an.addAll(addresses);
