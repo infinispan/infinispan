@@ -91,8 +91,6 @@ public class InfinispanDirectoryIOTest {
       }
       io.flush();
       assert io.length() == REPEATABLE_BUFFER_SIZE;
-      long deepCountFileSize = DirectoryIntegrityCheck.deepCountFileSize(new FileCacheKey(INDEXNAME,fileName), cache);
-      assert io.length() == deepCountFileSize;
       
       //Text to write on file with repeatable text
       final String someText = "This is some text";
@@ -100,7 +98,6 @@ public class InfinispanDirectoryIOTest {
       //4 points in random order where writing someText: at begin of file, at end of file, within a single chunk,
       //between 2 chunks
       final int[] pointers = {0, 635, REPEATABLE_BUFFER_SIZE, 135};
-      
       for(int i=0; i < pointers.length; i++) {
          io.seek(pointers[i]);
          io.writeBytes(someTextAsBytes, someTextAsBytes.length);
@@ -648,6 +645,7 @@ public class InfinispanDirectoryIOTest {
          indexOutput.writeBytes(manyBytes, bufferSize);
          indexOutput.flush();
       }
+      indexOutput.close();
       IndexInput input = dir.openInput(filename);
       final int finalSize = (10 * bufferSize);
       assert input.length() == finalSize;
@@ -658,7 +656,6 @@ public class InfinispanDirectoryIOTest {
          for (int j = 0; j < bufferSize; j++)
             assert resultingBuffer[index++] == manyBytes[j];
       }
-      indexOutput.close();
    }
 
    private byte[] fillBytes(int size) {

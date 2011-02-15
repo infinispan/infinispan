@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2009-2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -43,6 +43,7 @@ import org.infinispan.util.logging.LogFactory;
 public class InfinispanIndexOutput extends IndexOutput {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexOutput.class);
+   private final boolean trace = log.isTraceEnabled();
 
    private final int bufferSize;
    private final AdvancedCache chunksCache;
@@ -50,13 +51,17 @@ public class InfinispanIndexOutput extends IndexOutput {
    private final FileMetadata file;
    private final FileCacheKey fileKey;
    private final FileListOperations fileOps;
-   private final boolean trace;
 
    private byte[] buffer;
+   
+   /**
+    * First bytes are rewritten at close - we can minimize locking needs by flushing the first chunk
+    * only once (as final operation: so always keep a pointer to the first buffer)
+    */
+   private byte[] firstChunkBuffer;
    private int positionInBuffer = 0;
    private long filePosition = 0;
    private int currentChunkNumber = 0;
-   private boolean needsAddingToFileList = true;
 
    public InfinispanIndexOutput(AdvancedCache metadataCache, AdvancedCache chunksCache, FileCacheKey fileKey, int bufferSize, FileListOperations fileList) throws IOException {
       this.metadataCache = metadataCache;
@@ -65,9 +70,9 @@ public class InfinispanIndexOutput extends IndexOutput {
       this.bufferSize = bufferSize;
       this.fileOps = fileList;
       this.buffer = new byte[this.bufferSize];
+      this.firstChunkBuffer = buffer;
       this.file = new FileMetadata();
       this.file.setBufferSize(bufferSize);
-      trace = log.isTraceEnabled();
       if (trace) {
          log.trace("Opened new IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
       }
@@ -101,7 +106,7 @@ public class InfinispanIndexOutput extends IndexOutput {
    }
 
    private void newChunk() throws IOException {
-      storeCurrentBuffer();// save data first
+      storeCurrentBuffer(false);// save data first
       currentChunkNumber++;
       // check if we have to create new chunk, or get already existing in cache for modification
       buffer = getChunkById(chunksCache, fileKey, currentChunkNumber, bufferSize, file);
@@ -138,10 +143,15 @@ public class InfinispanIndexOutput extends IndexOutput {
 
    @Override
    public void flush() throws IOException {
-      storeCurrentBuffer();
+      storeCurrentBuffer(false);
    }
 
-   protected void storeCurrentBuffer() throws IOException {
+   protected void storeCurrentBuffer(boolean isClose) throws IOException {
+      if (currentChunkNumber == 0 && ! isClose) {
+         //we don't store the first chunk until the close operation: this way
+         //we guarantee each chunk is written only once an minimize locking needs.
+         return;
+      }
       // size changed, apply change to file header
       resizeFileIfNeeded();
       byte[] bufferToFlush = buffer;
@@ -153,30 +163,22 @@ public class InfinispanIndexOutput extends IndexOutput {
             System.arraycopy(buffer, 0, bufferToFlush, 0, newBufferSize);
          }
       }
-      boolean microbatch = false;
+      
       // add chunk to cache
       if ( ! writingOnLastChunk || this.positionInBuffer != 0) {
-         if (chunksCache == metadataCache) {
-            //as we do an operation on chunks and one on metadata, it's not useful to start a batch unless it's the same cache
-            microbatch = chunksCache.startBatch();
-         }
-         // create key for the current chunk
-         ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentChunkNumber);
-         if (trace) log.trace("Storing segment chunk: " + key);
-         chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(key, bufferToFlush);
+         // store the current chunk
+         storeBufferAsChunk(bufferToFlush, currentChunkNumber);
       }
-      // override existing file header with new size and updated accesstime
-      file.touch();
-      metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(fileKey, file);
-      registerToFileListIfNeeded();
-      if (microbatch) chunksCache.endBatch(true);
    }
 
-   private void registerToFileListIfNeeded() {
-      if (needsAddingToFileList) {
-         fileOps.addFileName(this.fileKey.getFileName());
-         needsAddingToFileList = false;
-      }
+   /**
+    * @param bufferToFlush
+    * @param chunkNumber
+    */
+   private void storeBufferAsChunk(byte[] bufferToFlush, int chunkNumber) {
+      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
+      if (trace) log.trace("Storing segment chunk: " + key);
+      chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(key, bufferToFlush);
    }
 
    private void resizeFileIfNeeded() {
@@ -187,10 +189,23 @@ public class InfinispanIndexOutput extends IndexOutput {
 
    @Override
    public void close() throws IOException {
-      storeCurrentBuffer();
-      positionInBuffer = 0;
-      filePosition = 0;
+      boolean microbatch = chunksCache.startBatch();
+      if (currentChunkNumber==0) {
+         //store current chunk, possibly resizing it
+         storeCurrentBuffer(true);
+      }
+      else {
+         //no need to resize first chunk, just store it:
+         storeBufferAsChunk(this.firstChunkBuffer, 0);
+         storeCurrentBuffer(true);
+      }
       buffer = null;
+      firstChunkBuffer = null;
+      // override existing file header with updated accesstime
+      file.touch();
+      metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(fileKey, file);
+      fileOps.addFileName(this.fileKey.getFileName());
+      if (microbatch) chunksCache.endBatch(true);
       if (trace) {
          log.trace("Closed IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
       }
@@ -210,8 +225,13 @@ public class InfinispanIndexOutput extends IndexOutput {
             throw new IOException(fileKey.getFileName() + ": seeking past end of file");
       }
       if (requestedChunkNumber != currentChunkNumber) {
-         storeCurrentBuffer();
-         buffer = getChunkById(chunksCache, fileKey, requestedChunkNumber, bufferSize, file);
+         storeCurrentBuffer(false);
+         if (requestedChunkNumber != 0) {
+            buffer = getChunkById(chunksCache, fileKey, requestedChunkNumber, bufferSize, file);
+         }
+         else {
+            buffer = firstChunkBuffer;
+         }
          currentChunkNumber = requestedChunkNumber;
       }
       positionInBuffer = getPositionInBuffer(pos, bufferSize);
