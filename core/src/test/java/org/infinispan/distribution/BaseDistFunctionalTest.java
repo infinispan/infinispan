@@ -209,9 +209,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       assertOwnershipAndNonOwnership("k1");
    }
 
-   protected static Address addressOf(Cache<?, ?> cache) {
-      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
-      return cacheManager.getAddress();
+   protected Address addressOf(Cache<?, ?> cache) {
+      return DistributionTestHelper.addressOf(cache);
    }
 
    protected Cache<Object, String> getFirstNonOwner(String key) {
@@ -272,66 +271,32 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       throw new RuntimeException("Cannot locate joiner! Joiner is [" + joinerAddress + "]");
    }
 
-   protected static String safeType(Object o) {
-      if (o == null) return "null";
-      return o.getClass().getSimpleName();
+   protected String safeType(Object o) {
+      return DistributionTestHelper.safeType(o);
    }
 
-   public static void assertIsInL1(Cache<?, ?> cache, Object key) {
-      DataContainer dc = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry ice = dc.get(key);
-      assert ice != null : "Entry for key [" + key + "] should be in L1 on cache at [" + addressOf(cache) + "]!";
-      assert !(ice instanceof ImmortalCacheEntry) : "Entry for key [" + key + "] should have a lifespan on cache at [" + addressOf(cache) + "]!";
+   protected void assertIsInL1(Cache<?, ?> cache, Object key) {
+      DistributionTestHelper.assertIsInL1(cache, key);
    }
 
-   public static void assertIsNotInL1(Cache<?, ?> cache, Object key) {
-      DataContainer dc = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry ice = dc.get(key);
-      assert ice == null : "Entry for key [" + key + "] should not be in data container at all on cache at [" + addressOf(cache) + "]!";
+   protected void assertIsNotInL1(Cache<?, ?> cache, Object key) {
+      DistributionTestHelper.assertIsNotInL1(cache, key);
    }
 
-   public static void assertIsInContainerImmortal(Cache<?, ?> cache, Object key) {
-      Log log = LogFactory.getLog(BaseDistFunctionalTest.class);
-      DataContainer dc = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry ice = dc.get(key);
-      if (ice == null) {
-         String msg = "Entry for key [" + key + "] should be in data container on cache at [" + addressOf(cache) + "]!";
-         log.fatal(msg);
-         assert false : msg;
-      }
-
-      if (!(ice instanceof ImmortalCacheEntry)) {
-         String msg = "Entry for key [" + key + "] on cache at [" + addressOf(cache) + "] should be immortal but was [" + ice + "]!";
-         log.fatal(msg);
-         assert false : msg;
-      }
+   protected void assertIsInContainerImmortal(Cache<?, ?> cache, Object key) {
+      DistributionTestHelper.assertIsInContainerImmortal(cache, key);
    }
 
-   public static void assertIsInL1OrNull(Cache<?, ?> cache, Object key) {
-      Log log = LogFactory.getLog(BaseDistFunctionalTest.class);
-      DataContainer dc = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry ice = dc.get(key);
-      if (ice instanceof ImmortalCacheEntry) {
-         String msg = "Entry for key [" + key + "] on cache at [" + addressOf(cache) + "] should be mortal or null but was [" + ice + "]!";
-         log.fatal(msg);
-         assert false : msg;
-      }
+   protected void assertIsInL1OrNull(Cache<?, ?> cache, Object key) {
+      DistributionTestHelper.assertIsInL1OrNull(cache, key);
    }
 
-
-   public static boolean isOwner(Cache<?, ?> c, Object key) {
-      DistributionManager dm = c.getAdvancedCache().getDistributionManager();
-      List<Address> ownerAddresses = dm.locate(key);
-      for (Address a : ownerAddresses) {
-         if (addressOf(c).equals(a)) return true;
-      }
-      return false;
+   protected boolean isOwner(Cache<?, ?> c, Object key) {
+      return DistributionTestHelper.isOwner(c, key);
    }
 
-   public static boolean isFirstOwner(Cache<?, ?> c, Object key) {
-      DistributionManager dm = c.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class);
-      List<Address> ownerAddresses = dm.locate(key);
-      return addressOf(c).equals(ownerAddresses.get(0));
+   protected boolean isFirstOwner(Cache<?, ?> c, Object key) {
+      return DistributionTestHelper.isFirstOwner(c, key);
    }
 
    public Cache<Object, String>[] getOwners(Object key) {

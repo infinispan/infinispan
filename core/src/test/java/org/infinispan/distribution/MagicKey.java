@@ -5,8 +5,8 @@ import org.infinispan.Cache;
 import java.io.Serializable;
 import java.util.Random;
 
-import static org.infinispan.distribution.BaseDistFunctionalTest.addressOf;
-import static org.infinispan.distribution.BaseDistFunctionalTest.isFirstOwner;
+import static org.infinispan.distribution.DistributionTestHelper.addressOf;
+import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 
 /**
  * A special type of key that if passed a cache in its constructor, will ensure it will always be assigned to that cache
