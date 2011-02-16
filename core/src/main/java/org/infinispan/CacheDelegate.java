@@ -77,6 +77,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.stats.StatsImpl;
+import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.AbstractInProcessNotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.logging.Log;
@@ -414,7 +415,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
 
    @Override
    public String toString() {
-      return "Cache '" + name + "'@" + (config.getCacheMode().isClustered() ? getCacheManager().getAddress() : System.identityHashCode(this));
+      return "Cache '" + name + "'@" + (config.getCacheMode().isClustered() ? getCacheManager().getAddress() : Util.hexIdHashCode(this));
    }
 
    public BatchContainer getBatchContainer() {

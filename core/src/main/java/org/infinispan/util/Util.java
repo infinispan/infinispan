@@ -468,4 +468,12 @@ public final class Util {
          return new CacheException(t);
    }
 
+   /**
+    * Prints the identity hash code of the object passed as parameter
+    * in an hexadecimal format in order to safe space.
+    */
+   public static String hexIdHashCode(Object o) {
+      return Integer.toHexString(System.identityHashCode(o));
+   }
+
 }
