@@ -21,6 +21,7 @@
  */
 package org.infinispan.commands.remote;
 
+import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commands.CommandsFactory;
@@ -76,6 +77,10 @@ public class ClusteredGetCommand implements CacheRpcCommand, FlagAffectedCommand
       this.key = key;
       this.cacheName = cacheName;
       this.flags = flags;
+   }
+
+   public ClusteredGetCommand(Object key, String cacheName) {
+      this(key, cacheName, Collections.<Flag>emptySet());
    }
 
    public void initialize(DataContainer dataContainer, InvocationContextContainer icc, CommandsFactory commandsFactory, InterceptorChain interceptorChain) {
