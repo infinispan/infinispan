@@ -411,7 +411,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          return retval;
       } finally {
          // release the "processing" lock so that other threads are aware of the network call having completed
-         if (unlock) flushTracker.releaseProcessingLock();
+         if (unlock) flushTracker.releaseProcessingLock(false);
       }
    }
 

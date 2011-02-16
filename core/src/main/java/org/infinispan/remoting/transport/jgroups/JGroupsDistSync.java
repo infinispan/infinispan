@@ -2,7 +2,6 @@ package org.infinispan.remoting.transport.jgroups;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.remoting.transport.DistributedSync;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -12,6 +11,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static java.lang.String.format;
+import static java.lang.Thread.currentThread;
+import static org.infinispan.util.Util.prettyPrintTime;
 
 /**
  * A DistributedSync based on JGroups' FLUSH protocol
@@ -30,19 +33,28 @@ public class JGroupsDistSync implements DistributedSync {
    private static final Log log = LogFactory.getLog(JGroupsDistSync.class);
    public static final boolean trace = log.isTraceEnabled();
 
-   public SyncResponse blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException, InterruptedException {
+   public SyncResponse blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException {
       int initState = flushWaitGateCount.get();
-      if (!flushWaitGate.await(timeout, timeUnit))
-         throw new TimeoutException("Timed out waiting for a cluster-wide sync to be acquired. (timeout = " + Util.prettyPrintTime(timeout) + ")");
+      try {
+         if (!flushWaitGate.await(timeout, timeUnit))
+            throw new TimeoutException("Timed out waiting for a cluster-wide sync to be acquired. (timeout = " + prettyPrintTime(timeout) + ")");
+      } catch (InterruptedException ie) {
+         currentThread().interrupt();
+      }
 
       return initState == flushWaitGateCount.get() ? SyncResponse.STATE_PREEXISTED : SyncResponse.STATE_ACHIEVED;
 
    }
 
-   public SyncResponse blockUntilReleased(long timeout, TimeUnit timeUnit) throws TimeoutException, InterruptedException {
+   public SyncResponse blockUntilReleased(long timeout, TimeUnit timeUnit) throws TimeoutException {
       int initState = flushBlockGateCount.get();
-      if (!flushBlockGate.await(timeout, timeUnit))
-         throw new TimeoutException("Timed out waiting for a cluster-wide sync to be released. (timeout = " + Util.prettyPrintTime(timeout) + ")");
+      try {
+         if (!flushBlockGate.await(timeout, timeUnit))
+            throw new TimeoutException("Timed out waiting for a cluster-wide sync to be released. (timeout = " + prettyPrintTime(timeout) + ")");
+      } catch (InterruptedException ie) {
+         currentThread().interrupt();
+      }
+
 
       return initState == flushWaitGateCount.get() ? SyncResponse.STATE_PREEXISTED : SyncResponse.STATE_ACHIEVED;
    }
@@ -59,19 +71,25 @@ public class JGroupsDistSync implements DistributedSync {
       flushBlockGate.open();
    }
 
-   public void acquireProcessingLock(boolean exclusive, long timeout, TimeUnit timeUnit) throws InterruptedException, TimeoutException {
+   public void acquireProcessingLock(boolean exclusive, long timeout, TimeUnit timeUnit) throws TimeoutException {
       Lock lock = exclusive ? processingLock.writeLock() : processingLock.readLock();
-      if (!lock.tryLock(timeout, timeUnit))
-         throw new TimeoutException("Could not obtain " + (exclusive ? "exclusive" : "shared") + " processing lock");
+      try {
+         if (!lock.tryLock(timeout, timeUnit))
+            throw new TimeoutException(format("%s could not obtain %s processing lock after %s.  Locks in question are %s and %s", currentThread().getName(), exclusive ? "exclusive" : "shared", prettyPrintTime(timeout, timeUnit), processingLock.readLock(), processingLock.writeLock()));
+//         log.info("Acquired processing lock xcl = %s.  Locks are %s and %s", exclusive, processingLock.readLock(), processingLock.writeLock());
+      } catch (InterruptedException ie) {
+         currentThread().interrupt();
+      }
    }
 
-   public void releaseProcessingLock() {
+   public void releaseProcessingLock(boolean exclusive) {
       try {
-         if (processingLock.isWriteLockedByCurrentThread()) {
+         if (exclusive) {
             processingLock.writeLock().unlock();
          } else {
             processingLock.readLock().unlock();
          }
+//         log.info("Releasing %s processing lock.  Locks now are %s and %s", exclusive ? "exclusive": "shared", processingLock.readLock(), processingLock.writeLock());
       } catch (IllegalMonitorStateException imse) {
          if (trace) log.trace("Did not own lock!");
       }

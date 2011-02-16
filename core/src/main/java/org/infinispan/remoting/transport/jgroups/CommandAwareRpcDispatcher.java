@@ -187,7 +187,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
          return resp;
       } finally {
-         if (unlock) distributedSync.releaseProcessingLock();
+         if (unlock) distributedSync.releaseProcessingLock(false);
       }
    }
 
