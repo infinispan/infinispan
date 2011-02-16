@@ -1,7 +1,6 @@
 package org.infinispan.distribution.ch;
 
 import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 import org.infinispan.util.hash.Hash;
@@ -15,7 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
