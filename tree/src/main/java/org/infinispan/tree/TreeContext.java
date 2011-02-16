@@ -72,9 +72,4 @@ public class TreeContext implements FlagContainer {
    public void reset() {
       flags = null;
    }
-
-   @Override
-   public boolean isFlagsUninitialized() {
-      return flags == null;
-   }
 }
