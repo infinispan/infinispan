@@ -22,16 +22,15 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static java.util.Collections.emptySet;
 
 /**
- * Cache loader that consults other members in the cluster for values. A <code>remoteCallTimeout</code> property is required, a
- * <code>long</code> that specifies in milliseconds how long to wait for results before returning a null.
+ * Cache loader that consults other members in the cluster for values. A <code>remoteCallTimeout</code> property is
+ * required, a <code>long</code> that specifies in milliseconds how long to wait for results before returning a null.
  *
  * @author Mircea.Markus@jboss.com
  */
@@ -51,15 +50,16 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
 
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       if (!(isCacheReady() && isLocalCall())) return null;
-      ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(key, cache.getName(), Collections.EMPTY_SET);
-      List<Response> response = doRemoteCall(clusteredGetCommand);
+      ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(key, cache.getName());
+      Collection<Response> response = doRemoteCall(clusteredGetCommand);
       if (response.isEmpty()) return null;
       if (response.size() > 1)
          throw new CacheLoaderException("Response length is always 0 or 1, received: " + response);
-      Response firstResponse = response.get(0);
-      if (firstResponse.isSuccessful() && firstResponse instanceof SuccessfulResponse) {
-         InternalCacheValue value = (InternalCacheValue) ((SuccessfulResponse) firstResponse).getResponseValue();
-         return value.toInternalCacheEntry(key);
+      for (Response r : response) {
+         if (r.isSuccessful() && r instanceof SuccessfulResponse) {
+            InternalCacheValue value = (InternalCacheValue) ((SuccessfulResponse) r).getResponseValue();
+            return value.toInternalCacheEntry(key);
+         }
       }
       String message = "Unknown response from remote cache: " + response;
       log.error(message);
@@ -92,12 +92,12 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
       return ClusterCacheLoaderConfig.class;
    }
 
-   private List<Response> doRemoteCall(ClusteredGetCommand clusteredGetCommand) throws CacheLoaderException {
+   private Collection<Response> doRemoteCall(ClusteredGetCommand clusteredGetCommand) throws CacheLoaderException {
       Set<Address> validMembers = new HashSet<Address>(rpcManager.getTransport().getMembers());
       validMembers.remove(rpcManager.getTransport().getAddress());
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(validMembers);
       try {
-         return rpcManager.invokeRemotely(null, clusteredGetCommand, ResponseMode.WAIT_FOR_VALID_RESPONSE, config.getRemoteCallTimeout(), false, filter);
+         return rpcManager.invokeRemotely(null, clusteredGetCommand, ResponseMode.WAIT_FOR_VALID_RESPONSE, config.getRemoteCallTimeout(), false, filter).values();
       } catch (Exception e) {
          log.error("error while doing remote call", e);
          throw new CacheLoaderException(e);

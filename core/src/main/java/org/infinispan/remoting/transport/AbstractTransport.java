@@ -3,14 +3,14 @@ package org.infinispan.remoting.transport;
 import org.infinispan.CacheException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.NamedCacheNotFoundException;
-import org.infinispan.remoting.ReplicationException;
+import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * Common transport-related behaviour
@@ -34,7 +34,7 @@ public abstract class AbstractTransport implements Transport {
       return true;
    }
 
-   protected boolean parseResponseAndAddToResponseList(Object responseObject, List<Response> responseListToAddTo, boolean wasSuspected,
+   protected boolean parseResponseAndAddToResponseList(Object responseObject, Map<Address, Response> responseListToAddTo, boolean wasSuspected,
                                                        boolean wasReceived, Address sender, boolean usedResponseFilter)
            throws Exception
    {
@@ -54,7 +54,7 @@ public abstract class AbstractTransport implements Transport {
             Response response = (Response) responseObject;
             if (response instanceof ExceptionResponse) {
                Exception e = ((ExceptionResponse) response).getException();
-               if (!(e instanceof ReplicationException)) {
+               if (!(e instanceof RpcException)) {
                   // if we have any application-level exceptions make sure we throw them!!
                   if (shouldThrowException(e)) {
                      throw e;
@@ -63,7 +63,7 @@ public abstract class AbstractTransport implements Transport {
                   }
                }
             }
-            responseListToAddTo.add(response);
+            responseListToAddTo.put(sender, response);
          } else if (responseObject instanceof Exception) {
             Exception e = (Exception) responseObject;
             if (trace) log.trace("Unexpected exception from " + sender, e);

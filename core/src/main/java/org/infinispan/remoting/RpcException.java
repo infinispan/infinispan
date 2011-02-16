@@ -24,28 +24,28 @@ package org.infinispan.remoting;
 import org.infinispan.CacheException;
 
 /**
- * Thrown when a replication problem occurred
+ * Thrown when an RPC problem occurred
  *
  * @author (various)
  * @since 4.0
  */
-public class ReplicationException extends CacheException {
+public class RpcException extends CacheException {
 
    private static final long serialVersionUID = 33172388691879866L;
 
-   public ReplicationException() {
+   public RpcException() {
       super();
    }
 
-   public ReplicationException(Throwable cause) {
+   public RpcException(Throwable cause) {
       super(cause);
    }
 
-   public ReplicationException(String msg) {
+   public RpcException(String msg) {
       super(msg);
    }
 
-   public ReplicationException(String msg, Throwable cause) {
+   public RpcException(String msg, Throwable cause) {
       super(msg, cause);
    }
 
