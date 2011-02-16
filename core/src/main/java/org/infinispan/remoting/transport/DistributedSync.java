@@ -63,5 +63,5 @@ public interface DistributedSync {
    /**
     * Releases any processing locks that may be held by the current thread.
     */
-   void releaseProcessingLock();
+   void releaseProcessingLock(boolean exclusive);
 }

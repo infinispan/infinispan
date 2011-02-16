@@ -32,7 +32,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -63,7 +62,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 
 public class StateTransferManagerImpl implements StateTransferManager {
 
@@ -219,7 +220,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          oo.flush();
       }
       finally {
-         distributedSync.releaseProcessingLock();
+         distributedSync.releaseProcessingLock(true);
       }
    }
 
@@ -335,6 +336,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }
    }
 
+   @SuppressWarnings("unchecked")
    private void applyInMemoryState(ObjectInput i) throws StateTransferException {
       dataContainer.clear();
       try {
