@@ -92,8 +92,8 @@ public class InvertedLeaveTask extends RehashTask {
                            null, oldCH, newCH, leaversHandled);
 
                   log.debug("I %s am pulling state from %s", self, providers);
-                  List<Response> resps = rpcManager.invokeRemotely(providers, cmd, SYNCHRONOUS,
-                           configuration.getRehashRpcTimeout(), true);
+                  Collection<Response> resps = rpcManager.invokeRemotely(providers, cmd, SYNCHRONOUS,
+                           configuration.getRehashRpcTimeout(), true).values();
 
                   log.debug("I %s received response %s ", self, resps);
                   for (Response r : resps) {

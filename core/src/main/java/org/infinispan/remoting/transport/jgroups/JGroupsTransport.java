@@ -62,7 +62,9 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -184,7 +186,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          dispatcher.stop();
       }
 
-      if (members != null) members = null;
+      members = Collections.emptyList();
       coordinator = false;
       dispatcher = null;
    }
@@ -289,7 +291,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    public Address getCoordinator() {
       if (channel == null) return null;
       synchronized (membersListLock) {
-         while (members == null || members.isEmpty()) {
+         while (members.isEmpty()) {
             log.debug("Waiting on view being accepted");
             try {
                membersListLock.wait();
@@ -298,7 +300,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
                break;
             }
          }
-         return members == null || members.isEmpty() ? null : members.get(0);
+         return members.isEmpty() ? null : members.get(0);
       }
    }
 
@@ -368,14 +370,14 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    // outbound RPC
    // ------------------------------------------------------------------------------------------------------------------
 
-   public List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
                                         boolean usePriorityQueue, ResponseFilter responseFilter, boolean supportReplay)
            throws Exception {
 
       if (recipients != null && recipients.isEmpty()) {
          // don't send if dest list is empty
          log.trace("Destination list is empty: no need to send message");
-         return Collections.emptyList();
+         return Collections.emptyMap();
       }
 
       if (trace) log.trace("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
@@ -393,14 +395,11 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
                  timeout, recipients != null, usePriorityQueue,
                  toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, recipients == null || recipients.size() == members.size());
 
-         if (mode.isAsynchronous()) return Collections.emptyList();// async case
-
-//         if (trace)
-//            log.trace("Cache [%s], is caller thread interupted? %s: responses for command %s:\n%s", getAddress(), rpcCommand.getClass().getSimpleName(), rsps, Thread.currentThread().isInterrupted());
+         if (mode.isAsynchronous()) return Collections.emptyMap();// async case
 
          // short-circuit no-return-value calls.
-         if (rsps == null) return Collections.emptyList();
-         List<Response> retval = new ArrayList<Response>(rsps.size());
+         if (rsps == null) return Collections.emptyMap();
+         Map<Address, Response> retval = new HashMap<Address, Response>(rsps.size());
 
          boolean noValidResponses = true;
          for (Rsp rsp : rsps.values()) {

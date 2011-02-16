@@ -22,7 +22,7 @@
 package org.infinispan.remoting.rpc;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.remoting.ReplicationException;
+import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -30,7 +30,7 @@ import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Map;
 
 /**
  * Provides a mechanism for communicating with other caches in the cluster, by formatting and passing requests down to
@@ -52,10 +52,9 @@ public interface RpcManager {
     * @param usePriorityQueue if true, a priority queue is used to deliver messages.  May not be supported by all
     *                         implementations.
     * @param responseFilter   a response filter with which to filter out failed/unwanted/invalid responses.
-    * @return a list of responses from each member contacted.
-    * @throws Exception in the event of problems.
+    * @return a map of responses from each member contacted.
     */
-   List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter);
+   Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter);
 
    /**
     * Invokes an RPC call on other caches in the cluster.
@@ -68,9 +67,9 @@ public interface RpcManager {
     * @param usePriorityQueue if true, a priority queue is used to deliver messages.  May not be supported by all
     *                         implementations.
     * @return a list of responses from each member contacted.
-    * @throws Exception in the event of problems.
+    * @return a map of responses from each member contacted.
     */
-   List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue);
+   Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue);
 
    /**
     * Invokes an RPC call on other caches in the cluster.
@@ -80,10 +79,10 @@ public interface RpcManager {
     * @param rpcCommand the cache command to invoke
     * @param mode       the response mode to use
     * @param timeout    a timeout after which to throw a replication exception.
-    * @return a list of responses from each member contacted.
+    * @return a map of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
-   List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) throws Exception;
+   Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) throws Exception;
 
    /**
     * Initiates a state retrieval process from neighbouring caches.  This method will block until it either times out,
@@ -101,9 +100,9 @@ public interface RpcManager {
     *
     * @param rpc  command to execute remotely
     * @param sync if true, the transport will operate in sync mode.  Otherwise, it will operate in async mode.
-    * @throws ReplicationException in the event of problems
+    * @throws org.infinispan.remoting.RpcException in the event of problems
     */
-   void broadcastRpcCommand(ReplicableCommand rpc, boolean sync) throws ReplicationException;
+   void broadcastRpcCommand(ReplicableCommand rpc, boolean sync) throws RpcException;
 
    /**
     * Broadcasts an RPC command to the entire cluster.
@@ -112,9 +111,9 @@ public interface RpcManager {
     * @param sync             if true, the transport will operate in sync mode.  Otherwise, it will operate in async
     *                         mode.
     * @param usePriorityQueue if true, a priority queue is used
-    * @throws ReplicationException in the event of problems
+    * @throws org.infinispan.remoting.RpcException in the event of problems
     */
-   void broadcastRpcCommand(ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException;
+   void broadcastRpcCommand(ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws RpcException;
 
    /**
     * The same as {@link #broadcastRpcCommand(org.infinispan.commands.ReplicableCommand, boolean)} except that the task
@@ -143,9 +142,9 @@ public interface RpcManager {
     * @param recipients recipients to invoke remote command on
     * @param rpc        command to execute remotely
     * @param sync       if true, the transport will operate in sync mode.  Otherwise, it will operate in async mode.
-    * @throws ReplicationException in the event of problems
+    * @throws org.infinispan.remoting.RpcException in the event of problems
     */
-   void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws ReplicationException;
+   void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws RpcException;
 
    /**
     * Broadcasts an RPC command to a specified set of recipients
@@ -155,9 +154,9 @@ public interface RpcManager {
     * @param sync             if true, the transport will operate in sync mode.  Otherwise, it will operate in async
     *                         mode.
     * @param usePriorityQueue if true, a priority queue is used
-    * @throws ReplicationException in the event of problems
+    * @throws org.infinispan.remoting.RpcException in the event of problems
     */
-   List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException;
+   Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws RpcException;
 
    /**
     * The same as {@link #invokeRemotely(java.util.Collection, org.infinispan.commands.ReplicableCommand, boolean)}

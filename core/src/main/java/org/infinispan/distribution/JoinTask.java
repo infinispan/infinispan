@@ -3,17 +3,13 @@ package org.infinispan.distribution;
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.RehashControlCommand;
-import static org.infinispan.commands.control.RehashControlCommand.Type.*;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheValue;
-import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
-
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
@@ -21,9 +17,14 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+
+import static org.infinispan.commands.control.RehashControlCommand.Type.*;
+import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
+import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
 
 /**
  * 5.  JoinTask: This is a PULL based rehash.  JoinTask is kicked off on the JOINER.
@@ -58,8 +59,8 @@ public class JoinTask extends RehashTask {
    }
 
    @SuppressWarnings("unchecked")
-   private List<Address> parseResponses(List<Response> resp) {
-      for (Response r : resp) {
+   private List<Address> parseResponses(Map<Address, Response> resp) {
+      for (Response r : resp.values()) {
          if (r instanceof SuccessfulResponse) {
             return (List<Address>) ((SuccessfulResponse) r).getResponseValue();
          }
@@ -110,7 +111,7 @@ public class JoinTask extends RehashTask {
                RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE_JOIN, myAddress, null, chOld, chNew,null);
                // TODO I should be able to process state chunks from different nodes simultaneously!!
                List<Address> addressesWhoMaySendStuff = getAddressesWhoMaySendStuff(chNew, configuration.getNumOwners());
-               List<Response> resps = rpcManager.invokeRemotely(addressesWhoMaySendStuff, cmd, SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
+               Collection<Response> resps = rpcManager.invokeRemotely(addressesWhoMaySendStuff, cmd, SYNCHRONOUS, configuration.getRehashRpcTimeout(), true).values();
    
                // 7.  Apply state
                for (Response r : resps) {
@@ -153,11 +154,11 @@ public class JoinTask extends RehashTask {
    private void broadcastNewCh() {
       RehashControlCommand rehashControlCommand = cf.buildRehashControlCommand(JOIN_REHASH_START, self);
       rehashControlCommand.setNodeTopologyInfo(dmi.topologyInfo.getNodeTopologyInfo(rpcManager.getAddress()));
-      List<Response> responseList = rpcManager.invokeRemotely(null, rehashControlCommand, true, true);
+      Collection<Response> responseList = rpcManager.invokeRemotely(null, rehashControlCommand, true, true).values();
       updateTopologyInfo(responseList);
    }
 
-   private void updateTopologyInfo(List<Response> responseList) {
+   private void updateTopologyInfo(Collection<Response> responseList) {
       for (Response r : responseList) {
          if(r instanceof SuccessfulResponse) {
             SuccessfulResponse sr = (SuccessfulResponse) r;
@@ -186,12 +187,12 @@ public class JoinTask extends RehashTask {
         do {
             if (trace)
                 log.trace("Requesting old consistent hash from coordinator");
-            List<Response> resp;
+            Map<Address, Response> resp;
             List<Address> addresses;
             try {
                 resp = rpcManager.invokeRemotely(coordinator(), cf.buildRehashControlCommand(
-                                JOIN_REQ, self), SYNCHRONOUS, configuration.getRehashRpcTimeout(),
-                                true);
+                      JOIN_REQ, self), SYNCHRONOUS, configuration.getRehashRpcTimeout(),
+                                                 true);
                 addresses = parseResponses(resp);
                 if (log.isDebugEnabled())
                     log.debug("Retrieved old consistent hash address list %s", addresses);

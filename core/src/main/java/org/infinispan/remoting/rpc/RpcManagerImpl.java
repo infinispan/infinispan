@@ -12,7 +12,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.remoting.ReplicationException;
+import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
@@ -33,6 +33,7 @@ import java.text.NumberFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
@@ -88,17 +89,17 @@ public class RpcManagerImpl implements RpcManager {
       return !sync && replicationQueue != null && replicationQueue.isEnabled();
    }
 
-   public final List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) {
+   public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) {
       List<Address> members = t.getMembers();
       if (members.size() < 2) {
          if (log.isDebugEnabled())
             log.debug("We're the only member in the cluster; Don't invoke remotely.");
-         return Collections.emptyList();
+         return Collections.emptyMap();
       } else {
          long startTime = 0;
          if (statisticsEnabled) startTime = System.currentTimeMillis();
          try {
-            List<Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
+            Map<Address, Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
             if (isStatisticsEnabled()) replicationCount.incrementAndGet();
             return result;
          } catch (CacheException e) {
@@ -121,11 +122,11 @@ public class RpcManagerImpl implements RpcManager {
       }
    }
 
-   public final List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue) {
+   public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue) {
       return invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, null);
    }
 
-   public final List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) throws Exception {
+   public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) throws Exception {
       return invokeRemotely(recipients, rpcCommand, mode, timeout, false, null);
    }
 
@@ -189,11 +190,11 @@ public class RpcManagerImpl implements RpcManager {
       }
    }
 
-   public final void broadcastRpcCommand(ReplicableCommand rpc, boolean sync) throws ReplicationException {
+   public final void broadcastRpcCommand(ReplicableCommand rpc, boolean sync) throws RpcException {
       broadcastRpcCommand(rpc, sync, false);
    }
 
-   public final void broadcastRpcCommand(ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException {
+   public final void broadcastRpcCommand(ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws RpcException {
       if (useReplicationQueue(sync)) {
          replicationQueue.add(rpc);
       } else {
@@ -209,15 +210,15 @@ public class RpcManagerImpl implements RpcManager {
       invokeRemotelyInFuture(null, rpc, usePriorityQueue, l);
    }
 
-   public final void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws ReplicationException {
+   public final void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws RpcException {
       invokeRemotely(recipients, rpc, sync, false);
    }
 
-   public final List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException {
+   public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws RpcException {
       return invokeRemotely(recipients, rpc, sync, usePriorityQueue, configuration.getSyncReplTimeout());
    }
 
-   public final List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue, long timeout) throws ReplicationException {
+   public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue, long timeout) throws RpcException {
       if (trace) log.trace("%s broadcasting call %s to recipient list %s", t.getAddress(), rpc, recipients);
 
       if (useReplicationQueue(sync)) {
@@ -227,8 +228,8 @@ public class RpcManagerImpl implements RpcManager {
          if (!(rpc instanceof CacheRpcCommand)) {
             rpc = cf.buildSingleRpcCommand(rpc);
          }
-         List<Response> rsps = invokeRemotely(recipients, rpc, getResponseMode(sync), timeout, usePriorityQueue);
-         if (trace) log.trace("responses=" + rsps);
+         Map<Address, Response> rsps = invokeRemotely(recipients, rpc, getResponseMode(sync), timeout, usePriorityQueue);
+         if (trace) log.trace("Response(s) to %s is %s", rpc, rsps);
          if (sync) checkResponses(rsps);
          return rsps;
       }
@@ -269,16 +270,14 @@ public class RpcManagerImpl implements RpcManager {
    /**
     * Checks whether any of the responses are exceptions. If yes, re-throws them (as exceptions or runtime exceptions).
     */
-   private void checkResponses(List rsps) {
+   private void checkResponses(Map<Address, Response> rsps) {
       if (rsps != null) {
-         for (Object rsp : rsps) {
-            if (rsp != null && rsp instanceof Throwable) {
-               // lets print a stack trace first.
-               Throwable throwable = (Throwable) rsp;
-               if (trace) {
-                  log.trace("Received Throwable from remote cache", throwable);
-               }
-               throw new ReplicationException(throwable);
+         for (Map.Entry<Address, Response> rsp : rsps.entrySet()) {
+            if (rsp != null && rsp.getValue() instanceof Throwable) {
+               Throwable throwable = (Throwable) rsp.getValue();
+               if (trace)
+                  log.trace("Received Throwable from remote node %s", throwable, rsp.getKey());
+               throw new RpcException(throwable);
             }
          }
       }

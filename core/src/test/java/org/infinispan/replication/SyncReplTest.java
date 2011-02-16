@@ -6,27 +6,29 @@
  */
 package org.infinispan.replication;
 
-import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
+import static org.easymock.EasyMock.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 /**
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
@@ -128,7 +130,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       Cache cache1 = cache(0, "replSync");
       Transport originalTransport = null;
       RpcManagerImpl rpcManager = null;
-      List<Response> emptyResponses = Collections.emptyList();
+      Map<Address, Response> emptyResponses = Collections.emptyMap();
       try {
          Configuration asyncCache = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
          asyncCache.setUseAsyncMarshalling(true);

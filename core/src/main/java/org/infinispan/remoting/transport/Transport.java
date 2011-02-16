@@ -21,6 +21,7 @@ import org.infinispan.util.logging.Log;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -41,7 +42,6 @@ public interface Transport extends Lifecycle {
    /**
     * Initializes the transport with global cache configuration and transport-specific properties.
     *
-    * @param c             global cache-wide configuration
     * @param marshaller    marshaller to use for marshalling and unmarshalling
     * @param asyncExecutor executor to use for asynchronous calls
     * @param handler       handler for invoking remotely originating calls on the local cache
@@ -64,10 +64,10 @@ public interface Transport extends Lifecycle {
     *                         implementations.
     * @param responseFilter   a response filter with which to filter out failed/unwanted/invalid responses.
     * @param supportReplay    whether replays of missed messages is supported
-    * @return a list of responses from each member contacted.
+    * @return a map of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
-   List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
+   Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
                                  boolean usePriorityQueue, ResponseFilter responseFilter, boolean supportReplay) throws Exception;
 
    /**
