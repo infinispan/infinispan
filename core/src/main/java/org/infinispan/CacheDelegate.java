@@ -21,23 +21,6 @@
  */
 package org.infinispan;
 
-import static org.infinispan.context.Flag.*;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
@@ -93,6 +76,22 @@ import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
+
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.context.Flag.*;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -628,7 +627,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       return config.getCacheMode().isDistributed()
             && isSkipLoader
             && ((flags != null && flags.contains(Flag.SKIP_REMOTE_LOOKUP))
-                      || distributionManager.isLocal(key).isLocal());
+                      || distributionManager.getLocality(key).isLocal());
    }
 
    private boolean isSkipLoader(EnumSet<Flag> flags) {

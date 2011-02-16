@@ -186,7 +186,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext tcx, PrepareCommand cc) throws Throwable {
-         if (tcx.getRunningTransaction().equals(tx)) {
+         if (tcx.getTransaction().equals(tx)) {
             txsReady.countDown();
             rehashStarted.await();
          }
@@ -195,7 +195,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
 
       @Override
       public Object visitCommitCommand(TxInvocationContext tcx, CommitCommand cc) throws Throwable {
-         if (tcx.getRunningTransaction().equals(tx)) {
+         if (tcx.getTransaction().equals(tx)) {
             try {
                joinEnded.await();
             } catch (InterruptedException e) {
@@ -234,7 +234,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       @Override
       public Object visitPrepareCommand(TxInvocationContext tcx, PrepareCommand cc) throws Throwable {
          Object o = super.visitPrepareCommand(tcx, cc);
-         if (tcx.getRunningTransaction().equals(tx)) {
+         if (tcx.getTransaction().equals(tx)) {
             txsReady.countDown();
          }
          return o;
@@ -242,7 +242,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
 
       @Override
       public Object visitCommitCommand(TxInvocationContext tcx, CommitCommand cc) throws Throwable {
-         if (tcx.getRunningTransaction().equals(tx)) {
+         if (tcx.getTransaction().equals(tx)) {
             try {
                rehashStarted.await();
             } catch (InterruptedException e) {

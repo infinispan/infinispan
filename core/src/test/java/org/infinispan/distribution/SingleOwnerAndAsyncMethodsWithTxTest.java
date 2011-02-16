@@ -170,11 +170,11 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
       return getNonOwners(key)[0];
    }
 
-   protected Cache<Object, String>[] getOwners(Object key) {
+   public Cache<Object, String>[] getOwners(Object key) {
       return getOwners(key, 1);
    }
 
-   protected Cache<Object, String>[] getNonOwners(Object key) {
+   public Cache<Object, String>[] getNonOwners(Object key) {
       return getNonOwners(key, 1);
    }
 

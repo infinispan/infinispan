@@ -21,9 +21,8 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
@@ -121,8 +120,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     * @throws Throwable if there are problems
     */
    private Object remoteGetAndStoreInL1(InvocationContext ctx, Object key, boolean dmWasRehashingDuringLocalLookup, boolean isWrite) throws Throwable {
-      DistributionManager.IsLocalRes local = dm.isLocal(key);
-      boolean isMappedToLocalNode = local.isLocal();
+      DataLocality locality = dm.getLocality(key);
+      boolean isMappedToLocalNode = locality.isLocal();
 
       if (ctx.isOriginLocal() && !isMappedToLocalNode && isNotInL1(key)) {
          return realRemoteGet(ctx, key, true, isWrite);

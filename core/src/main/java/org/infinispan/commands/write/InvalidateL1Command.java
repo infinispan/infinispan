@@ -71,7 +71,7 @@ public class InvalidateL1Command extends InvalidateCommand {
          }
       } else {
          for (Object k : getKeys()) {
-            if (!dm.isLocal(k).isLocal()) invalidate(ctx, k);
+            if (!dm.getLocality(k).isLocal()) invalidate(ctx, k);
          }
       }
       return null;
@@ -86,7 +86,7 @@ public class InvalidateL1Command extends InvalidateCommand {
       if (ctx.isOriginLocal() || (forRehash && config.isL1OnRehash())) return true;
       boolean invoke = false;
       for (Object k: getKeys()) {
-         invoke = invoke || !dm.isLocal(k).isLocal();
+         invoke = invoke || !dm.getLocality(k).isLocal();
          if (invoke) return true;
       }
       return invoke;

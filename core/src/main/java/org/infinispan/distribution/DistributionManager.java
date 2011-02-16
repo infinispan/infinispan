@@ -29,36 +29,7 @@ import java.util.Set;
 @Scope(Scopes.NAMED_CACHE)
 public interface DistributionManager {
 
-   public static final IsLocalRes LOCAL_NO_REHASHING = new IsLocalRes(true, false);
-   public static final IsLocalRes LOCAL_WITH_REHASHING = new IsLocalRes(true, true);
-   public static final IsLocalRes NOT_LOCAL_WITH_REHASHING = new IsLocalRes(false, true);
-   public static final IsLocalRes NOT_LOCAL_NO_REHASHING = new IsLocalRes(false, false);
-
-   /**
-    * This represents an atomic way of obtaining information from the distribution manager's {@link #isLocal()}.
-    * The information returned contains two bits of data: does the key pertains to local node and there is a
-    * rehashing going on at the same moment.
-    */
-   public static class IsLocalRes {
-      private final boolean isLocal;
-      private final boolean isRehashing;
-
-      public IsLocalRes(boolean local, boolean rehashing) {
-         isLocal = local;
-         isRehashing = rehashing;
-      }
-
-      public boolean isLocal() {
-         return isLocal;
-      }
-
-      public boolean isRehashing() {
-         return isRehashing;
-      }
-   }
-
-
-   IsLocalRes isLocal(Object key);
+   DataLocality getLocality(Object key);
 
    /**
     * Locates a key in a cluster.  The returned addresses <i>may not</i> be owners of the keys if a rehash happens to be
