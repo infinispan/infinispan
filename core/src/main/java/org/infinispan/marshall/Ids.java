@@ -108,6 +108,8 @@ public interface Ids {
    static final byte DEFAULT_CONSISTENT_HASH = 51;
    static final byte UNION_CONSISTENT_HASH = 52;
    static final byte JOIN_COMPLETE_COMMAND = 53;
+   static final byte REMOTE_TX_LOG_DETAILS = 62;
+
    /*
     * ids for server modules
     */

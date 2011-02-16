@@ -12,9 +12,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
@@ -781,7 +779,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       protected Boolean strictPeerToPeer = true;      
       
       @ConfigurationDoc(name="distributedSyncTimeout",desc="Cluster-wide synchronization timeout for locks.  Used to coordinate changes in cluster membership.")
-      protected Long distributedSyncTimeout = 60000L; // default
+      protected Long distributedSyncTimeout = 240000L; // default
       
       @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setTransportClass")
       protected String transportClass = null; // The default constructor sets default to JGroupsTransport

@@ -48,4 +48,11 @@ public interface InboundInvocationHandler {
     * @throws StateTransferException in the event of problems
     */
    void generateState(String cacheName, OutputStream o) throws StateTransferException;
+
+   /**
+    * Calling this method should block if the invocation handler implementation has been queueing commands for a given
+    * named cache and is in the process of flushing this queue.  It would block until the queue has been drained.
+    * @param cacheName name of the cache for which the handler would be queueing requests.
+    */
+   void blockTillNoLongerRetrying(String cacheName);
 }

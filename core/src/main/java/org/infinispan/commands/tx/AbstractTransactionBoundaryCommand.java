@@ -21,9 +21,11 @@
  */
 package org.infinispan.commands.tx;
 
+import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.RemoteTransaction;
@@ -48,7 +50,21 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    protected InterceptorChain invoker;
    protected InvocationContextContainer icc;
    protected TransactionTable txTable;
+   protected Configuration configuration;
+   protected ComponentRegistry componentRegistry;
 
+   public void injectComponents(Configuration configuration, ComponentRegistry componentRegistry) {
+      this.configuration = configuration;
+      this.componentRegistry = componentRegistry;
+   }
+
+   public Configuration getConfiguration() {
+      return configuration;
+   }
+
+   public ComponentRegistry getComponentRegistry() {
+      return componentRegistry;
+   }
 
    public void init(InterceptorChain chain, InvocationContextContainer icc, TransactionTable txTable) {
       this.invoker = chain;
@@ -72,13 +88,25 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       globalTx.setRemote(isRemote);
    }
 
+   /**
+    * This is what is returned to remote callers when an invalid RemoteTransaction is encountered.  Can happen if a
+    * remote node propagates a transactional call to the current node, and the current node has no idea of the transaction
+    * in question.  Can happen during rehashing, when ownerships are reassigned during a transactions.
+    *
+    * Returning a null usually means the transactional command succeeded.
+    * @return return value to respond to a remote caller with if the transaction context is invalid.
+    */
+   protected Object invalidRemoteTxReturnValue() {
+      return null;
+   }
+
    public Object perform(InvocationContext ctx) throws Throwable {
       if (ctx != null) throw new IllegalStateException("Expected null context!");
       markGtxAsRemote();
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
       if (transaction == null) {
-         if (trace) log.info("Did not find a RemoteTransaction for " + globalTx);
-         return null;
+         if (trace) log.trace("Did not find a RemoteTransaction for %s", globalTx);
+         return invalidRemoteTxReturnValue();
       }
       visitRemoteTransaction(transaction);
       RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext();

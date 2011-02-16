@@ -5,7 +5,6 @@ import org.infinispan.util.Util;
 import org.infinispan.util.hash.Hash;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jgroups.blocks.ReplCache;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -25,7 +24,8 @@ import java.util.TreeMap;
  */
 public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash {
 
-   private static Log log = LogFactory.getLog(AbstractWheelConsistentHash.class);
+   protected final Log log;
+   protected final boolean trace;
    protected ArrayList<Address> addresses;
    protected SortedMap<Integer, Address> positions;
    // TODO: Maybe address and addressToHashIds can be combined in a LinkedHashMap?
@@ -33,6 +33,11 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    protected Hash hashFunction;
 
    final static int HASH_SPACE = 10240; // no more than 10k nodes?
+
+   protected AbstractWheelConsistentHash() {
+      log = LogFactory.getLog(getClass());
+      trace = log.isTraceEnabled();
+   }
 
    public void setHashFunction(Hash h) {
       hashFunction = h;
@@ -64,9 +69,6 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       addresses.clear();
       // reorder addresses as per the positions.
       for (Address a : positions.values()) addresses.add(a);
-      if (log.isTraceEnabled()) {
-         log.trace("Position are: " + positions);
-      }
    }
 
    @Override
@@ -93,7 +95,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          return hashId.intValue();
    }
 
-   protected int getNormalizedHash(Object key) {
+   public int getNormalizedHash(Object key) {
       // more efficient impl
       int keyHashCode = hashFunction.hash(key);
       if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;

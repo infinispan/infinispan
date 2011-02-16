@@ -26,11 +26,11 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.InboundInvocationHandler;
+import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -59,13 +59,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.util.Util.formatString;
-import static org.infinispan.util.Util.prettyPrintTime;
-import static org.infinispan.util.Util.rewrapAsCacheException;
+import static org.infinispan.util.Util.*;
 
 /**
  * A JGroups RPC dispatcher that knows how to deal with {@link ReplicableCommand}s.
@@ -80,11 +77,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    long distributedSyncTimeout;
    private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    private static final boolean trace = log.isTraceEnabled();
-   AtomicBoolean newCacheStarting = new AtomicBoolean(false);
    private static final boolean FORCE_MCAST = Boolean.getBoolean("infinispan.unsafe.force_multicast");
-
-   public CommandAwareRpcDispatcher() {
-   }
 
    public CommandAwareRpcDispatcher(Channel channel,
                                     JGroupsTransport transport,
@@ -160,35 +153,10 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
-   protected Response executeCommand(CacheRpcCommand cmd, Message req) throws Throwable {
+   private Response executeCommand(CacheRpcCommand cmd, Message req) throws Throwable {
       if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
       if (trace) log.trace("Attempting to execute command: %s [sender=%s]", cmd, req.getSrc());
-
-      boolean unlock = false;
-      try {
-         distributedSync.acquireProcessingLock(false, distributedSyncTimeout, MILLISECONDS);
-         unlock = true;
-         DistributedSync.SyncResponse sr = distributedSync.blockUntilReleased(distributedSyncTimeout, MILLISECONDS);
-
-         // If this thread blocked during a NBST flush, then inform the sender
-         // it needs to replay ignored messages
-         boolean replayIgnored = sr == DistributedSync.SyncResponse.STATE_ACHIEVED;
-
-         Response resp = inboundInvocationHandler.handle(cmd);
-
-         // A null response is valid and OK ...
-         if (resp == null || resp.isValid()) {
-            if (replayIgnored) resp = new ExtendedResponse(resp, true);
-         } else {
-            // invalid response
-            newCacheStarting.set(true);
-            if (trace) log.trace("Unable to execute command, got invalid response");
-         }
-
-         return resp;
-      } finally {
-         if (unlock) distributedSync.releaseProcessingLock(false);
-      }
+      return inboundInvocationHandler.handle(cmd);
    }
 
    @Override
@@ -395,8 +363,10 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
       public RspList getResponseList() throws Exception {
          long giveupTime = System.currentTimeMillis() + timeout;
+         boolean notTimedOut = true;
          synchronized (this) {
-            while (giveupTime > System.currentTimeMillis() && expectedResponses > 0 && retval == null)
+            notTimedOut = giveupTime > System.currentTimeMillis();
+            while (notTimedOut && expectedResponses > 0 && retval == null)
                this.wait(timeout);
          }
 
@@ -405,6 +375,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             return retval;
          else if (exception != null)
             throw exception;
+         else if (notTimedOut)
+            throw new RpcException(format("No more valid responses.  Received invalid responses from all of %s", futures.values()));
          else
             throw new TimeoutException(format("Timed out waiting for %s for valid responses from any of %s.", Util.prettyPrintTime(timeout), futures.values()));
       }

@@ -3,19 +3,11 @@ package org.infinispan.distribution.ch;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
-import org.infinispan.util.hash.Hash;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
@@ -23,8 +15,6 @@ import static java.lang.Math.min;
 
 @Marshallable(externalizer = DefaultConsistentHash.Externalizer.class, id = Ids.DEFAULT_CONSISTENT_HASH)
 public class DefaultConsistentHash extends AbstractWheelConsistentHash {
-
-   private static Log log = LogFactory.getLog(DefaultConsistentHash.class);
 
    public List<Address> locate(Object key, int replCount) {
       int hash = getNormalizedHash(key);
@@ -175,14 +165,14 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
    }
 
    public List<Address> getStateProvidersOnLeave(Address leaver, int replCount) {
-      if (log.isTraceEnabled()) log.trace("List of addresses is: " + addresses + ". leaver is: " + leaver);
+      if (trace) log.trace("List of addresses is: %s. leaver is: %s", addresses, leaver);
       Set<Address> holders = new HashSet<Address>();
       for (Address address : addresses) {
          if (isAdjacent(leaver, address)) {
             holders.add(address);
-            if (log.isTraceEnabled()) log.trace(address + " is state holder");
+            if (trace) log.trace("%s is state holder", address);
          } else {
-            if (log.isTraceEnabled()) log.trace(address + " NOT state holder");
+            if (trace) log.trace("%s is NOT state holder", address);
          }
       }
       return new ArrayList<Address>(holders);

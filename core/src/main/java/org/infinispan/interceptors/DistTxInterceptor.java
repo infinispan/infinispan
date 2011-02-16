@@ -61,14 +61,17 @@ public class DistTxInterceptor extends TxInterceptor {
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand cmd) throws Throwable {
+      Object rv = super.visitRollbackCommand(ctx, cmd);
       dm.getTransactionLogger().logIfNeeded(cmd);
-      return super.visitRollbackCommand(ctx, cmd);
+      return rv;
    }
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand cmd) throws Throwable {
-      dm.getTransactionLogger().logIfNeeded(cmd);
-      return super.visitCommitCommand(ctx, cmd);
+      dm.getTransactionLogger().logModificationsIfNeeded(cmd, ctx);
+      Object rv = super.visitCommitCommand(ctx, cmd);
+      dm.getTransactionLogger().logIfNeeded(cmd, ctx);
+      return rv;
    }
 
    @Override

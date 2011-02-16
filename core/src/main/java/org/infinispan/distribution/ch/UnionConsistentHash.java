@@ -63,7 +63,7 @@ public class UnionConsistentHash extends AbstractConsistentHash {
 
    @Override
    public List<Address> getBackupsForNode(Address node, int replCount) {
-      throw new UnsupportedOperationException("Unsupported!");
+      return oldCH.locate(node, replCount);
    }
 
    @Override
@@ -93,13 +93,5 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new UnionConsistentHash((ConsistentHash) input.readObject(), (ConsistentHash) input.readObject());
       }
-   }
-
-   public ConsistentHash getOldCH() {
-      return oldCH;
-   }
-
-   public ConsistentHash getNewCH() {
-      return newCH;
    }
 }

@@ -21,13 +21,10 @@
  */
 package org.infinispan.commands.remote;
 
-import java.util.Collections;
-import java.util.Set;
-
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.container.DataContainer;
+import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -37,12 +34,16 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * Issues a remote get call.  This is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up the
@@ -62,13 +63,28 @@ public class ClusteredGetCommand implements CacheRpcCommand, FlagAffectedCommand
    private Object key;
    private String cacheName;
 
-   private DataContainer dataContainer;
    private InvocationContextContainer icc;
    private CommandsFactory commandsFactory;
    private InterceptorChain invoker;
 
-   private DistributionManager distributionManager;
    private Set<Flag> flags;
+   protected Configuration configuration;
+   protected ComponentRegistry componentRegistry;
+
+   private DistributionManager distributionManager;
+
+   public void injectComponents(Configuration configuration, ComponentRegistry componentRegistry) {
+      this.configuration = configuration;
+      this.componentRegistry = componentRegistry;
+   }
+
+   public Configuration getConfiguration() {
+      return configuration;
+   }
+
+   public ComponentRegistry getComponentRegistry() {
+      return componentRegistry;
+   }
 
    public ClusteredGetCommand() {
    }
@@ -83,8 +99,9 @@ public class ClusteredGetCommand implements CacheRpcCommand, FlagAffectedCommand
       this(key, cacheName, Collections.<Flag>emptySet());
    }
 
-   public void initialize(DataContainer dataContainer, InvocationContextContainer icc, CommandsFactory commandsFactory, InterceptorChain interceptorChain) {
-      this.dataContainer = dataContainer;
+   public void initialize(InvocationContextContainer icc, CommandsFactory commandsFactory,
+                          InterceptorChain interceptorChain, DistributionManager distributionManager) {
+      this.distributionManager = distributionManager;
       this.icc = icc;
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;

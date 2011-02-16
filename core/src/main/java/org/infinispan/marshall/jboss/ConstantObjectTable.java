@@ -53,6 +53,7 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.distribution.RemoteTransactionLogDetails;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
@@ -181,6 +182,7 @@ public class ConstantObjectTable implements ObjectTable {
       MARSHALLABLES.add("org.infinispan.server.hotrod.TopologyAddress");
       MARSHALLABLES.add("org.infinispan.server.hotrod.TopologyView");
 
+      MARSHALLABLES.add(RemoteTransactionLogDetails.class.getName());
    }
 
    /**

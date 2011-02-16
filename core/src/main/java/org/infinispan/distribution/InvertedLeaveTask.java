@@ -8,14 +8,10 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
@@ -32,24 +28,21 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static java.lang.System.currentTimeMillis;
 import static org.infinispan.commands.control.RehashControlCommand.Type.LEAVE_REHASH_END;
 import static org.infinispan.commands.control.RehashControlCommand.Type.PULL_STATE_LEAVE;
-import static org.infinispan.remoting.rpc.ResponseMode.ASYNCHRONOUS;
 import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
+import static org.infinispan.util.Util.prettyPrintTime;
 
 /**
- *A task to handle rehashing for when a node leaves the cluster
- * 
+ * A task to handle rehashing for when a node leaves the cluster
+ *
  * @author Vladimir Blagojevic
  * @author Manik Surtani
  * @since 4.0
  */
 public class InvertedLeaveTask extends RehashTask {
-
-   private static final Log log = LogFactory.getLog(InvertedLeaveTask.class);
-   private static final boolean trace = log.isTraceEnabled();
    private final DistributionManagerImpl distributionManager;
-   private final Address self;
    private final List<Address> leaversHandled;
    private final List<Address> providers;
    private final List<Address> receivers;
@@ -57,63 +50,67 @@ public class InvertedLeaveTask extends RehashTask {
    private final boolean isSender;
 
    public InvertedLeaveTask(DistributionManagerImpl dmi, RpcManager rpcManager, Configuration conf,
-            CommandsFactory commandsFactory, DataContainer dataContainer, DistributionManagerImpl leavers,
-            List<Address> stateProviders, List<Address> stateReceivers, boolean isReceiver) {
+                            CommandsFactory commandsFactory, DataContainer dataContainer,
+                            List<Address> stateProviders, List<Address> stateReceivers, boolean isReceiver) {
       super(dmi, rpcManager, conf, commandsFactory, dataContainer);
-      this.distributionManager = leavers;
-      this.leaversHandled = distributionManager.getLeavers();
+      this.distributionManager = dmi;
+      this.leaversHandled = new LinkedList<Address>(distributionManager.getLeavers());
       this.providers = stateProviders;
       this.receivers = stateReceivers;
-      this.isReceiver = isReceiver;      
-      this.self = rpcManager.getTransport().getAddress();
+      this.isReceiver = isReceiver;
       this.isSender = stateProviders.contains(self);
    }
 
-   @SuppressWarnings("unchecked")
-   private Map<Object, InternalCacheValue> getStateFromResponse(SuccessfulResponse r) {
-      return (Map<Object, InternalCacheValue>) r.getResponseValue();
-   }
-
    protected void performRehash() throws Exception {
-      long start = trace ? System.currentTimeMillis() : 0;
+      long start = currentTimeMillis();
 
       int replCount = configuration.getNumOwners();
-      ConsistentHash newCH = dmi.getConsistentHash();
-      ConsistentHash oldCH = ConsistentHashHelper.createConsistentHash(configuration, newCH.getCaches(), leaversHandled, dmi.topologyInfo);
+      ConsistentHash newCH = this.distributionManager.getConsistentHash();
+      ConsistentHash oldCH = ConsistentHashHelper.createConsistentHash(configuration, newCH.getCaches(), leaversHandled, this.distributionManager.topologyInfo);
 
       try {
-         log.debug("Starting leave rehash[enabled=%s,isReceiver=%s,isSender=%s] on node %s",
-                  configuration.isRehashEnabled(), isReceiver, isSender, self);
+         log.debug("Starting leave rehash[enabled=%s,isReceiver=%s,isSender=%s] on node %s", configuration.isRehashEnabled(), isReceiver, isSender, self);
+         // Handling leaves are tough.  We need to prevent any LOCAL transactions from running, if we are a receiver
+         // of state.
+         if (isReceiver) this.distributionManager.getTransactionLogger().blockNewTransactions();
+
 
          if (configuration.isRehashEnabled()) {
             if (isReceiver) {
+               // optimise ...
+               providers.remove(self);
+
                try {
                   RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE_LEAVE, self,
-                           null, oldCH, newCH, leaversHandled);
+                                                                          null, oldCH, newCH, leaversHandled);
 
                   log.debug("I %s am pulling state from %s", self, providers);
-                  Collection<Response> resps = rpcManager.invokeRemotely(providers, cmd, SYNCHRONOUS,
-                           configuration.getRehashRpcTimeout(), true).values();
-
-                  log.debug("I %s received response %s ", self, resps);
-                  for (Response r : resps) {
-                     if (r instanceof SuccessfulResponse) {
-                        Map<Object, InternalCacheValue> state = getStateFromResponse((SuccessfulResponse) r);
-                        log.debug("I %s am applying state %s ", self, state);
-                        dmi.applyState(newCH, state);
-                     }
+                  Set<Future<Void>> stateRetrievalProcesses = new HashSet<Future<Void>>(providers.size());
+                  for (Address stateProvider : providers) {
+                     stateRetrievalProcesses.add(
+                           statePullExecutor.submit(new LeaveStateGrabber(stateProvider, cmd, newCH))
+                     );
                   }
+
+                  // Wait for all this state to be applied, in parallel.
+                  log.trace("State retrieval being processed.");
+                  for (Future<Void> f : stateRetrievalProcesses) f.get();
+                  log.trace("State retrieval from %s completed.", providers);
+
                } finally {
+                  // Inform state senders that state has been applied successfully so they can proceed.
+                  // Needs to be SYNC - we need to make sure these messages don't get 'lost' or you end up with a
+                  // blocked up cluster
+                  log.trace("Informing %s that state has been applied.", providers);
                   RehashControlCommand c = cf.buildRehashControlCommand(LEAVE_REHASH_END, self);
-                  rpcManager.invokeRemotely(providers, c, ASYNCHRONOUS, configuration.getRehashRpcTimeout(), false);
+                  rpcManager.invokeRemotely(providers, c, SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
                }
             }
             if (isSender) {
                Set<Address> recCopy = new HashSet<Address>(receivers);
-               if(isReceiver) {
-                  recCopy.remove(self);
-               }
-               dmi.awaitLeaveRehashAcks(recCopy, configuration.getStateRetrievalTimeout());
+               recCopy.remove(self);
+
+               this.distributionManager.awaitLeaveRehashAcks(recCopy, configuration.getStateRetrievalTimeout());
                processAndDrainTxLog(oldCH, newCH, replCount);
                invalidateInvalidHolders(leaversHandled, oldCH, newCH);
             }
@@ -121,24 +118,18 @@ public class InvertedLeaveTask extends RehashTask {
       } catch (Exception e) {
          throw new CacheException("Unexpected exception", e);
       } finally {
-         distributionManager.removeLeavers(leaversHandled);
-         if (trace)
-            log.info("Completed leave rehash on node %s in %s", self,
-                     Util.prettyPrintTime(System.currentTimeMillis() - start));
-         else
-            log.info("Completed leave rehash on node %s", self);
-
-         for (Address addr : leaversHandled)
-            dmi.topologyInfo.removeNodeInfo(addr);
-         dmi.rehashInProgress = false;
+         for (Address addr : leaversHandled) this.distributionManager.markLeaverAsHandled(addr);
+         if (isReceiver) this.distributionManager.getTransactionLogger().unblockNewTransactions();
+         log.info("Completed leave rehash on node %s in %s - leavers now are %s", self, prettyPrintTime(currentTimeMillis() - start), this.distributionManager.leavers);
       }
    }
+
 
    private void processAndDrainTxLog(ConsistentHash oldCH, ConsistentHash newCH, int replCount) {
 
       List<WriteCommand> c;
       int i = 0;
-      TransactionLogger transactionLogger = dmi.getTransactionLogger();
+      TransactionLogger transactionLogger = this.distributionManager.getTransactionLogger();
       if (trace)
          log.trace("Processing transaction log iteratively: " + transactionLogger);
       while (transactionLogger.shouldDrainWithoutLock()) {
@@ -152,7 +143,7 @@ public class InvertedLeaveTask extends RehashTask {
 
       if (trace)
          log.trace("Processing transaction log: final drain and lock");
-      c = transactionLogger.drainAndLock();
+      c = transactionLogger.drainAndLock(null);
       if (trace)
          log.trace("Found %s modifications", c.size());
       apply(oldCH, newCH, replCount, c);
@@ -191,7 +182,7 @@ public class InvertedLeaveTask extends RehashTask {
       if (trace)
          log.trace("Finished pushing pending prepares; unlocking and disabling transaction logging");
 
-      transactionLogger.unlockAndDisable();
+      transactionLogger.unlockAndDisable(null);
    }
 
    private void apply(ConsistentHash oldCH, ConsistentHash newCH, int replCount, List<WriteCommand> wc) {
@@ -211,7 +202,7 @@ public class InvertedLeaveTask extends RehashTask {
          NotifyingNotifiableFuture<Object> f = new NotifyingFutureImpl(null);
          pushFutures.add(f);
          rpcManager.invokeRemotelyInFuture(Collections.singleton(entry.getKey()), push, true, f,
-                  configuration.getRehashRpcTimeout());
+                                           configuration.getRehashRpcTimeout());
       }
 
       for (Future f : pushFutures) {
@@ -225,10 +216,18 @@ public class InvertedLeaveTask extends RehashTask {
       }
    }
 
-   @Override
-   protected Log getLog() {
-      return log;
+   protected final class LeaveStateGrabber extends StateGrabber {
+
+      public LeaveStateGrabber(Address stateProvider, ReplicableCommand command, ConsistentHash newConsistentHash) {
+         super(stateProvider, command, newConsistentHash);
+      }
+
+      @Override
+      protected boolean isForLeave() {
+         return true;
+      }
    }
+
 }
 
 abstract class StateMap<S> {
@@ -297,8 +296,8 @@ abstract class CommandAggregatingStateMap<T extends ReplicableCommand> extends S
 }
 
 /**
- * Specific version of the CommandAggregatingStateMap that aggregates PrepareCommands, used to flush pending prepares
- * to nodes during a leave.
+ * Specific version of the CommandAggregatingStateMap that aggregates PrepareCommands, used to flush pending prepares to
+ * nodes during a leave.
  */
 class PendingPreparesMap extends CommandAggregatingStateMap<PrepareCommand> {
    PendingPreparesMap(List<Address> leavers, ConsistentHash oldCH, ConsistentHash newCH, int replCount) {
@@ -312,8 +311,8 @@ class PendingPreparesMap extends CommandAggregatingStateMap<PrepareCommand> {
 }
 
 /**
- * Specific version of the CommandAggregatingStateMap that aggregates PrepareCommands, used to flush writes
- * made while state was being transferred to nodes during a leave. 
+ * Specific version of the CommandAggregatingStateMap that aggregates PrepareCommands, used to flush writes made while
+ * state was being transferred to nodes during a leave.
  */
 class TransactionLogMap extends CommandAggregatingStateMap<WriteCommand> {
    TransactionLogMap(List<Address> leavers, ConsistentHash oldCH, ConsistentHash newCH, int replCount) {

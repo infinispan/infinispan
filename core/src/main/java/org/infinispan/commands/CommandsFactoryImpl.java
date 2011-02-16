@@ -25,8 +25,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
-import static org.infinispan.commands.control.RehashControlCommand.Type.DRAIN_TX_PREPARES;
-import static org.infinispan.commands.control.RehashControlCommand.Type.DRAIN_TX;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
@@ -52,8 +50,8 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
@@ -70,6 +68,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.infinispan.commands.control.RehashControlCommand.Type.LEAVE_DRAIN_TX;
+import static org.infinispan.commands.control.RehashControlCommand.Type.LEAVE_DRAIN_TX_PREPARES;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -289,7 +290,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ClusteredGetCommand.COMMAND_ID:
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
-            clusteredGetCommand.initialize(dataContainer, icc, this, interceptorChain);
+            clusteredGetCommand.initialize(icc, this, interceptorChain, distributionManager);
             break;
          case LockControlCommand.COMMAND_ID:
             LockControlCommand lcc = (LockControlCommand) c;
@@ -330,16 +331,20 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    public RehashControlCommand buildRehashControlCommandTxLog(Address sender, List<WriteCommand> commands) {
-      return new RehashControlCommand(cacheName, DRAIN_TX, sender, commands, null, this);
+      return new RehashControlCommand(cacheName, LEAVE_DRAIN_TX, sender, commands, null, this);
    }
 
    public RehashControlCommand buildRehashControlCommandTxLogPendingPrepares(Address sender, List<PrepareCommand> commands) {
-      return new RehashControlCommand(cacheName, DRAIN_TX_PREPARES, sender, null, commands, this);
+      return new RehashControlCommand(cacheName, LEAVE_DRAIN_TX_PREPARES, sender, null, commands, this);
    }  
    
    public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type,
             Address sender, Map<Object, InternalCacheValue> state, ConsistentHash oldCH,
             ConsistentHash newCH, List<Address> leavers) {
       return new RehashControlCommand(cacheName, type, sender, state, oldCH, newCH, leavers, this);
+   }
+
+   public String getCacheName() {
+      return cacheName;
    }
 }
