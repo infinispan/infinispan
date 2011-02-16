@@ -477,4 +477,13 @@ public final class Util {
       else
          return Collections.singleton(a[0]);
    }
+
+   /**
+    * Prints the identity hash code of the object passed as parameter
+    * in an hexadecimal format in order to safe space.
+    */
+   public static String hexIdHashCode(Object o) {
+      return Integer.toHexString(System.identityHashCode(o));
+   }
+
 }

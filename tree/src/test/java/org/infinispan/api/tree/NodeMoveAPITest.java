@@ -13,6 +13,7 @@ import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
 import org.infinispan.tree.TreeCacheImpl;
 import org.infinispan.tree.TreeStructureSupport;
+import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -96,9 +97,9 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
       nodeC = treeCache.getNode(Fqn.fromRelativeFqn(nodeB.getFqn(), C));
 
       log.info("POST MOVE " + treeCache);
-      log.info("HC " + nodeC + " " + System.identityHashCode(nodeC));
+      log.info("HC " + nodeC + " " + Util.hexIdHashCode(nodeC));
       Node x = treeCache.getRoot().getChild(Fqn.fromString("b/c"));
-      log.info("HC " + x + " " + System.identityHashCode(x));
+      log.info("HC " + x + " " + Util.hexIdHashCode(x));
       /*
          /a
          /b/c

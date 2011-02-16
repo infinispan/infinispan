@@ -212,7 +212,7 @@ public class MarshalledValue {
          .append("instance=").append(instance != null ? instance.toString() : "<serialized>")
          .append(", serialized=").append(raw != null ?  Util.printArray(raw, false) : "false")
          .append(", cachedHashCode=").append(cachedHashCode)
-         .append("}@").append(Integer.toHexString(System.identityHashCode(this)));
+         .append("}@").append(Util.hexIdHashCode(this));
       return sb.toString();
    }
 
