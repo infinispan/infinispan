@@ -13,7 +13,6 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -152,7 +151,7 @@ public class InvalidateL1Command extends InvalidateCommand {
    @Override
    public String toString() {
       return getClass().getSimpleName() + "{" +
-            "keys=" + Arrays.toString(keys) +
+            "num keys=" + (keys == null ? 0 : keys.length) +
             ", forRehash=" + forRehash +
             '}';
    }

@@ -95,7 +95,7 @@ public class TransactionXaAdapter implements XAResource {
    public void commit(Xid xid, boolean isOnePhase) throws XAException {
       LocalTransaction localTransaction = getLocalTransactionAndValidate(xid);
 
-      if (trace) log.trace("committing transaction %s" + localTransaction.getGlobalTransaction());
+      if (trace) log.trace("Committing transaction %s", localTransaction.getGlobalTransaction());
       try {
          LocalTxInvocationContext ctx = icc.createTxInvocationContext();
          ctx.setLocalTransaction(localTransaction);
