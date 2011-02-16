@@ -171,7 +171,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
 
       assertOnAllCachesAndOwnership("k1", "value");
 
-      assert !nonOwner.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class).isLocal("k1").isLocal();
+      assert !nonOwner.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class).getLocality("k1").isLocal();
       retval = nonOwner.replace("k1", "value", "value2");
       asyncWait("k1", ReplaceCommand.class, getSecondNonOwner("k1"));
       if (testRetVals) assert retval : "Should have replaced";

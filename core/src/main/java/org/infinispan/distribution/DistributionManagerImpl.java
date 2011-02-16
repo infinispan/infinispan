@@ -348,24 +348,23 @@ public class DistributionManagerImpl implements DistributionManager {
       return result;
    }
 
-   public IsLocalRes isLocal(Object key) {
+   public DataLocality getLocality(Object key) {
       chSwitchLock.readLock().lock();
       try {
-         if (consistentHash == null) {
-            return LOCAL_NO_REHASHING;
-         }
+         if (consistentHash == null) return DataLocality.LOCAL;
+
          boolean local = consistentHash.isKeyLocalToAddress(self, key, getReplCount());
          if (isRehashInProgress()) {
             if (local) {
-               return LOCAL_WITH_REHASHING;
+               return DataLocality.LOCAL_UNCERTAIN;
             } else {
-               return NOT_LOCAL_WITH_REHASHING;
+               return DataLocality.NOT_LOCAL_UNCERTAIN;
             }
          } else {
             if (local) {
-               return LOCAL_NO_REHASHING;
+               return DataLocality.LOCAL;
             } else {
-               return NOT_LOCAL_NO_REHASHING;
+               return DataLocality.NOT_LOCAL;
             }
          }
 
@@ -574,7 +573,8 @@ public class DistributionManagerImpl implements DistributionManager {
       boolean nodeLeaving;
       try {
          nodeLeaving = !leavers.isEmpty();
-         if (trace) log.trace("Node leaving? %s RehashInProgress? %s Leavers = %s", nodeLeaving, rehashInProgress, leavers);
+         if (trace)
+            log.trace("Node leaving? %s RehashInProgress? %s Leavers = %s", nodeLeaving, rehashInProgress, leavers);
       } finally {
          chSwitchLock.readLock().unlock();
       }
@@ -688,7 +688,7 @@ public class DistributionManagerImpl implements DistributionManager {
    @ManagedOperation(description = "Tells you whether a given key is local to this instance of the cache.  Only works with String keys.")
    @Operation(displayName = "Is key local?")
    public boolean isLocatedLocally(@Parameter(name = "key", description = "Key to query") String key) {
-      return isLocal(key).isLocal();
+      return getLocality(key).isLocal();
    }
 
    @ManagedOperation(description = "Locates an object in a cluster.  Only works with String keys.")

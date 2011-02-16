@@ -115,7 +115,7 @@ public class DistTxInterceptor extends TxInterceptor {
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
          Map newMap = new HashMap();
          for (Map.Entry entry : command.getMap().entrySet()) {
-            if (dm.isLocal(entry.getKey()).isLocal()) newMap.put(entry.getKey(), entry.getValue());
+            if (dm.getLocality(entry.getKey()).isLocal()) newMap.put(entry.getKey(), entry.getValue());
          }
 
          if (newMap.isEmpty()) return null;
@@ -139,7 +139,7 @@ public class DistTxInterceptor extends TxInterceptor {
       }
 
       private VisitableCommand visitDataWriteCommand(DataWriteCommand command) {
-         return dm.isLocal(command.getKey()).isLocal() ? command : null;
+         return dm.getLocality(command.getKey()).isLocal() ? command : null;
       }
 
       @Override
