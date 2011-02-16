@@ -15,12 +15,9 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -135,7 +132,6 @@ public class TestCacheManagerFactory {
 
    public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig, boolean transactional) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
-      globalConfiguration.setTransportNodeName(perThreadCacheManagers.get().getNextCacheName());
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
       amendTransport(globalConfiguration);
@@ -288,6 +284,7 @@ public class TestCacheManagerFactory {
          }
          newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
          configuration.setTransportProperties(newTransportProps);
+         configuration.setTransportNodeName(perThreadCacheManagers.get().getNextCacheName());
       }
    }
 
