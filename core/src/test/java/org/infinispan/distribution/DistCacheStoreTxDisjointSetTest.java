@@ -13,8 +13,8 @@ import java.util.Set;
 
 import static java.lang.String.format;
 import static org.infinispan.distribution.BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete;
-import static org.infinispan.distribution.BaseDistFunctionalTest.addressOf;
-import static org.infinispan.distribution.BaseDistFunctionalTest.isOwner;
+import static org.infinispan.distribution.DistributionTestHelper.addressOf;
+import static org.infinispan.distribution.DistributionTestHelper.isOwner;
 
 /**
  * This tests the access pattern where a Tx touches multiple keys such that: K1: {A, B} K2: {A, C}
