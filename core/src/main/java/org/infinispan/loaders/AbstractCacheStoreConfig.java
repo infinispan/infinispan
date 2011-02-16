@@ -56,6 +56,17 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
    protected SingletonStoreConfig singletonStore = new SingletonStoreConfig();
 
    protected AsyncStoreConfig async = new AsyncStoreConfig();
+   
+
+   @Override
+   public AsyncStoreConfig configureAsyncStore() {
+      return async;
+   }
+
+   @Override
+   public SingletonStoreConfig configureSingletonStore() {
+      return singletonStore;
+   }
 
    @XmlAttribute
    public Boolean isPurgeSynchronously() {
@@ -84,6 +95,17 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
    public void setPurgeSynchronously(Boolean purgeSynchronously) {
       testImmutability("purgeSynchronously");
       this.purgeSynchronously = purgeSynchronously;
+   }
+   
+   /**
+    * If true, CacheStore#purgeExpired() call will be done synchronously
+    * 
+    * @param purgeSynchronously
+    */
+   public CacheStoreConfig purgeSynchronously(Boolean purgeSynchronously) {
+      testImmutability("purgeSynchronously");
+      this.purgeSynchronously = purgeSynchronously;
+      return this;
    }
 
    /**
@@ -117,6 +139,24 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       testImmutability("fetchPersistentState");
       this.fetchPersistentState = fetchPersistentState;
    }
+   
+   /**
+    * If true, fetch persistent state when joining a cluster. If multiple cache stores are chained,
+    * only one of them can have this property enabled. Persistent state transfer with a shared cache
+    * store does not make sense, as the same persistent store that provides the data will just end
+    * up receiving it. Therefore, if a shared cache store is used, the cache will not allow a
+    * persistent state transfer even if a cache store has this property set to true. Finally,
+    * setting it to true only makes sense if in a clustered environment, and only 'replication' and
+    * 'invalidation' cluster modes are supported.
+    * 
+    * 
+    * @param fetchPersistentState
+    */
+   public CacheStoreConfig fetchPersistentState(Boolean fetchPersistentState) {
+      testImmutability("fetchPersistentState");
+      this.fetchPersistentState = fetchPersistentState;
+      return this;
+   }
 
    /**
     * If true, any operation that modifies the cache (put, remove, clear, store...etc) won't be
@@ -127,7 +167,20 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
     */
    public void setIgnoreModifications(Boolean ignoreModifications) {
       testImmutability("ignoreModifications");
+      this.ignoreModifications = ignoreModifications;    
+   }
+   
+   /**
+    * If true, any operation that modifies the cache (put, remove, clear, store...etc) won't be
+    * applied to the cache store. This means that the cache store could become out of sync with the
+    * cache.
+    * 
+    * @param ignoreModifications
+    */
+   public CacheStoreConfig ignoreModifications(Boolean ignoreModifications) {
+      testImmutability("ignoreModifications");
       this.ignoreModifications = ignoreModifications;
+      return this;
    }
 
    @XmlAttribute
@@ -140,6 +193,18 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       return purgeOnStartup;
    }
 
+   /**
+    * 
+    * If true, purges this cache store when it starts up.
+    * 
+    * @param purgeOnStartup
+    */
+   public CacheStoreConfig purgeOnStartup(Boolean purgeOnStartup) {
+      testImmutability("purgeOnStartup");
+      this.purgeOnStartup = purgeOnStartup;
+      return this;
+   }
+   
    /**
     * 
     * If true, purges this cache store when it starts up.
@@ -163,12 +228,12 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
 
    @XmlElement(name="async")
    public AsyncStoreConfig getAsyncStoreConfig() {
-      return async;
+      return async;      
    }
 
    public void setAsyncStoreConfig(AsyncStoreConfig asyncStoreConfig) {
       testImmutability("async");
-      this.async = asyncStoreConfig;
+      this.async = asyncStoreConfig;      
    }
    
    public void accept(ConfigurationBeanVisitor v) {

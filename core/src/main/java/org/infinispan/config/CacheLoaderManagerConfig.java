@@ -21,6 +21,7 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.config.Configuration.LoadersConfig;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.util.Util;
@@ -47,21 +48,21 @@ import java.util.List;
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
-@XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
+@XmlAccessorType(XmlAccessType.PROPERTY)
 @ConfigurationDoc(name="loaders",desc="Holds the configuration for cache loaders and stores")
-public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBean {
+public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBean implements LoadersConfig{
 
    private static final long serialVersionUID = 2210349340378984424L;
 
    @ConfigurationDocRef(bean=CacheLoaderManagerConfig.class,targetElement="setPassivation")
    protected Boolean passivation = false;
 
-   @ConfigurationDocRef(bean=CacheLoaderManagerConfig.class,targetElement="setPreload")
+   @ConfigurationDocRef(bean=CacheLoaderManagerConfig.class,targetElement="setPreload")   
    protected Boolean preload = false;
 
-   @ConfigurationDocRef(bean=CacheLoaderManagerConfig.class,targetElement="setShared")
+   @ConfigurationDocRef(bean=CacheLoaderManagerConfig.class,targetElement="setShared")   
    protected Boolean shared = false;
-
+  
    protected List<CacheLoaderConfig> cacheLoaderConfigs = new LinkedList<CacheLoaderConfig>();
 
    public CacheLoaderManagerConfig() {
@@ -83,7 +84,14 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
     * penalty as startup time is affected by this process.
     * 
     * @param preload
-    */
+    */  
+   @Override
+   public LoadersConfig preload(Boolean preload) {
+      testImmutability("preload");
+      this.preload = preload;
+      return this;
+   }
+      
    @XmlAttribute
    public void setPreload(Boolean preload) {
       testImmutability("preload");
@@ -100,7 +108,14 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
     * in cache store writes. This essentially gives you a 'write-through' configuration.
     * 
     * @param passivation
-    */
+    */   
+   @Override
+   public LoadersConfig passivation(Boolean passivation) {
+      testImmutability("passivation");
+      this.passivation = passivation;
+      return this;
+   }
+   
    @XmlAttribute
    public void setPassivation(Boolean passivation) {
       testImmutability("passivation");
@@ -123,7 +138,14 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
     * store - perhaps local on-disk.
     * 
     * @param shared
-    */
+    */   
+   @Override
+   public LoadersConfig shared(Boolean shared) {
+      testImmutability("shared");
+      this.shared = shared;
+      return this;
+   }
+   
    @XmlAttribute
    public void setShared(Boolean shared) {
       testImmutability("shared");
@@ -134,20 +156,22 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
       return shared;
    }
 
-   public void addCacheLoaderConfig(CacheLoaderConfig clc) {
+   public LoadersConfig addCacheLoaderConfig(CacheLoaderConfig clc) {
       testImmutability("cacheLoaderConfigs");
       cacheLoaderConfigs.add(clc);
+      return this;
    }
-
-   @XmlElement(name = "loader")
+   
    public List<CacheLoaderConfig> getCacheLoaderConfigs() {
       testImmutability("cacheLoaderConfigs");
       return cacheLoaderConfigs;
    }
 
-   public void setCacheLoaderConfigs(List<CacheLoaderConfig> configs) {
+   @XmlElement(name = "loader")
+   public LoadersConfig setCacheLoaderConfigs(List<CacheLoaderConfig> configs) {
       testImmutability("cacheLoaderConfigs");
       this.cacheLoaderConfigs = configs == null ? new LinkedList<CacheLoaderConfig>() : configs;
+      return this;
    }
 
    public CacheLoaderConfig getFirstCacheLoaderConfig() {
