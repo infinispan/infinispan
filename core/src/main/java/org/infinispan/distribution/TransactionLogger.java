@@ -4,9 +4,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
-
-import java.util.Collection;
-import java.util.List;
+import org.infinispan.context.impl.TxInvocationContext;
 
 /**
  * Typically adding a command, the following pattern would be used:
@@ -40,31 +38,11 @@ import java.util.List;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface TransactionLogger {
+public interface TransactionLogger extends RemoteTransactionLogger {
    /**
     * Enables transaction logging
     */
    void enable();
-
-   /**
-    * Drains the transaction log and returns a list of what has been drained.
-    *
-    * @return a list of drained commands
-    */
-   List<WriteCommand> drain();
-
-   /**
-    * Similar to {@link #drain()} except that relevant locks are acquired so that no more commands are added to the
-    * transaction log during this process, and transaction logging is disabled after draining.
-    *
-    * @return list of drained commands
-    */
-   List<WriteCommand> drainAndLock();
-
-   /**
-    * Unlocks and disables the transaction logger.  Should <i>only</i> be called after {@link #drainAndLock()}.
-    */
-   void unlockAndDisable();
 
    /**
     * If logging is enabled, will log the command and return true.  Otherwise, will just return false.
@@ -84,7 +62,7 @@ public interface TransactionLogger {
     * Logs a CommitCommand if needed.
     * @param command CommitCommand to log
     */
-   void logIfNeeded(CommitCommand command);
+   void logIfNeeded(CommitCommand command, TxInvocationContext context);
 
    /**
     * Logs a RollbackCommand if needed.
@@ -93,31 +71,26 @@ public interface TransactionLogger {
    void logIfNeeded(RollbackCommand command);
 
    /**
-    * If logging is enabled, will log the commands and return true.  Otherwise, will just return false.
-    *
-    * @param commands commands to log
-    * @return true if logged, false otherwise
-    */
-   boolean logIfNeeded(Collection<WriteCommand> commands);
-
-   /**
     * Checks whether transaction logging is enabled
     * @return true if enabled, false otherwise.
     */
    boolean isEnabled();
 
    /**
-    * Tests whether the drain() method can be called without a lock.  This is usually true if there is a lot of stuff
-    * to drain.  After a certain threshold (once there are relatively few entries in the tx log) this will return false
-    * after which you should call drainAndLock() to clear the final parts of the log.
-    * @return true if drain() should be called, false if drainAndLock() should be called.
+    * A mechanism for commit commands to register modifications instead of a prepare.  Used for when transaction logging
+    * was disabled during prepare, but was enabled before commit.
+    * @param commit commit command
+    * @param context context from which to extract modification list
     */
-   boolean shouldDrainWithoutLock();
+   void logModificationsIfNeeded(CommitCommand commit, TxInvocationContext context);
 
    /**
-    * Drains pending prepares.  Note that this should *only* be done after calling drainAndLock() to prevent race
-    * conditions
-    * @return a list of prepares pending commit or rollback
+    * Causes new transactions to block when testing isEnabled().
     */
-   Collection<PrepareCommand> getPendingPrepares();
+   void blockNewTransactions();
+
+   /**
+    * Unblocks anything blocking on isEnabled().
+    */
+   void unblockNewTransactions();
 }

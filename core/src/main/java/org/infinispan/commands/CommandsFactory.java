@@ -259,7 +259,7 @@ public interface CommandsFactory {
     * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a
     * control command with a sender and a payload - a transaction log of writes that occured during the generation and
     * delivery of state.  The {@link org.infinispan.commands.control.RehashControlCommand.Type}
-    * of this command is {@link org.infinispan.commands.control.RehashControlCommand.Type#DRAIN_TX}.
+    * of this command is {@link org.infinispan.commands.control.RehashControlCommand.Type#LEAVE_DRAIN_TX}.
     *
     * @param sender sender's Address
     * @param state list of writes
@@ -271,7 +271,7 @@ public interface CommandsFactory {
     * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a
     * control command with a sender and a payload - a transaction log of pending prepares that occured during the generation
     * and delivery of state.  The {@link org.infinispan.commands.control.RehashControlCommand.Type}
-    * of this command is {@link org.infinispan.commands.control.RehashControlCommand.Type#DRAIN_TX_PREPARES}.
+    * of this command is {@link org.infinispan.commands.control.RehashControlCommand.Type#LEAVE_DRAIN_TX_PREPARES}.
     *
     * @param sender sender's Address
     * @param state list of pending prepares
@@ -287,4 +287,10 @@ public interface CommandsFactory {
    RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype,
             Address sender, Map<Object, InternalCacheValue> state, ConsistentHash oldCH,
             ConsistentHash newCH, List<Address> leaversHandled);
+
+   /**
+    * Retrieves the cache name this CommandFactory is set up to construct commands for.
+    * @return the name of the cache this CommandFactory is set up to construct commands for.
+    */
+   String getCacheName();
 }

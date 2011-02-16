@@ -63,6 +63,8 @@ public interface Ids {
    static final int TRANSACTION_LOG_ENTRY = 41;
    static final int BUCKET = 42;
    static final int DEADLOCK_DETECTING_GLOBAL_TRANSACTION = 43;
+   static final int REMOTE_TX_LOG_DETAILS = 62;
+
    // 44 and 45 no longer in use, used to belong to tree module
    static final int ATOMIC_HASH_MAP_DELTA = 46;
    static final int ATOMIC_PUT_OPERATION = 47;
@@ -78,5 +80,4 @@ public interface Ids {
    static final int TOPOLOGY_AWARE_CH = 61;
    // commands (ids between 21 and 37 both inclusive and 50 and 53, are no longer in use, might get reused at a later stage)
    static final int REPLICABLE_COMMAND = 62;
-
 }

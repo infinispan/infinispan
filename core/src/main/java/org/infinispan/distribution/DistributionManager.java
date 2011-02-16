@@ -1,15 +1,17 @@
 package org.infinispan.distribution;
 
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.NodeTopologyInfo;
+import org.infinispan.distribution.ch.TopologyInfo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commands.write.WriteCommand;
 
 import java.util.Collection;
 import java.util.List;
@@ -170,6 +172,10 @@ public interface DistributionManager {
     */
    boolean isJoinComplete();
 
+   boolean isInFinalJoinPhase();
+
+   void waitForFinalJoin();
+
    /**
     * A helper method that retrieves a list of nodes affected by operations on a set of keys.  This helper will in turn
     * call {@link #locateAll(java.util.Collection)} and then combine the result addresses.
@@ -186,5 +192,13 @@ public interface DistributionManager {
    void applyRemoteTxLog(List<WriteCommand> modifications);
 
    void informRehashOnLeave(Address sender);
+
+   void applyState(ConsistentHash newConsistentHash, Map<Object,InternalCacheValue> state, RemoteTransactionLogger transactionLogger, boolean forLeave);
+
+   void setRehashInProgress(boolean value);
+
+   TopologyInfo getTopologyInfo();
+
+   void setJoinComplete(boolean value);
 }
 

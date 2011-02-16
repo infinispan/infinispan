@@ -22,9 +22,13 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
@@ -86,14 +90,15 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      
+
       // If you are a joiner then even if a rehash has completed you still may not have integrated all remote state.
       // so we need to check whether join has completed as well.
+      boolean isRehashInProgress = !dm.isJoinComplete() || dm.isRehashInProgress();
       Object returnValue = invokeNextInterceptor(ctx, command);
       // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
       // available.  It could just have been removed in the same tx beforehand.
       if (needsRemoteGet(ctx, command.getKey(), returnValue == null))
-         returnValue = remoteGetAndStoreInL1(ctx, command.getKey(), false);
+         returnValue = remoteGetAndStoreInL1(ctx, command.getKey(), isRehashInProgress, false);
       return returnValue;
    }
 
@@ -112,25 +117,25 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     *
     * @param ctx invocation context
     * @param key key to retrieve
-    *
     * @return value of a remote get, or null
-    *
     * @throws Throwable if there are problems
     */
-   private Object remoteGetAndStoreInL1(InvocationContext ctx, Object key, boolean isWrite) throws Throwable {
+   private Object remoteGetAndStoreInL1(InvocationContext ctx, Object key, boolean dmWasRehashingDuringLocalLookup, boolean isWrite) throws Throwable {
       DistributionManager.IsLocalRes local = dm.isLocal(key);
-      if (ctx.isOriginLocal() && !local.isLocal() && isNotInL1(key)) {
+      boolean isMappedToLocalNode = local.isLocal();
+
+      if (ctx.isOriginLocal() && !isMappedToLocalNode && isNotInL1(key)) {
          return realRemoteGet(ctx, key, true, isWrite);
       } else {
          // maybe we are still rehashing as a joiner? ISPN-258
-         if (local.isLocal() && (local.isRehashing() || !dm.isJoinComplete())) {
+         if (isMappedToLocalNode && dmWasRehashingDuringLocalLookup) {
             if (trace)
-               log.trace("Key is mapped to local node, but a rehash is in progress so may need to look elsewhere");
+               log.trace("Key %s is mapped to local node %s, but a rehash is in progress so may need to look elsewhere", key, rpcManager.getAddress());
             // try a remote lookup all the same
             return realRemoteGet(ctx, key, false, isWrite);
          } else {
             if (trace)
-               log.trace("Not doing a remote get for key %s since entry is mapped to current node, or is in L1", key);
+               log.trace("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1.  Owners are %s", key, rpcManager.getAddress(), dm.locate(key));
          }
       }
       return null;
@@ -174,7 +179,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     * Tests whether a key is in the L1 cache if L1 is enabled.
     *
     * @param key key to check for
-    *
     * @return true if the key is not in L1, or L1 caching is not enabled.  false the key is in L1.
     */
    private boolean isNotInL1(Object key) {
@@ -192,14 +196,14 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       // don't bother with a remote get for the PutMapCommand!
       return handleWriteCommand(ctx, command,
-              new MultipleKeysRecipientGenerator(command.getMap().keySet()), true, false);
+                                new MultipleKeysRecipientGenerator(command.getMap().keySet()), true, false);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
 
       return handleWriteCommand(ctx, command,
-              new SingleKeyRecipientGenerator(command.getKey()), false, false);
+                                new SingleKeyRecipientGenerator(command.getKey()), false, false);
    }
 
    @Override
@@ -210,7 +214,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleWriteCommand(ctx, command,
-              new SingleKeyRecipientGenerator(command.getKey()), false, false);
+                                new SingleKeyRecipientGenerator(command.getKey()), false, false);
    }
 
    @Override
@@ -238,33 +242,60 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
+   /**
+    * If the response to a commit is a request to resend the prepare, respond accordingly *
+    */
+   private boolean needToResendPrepare(Response r) {
+      return r instanceof SuccessfulResponse && Byte.valueOf(CommitCommand.RESEND_PREPARE).equals(((SuccessfulResponse) r).getResponseValue());
+   }
+
    // ---- TX boundary commands 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         Collection<Address> preparedOn = ((LocalTxInvocationContext)ctx).getRemoteLocksAcquired();
-         
+         Collection<Address> preparedOn = ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired();
+
          List<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
-         boolean goodToCommit = recipients.containsAll(preparedOn);
-         if (!goodToCommit)
-             throw new IllegalStateException("Can not commit since " + ctx.getGlobalTransaction()
-                      + " was prepared on " + preparedOn + " nodes while it is being committed to " + recipients);
-         
-         NotifyingNotifiableFuture<Object> f = flushL1Cache(recipients.size(), ctx.getLockedKeys(), null);                  
-         rpcManager.invokeRemotely(recipients, command, configuration.isSyncCommitPhase(), true);
-         
-         if (f != null && configuration.isSyncCommitPhase())
-         try {
-            f.get();
-         } catch (Exception e) {
-            if (log.isInfoEnabled()) log.info("Failed invalidating remote cache: ", e);
+
+         // By default, use the configured commit sync settings
+         boolean syncCommitPhase = configuration.isSyncCommitPhase();
+         for (Address a : preparedOn) {
+            if (!recipients.contains(a)) {
+               recipients.add(a);
+               // However if we have prepared on some nodes and are now committing on different nodes, make sure we
+               // force sync commit so we can respond to prepare resend requests.
+               syncCommitPhase = true;
+            }
          }
-         
-        
+         NotifyingNotifiableFuture<Object> f = flushL1Cache(recipients.size(), ctx.getLockedKeys(), null);
+
+         Map<Address, Response> responses = rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
+
+         if (!responses.isEmpty()) {
+            List<Address> resendTo = new LinkedList<Address>();
+            for (Map.Entry<Address, Response> r : responses.entrySet()) {
+               if (needToResendPrepare(r.getValue()))
+                  resendTo.add(r.getKey());
+            }
+
+            if (!resendTo.isEmpty()) {
+               log.debug("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
+               // Make sure this is 1-Phase!!
+               PrepareCommand pc = cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
+               rpcManager.invokeRemotely(resendTo, pc, true, true);
+            }
+         }
+
+         if (f != null && configuration.isSyncCommitPhase()) {
+            try {
+               f.get();
+            } catch (Exception e) {
+               if (log.isInfoEnabled()) log.info("Failed invalidating remote cache: ", e);
+            }
+         }
       }
       return invokeNextInterceptor(ctx, command);
    }
-
 
 
    @Override
@@ -280,7 +311,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             f = flushL1Cache(recipients.size(), ctx.getLockedKeys(), null);
          // this method will return immediately if we're the only member (because exclude_self=true)
          rpcManager.invokeRemotely(recipients, command, sync);
-         ((LocalTxInvocationContext)ctx).remoteLocksAcquired(recipients);
+         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients);
          if (f != null) f.get();
       }
       return retVal;
@@ -298,7 +329,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
       if (isNeedReliableReturnValues(ctx) || (isConditionalCommand && ctx.isInTxScope())) {
-         for (Object k : keygen.getKeys()) remoteGetAndStoreInL1(ctx, k, true);
+         boolean isStillRehashingOnJoin = !dm.isJoinComplete();
+         for (Object k : keygen.getKeys()) remoteGetAndStoreInL1(ctx, k, isStillRehashingOnJoin, true);
       }
    }
 
@@ -314,7 +346,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          rpcManager.broadcastRpcCommandInFuture(ic, future);
          return future;
       } else {
-         if (trace) log.trace("Not performing invalidation! isL1CacheEnabled? %s numCallRecipients=%s", isL1CacheEnabled, numCallRecipients);
+         if (trace)
+            log.trace("Not performing invalidation! isL1CacheEnabled? %s numCallRecipients=%s", isL1CacheEnabled, numCallRecipients);
       }
       return null;
    }
@@ -325,12 +358,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     */
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet, boolean skipL1Invalidation) throws Throwable {
       // see if we need to load values from remote srcs first
-      if (!skipRemoteGet) remoteGetBeforeWrite(ctx, command.isConditional(), recipientGenerator);
+      if (ctx.isOriginLocal() && !skipRemoteGet) remoteGetBeforeWrite(ctx, command.isConditional(), recipientGenerator);
       boolean sync = isSynchronous(ctx);
 
       // if this is local mode then skip distributing
       if (isLocalModeForced(ctx)) {
-         log.trace("LOCAL mode forced.  No RPC needed.");
          return invokeNextInterceptor(ctx, command);
       }
 

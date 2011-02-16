@@ -11,8 +11,10 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.RemoteTransactionLogDetails;
+import org.infinispan.distribution.TransactionLogger;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -22,10 +24,10 @@ import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
 
 /**
  * A control command to coordinate rehashes that may occur when nodes join or leave a cluster, when DIST is used as a
@@ -33,6 +35,8 @@ import java.util.Arrays;
  * leaves a cluster running in "distribution" mode.
  * <p />
  * It may break up into several commands in future.
+ * <p />
+ * In its current form, it is documented on <a href="http://community.jboss.org/wiki/DesignOfDynamicRehashing">this wiki page</a>.
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
@@ -42,8 +46,19 @@ public class RehashControlCommand extends BaseRpcCommand {
 
    public static final int COMMAND_ID = 17;
 
+   /* For a detailed description of the interactions involved here, please visit http://community.jboss.org/wiki/DesignOfDynamicRehashing */
    public enum Type {
-      JOIN_REQ, JOIN_REHASH_START, JOIN_REHASH_END, JOIN_ABORT, PULL_STATE_JOIN, PULL_STATE_LEAVE, LEAVE_REHASH_END, DRAIN_TX, DRAIN_TX_PREPARES
+      JOIN_REQ,
+      JOIN_REHASH_START,
+      JOIN_REHASH_END,
+      PULL_STATE_JOIN,
+      PULL_STATE_LEAVE,
+      LEAVE_REHASH_END,
+      LEAVE_DRAIN_TX,
+      LEAVE_DRAIN_TX_PREPARES,
+      JOIN_TX_LOG_REQ,
+      JOIN_TX_FINAL_LOG_REQ,
+      JOIN_TX_LOG_CLOSE
    }
 
    Type type;
@@ -118,25 +133,49 @@ public class RehashControlCommand extends BaseRpcCommand {
          case JOIN_REHASH_END:
             distributionManager.informRehashOnJoin(sender, false, nodeTopologyInfo);
             return null;
-         case LEAVE_REHASH_END:
+         case LEAVE_REHASH_END: // Signalled when a node 'applies' changes it has requested.
             distributionManager.informRehashOnLeave(sender);   
             return null;
          case PULL_STATE_JOIN:
             return pullStateForJoin();             
          case PULL_STATE_LEAVE:
              return pullStateForLeave();          
-         case DRAIN_TX:
+         case LEAVE_DRAIN_TX: // used for a LEAVE ONLY!!
             distributionManager.applyRemoteTxLog(txLogCommands);
             return null;
-         case DRAIN_TX_PREPARES:
+         case LEAVE_DRAIN_TX_PREPARES:
             for (PrepareCommand pc : pendingPrepares) pc.perform(null);
+            return null;
+         case JOIN_TX_LOG_REQ:
+            return drainTxLog();
+         case JOIN_TX_FINAL_LOG_REQ:
+            return lockAndDrainTxLog();
+         case JOIN_TX_LOG_CLOSE:
+            unlockAndCloseTxLog();
             return null;
       }
       throw new CacheException("Unknown rehash control command type " + type);
    }
 
+   private RemoteTransactionLogDetails drainTxLog() {
+      TransactionLogger tl = distributionManager.getTransactionLogger();
+      List<WriteCommand> mods = tl.drain();
+      return new RemoteTransactionLogDetails(tl.shouldDrainWithoutLock(), mods, null);
+   }
+
+   private RemoteTransactionLogDetails lockAndDrainTxLog() {
+      TransactionLogger tl = distributionManager.getTransactionLogger();
+      return new RemoteTransactionLogDetails(false, tl.drainAndLock(sender), tl.getPendingPrepares());
+
+   }
+
+   private void unlockAndCloseTxLog() {
+      TransactionLogger tl = distributionManager.getTransactionLogger();
+      tl.unlockAndDisable(sender);
+   }
+
    public Map<Object, InternalCacheValue> pullStateForJoin() throws CacheLoaderException {           
-      
+      distributionManager.getTransactionLogger().enable();
       Map<Object, InternalCacheValue> state = new HashMap<Object, InternalCacheValue>();
       for (InternalCacheEntry ice : dataContainer) {
          Object k = ice.getKey();
@@ -218,6 +257,10 @@ public class RehashControlCommand extends BaseRpcCommand {
       return false;
    }
 
+   public Type getType() {
+      return type;
+   }
+
    public byte getCommandId() {
       return COMMAND_ID;
    }
@@ -250,12 +293,12 @@ public class RehashControlCommand extends BaseRpcCommand {
       return "RehashControlCommand{" +
             "type=" + type +
             ", sender=" + sender +
-            ", state=" + state +
+            ", state=" + (state == null ? "N/A" : state.size()) +
             ", oldConsistentHash=" + oldCH +
             ", nodesLeft=" + nodesLeft +
             ", consistentHash=" + newCH +
-            ", txLogCommands=" + txLogCommands +
-            ", pendingPrepares=" + pendingPrepares +
+            ", txLogCommands=" + (txLogCommands == null ? "N/A" : txLogCommands.size()) +
+            ", pendingPrepares=" + (pendingPrepares == null ? "N/A" : pendingPrepares.size()) +
             ", nodeTopologyInfo=" + nodeTopologyInfo +
             '}';
    }
