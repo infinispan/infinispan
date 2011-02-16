@@ -111,7 +111,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Start(priority = 55)
    // it is imperative that this starts *after* the RpcManager does, and *after* the cache loader manager (if any) inits and preloads
    public void start() throws StateTransferException {
-      log.trace("Data container is %s", System.identityHashCode(dataContainer));
+      log.trace("Data container is %s", Util.hexIdHashCode(dataContainer));
       cs = clm == null ? null : clm.getCacheStore();
       transientState = configuration.isFetchInMemoryState();
       alwaysProvideTransientState = configuration.isAlwaysProvideInMemoryState();

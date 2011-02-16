@@ -9,6 +9,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -42,7 +43,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    public void store(InternalCacheEntry ed) {
       record("store");
       if (ed != null) {
-         if (trace) log.trace("Store %s in dummy map store@%s", ed, Integer.toHexString(System.identityHashCode(store)));
+         if (trace) log.trace("Store %s in dummy map store@%s", ed, Util.hexIdHashCode(store));
          config.failIfNeeded(ed.getKey());
          store.put(ed.getKey(), ed);
       }
@@ -55,7 +56,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
          int numEntries = (Integer) marshaller.objectFromObjectStream(ois);
          for (int i = 0; i < numEntries; i++) {
             InternalCacheEntry e = (InternalCacheEntry) marshaller.objectFromObjectStream(ois);
-            if (trace) log.trace("Store %s from stream in dummy store@%s", e, Integer.toHexString(System.identityHashCode(store)));
+            if (trace) log.trace("Store %s from stream in dummy store@%s", e, Util.hexIdHashCode(store));
             store.put(e.getKey(), e);
          }
       } catch (Exception e) {

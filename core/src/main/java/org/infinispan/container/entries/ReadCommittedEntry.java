@@ -23,6 +23,7 @@ package org.infinispan.container.entries;
 
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.container.DataContainer;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -234,7 +235,7 @@ public class ReadCommittedEntry implements MVCCEntry {
 
    @Override
    public String toString() {
-      return getClass().getSimpleName() + "(" + System.identityHashCode(this) + "){" +
+      return getClass().getSimpleName() + "(" + Util.hexIdHashCode(this) + "){" +
             "key=" + key +
             ", value=" + value +
             ", oldValue=" + oldValue +
