@@ -179,8 +179,12 @@ public class TransactionTable {
                      if (leavers.contains(gt.getAddress())) toKill.add(gt);
                   }
 
-                  if (trace)
-                     log.trace("Global transactions %s pertain to leavers list %s and need to be killed", toKill, leavers);
+                  if (trace) {
+                     if (toKill.isEmpty())
+                        log.trace("No global transactions pertain to originator(s) %s who have left the cluster.", leavers);
+                     else
+                        log.trace("%s global transactions pertain to leavers list %s and need to be killed", toKill.size(), leavers);
+                  }
 
                   for (GlobalTransaction gtx : toKill) {
                      if (trace) log.trace("Killing %s", gtx);

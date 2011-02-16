@@ -84,7 +84,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
                getCacheNamePrefix()));
       }
 
-      if (trace) log.trace("Invoked with command " + command + " and InvocationContext [" + ctx + "]");
+      if (trace) log.trace("Invoked with command %s and InvocationContext [%s]", command, ctx);
       if (ctx == null) throw new IllegalStateException("Null context not allowed!!");
 
       if (ctx.hasFlag(Flag.FAIL_SILENTLY)) {
