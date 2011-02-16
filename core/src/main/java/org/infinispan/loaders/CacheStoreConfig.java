@@ -18,20 +18,33 @@ public interface CacheStoreConfig extends CacheLoaderConfig, Cloneable {
    void setFetchPersistentState(Boolean fetchPersistentState);
 
    void setIgnoreModifications(Boolean ignoreModifications);
+   
+   CacheStoreConfig fetchPersistentState(Boolean fetchPersistentState);
+
+   CacheStoreConfig ignoreModifications(Boolean ignoreModifications);
 
    Boolean isIgnoreModifications();
 
    void setPurgeOnStartup(Boolean purgeOnStartup);
+   
+   CacheStoreConfig purgeOnStartup(Boolean purgeOnStartup);
 
    SingletonStoreConfig getSingletonStoreConfig();
 
    void setSingletonStoreConfig(SingletonStoreConfig singletonStoreConfig);
-
+   
    AsyncStoreConfig getAsyncStoreConfig();
 
    void setAsyncStoreConfig(AsyncStoreConfig asyncStoreConfig);
-
+   
    public Boolean isPurgeSynchronously();
 
-   public void setPurgeSynchronously(Boolean purgeSynchronously);
+   void setPurgeSynchronously(Boolean purgeSynchronously);
+   
+   CacheStoreConfig purgeSynchronously(Boolean purgeSynchronously);
+   
+   AsyncStoreConfig configureAsyncStore();
+
+   SingletonStoreConfig configureSingletonStore();
+   
 }

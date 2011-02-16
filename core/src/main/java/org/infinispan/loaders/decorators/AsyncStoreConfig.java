@@ -55,6 +55,17 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
       testImmutability("enabled");
       this.enabled = enabled;
    }
+   
+   /**
+    * If true, all modifications to this cache store happen asynchronously, on a separate thread.
+    * 
+    * @param enabled
+    */
+   public AsyncStoreConfig enabled(Boolean enabled) {
+      testImmutability("enabled");
+      this.enabled = enabled;
+      return this;
+   }
 
    @XmlAttribute
    public Integer getThreadPoolSize() {
@@ -68,7 +79,18 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
     */
    public void setThreadPoolSize(Integer threadPoolSize) {
       testImmutability("threadPoolSize");
+      this.threadPoolSize = threadPoolSize;      
+   }
+   
+   /**
+    * Size of the thread pool whose threads are responsible for applying the modifications.
+    * 
+    * @param threadPoolSize
+    */
+   public AsyncStoreConfig threadPoolSize(Integer threadPoolSize) {
+      testImmutability("threadPoolSize");
       this.threadPoolSize = threadPoolSize;
+      return this;
    }
 
    @XmlAttribute
@@ -82,9 +104,22 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
     * 
     * @param stateLockTimeout
     */
-   public void setFlushLockTimeout(Long stateLockTimeout) {
+   public AsyncStoreConfig setFlushLockTimeout(Long stateLockTimeout) {
       testImmutability("flushLockTimeout");
       this.flushLockTimeout = stateLockTimeout;
+      return this;
+   }
+   
+   /**
+    * Timeout to acquire the lock which guards the state to be flushed to the cache store
+    * periodically.
+    * 
+    * @param stateLockTimeout
+    */
+   public AsyncStoreConfig flushLockTimeout(Long stateLockTimeout) {
+      testImmutability("flushLockTimeout");
+      this.flushLockTimeout = stateLockTimeout;
+      return this;
    }
 
    @XmlAttribute
@@ -102,6 +137,19 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
    public void setShutdownTimeout(Long shutdownTimeout) {
       testImmutability("shutdownTimeout");
       this.shutdownTimeout = shutdownTimeout;
+   }
+   
+   /**
+    * Timeout to stop the cache store. When the store is stopped it's possible that some
+    * modifications still need to be applied; you likely want to set a very large timeout to make
+    * sure to not loose data
+    * 
+    * @param shutdownTimeout
+    */
+   public AsyncStoreConfig shutdownTimeout(Long shutdownTimeout) {
+      testImmutability("shutdownTimeout");
+      this.shutdownTimeout = shutdownTimeout;
+      return this;
    }
 
    @Override

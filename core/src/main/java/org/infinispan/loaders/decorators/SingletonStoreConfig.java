@@ -50,6 +50,17 @@ public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
       testImmutability("enabled");
       this.enabled = singletonStoreEnabled;
    }
+   
+   /**
+    * If true, the singleton store cache store is enabled.
+    * 
+    * @param singletonStoreEnabled
+    */
+   public SingletonStoreConfig enabled(Boolean singletonStoreEnabled) {
+      testImmutability("enabled");
+      this.enabled = singletonStoreEnabled;
+      return this;
+   }
 
    @XmlAttribute
    public Boolean isPushStateWhenCoordinator() {
@@ -67,6 +78,19 @@ public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
       testImmutability("pushStateWhenCoordinator");
       this.pushStateWhenCoordinator = pushStateWhenCoordinator;
    }
+   
+   /**
+    * If true, when a node becomes the coordinator, it will transfer in-memory state to the
+    * underlying cache store. This can be very useful in situations where the coordinator crashes
+    * and there's a gap in time until the new coordinator is elected.
+    * 
+    * @param pushStateWhenCoordinator
+    */
+   public SingletonStoreConfig pushStateWhenCoordinator(Boolean pushStateWhenCoordinator) {
+      testImmutability("pushStateWhenCoordinator");
+      this.pushStateWhenCoordinator = pushStateWhenCoordinator;
+      return this;
+   }
 
    @XmlAttribute
    public Long getPushStateTimeout() {
@@ -82,6 +106,18 @@ public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
    public void setPushStateTimeout(Long pushStateTimeout) {
       testImmutability("pushStateTimeout");
       this.pushStateTimeout = pushStateTimeout;
+   }
+   
+   /**
+    * If pushStateWhenCoordinator is true, this property sets the maximum number of milliseconds
+    * that the process of pushing the in-memory state to the underlying cache loader should take.
+    * 
+    * @param pushStateTimeout
+    */
+   public SingletonStoreConfig pushStateTimeout(Long pushStateTimeout) {
+      testImmutability("pushStateTimeout");
+      this.pushStateTimeout = pushStateTimeout;
+      return this;
    }
 
    @Override
