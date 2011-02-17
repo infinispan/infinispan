@@ -431,24 +431,26 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
       
    }
+
+   static class PojoWhichFailsOnUnmarshalling extends Pojo {
+      private static final long serialVersionUID = -5109779096242560884L;
+
+      @Override
+      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+         throw new IOException("Injected failue!");
+      }
+      
+   };
    
    public void testErrorUnmarshalling() throws Exception {
-      Pojo pojo = new Pojo() {
-         private static final long serialVersionUID = -5109779096242560884L;
-
-         @Override
-         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-            throw new IOException("Injected failue!");
-         }
-         
-      };
+      Pojo pojo = new PojoWhichFailsOnUnmarshalling();
       byte[] bytes = marshaller.objectToByteBuffer(pojo);
       try {
          marshaller.objectFromByteBuffer(bytes);
       } catch (IOException e) {
          log.info("Log exception for output format verification", e);
          TraceInformation inf = (TraceInformation) e.getCause();
-         assert inf.toString().contains("in object of type org.infinispan.marshall.VersionAwareMarshallerTest$1");
+         assert inf.toString().contains("in object of type org.infinispan.marshall.VersionAwareMarshallerTest$PojoWhichFailsOnUnmarshalling");
       }
       
    }
