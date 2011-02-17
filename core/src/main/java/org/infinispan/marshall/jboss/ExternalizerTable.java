@@ -40,6 +40,7 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.distribution.RemoteTransactionLogDetails;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
@@ -159,6 +160,8 @@ class ExternalizerTable implements ObjectTable {
       internalExternalizers.add(new NodeTopologyInfo.Externalizer());
       internalExternalizers.add(new TopologyAwareConsistentHash.Externalizer());
       internalExternalizers.add(new ByteArrayKey.Externalizer());
+
+      internalExternalizers.add(new RemoteTransactionLogDetails.Externalizer());
    }
 
    void addInternalExternalizer(Externalizer ext) {
