@@ -29,6 +29,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -45,10 +46,12 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    private static final boolean trace = log.isTraceEnabled();
    private CacheNotifier notifier;
    private boolean returnCacheEntry;
+   private Address origin;
 
-   public GetKeyValueCommand(Object key, CacheNotifier notifier, Set<Flag> flags) {
+   public GetKeyValueCommand(Object key, Address origin, CacheNotifier notifier, Set<Flag> flags) {
       this.key = key;
       this.notifier = notifier;
+      this.origin = origin;
       this.flags = flags;
    }
 
@@ -108,5 +111,9 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    @Override
    public Object[] getParameters() {
       return new Object[]{key, flags};
+   }
+   
+   public Address getOrigin() {
+	   return origin;
    }
 }

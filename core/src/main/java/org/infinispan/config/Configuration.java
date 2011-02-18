@@ -1464,6 +1464,36 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void setL1OnRehash(boolean l1OnRehash) {
       this.clustering.l1.setOnRehash(l1OnRehash);
    }
+   
+   /**
+    * <p>
+    * Determines whether a multicast or a web of unicasts are used when performing L1 invalidations.
+    * </p>
+    * 
+    * <p>
+    * By default
+    * <ul>
+    * <li>if the underlying transport supports multicast, and</li>
+    * <li>there are more than 5 invalidations to send</li>
+    * </ul>
+    * then multicast will be used.
+    * </p>
+    * 
+    * <p>
+    * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to 0, then multicast 
+    * will be always be used.
+    * </p>
+    * 
+    * @param l1Threshold the threshold over which to use a multicast
+    * 
+    */
+   public void setL1Threshold(int l1Threshold) {
+      this.clustering.l1.setThreshold(l1Threshold);
+   }
+   
+   public int getL1Threshold() {
+   	return this.clustering.l1.threshold;
+   }
 
    /**
     * Fully qualified name of class providing consistent hash algorithm
@@ -3170,6 +3200,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setL1OnRehash")
       protected Boolean onRehash = true;
+      
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "setL1Threshold")
+      protected Integer threshold = 5;
+      
 
       @XmlAttribute
       public L1Config setEnabled(Boolean enabled) {
@@ -3216,6 +3250,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.onRehash = onRehash;
          return this;
       }
+      
+      @XmlAttribute
+      public void setThreshold(Integer threshold) {
+         testImmutability("threshold");
+         this.threshold = threshold;
+      }
 
       @Override
       public boolean equals(Object o) {
@@ -3227,7 +3267,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (enabled != null ? !enabled.equals(l1Type.enabled) : l1Type.enabled != null) return false;
          if (lifespan != null ? !lifespan.equals(l1Type.lifespan) : l1Type.lifespan != null) return false;
          if (onRehash != null ? !onRehash.equals(l1Type.onRehash) : l1Type.onRehash != null) return false;
-
+         if (threshold != null ? !threshold.equals(l1Type.threshold) : l1Type.threshold != null) return false;
+         
          return true;
       }
 
@@ -3236,6 +3277,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          int result = enabled != null ? enabled.hashCode() : 0;
          result = 31 * result + (lifespan != null ? lifespan.hashCode() : 0);
          result = 31 * result + (onRehash != null ? onRehash.hashCode() : 0);
+         result = 31 * result + (threshold != null ? threshold.hashCode() : 0);
          return result;
       }
    }

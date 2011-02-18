@@ -178,6 +178,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       s.add(MarshallerFactory.class);
       s.add(ResponseGeneratorFactory.class);
       s.add(DistributionManagerFactory.class);
+      s.add(L1ManagerFactory.class);
       return s;
    }
 

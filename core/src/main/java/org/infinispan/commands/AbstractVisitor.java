@@ -22,6 +22,7 @@
 package org.infinispan.commands;
 
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.control.RequestInvalidateL1Command;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
@@ -120,6 +121,10 @@ public abstract class AbstractVisitor implements Visitor {
    
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command) throws Throwable {
 	   return visitInvalidateCommand(ctx, invalidateL1Command);
+   }
+
+   public Object visitRequestInvalidateL1Command(InvocationContext ctx, RequestInvalidateL1Command requestInvalidateCommand) throws Throwable {
+      return handleDefault(ctx, requestInvalidateCommand);
    }
 
    /**

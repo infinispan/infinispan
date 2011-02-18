@@ -23,6 +23,7 @@ package org.infinispan.commands;
 
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.RehashControlCommand;
+import org.infinispan.commands.control.RequestInvalidateL1Command;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -77,7 +78,7 @@ public interface CommandsFactory {
     * @param maxIdleTimeMillis max idle time in milliseconds.  -1 if maxIdle is not used.
     * @return a PutKeyValueCommand
     */
-   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags);
+   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, Address origin, Set<Flag> flags);
 
    /**
     * Builds a RemoveCommand
@@ -109,6 +110,15 @@ public interface CommandsFactory {
     * @return an InvalidateFromL1Command
     */
    InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Collection<Object> keys);
+   
+   /**
+    * Builds a RequestInvalidateL1Command, used to request other data owners initiate L1 invalidations
+    * @param keys keys to invalidate
+    * @return an InvalidateFromL1Command
+    */
+   RequestInvalidateL1Command buildRequestInvalidateL1Command(Object... keys);
+   
+   RequestInvalidateL1Command buildRequestInvalidateL1Command(Collection<Object> keys);
 
    /**
     * Builds a ReplaceCommand
@@ -132,7 +142,7 @@ public interface CommandsFactory {
     * @param key key to get
     * @return a GetKeyValueCommand
     */
-   GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags);
+   GetKeyValueCommand buildGetKeyValueCommand(Object key, Address origin, Set<Flag> flags);
 
    /**
     * Builds a KeySetCommand

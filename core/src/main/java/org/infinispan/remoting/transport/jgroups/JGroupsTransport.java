@@ -52,6 +52,7 @@ import org.jgroups.Message;
 import org.jgroups.View;
 import org.jgroups.blocks.GroupRequest;
 import org.jgroups.blocks.RspFilter;
+import org.jgroups.protocols.UDP;
 import org.jgroups.protocols.pbcast.STREAMING_STATE_TRANSFER;
 import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.Rsp;
@@ -348,6 +349,11 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       }
 
       return true;
+   }
+   
+   @Override
+   public boolean isMulticastCapable() {
+      return channel.getProtocolStack().getTransport().supportsMulticasting();
    }
 
    public Address getAddress() {

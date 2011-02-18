@@ -31,6 +31,7 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#put(Object, Object)}
@@ -47,17 +48,20 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
    boolean successful = true;
    long lifespanMillis = -1;
    long maxIdleTimeMillis = -1;
+   Address origin;
 
    public PutKeyValueCommand() {
    }
 
-   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
-      super(key, flags);
+
+   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis, Address origin, Set<Flag> flags) {
+   	super(key, flags);
       this.value = value;
       this.putIfAbsent = putIfAbsent;
       this.notifier = notifier;
       this.lifespanMillis = lifespanMillis;
       this.maxIdleTimeMillis = maxIdleTimeMillis;
+      this.origin = origin;
    }
 
    public void init(CacheNotifier notifier) {
@@ -115,7 +119,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, flags};
+      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, origin, flags};
    }
 
    public void setParameters(int commandId, Object[] parameters) {
@@ -124,7 +128,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       value = parameters[1];
       lifespanMillis = (Long) parameters[2];
       maxIdleTimeMillis = (Long) parameters[3];
-      flags = (Set<Flag>) (parameters.length>4 ? parameters[4] : Collections.EMPTY_SET); //TODO remove conditional check in future - eases migration for now
+      origin = (Address) parameters[4];
+      flags = (Set<Flag>) (parameters.length>5 ? parameters[5] : Collections.EMPTY_SET); //TODO remove conditional check in future - eases migration for now
    }
 
    public boolean isPutIfAbsent() {
@@ -141,6 +146,10 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
 
    public long getMaxIdleTimeMillis() {
       return maxIdleTimeMillis;
+   }
+   
+   public Address getOrigin() {
+	   return origin;
    }
 
    @Override

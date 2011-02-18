@@ -36,6 +36,7 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -58,6 +59,7 @@ public class ClusteredGetCommand implements CacheRpcCommand, FlagAffectedCommand
 
    private Object key;
    private String cacheName;
+   private Address origin;
 
    private InvocationContextContainer icc;
    private CommandsFactory commandsFactory;
@@ -85,14 +87,15 @@ public class ClusteredGetCommand implements CacheRpcCommand, FlagAffectedCommand
    public ClusteredGetCommand() {
    }
 
-   public ClusteredGetCommand(Object key, String cacheName, Set<Flag> flags) {
+   public ClusteredGetCommand(Object key, String cacheName, Address origin) {
+      this(key, cacheName, origin, Collections.<Flag>emptySet());
+   }
+   
+   public ClusteredGetCommand(Object key, String cacheName, Address origin, Set<Flag> flags) {
       this.key = key;
       this.cacheName = cacheName;
+      this.origin = origin;
       this.flags = flags;
-   }
-
-   public ClusteredGetCommand(Object key, String cacheName) {
-      this(key, cacheName, Collections.<Flag>emptySet());
    }
 
    public void initialize(InvocationContextContainer icc, CommandsFactory commandsFactory,
@@ -111,7 +114,7 @@ public class ClusteredGetCommand implements CacheRpcCommand, FlagAffectedCommand
     */
    public InternalCacheValue perform(InvocationContext context) throws Throwable {
       if (distributionManager != null && distributionManager.isAffectedByRehash(key)) return null;
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, flags);
+      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, origin, flags);
       command.setReturnCacheEntry(true);
       InvocationContext invocationContext = icc.createRemoteInvocationContextForCommand(command);
       CacheEntry cacheEntry = (CacheEntry) invoker.invoke(invocationContext, command);
@@ -135,14 +138,15 @@ public class ClusteredGetCommand implements CacheRpcCommand, FlagAffectedCommand
    }
 
    public Object[] getParameters() {
-      return new Object[]{key, cacheName, flags};
+      return new Object[]{key, cacheName, origin, flags};
    }
 
    public void setParameters(int commandId, Object[] args) {
       key = args[0];
       cacheName = (String) args[1];
-      if (args.length>2) {
-         this.flags = (Set<Flag>) args[2];
+      origin = (Address) args[2];
+      if (args.length>3) {
+         this.flags = (Set<Flag>) args[3];
       }
    }
 

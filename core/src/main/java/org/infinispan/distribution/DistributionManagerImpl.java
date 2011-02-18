@@ -496,7 +496,7 @@ public class DistributionManagerImpl implements DistributionManager {
             ctx.setFlags(CACHE_MODE_LOCAL, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING); // locking not necessary in the case of a join since the node isn't doing anything else.
 
             try {
-               PutKeyValueCommand put = cf.buildPutKeyValueCommand(e.getKey(), v.getValue(), v.getLifespan(), v.getMaxIdle(), ctx.getFlags());
+               PutKeyValueCommand put = cf.buildPutKeyValueCommand(e.getKey(), v.getValue(), v.getLifespan(), v.getMaxIdle(), getOrigin(), ctx.getFlags());
                interceptorChain.invoke(ctx, put);
             } catch (Exception ee) {
                if (withRetry) {
@@ -659,7 +659,7 @@ public class DistributionManagerImpl implements DistributionManager {
       return false;
    }
 
-   public List<Address> getAffectedNodes(Set<Object> affectedKeys) {
+   public List<Address> getAffectedNodes(Collection<Object> affectedKeys) {
       if (affectedKeys == null || affectedKeys.isEmpty()) {
          if (log.isTraceEnabled()) log.trace("Affected keys are empty");
          return Collections.emptyList();
@@ -704,6 +704,18 @@ public class DistributionManagerImpl implements DistributionManager {
       return "DistributionManagerImpl[rehashInProgress=" + rehashInProgress + ", consistentHash=" + consistentHash + "]";
    }
 
+   public void setSelf(Address self) {
+      this.self = self;
+   }
+   
+   public Address getSelf() {
+	   return self;
+   }
+
+   public void setConfiguration(Configuration configuration) {
+      this.configuration = configuration;
+   }
+
    public TopologyInfo getTopologyInfo() {
       return topologyInfo;
    }
@@ -729,5 +741,9 @@ public class DistributionManagerImpl implements DistributionManager {
          leaveAcksLock.unlock();
       }
       return !timeoutReached;
+   }
+   
+   private Address getOrigin() {
+   	return rpcManager != null ? rpcManager.getAddress() : null;
    }
 }

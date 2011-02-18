@@ -130,6 +130,13 @@ public interface Transport extends Lifecycle {
     * @return true if the implementation supports state transfer, false otherwise.
     */
    boolean isSupportStateTransfer();
+   
+   /**
+    * Tests whether the transport supports true multicast
+    * 
+    * @return true if the transport supports true multicast
+    */
+   boolean isMulticastCapable();
 
    @Start(priority = 10)
    void start();

@@ -3,6 +3,7 @@ package org.infinispan.commands;
 import org.infinispan.CacheException;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.RehashControlCommand;
+import org.infinispan.commands.control.RequestInvalidateL1Command;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -110,6 +111,9 @@ public class RemoteCommandsFactory {
             break;
          case RehashControlCommand.COMMAND_ID:
             command = new RehashControlCommand(transport);
+            break;
+         case RequestInvalidateL1Command.COMMAND_ID:
+            command = new RequestInvalidateL1Command();
             break;
          default:
             throw new CacheException("Unknown command id " + id + "!");

@@ -24,6 +24,7 @@ package org.infinispan.commands;
 import org.infinispan.Cache;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.RehashControlCommand;
+import org.infinispan.commands.control.RequestInvalidateL1Command;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -51,11 +52,13 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.L1Manager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -96,19 +99,23 @@ public class CommandsFactoryImpl implements CommandsFactory {
    EntrySetCommand cachedEntrySetCommand;
    private InterceptorChain interceptorChain;
    private DistributionManager distributionManager;
+   private L1Manager l1Manager;
    private InvocationContextContainer icc;
    private TransactionTable txTable;
    private Configuration configuration;
+   private RpcManager rpcManager;
 
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache cache,
-                                 InterceptorChain interceptorChain, DistributionManager distributionManager,
+                                 InterceptorChain interceptorChain, DistributionManager distributionManager, L1Manager l1Manager, RpcManager rpcManager,
                                  InvocationContextContainer icc, TransactionTable txTable, Configuration configuration) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
       this.interceptorChain = interceptorChain;
       this.distributionManager = distributionManager;
+      this.rpcManager = rpcManager;
+      this.l1Manager = l1Manager;
       this.icc = icc;
       this.txTable = txTable;
       this.configuration = configuration;
@@ -120,8 +127,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       cacheName = cache.getName();
    }
 
-   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, Set<Flag> flags) {
-      return new PutKeyValueCommand(key, value, false, notifier, lifespanMillis, maxIdleTimeMillis, flags);
+   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis, Address origin, Set<Flag> flags) {
+      return new PutKeyValueCommand(key, value, false, notifier, lifespanMillis, maxIdleTimeMillis, origin, flags);
    }
 
    public RemoveCommand buildRemoveCommand(Object key, Object value, Set<Flag> flags) {
@@ -142,6 +149,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespan, long maxIdleTimeMillis, Set<Flag> flags) {
       return new ReplaceCommand(key, oldValue, newValue, lifespan, maxIdleTimeMillis, flags);
+   }
+   
+   public RequestInvalidateL1Command buildRequestInvalidateL1Command(Object... keys) {
+      return new RequestInvalidateL1Command(l1Manager, keys);
+   }
+   
+   public RequestInvalidateL1Command buildRequestInvalidateL1Command(Collection<Object> keys) {
+      return new RequestInvalidateL1Command(l1Manager, keys);
    }
 
    public SizeCommand buildSizeCommand() {
@@ -172,8 +187,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return cachedEntrySetCommand;
    }
 
-   public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags) {
-      return new GetKeyValueCommand(key, notifier, flags);
+   public GetKeyValueCommand buildGetKeyValueCommand(Object key, Address origin, Set<Flag> flags) {
+      return new GetKeyValueCommand(key, origin, notifier, flags);
    }
 
    public PutMapCommand buildPutMapCommand(Map map, long lifespan, long maxIdleTimeMillis, Set<Flag> flags) {
@@ -219,7 +234,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    public ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags) {
-      return new ClusteredGetCommand(key, cacheName, flags);
+      return new ClusteredGetCommand(key, cacheName, getOrigin(), flags);
    }
 
    /**
@@ -259,6 +274,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case InvalidateL1Command.COMMAND_ID:
             InvalidateL1Command ilc = (InvalidateL1Command) c;
             ilc.init(configuration, distributionManager, notifier, dataContainer);
+            break;
+         case RequestInvalidateL1Command.COMMAND_ID:
+            RequestInvalidateL1Command rilc = (RequestInvalidateL1Command) c;
+            rilc.init(l1Manager);
             break;
          case PrepareCommand.COMMAND_ID:
             PrepareCommand pc = (PrepareCommand) c;
@@ -346,5 +365,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    public String getCacheName() {
       return cacheName;
+	}
+   
+   private Address getOrigin() {
+   	return rpcManager != null ? rpcManager.getAddress() : null;
    }
 }
