@@ -39,10 +39,10 @@ public abstract class BaseRpcInvokingCommand extends BaseRpcCommand {
          VisitableCommand vc = (VisitableCommand) cacheCommand;
          final InvocationContext ctx;
          if (vc instanceof FlagAffectedCommand) {
-            ctx = icc.createRemoteInvocationContextForCommand(vc);
+            ctx = icc.createRemoteInvocationContextForCommand(vc, getOrigin());
          }
          else {
-            ctx = icc.createRemoteInvocationContext();
+            ctx = icc.createRemoteInvocationContext(getOrigin());
          }
          if (vc.shouldInvoke(ctx)) {
             if (trace) log.trace("Invoking command " + cacheCommand + ", with originLocal flag set to " + ctx.isOriginLocal() + ".");

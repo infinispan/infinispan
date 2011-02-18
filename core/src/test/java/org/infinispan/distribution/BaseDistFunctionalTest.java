@@ -47,6 +47,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected boolean testRetVals = true;
    protected boolean l1CacheEnabled = true;
    protected boolean l1OnRehash = false;
+   protected int l1Threshold = 5;
    protected boolean performRehashing = false;
    protected boolean batchingEnabled = false;
    protected int numOwners = 2;
@@ -67,7 +68,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       configuration.setSyncReplTimeout(60, TimeUnit.SECONDS);
       configuration.setLockAcquisitionTimeout(lockTimeout, TimeUnit.SECONDS);
       configuration.setL1CacheEnabled(l1CacheEnabled);
-      if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);      
+      if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);
+      if (l1CacheEnabled) configuration.setL1InvalidationThreshold(l1Threshold);
       caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration);
 
       reorderBasedOnCHPositions();
@@ -203,7 +205,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       for (Cache<Object, String> c : caches) assert c.isEmpty();
 
       c1.put("k1", "value");
-      asyncWait("k1", PutKeyValueCommand.class, getNonOwnersExcludingSelf("k1", addressOf(c1)));
+      asyncWait("k1", PutKeyValueCommand.class);
       for (Cache<Object, String> c : caches)
          assert "value".equals(c.get("k1")) : "Failed on cache " + addressOf(c);
       assertOwnershipAndNonOwnership("k1");

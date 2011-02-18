@@ -64,7 +64,8 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
 
       getOwners("k1")[0].put("k1", "value");
 
-      asyncWait("k1", PutKeyValueCommand.class, getNonOwners("k1"));
+      // No non-owners have requested the key, so no invalidations
+      asyncWait("k1", PutKeyValueCommand.class);
 
       for (Cache<Object, String> c : caches) {
          if (isOwner(c, "k1")) {
@@ -184,7 +185,8 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
 
       for (int i = 0; i < 10; i++) {
          getOwners("k" + i)[0].put("k" + i, "value" + i);
-         asyncWait("k" + i, PutKeyValueCommand.class, getNonOwners("k" + i));
+         // There will be no caches to invalidate as this is the first command of the test
+         asyncWait("k" + i, PutKeyValueCommand.class);
       }
 
       // this will fill up L1 as well
@@ -200,13 +202,13 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
 
    public void testKeyValueEntryCollections() {
       c1.put("1", "one");
-      asyncWait("1", PutKeyValueCommand.class, getNonOwnersExcludingSelf("1", addressOf(c1)));
+      asyncWait("1", PutKeyValueCommand.class);
       c2.put("2", "two");
-      asyncWait("2", PutKeyValueCommand.class, getNonOwnersExcludingSelf("2", addressOf(c2)));
+      asyncWait("2", PutKeyValueCommand.class);
       c3.put("3", "three");
-      asyncWait("3", PutKeyValueCommand.class, getNonOwnersExcludingSelf("3", addressOf(c3)));
+      asyncWait("3", PutKeyValueCommand.class);
       c4.put("4", "four");
-      asyncWait("4", PutKeyValueCommand.class, getNonOwnersExcludingSelf("4", addressOf(c4)));
+      asyncWait("4", PutKeyValueCommand.class);
 
       for (Cache c : caches) {
          Set expKeys = TestingUtil.getInternalKeys(c);

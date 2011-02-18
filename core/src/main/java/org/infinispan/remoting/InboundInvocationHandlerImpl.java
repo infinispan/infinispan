@@ -22,6 +22,7 @@ import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.StateTransferException;
@@ -101,7 +102,8 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    }
 
    @Override
-   public Response handle(final CacheRpcCommand cmd) throws Throwable {
+   public Response handle(final CacheRpcCommand cmd, Address origin) throws Throwable {
+   	cmd.setOrigin(origin);
       String cacheName = cmd.getCacheName();
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
 

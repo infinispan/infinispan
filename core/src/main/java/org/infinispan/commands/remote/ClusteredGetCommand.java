@@ -95,7 +95,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       if (distributionManager != null && distributionManager.isAffectedByRehash(key)) return null;
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, flags);
       command.setReturnCacheEntry(true);
-      InvocationContext invocationContext = icc.createRemoteInvocationContextForCommand(command);
+      InvocationContext invocationContext = icc.createRemoteInvocationContextForCommand(command, getOrigin());
       CacheEntry cacheEntry = (CacheEntry) invoker.invoke(invocationContext, command);
       if (cacheEntry == null) {
          if (trace) log.trace("Did not find anything, returning null");

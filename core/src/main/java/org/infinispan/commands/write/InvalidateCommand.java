@@ -78,6 +78,7 @@ public class InvalidateCommand extends RemoveCommand {
 
    protected void invalidate(InvocationContext ctx, Object keyToInvalidate) throws Throwable {
       key = keyToInvalidate; // so that the superclass can see it
+      log.warn("Invalidating key %s", keyToInvalidate);
       super.perform(ctx);
    }
 

@@ -1,13 +1,14 @@
 package org.infinispan.remoting;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferException;
-
-import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
  * A globally scoped component, that is able to locate named caches and invoke remotely originating calls on the
@@ -27,7 +28,7 @@ public interface InboundInvocationHandler {
     * @return results, if any, from the invocation
     * @throws Throwable in the event of problems executing the command
     */
-   Response handle(CacheRpcCommand command) throws Throwable;
+   Response handle(CacheRpcCommand command, Address origin) throws Throwable;
 
    /**
     * Applies state onto a named cache.  State to be read from the stream.  Implementations should NOT close the stream

@@ -171,7 +171,7 @@ public interface DistributionManager {
     * @param affectedKeys keys to locate
     * @return a list of addresses which represent a combined set of all addresses affected by the set of keys.
     */
-   List<Address> getAffectedNodes(Set<Object> affectedKeys);
+   List<Address> getAffectedNodes(Collection<Object> affectedKeys);
 
    /**
     * Applies an ordered list of modifications to the current node.  Typically used when state is pushed to the node
