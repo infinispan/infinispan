@@ -221,6 +221,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return c.getAdvancedCache().getTransactionManager();
    }
 
+   protected TransactionManager tm(int i, String cacheName) {
+      return cache(i, cacheName ).getAdvancedCache().getTransactionManager();
+   }
+
+
    protected TransactionManager tm(int i) {
       return cache(i).getAdvancedCache().getTransactionManager();
    }

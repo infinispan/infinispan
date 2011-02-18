@@ -37,29 +37,35 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    }
 
    public void testNoOpWhenKeyPresent() {
-      Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
-      ReplListener replListener1 = replListener(cache1);
-      ReplListener replListener2 = replListener(cache2);
-      replListener2.expect(PutKeyValueCommand.class);
+      final Cache cache1 = cache(0, "replSync");
+      final Cache cache2 = cache(1, "replSync");
       cache1.putForExternalRead(key, value);
-      replListener2.waitForRpc();
 
-
-      assertEquals("PFER should have succeeded", value, cache1.get(key));
-      assertEquals("PFER should have replicated", value, cache2.get(key));
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return value.equals(cache1.get(key)) && value.equals(cache2.get(key));
+         }
+      });
 
       // reset
-      replListener2.expect(RemoveCommand.class);
       cache1.remove(key);
-      replListener2.waitForRpc();
 
-      assert cache1.isEmpty() : "Should have reset";
-      assert cache2.isEmpty() : "Should have reset";
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return cache1.isEmpty() && cache2.isEmpty();
+         }
+      });
 
-      replListener2.expect(PutKeyValueCommand.class);
       cache1.put(key, value);
-      replListener2.waitForRpc();
+
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return value.equals(cache1.get(key)) && value.equals(cache2.get(key));
+         }
+      });
 
       // now this pfer should be a no-op
       cache1.putForExternalRead(key, value2);
@@ -113,33 +119,42 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    }
 
    public void testTxSuspension() throws Exception {
-      Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
-      TransactionManager tm1 = TestingUtil.getTransactionManager(cache1);
-      TransactionManager tm2 = TestingUtil.getTransactionManager(cache2);
-      ReplListener replListener1 = replListener(cache1);
-      ReplListener replListener2 = replListener(cache2);
-      replListener2.expect(PutKeyValueCommand.class);
+      final Cache cache1 = cache(0, "replSync");
+      final Cache cache2 = cache(1, "replSync");
+
       cache1.put(key + "0", value);
-      replListener2.waitForRpc();
+
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return value.equals(cache2.get(key+"0"));
+         }
+      });
 
       // start a tx and do some stuff.
-      replListener2.expect(PutKeyValueCommand.class);
-      tm1.begin();
+      tm(0, "replSync").begin();
       cache1.get(key + "0");
       cache1.putForExternalRead(key, value); // should have happened in a separate tx and have committed already.
-      Transaction t = tm1.suspend();
+      Transaction t = tm(0, "replSync").suspend();
 
-      replListener2.waitForRpc();
-      assertEquals("PFER should have completed", value, cache1.get(key));
-      assertEquals("PFER should have completed", value, cache2.get(key));
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return value.equals(cache1.get(key)) && value.equals(cache2.get(key));
+         }
+      });
 
-      tm1.resume(t);
-      tm1.commit();
+      tm(0, "replSync").resume(t);
+      tm(0, "replSync").commit();
 
-      assertEquals("tx should have completed", value, cache1.get(key + "0"));
-      assertEquals("tx should have completed", value, cache2.get(key + "0"));
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return value.equals(cache1.get(key + "0")) && value.equals(cache2.get(key + "0"));
+         }
+      });
    }
+
 
    public void testExceptionSuppression() throws Exception {
       Cache cache1 = cache(0, "replSync");
