@@ -3,6 +3,7 @@ package org.infinispan.jmx;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -62,6 +63,8 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
    public void testCommit() throws Exception {      
       assertCommitRollback(0, 0, txInterceptor);
       tm.begin();
+      //enlist another resource adapter to force TM to execute 2PC (otherwise 1PC)
+      tm.getTransaction().enlistResource(new XAResourceAdapter());
       assertCommitRollback(0, 0, txInterceptor);
       cache1.put("key", "value");
       assertCommitRollback(0, 0, txInterceptor);
@@ -83,6 +86,8 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
       assertCommitRollback(0, 0, txInterceptor2);
       tm.begin();
       assertCommitRollback(0, 0, txInterceptor2);
+      //enlist another resource adapter to force TM to execute 2PC (otherwise 1PC)
+      tm.getTransaction().enlistResource(new XAResourceAdapter());
       cache2.put("key", "value");
       assertCommitRollback(0, 0, txInterceptor2);
       tm.commit();
