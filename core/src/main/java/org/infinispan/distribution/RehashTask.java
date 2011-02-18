@@ -103,7 +103,7 @@ public abstract class RehashTask implements Callable<Void> {
       invalidations.keySet().removeAll(doNotInvalidate);
 
       for (Map.Entry<Address, Set<Object>> e : invalidations.entrySet()) {
-         InvalidateCommand ic = cf.buildInvalidateFromL1Command(true, e.getValue().toArray());
+         InvalidateCommand ic = cf.buildInvalidateFromL1Command(true, false, e.getValue().toArray());
          rpcManager.invokeRemotely(Collections.singletonList(e.getKey()), ic, false);
       }
    }

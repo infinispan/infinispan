@@ -29,6 +29,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -52,6 +53,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    protected TransactionTable txTable;
    protected Configuration configuration;
    protected ComponentRegistry componentRegistry;
+   private Address origin;
 
    public void injectComponents(Configuration configuration, ComponentRegistry componentRegistry) {
       this.configuration = configuration;
@@ -109,7 +111,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
          return invalidRemoteTxReturnValue();
       }
       visitRemoteTransaction(transaction);
-      RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext();
+      RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext(getOrigin());
       ctxt.setRemoteTransaction(transaction);
 
       try {
@@ -158,5 +160,13 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
 
    private void markGtxAsRemote() {
       globalTx.setRemote(true);
+   }
+   
+   public Address getOrigin() {
+	   return origin;
+   }
+   
+   public void setOrigin(Address origin) {
+	   this.origin = origin;
    }
 }

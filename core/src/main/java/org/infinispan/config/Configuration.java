@@ -1493,6 +1493,31 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void setL1OnRehash(boolean l1OnRehash) {
       this.clustering.l1.setOnRehash(l1OnRehash);
    }
+   
+   /**
+    * <p>
+    * Determines whether a multicast or a web of unicasts are used when performing L1 invalidations.
+    * </p>
+    * 
+    * <p>
+    * By default multicast will be used.
+    * </p>
+    * 
+    * <p>
+    * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to 0, then multicast 
+    * will be always be used.
+    * </p>
+    * 
+    * @param threshold the threshold over which to use a multicast
+    * 
+    */
+   public void setL1InvalidationThreshold(int threshold) {
+      this.clustering.l1.setInvalidationThreshold(threshold);
+   }
+   
+   public int getL1InvalidationThreshold() {
+   	return this.clustering.l1.invalidationThreshold;
+   }
 
    /**
     * Fully qualified name of class providing consistent hash algorithm
@@ -3471,11 +3496,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setL1OnRehash")
       protected Boolean onRehash = true;
-
+      
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "setL1InvalidationThreshold")
+      protected Integer invalidationThreshold = 0;
+      
       public void accept(ConfigurationBeanVisitor v) {
          v.visitL1Type(this);
       }
-
 
       @XmlAttribute
       public Boolean isEnabled() {
@@ -3493,7 +3520,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          setEnabled(enabled);
          return this;
       }
-
 
       @XmlAttribute
       public Long getLifespan() {
@@ -3529,6 +3555,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          setOnRehash(onRehash);
          return this;
       }
+      
+      @XmlAttribute
+      public void setInvalidationThreshold(Integer threshold) {
+         testImmutability("invalidationThreshold");
+         this.invalidationThreshold = threshold;
+      }
+      
+      public Integer getInvalidationThreshold() {
+	      return invalidationThreshold;
+      }
 
       @Override
       public boolean equals(Object o) {
@@ -3540,7 +3576,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (enabled != null ? !enabled.equals(l1Type.enabled) : l1Type.enabled != null) return false;
          if (lifespan != null ? !lifespan.equals(l1Type.lifespan) : l1Type.lifespan != null) return false;
          if (onRehash != null ? !onRehash.equals(l1Type.onRehash) : l1Type.onRehash != null) return false;
-
+         if (invalidationThreshold != null ? !invalidationThreshold.equals(l1Type.invalidationThreshold) : l1Type.invalidationThreshold != null) return false;
+         
          return true;
       }
 
@@ -3549,6 +3586,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          int result = enabled != null ? enabled.hashCode() : 0;
          result = 31 * result + (lifespan != null ? lifespan.hashCode() : 0);
          result = 31 * result + (onRehash != null ? onRehash.hashCode() : 0);
+         result = 31 * result + (invalidationThreshold != null ? invalidationThreshold.hashCode() : 0);
          return result;
       }
    }

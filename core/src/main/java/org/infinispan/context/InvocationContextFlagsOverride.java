@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.BidirectionalMap;
 
 
@@ -152,6 +153,11 @@ public class InvocationContextFlagsOverride implements InvocationContext {
    @Override
    public Set<Object> getLockedKeys() {
       return delegate.getLockedKeys();
+   }
+   
+   @Override
+   public Address getOrigin() {
+      return delegate.getOrigin();
    }
    
    @Override

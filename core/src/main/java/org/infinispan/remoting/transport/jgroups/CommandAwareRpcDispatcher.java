@@ -156,7 +156,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private Response executeCommand(CacheRpcCommand cmd, Message req) throws Throwable {
       if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
       if (trace) log.trace("Attempting to execute command: %s [sender=%s]", cmd, req.getSrc());
-      return inboundInvocationHandler.handle(cmd);
+      return inboundInvocationHandler.handle(cmd, new JGroupsAddress(req.getSrc()));
    }
 
    @Override

@@ -1,14 +1,15 @@
 package org.infinispan.context.impl;
 
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Common features of transaction and invocation contexts
@@ -24,6 +25,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    // since this is finite, small, and strictly an internal API, it is cheaper/quicker to use bitmasking rather than
    // an EnumSet.
    protected byte contextFlags = 0;
+   private Address origin;
 
    // if this or any context subclass ever needs to store a boolean, always use a context flag instead.  This is far
    // more space-efficient.  Note that this value will be stored in a byte, which means up to 8 flags can be stored in
@@ -103,6 +105,14 @@ public abstract class AbstractInvocationContext implements InvocationContext {
          this.flags = EnumSet.copyOf(flags);
       else
          this.flags.addAll(flags);
+   }
+   
+   public Address getOrigin() {
+	   return origin;
+   }
+   
+   public void setOrigin(Address origin) {
+	   this.origin = origin;
    }
 
    public void reset() {
