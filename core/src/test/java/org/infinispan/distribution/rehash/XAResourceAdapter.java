@@ -10,7 +10,7 @@ import javax.transaction.xa.Xid;
  * @author Manik Surtani
  * @since 4.0
  */
-public abstract class XAResourceAdapter implements XAResource {
+public class XAResourceAdapter implements XAResource {
    private static final Xid[] XIDS = new Xid[0];
 
    public void commit(Xid xid, boolean b) throws XAException {
