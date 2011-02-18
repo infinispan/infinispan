@@ -109,7 +109,7 @@ public class RepeatableReadLockTest extends LockTestBase {
       assert cache.get("a").equals("v2");
       tm.resume(tx);
       cache.remove("a");
-      tx.commit();
+      tm.commit();
       assert cache.get("a") == null : "expected null but received " + cache.get("a");
    }
 
