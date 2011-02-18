@@ -27,6 +27,7 @@ import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.BaseDistFunctionalTest;
+import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -156,12 +157,14 @@ public class EagerLockingSingleLockTest extends MultipleCacheManagersTest {
 
    @Test(dependsOnMethods = "testSingleLockAcquiredLocally")
    public void testLockOwnerFailure() throws Exception {
+      log.info("Start here.");
       Object k = kaf.getKeyForAddress(address(3));
       cache(1).put(k, "1stValue");
       final TransactionManager tm = cache(0).getAdvancedCache().getTransactionManager();
 
       tm.begin();
       cache(1).put(k, "2ndValue");
+      tm.getTransaction().enlistResource(new XAResourceAdapter());
 
       //now check that the only node that has a remote lock is cache(3)
       assert !TestingUtil.extractLockManager(cache(0)).isLocked(k);
