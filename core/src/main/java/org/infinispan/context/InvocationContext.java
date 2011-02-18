@@ -23,6 +23,8 @@ package org.infinispan.context;
 
 import java.util.Set;
 
+import org.infinispan.remoting.transport.Address;
+
 /**
  * A context that contains information pertaining to a given invocation.  These contexts typically have the lifespan of
  * a single invocation.
@@ -37,6 +39,12 @@ public interface InvocationContext extends EntryLookup, FlagContainer, Cloneable
     * Returns true if the call was originated locally, false if it is the result of a remote rpc.
     */
    boolean isOriginLocal();
+   
+   /**
+    * Get the origin of the command, or null if the command originated locally
+    * @return
+    */
+   Address getOrigin();
 
    /**
     * Returns true if this call is performed in the context of an transaction, false otherwise.

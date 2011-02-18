@@ -147,7 +147,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       if (ignored != null)
          throw new IllegalStateException("Expected null context!");
 
-      RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext();
+      RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext(getOrigin());
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
 
       if (transaction == null) {

@@ -674,7 +674,7 @@ public class DistributionManagerImpl implements DistributionManager {
       return false;
    }
 
-   public List<Address> getAffectedNodes(Set<Object> affectedKeys) {
+   public List<Address> getAffectedNodes(Collection<Object> affectedKeys) {
       if (affectedKeys == null || affectedKeys.isEmpty()) {
          if (log.isTraceEnabled()) log.trace("Affected keys are empty");
          return Collections.emptyList();
@@ -719,6 +719,10 @@ public class DistributionManagerImpl implements DistributionManager {
       return "DistributionManagerImpl[rehashInProgress=" + rehashInProgress + ", consistentHash=" + consistentHash + "]";
    }
 
+   public void setConfiguration(Configuration configuration) {
+      this.configuration = configuration;
+   }
+
    public TopologyInfo getTopologyInfo() {
       return topologyInfo;
    }
@@ -749,4 +753,5 @@ public class DistributionManagerImpl implements DistributionManager {
       }
       return !timeoutReached;
    }
+   
 }

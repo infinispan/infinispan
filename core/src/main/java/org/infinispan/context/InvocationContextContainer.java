@@ -1,14 +1,15 @@
 package org.infinispan.context;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.impl.LocalTxInvocationContext;
-import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
+import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-
-import javax.transaction.Transaction;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Manages the association between an {@link org.infinispan.context.InvocationContext} and the
@@ -58,23 +59,29 @@ public interface InvocationContextContainer {
     * Returns an {@link org.infinispan.context.impl.RemoteTxInvocationContext}. The context is also
     * associated with the current thread, so further calls to {@link #getInvocationContext()} will
     * return same instance.
+    * 
+    * @param origin the origin of the command, or null if local
     */
-   RemoteTxInvocationContext createRemoteTxInvocationContext();
+   RemoteTxInvocationContext createRemoteTxInvocationContext(Address origin);
 
    /**
     * Returns an {@link org.infinispan.context.impl.NonTxInvocationContext} whose
     * {@link org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} flag will be true.
     * The context is also associated with the current thread, so further calls to
     * {@link #getInvocationContext()} will return same instance.
+    * 
+    * @param origin the origin of the command, or null if local
     */
-   InvocationContext createRemoteInvocationContext();
+   InvocationContext createRemoteInvocationContext(Address origin);
 
    /**
     * As {@link #createRemoteInvocationContext()}, but returning the flags to the context from
     * the Command if any Flag was set.
+    * 
     * @param cacheCommand
+    * @param origin the origin of the command, or null if local
     */
-   InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand);
+   InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand, Address origin);
 
    /**
     * Returns the {@link InvocationContext} that is currently associated with the calling thread.

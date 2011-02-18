@@ -229,7 +229,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       Object object = marshaller.objectFromObjectStream(oi);
       while (object instanceof TransactionLog.LogEntry) {
          TransactionLog.LogEntry logEntry = (TransactionLog.LogEntry) object;
-         InvocationContext ctx = invocationContextContainer.createRemoteInvocationContext();
+         InvocationContext ctx = invocationContextContainer.createRemoteInvocationContext(null /* No idea if this right PLM */);
          WriteCommand[] mods = logEntry.getModifications();
          if (trace) log.trace("Mods = %s", Arrays.toString(mods));
          for (WriteCommand mod : mods) {
@@ -267,7 +267,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             if (!transactionLog.hasPendingPrepare(command)) {
                if (trace) log.trace("Applying pending prepare %s", command);
                commandsFactory.initializeReplicableCommand(command, false);
-               RemoteTxInvocationContext ctx = invocationContextContainer.createRemoteTxInvocationContext();
+               RemoteTxInvocationContext ctx = invocationContextContainer.createRemoteTxInvocationContext(null /* No idea if this right PLM */);
                RemoteTransaction transaction = txTable.createRemoteTransaction(command.getGlobalTransaction(), command.getModifications());
                ctx.setRemoteTransaction(transaction);
                ctx.setFlags(CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);

@@ -6,6 +6,7 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.AbstractCacheLoader;
 import org.infinispan.loaders.CacheLoaderConfig;
@@ -40,12 +41,14 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
 
    private ClusterCacheLoaderConfig config;
    private RpcManager rpcManager;
+   private DistributionManager distributionManager;
    private AdvancedCache cache;
 
    public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) {
       this.config = (ClusterCacheLoaderConfig) config;
       this.cache = cache.getAdvancedCache();
       rpcManager = this.cache.getRpcManager();
+      distributionManager = this.cache.getDistributionManager();
    }
 
    public InternalCacheEntry load(Object key) throws CacheLoaderException {

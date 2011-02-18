@@ -30,6 +30,7 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionTable;
 
@@ -99,13 +100,14 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
       return localTxContext;
    }
 
-   public RemoteTxInvocationContext createRemoteTxInvocationContext() {
+   public RemoteTxInvocationContext createRemoteTxInvocationContext(Address origin) {
       InvocationContext existing = icTl.get();
       if (existing != null && existing instanceof RemoteTxInvocationContext) {
          return (RemoteTxInvocationContext) existing;
       }
       RemoteTxInvocationContext remoteTxContext = new RemoteTxInvocationContext();
       icTl.set(remoteTxContext);
+      remoteTxContext.setOrigin(origin);
       return remoteTxContext;
    }
 
@@ -122,8 +124,8 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
    }
    
    @Override
-   public InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand) {
-      InvocationContext context = createRemoteInvocationContext();
+   public InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand, Address origin) {
+      InvocationContext context = createRemoteInvocationContext(origin);
       if (cacheCommand != null && cacheCommand instanceof FlagAffectedCommand) {
          FlagAffectedCommand command = (FlagAffectedCommand) cacheCommand;
          Set<Flag> flags = command.getFlags();
@@ -134,15 +136,17 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
       return context;
    }
 
-   public NonTxInvocationContext createRemoteInvocationContext() {
+   public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
       InvocationContext existing = icTl.get();
       if (existing != null && existing instanceof NonTxInvocationContext) {
          NonTxInvocationContext context = (NonTxInvocationContext) existing;
          context.setOriginLocal(false);
+         context.setOrigin(origin);
          return context;
       }
       NonTxInvocationContext remoteNonTxContext = new NonTxInvocationContext();
       remoteNonTxContext.setOriginLocal(false);
+      remoteNonTxContext.setOrigin(origin);
       icTl.set(remoteNonTxContext);
       return remoteNonTxContext;
    }

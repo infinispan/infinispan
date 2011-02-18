@@ -1,6 +1,7 @@
 package org.infinispan.factories;
 
 import org.infinispan.commands.RemoteCommandsFactory;
+import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -15,7 +16,8 @@ import org.infinispan.util.Util;
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
-@DefaultFactoryFor(classes = {InboundInvocationHandler.class, RemoteCommandsFactory.class, TransactionFactory.class })
+
+@DefaultFactoryFor(classes = {InboundInvocationHandler.class, RemoteCommandsFactory.class, TransactionFactory.class, L1Manager.class })
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
    public <T> T construct(Class<T> componentType) {

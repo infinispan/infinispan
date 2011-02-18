@@ -7,7 +7,6 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -23,6 +22,7 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
@@ -30,7 +30,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Immutables;
-import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
@@ -47,6 +46,7 @@ import java.util.Set;
  *
  * @author Manik Surtani
  * @author Mircea.Markus@jboss.com
+ * @author Pete Muir
  * @since 4.0
  */
 public class DistributionInterceptor extends BaseRpcInterceptor {
@@ -55,7 +55,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    DataContainer dataContainer;
    boolean isL1CacheEnabled, needReliableReturnValues;
    EntryFactory entryFactory;
-
+   L1Manager l1Manager;
 
    static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
       public List<Address> generateRecipients() {
@@ -68,17 +68,19 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    };
 
    @Inject
-   public void injectDependencies(DistributionManager distributionManager, CommandsFactory cf, DataContainer dataContainer, EntryFactory entryFactory) {
+   public void injectDependencies(DistributionManager distributionManager, CommandsFactory cf, DataContainer dataContainer, EntryFactory entryFactory, L1Manager l1Manager) {
       this.dm = distributionManager;
       this.cf = cf;
       this.dataContainer = dataContainer;
       this.entryFactory = entryFactory;
+      this.l1Manager = l1Manager;
    }
 
    @Start
    public void start() {
-      isL1CacheEnabled = configuration.isL1CacheEnabled();
+      isL1CacheEnabled = l1Manager != null;
       needReliableReturnValues = !configuration.isUnsafeUnreliableReturnValues();
+      
    }
 
    // ---- READ commands
@@ -94,6 +96,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       // so we need to check whether join has completed as well.
       boolean isRehashInProgress = !dm.isJoinComplete() || dm.isRehashInProgress();
       Object returnValue = invokeNextInterceptor(ctx, command);
+      
+      // If L1 caching is enabled, this is a remote command, and we found a value in our cache
+      // we store it so that we can later invalidate it
+      if (isL1CacheEnabled && !ctx.isOriginLocal() && returnValue != null) {
+      	l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
+      }
+      
       // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
       // available.  It could just have been removed in the same tx beforehand.
       if (needsRemoteGet(ctx, command.getKey(), returnValue == null))
@@ -188,7 +197,12 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return handleWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()), false, false);
+      Object returnValue = handleWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()), false, false);
+      // If this was a remote put record that which sent it
+      if (isL1CacheEnabled && !ctx.isOriginLocal()) {
+      	l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
+      }
+      return returnValue;
    }
 
    @Override
@@ -266,7 +280,10 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                syncCommitPhase = true;
             }
          }
-         NotifyingNotifiableFuture<Object> f = flushL1Cache(recipients.size(), ctx.getLockedKeys(), null);
+         NotifyingNotifiableFuture<Object> f = null;
+         if (isL1CacheEnabled) {
+         	f = l1Manager.flushCache(ctx.getLockedKeys(), null, null);
+         }
 
          Map<Address, Response> responses = rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
 
@@ -306,8 +323,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          List<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
          NotifyingNotifiableFuture<Object> f = null;
-         if (command.isOnePhaseCommit())
-            f = flushL1Cache(recipients.size(), ctx.getLockedKeys(), null);
+         if (isL1CacheEnabled && command.isOnePhaseCommit())
+            f = l1Manager.flushCache(ctx.getLockedKeys(), null, null);
          // this method will return immediately if we're the only member (because exclude_self=true)
          rpcManager.invokeRemotely(recipients, command, sync);
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients);
@@ -337,20 +354,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP) && needReliableReturnValues;
    }
 
-   private NotifyingNotifiableFuture<Object> flushL1Cache(int numCallRecipients, Collection<Object> keys, Object retval) {
-      if (isL1CacheEnabled && rpcManager.getTransport().getMembers().size() > numCallRecipients) {
-         if (trace) log.trace("Invalidating L1 caches");
-         InvalidateCommand ic = cf.buildInvalidateFromL1Command(false, keys);
-         NotifyingNotifiableFuture<Object> future = new AggregatingNotifyingFutureImpl(retval, 2);
-         rpcManager.broadcastRpcCommandInFuture(ic, future);
-         return future;
-      } else {
-         if (trace)
-            log.trace("Not performing invalidation! isL1CacheEnabled? %s numCallRecipients=%s", isL1CacheEnabled, numCallRecipients);
-      }
-      return null;
-   }
-
    /**
     * If we are within one transaction we won't do any replication as replication would only be performed at commit
     * time. If the operation didn't originate locally we won't do any replication either.
@@ -369,14 +372,25 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       Object returnValue = invokeNextInterceptor(ctx, command);
 
       if (command.isSuccessful()) {
+      	
          if (!ctx.isInTxScope()) {
+         	NotifyingNotifiableFuture<Object> future = null;
             if (ctx.isOriginLocal()) {
                List<Address> rec = recipientGenerator.generateRecipients();
+               int numCallRecipients = rec == null ? 0 : rec.size();
                if (trace) log.trace("Invoking command %s on hosts %s", command, rec);
+               
                boolean useFuture = ctx.isUseFutureReturnType();
-               NotifyingNotifiableFuture<Object> future = null;
-               if (!skipL1Invalidation)
-                  future = flushL1Cache(rec == null ? 0 : rec.size(), recipientGenerator.getKeys(), returnValue);
+               if (isL1CacheEnabled && !skipL1Invalidation)
+               	// Handle the case where the put is local. If in unicast mode and this is not a data
+               	// owner, nothing happens. If in multicast mode, we this node will send the multicast
+               	if (rpcManager.getTransport().getMembers().size() > numCallRecipients) { 
+               		// Command was successful, we have a number of receipients and L1 should be flushed, so request any L1 invalidations from this node
+               		if (trace) log.trace("Put occuring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s", command.getAffectedKeys(), dm.getAffectedNodes(command.getAffectedKeys()));
+               		future = l1Manager.flushCache(recipientGenerator.getKeys(), returnValue, null);
+               	} else {
+                     if (trace) log.trace("Not performing invalidation! numCallRecipients=%s", numCallRecipients);
+                  }
                if (!isSingleOwnerAndLocal(recipientGenerator)) {
                   if (useFuture) {
                      if (future == null) future = new NotifyingFutureImpl(returnValue);
@@ -392,6 +406,17 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                   future.get(); // wait for the inval command to complete
                   if (trace) log.trace("Finished invalidating keys %s ", recipientGenerator.getKeys());
                }
+            } else {
+            	// Piggyback remote puts and cause L1 invalidations
+            	if (isL1CacheEnabled && !skipL1Invalidation) {
+               	// Command was successful and L1 should be flushed, so request any L1 invalidations from this node
+            		if (trace) log.trace("Put occuring on node, requesting cache invalidation for keys %s. Origin of command is remote", command.getAffectedKeys());
+            		future = l1Manager.flushCache(recipientGenerator.getKeys(), returnValue, ctx.getOrigin());
+            		if (sync) {
+            			future.get(); // wait for the inval command to complete
+                     if (trace) log.trace("Finished invalidating keys %s ", recipientGenerator.getKeys());
+            		}
+            	}
             }
          } else {
             ((TxInvocationContext) ctx).addAffectedKeys(recipientGenerator.getKeys());
@@ -459,4 +484,5 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          return keys;
       }
    }
+
 }
