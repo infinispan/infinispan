@@ -21,6 +21,7 @@ import org.infinispan.transaction.xa.TransactionTable;
 import static org.testng.AssertJUnit.*;
 import org.testng.annotations.Test;
 
+import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
@@ -263,8 +264,8 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       tm1.commit();
       replListener2.waitForRpc();
 
-      TransactionTable tt1 = TestingUtil.extractComponent(cache1, TransactionTable.class);
-      TransactionTable tt2 = TestingUtil.extractComponent(cache2, TransactionTable.class);
+      final TransactionTable tt1 = TestingUtil.extractComponent(cache1, TransactionTable.class);
+      final TransactionTable tt2 = TestingUtil.extractComponent(cache2, TransactionTable.class);
 
       assert tt1.getRemoteTxCount() == 0 : "Cache 1 should have no stale global TXs";
       assert tt1.getLocalTxCount() == 0 : "Cache 1 should have no stale local TXs";
@@ -273,27 +274,35 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
 
       replListener2.expectWithTx(PutKeyValueCommand.class);
       tm1.begin();
+      assertEquals(tm1.getTransaction().getStatus(), Status.STATUS_ACTIVE);
       cache1.putForExternalRead(key, value);
+      assertEquals(tm1.getTransaction().getStatus(), Status.STATUS_ACTIVE);
       cache1.put(key, value);
+      assertEquals(tm1.getTransaction().getStatus(), Status.STATUS_ACTIVE);
+      log.info("Before commit!!");
       tm1.commit();
-      replListener2.waitForRpc();
 
-      assert tt1.getRemoteTxCount() == 0 : "Cache 1 should have no stale global TXs";
-      assert tt1.getLocalTxCount() == 0 : "Cache 1 should have no stale local TXs";
-      assert tt2.getRemoteTxCount() == 0 : "Cache 2 should have no stale global TXs";
-      assert tt2.getLocalTxCount() == 0 : "Cache 2 should have no stale local TXs";
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
+                  && (tt2.getLocalTxCount() == 0);
+         }
+      });
 
       replListener2.expectWithTx(PutKeyValueCommand.class);
       tm1.begin();
       cache1.put(key, value);
       cache1.putForExternalRead(key, value);
       tm1.commit();
-      replListener2.waitForRpc();
 
-      assert tt1.getRemoteTxCount() == 0 : "Cache 1 should have no stale global TXs";
-      assert tt1.getLocalTxCount() == 0 : "Cache 1 should have no stale local TXs";
-      assert tt2.getRemoteTxCount() == 0 : "Cache 2 should have no stale global TXs";
-      assert tt2.getLocalTxCount() == 0 : "Cache 2 should have no stale local TXs";
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
+                  && (tt2.getLocalTxCount() == 0);
+         }
+      });
 
       replListener2.expectWithTx(PutKeyValueCommand.class, PutKeyValueCommand.class);
       tm1.begin();
@@ -301,12 +310,14 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       cache1.putForExternalRead(key, value);
       cache1.put(key, value);
       tm1.commit();
-      replListener2.waitForRpc();
 
-      assert tt1.getRemoteTxCount() == 0 : "Cache 1 should have no stale global TXs";
-      assert tt1.getLocalTxCount() == 0 : "Cache 1 should have no stale local TXs";
-      assert tt2.getRemoteTxCount() == 0 : "Cache 2 should have no stale global TXs";
-      assert tt2.getLocalTxCount() == 0 : "Cache 2 should have no stale local TXs";
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
+                  && (tt2.getLocalTxCount() == 0);
+         }
+      });
    }
 
    /**
