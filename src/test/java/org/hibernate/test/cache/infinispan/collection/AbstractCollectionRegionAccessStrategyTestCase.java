@@ -23,6 +23,10 @@
  */
 package org.hibernate.test.cache.infinispan.collection;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+
+>>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
 import static org.hibernate.TestLogger.LOG;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -544,7 +548,7 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
         private final String configResource;
         private final String configName;
         private String preferIPv4Stack;
-        private ServiceRegistryHolder serviceRegistryHolder;
+        private ServiceRegistry serviceRegistry;
 
         public AccessStrategyTestSetup( Test test,
                                         String configName ) {
@@ -567,13 +571,13 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
             preferIPv4Stack = System.getProperty(PREFER_IPV4STACK);
             System.setProperty(PREFER_IPV4STACK, "true");
 
-            serviceRegistryHolder = new ServiceRegistryHolder(Environment.getProperties());
+            serviceRegistry = ServiceRegistryBuilder.buildServiceRegistry(Environment.getProperties());
 
             localCfg = createConfiguration(configName, configResource);
-            localRegionFactory = CacheTestUtil.startRegionFactory(serviceRegistryHolder.getJdbcServicesImpl(), localCfg);
+            localRegionFactory = CacheTestUtil.startRegionFactory(serviceRegistry.getService(JdbcServices.class), localCfg);
 
             remoteCfg = createConfiguration(configName, configResource);
-            remoteRegionFactory = CacheTestUtil.startRegionFactory(serviceRegistryHolder.getJdbcServicesImpl(), remoteCfg);
+            remoteRegionFactory = CacheTestUtil.startRegionFactory(serviceRegistry.getService(JdbcServices.class), remoteCfg);
         }
 
         @Override
@@ -590,8 +594,8 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 
                 if (remoteRegionFactory != null) remoteRegionFactory.stop();
             } finally {
-                if (serviceRegistryHolder != null) {
-                    serviceRegistryHolder.destroy();
+                if (serviceRegistry != null) {
+                    ServiceRegistryBuilder.destroy(serviceRegistry);
                 }
 =======
          serviceRegistry = ServiceRegistryBuilder.buildServiceRegistry( Environment.getProperties() );

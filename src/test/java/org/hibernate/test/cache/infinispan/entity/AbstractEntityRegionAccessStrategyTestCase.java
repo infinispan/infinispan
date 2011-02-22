@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2007, Red Hat, Inc. and/or it's affiliates or third-party contributors as
  * indicated by the @author tags or express copyright attribution
- * statements applied by the authors.  All third-party contributions are
+ * statements applied by the authors.  All third-party contributions are
  * distributed under license by Red Hat, Inc. and/or it's affiliates.
  *
  * This copyrighted material is made available to anyone wishing to use, modify,
@@ -23,6 +23,10 @@
  */
 package org.hibernate.test.cache.infinispan.entity;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+
+>>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
 import static org.hibernate.TestLogger.LOG;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -644,7 +648,7 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
         private static final String PREFER_IPV4STACK = "java.net.preferIPv4Stack";
         private final String configName;
         private String preferIPv4Stack;
-        private ServiceRegistryHolder serviceRegistryHolder;
+        private ServiceRegistry serviceRegistry;
 
         public AccessStrategyTestSetup( Test test,
                                         String configName ) {
@@ -665,13 +669,13 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
             preferIPv4Stack = System.getProperty(PREFER_IPV4STACK);
             System.setProperty(PREFER_IPV4STACK, "true");
 
-            serviceRegistryHolder = new ServiceRegistryHolder(Environment.getProperties());
+            serviceRegistry = ServiceRegistryBuilder.buildServiceRegistry(Environment.getProperties());
 
             localCfg = createConfiguration(configName);
-            localRegionFactory = CacheTestUtil.startRegionFactory(serviceRegistryHolder.getJdbcServicesImpl(), localCfg);
+            localRegionFactory = CacheTestUtil.startRegionFactory(serviceRegistry.getService(JdbcServices.class), localCfg);
 
             remoteCfg = createConfiguration(configName);
-            remoteRegionFactory = CacheTestUtil.startRegionFactory(serviceRegistryHolder.getJdbcServicesImpl(), remoteCfg);
+            remoteRegionFactory = CacheTestUtil.startRegionFactory(serviceRegistry.getService(JdbcServices.class), remoteCfg);
         }
 
         @Override
@@ -684,8 +688,13 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
                 if (remoteRegionFactory != null) remoteRegionFactory.stop();
             } finally {
 <<<<<<< HEAD
+<<<<<<< HEAD
                 if (serviceRegistryHolder != null) {
                     serviceRegistryHolder.destroy();
+=======
+                if (serviceRegistry != null) {
+                    ServiceRegistryBuilder.destroy(serviceRegistry);
+>>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
                 }
 =======
                commitLatch.countDown();
