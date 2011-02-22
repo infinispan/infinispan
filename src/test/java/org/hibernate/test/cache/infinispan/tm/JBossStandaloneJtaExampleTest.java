@@ -22,6 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 package org.hibernate.test.cache.infinispan.tm;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Iterator;
@@ -55,6 +56,13 @@ import org.hibernate.service.spi.ServiceRegistry;
 import org.hibernate.stat.Statistics;
 import org.hibernate.test.cache.infinispan.functional.Item;
 import org.hibernate.testing.ServiceRegistryBuilder;
+import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.jboss.util.naming.NonSerializableFactory;
+import org.jnp.interfaces.NamingContext;
+import org.jnp.server.Main;
+import org.jnp.server.NamingServer;
 
 /**
  * This is an example test based on http://community.jboss.org/docs/DOC-14617 that shows how to interact with
@@ -272,7 +280,7 @@ public class JBossStandaloneJtaExampleTest extends TestCase {
    }
 
    private SessionFactory buildSessionFactory() {
-      // Extra options located in src/test/resources/hibernate.properties 
+      // Extra options located in src/test/resources/hibernate.properties
       Configuration cfg = new Configuration();
       cfg.setProperty(Environment.DIALECT, "org.hibernate.dialect.HSQLDialect");
       cfg.setProperty(Environment.HBM2DDL_AUTO, "create-drop");

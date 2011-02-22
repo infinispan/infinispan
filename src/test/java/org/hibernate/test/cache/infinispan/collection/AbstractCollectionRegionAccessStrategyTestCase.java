@@ -23,6 +23,14 @@
  */
 package org.hibernate.test.cache.infinispan.collection;
 
+import static org.hibernate.TestLogger.LOG;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import javax.transaction.TransactionManager;
 import junit.extensions.TestSetup;
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
@@ -471,110 +479,6 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
         assertNull("local is clean", localAccessStrategy.get(KEY, System.currentTimeMillis()));
         assertNull("remote is clean", remoteAccessStrategy.get(KEY, System.currentTimeMillis()));
 
-<<<<<<< HEAD
-        localAccessStrategy.putFromLoad(KEY, VALUE1, System.currentTimeMillis(), new Integer(1));
-        assertEquals(VALUE1, localAccessStrategy.get(KEY, System.currentTimeMillis()));
-        remoteAccessStrategy.putFromLoad(KEY, VALUE1, System.currentTimeMillis(), new Integer(1));
-        assertEquals(VALUE1, remoteAccessStrategy.get(KEY, System.currentTimeMillis()));
-
-        // Wait for async propagation
-        sleep(250);
-
-        if (evict) localAccessStrategy.evictAll();
-        else localAccessStrategy.removeAll();
-
-        // This should re-establish the region root node
-        assertNull(localAccessStrategy.get(KEY, System.currentTimeMillis()));
-
-        assertEquals(0, getValidKeyCount(localCache.keySet()));
-
-        // Re-establishing the region root on the local node doesn't
-        // propagate it to other nodes. Do a get on the remote node to re-establish
-        assertEquals(null, remoteAccessStrategy.get(KEY, System.currentTimeMillis()));
-
-        assertEquals(0, getValidKeyCount(remoteCache.keySet()));
-
-        // Test whether the get above messes up the optimistic version
-        remoteAccessStrategy.putFromLoad(KEY, VALUE1, System.currentTimeMillis(), new Integer(1));
-        assertEquals(VALUE1, remoteAccessStrategy.get(KEY, System.currentTimeMillis()));
-
-        assertEquals(1, getValidKeyCount(remoteCache.keySet()));
-
-        // Wait for async propagation of the putFromLoad
-        sleep(250);
-
-        assertEquals("local is correct",
-                     (isUsingInvalidation() ? null : VALUE1),
-                     localAccessStrategy.get(KEY, System.currentTimeMillis()));
-        assertEquals("remote is correct", VALUE1, remoteAccessStrategy.get(KEY, System.currentTimeMillis()));
-    }
-
-    private void rollback() {
-        try {
-            BatchModeTransactionManager.getInstance().rollback();
-        } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
-        }
-
-    }
-
-    private static class AccessStrategyTestSetup extends TestSetup {
-
-        private static final String PREFER_IPV4STACK = "java.net.preferIPv4Stack";
-
-        private final String configResource;
-        private final String configName;
-        private String preferIPv4Stack;
-        private ServiceRegistryHolder serviceRegistryHolder;
-
-        public AccessStrategyTestSetup( Test test,
-                                        String configName ) {
-            this(test, configName, null);
-        }
-
-        public AccessStrategyTestSetup( Test test,
-                                        String configName,
-                                        String configResource ) {
-            super(test);
-            this.configName = configName;
-            this.configResource = configResource;
-        }
-
-        @Override
-        protected void setUp() throws Exception {
-            super.setUp();
-
-            // Try to ensure we use IPv4; otherwise cluster formation is very slow
-            preferIPv4Stack = System.getProperty(PREFER_IPV4STACK);
-            System.setProperty(PREFER_IPV4STACK, "true");
-
-            serviceRegistryHolder = new ServiceRegistryHolder(Environment.getProperties());
-
-            localCfg = createConfiguration(configName, configResource);
-            localRegionFactory = CacheTestUtil.startRegionFactory(serviceRegistryHolder.getJdbcServicesImpl(), localCfg);
-
-            remoteCfg = createConfiguration(configName, configResource);
-            remoteRegionFactory = CacheTestUtil.startRegionFactory(serviceRegistryHolder.getJdbcServicesImpl(), remoteCfg);
-        }
-
-        @Override
-        protected void tearDown() throws Exception {
-            try {
-                super.tearDown();
-            } finally {
-                if (preferIPv4Stack == null) System.clearProperty(PREFER_IPV4STACK);
-                else System.setProperty(PREFER_IPV4STACK, preferIPv4Stack);
-            }
-
-            try {
-                if (localRegionFactory != null) localRegionFactory.stop();
-
-                if (remoteRegionFactory != null) remoteRegionFactory.stop();
-            } finally {
-                if (serviceRegistryHolder != null) {
-                    serviceRegistryHolder.destroy();
-                }
-=======
          serviceRegistry = ServiceRegistryBuilder.buildServiceRegistry( Environment.getProperties() );
 
          localCfg = createConfiguration(configName, configResource);
@@ -611,7 +515,6 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 		  finally {
             if ( serviceRegistry != null ) {
 				ServiceRegistryBuilder.destroy( serviceRegistry );
->>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
             }
         }
 
