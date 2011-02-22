@@ -219,7 +219,7 @@ public class CacheQueryImpl implements CacheQuery {
          int size = max - first + 1 < 0 ? 0 : max - first + 1;
          keyList = new ArrayList<Object>(size);
 
-         DocumentExtractor extractor = new DocumentExtractor(queryHits, searchFactory, indexProjection, idFieldNames, allowFieldSelectionInProjection);
+         DocumentExtractor extractor = buildDocumentExtractor( queryHits );
          for (int index = first; index <= max; index++) {
             // Since the documentId is same thing as the key in each key, value pairing. We can just get the documentId
             // from Lucene and then get it from the cache.
@@ -253,7 +253,7 @@ public class CacheQueryImpl implements CacheQuery {
          int first = first();
          int max = max(first, queryHits.totalHits);
 
-         DocumentExtractor extractor = new DocumentExtractor(queryHits, searchFactory, indexProjection, idFieldNames, allowFieldSelectionInProjection);
+         DocumentExtractor extractor = buildDocumentExtractor( queryHits );
 
          return new LazyIterator(extractor, cache, searcher, searchFactory, first, max, fetchSize);
       }
@@ -283,7 +283,7 @@ public class CacheQueryImpl implements CacheQuery {
 
          int size = max - first + 1 < 0 ? 0 : max - first + 1;
 
-         DocumentExtractor extractor = new DocumentExtractor(queryHits, searchFactory, indexProjection, idFieldNames, allowFieldSelectionInProjection);
+         DocumentExtractor extractor = buildDocumentExtractor( queryHits );
 
          List<String> keysForCache = new ArrayList<String>(size);
          for (int index = first; index <= max; index++) {
@@ -436,6 +436,10 @@ public class CacheQueryImpl implements CacheQuery {
                break;
             }
          }
+      }
+      else {
+         Map<Class<?>, DocumentBuilderIndexedEntity<?>> documentBuildersIndexedEntities = searchFactoryImplementor.getDocumentBuildersIndexedEntities();
+         this.classesAndSubclasses = documentBuildersIndexedEntities.keySet();
       }
 
       //set up the searcher
@@ -654,5 +658,11 @@ public class CacheQueryImpl implements CacheQuery {
       }
       return filter;
    }
+   
+   private DocumentExtractor buildDocumentExtractor(QueryHits queryHits) {
+      return new DocumentExtractor(
+                  queryHits, searchFactory, indexProjection, idFieldNames, allowFieldSelectionInProjection, classesAndSubclasses
+      );
+}
 
 }
