@@ -22,13 +22,13 @@
  * Boston, MA  02110-1301  USA
  */
 package org.hibernate.test.cache.infinispan.entity;
-import static org.hibernate.TestLogger.LOG;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+
 import junit.extensions.TestSetup;
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.infinispan.transaction.tm.BatchModeTransactionManager;
+
 import org.hibernate.cache.CacheDataDescription;
 import org.hibernate.cache.EntityRegion;
 import org.hibernate.cache.access.AccessType;
@@ -40,11 +40,15 @@ import org.hibernate.cache.infinispan.util.CacheAdapter;
 import org.hibernate.cache.infinispan.util.FlagAdapter;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
+import org.hibernate.engine.jdbc.spi.JdbcServices;
+import org.hibernate.service.spi.ServiceRegistry;
 import org.hibernate.test.cache.infinispan.AbstractNonFunctionalTestCase;
 import org.hibernate.test.cache.infinispan.util.CacheTestUtil;
-import org.hibernate.test.common.ServiceRegistryHolder;
+import org.hibernate.testing.ServiceRegistryBuilder;
 import org.hibernate.util.ComparableComparator;
-import org.infinispan.transaction.tm.BatchModeTransactionManager;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Base class for tests of EntityRegionAccessStrategy impls.
@@ -670,9 +674,200 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 
                 if (remoteRegionFactory != null) remoteRegionFactory.stop();
             } finally {
-                if (serviceRegistryHolder != null) {
-                    serviceRegistryHolder.destroy();
-                }
+               commitLatch.countDown();
+               log.debug("Completion latch countdown");
+               completionLatch.countDown();
+            }
+         }
+      };
+
+      updater.setDaemon(true);
+      reader.setDaemon(true);
+      updater.start();
+      reader.start();
+
+      // Should complete promptly
+      assertTrue(completionLatch.await(2, TimeUnit.SECONDS));
+
+      assertThreadsRanCleanly();
+
+      long txTimestamp = System.currentTimeMillis();
+      assertEquals("Correct node1 value", VALUE2, localAccessStrategy.get(KEY, txTimestamp));
+      Object expected = isUsingInvalidation() ? null : VALUE2;
+      assertEquals("Correct node2 value", expected, remoteAccessStrategy.get(KEY, txTimestamp));
+   }
+
+   /**
+    * Test method for {@link TransactionalAccess#remove(java.lang.Object)}.
+    */
+   public void testRemove() {
+      evictOrRemoveTest(false);
+   }
+
+   /**
+    * Test method for {@link TransactionalAccess#removeAll()}.
+    */
+   public void testRemoveAll() {
+      evictOrRemoveAllTest(false);
+   }
+
+   /**
+    * Test method for {@link TransactionalAccess#evict(java.lang.Object)}.
+    * 
+    * FIXME add testing of the "immediately without regard for transaction isolation" bit in the
+    * EntityRegionAccessStrategy API.
+    */
+   public void testEvict() {
+      evictOrRemoveTest(true);
+   }
+
+   /**
+    * Test method for {@link TransactionalAccess#evictAll()}.
+    * 
+    * FIXME add testing of the "immediately without regard for transaction isolation" bit in the
+    * EntityRegionAccessStrategy API.
+    */
+   public void testEvictAll() {
+      evictOrRemoveAllTest(true);
+   }
+
+   private void evictOrRemoveTest(boolean evict) {
+      final String KEY = KEY_BASE + testCount++;
+      assertEquals(0, getValidKeyCount(localCache.keySet()));
+      assertEquals(0, getValidKeyCount(remoteCache.keySet()));
+
+      assertNull("local is clean", localAccessStrategy.get(KEY, System.currentTimeMillis()));
+      assertNull("remote is clean", remoteAccessStrategy.get(KEY, System.currentTimeMillis()));
+
+      localAccessStrategy.putFromLoad(KEY, VALUE1, System.currentTimeMillis(), new Integer(1));
+      assertEquals(VALUE1, localAccessStrategy.get(KEY, System.currentTimeMillis()));
+      remoteAccessStrategy.putFromLoad(KEY, VALUE1, System.currentTimeMillis(), new Integer(1));
+      assertEquals(VALUE1, remoteAccessStrategy.get(KEY, System.currentTimeMillis()));
+
+      if (evict)
+         localAccessStrategy.evict(KEY);
+      else
+         localAccessStrategy.remove(KEY);
+
+      assertEquals(null, localAccessStrategy.get(KEY, System.currentTimeMillis()));
+      assertEquals(0, getValidKeyCount(localCache.keySet()));
+      assertEquals(null, remoteAccessStrategy.get(KEY, System.currentTimeMillis()));
+      assertEquals(0, getValidKeyCount(remoteCache.keySet()));
+   }
+
+   private void evictOrRemoveAllTest(boolean evict) {
+      final String KEY = KEY_BASE + testCount++;
+      assertEquals(0, getValidKeyCount(localCache.keySet()));
+      assertEquals(0, getValidKeyCount(remoteCache.keySet()));
+      assertNull("local is clean", localAccessStrategy.get(KEY, System.currentTimeMillis()));
+      assertNull("remote is clean", remoteAccessStrategy.get(KEY, System.currentTimeMillis()));
+
+      localAccessStrategy.putFromLoad(KEY, VALUE1, System.currentTimeMillis(), new Integer(1));
+      assertEquals(VALUE1, localAccessStrategy.get(KEY, System.currentTimeMillis()));
+
+      // Wait for async propagation
+      sleep(250);
+
+      remoteAccessStrategy.putFromLoad(KEY, VALUE1, System.currentTimeMillis(), new Integer(1));
+      assertEquals(VALUE1, remoteAccessStrategy.get(KEY, System.currentTimeMillis()));
+
+      // Wait for async propagation
+      sleep(250);
+
+      if (evict) {
+         log.debug("Call evict all locally");
+         localAccessStrategy.evictAll();
+      } else {
+         localAccessStrategy.removeAll();
+      }
+
+      // This should re-establish the region root node in the optimistic case
+      assertNull(localAccessStrategy.get(KEY, System.currentTimeMillis()));
+      assertEquals(0, getValidKeyCount(localCache.keySet()));
+
+      // Re-establishing the region root on the local node doesn't
+      // propagate it to other nodes. Do a get on the remote node to re-establish
+      assertEquals(null, remoteAccessStrategy.get(KEY, System.currentTimeMillis()));
+      assertEquals(0, getValidKeyCount(remoteCache.keySet()));
+
+      // Test whether the get above messes up the optimistic version
+      remoteAccessStrategy.putFromLoad(KEY, VALUE1, System.currentTimeMillis(), new Integer(1));
+      assertEquals(VALUE1, remoteAccessStrategy.get(KEY, System.currentTimeMillis()));
+      assertEquals(1, getValidKeyCount(remoteCache.keySet()));
+
+      // Wait for async propagation
+      sleep(250);
+
+      assertEquals("local is correct", (isUsingInvalidation() ? null : VALUE1), localAccessStrategy
+               .get(KEY, System.currentTimeMillis()));
+      assertEquals("remote is correct", VALUE1, remoteAccessStrategy.get(KEY, System
+               .currentTimeMillis()));
+   }
+
+   protected void rollback() {
+      try {
+         BatchModeTransactionManager.getInstance().rollback();
+      } catch (Exception e) {
+         log.error(e.getMessage(), e);
+      }
+   }
+
+   private static class AccessStrategyTestSetup extends TestSetup {
+
+      private static final String PREFER_IPV4STACK = "java.net.preferIPv4Stack";
+      private final String configName;
+      private String preferIPv4Stack;
+      private ServiceRegistry serviceRegistry;
+
+      public AccessStrategyTestSetup(Test test, String configName) {
+         super(test);
+         this.configName = configName;
+      }
+
+      @Override
+      protected void setUp() throws Exception {
+         try {
+            super.tearDown();
+         } finally {
+            if (preferIPv4Stack == null)
+               System.clearProperty(PREFER_IPV4STACK);
+            else
+               System.setProperty(PREFER_IPV4STACK, preferIPv4Stack);
+         }
+
+         // Try to ensure we use IPv4; otherwise cluster formation is very slow
+         preferIPv4Stack = System.getProperty(PREFER_IPV4STACK);
+         System.setProperty(PREFER_IPV4STACK, "true");
+
+		 serviceRegistry = ServiceRegistryBuilder.buildServiceRegistry( Environment.getProperties() );
+
+         localCfg = createConfiguration(configName);
+         localRegionFactory = CacheTestUtil.startRegionFactory(
+				 serviceRegistry.getService( JdbcServices.class ),
+				 localCfg
+		 );
+
+         remoteCfg = createConfiguration(configName);
+         remoteRegionFactory = CacheTestUtil.startRegionFactory(
+				 serviceRegistry.getService( JdbcServices.class ),
+				 remoteCfg
+		 );
+      }
+
+      @Override
+      protected void tearDown() throws Exception {
+         super.tearDown();
+
+		  try {
+            if (localRegionFactory != null)
+               localRegionFactory.stop();
+
+            if (remoteRegionFactory != null)
+               remoteRegionFactory.stop();
+		  }
+		  finally {
+            if ( serviceRegistry != null ) {
+				ServiceRegistryBuilder.destroy( serviceRegistry );
             }
         }
 

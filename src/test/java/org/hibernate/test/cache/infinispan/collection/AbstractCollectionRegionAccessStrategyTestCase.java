@@ -22,18 +22,13 @@
  * Boston, MA  02110-1301  USA
  */
 package org.hibernate.test.cache.infinispan.collection;
-import static org.hibernate.TestLogger.LOG;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import javax.transaction.TransactionManager;
+
 import junit.extensions.TestSetup;
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.infinispan.transaction.tm.BatchModeTransactionManager;
+
 import org.hibernate.cache.CacheDataDescription;
 import org.hibernate.cache.CollectionRegion;
 import org.hibernate.cache.access.AccessType;
@@ -48,12 +43,21 @@ import org.hibernate.cache.infinispan.util.CacheAdapter;
 import org.hibernate.cache.infinispan.util.FlagAdapter;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
+import org.hibernate.engine.jdbc.spi.JdbcServices;
+import org.hibernate.service.spi.ServiceRegistry;
 import org.hibernate.test.cache.infinispan.AbstractNonFunctionalTestCase;
 import org.hibernate.test.cache.infinispan.functional.cluster.DualNodeJtaTransactionManagerImpl;
 import org.hibernate.test.cache.infinispan.util.CacheTestUtil;
-import org.hibernate.test.common.ServiceRegistryHolder;
+import org.hibernate.testing.ServiceRegistryBuilder;
 import org.hibernate.util.ComparableComparator;
-import org.infinispan.transaction.tm.BatchModeTransactionManager;
+
+import javax.transaction.TransactionManager;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Base class for tests of CollectionRegionAccessStrategy impls.
@@ -449,7 +453,14 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
         assertEquals(null, remoteAccessStrategy.get(KEY, System.currentTimeMillis()));
     }
 
+<<<<<<< HEAD
     private void evictOrRemoveAllTest( boolean evict ) {
+=======
+      private final String configResource;
+      private final String configName;
+      private String preferIPv4Stack;
+      private ServiceRegistry serviceRegistry;
+>>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
 
         final String KEY = KEY_BASE + testCount++;
 
@@ -460,6 +471,7 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
         assertNull("local is clean", localAccessStrategy.get(KEY, System.currentTimeMillis()));
         assertNull("remote is clean", remoteAccessStrategy.get(KEY, System.currentTimeMillis()));
 
+<<<<<<< HEAD
         localAccessStrategy.putFromLoad(KEY, VALUE1, System.currentTimeMillis(), new Integer(1));
         assertEquals(VALUE1, localAccessStrategy.get(KEY, System.currentTimeMillis()));
         remoteAccessStrategy.putFromLoad(KEY, VALUE1, System.currentTimeMillis(), new Integer(1));
@@ -562,6 +574,44 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
                 if (serviceRegistryHolder != null) {
                     serviceRegistryHolder.destroy();
                 }
+=======
+         serviceRegistry = ServiceRegistryBuilder.buildServiceRegistry( Environment.getProperties() );
+
+         localCfg = createConfiguration(configName, configResource);
+         localRegionFactory = CacheTestUtil.startRegionFactory(
+				 serviceRegistry.getService( JdbcServices.class ),
+				 localCfg
+		 );
+
+         remoteCfg = createConfiguration(configName, configResource);
+         remoteRegionFactory = CacheTestUtil.startRegionFactory(
+				 serviceRegistry.getService( JdbcServices.class ),
+				 remoteCfg
+		 );
+      }
+
+      @Override
+      protected void tearDown() throws Exception {
+         try {
+            super.tearDown();
+         } finally {
+            if (preferIPv4Stack == null)
+               System.clearProperty(PREFER_IPV4STACK);
+            else
+               System.setProperty(PREFER_IPV4STACK, preferIPv4Stack);
+         }
+
+		  try {
+            if (localRegionFactory != null)
+               localRegionFactory.stop();
+
+            if (remoteRegionFactory != null)
+               remoteRegionFactory.stop();
+		  }
+		  finally {
+            if ( serviceRegistry != null ) {
+				ServiceRegistryBuilder.destroy( serviceRegistry );
+>>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
             }
         }
 
