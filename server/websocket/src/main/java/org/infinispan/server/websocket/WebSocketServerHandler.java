@@ -29,6 +29,7 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.*;
 import static org.jboss.netty.handler.codec.http.HttpVersion.*;
 
 import java.io.StringWriter;
+import java.security.MessageDigest;
 import java.util.Map;
 
 import org.infinispan.Cache;
@@ -63,151 +64,177 @@ import org.json.JSONObject;
  */
 public class WebSocketServerHandler extends SimpleChannelUpstreamHandler {
 
-	private static final String INFINISPAN_WS_JS_FILENAME = "infinispan-ws.js";
-	private CacheContainer cacheContainer;
-	private Map<String, OpHandler> operationHandlers;
-	private boolean connectionUpgraded;
-	private Map<String, Cache> startedCaches;
+   private static final String INFINISPAN_WS_JS_FILENAME = "infinispan-ws.js";
+   private CacheContainer cacheContainer;
+   private Map<String, OpHandler> operationHandlers;
+   private boolean connectionUpgraded;
+   private Map<String, Cache> startedCaches;
 
-	public WebSocketServerHandler(CacheContainer cacheContainer, Map<String, OpHandler> operationHandlers, Map<String, Cache> startedCaches) {
-		this.cacheContainer = cacheContainer;
-		this.operationHandlers = operationHandlers;
-		this.startedCaches = startedCaches;
-	}
+   public WebSocketServerHandler(CacheContainer cacheContainer, Map<String, OpHandler> operationHandlers, Map<String, Cache> startedCaches) {
+      this.cacheContainer = cacheContainer;
+      this.operationHandlers = operationHandlers;
+      this.startedCaches = startedCaches;
+   }
 
-	@Override
-    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-        Object msg = e.getMessage();
-        if (msg instanceof HttpRequest) {
-            handleHttpRequest(ctx, (HttpRequest) msg);
-        } else if (msg instanceof WebSocketFrame) {
-            handleWebSocketFrame(ctx, (WebSocketFrame) msg);
-        }
-    }
+   @Override
+   public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+      Object msg = e.getMessage();
+      if (msg instanceof HttpRequest) {
+         handleHttpRequest(ctx, (HttpRequest) msg);
+      } else if (msg instanceof WebSocketFrame) {
+         handleWebSocketFrame(ctx, (WebSocketFrame) msg);
+      }
+   }
 
-    private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest req) {
-        // Allow only GET methods.
-        if (req.getMethod() != GET) {
-            sendHttpResponse(ctx, req, new DefaultHttpResponse(HTTP_1_1, FORBIDDEN));
-            return;
-        }
+   private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
+      // Allow only GET methods.
+      if (req.getMethod() != GET) {
+         sendHttpResponse(ctx, req, new DefaultHttpResponse(HTTP_1_1, FORBIDDEN));
+         return;
+      }
 
-        if(!connectionUpgraded && req.getUri().equalsIgnoreCase("/" + INFINISPAN_WS_JS_FILENAME)) {
-            DefaultHttpResponse res = new DefaultHttpResponse(HTTP_1_1, OK);
-            loadScriptToResponse(req, res);
-			sendHttpResponse(ctx, req, res);
-            return;        	
-        } else if (Values.UPGRADE.equalsIgnoreCase(req.getHeader(CONNECTION)) &&
+      if (!connectionUpgraded && req.getUri().equalsIgnoreCase("/" + INFINISPAN_WS_JS_FILENAME)) {
+         DefaultHttpResponse res = new DefaultHttpResponse(HTTP_1_1, OK);
+         loadScriptToResponse(req, res);
+         sendHttpResponse(ctx, req, res);
+         return;
+      } else if (Values.UPGRADE.equalsIgnoreCase(req.getHeader(CONNECTION)) &&
             WEBSOCKET.equalsIgnoreCase(req.getHeader(Names.UPGRADE))) {
+         // Serve the WebSocket handshake request.
+         // Create the WebSocket handshake response.
+         HttpResponse res = new DefaultHttpResponse(HTTP_1_1, new HttpResponseStatus(101, "Web Socket Protocol Handshake"));
+         res.addHeader(Names.UPGRADE, Values.WEBSOCKET);
+         res.addHeader(Names.CONNECTION, Values.UPGRADE);
 
-        	// Serve the WebSocket handshake request.
-
-            // Create the WebSocket handshake response.
-            HttpResponse res = new DefaultHttpResponse(HTTP_1_1, new HttpResponseStatus(101, "Web Socket Protocol Handshake"));
-            res.addHeader(Names.UPGRADE, WEBSOCKET);
-            res.addHeader(CONNECTION, Values.UPGRADE);
-            res.addHeader(WEBSOCKET_ORIGIN, req.getHeader(ORIGIN));
-            res.addHeader(WEBSOCKET_LOCATION, getWebSocketLocation(req));
-            String protocol = req.getHeader(WEBSOCKET_PROTOCOL);
+         // Fill in the headers and contents depending on handshake method.
+         if (req.containsHeader(Names.SEC_WEBSOCKET_KEY1) &&
+            req.containsHeader(Names.SEC_WEBSOCKET_KEY2)) {
+            // New handshake method with a challenge:
+            res.addHeader(Names.SEC_WEBSOCKET_ORIGIN, req.getHeader(Names.ORIGIN));
+            res.addHeader(Names.SEC_WEBSOCKET_LOCATION, getWebSocketLocation(req));
+            String protocol = req.getHeader(Names.SEC_WEBSOCKET_PROTOCOL);
             if (protocol != null) {
-                res.addHeader(WEBSOCKET_PROTOCOL, protocol);
+               res.addHeader(Names.SEC_WEBSOCKET_PROTOCOL, protocol);
             }
 
-            // Upgrade the connection and send the handshake response.
-            ChannelPipeline p = ctx.getChannel().getPipeline();
-            p.remove("aggregator");
-            p.replace("decoder", "wsdecoder", new WebSocketFrameDecoder());
+            // Calculate the answer of the challenge.
+            String key1 = req.getHeader(Names.SEC_WEBSOCKET_KEY1);
+            String key2 = req.getHeader(Names.SEC_WEBSOCKET_KEY2);
+            int a = (int) (Long.parseLong(key1.replaceAll("[^0-9]", "")) / key1.replaceAll("[^ ]", "").length());
+            int b = (int) (Long.parseLong(key2.replaceAll("[^0-9]", "")) / key2.replaceAll("[^ ]", "").length());
+            long c = req.getContent().readLong();
+            ChannelBuffer input = ChannelBuffers.buffer(16);
+            input.writeInt(a);
+            input.writeInt(b);
+            input.writeLong(c);
+            ChannelBuffer output = ChannelBuffers.wrappedBuffer(
+                    MessageDigest.getInstance("MD5").digest(input.array()));
+            res.setContent(output);
+         } else {
+            // Old handshake method with no challenge:
+            res.addHeader(Names.WEBSOCKET_ORIGIN, req.getHeader(Names.ORIGIN));
+            res.addHeader(Names.WEBSOCKET_LOCATION, getWebSocketLocation(req));
+            String protocol = req.getHeader(Names.WEBSOCKET_PROTOCOL);
+            if (protocol != null) {
+               res.addHeader(Names.WEBSOCKET_PROTOCOL, protocol);
+            }
+         }
 
-            ctx.getChannel().write(res);
+         // Upgrade the connection and send the handshake response.
+         ChannelPipeline p = ctx.getChannel().getPipeline();
+         p.remove("aggregator");
+         p.replace("decoder", "wsdecoder", new WebSocketFrameDecoder());
 
-            p.replace("encoder", "wsencoder", new WebSocketFrameEncoder());
-            return;
-        }
+         ctx.getChannel().write(res);
 
-        // Send an error page otherwise.
-        sendHttpResponse(ctx, req, new DefaultHttpResponse(HTTP_1_1, FORBIDDEN));
-    }
+         p.replace("encoder", "wsencoder", new WebSocketFrameEncoder());
+         return;
+      }
 
-	private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
-    	try {
-			JSONObject payload = new JSONObject(frame.getTextData());
-			String opCode = (String) payload.get(OpHandler.OP_CODE);
-			String cacheName = (String) payload.opt(OpHandler.CACHE_NAME);
-			Cache<Object, Object> cache = getCache(cacheName);
-			
-			OpHandler handler = operationHandlers.get(opCode);
-			if(handler != null) {
-				handler.handleOp(payload, cache, ctx);
-			}
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    }
+      // Send an error page otherwise.
+      sendHttpResponse(ctx, req, new DefaultHttpResponse(HTTP_1_1, FORBIDDEN));
+   }
 
-	private Cache<Object, Object> getCache(final String cacheName) {
-		String key = cacheName;
-		Cache<Object, Object> cache;
-		
-		if(key == null) {
-			key = "";
-		}
-		
-		cache = startedCaches.get(key);
-		
-		if(cache == null) {
-			synchronized (startedCaches) {
-				cache = startedCaches.get(key);
-				if(cache == null) {
-					if(cacheName != null) {
-						cache = cacheContainer.getCache(key);
-					} else {
-						cache = cacheContainer.getCache();
-					}
-					startedCaches.put(key, cache);
-					cache.start();
-				}
-			}
-		}
-		
-		return cache;
-	}
+   private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
+      try {
+         JSONObject payload = new JSONObject(frame.getTextData());
+         String opCode = (String) payload.get(OpHandler.OP_CODE);
+         String cacheName = (String) payload.opt(OpHandler.CACHE_NAME);
+         Cache<Object, Object> cache = getCache(cacheName);
 
-    private void sendHttpResponse(ChannelHandlerContext ctx, HttpRequest req, HttpResponse res) {
-        // Generate an error page if response status code is not OK (200).
-        if (res.getStatus().getCode() != 200) {
-            res.setContent(ChannelBuffers.copiedBuffer(res.getStatus().toString(), CharsetUtil.UTF_8));
-            setContentLength(res, res.getContent().readableBytes());
-        }
+         OpHandler handler = operationHandlers.get(opCode);
+         if (handler != null) {
+            handler.handleOp(payload, cache, ctx);
+         }
+      } catch (JSONException e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
+   }
 
-        // Send the response and close the connection if necessary.
-        ChannelFuture f = ctx.getChannel().write(res);
-        if (!isKeepAlive(req) || res.getStatus().getCode() != 200) {
-            f.addListener(ChannelFutureListener.CLOSE);
-        }
-    }
+   private Cache<Object, Object> getCache(final String cacheName) {
+      String key = cacheName;
+      Cache<Object, Object> cache;
 
-	private void loadScriptToResponse(HttpRequest req, DefaultHttpResponse res) {
-		String wsAddress = getWebSocketLocation(req);
-		
-		StringWriter writer = new StringWriter();
-		writer.write("var defaultWSAddress = '" + wsAddress + "';");
-		writer.write(WebSocketServer.getJavascript());
-		
-		ChannelBuffer content = ChannelBuffers.copiedBuffer(writer.toString(), CharsetUtil.UTF_8);
-		
-		res.setHeader(CONTENT_TYPE, "text/javascript; charset=UTF-8");
-		setContentLength(res, content.readableBytes());
-		res.setContent(content);
-	}
+      if (key == null) {
+         key = "";
+      }
 
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        e.getCause().printStackTrace();
-        e.getChannel().close();
-    }
+      cache = startedCaches.get(key);
 
-    private String getWebSocketLocation(HttpRequest req) {
-        return "ws://" + req.getHeader(HttpHeaders.Names.HOST) + "/";
-    }
+      if (cache == null) {
+         synchronized (startedCaches) {
+            cache = startedCaches.get(key);
+            if (cache == null) {
+               if (cacheName != null) {
+                  cache = cacheContainer.getCache(key);
+               } else {
+                  cache = cacheContainer.getCache();
+               }
+               startedCaches.put(key, cache);
+               cache.start();
+            }
+         }
+      }
+
+      return cache;
+   }
+
+   private void sendHttpResponse(ChannelHandlerContext ctx, HttpRequest req, HttpResponse res) {
+      // Generate an error page if response status code is not OK (200).
+      if (res.getStatus().getCode() != 200) {
+         res.setContent(ChannelBuffers.copiedBuffer(res.getStatus().toString(), CharsetUtil.UTF_8));
+         HttpHeaders.setContentLength(res, res.getContent().readableBytes());
+      }
+
+      // Send the response and close the connection if necessary.
+      ChannelFuture f = ctx.getChannel().write(res);
+      if (!isKeepAlive(req) || res.getStatus().getCode() != 200) {
+         f.addListener(ChannelFutureListener.CLOSE);
+      }
+   }
+
+   private void loadScriptToResponse(HttpRequest req, DefaultHttpResponse res) {
+      String wsAddress = getWebSocketLocation(req);
+
+      StringWriter writer = new StringWriter();
+      writer.write("var defaultWSAddress = '" + wsAddress + "';");
+      writer.write(WebSocketServer.getJavascript());
+
+      ChannelBuffer content = ChannelBuffers.copiedBuffer(writer.toString(), CharsetUtil.UTF_8);
+
+      res.setHeader(CONTENT_TYPE, "text/javascript; charset=UTF-8");
+      setContentLength(res, content.readableBytes());
+      res.setContent(content);
+   }
+
+   @Override
+   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+      e.getCause().printStackTrace();
+      e.getChannel().close();
+   }
+
+   private String getWebSocketLocation(HttpRequest req) {
+      return "ws://" + req.getHeader(HttpHeaders.Names.HOST) + "/";
+   }
 }
