@@ -37,14 +37,24 @@ import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
 import junit.framework.TestCase;
 import org.enhydra.jdbc.standard.StandardXADataSource;
+import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.jboss.util.naming.NonSerializableFactory;
+import org.jnp.interfaces.NamingContext;
+import org.jnp.server.Main;
+import org.jnp.server.NamingServer;
+
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.PersistentClass;
+import org.hibernate.service.spi.ServiceRegistry;
 import org.hibernate.stat.Statistics;
 import org.hibernate.test.cache.infinispan.functional.Item;
+<<<<<<< HEAD
 import org.hibernate.test.common.ServiceRegistryHolder;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.logging.Log;
@@ -53,6 +63,9 @@ import org.jboss.util.naming.NonSerializableFactory;
 import org.jnp.interfaces.NamingContext;
 import org.jnp.server.Main;
 import org.jnp.server.NamingServer;
+=======
+import org.hibernate.testing.ServiceRegistryBuilder;
+>>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
 
 /**
  * This is an example test based on http://community.jboss.org/docs/DOC-14617 that shows how to interact with
@@ -69,12 +82,12 @@ public class JBossStandaloneJtaExampleTest extends TestCase {
    private static final JBossStandaloneJTAManagerLookup lookup = new JBossStandaloneJTAManagerLookup();
    Context ctx;
    Main jndiServer;
-   private ServiceRegistryHolder serviceRegistryHolder;
+   private ServiceRegistry serviceRegistry;
 
    @Override
    protected void setUp() throws Exception {
       super.setUp();
-	  serviceRegistryHolder = new ServiceRegistryHolder( Environment.getProperties() );
+	  serviceRegistry = ServiceRegistryBuilder.buildServiceRegistry( Environment.getProperties() );
       jndiServer = startJndiServer();
       ctx = createJndiContext();
       bindTransactionManager();
@@ -90,8 +103,8 @@ public class JBossStandaloneJtaExampleTest extends TestCase {
          jndiServer.stop();
 	  }
 	  finally {
-		  if ( serviceRegistryHolder != null ) {
-			  serviceRegistryHolder.destroy();
+		  if ( serviceRegistry != null ) {
+			  ServiceRegistryBuilder.destroy( serviceRegistry );
 		  }
 	  }
    }
@@ -298,6 +311,6 @@ public class JBossStandaloneJtaExampleTest extends TestCase {
          Collection coll = (Collection) iter.next();
          cfg.setCollectionCacheConcurrencyStrategy(coll.getRole(), "transactional");
       }
-      return cfg.buildSessionFactory( serviceRegistryHolder.getServiceRegistry() );
+      return cfg.buildSessionFactory( serviceRegistry );
    }
 }
