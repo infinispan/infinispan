@@ -44,7 +44,7 @@ public class TransactionSetup {
       TransactionManager getManager();
    }
 
-   public static final String JTA = LegacyKeySupportSystemProperties.getProperty("infinispan.test.jta.tm", "infinispan.tm");
+   public static final String JTA = System.getProperty("infinispan.test.jta.tm", "infinispan.tm");
    public static final String JBOSS_TM = "jbosstm";
 
    private static Operations operations;
@@ -56,6 +56,7 @@ public class TransactionSetup {
    private static void init() {
       String property = JTA;
       if (JBOSS_TM.equalsIgnoreCase(property)) {
+         System.out.println("Transaction manager used: JBossTM");
          final String lookup = JBossStandaloneJTAManagerLookup.class.getName();
          final JBossStandaloneJTAManagerLookup instance = new JBossStandaloneJTAManagerLookup();
          operations = new Operations() {
@@ -85,6 +86,7 @@ public class TransactionSetup {
             }
          };
       } else {
+         System.out.println("Transaction manager used: Dummy");
          final String lookup = DummyTransactionManagerLookup.class.getName();
          final DummyTransactionManagerLookup instance = new DummyTransactionManagerLookup();
          operations = new Operations() {
