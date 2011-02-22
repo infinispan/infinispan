@@ -43,6 +43,8 @@ public abstract class BaseDldLazyLockingTest extends BaseDldTest {
 
       t0.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
       t1.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
+      t0.execute(PerCacheExecutorThread.Operations.FORCE2PC);
+      t1.execute(PerCacheExecutorThread.Operations.FORCE2PC);
 
       t0.setKeyValue(k1, "k1_0");
       t1.setKeyValue(k0, "k0_1");
