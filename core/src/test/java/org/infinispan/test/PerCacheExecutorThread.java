@@ -1,6 +1,7 @@
 package org.infinispan.test;
 
 import org.infinispan.Cache;
+import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -130,6 +131,17 @@ public final class PerCacheExecutorThread extends Thread {
                }
                break;
             }
+            case FORCE2PC: {
+               try {
+                  TransactionManager txManager = TestingUtil.getTransactionManager(cache);
+                  txManager.getTransaction().enlistResource(new XAResourceAdapter());
+                  setResponse(OperationsResult.FORCE2PC_OK);
+               } catch (Exception e) {
+                  log.trace("Exception while executing replace(" + key + "," + value + ")", e);
+                  setResponse(e);
+               }
+               break;
+            }
             case STOP_THREAD: {
                log.trace("Exiting...");
                toExecute = null;
@@ -185,7 +197,7 @@ public final class PerCacheExecutorThread extends Thread {
     * @author Mircea.Markus@jboss.com
     */
    public static enum Operations {
-      BEGGIN_TX, COMMIT_TX, PUT_KEY_VALUE, REMOVE_KEY, REPLACE_KEY_VALUE, STOP_THREAD;
+      BEGGIN_TX, COMMIT_TX, PUT_KEY_VALUE, REMOVE_KEY, REPLACE_KEY_VALUE, STOP_THREAD, FORCE2PC;
       public OperationsResult getCorrespondingOkResult() {
          switch (this) {
             case BEGGIN_TX:
@@ -200,6 +212,8 @@ public final class PerCacheExecutorThread extends Thread {
                return OperationsResult.REPLACE_KEY_VALUE_OK;
             case STOP_THREAD:
                return OperationsResult.STOP_THREAD_OK;
+            case FORCE2PC:
+               return OperationsResult.FORCE2PC_OK;
             default:
                throw new IllegalStateException("Unrecognized operation: " + this);
          }
@@ -213,7 +227,7 @@ public final class PerCacheExecutorThread extends Thread {
     * @author Mircea.Markus@jboss.com
     */
    public static enum OperationsResult {
-      BEGGIN_TX_OK, COMMIT_TX_OK, PUT_KEY_VALUE_OK, REMOVE_KEY_OK, REPLACE_KEY_VALUE_OK, STOP_THREAD_OK
+      BEGGIN_TX_OK, COMMIT_TX_OK, PUT_KEY_VALUE_OK, REMOVE_KEY_OK, REPLACE_KEY_VALUE_OK, STOP_THREAD_OK , FORCE2PC_OK
    }
 
    public Transaction getOngoingTransaction() {
