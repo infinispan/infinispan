@@ -96,7 +96,6 @@ public abstract class HotRodOperation implements HotRodConstants {
       if (receivedOpCode != opRespCode) {
          if (receivedOpCode == HotRodConstants.ERROR_RESPONSE) {
             checkForErrorsInResponseStatus(transport.readByte(), messageId, transport);
-            throw new IllegalStateException("Error expected! (i.e. exception in the prev statement)");
          }
          throw new InvalidResponseException("Invalid response operation. Expected " + Integer.toHexString(opRespCode) + " and received " + Integer.toHexString(receivedOpCode));
       }
@@ -104,47 +103,42 @@ public abstract class HotRodOperation implements HotRodConstants {
          log.trace("Received operation code is: " + receivedOpCode);
       }
       short status = transport.readByte();
-      checkForErrorsInResponseStatus(status, messageId, transport);
-      short topologyChangeByte = transport.readByte();
-      if (topologyChangeByte == 1) {
-         readNewTopologyAndHash(transport, topologyId);
-      }
+      // There's not need to check for errors in status here because if there
+      // was an error, the server would have replied with error response op code.
+      readNewTopologyIfPresent(transport);
       return status;
    }
 
    protected void checkForErrorsInResponseStatus(short status, long messageId, Transport transport) {
-      if (log.isTraceEnabled()) {
-         log.trace("Received operation status: " + status);
-      }
+      final boolean isTrace = log.isTraceEnabled();
+      if (isTrace) log.trace("Received operation status: " + status);
+
       switch ((int) status) {
          case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
          case HotRodConstants.REQUEST_PARSING_ERROR_STATUS:
          case HotRodConstants.UNKNOWN_COMMAND_STATUS:
          case HotRodConstants.SERVER_ERROR_STATUS:
+         case HotRodConstants.COMMAND_TIMEOUT_STATUS:
          case HotRodConstants.UNKNOWN_VERSION_STATUS: {
+            readNewTopologyIfPresent(transport);
             String msgFromServer = transport.readString();
-            if (log.isWarnEnabled()) {
-               log.warn("Error status received from the server:" + msgFromServer + " for message id " + messageId);
+            if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
+               log.trace("Server-side timeout performing operation: %s", msgFromServer);
+            } else {
+               log.warn("Error received from the server: %s", msgFromServer);
             }
             throw new HotRodClientException(msgFromServer, messageId, status);
-         }
-         case HotRodConstants.COMMAND_TIMEOUT_STATUS: {
-            String msg = transport.readString();
-            if (log.isTraceEnabled()) {
-               log.trace("Server-side timeout performing operation: " + msg);
-            }
-            throw new HotRodTimeoutException(msg, messageId, status);
-         }
-         case HotRodConstants.NO_ERROR_STATUS:
-         case HotRodConstants.KEY_DOES_NOT_EXIST_STATUS:
-         case HotRodConstants.NOT_PUT_REMOVED_REPLACED_STATUS: {
-            //don't do anything, these are correct responses
-            break;
          }
          default: {
             throw new IllegalStateException("Unknown status: " + Integer.toHexString(status));
          }
       }
+   }
+
+   private void readNewTopologyIfPresent(Transport transport) {
+      short topologyChangeByte = transport.readByte();
+      if (topologyChangeByte == 1)
+         readNewTopologyAndHash(transport, topologyId);
    }
 
    private void readNewTopologyAndHash(Transport transport, AtomicInteger topologyId) {

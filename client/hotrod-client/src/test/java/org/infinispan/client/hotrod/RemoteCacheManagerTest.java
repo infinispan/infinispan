@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -89,7 +90,18 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
       remoteCacheManager.start();
       assertWorks(remoteCacheManager);
       remoteCacheManager.stop();
-   }   
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*CacheNotFoundException.*")
+   public void testGetUndefinedCache() {
+      Properties p = new Properties();
+      p.setProperty(ConfigurationProperties.SERVER_LIST, "127.0.0.1:" + port);
+      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(p, false);
+      assert !remoteCacheManager.isStarted();
+      remoteCacheManager.start();
+      RemoteCache<Object, Object> cache = remoteCacheManager.getCache("Undefined1234");
+      cache.put("aKey", "aValue");
+   }
 
    private void assertWorks(RemoteCacheManager remoteCacheManager) {
       RemoteCache<Object, Object> cache = remoteCacheManager.getCache();
