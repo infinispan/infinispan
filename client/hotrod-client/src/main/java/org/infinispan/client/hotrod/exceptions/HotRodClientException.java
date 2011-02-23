@@ -39,7 +39,7 @@ public class HotRodClientException extends RuntimeException {
       if (messageId != -1) sb.append(" id [").append(messageId).append("]");
       if (errorStatusCode != -1) sb.append(" code [").append(errorStatusCode).append("]");
       String message = getLocalizedMessage();
-      if (message != null) sb.append(" ").append(message);
+      if (message != null) sb.append(": ").append(message);
       return sb.toString();
    }
 }
