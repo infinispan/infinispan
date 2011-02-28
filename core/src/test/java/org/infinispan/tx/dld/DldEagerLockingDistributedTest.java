@@ -8,7 +8,6 @@ import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import javax.transaction.SystemException;
@@ -27,11 +26,7 @@ public class DldEagerLockingDistributedTest extends BaseDldEagerLockingTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-      config.setUnsafeUnreliableReturnValues(true);
-      config.setNumOwners(1);
-      config.setEnableDeadlockDetection(true);
-      config.setUseEagerLocking(true);
+      Configuration config = createConfiguration();
 
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(config, true);
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(config, true);
@@ -48,6 +43,15 @@ public class DldEagerLockingDistributedTest extends BaseDldEagerLockingTest {
       k0 = cas.getKeyForAddress(address(0));
       k1 = cas.getKeyForAddress(address(1));
       cas.stop();
+   }
+
+   protected Configuration createConfiguration() {
+      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+      config.setUnsafeUnreliableReturnValues(true);
+      config.setNumOwners(1);
+      config.setEnableDeadlockDetection(true);
+      config.setUseEagerLocking(true);
+      return config;
    }
 
    public void testSymmetricDeadlock() throws SystemException {

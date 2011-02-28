@@ -24,7 +24,6 @@ package org.infinispan.commands.remote;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -34,7 +33,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -50,37 +48,21 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ClusteredGetCommand implements CacheRpcCommand, FlagAffectedCommand {
+public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedCommand {
 
    public static final byte COMMAND_ID = 16;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private Object key;
-   private String cacheName;
 
    private InvocationContextContainer icc;
    private CommandsFactory commandsFactory;
    private InterceptorChain invoker;
 
    private Set<Flag> flags;
-   protected Configuration configuration;
-   protected ComponentRegistry componentRegistry;
 
    private DistributionManager distributionManager;
-
-   public void injectComponents(Configuration configuration, ComponentRegistry componentRegistry) {
-      this.configuration = configuration;
-      this.componentRegistry = componentRegistry;
-   }
-
-   public Configuration getConfiguration() {
-      return configuration;
-   }
-
-   public ComponentRegistry getComponentRegistry() {
-      return componentRegistry;
-   }
 
    public ClusteredGetCommand() {
    }

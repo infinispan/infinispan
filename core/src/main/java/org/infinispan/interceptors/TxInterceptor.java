@@ -30,6 +30,7 @@ import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.LocalTransaction;
 import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
@@ -70,10 +71,11 @@ public class TxInterceptor extends CommandInterceptor {
    private CommandsFactory commandsFactory;
    private InvocationContextContainer icc;
    private InterceptorChain invoker;
+   private RecoveryManager recoveryManager;
 
 
    @Inject
-   public void init(TransactionManager tm, TransactionTable txTable, TransactionLog transactionLog, Configuration c, CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker) {
+   public void init(TransactionManager tm, TransactionTable txTable, TransactionLog transactionLog, Configuration c, CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker, RecoveryManager rm) {
       this.configuration = c;
       this.tm = tm;
       this.transactionLog = transactionLog;
@@ -81,6 +83,7 @@ public class TxInterceptor extends CommandInterceptor {
       this.commandsFactory = commandsFactory;
       this.icc = icc;
       this.invoker = invoker;
+      this.recoveryManager = rm;
       setStatisticsEnabled(configuration.isExposeJmxStatistics());
    }
 
@@ -103,6 +106,13 @@ public class TxInterceptor extends CommandInterceptor {
       Object result = invokeNextInterceptor(ctx, command);
       if (command.isOnePhaseCommit()) {
          transactionLog.logOnePhaseCommit(ctx.getGlobalTransaction(), command.getModifications());
+      }
+      if (!ctx.isOriginLocal()) {
+         if (command.isOnePhaseCommit()) {
+            txTable.remoteTransactionCompleted(command.getGlobalTransaction());
+         } else {
+            txTable.remoteTransactionPrepared(command.getGlobalTransaction());
+         }
       }
       return result;
    }
@@ -197,13 +207,13 @@ public class TxInterceptor extends CommandInterceptor {
       LocalTransaction localTransaction = txTable.getOrCreateLocalTransaction(transaction, ctx);
       if (!localTransaction.isEnlisted()) { //make sure that you only enlist it once
          try {
-            transaction.enlistResource(new TransactionXaAdapter(localTransaction, txTable, commandsFactory, configuration, invoker, icc));
+            transaction.enlistResource(new TransactionXaAdapter(localTransaction, txTable, commandsFactory, configuration, invoker, icc, recoveryManager));
          } catch (Exception e) {
             Xid xid = localTransaction.getXid();
             if (xid != null && !ctx.getLockedKeys().isEmpty()) {
                log.debug("Attempting a rollback to clear stale resources!");
                try {
-                  TransactionXaAdapter.rollbackImpl(xid, commandsFactory, icc, invoker, txTable);
+                  TransactionXaAdapter.rollbackImpl(xid, commandsFactory, icc, invoker, txTable, recoveryManager);
                } catch (XAException xae) {
                   log.debug("Caught exception attempting to clean up " + xid, xae);
                }

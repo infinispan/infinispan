@@ -126,4 +126,6 @@ public interface ConfigurationBeanVisitor {
    
    void visitExternalizerConfig(ExternalizerConfig config);
 
+   void visitRecoveryType(Configuration.RecoveryType config);
+
 }

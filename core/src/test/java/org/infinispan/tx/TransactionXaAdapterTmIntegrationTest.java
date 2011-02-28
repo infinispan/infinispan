@@ -4,7 +4,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyXid;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.GlobalTransactionFactory;
+import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.transaction.xa.LocalTransaction;
 import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
@@ -30,7 +30,7 @@ public class TransactionXaAdapterTmIntegrationTest {
    @BeforeMethod
    public void setUp() {
       txTable = new TransactionTable();
-      GlobalTransactionFactory gtf = new GlobalTransactionFactory();
+      TransactionFactory gtf = new TransactionFactory();
       globalTransaction = gtf.newGlobalTransaction(null, false);
       localTx = new LocalTransaction(new DummyTransaction(null), globalTransaction);
       xid = new DummyXid();
@@ -38,7 +38,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       txTable.addLocalTransactionMapping(localTx);      
 
       configuration = new Configuration();
-      xaAdapter = new TransactionXaAdapter(localTx, txTable, null, configuration, null, null);
+      xaAdapter = new TransactionXaAdapter(localTx, txTable, null, configuration, null, null, null);
    }
 
    public void testPrepareOnNonexistentXid() {

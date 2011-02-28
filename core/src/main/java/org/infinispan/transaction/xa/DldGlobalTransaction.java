@@ -38,7 +38,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
    public DldGlobalTransaction() {
    }
 
-   DldGlobalTransaction(Address addr, boolean remote) {
+   public DldGlobalTransaction(Address addr, boolean remote) {
       super(addr, remote);
    }
 
@@ -144,7 +144,15 @@ public class DldGlobalTransaction extends GlobalTransaction {
    }
 
    public static class Externalizer extends AbstractExternalizer<DldGlobalTransaction> {
-      private final GlobalTransaction.Externalizer delegate = new GlobalTransaction.Externalizer(new GlobalTransactionFactory(true));
+      private final GlobalTransaction.Externalizer delegate;
+
+      public Externalizer() {
+         this(new TransactionFactory(true));
+      }
+
+      public Externalizer(TransactionFactory txFactory) {
+         delegate = new GlobalTransaction.Externalizer(txFactory);
+      }
 
       @Override
       public void writeObject(ObjectOutput output, DldGlobalTransaction ddGt) throws IOException {

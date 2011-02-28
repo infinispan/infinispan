@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:5.0 http://www.infinispan.org/schemas/infinispan-config-5.0.xsd"
+      xmlns="urn:infinispan:config:5.0">
+
+   <global>
+
+      <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+      	 <properties>
+         	<property name="maxThreads" value="5"/>
+         	<property name="threadNamePrefix" value="AsyncListenerThread"/>
+         </properties>
+      </asyncListenerExecutor>
+
+      <asyncTransportExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+      	<properties>
+         <property name="maxThreads" value="25"/>
+         <property name="threadNamePrefix" value="AsyncSerializationThread"/>
+         </properties>
+      </asyncTransportExecutor>
+
+      <evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
+      <properties>
+         <property name="threadNamePrefix" value="EvictionThread"/>
+         </properties>
+      </evictionScheduledExecutor>
+
+      <replicationQueueScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
+      <properties>
+         <property name="threadNamePrefix" value="ReplicationQueueThread"/>
+         </properties>
+      </replicationQueueScheduledExecutor>
+
+      <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno" machineId="m1" rackId="r1" siteId="s1">
+         <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
+         <properties>
+         <property name="configurationFile" value="jgroups-udp.xml"/>
+         </properties>
+         <!-- See the JGroupsTransport javadocs for more flags -->
+      </transport>
+
+      <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0">
+         <externalizers>
+            <externalizer id="1234" externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj$Externalizer"/>
+            <externalizer externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj$Externalizer"/>
+            <externalizer id="3456" externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj$Externalizer"/>
+         </externalizers>
+      </serialization>
+
+      <globalJmxStatistics enabled="false" jmxDomain="funky_domain"
+                           mBeanServerLookup="org.infinispan.jmx.PerThreadMBeanServerLookup"
+                           allowDuplicateDomains="true"/>
+
+      <shutdown hookBehavior="REGISTER"/>
+   </global>
+
+   <default>
+      <locking concurrencyLevel="100" lockAcquisitionTimeout="1000"/>
+      <jmxStatistics enabled="false"/>
+   </default>
+
+   <namedCache name="noRecovery">
+      <transaction useEagerLocking="true" eagerLockSingleNode="true">
+         <recovery enabled="false" recoveryInfoCacheName="someName"/>
+      </transaction>
+   </namedCache>
+
+   <namedCache name="withRecoveryDefaultCache">
+      <transaction useEagerLocking="true" eagerLockSingleNode="true">
+         <recovery enabled="true"/>
+      </transaction>
+   </namedCache>
+
+   <namedCache name="withRecoveryAndCache">
+      <transaction useEagerLocking="true" eagerLockSingleNode="true">
+         <recovery enabled="true" recoveryInfoCacheName="noRecovery"/>
+      </transaction>
+   </namedCache>
+
+   <namedCache name="withRecoveryAndAsync">
+
+      <clustering mode="repl">
+         <stateRetrieval fetchInMemoryState="false"/>
+         <async asyncMarshalling="false"/>
+      </clustering>
+
+      <transaction useEagerLocking="true" eagerLockSingleNode="true">
+         <recovery enabled="true" recoveryInfoCacheName="noRecovery"/>
+      </transaction>
+   </namedCache>
+
+</infinispan>

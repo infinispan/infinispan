@@ -13,7 +13,7 @@ import org.infinispan.loaders.modifications.Store;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.GlobalTransactionFactory;
+import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
@@ -144,7 +144,7 @@ public class AsyncTest extends AbstractInfinispanTest {
 
    public void testTransactionalModificationsHappenInDiffThread(Method m) throws Exception {
       try {
-         final GlobalTransactionFactory gtf = new GlobalTransactionFactory();
+         final TransactionFactory gtf = new TransactionFactory();
          final String k1 = k(m, 1), k2 = k(m, 2), v1 = v(m, 1), v2 = v(m, 2);
          final ConcurrentMap<Object, Modification> localMods = new ConcurrentHashMap<Object, Modification>();
          final CyclicBarrier barrier = new CyclicBarrier(2);
@@ -196,7 +196,7 @@ public class AsyncTest extends AbstractInfinispanTest {
 
    public void testTransactionalModificationsAreCoalesced(Method m) throws Exception {
       try {
-         final GlobalTransactionFactory gtf = new GlobalTransactionFactory();
+         final TransactionFactory gtf = new TransactionFactory();
          final String k1 = k(m, 1), k2 = k(m, 2), k3 = k(m, 3), v1 = v(m, 1), v2 = v(m, 2), v3 = v(m, 3);
          final AtomicInteger storeCount = new AtomicInteger();
          final AtomicInteger removeCount = new AtomicInteger();
