@@ -25,8 +25,9 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    protected List<WriteCommand> modifications;
    protected BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries;
    protected GlobalTransaction tx;
-   // TODO Couldn't affected keys be derived from modifications?
    protected Set<Object> affectedKeys = null;
+
+   protected volatile boolean prepared;
 
    public GlobalTransaction getGlobalTransaction() {
       return tx;

@@ -14,7 +14,7 @@ import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.GlobalTransactionFactory;
+import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.Util;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -49,7 +49,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
    protected CacheStore cs;
 
-   protected GlobalTransactionFactory gtf = new GlobalTransactionFactory();
+   protected TransactionFactory gtf = new TransactionFactory();
 
    @BeforeMethod
    public void setUp() throws Exception {

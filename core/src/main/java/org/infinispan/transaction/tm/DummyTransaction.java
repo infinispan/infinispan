@@ -246,7 +246,7 @@ public class DummyTransaction implements Transaction {
       return retval;
    }
 
-   private boolean runPrepare() throws SystemException {
+   public boolean runPrepare() throws SystemException {
       DummyTransaction transaction = tm_.getTransaction();
       Collection<XAResource> resources = transaction.getEnlistedResources();
       for (XAResource res : resources) {
@@ -287,7 +287,7 @@ public class DummyTransaction implements Transaction {
       return enlistedResources;
    }
 
-   private void runRollback() {
+   public void runRollback() {
       DummyTransaction transaction = tm_.getTransaction();
       Collection<XAResource> resources = transaction.getEnlistedResources();
       for (XAResource res : resources) {
@@ -299,7 +299,7 @@ public class DummyTransaction implements Transaction {
       }
    }
 
-   private void runCommitTx() throws HeuristicMixedException {
+   public void runCommitTx() throws HeuristicMixedException {
       DummyTransaction transaction = tm_.getTransaction();
       if (transaction.getPrepareStatus() == XAResource.XA_RDONLY) {
          log.debug("This is a read-only tx");
@@ -331,5 +331,13 @@ public class DummyTransaction implements Transaction {
 
    public int getPrepareStatus() {
       return prepareStatus;
+   }
+
+   public XAResource firstEnlistedResource() {
+      return getEnlistedResources().iterator().next();
+   }
+
+   public DummyXid getXid() {
+      return xid;
    }
 }

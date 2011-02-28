@@ -2,8 +2,8 @@ package org.infinispan.transaction.xa;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.BidirectionalLinkedHashMap;
-import org.infinispan.util.BidirectionalMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -98,4 +98,5 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
          throw new IllegalStateException("Different sizes!");
       return result;
    }
+
 }

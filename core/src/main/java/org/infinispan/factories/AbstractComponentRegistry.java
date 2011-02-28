@@ -37,6 +37,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.ReflectionCache;
+import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.util.BeanUtils;
 import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.ReflectionUtil;
@@ -169,6 +170,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       s.add(MarshallerFactory.class);
       s.add(ResponseGeneratorFactory.class);
       s.add(DistributionManagerFactory.class);
+      s.add(RecoveryManagerFactory.class);
+      s.add(TransactionTableFactory.class);
       return s;
    }
 

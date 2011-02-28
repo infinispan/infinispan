@@ -35,9 +35,9 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * Command corresponding to the 1st phase of 2PC.
@@ -82,8 +82,8 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
 
       // 1. first create a remote transaction
       RemoteTransaction remoteTransaction = txTable.getRemoteTransaction(globalTx);
-      boolean remoteTxinitiated = remoteTransaction != null;
-      if (!remoteTxinitiated) {
+      boolean remoteTxInitiated = remoteTransaction != null;
+      if (!remoteTxInitiated) {
          remoteTransaction = txTable.createRemoteTransaction(globalTx, modifications);
       } else {
          /*
@@ -103,13 +103,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       if (trace)
          log.trace("Invoking remotely originated prepare: " + this + " with invocation context: " + ctx);
       notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), ctx);
-      try {
-         return invoker.invoke(ctx, this);
-      } finally {
-         if (this.isOnePhaseCommit()) {
-            txTable.removeRemoteTransaction(globalTx);
-         }
-      }
+      return invoker.invoke(ctx, this);
    }
 
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {

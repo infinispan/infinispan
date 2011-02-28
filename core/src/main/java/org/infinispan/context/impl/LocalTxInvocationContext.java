@@ -11,6 +11,7 @@ import org.infinispan.util.BidirectionalMap;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
+import javax.transaction.xa.Xid;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;

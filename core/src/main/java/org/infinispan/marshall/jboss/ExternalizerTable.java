@@ -68,6 +68,9 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.recovery.RecoveryAwareDldGlobalTransaction;
+import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
+import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.Util;
@@ -126,7 +129,9 @@ class ExternalizerTable implements ObjectTable {
       internalExternalizers.add(new SingletonListExternalizer());
 
       internalExternalizers.add(new GlobalTransaction.Externalizer());
+      internalExternalizers.add(new RecoveryAwareGlobalTransaction.Externalizer());
       internalExternalizers.add(new DldGlobalTransaction.Externalizer());
+      internalExternalizers.add(new RecoveryAwareDldGlobalTransaction.Externalizer());
       internalExternalizers.add(new JGroupsAddress.Externalizer());
       internalExternalizers.add(new Immutables.ImmutableMapWrapperExternalizer());
       internalExternalizers.add(new MarshalledValue.Externalizer());
@@ -163,6 +168,7 @@ class ExternalizerTable implements ObjectTable {
       internalExternalizers.add(new ByteArrayKey.Externalizer());
 
       internalExternalizers.add(new RemoteTransactionLogDetails.Externalizer());
+      internalExternalizers.add(new SerializableXid.XidExternalizer());
    }
 
    void addInternalExternalizer(Externalizer ext) {

@@ -30,6 +30,8 @@ import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.GetInDoubtTransactionsCommand;
+import org.infinispan.commands.remote.RemoveRecoveryInfoCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -51,6 +53,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
+import javax.transaction.xa.Xid;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -293,4 +296,14 @@ public interface CommandsFactory {
     * @return the name of the cache this CommandFactory is set up to construct commands for.
     */
    String getCacheName();
+
+   /**
+    * Builds a {@link org.infinispan.commands.remote.GetInDoubtTransactionsCommand}.
+    */
+   GetInDoubtTransactionsCommand buildGetInDoubtTransactionsCommand();
+
+   /**
+    * Builds a {@link org.infinispan.commands.remote.RemoveRecoveryInfoCommand}.
+    */
+   RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(List<Xid> xids);
 }

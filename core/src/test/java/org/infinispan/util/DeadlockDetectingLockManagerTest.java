@@ -13,7 +13,7 @@ import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
-import org.infinispan.transaction.xa.GlobalTransactionFactory;
+import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;
@@ -32,7 +32,7 @@ import java.util.concurrent.locks.Lock;
 public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
 
    DeadlockDetectingLockManagerMock lockManager;
-   GlobalTransactionFactory gtf = new GlobalTransactionFactory(true);
+   TransactionFactory gtf = new TransactionFactory(true);
    Configuration config = new Configuration();
    private LockContainer lc;
    private static final int SPIN_DURATION = 1000;
