@@ -453,6 +453,7 @@ public class InfinispanDemo {
    @Listener
    public class CacheListener {
       @ViewChanged
+      @Merged
       public void viewChangeEvent(ViewChangedEvent e) {
          updateClusterTable(e.getNewMembers());
       }
