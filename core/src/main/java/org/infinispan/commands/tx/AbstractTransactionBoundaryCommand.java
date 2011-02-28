@@ -116,7 +116,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
          if (trace) log.trace("About to execute tx command " + this);
          return invoker.invoke(ctxt, this);
       } finally {
-         txTable.removeRemoteTransaction(globalTx);
+         txTable.remoteTransactionCompleted(globalTx);
       }
    }
 

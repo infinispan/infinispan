@@ -46,9 +46,9 @@ import javax.transaction.Transaction;
 import javax.transaction.xa.Xid;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -69,11 +69,11 @@ public class TransactionTable {
    private static final Log log = LogFactory.getLog(TransactionTable.class);
    private static boolean trace = log.isTraceEnabled();
 
-   private final Map<Transaction, LocalTransaction> localTransactions = new ConcurrentHashMap<Transaction, LocalTransaction>();
+   protected final ConcurrentMap<Transaction, LocalTransaction> localTransactions = new ConcurrentHashMap<Transaction, LocalTransaction>();
 
-   private final Map<GlobalTransaction, RemoteTransaction> remoteTransactions = new ConcurrentHashMap<GlobalTransaction, RemoteTransaction>();
+   protected final ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions = new ConcurrentHashMap<GlobalTransaction, RemoteTransaction>();
 
-   private final Map<Xid, LocalTransaction> xid2LocalTx = new ConcurrentHashMap<Xid, LocalTransaction>();
+   protected final ConcurrentMap<Xid, LocalTransaction> xid2LocalTx = new ConcurrentHashMap<Xid, LocalTransaction>();
 
    private final Object listener = new StaleTransactionCleanup();
    
@@ -82,20 +82,20 @@ public class TransactionTable {
    private InterceptorChain invoker;
    private CacheNotifier notifier;
    private RpcManager rpcManager;
-   private GlobalTransactionFactory gtf;
+   private TransactionFactory txFactory;
    private ExecutorService lockBreakingService;
    private EmbeddedCacheManager cm;
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration,
                           InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier,
-                          GlobalTransactionFactory gtf, EmbeddedCacheManager cm) {
+                          TransactionFactory gtf, EmbeddedCacheManager cm) {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.icc = icc;
       this.invoker = invoker;
       this.notifier = notifier;
-      this.gtf = gtf;
+      this.txFactory = gtf;
       this.cm = cm;
    }
 
@@ -152,6 +152,14 @@ public class TransactionTable {
       this.xid2LocalTx.put(localTransaction.getXid(), localTransaction);
    }
 
+   public void remoteTransactionPrepared(GlobalTransaction gtx) {
+      //do nothing
+   }
+
+   public void localTransactionPrepared(LocalTransaction localTransaction) {
+      //nothing, only used by recovery
+   }
+
    @Listener
    public class StaleTransactionCleanup {
       @ViewChanged
@@ -174,33 +182,7 @@ public class TransactionTable {
          try {
             lockBreakingService.submit(new Runnable() {
                public void run() {
-                  Set<GlobalTransaction> toKill = new HashSet<GlobalTransaction>();
-                  for (GlobalTransaction gt : remoteTransactions.keySet()) {
-                     if (leavers.contains(gt.getAddress())) toKill.add(gt);
-                  }
-
-                  if (trace) {
-                     if (toKill.isEmpty())
-                        log.trace("No global transactions pertain to originator(s) %s who have left the cluster.", leavers);
-                     else
-                        log.trace("%s global transactions pertain to leavers list %s and need to be killed", toKill.size(), leavers);
-                  }
-
-                  for (GlobalTransaction gtx : toKill) {
-                     if (trace) log.trace("Killing %s", gtx);
-                     RollbackCommand rc = new RollbackCommand(gtx);
-                     rc.init(invoker, icc, TransactionTable.this);
-                     try {
-                        rc.perform(null);
-                        if (trace) log.trace("Rollback of %s complete.", gtx);
-                     } catch (Throwable e) {
-                        log.warn("Unable to roll back gtx " + gtx, e);
-                     } finally {
-                        removeRemoteTransaction(gtx);
-                     }
-                  }
-
-                  if (trace) log.trace("Completed cleaning stale locks.");
+                  updateStateOnNodesLeaving(leavers);
                }
             });
          } catch (RejectedExecutionException ree) {
@@ -210,6 +192,35 @@ public class TransactionTable {
       }
    }
 
+   protected void updateStateOnNodesLeaving(List<Address> leavers) {
+      Set<GlobalTransaction> toKill = new HashSet<GlobalTransaction>();
+      for (GlobalTransaction gt : remoteTransactions.keySet()) {
+         if (leavers.contains(gt.getAddress())) toKill.add(gt);
+      }
+
+      if (trace) {
+         if (toKill.isEmpty())
+            log.trace("No global transactions pertain to originator(s) %s who have left the cluster.", leavers);
+         else
+            log.trace("%s global transactions pertain to leavers list %s and need to be killed", toKill.size(), leavers);
+      }
+
+      for (GlobalTransaction gtx : toKill) {
+         if (trace) log.trace("Killing %s", gtx);
+         RollbackCommand rc = new RollbackCommand(gtx);
+         rc.init(invoker, icc, TransactionTable.this);
+         try {
+            rc.perform(null);
+            if (trace) log.trace("Rollback of %s complete.", gtx);
+         } catch (Throwable e) {
+            log.warn("Unable to roll back gtx " + gtx, e);
+         } finally {
+            removeRemoteTransaction(gtx);
+         }
+      }
+
+      if (trace) log.trace("Completed cleaning stale locks.");
+   }
 
    /**
     * Returns the {@link org.infinispan.transaction.xa.RemoteTransaction} associated with the supplied transaction id.
@@ -227,7 +238,7 @@ public class TransactionTable {
     *                               for an already registered id is made.
     */
    public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications) {
-      RemoteTransaction remoteTransaction = new RemoteTransaction(modifications, globalTx);
+      RemoteTransaction remoteTransaction = txFactory.newRemoteTransaction(modifications, globalTx);
       registerRemoteTransaction(globalTx, remoteTransaction);
       return remoteTransaction;
    }
@@ -240,7 +251,7 @@ public class TransactionTable {
     *                               for an already registered id is made.
     */
    public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx) {
-      RemoteTransaction remoteTransaction = new RemoteTransaction(globalTx);
+      RemoteTransaction remoteTransaction = txFactory.newRemoteTransaction(globalTx);
       registerRemoteTransaction(globalTx, remoteTransaction);
       return remoteTransaction;
    }
@@ -264,9 +275,9 @@ public class TransactionTable {
       LocalTransaction current = localTransactions.get(transaction);
       if (current == null) {
          Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
-         GlobalTransaction tx = gtf.newGlobalTransaction(localAddress, false);
+         GlobalTransaction tx = txFactory.newGlobalTransaction(localAddress, false);
          if (trace) log.trace("Created a new GlobalTransaction %s", tx);
-         current = new LocalTransaction(transaction, tx);
+         current = txFactory.newLocalTransaction(transaction, tx);
          localTransactions.put(transaction, current);
          notifier.notifyTransactionRegistered(tx, ctx);
       }
@@ -283,10 +294,13 @@ public class TransactionTable {
    }
 
    /**
-    * Removes the {@link org.infinispan.transaction.xa.RemoteTransaction} corresponding to the given tx. Returns true if
-    * such an tx exists.
+    * Removes the {@link org.infinispan.transaction.xa.RemoteTransaction} corresponding to the given tx.
     */
-   public boolean removeRemoteTransaction(GlobalTransaction txId) {
+   public void remoteTransactionCompleted(GlobalTransaction gtx) {
+      remoteTransactions.remove(gtx);
+   }
+
+   private boolean removeRemoteTransaction(GlobalTransaction txId) {
       boolean existed = remoteTransactions.remove(txId) != null;
       if (trace) {
          log.trace("Removed " + txId + " from transaction table. Transaction existed? " + existed);

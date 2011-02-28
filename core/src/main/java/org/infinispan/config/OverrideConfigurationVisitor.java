@@ -56,6 +56,7 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
    private TransactionType transactionType = null;
    private UnsafeType unsafeType = null;
    private QueryConfigurationBean indexingType = null;
+   private RecoveryType recoveryType = null;
 
    public void override(OverrideConfigurationVisitor override) {
       
@@ -83,6 +84,7 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
       overrideFields(stateRetrievalType, override.stateRetrievalType);
       overrideFields(syncType, override.syncType);
       overrideFields(transactionType, override.transactionType);
+      overrideFields(recoveryType, override.recoveryType);
       overrideFields(unsafeType, override.unsafeType);
       overrideFields(indexingType, override.indexingType);
       overrideFields(customInterceptorsType, override.customInterceptorsType);      
@@ -180,5 +182,10 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
    @Override
    public void visitQueryConfigurationBean(QueryConfigurationBean bean) {
       indexingType = bean;
+   }
+
+   @Override
+   public void visitRecoveryType(RecoveryType config) {
+      this.recoveryType = config;
    }
 }

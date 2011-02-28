@@ -7,6 +7,8 @@ import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.RemoveRecoveryInfoCommand;
+import org.infinispan.commands.remote.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -127,6 +129,12 @@ public class RemoteCommandsFactory {
             break;
          case RemoveCacheCommand.COMMAND_ID:
             command = new RemoveCacheCommand(cacheManager, registry);
+            break;
+         case RemoveRecoveryInfoCommand.COMMAND_ID:
+            command = new RemoveRecoveryInfoCommand();
+            break;
+         case GetInDoubtTransactionsCommand.COMMAND_ID:
+            command = new GetInDoubtTransactionsCommand();
             break;
          default:
             ModuleCommandFactory mcf = commandFactories.get(id);

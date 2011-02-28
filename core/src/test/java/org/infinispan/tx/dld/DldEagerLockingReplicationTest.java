@@ -50,7 +50,7 @@ public class DldEagerLockingReplicationTest extends BaseDldEagerLockingTest {
          ex0.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
          ex0.setKeyValue("k1", "v1_1");
          ex0.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
-         assert ex0.lastResponse() instanceof TimeoutException;
+         assert ex0.lastResponse() instanceof TimeoutException : "received " + ex0.lastResponse();
          eventually(new Condition() {
             public boolean isSatisfied() throws Exception {
                return !lm1.isLocked("k1");

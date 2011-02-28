@@ -254,6 +254,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        * this could only last as long as the transaction timeout allows it.
        */
       TransactionConfig cacheStopTimeout(Integer cacheStopTimeout);
+
+      /**
+       * Configures recovery support for distributed transactions.
+       */
+      RecoveryConfig configureRecovery();
    }
 
    /**
@@ -265,16 +270,22 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public interface DeadlockDetectionConfig {
       /**
        * Toggle to enable/disable deadlock detection
+<<<<<<< HEAD
        *
        * @param useEagerDeadlockDetection
+=======
+>>>>>>> ISPN-272 - Implement XA recovery in TransactionXaAdapter - ongoing work
        */
       DeadlockDetectionConfig enabled(Boolean enabled);
 
       /**
        * Time period that determines how often is lock acquisition attempted within maximum time
        * allowed to acquire a particular lock
+<<<<<<< HEAD
        *
        * @param eagerDeadlockSpinDuration
+=======
+>>>>>>> ISPN-272 - Implement XA recovery in TransactionXaAdapter - ongoing work
        */
       DeadlockDetectionConfig spinDuration(Long duration);
    }
@@ -358,6 +369,30 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        * @param expirationMaxIdle
        */
       ExpirationConfig maxIdle(Long maxIdle);
+   }
+
+   /**
+    * Defines recovery configuration for the cache.
+    *
+    * @author Mircea.Markus@jboss.com
+    * @since 5.0
+    */
+   public interface RecoveryConfig {
+
+      public static final String DEFAULT_RECOVERY_INFO_CACHE = "__recoveryInfoCacheName__";
+
+      /**
+       * If set to false then no recovery information is maintained and XAResource.recover is ignored
+       * (warning logged on call). Defaults to false.
+       */
+      RecoveryConfig enabled(boolean enabled);
+
+      /**
+       *
+       * Sets the name of the cache where recovery related information is held. If not specified defaults to
+       * a cache named {@link #DEFAULT_RECOVERY_INFO_CACHE}.
+       */
+      RecoveryConfig recoveryInfoCacheName(String cacheName);
    }
 
    /**
@@ -1704,6 +1739,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return clustering.hash.rehashWait;
    }
 
+   public boolean isTransactionRecoveryEnabled() {
+      return transaction.recovery.isEnabled();
+   }
+
+   public String getTransactionRecoveryCacheName() {
+      return transaction.recovery.getRecoveryInfoCacheName();
+   }
+
    // ------------------------------------------------------------------------------------------------------------
    //   HELPERS
    // ------------------------------------------------------------------------------------------------------------
@@ -1800,6 +1843,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (lazyDeserialization != null) dolly.lazyDeserialization = (LazyDeserialization) lazyDeserialization.clone();
          if (invocationBatching != null) dolly.invocationBatching = (InvocationBatching) invocationBatching.clone();
          if (deadlockDetection != null) dolly.deadlockDetection = (DeadlockDetectionType) deadlockDetection.clone();
+         if (transaction != null) dolly.transaction = transaction.clone();
          if (indexing != null) dolly.indexing = indexing.clone();
          return dolly;
       } catch (CloneNotSupportedException e) {
@@ -1859,6 +1903,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @see <a href="../../../config.html#ce_default_transaction">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
+   @XmlType(propOrder = {})
    @ConfigurationDoc(name = "transaction")
    public static class TransactionType extends AbstractNamedCacheConfigurationBean implements TransactionConfig {
 
@@ -1893,12 +1938,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setCacheStopTimeout")
       protected Integer cacheStopTimeout = 30000;
 
+      @XmlElement
+      protected RecoveryType recovery = new RecoveryType();
+
       public TransactionType(String transactionManagerLookupClass) {
          this.transactionManagerLookupClass = transactionManagerLookupClass;
       }
 
       public void accept(ConfigurationBeanVisitor v) {
          v.visitTransactionType(this);
+         recovery.accept(v);
       }
 
       public TransactionType() {
@@ -2018,6 +2067,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
 
       @Override
+      public RecoveryConfig configureRecovery() {
+         return recovery;
+      }
+
+      @Override
       public boolean equals(Object o) {
          if (this == o) return true;
          if (!(o instanceof TransactionType)) return false;
@@ -2056,6 +2110,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          // set the REAL default now!!
          // make sure we use the setter so that the change is registered for merging
          setTransactionManagerLookupClass(GenericTransactionManagerLookup.class.getName());
+      }
+
+      @Override
+      public TransactionType clone() throws CloneNotSupportedException {
+         TransactionType dolly = (TransactionType) super.clone();
+         if (recovery != null)
+            dolly.recovery = (RecoveryType) recovery.clone();
+         return dolly;
       }
    }
 
@@ -2207,6 +2269,55 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          result = 31 * result + (useLockStriping != null ? useLockStriping.hashCode() : 0);
          result = 31 * result + (concurrencyLevel != null ? concurrencyLevel.hashCode() : 0);
          return result;
+      }
+   }
+
+   @XmlAccessorType(XmlAccessType.PROPERTY)
+   public static class RecoveryType extends AbstractNamedCacheConfigurationBean implements RecoveryConfig {
+
+      private boolean enabled;
+
+      private String recoveryInfoCacheName;
+
+      public RecoveryType() {
+         setEnabled(false);
+         setRecoveryInfoCacheName(DEFAULT_RECOVERY_INFO_CACHE);
+      }
+
+      @Override
+      public RecoveryConfig enabled(boolean enabled) {
+         testImmutability("enabled");
+         this.enabled = enabled;
+         return this;
+      }
+
+      @Override
+      public RecoveryConfig recoveryInfoCacheName(String cacheName) {
+         testImmutability("recoveryInfoCacheName");
+         this.recoveryInfoCacheName  = cacheName;
+         return this;
+      }
+
+      @XmlAttribute(required = false)
+      public boolean isEnabled() {
+         return enabled;
+      }
+
+      @XmlAttribute (required = false)
+      public String getRecoveryInfoCacheName() {
+         return recoveryInfoCacheName;
+      }
+
+      public void setRecoveryInfoCacheName(String recoveryInfoCacheName) {
+         recoveryInfoCacheName(recoveryInfoCacheName);
+      }
+
+      public void setEnabled(boolean enabled) {
+         enabled(enabled);
+      }
+
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitRecoveryType(this);
       }
    }
 

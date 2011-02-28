@@ -26,6 +26,7 @@ import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 
+import javax.transaction.xa.Xid;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Uniquely identifies a transaction that spans all JVMs in a cluster. This is used when replicating all modifications
  * in a transaction; the PREPARE and COMMIT (or ROLLBACK) messages have to have a unique identifier to associate the
- * changes with<br>. GlobalTransaction should be instantiated thorough {@link org.infinispan.transaction.xa.GlobalTransactionFactory} class, 
+ * changes with<br>. GlobalTransaction should be instantiated thorough {@link TransactionFactory} class,
  * as their type depends on the runtime configuration.
  *
  * @author <a href="mailto:bela@jboss.org">Bela Ban</a> Apr 12, 2003
@@ -55,14 +56,15 @@ public class GlobalTransaction implements Cloneable {
    protected transient Address addr = null;
    private transient int hash_code = -1;  // in the worst case, hashCode() returns 0, then increases, so we're safe here
    private transient boolean remote = false;
+   private Xid xid;
 
    /**
     * empty ctor used by externalization.
     */
-   GlobalTransaction() {
+   protected GlobalTransaction() {
    }
 
-   GlobalTransaction(Address addr, boolean remote) {
+   protected GlobalTransaction(Address addr, boolean remote) {
       this.id = sid.incrementAndGet();
       this.addr = addr;
       this.remote = remote;
@@ -83,6 +85,7 @@ public class GlobalTransaction implements Cloneable {
    public void setRemote(boolean remote) {
       this.remote = remote;
    }
+
 
    @Override
    public int hashCode() {
@@ -129,25 +132,25 @@ public class GlobalTransaction implements Cloneable {
    }
 
    public static class Externalizer extends AbstractExternalizer<GlobalTransaction> {
-      protected GlobalTransactionFactory gtxFactory;
+      protected TransactionFactory txFactory;
 
-      public Externalizer(GlobalTransactionFactory gtxFactory) {
-         this.gtxFactory = gtxFactory;
+      public Externalizer(TransactionFactory txFactory) {
+         this.txFactory = txFactory;
       }
 
       public Externalizer() {
-         gtxFactory = new GlobalTransactionFactory();
+         txFactory = new TransactionFactory();
       }
 
       @Override
       public void writeObject(ObjectOutput output, GlobalTransaction gtx) throws IOException {
          output.writeLong(gtx.id);
-         output.writeObject(gtx.addr);      
+         output.writeObject(gtx.addr);
       }
 
       @Override
       public GlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         GlobalTransaction gtx = gtxFactory.instantiateGlobalTransaction();
+         GlobalTransaction gtx = txFactory.instantiateGlobalTransaction();
          gtx.id = input.readLong();
          gtx.addr = (Address) input.readObject();
          return gtx;

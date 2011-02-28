@@ -32,6 +32,8 @@ import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.GetInDoubtTransactionsCommand;
+import org.infinispan.commands.remote.RemoveRecoveryInfoCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -58,15 +60,18 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.marshall.Ids;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.RemoteTransaction;
 import org.infinispan.transaction.xa.TransactionTable;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.xa.Xid;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -102,6 +107,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private InvocationContextContainer icc;
    private TransactionTable txTable;
    private Configuration configuration;
+   private RecoveryManager recoveryManager;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -109,7 +115,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache cache,
                                  InterceptorChain interceptorChain, DistributionManager distributionManager,
                                  InvocationContextContainer icc, TransactionTable txTable, Configuration configuration,
-                                 @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers) {
+                                 @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
+                                 RecoveryManager recoveryManager) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -119,6 +126,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.txTable = txTable;
       this.configuration = configuration;
       this.moduleCommandInitializers = moduleCommandInitializers;
+      this.recoveryManager = recoveryManager;
    }
 
    @Start(priority = 1)
@@ -323,6 +331,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
             RehashControlCommand rcc = (RehashControlCommand) c;
             rcc.init(distributionManager, configuration, dataContainer, this);
             break;
+         case GetInDoubtTransactionsCommand.COMMAND_ID:
+            GetInDoubtTransactionsCommand gptx = (GetInDoubtTransactionsCommand) c;
+            gptx.init(recoveryManager);
+            break;
+         case Ids.REMOVE_RECOVERY_INFO_TX_COMMAND:
+            RemoveRecoveryInfoCommand ftx = (RemoveRecoveryInfoCommand) c;
+            ftx.init(recoveryManager);
+            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -357,5 +373,15 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    public String getCacheName() {
       return cacheName;
+   }
+
+   @Override
+   public GetInDoubtTransactionsCommand buildGetInDoubtTransactionsCommand() {
+      return new GetInDoubtTransactionsCommand(cacheName);
+   }
+
+   @Override
+   public RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(List<Xid> xids) {
+      return new RemoveRecoveryInfoCommand(xids, cacheName);
    }
 }

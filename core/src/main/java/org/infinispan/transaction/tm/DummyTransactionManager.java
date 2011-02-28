@@ -28,6 +28,7 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.naming.NoInitialContextException;
+import javax.transaction.xa.XAResource;
 import java.util.Properties;
 
 /**
@@ -90,4 +91,7 @@ public class DummyTransactionManager extends DummyBaseTransactionManager {
       instance = null;
    }
 
+   public XAResource firstEnlistedResource() {
+      return getTransaction().firstEnlistedResource();
+   }
 }

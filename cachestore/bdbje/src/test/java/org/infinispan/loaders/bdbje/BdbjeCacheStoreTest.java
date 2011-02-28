@@ -19,7 +19,7 @@ import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.GlobalTransactionFactory;
+import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.ReflectionUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -53,7 +53,7 @@ public class BdbjeCacheStoreTest {
 
    private PreparableTransactionRunner runner;
    private CurrentTransaction currentTransaction;
-   private GlobalTransactionFactory gtf;
+   private TransactionFactory gtf;
 
    private class MockBdbjeResourceFactory extends BdbjeResourceFactory {
 
@@ -117,7 +117,7 @@ public class BdbjeCacheStoreTest {
       cacheMap = createMock(StoredMap.class);
       expiryMap = createMock(StoredSortedMap.class);
       currentTransaction = createMock(CurrentTransaction.class);
-      gtf = new GlobalTransactionFactory();
+      gtf = new TransactionFactory();
       WeakReference<Environment> envRef = new WeakReference<Environment>(env);
       ReflectionUtil.setValue(currentTransaction, "envRef", envRef);
       ThreadLocal localTrans = new ThreadLocal();

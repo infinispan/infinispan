@@ -3,6 +3,7 @@ package org.infinispan.transaction.xa;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.xa.recovery.XidAware;
 import org.infinispan.util.BidirectionalLinkedHashMap;
 import org.infinispan.util.BidirectionalMap;
 import org.infinispan.util.InfinispanCollections;
@@ -11,7 +12,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.Xid;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -34,6 +34,7 @@ public class LocalTransaction extends AbstractCacheTransaction {
    private volatile boolean isMarkedForRollback;
 
    private final Transaction transaction;
+
    private Xid xid;
 
    public LocalTransaction(Transaction transaction, GlobalTransaction tx) {
@@ -93,7 +94,10 @@ public class LocalTransaction extends AbstractCacheTransaction {
    }
 
    public void setXid(Xid xid) {
-      this.xid = xid;
+      this.xid  = xid;
+      if (tx instanceof XidAware) {
+         ((XidAware) tx).setXid(xid);
+      }
    }
 
    public Xid getXid() {
@@ -115,14 +119,20 @@ public class LocalTransaction extends AbstractCacheTransaction {
 
       LocalTransaction that = (LocalTransaction) o;
 
-      if (xid != null ? !xid.equals(that.xid) : that.xid != null) return false;
+      if (isMarkedForRollback != that.isMarkedForRollback) return false;
+      if (remoteLockedNodes != null ? !remoteLockedNodes.equals(that.remoteLockedNodes) : that.remoteLockedNodes != null)
+         return false;
+      if (transaction != null ? !transaction.equals(that.transaction) : that.transaction != null) return false;
 
       return true;
    }
 
    @Override
    public int hashCode() {
-      return xid != null ? xid.hashCode() : 0;
+      int result = remoteLockedNodes != null ? remoteLockedNodes.hashCode() : 0;
+      result = 31 * result + (isMarkedForRollback ? 1 : 0);
+      result = 31 * result + (transaction != null ? transaction.hashCode() : 0);
+      return result;
    }
 
    @Override
@@ -131,7 +141,6 @@ public class LocalTransaction extends AbstractCacheTransaction {
             "remoteLockedNodes=" + remoteLockedNodes +
             ", isMarkedForRollback=" + isMarkedForRollback +
             ", transaction=" + transaction +
-            ", xid=" + xid +
             "} " + super.toString();
    }
 }

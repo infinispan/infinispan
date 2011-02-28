@@ -63,7 +63,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.data.Person;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.GlobalTransactionFactory;
+import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;
@@ -89,7 +89,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(VersionAwareMarshallerTest.class);
    private final VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
 
-   private GlobalTransactionFactory gtf = new GlobalTransactionFactory();
+   private TransactionFactory gtf = new TransactionFactory();
 
    @BeforeTest
    public void setUp() {

@@ -10,10 +10,9 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.GlobalTransactionFactory;
+import org.infinispan.transaction.xa.TransactionFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -30,7 +29,7 @@ import java.util.List;
 public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
 
    private String tmpDirectory;
-   private GlobalTransactionFactory gts = new GlobalTransactionFactory();
+   private TransactionFactory gts = new TransactionFactory();
 
    @BeforeClass
    @Parameters({"basedir"})

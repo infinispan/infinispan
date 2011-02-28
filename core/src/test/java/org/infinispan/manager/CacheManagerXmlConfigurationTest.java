@@ -90,9 +90,6 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
          cm = TestCacheManagerFactory.fromStream(bais);
          assert false : "Should fail";
       } catch (Throwable expected) {
-
-         System.out.println("Blah");
-
       }
    }
 

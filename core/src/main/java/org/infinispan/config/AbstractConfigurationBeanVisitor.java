@@ -197,6 +197,11 @@ public abstract class AbstractConfigurationBeanVisitor implements ConfigurationB
       defaultVisit(bean);
    }
 
+   @Override
+   public void visitRecoveryType(Configuration.RecoveryType config) {
+      defaultVisit(config);
+   }
+
    public void defaultVisit(AbstractConfigurationBean c) {
    }
 
