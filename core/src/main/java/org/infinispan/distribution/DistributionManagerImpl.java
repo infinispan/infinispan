@@ -348,6 +348,10 @@ public class DistributionManagerImpl implements DistributionManager {
       return result;
    }
 
+   public boolean isLocal(Object key) {
+      return getLocality(key).isLocal();
+   }
+
    public DataLocality getLocality(Object key) {
       chSwitchLock.readLock().lock();
       try {
