@@ -25,8 +25,8 @@ import org.infinispan.config.Configuration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
@@ -183,7 +183,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     *
     * @return a cache manager
     */
-   CacheContainer getCacheManager();
+   EmbeddedCacheManager getCacheManager();
 
    /**
     * An overloaded form of {@link #put(Object, Object)}, which takes in lifespan parameters.
