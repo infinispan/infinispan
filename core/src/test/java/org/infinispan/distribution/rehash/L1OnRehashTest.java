@@ -82,7 +82,7 @@ public class L1OnRehashTest extends BaseDistFunctionalTest {
       // for the purpose of CH, 1 == 3.
 
       // invalidations happen asynchronously!  :(
-      TestingUtil.sleepThread(2000);
+      TestingUtil.sleepThread(30000);
 
       Cache<Object, String> cacheToCheckForInvalidation = joinerPos + 1 == caches.size() ? caches.get(0) : caches.get(joinerPos + 1);
       MagicKey rehashedKey = keys.get(joinerPos == 1 ? 0 : 1);
