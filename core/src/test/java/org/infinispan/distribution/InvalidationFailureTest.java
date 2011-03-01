@@ -41,7 +41,7 @@ public class InvalidationFailureTest extends MultipleCacheManagersTest {
       service.stop();
    }
 
-   public void testH1Invalidated() throws Exception {
+   public void testL1Invalidated() throws Exception {
       tm(1).begin();
       cache(1).put(k0,"v");
       cache(1, "second").put(k0,"v");
@@ -57,6 +57,7 @@ public class InvalidationFailureTest extends MultipleCacheManagersTest {
          tm(0).commit();
          log.info("After the Commit");
       } catch (Exception e) {
+         e.printStackTrace();
          assert false : "this should not fail even if the invalidation does";
       } finally {
          tm(1).resume(transaction);

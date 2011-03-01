@@ -7,7 +7,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
@@ -250,12 +249,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
          if (isOwner(c, key)) {
             assert ice != null : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned null!";
             assert ice instanceof ImmortalCacheEntry : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
-         } else {
-            if (dc.containsKey(key)) {
-               assert ice instanceof MortalCacheEntry : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
-               assert ice.getLifespan() == c1.getConfiguration().getL1Lifespan();
-            }
          }
+         // Invalidation may need some time to "catch up", so this should not be strictly enforced if the node is a NON OWNER.
       }
    }
 
