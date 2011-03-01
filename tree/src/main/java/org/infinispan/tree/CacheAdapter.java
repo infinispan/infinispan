@@ -26,7 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Collection;
@@ -96,7 +96,7 @@ public class CacheAdapter implements Cache {
    }
 
    @Override
-   public CacheContainer getCacheManager() {
+   public EmbeddedCacheManager getCacheManager() {
       return cache.getCacheManager();
    }
 
