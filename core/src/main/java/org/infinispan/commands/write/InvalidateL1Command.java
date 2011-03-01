@@ -5,12 +5,16 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
+import java.util.concurrent.locks.LockSupport;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Invalidates an entry in a L1 cache (used with DIST mode)
@@ -61,35 +65,44 @@ public class InvalidateL1Command extends InvalidateCommand {
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      if (forRehash && config.isL1OnRehash()) {
-         for (Object k : getKeys()) {
-            InternalCacheEntry ice = dataContainer.get(k);
-            if (ice != null) {
-               if (log.isTraceEnabled()) log.trace("Not removing, instead putting entry into L1.");
-               dataContainer.put(k, ice.getValue(), config.getL1Lifespan(), config.getExpirationMaxIdle());
+
+      for (Object k : getKeys()) {
+         InternalCacheEntry ice = dataContainer.get(k);
+         if (ice != null) {
+            DataLocality locality = dm.getLocality(k);
+
+            while (locality.isUncertain() && dm.isRehashInProgress()) {
+               LockSupport.parkNanos(MILLISECONDS.toNanos(50));
+               locality = dm.getLocality(k);
             }
-         }
-      } else {
-         for (Object k : getKeys()) {
-            if (!dm.getLocality(k).isLocal()) invalidate(ctx, k);
+
+            if (!locality.isLocal()) {
+               if (forRehash && config.isL1OnRehash()) {
+                  if (log.isTraceEnabled()) log.trace("Not removing, instead putting entry into L1.");
+                  dataContainer.put(k, ice.getValue(), config.getL1Lifespan(), config.getExpirationMaxIdle());
+               } else {
+                  invalidate(ctx, k);
+               }
+            }
          }
       }
       return null;
    }
-   
-   public void setKeys(Object [] keys){
-	   this.keys = keys;
+
+   public void setKeys(Object[] keys) {
+      this.keys = keys;
    }
 
    @Override
    public boolean shouldInvoke(InvocationContext ctx) {
-      if (ctx.isOriginLocal() || (forRehash && config.isL1OnRehash())) return true;
-      boolean invoke = false;
-      for (Object k: getKeys()) {
-         invoke = invoke || !dm.getLocality(k).isLocal();
-         if (invoke) return true;
+      if (ctx.isOriginLocal() || forRehash) return true;
+      for (Object k : getKeys()) {
+         // If any key in the set of keys to invalidate is not local, or we are uncertain due to a rehash, then we
+         // process this command.
+         DataLocality locality = dm.getLocality(k);
+         if (!locality.isLocal() || locality.isUncertain()) return true;
       }
-      return invoke;
+      return false;
    }
 
    @Override
@@ -131,7 +144,7 @@ public class InvalidateL1Command extends InvalidateCommand {
          System.arraycopy(args, 2, keys, 0, size);
       }
    }
-   
+
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitInvalidateL1Command(ctx, this);

@@ -68,10 +68,7 @@ public class DistributionTestHelper {
    public static boolean isOwner(Cache<?, ?> c, Object key) {
       DistributionManager dm = c.getAdvancedCache().getDistributionManager();
       List<Address> ownerAddresses = dm.locate(key);
-      for (Address a : ownerAddresses) {
-         if (addressOf(c).equals(a)) return true;
-      }
-      return false;
+      return ownerAddresses.contains(addressOf(c));
    }
 
    public static boolean isFirstOwner(Cache<?, ?> c, Object key) {
@@ -81,7 +78,7 @@ public class DistributionTestHelper {
    }
 
    public static Address addressOf(Cache<?, ?> cache) {
-      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+      EmbeddedCacheManager cacheManager = cache.getCacheManager();
       return cacheManager.getAddress();
 
    }
