@@ -44,7 +44,7 @@ public class TransactionSetup {
       TransactionManager getManager();
    }
 
-   public static final String JTA = System.getProperty("infinispan.test.jta.tm", "infinispan.tm");
+   public static final String JTA = LegacyKeySupportSystemProperties.getProperty("infinispan.test.jta.tm", "infinispan.tm");
    public static final String JBOSS_TM = "jbosstm";
 
    private static Operations operations;
