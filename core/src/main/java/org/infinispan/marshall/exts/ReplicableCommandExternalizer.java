@@ -23,6 +23,7 @@ package org.infinispan.marshall.exts;
 
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.RemoteCommandsFactory;
+import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.RehashControlCommand;
@@ -115,6 +116,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             ClearCommand.class, EvictCommand.class,
             InvalidateCommand.class, InvalidateL1Command.class,
             PutKeyValueCommand.class, PutMapCommand.class,
-            RemoveCommand.class, ReplaceCommand.class);
+            RemoveCommand.class, ReplaceCommand.class,
+            RemoveCacheCommand.class);
    }
 }

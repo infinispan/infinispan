@@ -9,7 +9,8 @@ import org.infinispan.container.entries.InternalCacheEntry;
 
 import static org.infinispan.context.Flag.*;
 
-import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -36,13 +37,15 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
    Cache<Object, Object> cache;
    StreamingMarshaller m;
    CacheLoader loader;
+   InvocationContextContainer icc;
    private static final Log log = LogFactory.getLog(CacheLoaderManagerImpl.class);
 
    @Inject
-   public void inject(Cache cache, StreamingMarshaller marshaller, Configuration configuration) {
+   public void inject(Cache cache, StreamingMarshaller marshaller, Configuration configuration, InvocationContextContainer icc) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;
+      this.icc = icc;
    }
 
    public CacheLoader getCacheLoader() {
@@ -170,12 +173,23 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
 
    @Stop
    public void stop() {
-      if (loader != null) try {
-         loader.stop();
-      } catch (CacheLoaderException e) {
-         throw new CacheException(e);
+      if (loader != null) {
+         try {
+            CacheStore store = getCacheStore();
+            if (store != null) {
+               InvocationContext ctx = icc.createInvocationContext();
+               if (ctx.hasFlag(REMOVE_DATA_ON_STOP)) {
+                  if (log.isTraceEnabled()) log.trace("Requested removal of data on stop, so clear cache store");
+                  store.clear();
+               }
+            }
+            loader.stop();
+         } catch (CacheLoaderException e) {
+            throw new CacheException(e);
+         } finally {
+            loader = null;
+         }
       }
-      loader = null;
    }
 
    CacheLoader createCacheLoader() throws Exception {

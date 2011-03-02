@@ -347,6 +347,8 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    @ManagedOperation(description = "Stops the cache.")
    @Operation(displayName = "Stops cache.")
    public void stop() {
+      // Create invocation context to pass flags
+      getInvocationContext(false);
       componentRegistry.stop();
    }
 

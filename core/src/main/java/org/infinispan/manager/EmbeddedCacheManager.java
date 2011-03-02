@@ -1,5 +1,6 @@
 package org.infinispan.manager;
 
+import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -148,4 +149,47 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @return true if the default cache is running; false otherwise.
     */
    boolean isDefaultRunning();
+
+   /**
+    * A cache is considered to exist if it has been created and started via
+    * one of the {@link #getCache()} methods and has not yet been removed via
+    * {@link #removeCache(String)}. </p>
+    *
+    * In environments when caches are continuously created and removed, this
+    * method offers the possibility to find out whether a cache has either,
+    * not been started, or if it was started, whether it's been removed already
+    * or not.
+    *
+    * @param cacheName
+    * @return <tt>true</tt> if the cache with the given name has not yet been
+    *         started, or if it was started, whether it's been removed or not.
+    */
+   boolean cacheExists(String cacheName);
+
+   /**
+    * Retrieves a named cache from the system in the same way that {@link
+    * #getCache(String)} does except that if offers the possibility for the
+    * named cache not to be retrieved if it has not yet been started, or if
+    * it's been removed after being started.
+    *
+    * @param cacheName name of cache to retrieve
+    * @param createIfAbsent if <tt>false</tt>, the named cache will not be
+    *        retrieved if it hasn't been retrieved previously or if it's been
+    *        removed. If <tt>true</tt>, this methods works just like {@link
+    *        #getCache(String)}
+    * @return null if no named cache exists as per rules set above, otherwise
+    *         returns a cache instance identified by cacheName
+    */
+   <K, V> Cache<K, V> getCache(String cacheName, boolean createIfAbsent);
+
+   /**
+    * Removes a cache with the given name from the system. This is a cluster
+    * wide operation that results not only in stopping the cache with the given
+    * name in all nodes in the cluster, but also deletes its contents both in
+    * memory and in any backing cache store.
+    *
+    * @param cacheName name of cache to remove
+    */
+   void removeCache(String cacheName);
+
 }
