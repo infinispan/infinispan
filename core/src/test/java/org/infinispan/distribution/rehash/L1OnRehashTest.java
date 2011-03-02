@@ -18,7 +18,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @author Manik Surtani
  * @since 4.0
  */
-@Test(groups = "functional", testName = "distribution.rehash.L1OnRehashTest")
+@Test(groups = "functional", testName = "distribution.rehash.L1OnRehashTest", enabled = false, description = "Invalidations happen asynchronously and it is hard to deterministically wait for such invals")
 public class L1OnRehashTest extends BaseDistFunctionalTest {
    public L1OnRehashTest() {
       this.tx = false;

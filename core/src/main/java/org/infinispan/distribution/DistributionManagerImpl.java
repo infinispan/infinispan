@@ -445,6 +445,16 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public List<Address> requestPermissionToJoin(Address a) {
+      try {
+         if (!startLatch.await(5, TimeUnit.MINUTES)) {
+            log.warn("DistributionManager not started after waiting up to 5 minutes!  Not rehashing!");
+            return null;
+         }
+      } catch (InterruptedException e) {
+         // Nothing to do here
+         Thread.currentThread().interrupt();
+      }
+
       if (JOINER_CAS.compareAndSet(this, null, a)) {
          if (trace) log.trace("Allowing %s to join", a);
          return new LinkedList<Address>(consistentHash.getCaches());
