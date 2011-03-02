@@ -25,6 +25,7 @@ import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.Version;
+import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.ConfigurationValidatingVisitor;
@@ -43,6 +44,8 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.Immutables;
@@ -211,7 +214,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       this.globalConfiguration.accept(new ConfigurationValidatingVisitor());
       this.defaultConfiguration = defaultConfiguration == null ? new Configuration() : defaultConfiguration.clone();
       this.defaultConfiguration.accept(new ConfigurationValidatingVisitor());
-      this.globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, reflectionCache);
+      this.globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, reflectionCache, caches.keySet());
       this.cacheNameLockContainer = new ReentrantPerEntryLockContainer(this.defaultConfiguration.getConcurrencyLevel());
       if (start)
          start();
@@ -252,7 +255,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             c.applyOverrides(entry.getValue());
             configurationOverrides.put(entry.getKey(), c);
          }
-         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, reflectionCache);
+         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, reflectionCache, caches.keySet());
          cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());
       } catch (RuntimeException re) {
          throw new ConfigurationException(re);
@@ -296,7 +299,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             c.applyOverrides(entry.getValue());
             configurationOverrides.put(entry.getKey(), c);
          }
-         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, reflectionCache);
+         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, reflectionCache, caches.keySet());
          cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());
       } catch (ConfigurationException ce) {
          throw ce;
@@ -347,7 +350,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             }
          }
 
-         globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, reflectionCache);
+         globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, reflectionCache, caches.keySet());
          cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());
       } catch (RuntimeException re) {
          throw new ConfigurationException(re);
@@ -450,6 +453,39 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       }
    }
 
+   @Override
+   public boolean cacheExists(String cacheName) {
+      return caches.containsKey(cacheName);
+   }
+
+   @Override
+   public <K, V> Cache<K, V> getCache(String cacheName, boolean createIfAbsent) {
+      boolean cacheExists = cacheExists(cacheName);
+      if (!cacheExists && !createIfAbsent)
+         return null;
+      else
+         return getCache(cacheName);
+   }
+
+   @Override
+   public void removeCache(String cacheName) {
+      RemoveCacheCommand cmd = new RemoveCacheCommand(this, globalComponentRegistry);
+      cmd.injectComponents(null, globalComponentRegistry.getNamedComponentRegistry(cacheName));
+      cmd.setCacheName(cacheName);
+      Transport transport = getTransport();
+      try {
+         if (transport != null) {
+            Configuration c = getConfiguration(cacheName);
+            // Use sync replication timeout
+            transport.invokeRemotely(null, cmd, ResponseMode.SYNCHRONOUS, c.getSyncReplTimeout(), false, null, false);
+         }
+         // Once sent to the cluster, remove the local cache
+         cmd.perform(null);
+      } catch (Throwable t) {
+         throw new CacheException("Error removing cache", t);
+      }
+   }
+
    /**
     * {@inheritDoc}
     */
@@ -495,11 +531,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       if (existingCache != null)
          return existingCache.getCache();
 
-      Configuration c;
-      if (cacheName.equals(DEFAULT_CACHE_NAME) || !configurationOverrides.containsKey(cacheName))
-         c = defaultConfiguration.clone();
-      else
-         c = configurationOverrides.get(cacheName);
+      Configuration c = getConfiguration(cacheName);
 
       c.setGlobalConfiguration(globalConfiguration);
       c.assertValid();
@@ -515,6 +547,15 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          cw.latch.countDown();
       }
       return cache;
+   }
+
+   private Configuration getConfiguration(String cacheName) {
+      Configuration c;
+      if (cacheName.equals(DEFAULT_CACHE_NAME) || !configurationOverrides.containsKey(cacheName))
+         c = defaultConfiguration.clone();
+      else
+         c = configurationOverrides.get(cacheName);
+      return c;
    }
 
    public void start() {

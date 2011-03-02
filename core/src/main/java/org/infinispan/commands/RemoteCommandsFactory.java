@@ -18,9 +18,11 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
 
 /**
@@ -39,10 +41,14 @@ import org.infinispan.remoting.transport.Transport;
 @Scope(Scopes.GLOBAL)
 public class RemoteCommandsFactory {
    Transport transport;
+   EmbeddedCacheManager cacheManager;
+   GlobalComponentRegistry registry;
 
    @Inject
-   public void inject(Transport transport) {
+   public void inject(Transport transport, EmbeddedCacheManager cacheManager, GlobalComponentRegistry registry) {
       this.transport = transport;
+      this.cacheManager = cacheManager;
+      this.registry = registry;
    }
 
    /**
@@ -110,6 +116,9 @@ public class RemoteCommandsFactory {
             break;
          case RehashControlCommand.COMMAND_ID:
             command = new RehashControlCommand(transport);
+            break;
+         case RemoveCacheCommand.COMMAND_ID:
+            command = new RemoveCacheCommand(cacheManager, registry);
             break;
          default:
             throw new CacheException("Unknown command id " + id + "!");

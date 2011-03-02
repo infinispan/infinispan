@@ -21,6 +21,7 @@ import javax.management.MBeanServerFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A global component registry where shared components are stored.
@@ -47,12 +48,18 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    private GlobalConfiguration globalConfiguration;
 
    /**
+    * Tracking set of created caches in order to make it easy to
+    * remove a cache on remote nodes.
+    */
+   private final Set<String> createdCaches;
+
+   /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
     *
     * @param configuration configuration with which this is created
     */
    public GlobalComponentRegistry(GlobalConfiguration configuration, EmbeddedCacheManager cacheManager,
-                                  ReflectionCache reflectionCache) {
+                                  ReflectionCache reflectionCache, Set<String> createdCaches) {
       super(reflectionCache);
       if (configuration == null) throw new NullPointerException("GlobalConfiguration cannot be null!");
       try {
@@ -64,6 +71,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(configuration, GlobalConfiguration.class);
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
+         this.createdCaches = createdCaches;
       }
       catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);
@@ -161,4 +169,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       return globalConfiguration;
    }
 
+   /**
+    * Removes a cache with the given name, returning true if the cache was removed.
+    */
+   public boolean removeCache(String cacheName) {
+      return createdCaches.remove(cacheName);
+   }
 }

@@ -139,8 +139,9 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
 
       try {
          log.trace("Calling perform() on %s", cmd);
+         ResponseGenerator respGen = cr.getComponent(ResponseGenerator.class);
          Object retval = cmd.perform(null);
-         return cr.getComponent(ResponseGenerator.class).getResponse(cmd, retval);
+         return respGen.getResponse(cmd, retval);
       } catch (Exception e) {
          return new ExceptionResponse(e);
       }
