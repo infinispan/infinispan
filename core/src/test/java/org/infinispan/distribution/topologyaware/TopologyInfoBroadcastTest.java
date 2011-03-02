@@ -43,7 +43,6 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
       gc.setMachineId(m);
    }
 
-   @Test (invocationCount = 50)
    public void testIsReplicated() {
       assert advancedCache(0).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;
       assert advancedCache(1).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;

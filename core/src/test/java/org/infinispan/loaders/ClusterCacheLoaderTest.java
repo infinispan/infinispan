@@ -51,7 +51,7 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
       assert cache1.get("key") == null;
       assert cache1.get("key") == null;
       cache2.put("key", "value");
-      assert cache1.get("key").equals("value");
+      assert "value".equals(cache1.get("key"));
    }
 
    public void testRemoteLoadFromCacheLoader() throws Exception {

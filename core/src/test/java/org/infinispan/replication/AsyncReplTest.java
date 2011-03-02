@@ -13,10 +13,11 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import static org.testng.AssertJUnit.assertEquals;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
+
+import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "replication.AsyncReplTest")
 public class AsyncReplTest extends MultipleCacheManagersTest {
