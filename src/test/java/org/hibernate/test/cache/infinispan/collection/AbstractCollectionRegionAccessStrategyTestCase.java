@@ -482,14 +482,11 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
          serviceRegistry = ServiceRegistryBuilder.buildServiceRegistry( Environment.getProperties() );
 
          localCfg = createConfiguration(configName, configResource);
-         localRegionFactory = CacheTestUtil.startRegionFactory(
-				 serviceRegistry.getService( JdbcServices.class ),
-				 localCfg
-		 );
+         localRegionFactory = CacheTestUtil.startRegionFactory( serviceRegistry, localCfg );
 
          remoteCfg = createConfiguration(configName, configResource);
          remoteRegionFactory = CacheTestUtil.startRegionFactory(
-				 serviceRegistry.getService( JdbcServices.class ),
+				 serviceRegistry,
 				 remoteCfg
 		 );
       }
