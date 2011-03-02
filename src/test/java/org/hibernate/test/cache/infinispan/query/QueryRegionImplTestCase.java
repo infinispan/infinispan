@@ -51,6 +51,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
  */
 public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 
+<<<<<<< HEAD
     // protected static final String REGION_NAME = "test/" + StandardQueryCache.class.getName();
 
     /**
@@ -124,6 +125,77 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
                 } finally {
                     readerLatch.countDown();
                 }
+=======
+   // protected static final String REGION_NAME = "test/" + StandardQueryCache.class.getName();
+
+   /**
+    * Create a new EntityRegionImplTestCase.
+    * 
+    * @param name
+    */
+   public QueryRegionImplTestCase(String name) {
+      super(name);
+   }
+
+   @Override
+   protected Region createRegion(InfinispanRegionFactory regionFactory, String regionName, Properties properties, CacheDataDescription cdd) {
+      return regionFactory.buildQueryResultsRegion(regionName, properties);
+   }
+
+   @Override
+   protected String getStandardRegionName(String regionPrefix) {
+      return regionPrefix + "/" + StandardQueryCache.class.getName();
+   }
+
+   @Override
+   protected CacheAdapter getInfinispanCache(InfinispanRegionFactory regionFactory) {
+      return CacheAdapterImpl.newInstance(regionFactory.getCacheManager().getCache("local-query"));
+   }
+   
+   @Override
+   protected Configuration createConfiguration() {
+      return CacheTestUtil.buildCustomQueryCacheConfiguration("test", "replicated-query");
+   }
+
+   public void testPutDoesNotBlockGet() throws Exception {
+      putDoesNotBlockGetTest();
+   }
+
+   private void putDoesNotBlockGetTest() throws Exception {
+      Configuration cfg = createConfiguration();
+      InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
+			  getServiceRegistry(), cfg, getCacheTestSupport());
+
+      // Sleep a bit to avoid concurrent FLUSH problem
+      avoidConcurrentFlush();
+
+      final QueryResultsRegion region = regionFactory.buildQueryResultsRegion(getStandardRegionName(REGION_PREFIX), cfg
+               .getProperties());
+
+      region.put(KEY, VALUE1);
+      assertEquals(VALUE1, region.get(KEY));
+
+      final CountDownLatch readerLatch = new CountDownLatch(1);
+      final CountDownLatch writerLatch = new CountDownLatch(1);
+      final CountDownLatch completionLatch = new CountDownLatch(1);
+      final ExceptionHolder holder = new ExceptionHolder();
+
+      Thread reader = new Thread() {
+         public void run() {
+            try {
+               BatchModeTransactionManager.getInstance().begin();
+               log.debug("Transaction began, get value for key");
+               assertTrue(VALUE2.equals(region.get(KEY)) == false);
+               BatchModeTransactionManager.getInstance().commit();
+            } catch (AssertionFailedError e) {
+               holder.a1 = e;
+               rollback();
+            } catch (Exception e) {
+               holder.e1 = e;
+               rollback();
+            } finally {
+               readerLatch.countDown();
+>>>>>>> HHH-5949 - Migrate, complete and integrate TransactionFactory as a service
             }
         };
 
@@ -174,9 +246,17 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
         getDoesNotBlockPutTest();
     }
 
+<<<<<<< HEAD
     private void getDoesNotBlockPutTest() throws Exception {
         Configuration cfg = createConfiguration();
         InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(getJdbcServices(), cfg, getCacheTestSupport());
+=======
+   private void getDoesNotBlockPutTest() throws Exception {
+      Configuration cfg = createConfiguration();
+      InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
+			  getServiceRegistry(), cfg, getCacheTestSupport()
+	  );
+>>>>>>> HHH-5949 - Migrate, complete and integrate TransactionFactory as a service
 
         // Sleep a bit to avoid concurrent FLUSH problem
         avoidConcurrentFlush();

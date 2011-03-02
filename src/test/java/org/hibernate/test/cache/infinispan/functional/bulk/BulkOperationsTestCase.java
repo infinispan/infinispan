@@ -31,13 +31,18 @@ import org.hibernate.cache.infinispan.InfinispanRegionFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.classic.Session;
+import org.hibernate.engine.transaction.internal.jta.CMTTransactionFactory;
+import org.hibernate.engine.transaction.spi.TransactionFactory;
 import org.hibernate.service.jdbc.connections.spi.ConnectionProvider;
 import org.hibernate.stat.SecondLevelCacheStatistics;
 import org.hibernate.test.cache.infinispan.functional.Contact;
 import org.hibernate.test.cache.infinispan.functional.Customer;
+<<<<<<< HEAD
 import org.hibernate.testing.junit.functional.FunctionalTestCase;
 import org.hibernate.transaction.CMTTransactionFactory;
 import org.hibernate.transaction.TransactionFactory;
+=======
+>>>>>>> HHH-5949 - Migrate, complete and integrate TransactionFactory as a service
 import org.hibernate.transaction.TransactionManagerLookup;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
