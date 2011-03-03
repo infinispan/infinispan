@@ -132,7 +132,7 @@ public class DefaultConsistentHashTest extends AbstractInfinispanTest {
       Address a3 = new TestAddress(3000);
       Address a4 = new TestAddress(4000);
 
-      ch = (DefaultConsistentHash) ConsistentHashHelper.createConsistentHash(new DefaultConsistentHash(new org.infinispan.util.hash.MurmurHash3()), Arrays.asList(a1, a2, a3, a4), new TopologyInfo(), a1);
+      ch = (DefaultConsistentHash) ConsistentHashHelper.createConsistentHash(new DefaultConsistentHash(new org.infinispan.util.hash.MurmurHash2()), Arrays.asList(a1, a2, a3, a4), new TopologyInfo(), a1);
       assert ch.getCaches().size() == 4: "Expected 4 entries; found " + ch.getCaches();
    }
 }
