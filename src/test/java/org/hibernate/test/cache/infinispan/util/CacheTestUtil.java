@@ -34,6 +34,7 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.cfg.Settings;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
+import org.hibernate.service.jta.platform.internal.JtaPlatformInitiator;
 import org.hibernate.service.spi.ServiceRegistry;
 
 /**
@@ -47,7 +48,7 @@ public class CacheTestUtil {
       Configuration cfg = new Configuration();
       cfg.setProperty(Environment.GENERATE_STATISTICS, "true");
       cfg.setProperty(Environment.USE_STRUCTURED_CACHE, "true");
-      cfg.setProperty(Environment.TRANSACTION_MANAGER_STRATEGY, BatchModeTransactionManagerLookup.class.getName());
+      cfg.setProperty( JtaPlatformInitiator.JTA_PLATFORM, BatchModeJtaPlatform.class.getName() );
 
       cfg.setProperty(Environment.CACHE_REGION_FACTORY, regionFactory.getName());
       cfg.setProperty(Environment.CACHE_REGION_PREFIX, regionPrefix);
