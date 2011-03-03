@@ -31,15 +31,18 @@ public class HotRodClientException extends RuntimeException {
       this.errorStatusCode = errorStatusCode;
    }
 
-
    @Override
    public String toString() {
       StringBuilder sb = new StringBuilder(getClass().getName());
       sb.append(":");
-      if (messageId != -1) sb.append(" id [").append(messageId).append("]");
-      if (errorStatusCode != -1) sb.append(" code [").append(errorStatusCode).append("]");
+      if (messageId != -1) sb.append("Request for message id[").append(messageId).append("]");
+      if (errorStatusCode != -1) sb.append(" returned ").append(toErrorMsg(errorStatusCode));
       String message = getLocalizedMessage();
       if (message != null) sb.append(": ").append(message);
       return sb.toString();
+   }
+
+   private String toErrorMsg(int errorStatusCode) {
+      return String.format("server error (status=0x%x)", errorStatusCode);
    }
 }
