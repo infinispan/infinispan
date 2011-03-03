@@ -3,7 +3,6 @@ package org.infinispan.config.parsing;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
@@ -20,14 +19,13 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-@Test(groups = "unit", testName = "config.parsing.Jbc2InfinispanTransformerTest")
+@Test(groups = "unit", testName = "config.parsing.Jbc2InfinispanTransformerTest", enabled = false, description = "Vladimir looking into this")
 public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
    public static final String XSLT_FILE = "xslt/jbc3x2infinispan4x.xslt";
    private static final String BASE_DIR = "configs/jbosscache3x";

@@ -32,8 +32,15 @@ public class ControlledRpcManager implements RpcManager {
    private boolean fail;
 
    public ControlledRpcManager(RpcManager realOne) {
-      this.realOne = realOne;
+      this(realOne, new CountDownLatch(1));
+      replicationLatch.countDown();
    }
+
+   public ControlledRpcManager(RpcManager realOne, CountDownLatch latch) {
+      this.realOne = realOne;
+      replicationLatch = latch;
+   }
+
 
    protected RpcManager realOne;
 
@@ -113,6 +120,7 @@ public class ControlledRpcManager implements RpcManager {
 
    public void broadcastRpcCommand(ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws RpcException {
       log.trace("ControlledRpcManager.broadcastRpcCommand2");
+      failIfNeeded();
       realOne.broadcastRpcCommand(rpc, sync, usePriorityQueue);
       waitForLatchToOpen();
    }

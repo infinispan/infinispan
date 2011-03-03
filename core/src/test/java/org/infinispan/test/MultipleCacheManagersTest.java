@@ -55,11 +55,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    @BeforeClass (alwaysRun = true)
    public void createBeforeClass() throws Throwable {
-      try {
-         if (cleanupAfterTest()) callCreateCacheManagers();
-      } catch (Throwable th) {
-         log.info("Saw exception!", th);
-      }
+      if (cleanupAfterTest()) callCreateCacheManagers();
    }
 
    private void callCreateCacheManagers() throws Throwable {
@@ -68,7 +64,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       } catch (Throwable th) {
          th.printStackTrace();
          log.error("Error in test setup: ", th);
-         throw th;
       }
    }
 
