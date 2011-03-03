@@ -61,7 +61,6 @@ import org.hibernate.cache.infinispan.util.CacheAdapter;
 import org.hibernate.cache.infinispan.util.FlagAdapter;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
-import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.service.spi.ServiceRegistry;
 import org.hibernate.test.cache.infinispan.AbstractNonFunctionalTestCase;
 import org.hibernate.test.cache.infinispan.functional.cluster.DualNodeJtaTransactionManagerImpl;
@@ -571,7 +570,16 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
             preferIPv4Stack = System.getProperty(PREFER_IPV4STACK);
             System.setProperty(PREFER_IPV4STACK, "true");
 
+<<<<<<< HEAD
             serviceRegistry = ServiceRegistryBuilder.buildServiceRegistry(Environment.getProperties());
+=======
+      private final String configResource;
+      private final String configName;
+      private String preferIPv4Stack;
+
+      private ServiceRegistry localServiceRegistry;
+      private ServiceRegistry remoteServiceRegistry;
+>>>>>>> HHH-5949 - Migrate, complete and integrate TransactionFactory as a service
 
             localCfg = createConfiguration(configName, configResource);
             localRegionFactory = CacheTestUtil.startRegionFactory(serviceRegistry.getService(JdbcServices.class), localCfg);
@@ -592,6 +600,7 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
             try {
                 if (localRegionFactory != null) localRegionFactory.stop();
 
+<<<<<<< HEAD
                 if (remoteRegionFactory != null) remoteRegionFactory.stop();
             } finally {
                 if (serviceRegistry != null) {
@@ -602,12 +611,15 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 
          localCfg = createConfiguration(configName, configResource);
          localRegionFactory = CacheTestUtil.startRegionFactory( serviceRegistry, localCfg );
+=======
+		  localCfg = createConfiguration(configName, configResource);
+		  localServiceRegistry = ServiceRegistryBuilder.buildServiceRegistry( localCfg.getProperties() );
+		  localRegionFactory = CacheTestUtil.startRegionFactory( localServiceRegistry, localCfg );
+>>>>>>> HHH-5949 - Migrate, complete and integrate TransactionFactory as a service
 
-         remoteCfg = createConfiguration(configName, configResource);
-         remoteRegionFactory = CacheTestUtil.startRegionFactory(
-				 serviceRegistry,
-				 remoteCfg
-		 );
+		  remoteCfg = createConfiguration(configName, configResource);
+		  remoteServiceRegistry = ServiceRegistryBuilder.buildServiceRegistry( remoteCfg.getProperties() );
+		  remoteRegionFactory = CacheTestUtil.startRegionFactory( remoteServiceRegistry, remoteCfg );
       }
 
       @Override
@@ -629,9 +641,17 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
                remoteRegionFactory.stop();
 		  }
 		  finally {
+<<<<<<< HEAD
             if ( serviceRegistry != null ) {
 				ServiceRegistryBuilder.destroy( serviceRegistry );
 >>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
+=======
+            if ( localServiceRegistry != null ) {
+				ServiceRegistryBuilder.destroy( localServiceRegistry );
+            }
+            if ( remoteServiceRegistry != null ) {
+				ServiceRegistryBuilder.destroy( remoteServiceRegistry );
+>>>>>>> HHH-5949 - Migrate, complete and integrate TransactionFactory as a service
             }
         }
 
