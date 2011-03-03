@@ -12,6 +12,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -57,8 +58,8 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
       }
    }
 
-   public List<Address> getCaches() {
-      return nodes;
+   public Set<Address> getCaches() {
+      return new LinkedHashSet<Address>(nodes);
    }
 
    public void setCaches(List<Address> caches) {

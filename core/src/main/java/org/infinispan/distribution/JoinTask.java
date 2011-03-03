@@ -47,10 +47,10 @@ public class JoinTask extends RehashTask {
    }
 
    @SuppressWarnings("unchecked")
-   private List<Address> parseResponses(Collection<Response> resp) {
+   private Set<Address> parseResponses(Collection<Response> resp) {
       for (Response r : resp) {
          if (r instanceof SuccessfulResponse) {
-            return (List<Address>) ((SuccessfulResponse) r).getResponseValue();
+            return (Set<Address>) ((SuccessfulResponse) r).getResponseValue();
          }
       }
       return null;
@@ -157,7 +157,7 @@ public class JoinTask extends RehashTask {
             if (trace)
                 log.trace("Requesting old consistent hash from coordinator");
             Map<Address, Response> resp;
-            List<Address> addresses;
+            Set<Address> addresses;
             try {
                 resp = rpcManager.invokeRemotely(coordinator(), cf.buildRehashControlCommand(
                                 JOIN_REQ, self), SYNCHRONOUS, configuration.getRehashRpcTimeout(),

@@ -33,14 +33,17 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       this.newCH = newCH;
    }
 
-   public void setCaches(List<Address> caches) {
+   @Override
+   public void setCaches(Set<Address> caches) {
       // no op
    }
 
-   public List<Address> getCaches() {
-      return Collections.emptyList();
+   @Override
+   public Set<Address> getCaches() {
+      return Collections.emptySet();
    }
 
+   @Override
    public List<Address> locate(Object key, int replCount) {
       Set<Address> addresses = new LinkedHashSet<Address>();
       addresses.addAll(oldCH.locate(key, replCount));
@@ -57,6 +60,7 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       throw new UnsupportedOperationException("Unsupported!");
    }
 
+   @Override
    public List<Address> getStateProvidersOnJoin(Address joiner, int replCount) {
       throw new UnsupportedOperationException("Unsupported!");
    }

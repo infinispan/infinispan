@@ -9,10 +9,12 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -26,7 +28,6 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
 
    protected final Log log;
    protected final boolean trace;
-   protected ArrayList<Address> addresses;
    protected SortedMap<Integer, Address> positions;
    // TODO: Maybe address and addressToHashIds can be combined in a LinkedHashMap?
    protected Map<Address, Integer> addressToHashIds;
@@ -43,18 +44,14 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       hashFunction = h;
    }
 
-   public void setCaches(List<Address> caches) {
-      super.setCaches(caches);
-
-      addresses = new ArrayList<Address>(caches);
-
-      // this list won't grow.
-      addresses.trimToSize();
+   @Override
+   public void setCaches(Set<Address> newCaches) {
+      caches = new LinkedHashSet<Address>(newCaches.size());
 
       positions = new TreeMap<Integer, Address>();
       addressToHashIds = new HashMap<Address, Integer>();
 
-      for (Address a : addresses) {
+      for (Address a : newCaches) {
          int positionIndex = Math.abs(hashFunction.hash(a)) % HASH_SPACE;
          // this is deterministic since the address list is ordered and the order is consistent across the grid
          while (positions.containsKey(positionIndex)) positionIndex = positionIndex + 1 % HASH_SPACE;
@@ -66,18 +63,13 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
             addressToHashIds.put(a, positionIndex);
       }
 
-      addresses.clear();
       // reorder addresses as per the positions.
-      for (Address a : positions.values()) addresses.add(a);
+      caches.addAll(positions.values());
    }
 
    @Override
    public List<Address> getBackupsForNode(Address node, int replCount) {
       return locate(node, replCount);
-   }
-
-   public List<Address> getCaches() {
-      return addresses;
    }
 
    @Override
@@ -105,17 +97,18 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    @Override
    public String toString() {
       return "AbstractWheelConsistentHash{" +
-            "addresses=" + addresses +
+            "addresses=" + caches +
+            ", topologyInfo=" + topologyInfo +
             ", positions=" + positions +
             ", addressToHashIds=" + addressToHashIds +
-            "} " + super.toString();
+            "}";
    }
 
    protected static abstract class Externalizer implements org.infinispan.marshall.Externalizer {
       public void writeObject(ObjectOutput output, Object subject) throws IOException {
          AbstractWheelConsistentHash consistentHash = (AbstractWheelConsistentHash) subject;
          output.writeObject(consistentHash.hashFunction.getClass().getName());
-         output.writeObject(consistentHash.addresses);
+         output.writeObject(consistentHash.caches);
          output.writeObject(consistentHash.positions);
          output.writeObject(consistentHash.addressToHashIds);
       }
@@ -127,7 +120,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          AbstractWheelConsistentHash consistentHash = instance();
          String hashFunctionName = (String) unmarshaller.readObject();
          consistentHash.hashFunction = (Hash) Util.getInstance(hashFunctionName);
-         consistentHash.addresses = (ArrayList<Address>) unmarshaller.readObject();
+         consistentHash.caches = (HashSet<Address>) unmarshaller.readObject();
          consistentHash.positions = (SortedMap<Integer, Address>) unmarshaller.readObject();
          consistentHash.addressToHashIds = (Map<Address, Integer>) unmarshaller.readObject();
          return consistentHash;

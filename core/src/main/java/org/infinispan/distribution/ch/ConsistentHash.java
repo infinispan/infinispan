@@ -5,6 +5,7 @@ import org.infinispan.remoting.transport.Address;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A consistent hash algorithm implementation.  Implementations would typically be constructed via reflection so should
@@ -20,9 +21,9 @@ public interface ConsistentHash {
     * Sets the collection of cache addresses in the cluster.  The implementation should store these internally and use
     * these to locate keys.
     *
-    * @param caches caches in cluster.
+    * @param caches A set of unique caches in cluster.
     */
-   void setCaches(List<Address> caches);
+   void setCaches(Set<Address> caches);
 
    /**
     * Sets cluster topology information that can be used by CH to improve fault tolerance by smart choosing of backups.
@@ -33,9 +34,9 @@ public interface ConsistentHash {
    /**
     * Should return a collection of cache addresses in the cluster.
     *
-    * @return collection of cache addresses
+    * @return set of unique of cache addresses
     */
-   List<Address> getCaches();
+   Set<Address> getCaches();
 
    /**
     * Locates a key, given a replication count (number of copies).
@@ -43,7 +44,7 @@ public interface ConsistentHash {
     * @param key       key to locate
     * @param replCount replication count (number of copies)
     * @return a list of addresses where the key resides, where this list is a subset of the addresses set in {@link
-    *         #setCaches(java.util.List)}.  Should never be null, and should contain replCount elements or the max
+    *         #setCaches(java.util.Set)}.  Should never be null, and should contain replCount elements or the max
     *         number of caches available, whichever is smaller.
     */
    List<Address> locate(Object key, int replCount);

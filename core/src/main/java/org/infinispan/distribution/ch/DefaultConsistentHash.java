@@ -3,6 +3,7 @@ package org.infinispan.distribution.ch;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.hash.Hash;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -16,9 +17,20 @@ import static java.lang.Math.min;
 @Marshallable(externalizer = DefaultConsistentHash.Externalizer.class, id = Ids.DEFAULT_CONSISTENT_HASH)
 public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
+   public DefaultConsistentHash() {
+   }
+
+   public DefaultConsistentHash(Hash hash) {
+      setHashFunction(hash);
+   }
+
+   private int getNumCopiesToFind(int replCount) {
+      return min(replCount, caches.size());
+   }
+
    public List<Address> locate(Object key, int replCount) {
       int hash = getNormalizedHash(key);
-      int numCopiesToFind = min(replCount, addresses.size());
+      int numCopiesToFind = getNumCopiesToFind(replCount);
 
       List<Address> owners = new ArrayList<Address>(numCopiesToFind);
 
@@ -52,7 +64,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
    @Override
    public boolean isKeyLocalToAddress(Address target, Object key, int replCount) {
       int hash = getNormalizedHash(key);
-      int numCopiesToFind = min(replCount, addresses.size());
+      int numCopiesToFind = getNumCopiesToFind(replCount);
 
       SortedMap<Integer, Address> candidates = positions.tailMap(hash);
       int nodesTested = 0;
@@ -80,27 +92,37 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       return false;
    }
 
+   private int indexOf(Address a) {
+      int p = 0;
+      for (Address target: caches) {
+         if (target.equals(a)) return p;
+         p++;
+      }
+      return -1;
+   }
 
    public int getDistance(Address a1, Address a2) {
       if (a1 == null || a2 == null) throw new NullPointerException("Cannot deal with nulls as parameters!");
 
-      int p1 = addresses.indexOf(a1);
+
+
+      int p1 = indexOf(a1);
       if (p1 < 0)
          return -1;
 
-      int p2 = addresses.indexOf(a2);
+      int p2 = indexOf(a2);
       if (p2 < 0)
          return -1;
 
       if (p1 <= p2)
          return p2 - p1;
       else
-         return addresses.size() - (p1 - p2);
+         return caches.size() - (p1 - p2);
    }
 
    public boolean isAdjacent(Address a1, Address a2) {
       int distance = getDistance(a1, a2);
-      return distance == 1 || distance == addresses.size() - 1;
+      return distance == 1 || distance == caches.size() - 1;
    }
 
    @Override
@@ -110,7 +132,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
       DefaultConsistentHash that = (DefaultConsistentHash) o;
 
-      if (addresses != null ? !addresses.equals(that.addresses) : that.addresses != null) return false;
+      if (caches != null ? !caches.equals(that.caches) : that.caches != null) return false;
       if (positions != null ? !positions.equals(that.positions) : that.positions != null) return false;
 
       return true;
@@ -118,7 +140,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
    @Override
    public int hashCode() {
-      int result = addresses != null ? addresses.hashCode() : 0;
+      int result = caches != null ? caches.hashCode() : 0;
       result = 31 * result + (positions != null ? positions.hashCode() : 0);
       return result;
    }
@@ -138,36 +160,32 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
               '}';
    }
 
-   public List<Address> getAddressOnTheWheel() {
-      return addresses;
-   }
-
    public List<Address> getStateProvidersOnJoin(Address self, int replCount) {
       List<Address> l = new LinkedList<Address>();
-      List<Address> caches = getCaches();
-      int selfIdx = caches.indexOf(self);
+      List<Address> cachesList = new LinkedList<Address>(this.caches);
+      int selfIdx = cachesList.indexOf(self);
       if (selfIdx >= replCount - 1) {
-         l.addAll(caches.subList(selfIdx - replCount + 1, selfIdx));
+         l.addAll(cachesList.subList(selfIdx - replCount + 1, selfIdx));
       } else {
-         l.addAll(caches.subList(0, selfIdx));
+         l.addAll(cachesList.subList(0, selfIdx));
          int alreadyCollected = l.size();
-         l.addAll(caches.subList(caches.size() - replCount + 1 + alreadyCollected, caches.size()));
+         l.addAll(cachesList.subList(cachesList.size() - replCount + 1 + alreadyCollected, cachesList.size()));
       }
 
       Address plusOne;
-      if (selfIdx == caches.size() - 1)
-         plusOne = caches.get(0);
+      if (selfIdx == cachesList.size() - 1)
+         plusOne = cachesList.get(0);
       else
-         plusOne = caches.get(selfIdx + 1);
+         plusOne = cachesList.get(selfIdx + 1);
 
       if (!l.contains(plusOne)) l.add(plusOne);
       return l;
    }
 
    public List<Address> getStateProvidersOnLeave(Address leaver, int replCount) {
-      if (trace) log.trace("List of addresses is: %s. leaver is: %s", addresses, leaver);
+      if (trace) log.trace("List of addresses is: %s. leaver is: %s", caches, leaver);
       Set<Address> holders = new HashSet<Address>();
-      for (Address address : addresses) {
+      for (Address address : caches) {
          if (isAdjacent(leaver, address)) {
             holders.add(address);
             if (trace) log.trace("%s is state holder", address);

@@ -5,11 +5,10 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 import org.infinispan.util.hash.Hash;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A helper class that handles the construction of consistent hash instances based on configuration.
@@ -34,7 +33,7 @@ public class ConsistentHashHelper {
          return removeAddressFromUnionConsistentHash((UnionConsistentHash) ch, toRemove, c, topologyInfo);
       else {
          ConsistentHash newCH = constructConsistentHashInstance(c);
-         List<Address> caches = new ArrayList<Address>(ch.getCaches());
+         Set<Address> caches = new HashSet<Address>(ch.getCaches());
          caches.remove(toRemove);
          newCH.setCaches(caches);
          newCH.setTopologyInfo(topologyInfo);
@@ -84,9 +83,9 @@ public class ConsistentHashHelper {
     * @param topologyInfo
     * @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(Configuration c, List<Address> addresses, TopologyInfo topologyInfo) {
+   public static ConsistentHash createConsistentHash(Configuration c, Collection<Address> addresses, TopologyInfo topologyInfo) {
       ConsistentHash ch = constructConsistentHashInstance(c);
-      ch.setCaches(addresses);
+      ch.setCaches(toSet(addresses));
       ch.setTopologyInfo(topologyInfo);
       return ch;
    }
@@ -100,10 +99,10 @@ public class ConsistentHashHelper {
     * @param topologyInfo
     *@param moreAddresses to add to the list of addresses  @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(Configuration c, List<Address> addresses, TopologyInfo topologyInfo, Address... moreAddresses) {
-      List<Address> list = new LinkedList<Address>(addresses);
-      list.addAll(Arrays.asList(moreAddresses));
-      return createConsistentHash(c, list, topologyInfo);
+   public static ConsistentHash createConsistentHash(Configuration c, Collection<Address> addresses, TopologyInfo topologyInfo, Address... moreAddresses) {
+      Set<Address> caches = new HashSet<Address>(addresses);
+      caches.addAll(Arrays.asList(moreAddresses));
+      return createConsistentHash(c, caches, topologyInfo);
    }
 
    /**
@@ -116,10 +115,10 @@ public class ConsistentHashHelper {
     * @param topologyInfo
     * @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(Configuration c, List<Address> addresses, Collection<Address> moreAddresses, TopologyInfo topologyInfo) {
-      List<Address> list = new LinkedList<Address>(addresses);
-      list.addAll(moreAddresses);
-      return createConsistentHash(c, list, topologyInfo);
+   public static ConsistentHash createConsistentHash(Configuration c, Collection<Address> addresses, Collection<Address> moreAddresses, TopologyInfo topologyInfo) {
+      Set<Address> caches = new HashSet<Address>(addresses);
+      caches.addAll(moreAddresses);
+      return createConsistentHash(c, caches, topologyInfo);
    }
 
    /**
@@ -131,13 +130,13 @@ public class ConsistentHashHelper {
     * @param topologyInfo
     * @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(ConsistentHash template, List<Address> addresses, TopologyInfo topologyInfo) {
+   public static ConsistentHash createConsistentHash(ConsistentHash template, Collection<Address> addresses, TopologyInfo topologyInfo) {
       Hash hf = null;
       if (template instanceof AbstractWheelConsistentHash) {
          hf = ((AbstractWheelConsistentHash) template).hashFunction;
       }
       ConsistentHash ch = constructConsistentHashInstance(template.getClass(), hf);
-      if (addresses != null && !addresses.isEmpty())  ch.setCaches(addresses);
+      if (addresses != null && !addresses.isEmpty())  ch.setCaches(toSet(addresses));
       ch.setTopologyInfo(topologyInfo);
       return ch;
    }
@@ -151,9 +150,14 @@ public class ConsistentHashHelper {
     * @param topologyInfo
     *@param moreAddresses to add to the list of addresses  @return a new consistent hash instance
     */
-   public static ConsistentHash createConsistentHash(ConsistentHash template, List<Address> addresses, TopologyInfo topologyInfo, Address... moreAddresses) {
-      List<Address> list = new LinkedList<Address>(addresses);
-      list.addAll(Arrays.asList(moreAddresses));
-      return createConsistentHash(template, list, topologyInfo);
+   public static ConsistentHash createConsistentHash(ConsistentHash template, Collection<Address> addresses, TopologyInfo topologyInfo, Address... moreAddresses) {
+      Set<Address> caches = new HashSet<Address>(addresses);
+      caches.addAll(Arrays.asList(moreAddresses));
+      return createConsistentHash(template, caches, topologyInfo);
+   }
+
+   private static Set<Address> toSet(Collection<Address> c) {
+      if (c instanceof Set) return (Set<Address>) c;
+      return new HashSet<Address>(c);
    }
 }
