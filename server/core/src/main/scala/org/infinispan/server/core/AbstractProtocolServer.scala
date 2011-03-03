@@ -105,5 +105,5 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
 
    def getPort = port
 
-   def startDefaultCache = cacheManager.getCache
+   def startDefaultCache = cacheManager.getCache()
 }

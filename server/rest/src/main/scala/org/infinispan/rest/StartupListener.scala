@@ -39,7 +39,7 @@ class StartupListener extends HttpServlet with Logging {
       for (cacheName <- asIterator(ManagerInstance.instance.getCacheNames.iterator))
          ManagerInstance.instance.getCache(cacheName)
       // Finally, start default cache as well
-      ManagerInstance.instance.getCache[String, Any]
+      ManagerInstance.instance.getCache[String, Any]()
    }
 
    /**
