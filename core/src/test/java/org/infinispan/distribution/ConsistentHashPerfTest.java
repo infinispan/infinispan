@@ -3,16 +3,18 @@ package org.infinispan.distribution;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -27,7 +29,7 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
 
    private void addCaches(ConsistentHash ch, int numNodes) {
       Random r = new Random();
-      List<Address> addresses = new ArrayList<Address>(numNodes);
+      Set<Address> addresses = new HashSet<Address>(numNodes);
       while (addresses.size() < numNodes)
          addresses.add(new JGroupsAddress(new org.jgroups.util.UUID(r.nextLong(), r.nextLong())));
       ch.setCaches(addresses);

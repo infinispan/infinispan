@@ -10,10 +10,11 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -27,7 +28,6 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
 
    protected final Log log;
    protected final boolean trace;
-   protected ArrayList<Address> addresses;
    protected SortedMap<Integer, Address> positions;
    // TODO: Maybe address and addressToHashIds can be combined in a LinkedHashMap?
    protected Map<Address, Integer> addressToHashIds;
@@ -44,18 +44,14 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       hashFunction = h;
    }
 
-   public void setCaches(List<Address> caches) {
-      super.setCaches(caches);
-
-      addresses = new ArrayList<Address>(caches);
-
-      // this list won't grow.
-      addresses.trimToSize();
+   @Override
+   public void setCaches(Set<Address> newCaches) {
+      caches = new LinkedHashSet<Address>(newCaches.size());
 
       positions = new TreeMap<Integer, Address>();
       addressToHashIds = new HashMap<Address, Integer>();
 
-      for (Address a : addresses) {
+      for (Address a : newCaches) {
          int positionIndex = Math.abs(hashFunction.hash(a)) % HASH_SPACE;
          // this is deterministic since the address list is ordered and the order is consistent across the grid
          while (positions.containsKey(positionIndex)) positionIndex = positionIndex + 1 % HASH_SPACE;
@@ -67,18 +63,13 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
             addressToHashIds.put(a, positionIndex);
       }
 
-      addresses.clear();
       // reorder addresses as per the positions.
-      for (Address a : positions.values()) addresses.add(a);
+      caches.addAll(positions.values());
    }
 
    @Override
    public List<Address> getBackupsForNode(Address node, int replCount) {
       return locate(node, replCount);
-   }
-
-   public List<Address> getCaches() {
-      return addresses;
    }
 
    @Override
@@ -106,10 +97,11 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    @Override
    public String toString() {
       return "AbstractWheelConsistentHash{" +
-            "addresses=" + addresses +
+            "addresses=" + caches +
+            ", topologyInfo=" + topologyInfo +
             ", positions=" + positions +
             ", addressToHashIds=" + addressToHashIds +
-            "} " + super.toString();
+            "}";
    }
 
    public static abstract class Externalizer<T extends AbstractWheelConsistentHash> extends AbstractExternalizer<T> {
@@ -119,7 +111,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       @Override
       public void writeObject(ObjectOutput output, T abstractWheelConsistentHash) throws IOException {
          output.writeObject(abstractWheelConsistentHash.hashFunction.getClass().getName());
-         output.writeObject(abstractWheelConsistentHash.addresses);
+         output.writeObject(abstractWheelConsistentHash.caches);
          output.writeObject(abstractWheelConsistentHash.positions);
          output.writeObject(abstractWheelConsistentHash.addressToHashIds);
       }
@@ -130,7 +122,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          T abstractWheelConsistentHash = instance();
          String hashFuctionName = (String) unmarshaller.readObject();
          abstractWheelConsistentHash.setHashFunction((Hash) Util.getInstance(hashFuctionName));
-         abstractWheelConsistentHash.addresses = (ArrayList<Address>) unmarshaller.readObject();
+         abstractWheelConsistentHash.caches = (Set<Address>) unmarshaller.readObject();
          abstractWheelConsistentHash.positions = (SortedMap<Integer, Address>) unmarshaller.readObject();
          abstractWheelConsistentHash.addressToHashIds = (Map<Address, Integer>) unmarshaller.readObject();
          return abstractWheelConsistentHash;

@@ -3,9 +3,12 @@ package org.infinispan.distribution.ch;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * An abstract consistent hash implementation that handles common implementations of certain methods.  In particular,
@@ -21,24 +24,40 @@ import java.util.Map;
  */
 public abstract class AbstractConsistentHash implements ConsistentHash {
 
-   protected volatile List<Address> caches;
+   protected volatile Set<Address> caches;
    protected TopologyInfo topologyInfo;
 
-   public void setCaches(List<Address> caches) {
-      this.caches = caches;
+   @Override
+   public void setCaches(Set<Address> caches) {
+      this.caches = new TreeSet<Address>(new Comparator<Address>() {
+         @Override
+         public int compare(Address o1, Address o2) {
+            return o1.hashCode() - o2.hashCode();
+         }
+      });
+
+      for (Address a: caches) this.caches.add(a);
    }
 
+   @Override
+   public Set<Address> getCaches() {
+      return caches;
+   }
+
+   @Override
    public Map<Object, List<Address>> locateAll(Collection<Object> keys, int replCount) {
       Map<Object, List<Address>> locations = new HashMap<Object, List<Address>>();
       for (Object k : keys) locations.put(k, locate(k, replCount));
       return locations;
    }
 
+   @Override
    public boolean isKeyLocalToAddress(Address a, Object key, int replCount) {
       // simple, brute-force impl
       return locate(key, replCount).contains(a);
    }
 
+   @Override
    public void setTopologyInfo(TopologyInfo topologyInfo) {
       this.topologyInfo = topologyInfo;
    }

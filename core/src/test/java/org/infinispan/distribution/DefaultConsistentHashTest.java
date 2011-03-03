@@ -1,6 +1,8 @@
 package org.infinispan.distribution;
 
+import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.ch.TopologyInfo;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterTest;
@@ -9,6 +11,7 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -86,11 +89,11 @@ public class DefaultConsistentHashTest extends AbstractInfinispanTest {
       ch = (DefaultConsistentHash) BaseDistFunctionalTest.createNewConsistentHash(Arrays.asList(a1, a2, a3, a4));
 
       // the CH may reorder the addresses.  Get the new order.
-      List<Address> adds = ch.getCaches();
-      a1 = adds.get(0);
-      a2 = adds.get(1);
-      a3 = adds.get(2);
-      a4 = adds.get(3);
+      Iterator<Address> adds = ch.getCaches().iterator();
+      a1 = adds.next();
+      a2 = adds.next();
+      a3 = adds.next();
+      a4 = adds.next();
 
       assert ch.getDistance(a1, a1) == 0;
       assert ch.getDistance(a1, a4) == 3;
@@ -121,6 +124,16 @@ public class DefaultConsistentHashTest extends AbstractInfinispanTest {
          assert l.size() == 2: "Did NOT find 2 owners for key ["+key+"] as expected!  Found " + l;
          assert ch.isAdjacent(l.get(0), l.get(1)) : "Nodes " + l + " should be adjacent!";
       }
+   }
+
+   public void testDuplicates() {
+      Address a1 = new TestAddress(1000);
+      Address a2 = new TestAddress(2000);
+      Address a3 = new TestAddress(3000);
+      Address a4 = new TestAddress(4000);
+
+      ch = (DefaultConsistentHash) ConsistentHashHelper.createConsistentHash(new DefaultConsistentHash(new org.infinispan.util.hash.MurmurHash3()), Arrays.asList(a1, a2, a3, a4), new TopologyInfo(), a1);
+      assert ch.getCaches().size() == 4: "Expected 4 entries; found " + ch.getCaches();
    }
 }
 

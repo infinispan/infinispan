@@ -1,6 +1,5 @@
 package org.infinispan.distribution.ch;
 
-import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
@@ -14,7 +13,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
@@ -47,17 +45,19 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       setHashFunction(hash);
    }
 
+   @Override
    public List<Address> locate(Object key, int replCount) {
       Address owner = getOwner(key);
-      int ownerCount = min(replCount, addresses.size());
+      int ownerCount = min(replCount, caches.size());
       return getOwners(owner, ownerCount);
    }
 
+   @Override
    public List<Address> getStateProvidersOnLeave(Address leaver, int replCount) {
       Set<Address> result = new HashSet<Address>();
 
       //1. first get all the node that replicated on leaver
-      for (Address address : addresses) {
+      for (Address address : caches) {
          if (address.equals(leaver)) continue;
          if (getOwners(address, replCount).contains(leaver)) {
             result.add(address);
@@ -76,6 +76,7 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
    /**
     * In this situation are the same nodes providing state on join as the nodes that provide state on leave.
     */
+   @Override
    public List<Address> getStateProvidersOnJoin(Address joiner, int replCount) {
       return getStateProvidersOnLeave(joiner, replCount);
    }

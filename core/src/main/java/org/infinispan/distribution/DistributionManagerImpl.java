@@ -348,6 +348,7 @@ public class DistributionManagerImpl implements DistributionManager {
       return result;
    }
 
+   @Deprecated
    public boolean isLocal(Object key) {
       return getLocality(key).isLocal();
    }
@@ -444,7 +445,7 @@ public class DistributionManagerImpl implements DistributionManager {
       return transactionLogger;
    }
 
-   public List<Address> requestPermissionToJoin(Address a) {
+   public Set<Address> requestPermissionToJoin(Address a) {
       try {
          if (!startLatch.await(5, TimeUnit.MINUTES)) {
             log.warn("DistributionManager not started after waiting up to 5 minutes!  Not rehashing!");
@@ -457,7 +458,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
       if (JOINER_CAS.compareAndSet(this, null, a)) {
          if (trace) log.trace("Allowing %s to join", a);
-         return new LinkedList<Address>(consistentHash.getCaches());
+         return new HashSet<Address>(consistentHash.getCaches());
       } else {
          if (trace)
             log.trace("Not alowing %s to join since there is a join already in progress for node %s", a, joiner);

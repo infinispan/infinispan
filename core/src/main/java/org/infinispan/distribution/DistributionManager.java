@@ -131,7 +131,7 @@ public interface DistributionManager {
     * @param joiner joiner who wants to join
     * @return a consistent hash prior to the joiner joining (if the joiner is allowed to join), otherwise null.
     */
-   List<Address> requestPermissionToJoin(Address joiner);
+   Set<Address> requestPermissionToJoin(Address joiner);
 
    /**
     * This will cause all nodes to add the joiner to their consistent hash instance (usually by creating a {@link org.infinispan.distribution.ch.UnionConsistentHash}
