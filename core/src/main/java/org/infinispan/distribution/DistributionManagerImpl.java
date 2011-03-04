@@ -304,6 +304,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
    private Map<Object, InternalCacheValue> applyStateMap(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state, boolean withRetry) {
       Map<Object, InternalCacheValue> retry = withRetry ? new HashMap<Object, InternalCacheValue>() : null;
+
       Address myself=self;
       if(myself == null) {
          myself=rpcManager.getTransport().getAddress();
@@ -318,6 +319,7 @@ public class DistributionManagerImpl implements DistributionManager {
             try {
                PutKeyValueCommand put = cf.buildPutKeyValueCommand(e.getKey(), v.getValue(), v.getLifespan(), v.getMaxIdle(), ctx.getFlags());
                interceptorChain.invoke(ctx, put);
+               // System.out.println("$put(" + e.getKey() + ", " + e.getValue() + ", container size=" + dataContainer.size());
             } catch (Exception ee) {
                if (withRetry) {
                   if (trace)
@@ -327,6 +329,10 @@ public class DistributionManagerImpl implements DistributionManager {
                   log.warn("problem %s encountered when applying state for key %s!", ee.getMessage(), e.getKey());
                }
             }
+         }
+         else {
+            List<Address> mbrs = consistentHash.locate(e.getKey(), configuration.getNumOwners());
+            System.err.println(myself + " is not member of " + mbrs + "; cannot apply key " + e.getKey());
          }
       }
       return retry;
@@ -341,6 +347,7 @@ public class DistributionManagerImpl implements DistributionManager {
       for (int i = 0; i < retryCount; i++) {
          pendingApplications = applyStateMap(consistentHash, pendingApplications, true);
          if (pendingApplications.isEmpty()) break;
+         System.err.println("couldn't apply state the first time, retrying (#" + (i+1) + ")");
       }
       // one last go
       if (!pendingApplications.isEmpty()) applyStateMap(consistentHash, pendingApplications, false);
