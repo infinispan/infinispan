@@ -9,6 +9,9 @@ import org.infinispan.Cache
 import org.infinispan.server.core.{CacheValue, Logging}
 import org.infinispan.util.ByteArrayKey
 import scala.collection.JavaConversions._
+import collection.mutable
+import collection.immutable
+import org.infinispan.remoting.transport.Address
 
 /**
  * Hot Rod specific encoder.
@@ -106,7 +109,6 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
       buffer.writeByte(r.operation.id.byteValue)
       buffer.writeByte(r.status.id.byteValue)
       if (topologyResp != null) {
-         buffer.writeByte(1) // Topology changed
          topologyResp match {
             case t: TopologyAwareResponse => {
                if (r.clientIntel == 2)
@@ -124,6 +126,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
 
    private def writeTopologyHeader(t: TopologyAwareResponse, buffer: ChannelBuffer, isTrace: Boolean) {
       if (isTrace) trace("Write topology change response header {0}", t)
+      buffer.writeByte(1) // Topology changed
       buffer.writeUnsignedInt(t.view.topologyId)
       buffer.writeUnsignedInt(t.view.members.size)
       t.view.members.foreach{address =>
@@ -134,6 +137,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
 
    private def writeHashTopologyHeader(t: TopologyAwareResponse, buffer: ChannelBuffer, isTrace: Boolean) {
       if (isTrace) trace("Return limited hash distribution aware header in spite of having a hash aware client {0}", t)
+      buffer.writeByte(1) // Topology changed
       buffer.writeUnsignedInt(t.view.topologyId)
       buffer.writeUnsignedShort(0) // Num key owners
       buffer.writeByte(0) // Hash function
@@ -148,37 +152,60 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
 
    private def writeHashTopologyHeader(h: HashDistAwareResponse, buffer: ChannelBuffer, r: Response, isTrace: Boolean) {
       if (isTrace) trace("Write hash distribution change response header {0}", h)
-      buffer.writeUnsignedInt(h.view.topologyId)
-      buffer.writeUnsignedShort(h.numOwners) // Num key owners
-      buffer.writeByte(h.hashFunction) // Hash function
-      buffer.writeUnsignedInt(h.hashSpace) // Hash space
-      buffer.writeUnsignedInt(h.view.members.size)
-      var hashIdUpdateRequired = false
+      try {
+         val computedHashIds = checkForRehashing(r, h)
+         buffer.writeByte(1) // Topology changed
+         buffer.writeUnsignedInt(h.view.topologyId)
+         buffer.writeUnsignedShort(h.numOwners) // Num key owners
+         buffer.writeByte(h.hashFunction) // Hash function
+         buffer.writeUnsignedInt(h.hashSpace) // Hash space
+         buffer.writeUnsignedInt(h.view.members.size)
+         var hashIdUpdateRequired = false
+         val updateMembers = new ListBuffer[TopologyAddress]
+         h.view.members.foreach{address =>
+            buffer.writeString(address.host)
+            buffer.writeUnsignedShort(address.port)
+            val cachedHashId = address.hashIds.get(r.cacheName)
+            val hashId = computedHashIds(address.clusterAddress)
+            val newAddress =
+               // If distinct or not present, cached hash id needs updating
+               if (cachedHashId == None || cachedHashId.get != hashId) {
+                  if (!hashIdUpdateRequired) hashIdUpdateRequired = true
+                  val newHashIds = address.hashIds + (r.cacheName -> hashId)
+                  address.copy(hashIds = newHashIds)
+               } else {
+                  address
+               }
+            updateMembers += newAddress
+            buffer.writeInt(hashId) // Address' hash id
+         }
+         // At least a hash id had to be updated in the view. Take the view copy and distribute it around the cluster
+         if (hashIdUpdateRequired) {
+            val viewCopy = h.view.copy(members = updateMembers.toList)
+            topologyCache.replace("view", h.view, viewCopy)
+         }
+      } catch {
+         case u: UnsupportedOperationException => {
+            // Rehashing is ongoing, so mark as if topology not changed
+            // In next request, the client should still send the old view id
+            // which the server should spot and attempt again to get all hash ids
+            buffer.writeByte(0)
+         }
+      }
+
+   }
+
+   private def checkForRehashing(r: Response, h: HashDistAwareResponse): Map[Address, Int] = {
       // If we reached here, we know for sure that this is a cache configured with distribution
       val consistentHash = getCacheInstance(r.cacheName, cacheManager).getAdvancedCache.getDistributionManager.getConsistentHash
-      val updateMembers = new ListBuffer[TopologyAddress]
+      val hashIds = mutable.Map.empty[Address, Int]
       h.view.members.foreach{address =>
-         buffer.writeString(address.host)
-         buffer.writeUnsignedShort(address.port)
-         val cachedHashId = address.hashIds.get(r.cacheName)
          val hashId = consistentHash.getHashId(address.clusterAddress)
-         val newAddress =
-            // If distinct or not present, cached hash id needs updating
-            if (cachedHashId == None || cachedHashId.get != hashId) {
-               if (!hashIdUpdateRequired) hashIdUpdateRequired = true
-               val newHashIds = address.hashIds + (r.cacheName -> hashId)
-               address.copy(hashIds = newHashIds)
-            } else {
-               address
-            }
-         updateMembers += newAddress
-         buffer.writeInt(hashId) // Address' hash id
+         hashIds += (address.clusterAddress -> hashId)
       }
-      // At least a hash id had to be updated in the view. Take the view copy and distribute it around the cluster
-      if (hashIdUpdateRequired) {
-         val viewCopy = h.view.copy(members = updateMembers.toList)
-         topologyCache.replace("view", h.view, viewCopy)
-      }
+      // If we reached here, no unsupported exception was thrown,
+      // so no rehashing going on.
+      immutable.Map[Address, Int]() ++ hashIds
    }
 
 }
