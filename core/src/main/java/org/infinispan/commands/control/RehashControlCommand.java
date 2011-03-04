@@ -62,7 +62,9 @@ public class RehashControlCommand extends BaseRpcCommand {
       LEAVE_DRAIN_TX_PREPARES,
       JOIN_TX_LOG_REQ,
       JOIN_TX_FINAL_LOG_REQ,
-      JOIN_TX_LOG_CLOSE
+      JOIN_TX_LOG_CLOSE,
+
+      APPLY_STATE // receive a map of keys and add them to the data container
    }
 
    Type type;
@@ -157,6 +159,9 @@ public class RehashControlCommand extends BaseRpcCommand {
          case JOIN_TX_LOG_CLOSE:
             unlockAndCloseTxLog();
             return null;
+         case APPLY_STATE:
+            distributionManager.applyState(newCH, state, distributionManager.getTransactionLogger(), true);
+            return null;
       }
       throw new CacheException("Unknown rehash control command type " + type);
    }
@@ -183,10 +188,12 @@ public class RehashControlCommand extends BaseRpcCommand {
       Map<Object, InternalCacheValue> state = new HashMap<Object, InternalCacheValue>();
       for (InternalCacheEntry ice : dataContainer) {
          Object k = ice.getKey();
-         if (shouldTransferOwnershipToJoinNode(k)) {            
+         if (shouldTransferOwnershipToJoinNode(k)) {
              state.put(k, ice.toInternalCacheValue());
          }
       }
+
+       System.out.println("state provider: returning state of " + state.size() + " values");
 
       CacheStore cacheStore = distributionManager.getCacheStoreForRehashing();
       if (cacheStore != null) {
@@ -251,13 +258,22 @@ public class RehashControlCommand extends BaseRpcCommand {
    }
 
    final boolean shouldTransferOwnershipToJoinNode(Object k) {     
-      Address self = transport.getAddress();      
-      int numCopies = configuration.getNumOwners(); 
-      List<Address> oldOwnerList = oldCH.locate(k, numCopies);
-      if (!oldOwnerList.isEmpty() && self.equals(oldOwnerList.get(0))) {
-         List<Address> newOwnerList = newCH.locate(k, numCopies);
-         if (newOwnerList.contains(sender)) return true;
-      }
+      // Address self = transport.getAddress();
+      int numCopies = configuration.getNumOwners();
+
+      // List<Address> oldOwnerList = oldCH.locate(k, numCopies);
+       List<Address> newOwnerList = newCH.locate(k, numCopies);
+       if (newOwnerList.contains(sender)) return true;
+
+
+//      if (!oldOwnerList.isEmpty() && self.equals(oldOwnerList.get(0))) {
+//         List<Address> newOwnerList = newCH.locate(k, numCopies);
+//          System.out.println("newOwnerList: " + newOwnerList);
+//         if (newOwnerList.contains(sender)) return true;
+//      }
+
+
+
       return false;
    }
 

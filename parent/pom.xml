@@ -104,7 +104,7 @@
       <version.jclouds>1.0-beta-7</version.jclouds>
       <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
-      <version.jgroups>2.11.0.GA</version.jgroups>
+      <version.jgroups>2.12.0.CR5</version.jgroups>
       <version.json>20090211</version.json>
       <version.jstl>1.2</version.jstl>
       <version.jta>1.0.1.GA</version.jta>

@@ -118,7 +118,12 @@ public enum Flag {
    /**
     * If this flag is enabled, if a cache store is shared, then storage to the store is skipped.
     */
-   SKIP_SHARED_CACHE_STORE;
+   SKIP_SHARED_CACHE_STORE,
+
+   /**
+    * Used by the DistLockingInterceptor to commit the change no matter what (if the flag is set)
+    */
+   FORCE_COMMIT;
    
    /**
     * Creates a copy of a Flag Set removing instances of FAIL_SILENTLY.

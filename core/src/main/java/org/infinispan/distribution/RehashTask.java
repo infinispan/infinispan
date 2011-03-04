@@ -136,10 +136,12 @@ public abstract class RehashTask implements Callable<Void> {
       @Override
       public Void call() throws Exception {
          // This call will cause the sender to start logging transactions - BEFORE generating state.
+          System.out.println("-- fetching state from " + stateProvider);
          Map<Address, Response> resps = rpcManager.invokeRemotely(Collections.singleton(stateProvider), command, SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
          for (Response r : resps.values()) {
             if (r instanceof SuccessfulResponse) {
                Map<Object, InternalCacheValue> state = getStateFromResponse((SuccessfulResponse) r);
+                System.out.println(">> fetched state (" + state.size() + " values) from " + stateProvider);
                distributionManager.applyState(newConsistentHash, state, new RemoteTransactionLoggerImpl(cf, stateProvider, rpcManager), isForLeave());
             }
          }
