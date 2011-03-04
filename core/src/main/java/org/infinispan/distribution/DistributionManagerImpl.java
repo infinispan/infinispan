@@ -341,7 +341,6 @@ public class DistributionManagerImpl implements DistributionManager {
       for (int i = 0; i < retryCount; i++) {
          pendingApplications = applyStateMap(consistentHash, pendingApplications, true);
          if (pendingApplications.isEmpty()) break;
-         System.err.println("couldn't apply state the first time, retrying (#" + (i+1) + ")");
       }
       // one last go
       if (!pendingApplications.isEmpty()) applyStateMap(consistentHash, pendingApplications, false);
