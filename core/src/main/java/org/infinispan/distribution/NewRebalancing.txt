@@ -38,3 +38,12 @@ This roughly works as follows:
   (In this last case, there is no rebalancing as all the data has been lost !)
 - If N is the owner of K, it pushes K to all servers in S-new which are *not* in S-old.
 - If N is *not* in S-new, K is invalidated on N
+
+
+Implementation
+--------------
+- DistributionManagerImpl:
+  - On a view change, we submit a new RebalanceTask
+  - The RebalanceTask executes the logic above
+- State is pushed to store holders via the applyState() method in DistributionManagerImpl
+  - applyState() bypasses the check whether a key is local (the pusher already toook that decision)
