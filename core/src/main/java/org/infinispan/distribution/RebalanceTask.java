@@ -15,11 +15,9 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.Util;
-
 import java.util.*;
 import java.util.concurrent.Callable;
 
-import static org.infinispan.commands.control.RehashControlCommand.Type.APPLY_STATE;
 import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
 import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
 
@@ -95,7 +93,8 @@ public class RebalanceTask extends RehashTask {
                   if(trace)
                      log.trace("pushing %d keys to %s", state.size(), target);
 
-                  final RehashControlCommand cmd = cf.buildRehashControlCommand(APPLY_STATE, self, state, chOld, chNew, null);
+                  final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.APPLY_STATE, self,
+                        state, chOld, chNew, null);
                   statePullExecutor.submit(new Callable<Void>() {
                      public Void call() throws Exception {
                         rpcManager.invokeRemotely(Collections.singleton(target), cmd,
@@ -114,7 +113,7 @@ public class RebalanceTask extends RehashTask {
                distributionManager.getTransactionLogger().unblockNewTransactions();
             } else {
                if (trace) log.trace("Rehash not enabled, so not pushing state");
-            }                                 
+            }
          } finally {
             // wait for any enqueued remote commands to finish...
             distributionManager.setJoinComplete(true);

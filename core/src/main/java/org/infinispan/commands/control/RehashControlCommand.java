@@ -160,7 +160,6 @@ public class RehashControlCommand extends BaseRpcCommand {
    }
 
 
-
    public Type getType() {
       return type;
    }
