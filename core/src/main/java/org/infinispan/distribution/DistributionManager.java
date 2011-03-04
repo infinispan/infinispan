@@ -163,7 +163,8 @@ public interface DistributionManager {
     */
    void applyRemoteTxLog(List<WriteCommand> modifications);
 
-   void applyState(ConsistentHash newConsistentHash, Map<Object,InternalCacheValue> state, RemoteTransactionLogger transactionLogger, boolean forLeave);
+   void applyState(ConsistentHash newConsistentHash, Map<Object,InternalCacheValue> state,
+                   RemoteTransactionLogger transactionLogger, boolean forLeave, Address sender);
 
    void setRehashInProgress(boolean value);
 

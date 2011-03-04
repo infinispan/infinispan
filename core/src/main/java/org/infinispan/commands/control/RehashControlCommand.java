@@ -136,7 +136,7 @@ public class RehashControlCommand extends BaseRpcCommand {
          case APPLY_STATE:
             // todo: is this the correct transaction logger ?
             // todo: last argument forLeave is always set to true, is this correct ?
-            distributionManager.applyState(newCH, state, distributionManager.getTransactionLogger(), true);
+            distributionManager.applyState(newCH, state, distributionManager.getTransactionLogger(), true,sender);
             return null;
       }
       throw new CacheException("Unknown rehash control command type " + type);

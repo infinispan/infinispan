@@ -92,8 +92,8 @@ public class RebalanceTask extends RehashTask {
                for(Map.Entry<Address,Map<Object,InternalCacheValue>> entry: states.entrySet()) {
                   final Address target=entry.getKey();
                   Map<Object,InternalCacheValue> state = entry.getValue();
-
-                  System.out.println("==> pushing " + state.size() + " keys to " + target);
+                  if(trace)
+                     log.trace("pushing %d keys to %s", state.size(), target);
 
                   final RehashControlCommand cmd = cf.buildRehashControlCommand(APPLY_STATE, self, state, chOld, chNew, null);
                   statePullExecutor.submit(new Callable<Void>() {
@@ -105,8 +105,11 @@ public class RebalanceTask extends RehashTask {
                   });
                }
 
-               System.out.println("(removed " + removed + " keys)");
-               System.out.println("size of the data container is " + dataContainer.size() + "\n");
+               if(trace) {
+                  if(removed > 0)
+                     log.trace("removed %d keys", removed);
+                  log.trace("data container has now %d keys", dataContainer.size());
+               }
 
                distributionManager.getTransactionLogger().unblockNewTransactions();
             } else {
@@ -120,10 +123,10 @@ public class RebalanceTask extends RehashTask {
          }
 
       } catch (Exception e) {
-         log.error("Caught exception!", e);
+         log.error("failure in rebalancing", e);
          throw new CacheException("Unexpected exception", e);
       } finally {
-         log.info("%s completed join rehash in %s!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
+         log.info("%s completed rebalancing in %s", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
       }
    }
 
@@ -178,7 +181,7 @@ public class RebalanceTask extends RehashTask {
                   try {
                      value=cacheStore.load(key);
                   } catch (CacheLoaderException e) {
-                     log.warn("failed loading value for key=" + key + " from cache store");
+                     log.warn("failed loading value for key %s from cache store", key);
                   }
                }
                if(value != null)

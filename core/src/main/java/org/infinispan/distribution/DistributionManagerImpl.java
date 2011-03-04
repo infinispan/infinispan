@@ -149,7 +149,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Start(priority = 20)
    public void start() throws Exception {
-      if (trace) log.trace("Starting distribution manager on " + getMyAddress());
+      if (trace) log.trace("starting distribution manager on " + getMyAddress());
       listener = new ViewChangeListener();
       notifier.addListener(listener);
       GlobalConfiguration gc = configuration.getGlobalConfiguration();
@@ -288,7 +288,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public void setConsistentHash(ConsistentHash consistentHash) {
-      if (trace) log.trace("Installing new consistent hash %s", consistentHash);
+      if (trace) log.trace("installing new consistent hash %s", consistentHash);
       this.consistentHash = consistentHash;
    }
 
@@ -325,10 +325,10 @@ public class DistributionManagerImpl implements DistributionManager {
             } catch (Exception ee) {
                if (withRetry) {
                   if (trace)
-                     log.trace("Problem %s encountered when applying state for key %s. Adding entry to retry queue.", ee.getMessage(), e.getKey());
+                     log.trace("problem %s encountered when applying state for key %s. Adding entry to retry queue.", ee.getMessage(), e.getKey());
                   retry.put(e.getKey(), e.getValue());
                } else {
-                  log.warn("Problem %s encountered when applying state for key %s!", ee.getMessage(), e.getKey());
+                  log.warn("problem %s encountered when applying state for key %s!", ee.getMessage(), e.getKey());
                }
             }
          }
@@ -337,26 +337,22 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    // todo: forLeave is always set to true in RehashControlCommand, check if this is correct
-   public void applyState(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state, RemoteTransactionLogger tlog, boolean forLeave) {
-      if (trace) log.trace("Applying %d keys", state.size());
-
-      System.out.println("\n<== received " + state.size() + " keys, consistent hash=" + consistentHash);
-
+   public void applyState(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state,
+                          RemoteTransactionLogger tlog, boolean forLeave, Address sender) {
+      if (trace) log.trace("received %d keys from %s", state.size(), sender);
       int retryCount = 3; // in case we have issues applying state.
       Map<Object, InternalCacheValue> pendingApplications = state;
       for (int i = 0; i < retryCount; i++) {
          pendingApplications = applyStateMap(consistentHash, pendingApplications, true);
          if (pendingApplications.isEmpty()) break;
-         System.err.println("couldn't apply state the first time, retrying (#" + (i+1) + ")");
       }
       // one last go
       if (!pendingApplications.isEmpty()) applyStateMap(consistentHash, pendingApplications, false);
 
       if (!forLeave) drainLocalTransactionLog(tlog);
 
-      System.out.println("** size of the data container is now " + dataContainer.size() + ", pending: " + pendingApplications.size() + " keys");
-
-      if (trace) log.trace("%s has completed applying state", self);
+      if(trace)
+         log.trace("data container has now %d keys", dataContainer.size());
    }
 
    public void setRehashInProgress(boolean value) {
@@ -369,9 +365,7 @@ public class DistributionManagerImpl implements DistributionManager {
       @Merged @ViewChanged
       public void handleViewChange(ViewChangedEvent e) {
          if(trace)
-            log.trace("view: type=" + e.getType() + ", existing members: " + e.getOldMembers() + ", new members: " + e.getNewMembers());
-         System.out.println("\n** view: type=" + e.getType() + ", old: " + e.getOldMembers() + ", new: " + e.getNewMembers());
-
+            log.trace("view: type=" + e.getType() + ", members: " + e.getNewMembers() + ". Starting the RebalanceTask");
          RebalanceTask rebalanceTask = new RebalanceTask(rpcManager, cf, configuration, dataContainer,
                                                          DistributionManagerImpl.this, inboundInvocationHandler);
          joinFuture = rehashExecutor.submit(rebalanceTask);
@@ -418,7 +412,7 @@ public class DistributionManagerImpl implements DistributionManager {
       List<WriteCommand> c;
       while (tlog.shouldDrainWithoutLock()) {
          c = tlog.drain();
-         if (trace) log.trace("Draining %s entries from transaction log", c.size());
+         if (trace) log.trace("draining %s entries from transaction log", c.size());
          applyRemoteTxLog(c);
       }
 
@@ -426,11 +420,11 @@ public class DistributionManagerImpl implements DistributionManager {
       try {
          this.enteredFinalJoinPhase = true;
          c = tlog.drainAndLock(null);
-         if (trace) log.trace("Locked and draining %s entries from transaction log", c.size());
+         if (trace) log.trace("locked and draining %s entries from transaction log", c.size());
          applyRemoteTxLog(c);
 
          Collection<PrepareCommand> pendingPrepares = tlog.getPendingPrepares();
-         if (trace) log.trace("Applying %s pending prepares", pendingPrepares.size());
+         if (trace) log.trace("applying %s pending prepares", pendingPrepares.size());
          for (PrepareCommand pc : pendingPrepares) {
             // this is a remotely originating call.
             cf.initializeReplicableCommand(pc, true);
@@ -451,7 +445,7 @@ public class DistributionManagerImpl implements DistributionManager {
          rpcManager.getTransport().getDistributedSync().acquireProcessingLock(true, 100, TimeUnit.DAYS);
          return true;
       } catch (TimeoutException e) {
-         log.info("Couldn't acquire shared lock");
+         log.info("couldn't acquire shared lock");
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
       }
@@ -460,7 +454,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
    public List<Address> getAffectedNodes(Set<Object> affectedKeys) {
       if (affectedKeys == null || affectedKeys.isEmpty()) {
-         if (log.isTraceEnabled()) log.trace("Affected keys are empty");
+         if (log.isTraceEnabled()) log.trace("affected keys are empty");
          return Collections.emptyList();
       }
 
@@ -478,7 +472,7 @@ public class DistributionManagerImpl implements DistributionManager {
             ctx.setFlags(SKIP_REMOTE_LOOKUP, CACHE_MODE_LOCAL, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING);
             interceptorChain.invoke(ctx, cmd);
          } catch (Exception e) {
-            log.warn("Caught exception replaying %s", e, cmd);
+            log.warn("caught exception replaying %s", e, cmd);
          }
       }
 
