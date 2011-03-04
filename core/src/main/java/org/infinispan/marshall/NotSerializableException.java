@@ -38,6 +38,10 @@ public class NotSerializableException extends CacheException {
       super(message, cause);
    }
 
+   public NotSerializableException(String message) {
+      super(message);
+   }
+
    @Override
    public void setStackTrace(StackTraceElement[] stackTrace) {
       // nothing

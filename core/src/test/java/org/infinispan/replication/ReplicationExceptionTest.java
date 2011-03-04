@@ -34,12 +34,22 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,true);
       configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
       configuration.setLockAcquisitionTimeout(5000);
+      createClusteredCaches(2, "syncReplCache", configuration);
 
-      createClusteredCaches(2, "replicatinExceptionTest", configuration);
+      Configuration replAsync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
+      defineConfigurationOnAllManagers("asyncReplCache", replAsync);
+
+      Configuration replQueue = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
+      replQueue.setUseReplQueue(true);
+      defineConfigurationOnAllManagers("replQueueCache", replQueue);
+
+      Configuration asyncMarshall = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
+      asyncMarshall.setUseAsyncMarshalling(true);
+      defineConfigurationOnAllManagers("asyncMarshallCache", asyncMarshall);
    }
 
    private TransactionManager beginTransaction() throws SystemException, NotSupportedException {
-      AdvancedCache cache1 = cache(0, "replicatinExceptionTest").getAdvancedCache();
+      AdvancedCache cache1 = cache(0, "syncReplCache").getAdvancedCache();
 
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
       mgr.begin();
@@ -47,16 +57,32 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
    }
 
    public void testNonSerializableRepl() throws Exception {
-      AdvancedCache cache1 = cache(0, "replicatinExceptionTest").getAdvancedCache();
-      AdvancedCache cache2 = cache(1, "replicatinExceptionTest").getAdvancedCache();
+      doNonSerializableReplTest("syncReplCache");
+   }
+
+   public void testNonSerializableAsyncRepl() throws Exception {
+      doNonSerializableReplTest("asyncReplCache");
+   }
+
+   public void testNonSerializableReplQueue() throws Exception {
+      doNonSerializableReplTest("replQueueCache");
+   }
+
+   public void testNonSerializableAsyncMarshalling() throws Exception {
+      doNonSerializableReplTest("asyncMarshallCache");
+   }
+
+   private void doNonSerializableReplTest(String cacheName) {
+      AdvancedCache cache1 = cache(0, cacheName).getAdvancedCache();
+      AdvancedCache cache2 = cache(1, cacheName).getAdvancedCache();
       try {
          cache1.put("test", new ContainerData());
-
          // We should not come here.
          assertNotNull("NonSerializableData should not be null on cache2", cache2.get("test"));
       } catch (RuntimeException runtime) {
          Throwable t = runtime.getCause();
-         if (t instanceof NotSerializableException
+         if (runtime instanceof NotSerializableException
+                  || t instanceof NotSerializableException
                   || t.getCause() instanceof NotSerializableException) {
             System.out.println("received NotSerializableException - as expected");
          } else {
@@ -66,8 +92,8 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
    }
 
    public void testNonSerializableReplWithTx() throws Exception {
-      AdvancedCache cache1 = cache(0, "replicatinExceptionTest").getAdvancedCache();
-      AdvancedCache cache2 = cache(1, "replicatinExceptionTest").getAdvancedCache();
+      AdvancedCache cache1 = cache(0, "syncReplCache").getAdvancedCache();
+      AdvancedCache cache2 = cache(1, "syncReplCache").getAdvancedCache();
       TransactionManager tm;
 
       try {
@@ -87,8 +113,8 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
 
    @Test(groups = "functional", expectedExceptions = { TimeoutException.class })
    public void testSyncReplTimeout() {
-      AdvancedCache cache1 = cache(0, "replicatinExceptionTest").getAdvancedCache();
-      AdvancedCache cache2 = cache(1, "replicatinExceptionTest").getAdvancedCache();
+      AdvancedCache cache1 = cache(0, "syncReplCache").getAdvancedCache();
+      AdvancedCache cache2 = cache(1, "syncReplCache").getAdvancedCache();
       cache2.addInterceptor(new CommandInterceptor() {
          @Override
          protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd)
@@ -108,8 +134,8 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
 
    @Test(groups = "functional", expectedExceptions = { TimeoutException.class })
    public void testLockAcquisitionTimeout() throws Exception {
-      AdvancedCache cache1 = cache(0, "replicatinExceptionTest").getAdvancedCache();
-      AdvancedCache cache2 = cache(1, "replicatinExceptionTest").getAdvancedCache();
+      AdvancedCache cache1 = cache(0, "syncReplCache").getAdvancedCache();
+      AdvancedCache cache2 = cache(1, "syncReplCache").getAdvancedCache();
       cache2.getConfiguration().setLockAcquisitionTimeout(1);
       TestingUtil.blockUntilViewsReceived(10000, cache1, cache2);
 
@@ -125,7 +151,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       int i;
    }
 
-   static class ContainerData implements Serializable {
+   public static class ContainerData implements Serializable {
       int i;
       NonSerializabeData non_serializable_data;
       private static final long serialVersionUID = -8322197791060897247L;

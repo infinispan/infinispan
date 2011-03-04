@@ -4,6 +4,7 @@ import org.infinispan.CacheException;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.marshall.AbstractMarshaller;
+import org.infinispan.util.ConcurrentWeakKeyHashMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.ContextClassResolver;
@@ -24,6 +25,8 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * A marshaller that makes use of <a href="http://www.jboss.org/jbossmarshalling">JBoss Marshalling</a> to serialize
@@ -40,6 +43,13 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
    protected ClassLoader defaultCl = this.getClass().getClassLoader();
    protected MarshallingConfiguration configuration;
    protected MarshallerFactory factory;
+   /**
+    * Cache of classes that are considered to be marshallable. Since checking
+    * whether a type is marshallable requires attempting to marshalling them,
+    * a cache for the types that are known to be marshallable or not is
+    * advantageous.
+    */
+   private final ConcurrentMap<Class, Boolean> isMarshallableMap = new ConcurrentWeakKeyHashMap<Class, Boolean>();
 
    public GenericJBossMarshaller() {
       factory = Marshalling.getMarshallerFactory("river");
@@ -184,7 +194,33 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
 
    @Override
    public boolean isMarshallable(Object o) {
-      return (o instanceof Serializable);
+      Class clazz = o.getClass();
+      Object isClassMarshallable = isMarshallableMap.get(clazz);
+      if (isClassMarshallable != null) {
+         return (Boolean) isClassMarshallable;
+      } else {
+         if (isMarshallableCandidate(o)) {
+            boolean isMarshallable = true;
+            try {
+               objectToBuffer(o);
+            } catch (Exception e) {
+               isMarshallable = false;
+            } finally {
+               isMarshallableMap.putIfAbsent(clazz, isMarshallable);
+               return isMarshallable;
+            }
+         }
+         return false;
+      }
+   }
+
+   public void stop() {
+       // Clear class cache
+      isMarshallableMap.clear();
+   }
+
+   protected boolean isMarshallableCandidate(Object o) {
+      return o instanceof Serializable;
    }
 
    protected static class DebuggingExceptionListener implements ExceptionListener {
