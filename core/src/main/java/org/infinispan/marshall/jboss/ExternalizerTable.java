@@ -19,6 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
@@ -234,7 +235,7 @@ class ExternalizerTable implements ObjectTable {
       return adapter.readObject(input);
    }
 
-   boolean isMarshallable(Object o) {
+   boolean isMarshallableCandidate(Object o) {
       return writers.containsKey(o.getClass());
    }
 

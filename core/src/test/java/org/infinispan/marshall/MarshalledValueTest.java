@@ -449,7 +449,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
          Pojo pojo = new Pojo();
          cache1.put("key", pojo);
          assert l.newValue instanceof Pojo : "recieved " + l.newValue.getClass().getName();
-         assertSerializationCounts(1, 0);
+         // +1 due to new marshallable checks
+         assertSerializationCounts(2, 0);
       } finally {
          cache1.removeListener(l);
       }
@@ -491,7 +492,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       cache2.put(key, "2");
 
       // Deserialization only occurs when the cache2.put occurs, not during transport thread execution.
-      assertSerializationCounts(3, 1);
+      assertSerializationCounts(4, 1);
    }
 
    public void testReturnValueDeserialization() { 
@@ -530,7 +531,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
    }
 
-   public static class Pojo implements Externalizable {
+   static class Pojo implements Externalizable {
       public int i;
       boolean b = true;
       static int serializationCount, deserializationCount;

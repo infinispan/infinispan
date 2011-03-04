@@ -51,14 +51,15 @@ public class JBossMarshaller extends GenericJBossMarshaller implements Streaming
    }
 
    public void stop() {
+      super.stop();
       // Do not leak classloader when cache is stopped.
       defaultCl = null;
       if (externalizerTable != null) externalizerTable.stop();
    }
 
    @Override
-   public boolean isMarshallable(Object o) {
-      return super.isMarshallable(o) || externalizerTable.isMarshallable(o);
+   public boolean isMarshallableCandidate(Object o) {
+      return super.isMarshallableCandidate(o) || externalizerTable.isMarshallableCandidate(o);
    }
 
    protected ExternalizerTable createExternalizerTable(RemoteCommandsFactory f, StreamingMarshaller m, GlobalConfiguration g) {

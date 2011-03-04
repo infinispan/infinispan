@@ -29,6 +29,8 @@ import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.*;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.util.Util;
 
 import java.util.List;
@@ -70,6 +72,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       // add the interceptor chain to the registry first, since some interceptors may ask for it.
       componentRegistry.registerComponent(interceptorChain, InterceptorChain.class);
+
+      // add marshallable check interceptor for situations where we want to figure out before marshalling
+      if (configuration.isUseLazyDeserialization() || configuration.isUseAsyncMarshalling()
+            || configuration.isUseReplQueue() || hasAsyncStore())
+         interceptorChain.appendIntereceptor(createInterceptor(IsMarshallableInterceptor.class));
 
       // NOW add the ICI if we are using batching!
       if (invocationBatching)
@@ -157,7 +164,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    }
 
    private void buildCustomInterceptors(InterceptorChain interceptorChain, List<CustomInterceptorConfig> customInterceptors) {
-
       for (CustomInterceptorConfig config : customInterceptors) {
          if (interceptorChain.containsInterceptorType(getCustomInterceptorType(config))) continue;
          if (config.isFirst())
@@ -184,6 +190,18 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          }
       }
       
+   }
+
+   private boolean hasAsyncStore() {
+      List<CacheLoaderConfig> loaderConfigs = configuration.getCacheLoaderManagerConfig().getCacheLoaderConfigs();
+      for (CacheLoaderConfig loaderConfig : loaderConfigs) {
+         if (loaderConfig instanceof CacheStoreConfig) {
+            CacheStoreConfig storeConfig = (CacheStoreConfig) loaderConfig;
+            if (storeConfig.getAsyncStoreConfig().isEnabled())
+               return true;
+         }
+      }
+      return false;
    }
 
    @Override
