@@ -159,7 +159,6 @@ public class RehashControlCommand extends BaseRpcCommand {
       tl.unlockAndDisable(sender);
    }
 
-
    public Type getType() {
       return type;
    }

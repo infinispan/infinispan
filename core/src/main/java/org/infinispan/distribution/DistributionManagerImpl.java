@@ -29,6 +29,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
+import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
@@ -302,7 +303,6 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
 
-
    private Map<Object, InternalCacheValue> applyStateMap(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state, boolean withRetry) {
       Map<Object, InternalCacheValue> retry = withRetry ? new HashMap<Object, InternalCacheValue>() : null;
       Address myself=self;
@@ -316,10 +316,10 @@ public class DistributionManagerImpl implements DistributionManager {
             InternalCacheValue v = e.getValue();
             InvocationContext ctx = icc.createInvocationContext();
             ctx.setFlags(CACHE_MODE_LOCAL, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING, SKIP_OWNERSHIP_CHECK); // locking not necessary in the case of a join since the node isn't doing anything else.
-
             try {
                PutKeyValueCommand put = cf.buildPutKeyValueCommand(e.getKey(), v.getValue(), v.getLifespan(), v.getMaxIdle(), ctx.getFlags());
                interceptorChain.invoke(ctx, put);
+               // System.out.println("$put(" + e.getKey() + ", " + e.getValue() + ", container size=" + dataContainer.size());
             } catch (Exception ee) {
                if (withRetry) {
                   if (trace)
@@ -329,6 +329,10 @@ public class DistributionManagerImpl implements DistributionManager {
                   log.warn("problem %s encountered when applying state for key %s!", ee.getMessage(), e.getKey());
                }
             }
+         }
+         else {
+            List<Address> mbrs = consistentHash.locate(e.getKey(), configuration.getNumOwners());
+            System.err.println(myself + " is not member of " + mbrs + "; cannot apply key " + e.getKey());
          }
       }
       return retry;
@@ -343,6 +347,7 @@ public class DistributionManagerImpl implements DistributionManager {
       for (int i = 0; i < retryCount; i++) {
          pendingApplications = applyStateMap(consistentHash, pendingApplications, true);
          if (pendingApplications.isEmpty()) break;
+         System.err.println("couldn't apply state the first time, retrying (#" + (i+1) + ")");
       }
       // one last go
       if (!pendingApplications.isEmpty()) applyStateMap(consistentHash, pendingApplications, false);

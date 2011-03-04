@@ -95,6 +95,7 @@ public class RebalanceTask extends RehashTask {
 
                   final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.APPLY_STATE, self,
                         state, chOld, chNew, null);
+
                   statePullExecutor.submit(new Callable<Void>() {
                      public Void call() throws Exception {
                         rpcManager.invokeRemotely(Collections.singleton(target), cmd,
