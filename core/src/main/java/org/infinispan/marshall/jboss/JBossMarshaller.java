@@ -56,6 +56,7 @@ public class JBossMarshaller extends GenericJBossMarshaller implements Streaming
    }
 
    public void stop() {
+      super.stop();
       // Do not leak classloader when cache is stopped.
       defaultCl = null;
       if (objectTable != null) objectTable.stop();
@@ -73,8 +74,8 @@ public class JBossMarshaller extends GenericJBossMarshaller implements Streaming
    }
 
    @Override
-   public boolean isMarshallable(Object o) {
-      return super.isMarshallable(o) || ReflectionUtil.isAnnotationPresent(o.getClass(), Marshallable.class);
+   public boolean isMarshallableCandidate(Object o) {
+      return super.isMarshallableCandidate(o) || objectTable.isMarshallableCandidate(o);
    }
 
    private ConstantObjectTable createCustomObjectTable(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller) {

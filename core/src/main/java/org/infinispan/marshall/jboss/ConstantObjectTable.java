@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -250,6 +250,10 @@ public class ConstantObjectTable implements ObjectTable {
 
       if (log.isTraceEnabled())
          log.trace("Constant object table was started and contains these externalizer readers: %s", readers);
+   }
+
+   boolean isMarshallableCandidate(Object o) {
+      return ReflectionUtil.isAnnotationPresent(o.getClass(), Marshallable.class);
    }
 
    public void stop() {

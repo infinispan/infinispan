@@ -22,7 +22,11 @@
  */
 package org.infinispan.eviction;
 
+import java.io.Externalizable;
+import java.io.IOException;
 import java.io.NotSerializableException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.config.Configuration;
@@ -30,7 +34,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.marshall.MarshalledValueTest;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -62,9 +65,9 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
    
    public void testEvictCustomKeyValue() {
       for (int i = 0; i<CACHE_SIZE*2;i++) {
-         MarshalledValueTest.Pojo p1 = new MarshalledValueTest.Pojo();
+         EvictionPojo p1 = new EvictionPojo();
          p1.i = (int)Util.random(2000);
-         MarshalledValueTest.Pojo p2 = new MarshalledValueTest.Pojo();
+         EvictionPojo p2 = new EvictionPojo();
          p2.i = 24;
          cache.put(p1, p2);         
       }   
@@ -85,9 +88,9 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
 
    public void testEvictPrimitiveKeyCustomValue() {
       for (int i = 0; i<CACHE_SIZE*2;i++) {
-         MarshalledValueTest.Pojo p1 = new MarshalledValueTest.Pojo();
+         EvictionPojo p1 = new EvictionPojo();
          p1.i = (int)Util.random(2000);
-         MarshalledValueTest.Pojo p2 = new MarshalledValueTest.Pojo();
+         EvictionPojo p2 = new EvictionPojo();
          p2.i = 24;
          cache.put(p1, p2);         
       }
@@ -127,4 +130,32 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       }
    }
 
+   class EvictionPojo implements Externalizable {
+      int i;
+
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         EvictionPojo pojo = (EvictionPojo) o;
+         if (i != pojo.i) return false;
+         return true;
+      }
+
+      public int hashCode() {
+         int result;
+         result = i;
+         return result;
+      }
+
+      @Override
+      public void writeExternal(ObjectOutput out) throws IOException {
+         out.writeInt(i);
+      }
+
+      @Override
+      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+         i = in.readInt();
+      }
+
+   }
 }

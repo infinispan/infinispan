@@ -6,15 +6,20 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
-import static org.infinispan.marshall.MarshalledValueTest.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
- * // TODO: Document this
+ * Tests that invalidation and lazy deserialization works as expected.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 4.2
  */
 @Test(groups = "functional", testName = "marshall.InvalidatedMarshalledValueTest")
 public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
@@ -45,28 +50,44 @@ public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
       InvalidatedPojo key = new InvalidatedPojo();
       cache2.put(key, "1");
       cache1.put(key, "2");
-      assertSerializationCounts(3, 0);
+      // Each cache manager attempts to serialize the pojo once to check is
+      // marshallable, so add a couple of more times on previous 3. Note that
+      // this is only done once for the type.
+      assertSerializationCounts(5, 0);
       cache1.put(key, "3");
-      assertSerializationCounts(4, 0);
+      // +2 carried on here.
+      assertSerializationCounts(6, 0);
    }
 
-   public static class InvalidatedPojo extends Pojo {
-      static int serializationCount, deserializationCount;
+   public static class InvalidatedPojo implements Externalizable {
+      final Log log = LogFactory.getLog(InvalidatedPojo.class);
 
-      @Override
+      static int invalidSerializationCount, invalidDeserializationCount;
+
       public int updateSerializationCount() {
-         return ++serializationCount;
+         return ++invalidSerializationCount;
+      }
+
+      public int updateDeserializationCount() {
+         return ++invalidDeserializationCount;
       }
 
       @Override
-      public int updateDeserializationCount() {
-         return ++deserializationCount;
+      public void writeExternal(ObjectOutput out) throws IOException {
+         int serCount = updateSerializationCount();
+         log.trace("invalidSerializationCount=" + serCount);
+      }
+
+      @Override
+      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+         int deserCount = updateDeserializationCount();
+         log.trace("invalidDeserializationCount=" + deserCount);
       }
    }
 
    private void assertSerializationCounts(int serializationCount, int deserializationCount) {
-      assert InvalidatedPojo.serializationCount == serializationCount : "Serialization count: expected " + serializationCount + " but was " + InvalidatedPojo.serializationCount;
-      assert InvalidatedPojo.deserializationCount == deserializationCount : "Deserialization count: expected " + deserializationCount + " but was " + InvalidatedPojo.deserializationCount;
+      assert InvalidatedPojo.invalidSerializationCount == serializationCount : "Serialization count: expected " + serializationCount + " but was " + InvalidatedPojo.invalidSerializationCount;
+      assert InvalidatedPojo.invalidDeserializationCount == deserializationCount : "Deserialization count: expected " + deserializationCount + " but was " + InvalidatedPojo.invalidDeserializationCount;
    }
 
 }
