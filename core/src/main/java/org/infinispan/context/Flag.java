@@ -121,7 +121,8 @@ public enum Flag {
    SKIP_SHARED_CACHE_STORE,
 
    /**
-    * Used by the DistLockingInterceptor to commit the change no matter what (if the flag is set)
+    * Used by the DistLockingInterceptor to commit the change no matter what (if the flag is set). This is used when
+    * a node A pushes state to another node B and A doesn't want B to check if the state really belongs to it
     */
    FORCE_COMMIT;
    

@@ -52,29 +52,10 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(configuration, true);
    }
 
-   private void injectListeningHandler(CacheContainer ecm, ListeningHandler lh) {
-      replaceComponent(ecm, InboundInvocationHandler.class, lh, true);
-      JGroupsTransport t = (JGroupsTransport) extractComponent(cache(0), Transport.class);
-      CommandAwareRpcDispatcher card = t.getCommandAwareRpcDispatcher();
-      Field f = null;
-      try {
-         f = card.getClass().getDeclaredField("inboundInvocationHandler");
-         f.setAccessible(true);
-         f.set(card, lh);
-      } catch (NoSuchFieldException e) {
-         e.printStackTrace();
-      } catch (IllegalAccessException e) {
-         e.printStackTrace();
-      }
-   }
 
    public void testRehashOnJoin() throws InterruptedException {
       Cache<Object, Object> firstNode = cache(0);
       final CountDownLatch txsStarted = new CountDownLatch(3), txsReady = new CountDownLatch(3), joinEnded = new CountDownLatch(1), rehashStarted = new CountDownLatch(1);
-      ListeningHandler listeningHandler = new ListeningHandler(extractComponent(firstNode, InboundInvocationHandler.class), txsReady, joinEnded, rehashStarted);
-      injectListeningHandler(firstNode.getCacheManager(), listeningHandler);
-
-      assert firstNode.getAdvancedCache().getComponentRegistry().getComponent(InboundInvocationHandler.class) instanceof ListeningHandler;
 
       for (int i = 0; i < 10; i++) firstNode.put("OLD" + i, "value");
 
@@ -254,38 +235,5 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       }
    }
 
-   class ListeningHandler extends InboundInvocationHandlerImpl {
-      final InboundInvocationHandler delegate;
-      final CountDownLatch txsReady, joinEnded, rehashStarted;
 
-      public ListeningHandler(InboundInvocationHandler delegate, CountDownLatch txsReady, CountDownLatch joinEnded, CountDownLatch rehashStarted) {
-         this.delegate = delegate;
-         this.txsReady = txsReady;
-         this.joinEnded = joinEnded;
-         this.rehashStarted = rehashStarted;
-      }
-
-      @Override
-      public Response handle(CacheRpcCommand cmd) throws Throwable {
-         boolean notifyRehashStarted = false;
-         if (cmd instanceof RehashControlCommand) {
-            RehashControlCommand rcc = (RehashControlCommand) cmd;
-            switch (rcc.getType()) {
-               case JOIN_REQ:
-                  txsReady.await();
-                  break;
-               case PULL_STATE_JOIN:
-                  notifyRehashStarted = true;
-                  break;
-               case JOIN_REHASH_END:
-                  joinEnded.countDown();
-                  break;
-            }
-         }
-
-         Response r = delegate.handle(cmd);
-         if (notifyRehashStarted) rehashStarted.countDown();
-         return r;
-      }
-   }
 }

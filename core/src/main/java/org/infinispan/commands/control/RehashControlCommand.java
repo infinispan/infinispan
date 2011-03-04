@@ -8,7 +8,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
@@ -16,19 +15,15 @@ import org.infinispan.distribution.RemoteTransactionLogDetails;
 import org.infinispan.distribution.TransactionLogger;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.NodeTopologyInfo;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -52,18 +47,11 @@ public class RehashControlCommand extends BaseRpcCommand {
 
    /* For a detailed description of the interactions involved here, please visit http://community.jboss.org/wiki/DesignOfDynamicRehashing */
    public enum Type {
-      JOIN_REQ,
-      JOIN_REHASH_START,
-      JOIN_REHASH_END,
-      PULL_STATE_JOIN,
-      PULL_STATE_LEAVE,
-      LEAVE_REHASH_END,
       LEAVE_DRAIN_TX,
       LEAVE_DRAIN_TX_PREPARES,
       JOIN_TX_LOG_REQ,
       JOIN_TX_FINAL_LOG_REQ,
       JOIN_TX_LOG_CLOSE,
-
       APPLY_STATE // receive a map of keys and add them to the data container
    }
 
@@ -132,20 +120,6 @@ public class RehashControlCommand extends BaseRpcCommand {
 
    public Object perform(InvocationContext ctx) throws Throwable {
       switch (type) {
-         case JOIN_REQ:
-            return distributionManager.requestPermissionToJoin(sender);
-         case JOIN_REHASH_START:
-            return distributionManager.informRehashOnJoin(sender, true, nodeTopologyInfo);
-         case JOIN_REHASH_END:
-            distributionManager.informRehashOnJoin(sender, false, nodeTopologyInfo);
-            return null;
-         case LEAVE_REHASH_END: // Signalled when a node 'applies' changes it has requested.
-            distributionManager.informRehashOnLeave(sender);   
-            return null;
-         case PULL_STATE_JOIN:
-            return pullStateForJoin();             
-         case PULL_STATE_LEAVE:
-             return pullStateForLeave();          
          case LEAVE_DRAIN_TX: // used for a LEAVE ONLY!!
             distributionManager.applyRemoteTxLog(txLogCommands);
             return null;
@@ -160,6 +134,8 @@ public class RehashControlCommand extends BaseRpcCommand {
             unlockAndCloseTxLog();
             return null;
          case APPLY_STATE:
+            // todo: is this the correct transaction logger ?
+            // todo: last argument forLeave is always set to true, is this correct ?
             distributionManager.applyState(newCH, state, distributionManager.getTransactionLogger(), true);
             return null;
       }
@@ -183,99 +159,7 @@ public class RehashControlCommand extends BaseRpcCommand {
       tl.unlockAndDisable(sender);
    }
 
-   public Map<Object, InternalCacheValue> pullStateForJoin() throws CacheLoaderException {           
-      distributionManager.getTransactionLogger().enable();
-      Map<Object, InternalCacheValue> state = new HashMap<Object, InternalCacheValue>();
-      for (InternalCacheEntry ice : dataContainer) {
-         Object k = ice.getKey();
-         if (shouldTransferOwnershipToJoinNode(k)) {
-             state.put(k, ice.toInternalCacheValue());
-         }
-      }
 
-       System.out.println("state provider: returning state of " + state.size() + " values");
-
-      CacheStore cacheStore = distributionManager.getCacheStoreForRehashing();
-      if (cacheStore != null) {
-         for (Object k: cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
-            if (!state.containsKey(k) && shouldTransferOwnershipToJoinNode(k)) {                
-               InternalCacheValue v = loadValue(cacheStore, k);               
-               if (v != null) state.put(k, v);
-            }
-         }
-      }
-      return state;
-   }
-   
-   public Map<Object, InternalCacheValue> pullStateForLeave() throws CacheLoaderException {
-     
-      Map<Object, InternalCacheValue> state = new HashMap<Object, InternalCacheValue>();
-      for (InternalCacheEntry ice : dataContainer) {
-         Object k = ice.getKey();
-         if (shouldTransferOwnershipFromLeftNodes(k)) {
-            state.put(k, ice.toInternalCacheValue());
-         }
-      }
-
-      CacheStore cacheStore = distributionManager.getCacheStoreForRehashing();
-      if (cacheStore != null) {
-         for (Object k : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
-            if (!state.containsKey(k) && shouldTransferOwnershipFromLeftNodes(k)) {
-               InternalCacheValue v = loadValue(cacheStore, k);               
-               if (v != null)
-                  state.put(k, v);
-            }
-         }
-      }
-      return state;
-   }
-   
-   private boolean shouldTransferOwnershipFromLeftNodes(Object k) {      
-      Address self = transport.getAddress();      
-      int numCopies = configuration.getNumOwners();
-      
-      List<Address> oldList = oldCH.locate(k, numCopies);
-      boolean localToThisNode = oldList.indexOf(self) >= 0;
-      boolean senderIsNewOwner = newCH.isKeyLocalToAddress(sender, k, numCopies);
-      for (Address leftNodeAddress : nodesLeft) {
-         boolean localToLeftNode = oldList.indexOf(leftNodeAddress) >= 0;
-         if (localToLeftNode && senderIsNewOwner && localToThisNode) {
-            return true;
-         }
-      }
-      return false;
-   }
-      
-
-   private InternalCacheValue loadValue(CacheStore cs, Object k) {
-      try {
-         InternalCacheEntry ice = cs.load(k);
-         return ice == null ? null : ice.toInternalCacheValue();
-      } catch (CacheLoaderException cle) {
-         log.warn("Unable to load " + k + " from cache loader", cle);
-      }
-      return null;
-   }
-
-   final boolean shouldTransferOwnershipToJoinNode(Object k) {     
-      // Address self = transport.getAddress();
-      int numCopies = configuration.getNumOwners();
-
-      // List<Address> oldOwnerList = oldCH.locate(k, numCopies);
-       List<Address> newOwnerList = newCH.locate(k, numCopies);
-       if (newOwnerList.contains(sender)) return true;
-
-
-//      if (!oldOwnerList.isEmpty() && self.equals(oldOwnerList.get(0))) {
-//         List<Address> newOwnerList = newCH.locate(k, numCopies);
-//          System.out.println("newOwnerList: " + newOwnerList);
-//         if (newOwnerList.contains(sender)) return true;
-//      }
-
-
-
-      return false;
-   }
 
    public Type getType() {
       return type;

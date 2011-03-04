@@ -8,25 +8,24 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.NodeTopologyInfo;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.InboundInvocationHandler;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.NotifyingFutureImpl;
 
 import java.util.*;
 import java.util.concurrent.Callable;
 
-import static org.infinispan.commands.control.RehashControlCommand.Type.*;
+import static org.infinispan.commands.control.RehashControlCommand.Type.APPLY_STATE;
 import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
 import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
 
 /**
  * Task which handles view changes (joins, merges or leaves) and rebalances keys using a push based approach. Essentially,
- * every member gets the old and new consistent hash (CH) on a view changes. Then for each key K, it gets the target
+ * every member gets the old and new consistent hash (CH) on a view change. Then for each key K, it gets the target
  * servers S-old for the old CH and S-new for the new CH. If S-old == S-new, it does nothing. If there is a change, it
  * either pushes K to the new location (if it is the owner), or invalidates K (if we're not the owner any longer).<p/>
  * Example:<p/>
@@ -36,9 +35,8 @@ import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
  * - For K, the old CH is A,B and the new CH is A,C
  * - A (since it is K's owner) now pushes K to C
  * - B invalidates K
- * - For K2, the old CH is A,B and the new CH is E,F
- * - A (since it is the owner) pushes K2 to E and F
- * - B invalidates K2
+ * - For K2, the old CH is A,B and the new CH is B,C
+ * - B (since it is the backup owner and A left) pushes K2 to C
  * </pre>
  * @author Bela Ban
  * @since 4.2
@@ -57,8 +55,6 @@ public class RebalanceTask extends RehashTask {
 
    protected void performRehash() throws Exception {
       long start = System.currentTimeMillis();
-      if (log.isDebugEnabled())
-         log.debug("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s", getMyAddress(), distributionManager.isJoinComplete());
       ConsistentHash chOld, chNew;
       try {
          // 1.  Get the old CH
@@ -76,86 +72,23 @@ public class RebalanceTask extends RehashTask {
                distributionManager.getTransactionLogger().blockNewTransactions();
 
                int numOwners = configuration.getNumOwners();
-               Map<Address,Map<Object,InternalCacheValue>> states=new HashMap<Address,Map<Object,InternalCacheValue>>();
+
+               // Contains the state to be pushed to various servers. The state is a hashmap of keys and values
+               final Map<Address,Map<Object,InternalCacheValue>> states=new HashMap<Address,Map<Object,InternalCacheValue>>();
 
                int removed=0;
                for (InternalCacheEntry ice : dataContainer) {
-                  Object k = ice.getKey();
-                  List<Address> oldServers = chOld.locate(k, numOwners);
-                  List<Address> newServers = chNew.locate(k, numOwners);
+                  removed+=rebalance(ice.getKey(), numOwners, chOld, chNew, states, dataContainer, null);
+               }
 
-                  // the target set for K hasn't changed --> no-op
-                  if(oldServers.equals(newServers))
-                     continue;
-
-                  Address oldOwner=null;
-                  for(Address tmp: oldServers) {
-                     if(newServers.contains(tmp)) {
-                        oldOwner=tmp;
-                        break;
-                     }
-                  }
-                  // System.out.println("#" + count++ + ": oldOwner(" + k + "): " + oldOwner + ", old servers: " + oldServers +
-                     //                      ", new servers: " + newServers + ", self == owner: " + self.equals(oldOwner));
-
-                  if(self.equals(oldOwner)) {
-                     for(Address server: newServers) {
-                        if(!oldServers.contains(server)) { // server doesn't have K
-                           // state.put(k, ice.toInternalCacheValue());
-                           Map<Object,InternalCacheValue> map = states.get(server);
-                           if(map == null) {
-                              map=new HashMap<Object,InternalCacheValue>();
-                              states.put(server, map);
-                           }
-                           map.put(k, ice.toInternalCacheValue());
-                        }
-                     }
-                  }
-
-                  if(oldServers.contains(self) && !newServers.contains(self)) {
-                     // todo: invalidate (rather than remove) K on self
-                     InternalCacheEntry tmp_entry = dataContainer.remove(k);
-                     if(tmp_entry != null)
-                        removed++;
+               CacheStore cacheStore = distributionManager.getCacheStoreForRehashing();
+               if (cacheStore != null) {
+                  for (Object k: cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
+                     removed+=rebalance(k, numOwners, chOld, chNew, states, null, cacheStore);
                   }
                }
 
-
-               // todo: uncomment
-               /*CacheStore cacheStore = distributionManager.getCacheStoreForRehashing();
-               if (cacheStore != null) {
-                  for (Object k: cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
-                     List<Address> oldServers = chOld.locate(k, numOwners);
-                     List<Address> newServers = chNew.locate(k, numOwners);
-
-                     // the target set for K hasn't changed --> no-op
-                     if(oldServers.equals(newServers))
-                        continue;
-
-                     for(Address oldOwner: oldServers) {
-                        if(self.equals(oldOwner)) {
-                           for(Address server: newServers) {
-                              if(!oldServers.contains(server)) { // server doesn't have K
-                                 // state.put(k, ice.toInternalCacheValue());
-                                 Map<Object,InternalCacheValue> map = states.get(server);
-                                 if(map == null) {
-                                    map=new HashMap<Object,InternalCacheValue>();
-                                    states.put(server, map);
-                                 }
-                                 map.put(k, cacheStore.load(k).toInternalCacheValue());
-                              }
-                           }
-                           break;
-                        }
-                     }
-                  }
-               }*/
-
                // Now for each server S in states.keys(): push states.get(S) to S via RPC
-
-               // Maybe it is better to send each push as it occurs, because we might accumulate too much state in the
-               // hashmap before we finally do the push for each server...
-
                for(Map.Entry<Address,Map<Object,InternalCacheValue>> entry: states.entrySet()) {
                   final Address target=entry.getKey();
                   Map<Object,InternalCacheValue> state = entry.getValue();
@@ -177,16 +110,13 @@ public class RebalanceTask extends RehashTask {
 
                distributionManager.getTransactionLogger().unblockNewTransactions();
             } else {
-               // broadcastNewCh();
-               if (trace) log.trace("Rehash not enabled, so not pulling state.");
+               if (trace) log.trace("Rehash not enabled, so not pushing state");
             }                                 
          } finally {
             // wait for any enqueued remote commands to finish...
             distributionManager.setJoinComplete(true);
             distributionManager.setRehashInProgress(false);
             inboundInvocationHandler.blockTillNoLongerRetrying(cf.getCacheName());
-            rpcManager.broadcastRpcCommandInFuture(cf.buildRehashControlCommand(JOIN_REHASH_END, self), true, new NotifyingFutureImpl(null));
-            if (configuration.isRehashEnabled()) invalidateInvalidHolders(chOld, chNew);
          }
 
       } catch (Exception e) {
@@ -198,6 +128,83 @@ public class RebalanceTask extends RehashTask {
    }
 
 
+   /**
+    * Computes the list of old a new servers for a given key K and value V. Removes K (from memory or the cache store)
+    * if the current server shouldn't store it. Adds K to the 'states' map if K should be pushed to other servers.
+    * @param key The key
+    * @param numOwners The number of owners (grabbed from the configuration)
+    * @param chOld The old (current) consistent hash
+    * @param chNew The new consistent hash
+    * @param states The result hashmap. Keys are servers, values are states (hashmaps) to be pushed to them.
+    * @param container The in-memory cache to be used for removal. Null if we shouldn't remove from the cache
+    * @param cacheStore The cache store for removal. Null if we shouldn't remove from the cache store.
+    * @return Number of removed keys
+    */
+   protected int rebalance(Object key, int numOwners, ConsistentHash chOld, ConsistentHash chNew,
+                           Map<Address,Map<Object,InternalCacheValue>> states, DataContainer container, CacheStore cacheStore) {
+      int removed=0;
+
+      // 1. Get the old and new servers for key K
+      List<Address> oldServers = chOld.locate(key, numOwners);
+      List<Address> newServers = chNew.locate(key, numOwners);
+
+      // 2. If the target set for K hasn't changed --> no-op
+      if(oldServers.equals(newServers))
+         return removed;
+
+      // 3. The old owner is the first node in the old server list that's also in the new server list
+      // This might be null if we have old servers={A,B} and new servers={C,D}
+      Address oldOwner=null;
+      for(Address tmp: oldServers) {
+         if(newServers.contains(tmp)) {
+            oldOwner=tmp;
+            break;
+         }
+      }
+
+      // 4. Push K to all the new servers which are *not* in the old servers list
+      if(self.equals(oldOwner)) {
+         for(Address server: newServers) {
+            if(!oldServers.contains(server)) { // server doesn't have K
+               Map<Object,InternalCacheValue> map = states.get(server);
+               if(map == null) {
+                  map=new HashMap<Object,InternalCacheValue>();
+                  states.put(server, map);
+               }
+               InternalCacheEntry value=null;
+               if(container != null)
+                  value=container.get(key);
+               else if(cacheStore != null) {
+                  try {
+                     value=cacheStore.load(key);
+                  } catch (CacheLoaderException e) {
+                     log.warn("failed loading value for key=" + key + " from cache store");
+                  }
+               }
+               if(value != null)
+                  map.put(key, value.toInternalCacheValue());
+            }
+         }
+      }
+
+      // 5. Remove K if it should not be stored here any longer; rebalancing moved K to a different server
+      if(oldServers.contains(self) && !newServers.contains(self)) {
+         // todo: invalidate (rather than remove) K on self (use InvalidateL1Command)
+         if(container != null && container.remove(key) != null)
+            removed++;
+
+         if(cacheStore != null) {
+            try {
+               if(cacheStore.remove(key))
+                  removed++;
+            } catch (CacheLoaderException e) {
+               log.warn("failed removing " + key + " from cache store", e);
+            }
+         }
+      }
+      return removed;
+   }
+   
 
    public Address getMyAddress() {
       return rpcManager != null && rpcManager.getTransport() != null ? rpcManager.getTransport().getAddress() : null;

@@ -110,13 +110,13 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
             DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
             while (!dmi.isJoinComplete()) {
                if (System.currentTimeMillis() > giveup) {
-                  String message = "Timed out waiting for initial join sequence to complete on node " + dmi.rpcManager.getAddress() + " !";
+                  String message = "Timed out waiting for initial join sequence to complete on node " + dmi.getRpcManager().getAddress() + " !";
                   log.error(message);
                   throw new RuntimeException(message);
                }
                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
             }
-            log.trace("Node " + dmi.rpcManager.getAddress() + " finished rehash task.");
+            log.trace("Node " + dmi.getRpcManager().getAddress() + " finished rehash task.");
          }
       }
 
@@ -127,13 +127,13 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
             DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
             while (dmi.isRehashInProgress()) {
                if (System.currentTimeMillis() > giveup) {
-                  String message = "Timed out waiting for rehash to complete on node " + dmi.rpcManager.getAddress() + " !";
+                  String message = "Timed out waiting for rehash to complete on node " + dmi.getRpcManager().getAddress() + " !";
                   log.error(message);
                   throw new RuntimeException(message);
                }
                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
             }
-            log.trace("Node " + dmi.rpcManager.getAddress() + " finished rehash task.");
+            log.trace("Node " + dmi.getRpcManager().getAddress() + " finished rehash task.");
          }
       }
 

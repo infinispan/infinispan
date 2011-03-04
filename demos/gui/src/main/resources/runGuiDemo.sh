@@ -93,4 +93,4 @@ JVM_PARAMS="${JVM_PARAMS} -Dbind.address=127.0.0.1 -Djava.net.preferIPv4Stack=tr
 # Sample JPDA settings for remote socket debuging
 #JVM_PARAMS="$JVM_PARAMS -Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n"
 
-${JAVACMD} -cp ${CP} ${JVM_PARAMS} org.infinispan.demo.InfinispanDemo &
+${JAVACMD} -cp ${CP} ${JVM_PARAMS} org.infinispan.demo.InfinispanDemo $* &
