@@ -285,7 +285,7 @@ def release():
   
   # Step 3: Build and test in Maven2
   prettyprint("Step 3: Build and test in Maven2", Levels.INFO)
-  maven_build_distribution()
+  maven_build_distribution(version)
   prettyprint("Step 3: Complete", Levels.INFO)
   
   async_processes = []
