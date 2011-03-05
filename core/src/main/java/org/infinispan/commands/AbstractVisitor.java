@@ -151,4 +151,8 @@ public abstract class AbstractVisitor implements Visitor {
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
+
+   public Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      return handleDefault(ctx, command);
+   }
 }

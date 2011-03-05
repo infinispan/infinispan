@@ -88,4 +88,6 @@ public interface Visitor {
 
    // locking commands
    Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable;
+
+   Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable;
 }

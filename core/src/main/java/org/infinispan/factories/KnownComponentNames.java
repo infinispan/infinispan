@@ -15,6 +15,8 @@ public class KnownComponentNames {
    public static final String ASYNC_NOTIFICATION_EXECUTOR = "org.infinispan.executors.notification";
    public static final String EVICTION_SCHEDULED_EXECUTOR = "org.infinispan.executors.eviction";
    public static final String ASYNC_REPLICATION_QUEUE_EXECUTOR = "org.infinispan.executors.replicationQueue";
+   public static final String MODULE_COMMAND_INITIALIZERS ="org.infinispan.modules.command.initializers";
+   public static final String MODULE_COMMAND_FACTORIES ="org.infinispan.modules.command.factories";
 
    private static final Map<String, Integer> DEFAULT_THREADCOUNTS = new HashMap<String, Integer>(2);
    private static final Map<String, Integer> DEFAULT_THREADPRIO = new HashMap<String, Integer>(4);

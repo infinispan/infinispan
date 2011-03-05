@@ -4,6 +4,7 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
@@ -19,11 +20,15 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
+
+import java.util.Map;
 
 /**
  * Specifically used to create un-initialized {@link org.infinispan.commands.ReplicableCommand}s from a byte stream.
@@ -43,12 +48,15 @@ public class RemoteCommandsFactory {
    Transport transport;
    EmbeddedCacheManager cacheManager;
    GlobalComponentRegistry registry;
+   Map<Byte,ModuleCommandFactory> commandFactories;
 
    @Inject
-   public void inject(Transport transport, EmbeddedCacheManager cacheManager, GlobalComponentRegistry registry) {
+   public void inject(Transport transport, EmbeddedCacheManager cacheManager, GlobalComponentRegistry registry,
+                      @ComponentName(KnownComponentNames.MODULE_COMMAND_FACTORIES) Map<Byte, ModuleCommandFactory> commandFactories) {
       this.transport = transport;
       this.cacheManager = cacheManager;
       this.registry = registry;
+      this.commandFactories = commandFactories;
    }
 
    /**
@@ -121,7 +129,11 @@ public class RemoteCommandsFactory {
             command = new RemoveCacheCommand(cacheManager, registry);
             break;
          default:
-            throw new CacheException("Unknown command id " + id + "!");
+            ModuleCommandFactory mcf = commandFactories.get(id);
+            if (mcf != null)
+               return mcf.fromStream(id, parameters);
+            else
+               throw new CacheException("Unknown command id " + id + "!");
       }
       command.setParameters(id, parameters);
       return command;

@@ -43,14 +43,16 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
+import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -107,7 +109,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
 
    @Override
    public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
-      return Util.asSet(
+       Set<Class<? extends ReplicableCommand>> coreCommands = Util.asSet(
             LockControlCommand.class, RehashControlCommand.class,
             StateTransferControlCommand.class, GetKeyValueCommand.class,
             ClusteredGetCommand.class, MultipleRpcCommand.class,
@@ -118,5 +120,8 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             PutKeyValueCommand.class, PutMapCommand.class,
             RemoveCommand.class, ReplaceCommand.class,
             RemoveCacheCommand.class);
+      Collection<Class<? extends ReplicableCommand>> moduleCommands = ModuleProperties.moduleCommands();
+      if (moduleCommands != null && !moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);
+      return coreCommands;
    }
 }

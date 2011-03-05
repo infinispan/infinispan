@@ -98,16 +98,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    // component and method containers
    final Map<String, Component> componentLookup = new HashMap<String, Component>();
 
-   protected static List<ModuleLifecycle> moduleLifecycles;
-
-   static {
-      try {
-         moduleLifecycles = ModuleProperties.resolveModuleLifecycles();
-      } catch (Exception e) {
-         moduleLifecycles = Collections.emptyList();
-      }
-   }
-
+   protected static List<ModuleLifecycle> moduleLifecycles = ModuleProperties.resolveModuleLifecycles();
 
    volatile ComponentStatus state = ComponentStatus.INSTANTIATED;
 

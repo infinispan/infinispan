@@ -2,6 +2,7 @@ package org.infinispan.factories;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheException;
+import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.Inject;
@@ -11,6 +12,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.ReflectionCache;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -58,6 +60,13 @@ public class ComponentRegistry extends AbstractComponentRegistry {
          registerComponent(this, ComponentRegistry.class);
          registerComponent(configuration, Configuration.class);
          registerComponent(new BootstrapFactory(cache, configuration, this), BootstrapFactory.class);
+
+         // register any module-specific commmand initializers
+         Map<Byte, ModuleCommandInitializer> initializers = ModuleProperties.moduleCommandInitializers();
+         if (initializers != null && !initializers.isEmpty()) {
+            registerComponent(initializers, KnownComponentNames.MODULE_COMMAND_INITIALIZERS);
+            for (ModuleCommandInitializer mci: initializers.values()) registerComponent(mci, mci.getClass());
+         }
       }
       catch (Exception e) {
          throw new CacheException("Unable to construct a ComponentRegistry!", e);

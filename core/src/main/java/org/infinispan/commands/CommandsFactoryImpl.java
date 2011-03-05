@@ -25,6 +25,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
@@ -52,6 +53,8 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
@@ -100,10 +103,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private TransactionTable txTable;
    private Configuration configuration;
 
+   private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
+
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache cache,
                                  InterceptorChain interceptorChain, DistributionManager distributionManager,
-                                 InvocationContextContainer icc, TransactionTable txTable, Configuration configuration) {
+                                 InvocationContextContainer icc, TransactionTable txTable, Configuration configuration,
+                                 @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -112,6 +118,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.icc = icc;
       this.txTable = txTable;
       this.configuration = configuration;
+      this.moduleCommandInitializers = moduleCommandInitializers;
    }
 
    @Start(priority = 1)
@@ -317,8 +324,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
             rcc.init(distributionManager, configuration, dataContainer, this);
             break;
          default:
-            if (trace)
-               log.trace("Nothing to initialize for command: " + c);
+            ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
+            if (mci != null) {
+               mci.initializeReplicableCommand(c, isRemote);
+            } else {
+               if (trace) log.trace("Nothing to initialize for command: " + c);
+            }
       }
    }
 
@@ -336,8 +347,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    public RehashControlCommand buildRehashControlCommandTxLogPendingPrepares(Address sender, List<PrepareCommand> commands) {
       return new RehashControlCommand(cacheName, LEAVE_DRAIN_TX_PREPARES, sender, null, commands, this);
-   }  
-   
+   }
+
    public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type,
             Address sender, Map<Object, InternalCacheValue> state, ConsistentHash oldCH,
             ConsistentHash newCH, List<Address> leavers) {

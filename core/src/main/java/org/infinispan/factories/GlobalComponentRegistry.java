@@ -1,9 +1,8 @@
 package org.infinispan.factories;
 
 import org.infinispan.CacheException;
+import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.config.GlobalConfiguration;
-import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.DEFAULT;
-import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.REGISTER;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -14,6 +13,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.ReflectionCache;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
+import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -22,6 +22,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.DEFAULT;
+import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.REGISTER;
 
 /**
  * A global component registry where shared components are stored.
@@ -71,9 +74,11 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(configuration, GlobalConfiguration.class);
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
+         Map<Byte, ModuleCommandFactory> factories = ModuleProperties.moduleCommandFactories();
+         if (factories != null && !factories.isEmpty())
+            registerComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
          this.createdCaches = createdCaches;
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);
       }
    }
