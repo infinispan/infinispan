@@ -24,6 +24,7 @@ package org.infinispan.remoting.transport.jgroups;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
@@ -52,6 +53,7 @@ import org.jgroups.Message;
 import org.jgroups.View;
 import org.jgroups.blocks.GroupRequest;
 import org.jgroups.blocks.RspFilter;
+import org.jgroups.protocols.pbcast.FLUSH;
 import org.jgroups.protocols.pbcast.STREAMING_STATE_TRANSFER;
 import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.Rsp;
@@ -150,6 +152,11 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
       initChannelAndRPCDispatcher();
       startJGroupsChannelIfNeeded();
+
+      // ensure that the channel has FLUSH enabled.
+      // see ISPN-83 for details.
+      if (channel.getProtocolStack() != null && channel.getProtocolStack().findProtocol(FLUSH.class) == null)
+         throw new ConfigurationException("Flush should be enabled. This is related to https://jira.jboss.org/jira/browse/ISPN-83");
    }
 
    protected void startJGroupsChannelIfNeeded() {
@@ -527,11 +534,11 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    }
 
    public void block() {
-      // no-op since ISPN-83
+      flushTracker.signalJoinInProgress();
    }
 
    public void unblock() {
-      // no-op since ISPN-83
+      flushTracker.signalJoinCompleted();
    }
 
    public void receive(Message msg) {

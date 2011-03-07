@@ -220,6 +220,13 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
          if (filter != null) mode = GroupRequest.GET_FIRST;
 
+
+        // if there is a JOIN in progress, wait for this to complete.
+
+        // See ISPN-83 for more details.  Once ISPN-83 is addressed, this may no longer be needed.
+
+        distributedSync.blockUntilNoJoinsInProgress();
+
          RspList retval = null;
          Buffer buf;
          if (broadcast || FORCE_MCAST) {

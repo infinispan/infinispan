@@ -63,4 +63,5 @@
        min_threshold="0.10"/>
    <FRAG2 frag_size="60000"/>
    <pbcast.STREAMING_STATE_TRANSFER/>
+   <pbcast.FLUSH timeout="0"/>
 </config>
