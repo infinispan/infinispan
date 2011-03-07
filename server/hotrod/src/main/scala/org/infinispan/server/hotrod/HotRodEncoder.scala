@@ -186,6 +186,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
          }
       } catch {
          case u: UnsupportedOperationException => {
+            if (isDebugEnabled) debug("Unable to get all hash ids due to rehashing being in process. Mark as topology not changed.")
             // Rehashing is ongoing, so mark as if topology not changed
             // In next request, the client should still send the old view id
             // which the server should spot and attempt again to get all hash ids
