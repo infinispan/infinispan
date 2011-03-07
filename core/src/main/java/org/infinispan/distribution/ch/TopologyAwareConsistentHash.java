@@ -3,19 +3,13 @@ package org.infinispan.distribution.ch;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.util.hash.Hash;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
+import java.util.*;
 
 import static java.lang.Math.min;
 
@@ -80,7 +74,7 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       return getStateProvidersOnLeave(joiner, replCount);
    }
 
-   private List<Address> getOwners(Address address, int numOwners) {
+   protected List<Address> getOwners(Address address, int numOwners) {
       int ownerHash = getNormalizedHash(address);
       Collection<Address> beforeOnWheel = positions.headMap(ownerHash).values();
       Collection<Address> afterOnWheel = positions.tailMap(ownerHash).values();
@@ -94,32 +88,28 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
          while (addrIt.hasNext()) {
             Address a = addrIt.next();
             switch (level) {
-               case 0 : { //site level
-                  if (!topologyInfo.isSameSite(address, a)) {
+               case 0 :  //site level
+                  if (!isSameSite(address, a)) {
                      result.add(a);
                      addrIt.remove();
                   }
                   break;
-               }
-               case 1 : { //rack level
-                  if (!topologyInfo.isSameRack(address, a)) {
+               case 1 :  //rack level
+                  if (!isSameRack(address, a)) {
                      result.add(a);
                      addrIt.remove();
                   }
                   break;
-               }
-               case 2 : { //machine level
-                  if (!topologyInfo.isSameMachine(address, a)) {
+               case 2 :  //machine level
+                  if (!isSameMachine(address, a)) {
                      result.add(a);
                      addrIt.remove();
                   }
                   break;
-               }
-               case 3 : { //just add them in sequence
+               case 3 :  //just add them in sequence
                   result.add(a);
                   addrIt.remove();
                   break;
-               }
             }
             if (result.size() == numOwners) break;
          }
@@ -130,15 +120,30 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       return result;
    }
 
-   private Address getOwner(Object key) {
+   protected Address getOwner(Object key) {
       int hash = getNormalizedHash(key);
       SortedMap<Integer, Address> map = positions.tailMap(hash);
-      if (map.size() == 0) {
+      if (map.isEmpty()) {
          return positions.get(positions.firstKey());
       }
       Integer ownerHash = map.firstKey();
       return positions.get(ownerHash);
    }
+
+
+   protected static boolean isSameSite(Address one, Address two) {
+      return one != null && two != null && ((TopologyAwareAddress)one).isSameSite((TopologyAwareAddress) two);
+   }
+
+   protected static boolean isSameRack(Address one, Address two) {
+      return one != null && two != null && ((TopologyAwareAddress)one).isSameRack((TopologyAwareAddress) two);
+   }
+
+   protected static boolean isSameMachine(Address one, Address two) {
+      return one != null && two != null && ((TopologyAwareAddress)one).isSameMachine((TopologyAwareAddress) two);
+   }
+
+
    public static class Externalizer extends AbstractWheelConsistentHash.Externalizer {
 
       @Override
