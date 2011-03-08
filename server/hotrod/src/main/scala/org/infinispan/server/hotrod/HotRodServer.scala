@@ -115,7 +115,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 
    override def stop {
       super.stop
-      if (isClustered)
+      if (isClustered && topologyCache != null)
          removeSelfFromTopologyView
    }
 
