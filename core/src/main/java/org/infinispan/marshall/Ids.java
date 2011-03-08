@@ -123,5 +123,5 @@ public interface Ids {
    static final byte TOPOLOGY_AWARE_CH = 61;
 
 
-   static final byte JGROUPS_TOPOLOGY_AWARE_ADDRESS = 62;
+   static final byte JGROUPS_TOPOLOGY_AWARE_ADDRESS = 63;
 }

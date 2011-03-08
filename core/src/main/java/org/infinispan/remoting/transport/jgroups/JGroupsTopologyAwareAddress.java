@@ -2,7 +2,6 @@ package org.infinispan.remoting.transport.jgroups;
 
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.jgroups.util.TopologyUUID;
 
@@ -20,7 +19,6 @@ import java.io.ObjectOutput;
 public class JGroupsTopologyAwareAddress extends JGroupsAddress implements TopologyAwareAddress {
 
    public JGroupsTopologyAwareAddress() {
-      super();
    }
 
    public JGroupsTopologyAwareAddress(org.jgroups.Address address) {
