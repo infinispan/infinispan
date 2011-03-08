@@ -45,9 +45,11 @@ import org.jgroups.*;
 import org.jgroups.blocks.Request;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.protocols.pbcast.STREAMING_STATE_TRANSFER;
+import org.jgroups.stack.AddressGenerator;
 import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
+import org.jgroups.util.TopologyUUID;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -146,7 +148,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
             throw new CacheException("Unable to start JGroups Channel", e);
          }
       }
-      address = new JGroupsAddress(channel.getAddress());
+      address = fromJGroupsAddress(channel.getAddress());
       if (log.isInfoEnabled())
          log.info("Cache local address is %s, physical addresses are %s", getAddress(), getPhysicalAddresses());
    }
@@ -194,6 +196,18 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       }
 
       channel.setOpt(Channel.LOCAL, false);
+
+      // if we have a TopologyAwareConsistentHash, we need to set our own address generator in JGroups:
+      if(configuration.hasTopologyInfo()) {
+         ((JChannel)channel).setAddressGenerator(new AddressGenerator() {
+
+            public org.jgroups.Address generateAddress() {
+               return TopologyUUID.randomUUID(channel.getName(),
+                     configuration.getSiteId(), configuration.getRackId(), configuration.getMachineId());
+
+            }
+         });
+      }
    }
 
    private void initChannelAndRPCDispatcher() throws CacheException {
@@ -338,8 +352,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
    public Address getAddress() {
       if (address == null && channel != null) {
-         address = new JGroupsAddress(channel.getAddress());
-//         address = new JGroupsAddress(channel.getLocalAddress());
+         address = fromJGroupsAddress(channel.getAddress());
       }
       return address;
    }
@@ -389,7 +402,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
          boolean noValidResponses = true;
          for (Rsp rsp : rsps.values()) {
-            noValidResponses = parseResponseAndAddToResponseList(rsp.getValue(), retval, rsp.wasSuspected(), rsp.wasReceived(), new JGroupsAddress(rsp.getSender()), responseFilter != null) && noValidResponses;
+            noValidResponses = parseResponseAndAddToResponseList(rsp.getValue(), retval, rsp.wasSuspected(), rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()), responseFilter != null) && noValidResponses;
          }
 
          if (noValidResponses) throw new TimeoutException("Timed out waiting for valid responses!");
@@ -584,7 +597,19 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    // Helpers to convert between Address types
    // ------------------------------------------------------------------------------------------------------------------
 
-   private Vector<org.jgroups.Address> toJGroupsAddressVector(Collection<Address> list) {
+   protected static org.jgroups.Address toJGroupsAddress(Address a) {
+      return ((JGroupsAddress) a).address;
+   }
+
+   protected static Address fromJGroupsAddress(org.jgroups.Address addr) {
+      if(addr instanceof TopologyUUID)
+         return new JGroupsTopologyAwareAddress(addr);
+      else
+         return new JGroupsAddress(addr);
+   }
+
+
+   private static Vector<org.jgroups.Address> toJGroupsAddressVector(Collection<Address> list) {
       if (list == null) return null;
       if (list.isEmpty()) return new Vector<org.jgroups.Address>();
 
@@ -595,9 +620,6 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       return retval;
    }
 
-   private static org.jgroups.Address toJGroupsAddress(Address a) {
-      return ((JGroupsAddress) a).address;
-   }
 
    private static List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
       if (list == null || list.isEmpty()) return Collections.emptyList();
@@ -605,9 +627,9 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       int sz = list.size();
       List<Address> retval = new ArrayList<Address>(sz);
       if (sz == 1) {
-         retval.add(new JGroupsAddress(list.get(0)));
+         retval.add(fromJGroupsAddress(list.get(0)));
       } else {
-         for (org.jgroups.Address a : list) retval.add(new JGroupsAddress(a));
+         for (org.jgroups.Address a : list) retval.add(fromJGroupsAddress(a));
       }
       return retval;
    }
