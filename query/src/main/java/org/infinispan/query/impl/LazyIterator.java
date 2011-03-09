@@ -23,12 +23,10 @@
 package org.infinispan.query.impl;
 
 import net.jcip.annotations.NotThreadSafe;
-import org.apache.lucene.search.IndexSearcher;
-import org.hibernate.search.engine.DocumentExtractor;
-import org.hibernate.search.engine.SearchFactoryImplementor;
+import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
-import org.infinispan.query.backend.IndexSearcherCloser;
 import org.infinispan.query.backend.KeyTransformationHandler;
 
 import java.io.IOException;
@@ -42,30 +40,20 @@ import java.util.NoSuchElementException;
  *
  * @author Navin Surtani
  */
-
 @NotThreadSafe
 public class LazyIterator extends AbstractIterator {
 
-   private DocumentExtractor extractor;
-   private IndexSearcher searcher;
-   private SearchFactoryImplementor searchFactory;
+   private final DocumentExtractor extractor;
 
-
-   public LazyIterator(DocumentExtractor extractor, Cache cache,
-                       IndexSearcher searcher, SearchFactoryImplementor searchFactory, int first, int max, int fetchSize) {
+   public LazyIterator(HSQuery hSearchQuery, Cache cache, int fetchSize) {
       if (fetchSize < 1) {
          throw new IllegalArgumentException("Incorrect value for fetchsize passed. Your fetchSize is less than 1");
       }
-
-      this.extractor = extractor;
+      this.extractor = hSearchQuery.queryDocumentExtractor(); //triggers actual Lucene search
+      this.index = 0;
+      this.max = hSearchQuery.queryResultSize() - 1;
       this.cache = cache;
-      index = first;
-      this.first = first;
-      this.max = max;
       this.fetchSize = fetchSize;
-      this.searcher = searcher;
-      this.searchFactory = searchFactory;
-
       //Create an buffer with size fetchSize (which is the size of the required buffer).
       buffer = new Object[this.fetchSize];
    }
@@ -74,12 +62,12 @@ public class LazyIterator extends AbstractIterator {
       if (index < first || index > max) {
          throw new IndexOutOfBoundsException("The given index is incorrect. Please check and try again.");
       }
-
       this.index = first + index;
    }
 
+   @Override
    public void close() {
-      IndexSearcherCloser.closeSearcher(searcher, searchFactory.getReaderProvider());
+      extractor.close();
    }
 
    public Object next() {
@@ -100,7 +88,7 @@ public class LazyIterator extends AbstractIterator {
          // else we need to populate the buffer and get what we need.
 
          try {
-            String documentId = (String) extractor.extract(index).id;
+            String documentId = (String) extractor.extract(index).getId();
             toReturn = cache.get(KeyTransformationHandler.stringToKey(documentId));
 
             //Wiping bufferObjects and the bufferIndex so that there is no stale data.
@@ -112,7 +100,7 @@ public class LazyIterator extends AbstractIterator {
             //now loop through bufferSize times to add the rest of the objects into the list.
 
             for (int i = 1; i < bufferSize; i++) {
-               String bufferDocumentId = (String) extractor.extract(index + i).id;
+               String bufferDocumentId = (String) extractor.extract(index + i).getId();
                Object toBuffer = cache.get(KeyTransformationHandler.stringToKey(bufferDocumentId));
                buffer[i] = toBuffer;
             }
@@ -148,14 +136,14 @@ public class LazyIterator extends AbstractIterator {
          //Wiping the buffer
          Arrays.fill(buffer, null);
 
-         String documentId = (String) extractor.extract(index).id;
+         String documentId = (String) extractor.extract(index).getId();
          toReturn = cache.get(KeyTransformationHandler.stringToKey(documentId));
 
          buffer[0] = toReturn;
 
          //now loop through bufferSize times to add the rest of the objects into the list.
          for (int i = 1; i < bufferSize; i++) {
-            String bufferDocumentId = (String) extractor.extract(index - i).id;    //In this case it has to be index - i because previous() is called.
+            String bufferDocumentId = (String) extractor.extract(index - i).getId();    //In this case it has to be index - i because previous() is called.
             Object toBuffer = cache.get(KeyTransformationHandler.stringToKey(bufferDocumentId));
             buffer[i] = toBuffer;
          }
