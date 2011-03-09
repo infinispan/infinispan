@@ -61,6 +61,7 @@ import static org.infinispan.util.Util.getInstance;
  * <li><tt>infinispan.client.hotrod.hash_function_impl.1</tt>, default = org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1.  This specifies the version of the hash function and consistent hash algorithm in use, and is closely tied with the HotRod server version used.</li>
  * <li><tt>infinispan.client.hotrod.key_size_estimate</tt>, default = 64.  This hint allows sizing of byte buffers when serializing and deserializing keys, to minimize array resizing.</li>
  * <li><tt>infinispan.client.hotrod.value_size_estimate</tt>, default = 512.  This hint allows sizing of byte buffers when serializing and deserializing values, to minimize array resizing.</li>
+ * <li><tt>infinispan.client.hotrod.socket_timeout</tt>, default = 60000 (60 seconds).  This property defines the maximum socket read timeout before giving up waiting for bytes from the server.</li>
  * </ul>
  * <br/>
  * <i>The following properties are related to connection pooling</i>:
