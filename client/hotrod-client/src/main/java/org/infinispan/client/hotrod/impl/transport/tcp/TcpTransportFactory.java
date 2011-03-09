@@ -38,6 +38,7 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile Collection<InetSocketAddress> servers;
    private volatile ConsistentHash consistentHash;
    private volatile boolean tcpNoDelay;
+   private volatile int soTimeout;
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
 
    @Override
@@ -48,6 +49,7 @@ public class TcpTransportFactory implements TransportFactory {
       String balancerClass = cfg.getRequestBalancingStrategy();
       balancer = (RequestBalancingStrategy) Util.getInstance(balancerClass);
       tcpNoDelay = cfg.getTcpNoDelay();
+      soTimeout = cfg.getSoTimeout();
       PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TransportObjectFactory(this, topologyId, pingOnStartup), cfg.getProperties());
       createAndPreparePool(staticConfiguredServers, poolFactory);
       balancer.setServers(servers);
@@ -215,6 +217,11 @@ public class TcpTransportFactory implements TransportFactory {
       } else {
          return 10 * servers.size();
       }
+   }
+
+   @Override
+   public int getSoTimeout() {
+      return soTimeout;
    }
 
    public RequestBalancingStrategy getBalancer() {

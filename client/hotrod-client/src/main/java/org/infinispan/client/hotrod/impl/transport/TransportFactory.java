@@ -32,4 +32,6 @@ public interface TransportFactory {
    boolean isTcpNoDelay();
 
    int getTransportCount();
+
+   int getSoTimeout();
 }
