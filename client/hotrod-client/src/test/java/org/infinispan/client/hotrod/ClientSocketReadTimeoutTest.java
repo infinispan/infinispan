@@ -175,21 +175,6 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public boolean cacheExists(String cacheName) {
-         return delegate.cacheExists(cacheName);
-      }
-
-      @Override
-      public <K, V> Cache<K, V> getCache(String cacheName, boolean createIfAbsent) {
-         return delegate.getCache(cacheName, createIfAbsent);
-      }
-
-      @Override
-      public void removeCache(String cacheName) {
-         delegate.removeCache(cacheName);
-      }
-
-      @Override
       public <K, V> Cache<K, V> getCache() {
          // TODO: Hacky but it's the easiest thing to do - consider ByteMan
          // ByteMan apparently supports testng since 1.5.1 but no clear
