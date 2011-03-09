@@ -12,8 +12,8 @@ import java.io.ObjectOutput;
 /**
  * An encapsulation of a JGroups Address
  *
- * @author Manik Surtani
- * @since 4.0
+ * @author Bela Ban
+ * @since 4.2
  */
 @Marshallable(externalizer = JGroupsTopologyAwareAddress.Externalizer.class, id = Ids.JGROUPS_TOPOLOGY_AWARE_ADDRESS)
 public class JGroupsTopologyAwareAddress extends JGroupsAddress implements TopologyAwareAddress {
