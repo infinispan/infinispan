@@ -473,7 +473,7 @@ public class TestingUtil {
       }
 
       if (cacheContainer.isDefaultRunning()) {
-         Cache defaultCache = ((DefaultCacheManager) cacheContainer).getCache();
+         Cache defaultCache = cacheContainer.getCache();
          if (defaultCache.getStatus().allowInvocations()) running.add(defaultCache);
       }
 

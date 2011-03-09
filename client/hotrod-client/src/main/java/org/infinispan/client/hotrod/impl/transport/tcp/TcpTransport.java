@@ -41,6 +41,7 @@ public class TcpTransport extends AbstractTransport {
          SocketChannel socketChannel = SocketChannel.open(serverAddress);
          socket = socketChannel.socket();
          socket.setTcpNoDelay(transportFactory.isTcpNoDelay());
+         socket.setSoTimeout(transportFactory.getSoTimeout());
       } catch (IOException e) {
          String message = "Could not connect to server: " + serverAddress;
          log.error(message, e);
