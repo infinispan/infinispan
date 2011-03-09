@@ -98,11 +98,13 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
          if (log.isDebugEnabled()) log.debug("Object is not serializable", nse);
          throw new org.infinispan.marshall.NotSerializableException(nse.getMessage(), nse.getCause());
       } catch (IOException ioe) {
-         if (log.isTraceEnabled()) log.trace("Exception while marshalling object", ioe);
-         if (ioe.getCause() instanceof InterruptedException)
+         if (ioe.getCause() instanceof InterruptedException) {
+            if (log.isTraceEnabled()) log.trace("Interrupted exception while marshalling", ioe.getCause());
             throw (InterruptedException) ioe.getCause();
-         else
+         } else {
+            log.error("Exception while marshalling object", ioe);
             throw ioe;
+         }
       } finally {
          finishObjectOutput(out);
       }
