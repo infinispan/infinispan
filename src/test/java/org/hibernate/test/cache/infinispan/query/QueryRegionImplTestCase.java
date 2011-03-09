@@ -92,7 +92,11 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 
     private void putDoesNotBlockGetTest() throws Exception {
         Configuration cfg = createConfiguration();
+<<<<<<< HEAD
         InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(getJdbcServices(), cfg, getCacheTestSupport());
+=======
+        InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(getServiceRegistry(cfg.getProperties()), cfg, getCacheTestSupport());
+>>>>>>> HHH-5949 : Migrate, complete and integrate TransactionFactory as a service
 
         // Sleep a bit to avoid concurrent FLUSH problem
         avoidConcurrentFlush();
@@ -249,6 +253,7 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 <<<<<<< HEAD
     private void getDoesNotBlockPutTest() throws Exception {
         Configuration cfg = createConfiguration();
+<<<<<<< HEAD
         InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(getJdbcServices(), cfg, getCacheTestSupport());
 =======
    private void getDoesNotBlockPutTest() throws Exception {
@@ -257,6 +262,9 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 			  getServiceRegistry(), cfg, getCacheTestSupport()
 	  );
 >>>>>>> HHH-5949 - Migrate, complete and integrate TransactionFactory as a service
+=======
+        InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(getServiceRegistry(cfg.getProperties()), cfg, getCacheTestSupport());
+>>>>>>> HHH-5949 : Migrate, complete and integrate TransactionFactory as a service
 
         // Sleep a bit to avoid concurrent FLUSH problem
         avoidConcurrentFlush();
