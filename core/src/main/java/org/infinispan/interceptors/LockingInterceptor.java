@@ -58,11 +58,9 @@ import org.infinispan.util.concurrent.locks.LockManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Interceptor to implement <a href="http://wiki.jboss.org/wiki/JBossCacheMVCC">MVCC</a> functionality.
@@ -392,7 +390,7 @@ public class LockingInterceptor extends CommandInterceptor {
             boolean needToUnlock = lockManager.possiblyLocked(entry);
             // could be null with read-committed
             if (entry != null && entry.isChanged()) {
-               commitEntry(entry, ctx.hasFlag(Flag.FORCE_COMMIT));
+               commitEntry(entry, ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK));
             } else {
                if (trace) log.trace("Entry for key %s is null, not calling commitUpdate", key);
             }

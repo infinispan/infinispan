@@ -124,7 +124,7 @@ public enum Flag {
     * Used by the DistLockingInterceptor to commit the change no matter what (if the flag is set). This is used when
     * a node A pushes state to another node B and A doesn't want B to check if the state really belongs to it
     */
-   FORCE_COMMIT;
+   SKIP_OWNERSHIP_CHECK;
    
    /**
     * Creates a copy of a Flag Set removing instances of FAIL_SILENTLY.

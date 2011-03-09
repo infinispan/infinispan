@@ -315,7 +315,7 @@ public class DistributionManagerImpl implements DistributionManager {
          if (consistentHash.locate(e.getKey(), configuration.getNumOwners()).contains(myself)) {
             InternalCacheValue v = e.getValue();
             InvocationContext ctx = icc.createInvocationContext();
-            ctx.setFlags(CACHE_MODE_LOCAL, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING, FORCE_COMMIT); // locking not necessary in the case of a join since the node isn't doing anything else.
+            ctx.setFlags(CACHE_MODE_LOCAL, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING, SKIP_OWNERSHIP_CHECK); // locking not necessary in the case of a join since the node isn't doing anything else.
 
             try {
                PutKeyValueCommand put = cf.buildPutKeyValueCommand(e.getKey(), v.getValue(), v.getLifespan(), v.getMaxIdle(), ctx.getFlags());
