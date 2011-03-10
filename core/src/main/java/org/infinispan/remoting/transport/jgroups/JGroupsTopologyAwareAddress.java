@@ -27,6 +27,22 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
 
 
    @Override
+   public String getSiteId() {
+      return ((TopologyUUID)getJGroupsAddress()).getSiteId();
+   }
+
+   @Override
+   public String getRackId() {
+      return ((TopologyUUID)getJGroupsAddress()).getRackId();
+   }
+
+   @Override
+   public String getMachineId() {
+      return ((TopologyUUID)getJGroupsAddress()).getMachineId();
+   }
+
+
+   @Override
    public boolean isSameSite(TopologyAwareAddress addr) {
       TopologyUUID my_addr= (TopologyUUID) getJGroupsAddress();
       TopologyUUID other_addr= addr instanceof JGroupsTopologyAwareAddress?
