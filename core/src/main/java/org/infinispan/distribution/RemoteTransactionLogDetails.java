@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -22,6 +23,8 @@ public class RemoteTransactionLogDetails {
    final boolean drainNextCallWithoutLock;
    final List<WriteCommand> modifications;
    final Collection<PrepareCommand> pendingPreparesMap;
+
+   public static final RemoteTransactionLogDetails DEFAULT = new RemoteTransactionLogDetails(true, Collections.<WriteCommand>emptyList(), Collections.<PrepareCommand>emptyList());
 
    public RemoteTransactionLogDetails(boolean drainNextCallWithoutLock, List<WriteCommand> modifications, Collection<PrepareCommand> pendingPreparesMap) {
       this.drainNextCallWithoutLock = drainNextCallWithoutLock;
