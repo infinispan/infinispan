@@ -10,6 +10,8 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +30,7 @@ public class RemoteTransactionLoggerImpl implements RemoteTransactionLogger {
    private final RpcManager rpcManager;
    private boolean drainWithoutLock = true;
    private Collection<PrepareCommand> pendingPrepares;
+   private static final Log log = LogFactory.getLog(RemoteTransactionLoggerImpl.class);
 
    public RemoteTransactionLoggerImpl(CommandsFactory commandsFactory, Address targetNode, RpcManager rpcManager) {
       this.commandsFactory = commandsFactory;
@@ -38,7 +41,11 @@ public class RemoteTransactionLoggerImpl implements RemoteTransactionLogger {
 
    private RemoteTransactionLogDetails extractRemoteTransactionLogDetails(ReplicableCommand c) {
       Map<Address, Response> lr = rpcManager.invokeRemotely(Collections.singleton(targetNode), c, true, true);
-      if (lr.size() != 1) throw new RpcException("Expected just one response; got " + lr + " instead!");
+      if (lr.size() != 1) {
+         log.warn("Expected just one response; got %s", lr);
+         return RemoteTransactionLogDetails.DEFAULT;
+      }
+
       Response r = lr.get(targetNode);
       if (r != null && r.isSuccessful() && r.isValid()) {
          return (RemoteTransactionLogDetails) ((SuccessfulResponse) r).getResponseValue();
