@@ -5,13 +5,13 @@ import java.lang.reflect.Method
 import org.infinispan.server.core.Logging
 import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.Assert._
-import org.infinispan.util.Util
 import org.infinispan.server.hotrod._
 import org.infinispan.config.Configuration.CacheMode
 import org.infinispan.config.Configuration
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.Main._
 import java.util.{Properties, Arrays}
+import org.infinispan.util.{TypedProperties, Util}
 
 /**
  * Test utils for Hot Rod tests.
@@ -50,16 +50,31 @@ object HotRodTestingUtil extends Logging {
 
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, idleTimeout: Int,
                          proxyHost: String, proxyPort: Int, delay: Long): HotRodServer = {
+      val properties = new Properties
+      properties.setProperty(PROP_KEY_IDLE_TIMEOUT, idleTimeout.toString)
+      properties.setProperty(PROP_KEY_PROXY_HOST, proxyHost)
+      properties.setProperty(PROP_KEY_PROXY_PORT, proxyPort.toString)
+      startHotRodServer(manager, port, delay, properties)
+   }
+
+   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, props: Properties): HotRodServer =
+      startHotRodServer(manager, port, 0, props)
+
+   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, delay: Long, props: Properties): HotRodServer = {
       val server = new HotRodServer {
-         import HotRodServer._
-         override protected def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
+         override protected def createTopologyCacheConfig(typedProps: TypedProperties): Configuration = {
             if (delay > 0)
                Thread.sleep(delay)
 
-            cacheManager.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
+            val cfg = super.createTopologyCacheConfig(typedProps)
+            cfg.setSyncCommitPhase(true) // Only for testing, so that asserts work fine.
+            cfg.setSyncRollbackPhase(true) // Only for testing, so that asserts work fine.
+            cfg
          }
       }
-      server.start(getProperties(host, port, idleTimeout, proxyHost, proxyPort), manager)
+      props.setProperty(PROP_KEY_HOST, host)
+      props.setProperty(PROP_KEY_PORT, port.toString)
+      server.start(props, manager)
       server
    }
 
@@ -75,9 +90,11 @@ object HotRodTestingUtil extends Logging {
 
    def startCrashingHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer = {
       val server = new HotRodServer {
-         import HotRodServer._
-         override protected def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
-            cacheManager.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
+         override protected def createTopologyCacheConfig(typedProps: TypedProperties): Configuration = {
+            val cfg = super.createTopologyCacheConfig(typedProps)
+            cfg.setSyncCommitPhase(true) // Only for testing, so that asserts work fine.
+            cfg.setSyncRollbackPhase(true) // Only for testing, so that asserts work fine.
+            cfg
          }
 
          override protected def removeSelfFromTopologyView {

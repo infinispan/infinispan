@@ -5,11 +5,10 @@ import java.lang.reflect.Method
 import test.HotRodTestingUtil._
 import org.testng.Assert._
 import java.util.Arrays
-import org.infinispan.manager.DefaultCacheManager
 import org.infinispan.server.core.CacheValue
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.test._
-import org.infinispan.util.{Util, ByteArrayKey}
+import org.infinispan.util.ByteArrayKey
 
 /**
  * Hot Rod server functional test.
