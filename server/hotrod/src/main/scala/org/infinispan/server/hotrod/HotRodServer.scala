@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod
 
 import org.infinispan.server.core.transport.{Decoder, Encoder}
-import org.infinispan.config.Configuration
 import org.infinispan.config.Configuration.CacheMode
 import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged
@@ -16,6 +15,8 @@ import org.infinispan.server.core.{CacheValue, Logging, AbstractProtocolServer}
 import org.infinispan.eviction.EvictionStrategy
 import org.infinispan.util.{TypedProperties, ByteArrayKey, Util};
 import org.infinispan.server.core.Main._
+import org.infinispan.config.{CacheLoaderManagerConfig, Configuration}
+import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -42,7 +43,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
       val properties = if (p == null) new Properties else p
       isClustered = cacheManager.getGlobalConfiguration.getTransportClass != null
       if (isClustered)
-         defineTopologyCacheConfig(cacheManager)
+         defineTopologyCacheConfig(cacheManager, TypedProperties.toTypedProperties(properties))
          
       super.start(properties, cacheManager, 11222)
    }
@@ -140,15 +141,33 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
       }
    }
 
-   protected def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
+   private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager, typedProps: TypedProperties) {
+      cacheManager.defineConfiguration(TopologyCacheName, createTopologyCacheConfig(typedProps))
+   }
+
+   protected def createTopologyCacheConfig(typedProps: TypedProperties): Configuration = {
+      val lockTimeout = typedProps.getLongProperty(PROP_KEY_TOPOLOGY_LOCK_TIMEOUT, TOPO_LOCK_TIMEOUT_DEFAULT, true)
+      val replTimeout = typedProps.getLongProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, TOPO_REPL_TIMEOUT_DEFAULT, true)
+      val doStateTransfer = typedProps.getBooleanProperty(PROP_KEY_TOPOLOGY_STATE_TRANSFER, TOPO_STATE_TRANSFER_DEFAULT, true)
       val topologyCacheConfig = new Configuration
       topologyCacheConfig.setCacheMode(CacheMode.REPL_SYNC)
-      topologyCacheConfig.setSyncReplTimeout(10000) // Milliseconds
-      topologyCacheConfig.setFetchInMemoryState(true) // State transfer required
+      topologyCacheConfig.setSyncReplTimeout(replTimeout) // Milliseconds
+      topologyCacheConfig.setLockAcquisitionTimeout(lockTimeout) // Milliseconds
       topologyCacheConfig.setEvictionStrategy(EvictionStrategy.NONE); // No eviction
       topologyCacheConfig.setExpirationLifespan(-1); // No maximum lifespan
       topologyCacheConfig.setExpirationMaxIdle(-1); // No maximum idle time
-      cacheManager.defineConfiguration(TopologyCacheName, topologyCacheConfig)
+      if (doStateTransfer) {
+         topologyCacheConfig.setFetchInMemoryState(true) // State transfer required
+         topologyCacheConfig.setStateRetrievalTimeout(replTimeout)
+      } else {
+         // Otherwise configure a cluster cache loader
+         val loaderConfigs = new CacheLoaderManagerConfig
+         val clusterLoaderConfig = new ClusterCacheLoaderConfig
+         clusterLoaderConfig.setRemoteCallTimeout(replTimeout)
+         loaderConfigs.addCacheLoaderConfig(clusterLoaderConfig)
+         topologyCacheConfig.setCacheLoaderManagerConfig(loaderConfigs)
+      }
+      topologyCacheConfig
    }
 
    @Listener(sync = false) // Use a separate thread to avoid blocking the view handler thread

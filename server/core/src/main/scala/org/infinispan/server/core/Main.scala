@@ -31,6 +31,9 @@ object Main extends Logging {
    val PROP_KEY_RECV_BUF_SIZE = "infinispan.server.recv_buf_size"
    val PROP_KEY_PROXY_HOST = "infinispan.server.proxy_host"
    val PROP_KEY_PROXY_PORT = "infinispan.server.proxy_port"
+   val PROP_KEY_TOPOLOGY_LOCK_TIMEOUT = "infinispan.server.topology.lock_timeout"
+   val PROP_KEY_TOPOLOGY_REPL_TIMEOUT = "infinispan.server.topology.repl_timeout"
+   val PROP_KEY_TOPOLOGY_STATE_TRANSFER = "infinispan.server.topology.state_transfer"
    val HOST_DEFAULT = "127.0.0.1"
    val MASTER_THREADS_DEFAULT = 0
    val WORKER_THREADS_DEFAULT = 0
@@ -38,6 +41,9 @@ object Main extends Logging {
    val TCP_NO_DELAY_DEFAULT = true
    val SEND_BUF_SIZE_DEFAULT = 0
    val RECV_BUF_SIZE_DEFAULT = 0
+   val TOPO_LOCK_TIMEOUT_DEFAULT = 10000L
+   val TOPO_REPL_TIMEOUT_DEFAULT = 10000L
+   val TOPO_STATE_TRANSFER_DEFAULT = true
 
    /**
     * Server properties.  This object holds all of the required
@@ -117,7 +123,7 @@ object Main extends Logging {
    }
 
    private def processCommandLine(args: Array[String]) {
-      val sopts = "-:hD:Vp:l:m:t:c:r:i:n:s:e:o:x:"
+      val sopts = "-:hD:Vp:l:m:t:c:r:i:n:s:e:o:x:k:u:a:"
       val lopts = Array(
          new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
          new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'V'),
@@ -132,7 +138,9 @@ object Main extends Logging {
          new LongOpt("send_buf_size", LongOpt.REQUIRED_ARGUMENT, null, 's'),
          new LongOpt("recv_buf_size", LongOpt.REQUIRED_ARGUMENT, null, 'e'),
          new LongOpt("proxy_host", LongOpt.REQUIRED_ARGUMENT, null, 'o'),
-         new LongOpt("proxy_port", LongOpt.REQUIRED_ARGUMENT, null, 'x')
+         new LongOpt("topo_lock_timeout", LongOpt.REQUIRED_ARGUMENT, null, 'k'),
+         new LongOpt("topo_repl_timeout", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
+         new LongOpt("topo_state_transfer", LongOpt.REQUIRED_ARGUMENT, null, 'a')
          )
       val getopt = new Getopt("startServer", args, sopts, lopts)
       var code: Int = 0
@@ -157,6 +165,9 @@ object Main extends Logging {
             case 'e' => props.setProperty(PROP_KEY_RECV_BUF_SIZE, getopt.getOptarg)
             case 'o' => props.setProperty(PROP_KEY_PROXY_HOST, getopt.getOptarg)
             case 'x' => props.setProperty(PROP_KEY_PROXY_PORT, getopt.getOptarg)
+            case 'k' => props.setProperty(PROP_KEY_TOPOLOGY_LOCK_TIMEOUT, getopt.getOptarg)
+            case 'u' => props.setProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, getopt.getOptarg)
+            case 'a' => props.setProperty(PROP_KEY_TOPOLOGY_STATE_TRANSFER, getopt.getOptarg)
             case 'D' => {
                val arg = getopt.getOptarg
                var name = ""
@@ -218,9 +229,22 @@ object Main extends Logging {
       println
       println("    -e, --recv_buf_size=<num>          Receive buffer size (default: as defined by the OS).")
       println
-      println("    -o, --proxy_host=<host or ip>      Host address to expose in topology information sent to clients. If not present, it defaults to configured host. Servers that do not transmit topology information ignore this setting.")
+      println("    -o, --proxy_host=<host or ip>      Host address to expose in topology information sent to clients.")
+      println("                                       If not present, it defaults to configured host.")
+      println("                                       Servers that do not transmit topology information ignore this setting.")
       println
-      println("    -x, --proxy_port=<num>             Port to expose in topology information sent to clients. If not present, it defaults to configured port. Servers that do not transmit topology information ignore this setting.")
+      println("    -x, --proxy_port=<num>             Port to expose in topology information sent to clients. If not present, it defaults to configured port.")
+      println("                                       Servers that do not transmit topology information ignore this setting.")
+      println
+      println("    -k, --topo_lock_timeout=<num>      Controls lock timeout (in milliseconds) for those servers that maintain the topology information in an internal cache.")
+      println
+      println("    -u, --topo_repl_timeout=<num>      Sets the maximum replication time (in milliseconds) for transfer of topology information between servers.")
+      println("                                       If state transfer is enabled, this setting also controls the topology cache state transfer timeout.")
+      println("                                       If state transfer is disabled, it controls the amount of time to wait for this topology data")
+      println("                                       to be lazily loaded from a different node when not present locally.")
+      println
+      println("    -a, --topo_state_trasfer=          Enabling topology information state transfer means that when a server starts it retrieves this information from a different node.")
+      println("          [true|false]                 Otherwise, if set to false, the topology information is lazily loaded if not available locally.")
       println
       println("    -D<name>[=<value>]                 Set a system property")
       println
