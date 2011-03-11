@@ -778,7 +778,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setStrictPeerToPeer")
       protected Boolean strictPeerToPeer = true;      
       
-      @ConfigurationDoc(name="distributedSyncTimeout",desc="Cluster-wide synchronization timeout for locks.  Used to coordinate changes in cluster membership.")
+      @ConfigurationDoc(name="distributedSyncTimeout",
+                        desc="Infinispan uses a distributed lock to maintain a coherent transaction log during state transfer or rehashing, "
+                              + "which means that only one cache can be doing state transfer or rehashing at the same time."
+                              + "This constraint is in place because more than one cache could be involved in a transaction."
+                              + "This timeout controls the time to wait to acquire acquire a lock on the distributed lock.")
       protected Long distributedSyncTimeout = 240000L; // default
       
       @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setTransportClass")
