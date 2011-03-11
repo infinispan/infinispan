@@ -1,13 +1,12 @@
 <!--
    This package will build a ZIP containing the following:
 
+   - infinispan-core.jar
+   + lib (contains dependencies for core)
    + modules
-      + core
-         - infinispan-core.jar
-         + lib (contains dependencies)
       + tree
          - infinispan-tree.jar
-         + lib (excluding core)
+         + lib (dependencies for tree, excluding core)
 
       .. etc ...
 
@@ -109,7 +108,7 @@
          </sources>
 
          <binaries>
-            <outputDirectory>.</outputDirectory>
+            <outputDirectory></outputDirectory>
             <unpack>false</unpack>
             <outputFileNameMapping>
                ${module.artifactId}.${module.extension}
@@ -118,7 +117,7 @@
             <dependencySets>
                <dependencySet>
                   <useTransitiveDependencies>false</useTransitiveDependencies>
-                  <outputDirectory>./lib</outputDirectory>
+                  <outputDirectory>/lib</outputDirectory>
                </dependencySet>
             </dependencySets>
 
