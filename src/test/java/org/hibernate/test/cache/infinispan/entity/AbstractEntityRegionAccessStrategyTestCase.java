@@ -26,6 +26,7 @@ package org.hibernate.test.cache.infinispan.entity;
 <<<<<<< HEAD
 =======
 
+<<<<<<< HEAD
 >>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
 import static org.hibernate.TestLogger.LOG;
 import java.util.concurrent.CountDownLatch;
@@ -42,24 +43,47 @@ import junit.framework.TestSuite;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 
 >>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
+=======
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.transaction.tm.BatchModeTransactionManager;
+
+>>>>>>> HHH-5942 - Migrate to JUnit 4
 import org.hibernate.cache.CacheDataDescription;
-import org.hibernate.cache.EntityRegion;
 import org.hibernate.cache.access.AccessType;
 import org.hibernate.cache.access.EntityRegionAccessStrategy;
 import org.hibernate.cache.impl.CacheDataDescriptionImpl;
 import org.hibernate.cache.infinispan.InfinispanRegionFactory;
-import org.hibernate.cache.infinispan.impl.BaseRegion;
-import org.hibernate.cache.infinispan.util.CacheAdapter;
-import org.hibernate.cache.infinispan.util.FlagAdapter;
+import org.hibernate.cache.infinispan.entity.EntityRegionImpl;
 import org.hibernate.cfg.Configuration;
+<<<<<<< HEAD
 import org.hibernate.service.spi.ServiceRegistry;
+=======
+import org.hibernate.internal.util.compare.ComparableComparator;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import junit.framework.AssertionFailedError;
+
+>>>>>>> HHH-5942 - Migrate to JUnit 4
 import org.hibernate.test.cache.infinispan.AbstractNonFunctionalTestCase;
+import org.hibernate.test.cache.infinispan.NodeEnvironment;
 import org.hibernate.test.cache.infinispan.util.CacheTestUtil;
+<<<<<<< HEAD
 import org.hibernate.testing.ServiceRegistryBuilder;
 import org.hibernate.internal.util.compare.ComparableComparator;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+=======
+
+import static org.hibernate.testing.TestingLogger.LOG;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+>>>>>>> HHH-5942 - Migrate to JUnit 4
 
 /**
  * Base class for tests of EntityRegionAccessStrategy impls.
@@ -897,21 +921,16 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 
 	protected static int testCount;
 
-	protected static Configuration localCfg;
-	protected static InfinispanRegionFactory localRegionFactory;
-	protected CacheAdapter localCache;
-	protected static Configuration remoteCfg;
-	protected static InfinispanRegionFactory remoteRegionFactory;
-	protected CacheAdapter remoteCache;
+	protected NodeEnvironment localEnvironment;
+	protected EntityRegionImpl localEntityRegion;
+	protected EntityRegionAccessStrategy localAccessStrategy;
+
+	protected NodeEnvironment remoteEnvironment;
+	protected EntityRegionImpl remoteEntityRegion;
+	protected EntityRegionAccessStrategy remoteAccessStrategy;
 
 	protected boolean invalidation;
 	protected boolean synchronous;
-
-	protected EntityRegion localEntityRegion;
-	protected EntityRegionAccessStrategy localAccessStrategy;
-
-	protected EntityRegion remoteEntityRegion;
-	protected EntityRegionAccessStrategy remoteAccessStrategy;
 
 	protected Exception node1Exception;
 	protected Exception node2Exception;
@@ -919,11 +938,14 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 	protected AssertionFailedError node1Failure;
 	protected AssertionFailedError node2Failure;
 
-	public static Test getTestSetup(Class testClass, String configName) {
-		TestSuite suite = new TestSuite( testClass );
-		return new AccessStrategyTestSetup( suite, configName );
-	}
+	@Before
+	public void prepareResources() throws Exception {
+		// to mimic exactly the old code results, both environments here are exactly the same...
+		Configuration cfg = createConfiguration( getConfigurationName() );
+		localEnvironment = new NodeEnvironment( cfg );
+		localEnvironment.prepare();
 
+<<<<<<< HEAD
 	public static Test getTestSetup(Test test, String configName) {
 		return new AccessStrategyTestSetup( test, configName );
 	}
@@ -949,31 +971,25 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 				REGION_NAME, localCfg
 				.getProperties(), getCacheDataDescription()
 		);
+=======
+		localEntityRegion = localEnvironment.getEntityRegion( REGION_NAME, getCacheDataDescription() );
+>>>>>>> HHH-5942 - Migrate to JUnit 4
 		localAccessStrategy = localEntityRegion.buildAccessStrategy( getAccessType() );
 
-		localCache = ((BaseRegion) localEntityRegion).getCacheAdapter();
-
-		invalidation = localCache.isClusteredInvalidation();
-		synchronous = localCache.isSynchronous();
+		invalidation = localEntityRegion.getCacheAdapter().isClusteredInvalidation();
+		synchronous = localEntityRegion.getCacheAdapter().isSynchronous();
 
 		// Sleep a bit to avoid concurrent FLUSH problem
 		avoidConcurrentFlush();
 
-		remoteEntityRegion = remoteRegionFactory.buildEntityRegion(
-				REGION_NAME, remoteCfg
-				.getProperties(), getCacheDataDescription()
-		);
+		remoteEnvironment = new NodeEnvironment( cfg );
+		remoteEnvironment.prepare();
+
+		remoteEntityRegion = remoteEnvironment.getEntityRegion( REGION_NAME, getCacheDataDescription() );
 		remoteAccessStrategy = remoteEntityRegion.buildAccessStrategy( getAccessType() );
-
-		remoteCache = ((BaseRegion) remoteEntityRegion).getCacheAdapter();
-
-		node1Exception = null;
-		node2Exception = null;
-
-		node1Failure = null;
-		node2Failure = null;
 	}
 
+<<<<<<< HEAD
 	protected void tearDown() throws Exception {
 
 		super.tearDown();
@@ -998,10 +1014,16 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 		node1Failure = null;
 		node2Failure = null;
 	}
+=======
+	protected abstract String getConfigurationName();
+>>>>>>> HHH-5942 - Migrate to JUnit 4
 
 	protected static Configuration createConfiguration(String configName) {
 		Configuration cfg = CacheTestUtil.buildConfiguration(
-				REGION_PREFIX, InfinispanRegionFactory.class, true, false
+				REGION_PREFIX,
+				InfinispanRegionFactory.class,
+				true,
+				false
 		);
 		cfg.setProperty( InfinispanRegionFactory.ENTITY_CACHE_RESOURCE_PROP, configName );
 		return cfg;
@@ -1010,6 +1032,18 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 	protected CacheDataDescription getCacheDataDescription() {
 		return new CacheDataDescriptionImpl( true, true, ComparableComparator.INSTANCE );
 	}
+
+	@After
+	public void releaseResources() throws Exception {
+		if ( localEnvironment != null ) {
+			localEnvironment.release();
+		}
+		if ( remoteEnvironment != null ) {
+			remoteEnvironment.release();
+		}
+	}
+
+	protected abstract AccessType getAccessType();
 
 	protected boolean isUsingInvalidation() {
 		return invalidation;
@@ -1038,19 +1072,20 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 		}
 	}
 
-	/**
-	 * This is just a setup test where we assert that the cache config is as we expected.
-	 */
+	@Test
 	public abstract void testCacheConfiguration();
 
+	@Test
 	public void testGetRegion() {
 		assertEquals( "Correct region", localEntityRegion, localAccessStrategy.getRegion() );
 	}
 
+	@Test
 	public void testPutFromLoad() throws Exception {
 		putFromLoadTest( false );
 	}
 
+	@Test
 	public void testPutFromLoadMinimal() throws Exception {
 		putFromLoadTest( true );
 	}
@@ -1175,6 +1210,7 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 		}
 	}
 
+	@Test
 	public void testInsert() throws Exception {
 
 		final String KEY = KEY_BASE + testCount++;
@@ -1267,6 +1303,7 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 		assertEquals( "Correct node2 value", expected, remoteAccessStrategy.get( KEY, txTimestamp ) );
 	}
 
+	@Test
 	public void testUpdate() throws Exception {
 
 		final String KEY = KEY_BASE + testCount++;
@@ -1368,26 +1405,30 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 		assertEquals( "Correct node2 value", expected, remoteAccessStrategy.get( KEY, txTimestamp ) );
 	}
 
+	@Test
 	public void testRemove() {
 		evictOrRemoveTest( false );
 	}
 
+	@Test
 	public void testRemoveAll() {
 		evictOrRemoveAllTest( false );
 	}
 
+	@Test
 	public void testEvict() {
 		evictOrRemoveTest( true );
 	}
 
+	@Test
 	public void testEvictAll() {
 		evictOrRemoveAllTest( true );
 	}
 
 	private void evictOrRemoveTest(boolean evict) {
 		final String KEY = KEY_BASE + testCount++;
-		assertEquals( 0, getValidKeyCount( localCache.keySet() ) );
-		assertEquals( 0, getValidKeyCount( remoteCache.keySet() ) );
+		assertEquals( 0, getValidKeyCount( localEntityRegion.getCacheAdapter().keySet() ) );
+		assertEquals( 0, getValidKeyCount( remoteEntityRegion.getCacheAdapter().keySet() ) );
 
 		assertNull( "local is clean", localAccessStrategy.get( KEY, System.currentTimeMillis() ) );
 		assertNull( "remote is clean", remoteAccessStrategy.get( KEY, System.currentTimeMillis() ) );
@@ -1405,15 +1446,15 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 		}
 
 		assertEquals( null, localAccessStrategy.get( KEY, System.currentTimeMillis() ) );
-		assertEquals( 0, getValidKeyCount( localCache.keySet() ) );
+		assertEquals( 0, getValidKeyCount( localEntityRegion.getCacheAdapter().keySet() ) );
 		assertEquals( null, remoteAccessStrategy.get( KEY, System.currentTimeMillis() ) );
-		assertEquals( 0, getValidKeyCount( remoteCache.keySet() ) );
+		assertEquals( 0, getValidKeyCount( remoteEntityRegion.getCacheAdapter().keySet() ) );
 	}
 
 	private void evictOrRemoveAllTest(boolean evict) {
 		final String KEY = KEY_BASE + testCount++;
-		assertEquals( 0, getValidKeyCount( localCache.keySet() ) );
-		assertEquals( 0, getValidKeyCount( remoteCache.keySet() ) );
+		assertEquals( 0, getValidKeyCount( localEntityRegion.getCacheAdapter().keySet() ) );
+		assertEquals( 0, getValidKeyCount( remoteEntityRegion.getCacheAdapter().keySet() ) );
 		assertNull( "local is clean", localAccessStrategy.get( KEY, System.currentTimeMillis() ) );
 		assertNull( "remote is clean", remoteAccessStrategy.get( KEY, System.currentTimeMillis() ) );
 
@@ -1439,17 +1480,17 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 
 		// This should re-establish the region root node in the optimistic case
 		assertNull( localAccessStrategy.get( KEY, System.currentTimeMillis() ) );
-		assertEquals( 0, getValidKeyCount( localCache.keySet() ) );
+		assertEquals( 0, getValidKeyCount( localEntityRegion.getCacheAdapter().keySet() ) );
 
 		// Re-establishing the region root on the local node doesn't
 		// propagate it to other nodes. Do a get on the remote node to re-establish
 		assertEquals( null, remoteAccessStrategy.get( KEY, System.currentTimeMillis() ) );
-		assertEquals( 0, getValidKeyCount( remoteCache.keySet() ) );
+		assertEquals( 0, getValidKeyCount( remoteEntityRegion.getCacheAdapter().keySet() ) );
 
 		// Test whether the get above messes up the optimistic version
 		remoteAccessStrategy.putFromLoad( KEY, VALUE1, System.currentTimeMillis(), new Integer( 1 ) );
 		assertEquals( VALUE1, remoteAccessStrategy.get( KEY, System.currentTimeMillis() ) );
-		assertEquals( 1, getValidKeyCount( remoteCache.keySet() ) );
+		assertEquals( 1, getValidKeyCount( remoteEntityRegion.getCacheAdapter().keySet() ) );
 
 		// Wait for async propagation
 		sleep( 250 );
@@ -1474,6 +1515,7 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 			log.error( e.getMessage(), e );
 		}
 	}
+<<<<<<< HEAD
 
 	private static class AccessStrategyTestSetup extends TestSetup {
 
@@ -1543,4 +1585,6 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 	}
 >>>>>>> HHH-5949 - Migrate, complete and integrate TransactionFactory as a service
 
+=======
+>>>>>>> HHH-5942 - Migrate to JUnit 4
 }
