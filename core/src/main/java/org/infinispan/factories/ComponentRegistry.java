@@ -16,9 +16,11 @@ import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static java.util.Collections.emptyMap;
+import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
 
 /**
  * Named cache specific components
@@ -65,10 +67,10 @@ public class ComponentRegistry extends AbstractComponentRegistry {
          // register any module-specific commmand initializers
          Map<Byte, ModuleCommandInitializer> initializers = ModuleProperties.moduleCommandInitializers();
          if (initializers != null && !initializers.isEmpty()) {
-            registerComponent(initializers, KnownComponentNames.MODULE_COMMAND_INITIALIZERS);
-            for (ModuleCommandInitializer mci: initializers.values()) registerComponent(mci, mci.getClass());
+            registerNonVolatileComponent(initializers, MODULE_COMMAND_INITIALIZERS);
+            for (ModuleCommandInitializer mci: initializers.values()) registerNonVolatileComponent(mci, mci.getClass());
          } else
-            registerComponent(Collections.<Object, Object>emptyMap(), KnownComponentNames.MODULE_COMMAND_INITIALIZERS);
+            registerNonVolatileComponent(emptyMap(), MODULE_COMMAND_INITIALIZERS);
       }
       catch (Exception e) {
          throw new CacheException("Unable to construct a ComponentRegistry!", e);
