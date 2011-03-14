@@ -16,6 +16,7 @@ import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -66,7 +67,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
          if (initializers != null && !initializers.isEmpty()) {
             registerComponent(initializers, KnownComponentNames.MODULE_COMMAND_INITIALIZERS);
             for (ModuleCommandInitializer mci: initializers.values()) registerComponent(mci, mci.getClass());
-         }
+         } else
+            registerComponent(Collections.<Object, Object>emptyMap(), KnownComponentNames.MODULE_COMMAND_INITIALIZERS);
       }
       catch (Exception e) {
          throw new CacheException("Unable to construct a ComponentRegistry!", e);
