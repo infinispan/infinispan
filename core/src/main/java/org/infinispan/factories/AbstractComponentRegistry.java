@@ -183,6 +183,16 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       registerComponent(component, type.getName());
    }
 
+   protected void registerNonVolatileComponent(Object component, String name) {
+      registerComponent(component, name);
+      Component c = componentLookup.get(name);
+      c.nonVolatile = true;
+   }
+
+   protected void registerNonVolatileComponent(Object component, Class type) {
+      registerNonVolatileComponent(component, type.getName());
+   }
+
    public void registerComponent(Object component, String name) {
       if (component == null)
          throw new NullPointerException("Cannot register a null component under name [" + name + "]");
