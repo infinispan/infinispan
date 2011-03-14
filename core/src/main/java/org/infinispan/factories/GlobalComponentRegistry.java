@@ -77,9 +77,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
          Map<Byte, ModuleCommandFactory> factories = ModuleProperties.moduleCommandFactories();
          if (factories != null && !factories.isEmpty())
-            registerComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
+            registerNonVolatileComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
          else
-            registerComponent(Collections.<Object, Object>emptyMap(), KnownComponentNames.MODULE_COMMAND_FACTORIES);
+            registerNonVolatileComponent(Collections.<Object, Object>emptyMap(), KnownComponentNames.MODULE_COMMAND_FACTORIES);
          this.createdCaches = createdCaches;
       } catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);
