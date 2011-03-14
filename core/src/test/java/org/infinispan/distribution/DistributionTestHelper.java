@@ -4,7 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -78,8 +77,6 @@ public class DistributionTestHelper {
    }
 
    public static Address addressOf(Cache<?, ?> cache) {
-      EmbeddedCacheManager cacheManager = cache.getCacheManager();
-      return cacheManager.getAddress();
-
+      return cache.getAdvancedCache().getRpcManager().getAddress();
    }
 }
