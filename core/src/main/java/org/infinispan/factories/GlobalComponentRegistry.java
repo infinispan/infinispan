@@ -19,6 +19,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.management.MBeanServerFactory;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -77,6 +78,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          Map<Byte, ModuleCommandFactory> factories = ModuleProperties.moduleCommandFactories();
          if (factories != null && !factories.isEmpty())
             registerComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
+         else
+            registerComponent(Collections.<Object, Object>emptyMap(), KnownComponentNames.MODULE_COMMAND_FACTORIES);
          this.createdCaches = createdCaches;
       } catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);
