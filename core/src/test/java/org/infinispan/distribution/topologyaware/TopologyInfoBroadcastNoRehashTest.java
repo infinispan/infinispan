@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(groups = "functional", testName = "distribution.TopologyInfoBroadcastNoRehashTest", enabled = false, description = "Left out for now until new, push-based rehash is implemented")
+@Test(groups = "functional", testName = "distribution.TopologyInfoBroadcastNoRehashTest")
 public class TopologyInfoBroadcastNoRehashTest extends TopologyInfoBroadcastTest {
 
    @Override
