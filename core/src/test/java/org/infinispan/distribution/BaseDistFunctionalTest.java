@@ -78,7 +78,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
       cacheAddresses = new ArrayList<Address>(INIT_CLUSTER_SIZE);
       for (Cache cache : caches) {
-         EmbeddedCacheManager cacheManager = cache.getCacheManager();
+         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
          cacheAddresses.add(cacheManager.getAddress());
       }
 
