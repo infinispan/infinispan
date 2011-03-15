@@ -3,7 +3,6 @@ package org.infinispan.tx;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -16,7 +15,7 @@ import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.List;
 
-@Test(groups = "functional", testName = "tx.OnePhaseXATest", description = "See ISPN-156 for details.", enabled = false)
+@Test(groups = "functional", testName = "tx.OnePhaseXATest", description = "See ISPN-156 for details.")
 public class OnePhaseXATest extends AbstractInfinispanTest {
    private List<Cache> caches;
    private List<EmbeddedCacheManager> cacheContainers;
