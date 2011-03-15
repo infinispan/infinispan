@@ -69,29 +69,29 @@ public class QueryHelperTest {
    public void testConstructorWithNoClasses() {
       Cache<?, ?> c = createCache(cfg);
       Class[] classes = new Class[0];
-      QueryHelper qh = new QueryHelper(c, null, classes);
+      new QueryHelper(c, null, classes);
    }
 
    @Test(expectedExceptions = CacheException.class)
    public void testCheckInterceptorChainWithIndexLocalTrue() {
       Cache<?, ?> c = createCache(cfg);
-      QueryHelper qh = new QueryHelper(c, null, Person.class);
-      QueryHelper qh2 = new QueryHelper(c, null, Person.class);
+      new QueryHelper(c, null, Person.class);
+      new QueryHelper(c, null, Person.class);
    }
 
    @Test(expectedExceptions = CacheException.class)
    public void testCheckInterceptorChainWithIndexLocalFalse() {
       cfg.configureIndexing().indexLocalOnly(false);
       Cache<?, ?> c = createCache(cfg);
-      QueryHelper qh = new QueryHelper(c, null, Person.class);
-      QueryHelper qh2 = new QueryHelper(c, null, Person.class);
+      new QueryHelper(c, null, Person.class);
+      new QueryHelper(c, null, Person.class);
    }
 
    public void testTwoQueryHelpersWithTwoCaches() {
       Cache c1 = createCache(cfg);
       Cache c2 = createCache(cfg);
-      QueryHelper qh1 = new QueryHelper(c1, null, Person.class);
-      QueryHelper qh2 = new QueryHelper(c2, null, Person.class);
+      new QueryHelper(c1, null, Person.class);
+      new QueryHelper(c2, null, Person.class);
    }
 
 }
