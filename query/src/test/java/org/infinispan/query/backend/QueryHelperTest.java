@@ -50,8 +50,7 @@ public class QueryHelperTest {
    @BeforeMethod
    public void setUp() {
       cfg = new Configuration();
-      cfg.setIndexingEnabled(true);
-      cfg.setIndexLocalOnly(true);
+      cfg.configureIndexing().enabled(true).indexLocalOnly(true);
       cacheContainers = new LinkedList<EmbeddedCacheManager>();
    }
 
@@ -82,7 +81,7 @@ public class QueryHelperTest {
 
    @Test(expectedExceptions = CacheException.class)
    public void testCheckInterceptorChainWithIndexLocalFalse() {
-      cfg.setIndexLocalOnly(false);
+      cfg.configureIndexing().indexLocalOnly(false);
       Cache<?, ?> c = createCache(cfg);
       QueryHelper qh = new QueryHelper(c, null, Person.class);
       QueryHelper qh2 = new QueryHelper(c, null, Person.class);

@@ -48,8 +48,7 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultStandaloneConfig(true);
-      c.setIndexingEnabled(true);
-      c.setIndexLocalOnly(true);
+      c.configureIndexing().enabled(true).indexLocalOnly(true);
       m_cacheManager = TestCacheManagerFactory.createCacheManager(c, true);
       m_cache = m_cacheManager.getCache();
       m_transactionManager = m_cache.getAdvancedCache().getTransactionManager();

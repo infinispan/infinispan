@@ -78,8 +78,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       Configuration cacheCfg = getDefaultClusteredConfig(REPL_SYNC);
       enhanceConfig(cacheCfg);
-      cacheCfg.setIndexingEnabled(true);
-      cacheCfg.setIndexLocalOnly(false);
+      cacheCfg.configureIndexing().enabled(true).indexLocalOnly(false);
       List<Cache<String, Person>> caches = createClusteredCaches(2, "infinispan-query", cacheCfg);
 
       cache1 = caches.get(0);

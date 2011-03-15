@@ -73,7 +73,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
       // test mergeability
       Configuration other = new Configuration();
       other.setUseLazyDeserialization(true);
-      other.setUseLockStriping(false);
+      other.configureLocking().useLockStriping(false);
       other.applyOverrides(dolly);
       assert other.isUseLazyDeserialization();
       assert !other.isUseLockStriping();
