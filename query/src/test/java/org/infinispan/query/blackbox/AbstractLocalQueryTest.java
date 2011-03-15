@@ -56,7 +56,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
    protected QueryParser queryParser;
    protected Query luceneQuery;
    protected CacheQuery cacheQuery;
-   protected List found;
+   protected List<Object> found;
    protected String key1 = "Navin";
    protected String key2 = "BigGoat";
    protected String key3 = "MiniGoat";
