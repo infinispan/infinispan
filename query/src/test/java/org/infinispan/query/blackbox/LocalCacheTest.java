@@ -45,8 +45,7 @@ public class LocalCacheTest extends AbstractLocalQueryTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultClusteredConfig(LOCAL, true);
-      c.setIndexingEnabled(true);
-      c.setIndexLocalOnly(false);
+      c.configureIndexing().enabled(true).indexLocalOnly(false);
       enhanceConfig(c);
       return TestCacheManagerFactory.createCacheManager(c, true);
    }

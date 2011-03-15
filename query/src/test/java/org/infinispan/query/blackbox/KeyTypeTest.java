@@ -61,8 +61,7 @@ public class KeyTypeTest extends SingleCacheManagerTest{
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultClusteredConfig(LOCAL, true);
-      c.setIndexingEnabled(true);
-      c.setIndexLocalOnly(false);
+      c.configureIndexing().enabled(true).indexLocalOnly(false);
       cacheManager = TestCacheManagerFactory.createCacheManager(c, true);
       cache = cacheManager.getCache();
       qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class);
