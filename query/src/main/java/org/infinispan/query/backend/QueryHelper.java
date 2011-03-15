@@ -59,10 +59,10 @@ public class QueryHelper {
 
    private static final Log log = LogFactory.getLog(QueryHelper.class);
 
-   private Cache cache;
-   private Properties properties;
+   private final Cache cache;
+   private final Properties properties;
+   private final SearchFactoryImplementor searchFactory;
    private Class[] classes;
-   private SearchFactoryImplementor searchFactory;
 
    /**
     * Constructor that will take in 3 params and build the searchFactory for Hibernate Search.
@@ -199,5 +199,9 @@ public class QueryHelper {
             throw new CacheException("There is already an instance of the QueryInterceptor running");
          }
       }
+   }
+   
+   public void close() {
+      this.searchFactory.close();
    }
 }
