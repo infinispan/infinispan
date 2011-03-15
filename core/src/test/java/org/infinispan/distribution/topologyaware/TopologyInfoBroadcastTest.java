@@ -43,7 +43,6 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
       gc.setMachineId(m);
    }
 
-   @Test(enabled = false, description = "Waiting on push-based rehash")
    public void testIsReplicated() {
       assert advancedCache(0).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;
       assert advancedCache(1).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;
@@ -65,7 +64,7 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
       assertEquals(tach.getTopologyInfo(), dmi.getTopologyInfo());
    }
 
-   @Test(dependsOnMethods = "testIsReplicated", enabled = false, description = "Waiting on push-based rehash")
+   @Test(dependsOnMethods = "testIsReplicated")
    public void testNodeLeaves() {
       TestingUtil.killCacheManagers(manager(1));
       BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0), cache(2));
