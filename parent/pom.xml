@@ -511,6 +511,7 @@
          </activation>
          <properties>
             <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
+            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
       </profile>
    </profiles>
