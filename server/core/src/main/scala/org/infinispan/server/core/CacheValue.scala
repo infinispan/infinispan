@@ -7,13 +7,21 @@ import org.infinispan.marshall.AbstractExternalizer
 import scala.collection.JavaConversions._
 
 /**
- * Represents the value part of a key/value pair stored in a protocol cache. With each value, a version is stored
- * which allows for conditional operations to be executed remotely in a efficient way. For more detailed info on
+ * Represents the value part of a key/value pair stored in a protocol cache.
+ * With each value, a version is stored which allows for conditional operations
+ * to be executed remotely in a efficient way.  For more detailed info on
  * conditional operations, check <a href="http://community.jboss.org/docs/DOC-15604">this document</a>.
+ *
+ * The class can be marshalled either via its externalizer or via the JVM
+ * serialization.  The reason for supporting both methods is to enable
+ * third-party libraries to be able to marshall/unmarshall them using standard
+ * JVM serialization rules.  The Infinispan marshalling layer will always
+ * chose the most performant one, aka the Externalizer method.
  *
  * @author Galder Zamarreño
  * @since 4.1
  */
+@serializable
 class CacheValue(val data: Array[Byte], val version: Long) {
 
    override def toString = {
