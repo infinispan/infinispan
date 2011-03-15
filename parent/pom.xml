@@ -71,6 +71,7 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <defaultTestGroup>functional,unit</defaultTestGroup>
       <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
+      <infinispan.test.parallel.threads>20</infinispan.test.parallel.threads>
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
 
@@ -270,7 +271,7 @@
             <version>2.4.3-JBOSS</version>
             <configuration>
                <parallel>tests</parallel>
-               <threadCount>10</threadCount>
+               <threadCount>${infinispan.test.parallel.threads}</threadCount>
                <forkMode>none</forkMode>
                <systemProperties>
                   <property>
@@ -501,6 +502,15 @@
          </activation>
          <properties>
             <version.lucene>2.9.3</version.lucene>
+         </properties>
+      </profile>
+      <profile>
+         <id>nonParallel</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
          </properties>
       </profile>
    </profiles>
