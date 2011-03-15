@@ -33,6 +33,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.Util;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -132,9 +133,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    }
 
    public void testRestoreAtomicMap(Method m) {
-      Configuration cfg = new Configuration();
-      cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
-      CacheContainer localCacheContainer = TestCacheManagerFactory.createCacheManager(cfg, true);
+      CacheContainer localCacheContainer = getContainerWithCacheLoader();
       try {
          Cache<String, Object> cache = localCacheContainer.getCache();
          cacheNames.add(cache.getName());
@@ -152,9 +151,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    }
 
    public void testRestoreTransactionalAtomicMap(Method m) throws Exception {
-      Configuration cfg = new Configuration();
-      cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
-      CacheContainer localCacheContainer = TestCacheManagerFactory.createCacheManager(cfg, true);
+      CacheContainer localCacheContainer = getContainerWithCacheLoader();
       try {
          Cache<String, Object> cache = localCacheContainer.getCache();
          cacheNames.add(cache.getName());
@@ -172,6 +169,22 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
       } finally {
          TestingUtil.killCacheManagers(localCacheContainer);
       }
+   }
+
+   public void testByteArrayKey(Method m) {
+      CacheContainer localCacheContainer = getContainerWithCacheLoader();
+      try {
+         Cache<ByteArrayKey, Object> cache = localCacheContainer.getCache();
+         cache.put(new ByteArrayKey(m.getName().getBytes()), "hello");
+      } finally {
+         TestingUtil.killCacheManagers(localCacheContainer);
+      }
+   }
+
+   private CacheContainer getContainerWithCacheLoader() {
+      Configuration cfg = new Configuration();
+      cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
+      return TestCacheManagerFactory.createCacheManager(cfg, true);
    }
 
    private void assertCacheEntry(Cache cache, String key, String value, long lifespanMillis, long maxIdleMillis) {
