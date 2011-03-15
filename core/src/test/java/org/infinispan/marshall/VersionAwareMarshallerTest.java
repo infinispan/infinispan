@@ -63,6 +63,7 @@ import org.infinispan.test.data.Person;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
+import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -429,7 +430,11 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          TraceInformation inf = (TraceInformation) e.getCause();
          assert inf.toString().contains("in object java.lang.Object@");
       }
-      
+   }
+
+   public void testByteArrayKey() throws Exception {
+      ByteArrayKey o = new ByteArrayKey("123".getBytes());
+      marshallAndAssertEquality(o);
    }
 
    static class PojoWhichFailsOnUnmarshalling extends Pojo {
