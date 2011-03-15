@@ -7,11 +7,19 @@ import org.infinispan.marshall.AbstractExternalizer
 import scala.collection.JavaConversions._
 
 /**
- * Memcached value part of key/value pair containing flags on top the common byte array and version.
+ * Memcached value part of key/value pair containing flags on top the common
+ * byte array and version.
+ *
+ * The class can be marshalled either via its externalizer or via the JVM
+ * serialization.  The reason for supporting both methods is to enable
+ * third-party libraries to be able to marshall/unmarshall them using standard
+ * JVM serialization rules.  The Infinispan marshalling layer will always
+ * chose the most performant one, aka the Externalizer method.
  *
  * @author Galder Zamarreño
  * @since 4.1
  */
+@serializable
 class MemcachedValue(override val data: Array[Byte], override val version: Long, val flags: Long)
       extends CacheValue(data, version) {
 
