@@ -25,7 +25,7 @@ class HotRodConcurrentStartTest extends MultipleCacheManagersTest {
    @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
    override def createCacheManagers {
       for (i <- 0 until numberOfServers) {
-         val cm = addClusterEnabledCacheManager()
+         val cm = super.addClusterEnabledCacheManager()
          cm.defineConfiguration(cacheName, getDefaultClusteredConfig(CacheMode.DIST_SYNC))
       }
    }
@@ -50,8 +50,8 @@ class HotRodConcurrentStartTest extends MultipleCacheManagersTest {
       val initialPort = UniquePortThreadLocal.get.intValue
       // Start servers in paralell using Scala's futures
       // Start first server with delay so that cache not found issue can be replicated
-      val hotRodServer1 = future(startHotRodServerWithDelay(cacheManagers.get(0), initialPort, 5000))
-      val hotRodServer2 = future(startHotRodServer(cacheManagers.get(1), initialPort + 10))
+      val hotRodServer1 = future(startHotRodServerWithDelay(getCacheManagers().get(0), initialPort, 5000))
+      val hotRodServer2 = future(startHotRodServer(getCacheManagers().get(1), initialPort + 10))
 
       hotRodServers = hotRodServers ::: List(hotRodServer1.apply)
       hotRodServers = hotRodServers ::: List(hotRodServer2.apply)
