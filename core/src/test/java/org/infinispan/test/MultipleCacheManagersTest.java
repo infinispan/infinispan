@@ -342,4 +342,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected LockManager lockManager(int i, String cacheName) {
       return TestingUtil.extractLockManager(cache(i, cacheName));
    }
+
+   public List<EmbeddedCacheManager> getCacheManagers() {
+      return cacheManagers;
+   }
 }

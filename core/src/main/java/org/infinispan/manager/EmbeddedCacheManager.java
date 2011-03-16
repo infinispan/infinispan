@@ -130,10 +130,17 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
    Configuration getDefaultConfiguration();
 
    /**
-    * If no named caches are registered, this method returns an empty set.  The default cache is never included in this
+    * This method returns a collection of caches names which contains the
+    * caches that have been defined via XML or programmatically, and the
+    * caches that have been created at runtime via this cache manager
+    * instance.
+    *
+    * If no named caches are registered or no caches have been created, this
+    * method returns an empty set.  The default cache is never included in this
     * set of cache names.
     *
-    * @return an immutable set of non-default named caches registered with this cache manager.
+    * @return an immutable set of non-default named caches registered or
+    * created with this cache manager.
     */
    Set<String> getCacheNames();
 
