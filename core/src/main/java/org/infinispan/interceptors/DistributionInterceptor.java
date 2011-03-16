@@ -405,7 +405,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     */
    private boolean isSingleOwnerAndLocal(RecipientGenerator recipientGenerator) {
       List<Address> recipients;
-      return configuration.getNumOwners() == 1 && (recipients = recipientGenerator.generateRecipients()) != null && recipients.get(0).equals(rpcManager.getTransport().getAddress());
+      return configuration.getNumOwners() == 1 && (recipients = recipientGenerator.generateRecipients()) != null && recipients.size() == 1 && recipients.get(0).equals(rpcManager.getTransport().getAddress());
    }
 
    interface KeyGenerator {
