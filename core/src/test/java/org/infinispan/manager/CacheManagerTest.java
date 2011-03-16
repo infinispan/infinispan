@@ -228,6 +228,17 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
    }
 
+   public void testRemoveNonExistentCache(Method m) {
+      EmbeddedCacheManager manager = getManagerWithStore(m, false, false);
+      try {
+         manager.getCache("cache");
+         // An attempt to remove a non-existing cache should be a no-op
+         manager.removeCache("does-not-exist");
+      } finally {
+         manager.stop();
+      }
+   }
+
    public void testRemoveCacheLocal(Method m) {
       EmbeddedCacheManager manager = getManagerWithStore(m, false, false);
       try {
@@ -239,6 +250,10 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          DataContainer data = getDataContainer(cache);
          assert !store.isEmpty();
          assert 0 != data.size();
+         manager.removeCache("cache");
+         assert store.isEmpty();
+         assert 0 == data.size();
+         // Try removing the cache again, it should be a no-op
          manager.removeCache("cache");
          assert store.isEmpty();
          assert 0 == data.size();
