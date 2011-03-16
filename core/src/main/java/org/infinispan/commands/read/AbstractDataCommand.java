@@ -21,12 +21,12 @@
  */
 package org.infinispan.commands.read;
 
-import java.util.Set;
-
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+
+import java.util.Set;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -98,8 +98,8 @@ public abstract class AbstractDataCommand implements DataCommand, FlagAffectedCo
    
    @Override
    public String toString() {
-      return new StringBuilder()
-         .append("AbstractDataCommand{key=")
+      return new StringBuilder(getClass().getSimpleName())
+         .append(" {key=")
          .append(key)
          .append(", flags=").append(flags)
          .append("}")
