@@ -585,7 +585,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    }
 
    public Set<String> getCacheNames() {
+      // Get the XML/programmatically defined caches
       Set<String> names = new HashSet<String>(configurationOverrides.keySet());
+      // Add the caches created dynamically without explicit config
+      // Since caches could be modified dynamically, make a safe copy of keys
+      names.addAll(Immutables.immutableSetConvert(caches.keySet()));
       names.remove(DEFAULT_CACHE_NAME);
       if (names.isEmpty())
          return Collections.emptySet();

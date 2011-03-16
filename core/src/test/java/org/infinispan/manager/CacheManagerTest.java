@@ -10,6 +10,8 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.testng.annotations.Test;
 
+import java.util.Set;
+
 /**
  * @author Manik Surtani
  * @since 4.0
@@ -149,6 +151,46 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       Configuration lazyLru = cm.defineConfiguration("lazyDeserializationWithLRU", "lazyDeserialization", c);
       assert lazyLru.isUseLazyDeserialization();
       assert lazyLru.getEvictionStrategy() == EvictionStrategy.LRU;
+   }
+
+   public void testGetCacheNames() {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      try {
+         cm.defineConfiguration("one", new Configuration());
+         cm.defineConfiguration("two", new Configuration());
+         cm.getCache("three");
+         Set<String> cacheNames = cm.getCacheNames();
+         assert 3 == cacheNames.size();
+         assert cacheNames.contains("one");
+         assert cacheNames.contains("two");
+         assert cacheNames.contains("three");
+      } finally {
+         cm.stop();
+      }
+   }
+
+   public void testCacheStopTwice() {
+      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      try {
+         Cache cache = localCacheManager.getCache();
+         cache.put("k", "v");
+         cache.stop();
+         cache.stop();
+      } finally {
+         TestingUtil.killCacheManagers(localCacheManager);
+      }
+   }
+
+   public void testCacheManagerStopTwice() {
+      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      try {
+         Cache cache = localCacheManager.getCache();
+         cache.put("k", "v");
+         localCacheManager.stop();
+         localCacheManager.stop();
+      } finally {
+         TestingUtil.killCacheManagers(localCacheManager);
+      }
    }
 
    @Test(expectedExceptions = IllegalStateException.class)
