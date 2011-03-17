@@ -110,12 +110,12 @@ public class RebalanceTask extends RehashTask {
                      log.trace("removed %d keys", removed);
                   log.trace("data container has now %d keys", dataContainer.size());
                }
-
-               distributionManager.getTransactionLogger().unblockNewTransactions();
             } else {
                if (trace) log.trace("Rehash not enabled, so not pushing state");
             }
          } finally {
+            if(configuration.isRehashEnabled())
+               distributionManager.getTransactionLogger().unblockNewTransactions();
             // wait for any enqueued remote commands to finish...
             distributionManager.setJoinComplete(true);
             distributionManager.setRehashInProgress(false);
