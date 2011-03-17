@@ -588,8 +588,8 @@ public class DistributionManagerImpl implements DistributionManager {
       boolean nodeLeaving;
       try {
          nodeLeaving = !leavers.isEmpty();
-         if (trace)
-            log.trace("Node leaving? %s RehashInProgress? %s Leavers = %s", nodeLeaving, rehashInProgress, leavers);
+//         if (trace)
+//            log.trace("Node leaving? %s RehashInProgress? %s Leavers = %s", nodeLeaving, rehashInProgress, leavers);
       } finally {
          chSwitchLock.readLock().unlock();
       }
