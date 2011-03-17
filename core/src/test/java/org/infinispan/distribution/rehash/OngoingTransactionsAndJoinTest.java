@@ -126,6 +126,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
          tm(cache).begin();
          cache.put(key(), "value");
          tx = tm(cache).getTransaction();
+         tx.enlistResource(new XAResourceAdapter()); // this is to force 2PC and to prevent transaction managers attempting to optimise the call to a 1PC.
          txsStarted.countDown();
       }
 

@@ -34,7 +34,7 @@ public class XAResourceAdapter implements XAResource {
    }
 
    public int prepare(Xid xid) throws XAException {
-      return 0;
+      return XA_OK;
    }
 
    public Xid[] recover(int i) throws XAException {
