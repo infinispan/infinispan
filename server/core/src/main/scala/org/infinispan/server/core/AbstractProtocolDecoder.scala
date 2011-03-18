@@ -77,7 +77,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
 
    private def writeResponse(ch: Channel, response: AnyRef) {
       if (response != null) {
-         if (isTrace) trace("Write response {0}", response)
+         if (isTrace) trace("Write response %s", response)
          response match {
             // We only expect Lists of ChannelBuffer instances, so don't worry about type erasure 
             case l: List[ChannelBuffer] => l.foreach(ch.write(_))

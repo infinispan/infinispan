@@ -108,7 +108,7 @@ object HotRodTestingUtil extends Logging {
 
    def k(m: Method, prefix: String): Array[Byte] = {
       val bytes: Array[Byte] = (prefix + m.getName).getBytes
-      trace("String {0} is converted to {1} bytes", prefix + m.getName, Util.printArray(bytes, true))
+      trace("String %s is converted to %s bytes", prefix + m.getName, Util.printArray(bytes, true))
       bytes
    }
 

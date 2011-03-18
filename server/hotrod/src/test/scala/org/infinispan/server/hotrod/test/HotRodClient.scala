@@ -222,7 +222,7 @@ private class ClientPipelineFactory(client: HotRodClient, rspTimeoutSeconds: Int
 private class Encoder extends OneToOneEncoder {
 
    override def encode(ctx: ChannelHandlerContext, ch: Channel, msg: Any) = {
-      trace("Encode {0} so that it's sent to the server", msg)
+      trace("Encode %s so that it's sent to the server", msg)
       msg match {
          case partial: PartialOp => {
             val buffer = new ChannelBufferAdapter(ChannelBuffers.dynamicBuffer)
@@ -380,7 +380,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[NoState] wi
          }
 
       }
-      trace("Got response from server: {0}", resp)
+      trace("Got response from server: %s", resp)
       resp
    }
 
@@ -395,7 +395,7 @@ private class ClientHandler(rspTimeoutSeconds: Int) extends SimpleChannelUpstrea
 
    override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
       val resp = e.getMessage.asInstanceOf[TestResponse]
-      trace("Put {0} in responses", resp)
+      trace("Put %s in responses", resp)
       responses.put(resp.messageId, resp)
    }
 

@@ -61,7 +61,7 @@ object Main extends Logging {
    def getCacheManager = cacheManager
 
    def main(args: Array[String]) {
-      info("Start main with args: {0}", args.mkString(", "))
+      info("Start main with args: %s", args.mkString(", "))
       val worker = new Callable[Void] {
          override def call = {
             try {
