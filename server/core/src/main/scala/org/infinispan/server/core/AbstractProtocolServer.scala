@@ -58,8 +58,8 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
          }
 
          if (isDebugEnabled) {
-            debug("Starting server with basic settings: host={0}, port={1}, masterThreads={2}, workerThreads={3}, " +
-                  "idleTimeout={4}, tcpNoDelay={5}, sendBufSize={6}, recvBufSize={7}", host, port,
+            debug("Starting server with basic settings: host=%s, port=%d, masterThreads=%s, workerThreads=%d, " +
+                  "idleTimeout=%d, tcpNoDelay=%b, sendBufSize=%d, recvBufSize=%d", host, port,
                   masterThreads, workerThreads, idleTimeout, tcpNoDelay, sendBufSize, recvBufSize)
          }
 
@@ -90,7 +90,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
    override def stop {
       val isDebug = isDebugEnabled
       if (isDebug)
-         debug("Stopping server listening in {0}:{1}", host, port)
+         debug("Stopping server listening in %s:%d", host, port)
 
       if (transport != null)
          transport.stop

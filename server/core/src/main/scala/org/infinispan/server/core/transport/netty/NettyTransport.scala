@@ -38,7 +38,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
          if (isDebugEnabled) debug("Configured unlimited threads for master thread pool")
          Executors.newCachedThreadPool
       } else {
-         if (isDebugEnabled) debug("Configured {0} threads for master thread pool", masterThreads)
+         if (isDebugEnabled) debug("Configured %d threads for master thread pool", masterThreads)
          Executors.newFixedThreadPool(masterThreads)
       }
    }
@@ -49,7 +49,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
          Executors.newCachedThreadPool
       }
       else {
-         if (isDebugEnabled) debug("Configured {0} threads for worker thread pool", workerThreads)
+         if (isDebugEnabled) debug("Configured %d threads for worker thread pool", workerThreads)
          Executors.newFixedThreadPool(masterThreads)
       }
    }
@@ -66,7 +66,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
             // Set thread name to be: <prefix><ServerWorker-|ServerMaster-|ClientWorker-|ClientMaster-><number>
             val name = threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
             if (isTraceEnabled)
-               trace("Thread name will be {0}, with current thread name being {1} and proposed name being '{2}'",
+               trace("Thread name will be %s, with current thread name being %s and proposed name being '%s'",
                   name, currentThread, proposedThreadName)
             name
          }
@@ -90,7 +90,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
          warn("Server channel group did not completely unbind");
          for (ch <- asIterator(future.getGroup().iterator)) {
             if (ch.isBound()) {
-               warn("{0} is still bound to {1}", ch, ch.getRemoteAddress());
+               warn("%s is still bound to %s", ch, ch.getRemoteAddress());
             }
          }
       }

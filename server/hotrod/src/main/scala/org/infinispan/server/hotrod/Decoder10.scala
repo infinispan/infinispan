@@ -43,7 +43,7 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
          case 0x19 => BulkGetRequest
          case _ => throw new HotRodUnknownOperationException("Unknown operation: " + streamOp, messageId)
       }
-      if (isTraceEnabled) trace("Operation code: {0} has been matched to {1}", streamOp, op)
+      if (isTraceEnabled) trace("Operation code: %d has been matched to %s", streamOp, op)
       
       val cacheName = buffer.readString
       val flag = buffer.readUnsignedInt match {
