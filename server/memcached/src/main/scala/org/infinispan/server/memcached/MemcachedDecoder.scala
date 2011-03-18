@@ -94,7 +94,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       if (!h.endOfOp) {
          val line = readLine(b)
          if (!line.isEmpty) {
-            if (isTraceEnabled) trace("Operation parameters: {0}", line)
+            if (isTraceEnabled) trace("Operation parameters: %s", line)
             val args = line.trim.split(" +")
             try {
                var index = 0
@@ -527,7 +527,7 @@ private object RequestResolver extends Logging {
    )
 
    def toRequest(commandName: String): Option[Enumeration#Value] = {
-      if (isTraceEnabled) trace("Operation: {0}", commandName)
+      if (isTraceEnabled) trace("Operation: %s", commandName)
       val op = operations.get(commandName)
       op
    }

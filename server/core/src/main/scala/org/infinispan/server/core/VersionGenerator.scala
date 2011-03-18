@@ -45,7 +45,7 @@ object VersionGenerator {
       @ViewChanged
       def calculateRank(e: ViewChangedEvent) {
          val rank = calculateRank(e.getLocalAddress, asIterable(e.getNewMembers), e.getViewId)
-         if (isTraceEnabled) trace("Calculated rank based on view {0} and result was {1}", e, rank)
+         if (isTraceEnabled) trace("Calculated rank based on view %s and result was %d", e, rank)
       }
 
       private[core] def calculateRank(address: Address, members: Iterable[Address], viewId: Long): Long = {
