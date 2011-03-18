@@ -30,7 +30,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
    override def encode(ctx: ChannelHandlerContext, channel: Channel, msg: AnyRef): AnyRef = {
       val isTrace = isTraceEnabled
 
-      if (isTrace) trace("Encode msg {0}", msg)
+      if (isTrace) trace("Encode msg %s", msg)
       val buffer: ChannelBuffer = msg match { 
          case r: Response => writeHeader(r, isTrace, getTopologyResponse(r))
       }
@@ -60,7 +60,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
                val cache: Cache[ByteArrayKey, CacheValue] = getCacheInstance(g.cacheName, cacheManager)
                var iterator = asIterator(cache.entrySet.iterator)
                if (g.count != 0) {
-                  if (isTrace) trace("About to write (max) {0} messages to the client", g.count)
+                  if (isTrace) trace("About to write (max) %d messages to the client", g.count)
                   iterator = iterator.take(g.count)
                }
                for (entry <- iterator) {
@@ -125,7 +125,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
    }
 
    private def writeTopologyHeader(t: TopologyAwareResponse, buffer: ChannelBuffer, isTrace: Boolean) {
-      if (isTrace) trace("Write topology change response header {0}", t)
+      if (isTrace) trace("Write topology change response header %s", t)
       buffer.writeByte(1) // Topology changed
       buffer.writeUnsignedInt(t.view.topologyId)
       buffer.writeUnsignedInt(t.view.members.size)
@@ -136,7 +136,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
    }
 
    private def writeHashTopologyHeader(t: TopologyAwareResponse, buffer: ChannelBuffer, isTrace: Boolean) {
-      if (isTrace) trace("Return limited hash distribution aware header in spite of having a hash aware client {0}", t)
+      if (isTrace) trace("Return limited hash distribution aware header in spite of having a hash aware client %s", t)
       buffer.writeByte(1) // Topology changed
       buffer.writeUnsignedInt(t.view.topologyId)
       buffer.writeUnsignedShort(0) // Num key owners
@@ -151,7 +151,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
    }
 
    private def writeHashTopologyHeader(h: HashDistAwareResponse, buffer: ChannelBuffer, r: Response, isTrace: Boolean) {
-      if (isTrace) trace("Write hash distribution change response header {0}", h)
+      if (isTrace) trace("Write hash distribution change response header %s", h)
       try {
          val computedHashIds = checkForRehashing(r, h)
          buffer.writeByte(1) // Topology changed
