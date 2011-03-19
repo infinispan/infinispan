@@ -113,6 +113,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    final ConcurrentMap<String, StateTransferMonitor> stateTransfersInProgress = new ConcurrentHashMap<String, StateTransferMonitor>();
    private final JGroupsDistSync flushTracker = new JGroupsDistSync();
    long distributedSyncTimeout;
+   private boolean usingFlush = true;
 
    /**
     * This form is used when the transport is created by an external source and passed in to the GlobalConfiguration.
@@ -155,8 +156,13 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
       // ensure that the channel has FLUSH enabled.
       // see ISPN-83 for details.
-      if (channel.getProtocolStack() != null && channel.getProtocolStack().findProtocol(FLUSH.class) == null)
-         throw new ConfigurationException("Flush should be enabled. This is related to https://jira.jboss.org/jira/browse/ISPN-83");
+      boolean skipFlushCheck = Boolean.getBoolean("infinispan.experimental.transport.skip_flush_check");
+      if (channel.getProtocolStack() != null && channel.getProtocolStack().findProtocol(FLUSH.class) == null) {
+         if (skipFlushCheck)
+            usingFlush = false;
+         else
+            throw new ConfigurationException("Flush should be enabled. This is related to https://jira.jboss.org/jira/browse/ISPN-83");
+      }
    }
 
    protected void startJGroupsChannelIfNeeded() {
@@ -394,7 +400,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       flushTracker.acquireProcessingLock(false, distributedSyncTimeout, MILLISECONDS);
       boolean unlock = true;
       // if there is a FLUSH in progress, block till it completes
-      flushTracker.blockUntilReleased(distributedSyncTimeout, MILLISECONDS);
+      if (usingFlush) flushTracker.blockUntilReleased(distributedSyncTimeout, MILLISECONDS);
       boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
       if (!usePriorityQueue && ResponseMode.SYNCHRONOUS == mode) usePriorityQueue = true;
       try {
@@ -534,11 +540,11 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    }
 
    public void block() {
-      flushTracker.signalJoinInProgress();
+      if (usingFlush) flushTracker.signalJoinInProgress();
    }
 
    public void unblock() {
-      flushTracker.signalJoinCompleted();
+      if (usingFlush) flushTracker.signalJoinCompleted();
    }
 
    public void receive(Message msg) {
