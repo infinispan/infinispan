@@ -430,6 +430,15 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       return name + "(" + getConfiguration().getCacheModeString().toLowerCase() + ")";
    }
 
+   /**
+    * Returns the cache configuration as XML string.
+    */
+   @ManagedAttribute(description = "Returns the cache configuration as XML string")
+   @Metric(displayName = "Cache configuration (XML)", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   public String getConfigurationAsXmlString() {
+      return getConfiguration().toXmlString();
+   }
+
    public String getVersion() {
       return Version.VERSION;
    }
