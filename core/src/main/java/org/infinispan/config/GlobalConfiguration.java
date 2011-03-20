@@ -22,12 +22,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +31,7 @@ import java.util.Properties;
 /**
  * Configuration component that encapsulates the global configuration.
  * <p/>
- * 
+ *
  * A default instance of this bean takes default values for each attribute.  Please see the individual setters for
  * details of what these defaults are.
  * <p/>
@@ -46,49 +41,46 @@ import java.util.Properties;
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  * @since 4.0
- * 
+ *
  * @see <a href="../../../config.html#ce_infinispan_global">Configuration reference</a>
- * 
+ *
  */
 @SurvivesRestarts
 @Scope(Scopes.GLOBAL)
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder = {})
-@ConfigurationDoc(name="global",desc="Defines global settings shared among all cache instances created by a single CacheManager.")
+@XmlRootElement
+@ConfigurationDoc(name = "global", desc = "Defines global settings shared among all cache instances created by a single CacheManager.")
 public class GlobalConfiguration extends AbstractConfigurationBean {
-   
+
    /**
     * Configures executor factory.
-    * 
+    *
     * @author Vladimir Blagojevic
     * @since 5.0
     */
    public interface ExecutorFactoryConfig<T> {
       /**
        * Specify factory class for executor
-       * 
-       * @param factory
-       *           clazz
+       *
+       * @param factory clazz
        * @return this ExecutorFactoryConfig
        */
       ExecutorFactoryConfig<T> factory(Class<? extends T> clazz);
 
       /**
        * Add key/value property pair to this executor factory configuration
-       * 
-       * @param key
-       *           property key
-       * @param value
-       *           property value
+       *
+       * @param key   property key
+       * @param value property value
        * @return previous value if exists, null otherwise
        */
       Object addProperty(String key, String value);
 
       /**
        * Set key/value properties to this executor factory configuration
-       * 
-       * @param props
-       *           Prpperties
+       *
+       * @param props Prpperties
        * @return this ExecutorFactoryConfig
        */
       ExecutorFactoryConfig<T> withProperties(Properties props);
@@ -96,39 +88,37 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    /**
     * Configures whether global statistics are gathered and reported via JMX for all caches under this cache manager.
-    * 
+    *
     * @author Vladimir Blagojevic
     * @since 5.0
     */
    public interface GlobalJmxStatisticsConfig {
       /**
        * Toggle to enable/disable global statistics being exported via JMX
-       * 
+       *
        * @param exposeGlobalJmxStatistics
        */
       GlobalJmxStatisticsConfig enabled(Boolean enabled);
 
       /**
        * Sets properties which are then passed to the MBean Server Lookup implementation specified.
-       * 
-       * @param properties
-       *           properties to pass to the MBean Server Lookup
+       *
+       * @param properties properties to pass to the MBean Server Lookup
        */
       GlobalJmxStatisticsConfig setProperties(Properties p);
 
       /**
        * If JMX statistics are enabled then all 'published' JMX objects will appear under this name.
        * This is optional, if not specified an object name will be created for you by default.
-       * 
+       *
        * @param jmxObjectName
        */
       GlobalJmxStatisticsConfig jmxDomain(String jmxDomain);
 
       /**
        * Instance of class that will attempt to locate a JMX MBean server to bind to
-       * 
-       * @param mBeanServerLookupClass
-       *           MBean Server Lookup class implementation
+       *
+       * @param mBeanServerLookupClass MBean Server Lookup class implementation
        */
       GlobalJmxStatisticsConfig mBeanServerLookup(Class<? extends MBeanServerLookup> beanServerLookupClass);
 
@@ -136,7 +126,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
        * If true, multiple cache manager instances could be configured under the same configured JMX
        * domain. Each cache manager will in practice use a different JMX domain that has been
        * calculated based on the configured one by adding an incrementing index to it.
-       * 
+       *
        * @param allowDuplicateDomains
        */
       GlobalJmxStatisticsConfig allowDuplicateDomains(Boolean allowDuplicateDomains);
@@ -146,30 +136,29 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
        * offers the possibility for clients to provide a user-defined name to the cache manager
        * which later can be used to identify the cache manager within a JMX based management tool
        * amongst other cache managers that might be running under the same JVM.
-       * 
+       *
        * @param cacheManagerName
        */
       GlobalJmxStatisticsConfig cacheManagerName(String cacheManagerName);
 
       /**
        * Sets the instance of the {@link MBeanServerLookup} class to be used to bound JMX MBeans to.
-       * 
-       * @param mBeanServerLookupInstance
-       *           An instance of {@link MBeanServerLookup}
+       *
+       * @param mBeanServerLookupInstance An instance of {@link MBeanServerLookup}
        */
       GlobalJmxStatisticsConfig usingMBeanServerLookupInstance(MBeanServerLookup MBeanServerLookupInstance);
    }
 
    /**
     * Configures the transport used for network communications across the cluster.
-    * 
+    *
     * @author Vladimir Blagojevic
     * @since 5.0
     */
    public interface TransportConfig {
       /**
        * Defines the name of the cluster. Nodes only connect to clusters sharing the same name.
-       * 
+       *
        * @param clusterName
        */
       TransportConfig clusterName(String clusterName);
@@ -197,7 +186,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       /**
        * Class that represents a network transport. Must implement
        * org.infinispan.remoting.transport.Transport
-       * 
+       *
        * @param transportClass
        */
       TransportConfig transportClass(Class<? extends Transport> transportClass);
@@ -206,15 +195,15 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
        * Name of the current node. This is a friendly name to make logs, etc. make more sense.
        * Defaults to a combination of host name and a random number (to differentiate multiple nodes
        * on the same host)
-       * 
+       *
        * @param nodeName
        */
       TransportConfig nodeName(String nodeName);
 
-      
+
       /**
        * Sets transport properties
-       * 
+       *
        * @param properties
        * @return this TransportConfig
        */
@@ -225,9 +214,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
        * with a NamedCacheNotFoundException. Otherwise, operations will succeed but it will be
        * logged on the caller that the RPC did not succeed on certain nodes due to the named cache
        * not being available.
-       * 
-       * @param strictPeerToPeer
-       *           flag controlling this behavior
+       *
+       * @param strictPeerToPeer flag controlling this behavior
        */
       TransportConfig strictPeerToPeer(Boolean strictPeerToPeer);
 
@@ -236,7 +224,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    /**
     * Configures serialization and marshalling settings.
-    * 
+    *
     * @author Vladimir Blagojevic
     * @since 5.0
     */
@@ -244,7 +232,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       /**
        * Fully qualified name of the marshaller to use. It must implement
        * org.infinispan.marshall.StreamingMarshaller
-       * 
+       *
        * @param marshallerClass
        */
       SerializationConfig marshallerClass(Class<? extends Marshaller> c);
@@ -254,14 +242,14 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
        * version cache instance in your cluster to ensure compatibility of communications. However,
        * setting this too low will mean you lose out on the benefit of improvements in newer
        * versions of the marshaller.
-       * 
+       *
        * @param marshallVersion
        */
       SerializationConfig version(String s);
 
       /**
        * Returns externalizers sub element
-       * 
+       *
        * @return ExternalizersConfig element
        */
       ExternalizersConfig configureExternalizers();
@@ -269,25 +257,26 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    /**
     * ExternalizersConfig.
-    * 
+    *
     * @author Vladimir Blagojevic
     * @since 5.0
     */
    public interface ExternalizersConfig {
-      
+
       /**
-       * Adds externalizer config to the list of configured externalizers 
-       * @param ec 
+       * Adds externalizer config to the list of configured externalizers
+       *
+       * @param ec
        * @return this ExternalizersConfig
        */
       ExternalizersConfig addExtrenalizer(ExternalizerConfig ec);
 
       /**
-       * Adds externalizer config as a class and id to the list of configured externalizers 
-       * 
+       * Adds externalizer config as a class and id to the list of configured externalizers
+       *
        * @param <T>
        * @param clazz externalizer class
-       * @param id id of externlizer
+       * @param id    id of externlizer
        * @return this ExternalizersConfig
        */
       <T> ExternalizersConfig addExtrenalizer(Class<? extends Externalizer<T>> clazz, int id);
@@ -333,33 +322,33 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    @XmlTransient
    GlobalComponentRegistry gcr;
-   
-   
-   public ExecutorFactoryConfig<ExecutorFactory> configureAsyncListenerExecutor(){
+
+
+   public ExecutorFactoryConfig<ExecutorFactory> configureAsyncListenerExecutor() {
       return asyncListenerExecutor;
    }
-   
-   public ExecutorFactoryConfig<ExecutorFactory> configureAsyncTransportExecutor(){
+
+   public ExecutorFactoryConfig<ExecutorFactory> configureAsyncTransportExecutor() {
       return asyncTransportExecutor;
    }
-   
-   public ExecutorFactoryConfig<ScheduledExecutorFactory> configureEvictionScheduledExecutor(){
+
+   public ExecutorFactoryConfig<ScheduledExecutorFactory> configureEvictionScheduledExecutor() {
       return evictionScheduledExecutor;
    }
-   
-   public ExecutorFactoryConfig<ScheduledExecutorFactory> configureReplicationQueueScheduledExecutor(){
+
+   public ExecutorFactoryConfig<ScheduledExecutorFactory> configureReplicationQueueScheduledExecutor() {
       return replicationQueueScheduledExecutor;
    }
-   
-   public GlobalJmxStatisticsConfig configureGlobalJmxStatistics(){
+
+   public GlobalJmxStatisticsConfig configureGlobalJmxStatistics() {
       return globalJmxStatistics;
    }
-   
-   public SerializationConfig configureSerialization(){
+
+   public SerializationConfig configureSerialization() {
       return serialization;
    }
-   
-   public TransportConfig configureTransport(){
+
+   public TransportConfig configureTransport() {
       return transport;
    }
 
@@ -369,7 +358,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    /**
     * Toggle to enable/disable global statistics being exported via JMX
-    * 
+    *
     * @param exposeGlobalJmxStatistics
     */
    @Deprecated
@@ -381,7 +370,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    /**
     * If JMX statistics are enabled then all 'published' JMX objects will appear under this name.
     * This is optional, if not specified an object name will be created for you by default.
-    * 
+    *
     * @param jmxObjectName
     */
    @Deprecated
@@ -406,6 +395,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    /**
     * Sets properties which are then passed to the MBean Server Lookup implementation specified.
+    *
     * @param properties properties to pass to the MBean Server Lookup
     */
    @Deprecated
@@ -415,7 +405,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    /**
     * Fully qualified name of class that will attempt to locate a JMX MBean server to bind to
-    * 
+    *
     * @param mBeanServerLookupClass fully qualified class name of the MBean Server Lookup class implementation
     */
    @Deprecated
@@ -456,7 +446,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * If true, multiple cache manager instances could be configured under the same configured JMX
     * domain. Each cache manager will in practice use a different JMX domain that has been
     * calculated based on the configured one by adding an incrementing index to it.
-    * 
+    *
     * @param allowDuplicateDomains
     */
    @Deprecated
@@ -490,7 +480,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * with a NamedCacheNotFoundException.  Otherwise, operations will succeed but it will be
     * logged on the caller that the RPC did not succeed on certain nodes due to the named cache
     * not being available.
-    * 
+    *
     * @param strictPeerToPeer flag controlling this behavior
     */
    @Deprecated
@@ -582,7 +572,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    /**
     * Fully qualified name of the marshaller to use. It must implement
     * org.infinispan.marshall.StreamingMarshaller
-    * 
+    *
     * @param marshallerClass
     */
    @Deprecated
@@ -598,7 +588,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * Name of the current node. This is a friendly name to make logs, etc. make more sense. Defaults
     * to a combination of host name and a random number (to differentiate multiple nodes on the same
     * host)
-    * 
+    *
     * @param nodeName
     */
    @Deprecated
@@ -614,7 +604,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    /**
     * Fully qualified name of a class that represents a network transport. Must implement
     * org.infinispan.remoting.transport.Transport
-    * 
+    *
     * @param transportClass
     */
    @Deprecated
@@ -635,14 +625,14 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public void setTransportProperties(String transportPropertiesString) {
       transport.setProperties(toTypedProperties(transportPropertiesString));
    }
-   
+
    public String getClusterName() {
       return transport.clusterName;
    }
 
    /**
     * Defines the name of the cluster. Nodes only connect to clusters sharing the same name.
-    * 
+    *
     * @param clusterName
     */
    @Deprecated
@@ -692,7 +682,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    /**
-    * @see #setSiteId(String) 
+    * @see #setSiteId(String)
     */
    public String getSiteId() {
       return transport.siteId;
@@ -709,7 +699,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * detected. REGISTER - Forces the cache to register a shutdown hook even if an MBean server is
     * detected. DONT_REGISTER - Forces the cache NOT to register a shutdown hook, even if no MBean
     * server is detected.
-    * 
+    *
     * @param shutdownHookBehavior
     */
    public void setShutdownHookBehavior(ShutdownHookBehavior shutdownHookBehavior) {
@@ -797,7 +787,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * version cache instance in your cluster to ensure compatibility of communications. However,
     * setting this too low will mean you lose out on the benefit of improvements in newer versions
     * of the marshaller.
-    * 
+    *
     * @param marshallVersion
     */
    @Deprecated
@@ -811,7 +801,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * version cache instance in your cluster to ensure compatibility of communications. However,
     * setting this too low will mean you lose out on the benefit of improvements in newer versions
     * of the marshaller.
-    * 
+    *
     * @param marshallVersion
     */
    @Deprecated
@@ -922,7 +912,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       result = 31 * result + (replicationQueueScheduledExecutor.properties != null ? replicationQueueScheduledExecutor.properties.hashCode() : 0);
       result = 31 * result + (serialization.marshallerClass != null ? serialization.marshallerClass.hashCode() : 0);
       result = 31 * result + (transport.transportClass != null ? transport.transportClass.hashCode() : 0);
-      result = 31 * result + (transport.properties != null ? transport.properties.hashCode() : 0);     
+      result = 31 * result + (transport.properties != null ? transport.properties.hashCode() : 0);
       result = 31 * result + (transport.clusterName != null ? transport.clusterName.hashCode() : 0);
       result = 31 * result + (shutdown.hookBehavior.hashCode());
       result = 31 * result + serialization.version.hashCode();
@@ -945,10 +935,18 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          if (serialization != null) dolly.serialization = (SerializationType) serialization.clone();
          if (shutdown != null) dolly.shutdown = (ShutdownType) shutdown.clone();
          return dolly;
-      }
-      catch (CloneNotSupportedException e) {
+      } catch (CloneNotSupportedException e) {
          throw new CacheException("Problems cloning configuration component!", e);
       }
+   }
+
+   /**
+    * Converts this configuration instance to an XML representation containing the current settings.
+    *
+    * @return a string containing the formatted XML representation of this configuration instance.
+    */
+   public String toXmlString() {
+      return InfinispanConfiguration.toXmlString(this);
    }
 
    /**
@@ -985,12 +983,12 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
        * The serialVersionUID
        */
       private static final long serialVersionUID = 7625606997888180254L;
-            
-      @ConfigurationDocs( {
-               @ConfigurationDoc(name = "maxThreads", 
-                        desc = "Maximum number of threads for this executor. Default values can be found <a href=&quot;http://community.jboss.org/docs/DOC-15540&quot;>here</a>"),
-               @ConfigurationDoc(name = "threadNamePrefix", 
-                        desc = "Thread name prefix for threads created by this executor. Default values can be found <a href=&quot;http://community.jboss.org/docs/DOC-15540&quot;>here</a>") })
+
+      @ConfigurationDocs({
+              @ConfigurationDoc(name = "maxThreads",
+                      desc = "Maximum number of threads for this executor. Default values can be found <a href=&quot;http://community.jboss.org/docs/DOC-15540&quot;>here</a>"),
+              @ConfigurationDoc(name = "threadNamePrefix",
+                      desc = "Thread name prefix for threads created by this executor. Default values can be found <a href=&quot;http://community.jboss.org/docs/DOC-15540&quot;>here</a>")})
       protected TypedProperties properties = EMPTY_PROPERTIES;
 
       public void accept(ConfigurationBeanVisitor v) {
@@ -1001,9 +999,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          testImmutability("properties");
          this.properties = properties;
       }
-      
+
       @XmlElement(name = "properties")
-      public TypedProperties getProperties(){
+      public TypedProperties getProperties() {
          return properties;
       }
 
@@ -1016,21 +1014,21 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    /**
-    * 
+    *
     * @see <a href="../../../config.html#ce_global_asyncListenerExecutor">Configuration reference</a>
-    * 
+    *
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   @ConfigurationDocs( {
-            @ConfigurationDoc(name = "asyncListenerExecutor", 
-                     desc = "Configuration for the executor service used to emit notifications to asynchronous listeners"),
-            @ConfigurationDoc(name = "asyncTransportExecutor",
-                     desc = "Configuration for the executor service used for asynchronous work on the Transport, including asynchronous marshalling and Cache 'async operations' such as Cache.putAsync().") })
-   public static class ExecutorFactoryType extends FactoryClassWithPropertiesType implements ExecutorFactoryConfig<ExecutorFactory>{
+   @ConfigurationDocs({
+           @ConfigurationDoc(name = "asyncListenerExecutor",
+                   desc = "Configuration for the executor service used to emit notifications to asynchronous listeners"),
+           @ConfigurationDoc(name = "asyncTransportExecutor",
+                   desc = "Configuration for the executor service used for asynchronous work on the Transport, including asynchronous marshalling and Cache 'async operations' such as Cache.putAsync().")})
+   public static class ExecutorFactoryType extends FactoryClassWithPropertiesType implements ExecutorFactoryConfig<ExecutorFactory> {
 
       private static final long serialVersionUID = 6895901500645539386L;
-                  
-      @ConfigurationDoc(name="factory", desc="Fully qualified class name of the ExecutorFactory to use.  Must implement org.infinispan.executors.ExecutorFactory")
+
+      @ConfigurationDoc(name = "factory", desc = "Fully qualified class name of the ExecutorFactory to use.  Must implement org.infinispan.executors.ExecutorFactory")
       protected String factory = DefaultExecutorFactory.class.getName();
 
       public ExecutorFactoryType(String factory) {
@@ -1041,10 +1039,21 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       }
 
       @XmlAttribute
+      public String getFactory() {
+         return factory;
+      }
+
       public void setFactory(String factory) {
          testImmutability("factory");
          this.factory = factory;
       }
+
+      @Override
+      public ExecutorFactoryConfig<ExecutorFactory> factory(Class<? extends ExecutorFactory> clazz) {
+         setFactory(clazz == null ? null : clazz.getName());
+         return this;
+      }
+
 
       @Override
       public ExecutorFactoryType clone() throws CloneNotSupportedException {
@@ -1052,15 +1061,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       }
 
       @Override
-      public ExecutorFactoryConfig<ExecutorFactory> factory(Class<? extends ExecutorFactory> clazz) {
-         factory = clazz.getName();
-         return this;
-      }
-
-      @Override
       public Object addProperty(String key, String value) {
          return getProperties().put(key, value);
-      }            
+      }
 
       @Override
       public ExecutorFactoryConfig<ExecutorFactory> withProperties(Properties props) {
@@ -1070,22 +1073,22 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    /**
-    * 
-    * 
+    *
+    *
     * @see <a href="../../../config.html#ce_global_evictionScheduledExecutor">Configuration reference</a>
-    * 
+    *
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   @ConfigurationDocs( {
-            @ConfigurationDoc(name = "evictionScheduledExecutor", 
-                     desc = "Configuration for the scheduled executor service used to periodically run eviction cleanup tasks."),
-            @ConfigurationDoc(name = "replicationQueueScheduledExecutor", 
-                     desc = "Configuration for the scheduled executor service used to periodically flush replication queues, used if asynchronous clustering is enabled along with useReplQueue being set to true.") })
-   public static class ScheduledExecutorFactoryType extends FactoryClassWithPropertiesType implements ExecutorFactoryConfig<ScheduledExecutorFactory>{
+   @ConfigurationDocs({
+           @ConfigurationDoc(name = "evictionScheduledExecutor",
+                   desc = "Configuration for the scheduled executor service used to periodically run eviction cleanup tasks."),
+           @ConfigurationDoc(name = "replicationQueueScheduledExecutor",
+                   desc = "Configuration for the scheduled executor service used to periodically flush replication queues, used if asynchronous clustering is enabled along with useReplQueue being set to true.")})
+   public static class ScheduledExecutorFactoryType extends FactoryClassWithPropertiesType implements ExecutorFactoryConfig<ScheduledExecutorFactory> {
 
       private static final long serialVersionUID = 7806391452092647488L;
-            
-      @ConfigurationDoc(name="factory",desc="Fully qualified class name of the ScheduledExecutorFactory to use.  Must implement org.infinispan.executors.ScheduledExecutorFactory")
+
+      @ConfigurationDoc(name = "factory", desc = "Fully qualified class name of the ScheduledExecutorFactory to use.  Must implement org.infinispan.executors.ScheduledExecutorFactory")
       protected String factory = DefaultScheduledExecutorFactory.class.getName();
 
       public ScheduledExecutorFactoryType(String factory) {
@@ -1095,11 +1098,23 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       public ScheduledExecutorFactoryType() {
       }
 
+
       @XmlAttribute
+      public String getFactory() {
+         return factory;
+      }
+
       public void setFactory(String factory) {
          testImmutability("factory");
          this.factory = factory;
       }
+
+      @Override
+      public ExecutorFactoryConfig<ScheduledExecutorFactory> factory(Class<? extends ScheduledExecutorFactory> clazz) {
+         setFactory(clazz == null ? null : clazz.getName());
+         return this;
+      }
+
 
       @Override
       public ScheduledExecutorFactoryType clone() throws CloneNotSupportedException {
@@ -1107,18 +1122,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       }
 
       @Override
-      public ExecutorFactoryConfig<ScheduledExecutorFactory> factory(Class<? extends ScheduledExecutorFactory> clazz) {
-         testImmutability("factory");
-         this.factory = clazz.getName();
-         return this;
-      }
-
-      @Override
       public Object addProperty(String key, String value) {
          return getProperties().put(key, value);
       }
 
-      @Override      
+      @Override
       public ExecutorFactoryConfig<ScheduledExecutorFactory> withProperties(Properties props) {
          getProperties().putAll(props);
          return this;
@@ -1127,44 +1135,44 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    /**
     * This element configures the transport used for network communications across the cluster.
-    * 
+    *
     * @see <a href="../../../config.html#ce_global_transport">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   @ConfigurationDoc(name="transport")
-   public static class TransportType extends AbstractConfigurationBeanWithGCR  implements TransportConfig{
+   @ConfigurationDoc(name = "transport")
+   public static class TransportType extends AbstractConfigurationBeanWithGCR implements TransportConfig {
 
       /**
        * The serialVersionUID
        */
       private static final long serialVersionUID = -4739815717370060368L;
-     
-      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setClusterName")      
+
+      @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setClusterName")
       protected String clusterName = "Infinispan-Cluster";
 
-      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setMachineId")
+      @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setMachineId")
       protected String machineId;
 
-      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setRackId")      
+      @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setRackId")
       protected String rackId;
 
-      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setSiteId")      
+      @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setSiteId")
       protected String siteId;
 
-      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setStrictPeerToPeer")
-      protected Boolean strictPeerToPeer = true;      
-      
+      @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setStrictPeerToPeer")
+      protected Boolean strictPeerToPeer = true;
+
       @ConfigurationDoc(name="distributedSyncTimeout",
                         desc="Infinispan uses a distributed lock to maintain a coherent transaction log during state transfer or rehashing, "
                               + "which means that only one cache can be doing state transfer or rehashing at the same time."
                               + "This constraint is in place because more than one cache could be involved in a transaction."
                               + "This timeout controls the time to wait to acquire acquire a lock on the distributed lock.")
       protected Long distributedSyncTimeout = 240000L; // default
-      
-      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setTransportClass")
+
+      @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setTransportClass")
       protected String transportClass = null; // The default constructor sets default to JGroupsTransport
 
-      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setTransportNodeName")
+      @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setTransportNodeName")
       protected String nodeName = null;
 
       @XmlElement(name = "properties")
@@ -1184,159 +1192,187 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          this.transportClass = transportClass;
       }
 
-      
-      @Override
-      public TransportConfig clusterName(String clusterName) {
-         testImmutability("clusterName");
-         this.clusterName = clusterName;
-         return this;
-      }
 
-      
-      @Override
-      public TransportConfig machineId(String machineId) {
-         testImmutability("machineId");
-         this.machineId = machineId;
-         return this;
-      }
-
-      
-      @Override
-      public TransportConfig rackId(String rackId) {
-         testImmutability("rackId");
-         this.rackId = rackId;
-         return this;
-      }
-
-      
-      @Override
-      public TransportConfig siteId(String siteId) {
-         testImmutability("siteId");
-         this.siteId = siteId;
-         return this;
-      }
-      
       @XmlAttribute
+      public String getClusterName() {
+         return clusterName;
+      }
+
       public void setClusterName(String clusterName) {
          testImmutability("clusterName");
          this.clusterName = clusterName;
       }
 
+      @Override
+      public TransportConfig clusterName(String clusterName) {
+         setClusterName(clusterName);
+         return this;
+      }
+
+
       @XmlAttribute
+      public String getMachineId() {
+         return machineId;
+      }
+
       public void setMachineId(String machineId) {
          testImmutability("machineId");
          this.machineId = machineId;
       }
 
+      @Override
+      public TransportConfig machineId(String machineId) {
+         setMachineId(machineId);
+         return this;
+      }
+
+
       @XmlAttribute
+      public String getRackId() {
+         return rackId;
+      }
+
       public void setRackId(String rackId) {
          testImmutability("rackId");
          this.rackId = rackId;
       }
 
+      @Override
+      public TransportConfig rackId(String rackId) {
+         setRackId(rackId);
+         return this;
+      }
+
+
       @XmlAttribute
+      public String getSiteId() {
+         return siteId;
+      }
+
       public void setSiteId(String siteId) {
          testImmutability("siteId");
          this.siteId = siteId;
       }
 
       @Override
-      public TransportConfig distributedSyncTimeout(Long distributedSyncTimeout) {
-         testImmutability("distributedSyncTimeout");
-         this.distributedSyncTimeout = distributedSyncTimeout;
+      public TransportConfig siteId(String siteId) {
+         setSiteId(siteId);
          return this;
       }
-      
-      @XmlAttribute      
+
+
+      @XmlAttribute
+      public Long getDistributedSyncTimeout() {
+         return distributedSyncTimeout;
+      }
+
       public void setDistributedSyncTimeout(Long distributedSyncTimeout) {
          testImmutability("distributedSyncTimeout");
          this.distributedSyncTimeout = distributedSyncTimeout;
       }
 
-      @XmlAttribute     
+      @Override
+      public TransportConfig distributedSyncTimeout(Long distributedSyncTimeout) {
+         setDistributedSyncTimeout(distributedSyncTimeout);
+         return this;
+      }
+
+
+      @XmlAttribute
+      public String getTransportClass() {
+         return transportClass;
+      }
+
       public void setTransportClass(String transportClass) {
          testImmutability("transportClass");
          this.transportClass = transportClass;
       }
-      
+
       @Override
       public TransportConfig transportClass(Class<? extends Transport> transportClass) {
-         testImmutability("transportClass");
-         this.transportClass = transportClass.getName();
-         return this;        
-      }
-
-      
-      @Override
-      public TransportConfig nodeName(String nodeName) {
-         testImmutability("nodeName");
-         this.nodeName = nodeName;
+         setTransportClass(transportClass == null ? null : transportClass.getName());
          return this;
       }
-      
+
+
       @XmlAttribute
+      public String getNodeName() {
+         return nodeName;
+      }
+
       public void setNodeName(String nodeName) {
          testImmutability("nodeName");
          this.nodeName = nodeName;
       }
-      
+
+      @Override
+      public TransportConfig nodeName(String nodeName) {
+         setNodeName(nodeName);
+         return this;
+      }
+
+
       @XmlTransient
       public void setProperties(TypedProperties properties) {
          testImmutability("properties");
          this.properties = properties;
       }
-      
+
       @Override
       public TransportConfig withProperties(Properties properties) {
-         testImmutability("properties");
-         this.properties = toTypedProperties(properties);
+         setProperties(toTypedProperties(properties));
          return this;
       }
-      
+
       @Override
-      public Object addProperty(String key, String value){
+      public Object addProperty(String key, String value) {
          return this.properties.put(key, value);
       }
-      
-      @Override
-      public TransportConfig strictPeerToPeer(Boolean strictPeerToPeer) {
-         testImmutability("strictPeerToPeer");
-         this.strictPeerToPeer = strictPeerToPeer;
-         return this;
+
+
+      @XmlAttribute
+      public Boolean getStrictPeerToPeer() {
+         return strictPeerToPeer;
       }
-      
-      @XmlAttribute      
+
       public void setStrictPeerToPeer(Boolean strictPeerToPeer) {
          testImmutability("strictPeerToPeer");
          this.strictPeerToPeer = strictPeerToPeer;
       }
 
       @Override
+      public TransportConfig strictPeerToPeer(Boolean strictPeerToPeer) {
+         setStrictPeerToPeer(strictPeerToPeer);
+         return this;
+      }
+
+
+      @Override
       public TransportType clone() throws CloneNotSupportedException {
          TransportType dolly = (TransportType) super.clone();
          dolly.properties = (TypedProperties) properties.clone();
          return dolly;
-      }      
+      }
    }
 
    /**
     * Serialization and marshalling settings.
-    * 
+    *
     * @see <a href="../../../config.html#ce_global_serialization">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   @ConfigurationDoc(name="serialization")
-   public static class SerializationType extends AbstractConfigurationBeanWithGCR implements SerializationConfig{
+   @ConfigurationDoc(name = "serialization")
+   public static class SerializationType extends AbstractConfigurationBeanWithGCR implements SerializationConfig {
 
       /**
        * The serialVersionUID
        */
       private static final long serialVersionUID = -925947118621507282L;
 
-      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setMarshallerClass")      
+      @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setMarshallerClass")
       protected String marshallerClass = VersionAwareMarshaller.class.getName(); // the default
-      
-      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setMarshallVersion")      
+
+      @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setMarshallVersion")
       protected String version = Version.MAJOR_MINOR;
 
       @XmlElement(name = "externalizers")
@@ -1349,38 +1385,45 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       public void accept(ConfigurationBeanVisitor v) {
          v.visitSerializationType(this);
       }
-      
+
       public void setExternalizerTypes(ExternalizersType externalizerTypes) {
          this.externalizerTypes = externalizerTypes;
       }
 
-      @Override
-      public SerializationConfig marshallerClass(Class<? extends Marshaller> marshallerClass) {
-         testImmutability("marshallerClass");
-         this.marshallerClass = marshallerClass.getName();
-         return this;
+
+      @XmlAttribute
+      public String getMarshallerClass() {
+         return marshallerClass;
       }
 
-      
-      @Override
-      public SerializationConfig version(String version) {
-         testImmutability("version");
-         this.version = version;
-         return this;
-      }
-      
-      @XmlAttribute
       public void setMarshallerClass(String marshallerClass) {
          testImmutability("marshallerClass");
          this.marshallerClass = marshallerClass;
       }
 
+      @Override
+      public SerializationConfig marshallerClass(Class<? extends Marshaller> marshallerClass) {
+         setMarshallerClass(marshallerClass == null ? null : marshallerClass.getName());
+         return this;
+      }
+
+
       @XmlAttribute
+      public String getVersion() {
+         return version;
+      }
+
       public void setVersion(String version) {
          testImmutability("version");
          this.version = version;
       }
-      
+
+      @Override
+      public SerializationConfig version(String version) {
+         setVersion(version);
+         return this;
+      }
+
       // TODO implement equals and hashCode and update parent equals/hashcode
 
       @Override
@@ -1388,6 +1431,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          return externalizerTypes;
       }
    }
+
    /**
     * Configures custom marshallers.
     *
@@ -1396,11 +1440,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    @XmlAccessorType(XmlAccessType.FIELD)
    @ConfigurationDoc(name = "externalizers")
    public static class ExternalizersType extends AbstractConfigurationBeanWithGCR implements ExternalizersConfig {
-      
 
-      /** The serialVersionUID */
+
+      /**
+       * The serialVersionUID
+       */
       private static final long serialVersionUID = -496116709223466807L;
-      
+
       @XmlElement(name = "externalizer")
       private List<ExternalizerConfig> externalizers = new ArrayList<ExternalizerConfig>();
 
@@ -1453,7 +1499,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       }
 
       @Override
-      public ExternalizersConfig addExtrenalizer(ExternalizerConfig e) {   
+      public ExternalizersConfig addExtrenalizer(ExternalizerConfig e) {
          this.externalizers.add(e);
          return this;
       }
@@ -1471,13 +1517,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    /**
     * This element specifies whether global statistics are gathered and reported via JMX for all
     * caches under this cache manager.
-    * 
+    *
     * @see <a href="../../../config.html#ce_global_globalJmxStatistics">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "globalJmxStatistics")
    public static class GlobalJmxStatisticsType extends AbstractConfigurationBeanWithGCR implements
-            GlobalJmxStatisticsConfig {
+           GlobalJmxStatisticsConfig {
 
       /**
        * The serialVersionUID
@@ -1502,24 +1548,28 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       @XmlElement(name = "properties")
       @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setMBeanServerProperties")
       protected TypedProperties properties = EMPTY_PROPERTIES;
-      
+
       private MBeanServerLookup mBeanServerLookupInstance;
 
-      @Override
-      public GlobalJmxStatisticsConfig enabled(Boolean enabled) {
-         testImmutability("enabled");
-         this.enabled = enabled;
-         return this;
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitGlobalJmxStatisticsType(this);
       }
 
+
       @XmlAttribute
+      public Boolean getEnabled() {
+         return enabled;
+      }
+
       public void setEnabled(Boolean enabled) {
          testImmutability("enabled");
          this.enabled = enabled;
       }
 
-      public void accept(ConfigurationBeanVisitor v) {
-         v.visitGlobalJmxStatisticsType(this);
+      @Override
+      public GlobalJmxStatisticsConfig enabled(Boolean enabled) {
+         setEnabled(enabled);
+         return this;
       }
 
       @XmlTransient
@@ -1527,58 +1577,75 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          this.properties = p;
       }
 
-      @Override
-      public GlobalJmxStatisticsConfig jmxDomain(String jmxDomain) {
-         testImmutability("jmxDomain");
-         this.jmxDomain = jmxDomain;
-         return this;
-      }
 
       @XmlAttribute
+      public String getJmxDomain() {
+         return jmxDomain;
+      }
+
       public void setJmxDomain(String jmxDomain) {
          testImmutability("jmxDomain");
          this.jmxDomain = jmxDomain;
       }
 
       @Override
-      public GlobalJmxStatisticsConfig mBeanServerLookup(Class<? extends MBeanServerLookup> beanServerLookupClass) {
-         testImmutability("mBeanServerLookup");
-         mBeanServerLookup = beanServerLookupClass.getName();
+      public GlobalJmxStatisticsConfig jmxDomain(String jmxDomain) {
+         setJmxDomain(jmxDomain);
          return this;
       }
 
+
       @XmlAttribute
+      public String getMBeanServerLookup() {
+         return mBeanServerLookup;
+      }
+
       public void setMBeanServerLookup(String beanServerLookup) {
          testImmutability("mBeanServerLookup");
          mBeanServerLookup = beanServerLookup;
       }
 
       @Override
-      public GlobalJmxStatisticsConfig allowDuplicateDomains(Boolean allowDuplicateDomains) {
-         testImmutability("allowDuplicateDomains");
-         this.allowDuplicateDomains = allowDuplicateDomains;
+      public GlobalJmxStatisticsConfig mBeanServerLookup(Class<? extends MBeanServerLookup> beanServerLookupClass) {
+         setMBeanServerLookup(beanServerLookupClass == null ? null : beanServerLookupClass.getName());
          return this;
       }
 
+
       @XmlAttribute
+      public Boolean getAllowDuplicateDomains() {
+         return allowDuplicateDomains;
+      }
+
       public void setAllowDuplicateDomains(Boolean allowDuplicateDomains) {
          testImmutability("allowDuplicateDomains");
          this.allowDuplicateDomains = allowDuplicateDomains;
       }
 
       @Override
-      public GlobalJmxStatisticsConfig cacheManagerName(String cacheManagerName) {
-         testImmutability("cacheManagerName");
-         this.cacheManagerName = cacheManagerName;
+      public GlobalJmxStatisticsConfig allowDuplicateDomains(Boolean allowDuplicateDomains) {
+         setAllowDuplicateDomains(allowDuplicateDomains);
          return this;
       }
 
+
       @XmlAttribute
+      public String getCacheManagerName() {
+         return cacheManagerName;
+      }
+
       public void setCacheManagerName(String cacheManagerName) {
          testImmutability("cacheManagerName");
          this.cacheManagerName = cacheManagerName;
       }
 
+      @Override
+      public GlobalJmxStatisticsConfig cacheManagerName(String cacheManagerName) {
+         setCacheManagerName(cacheManagerName);
+         return this;
+      }
+
+      @XmlTransient
       public MBeanServerLookup getMBeanServerLookupInstance() {
          if (mBeanServerLookupInstance == null)
             mBeanServerLookupInstance = (MBeanServerLookup) Util.getInstance(mBeanServerLookup);
@@ -1586,7 +1653,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          return mBeanServerLookupInstance;
       }
 
-      @XmlTransient
       public void setMBeanServerLookupInstance(MBeanServerLookup MBeanServerLookupInstance) {
          this.mBeanServerLookupInstance = MBeanServerLookupInstance;
       }
@@ -1606,11 +1672,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    /**
     * This element specifies behavior when the JVM running the cache instance shuts down.
-    * 
+    *
     * @see <a href="../../../config.html#ce_global_shutdown">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   @ConfigurationDoc(name="shutdown")
+   @ConfigurationDoc(name = "shutdown")
    public static class ShutdownType extends AbstractConfigurationBeanWithGCR {
 
       /**
@@ -1618,17 +1684,22 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
        */
       private static final long serialVersionUID = 3427920991221031456L;
 
-      @ConfigurationDocRef(bean=GlobalConfiguration.class,targetElement="setShutdownHookBehavior")
+      @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setShutdownHookBehavior")
       protected ShutdownHookBehavior hookBehavior = ShutdownHookBehavior.DEFAULT;
-
-      @XmlAttribute
-      public void setHookBehavior(ShutdownHookBehavior hookBehavior) {
-         testImmutability("hookBehavior");
-         this.hookBehavior = hookBehavior;
-      }
 
       public void accept(ConfigurationBeanVisitor v) {
          v.visitShutdownType(this);
+      }
+
+
+      @XmlAttribute
+      public ShutdownHookBehavior getHookBehavior() {
+         return hookBehavior;
+      }
+
+      public void setHookBehavior(ShutdownHookBehavior hookBehavior) {
+         testImmutability("hookBehavior");
+         this.hookBehavior = hookBehavior;
       }
    }
 }

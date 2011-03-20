@@ -25,18 +25,15 @@ import org.infinispan.Version;
 import org.infinispan.config.parsing.NamespaceFilter;
 import org.infinispan.config.parsing.XmlConfigurationParser;
 import org.infinispan.util.FileLookup;
+import org.infinispan.util.StringPropertyReplacer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.StringPropertyReplacer;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLFilter;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.ValidationEvent;
-import javax.xml.bind.ValidationEventHandler;
+import javax.xml.bind.*;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -44,14 +41,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.transform.sax.SAXSource;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
-
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
+import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,13 +53,13 @@ import java.util.Map;
  * InfinispanConfiguration encapsulates root component of Infinispan XML configuration. Can be empty
  * for sensible defaults throughout, however that would only give you the most basic of local,
  * non-clustered caches.
- * 
+ *
  * @author Vladimir Blagojevic
  * @since 4.0
  */
 @XmlRootElement(name = "infinispan")
 @XmlAccessorType(XmlAccessType.FIELD)
-@ConfigurationDoc(name="infinispan")
+@ConfigurationDoc(name = "infinispan")
 public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnmarshallable {
 
    private static final Log log = LogFactory.getLog(InfinispanConfiguration.class);
@@ -84,6 +75,8 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    public static final String SCHEMA_URL_SYSTEM_PROPERTY = "infinispan.config.schema.url";
 
    private static final String DEFAULT_SCHEMA_URL = String.format("http://www.infinispan.org/schemas/infinispan-config-%s.xsd", Version.MAJOR_MINOR);
+
+   private static SoftReference<JAXBContext> jaxbContextReference;
 
    @XmlElement
    private final GlobalConfiguration global = new GlobalConfiguration();
@@ -218,8 +211,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    public static InfinispanConfiguration newInfinispanConfiguration(Reader config,
                                                                     InputStream schema, ConfigurationBeanVisitor cbv) throws IOException {
       try {
-         JAXBContext jc = JAXBContext.newInstance(InfinispanConfiguration.class);
-         Unmarshaller u = jc.createUnmarshaller();
+         Unmarshaller u = getJAXBContext().createUnmarshaller();
          NamespaceFilter nf = new NamespaceFilter();
          XMLReader reader = XMLReaderFactory.createXMLReader();
          nf.setParent(reader);
@@ -280,6 +272,46 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    public static InfinispanConfiguration newInfinispanConfiguration(InputStream config,
                                                                     InputStream schema, ConfigurationBeanVisitor cbv) throws IOException {
       return newInfinispanConfiguration(new InputStreamReader(config), schema, cbv);
+   }
+
+   /**
+    * Returns the JAXB context that may be used to read and write Infinispan configurations.
+    *
+    * @return the JAXB context that may be used to read and write Infinispan configurations.
+    * @throws JAXBException In case of the creation of the context failed.
+    */
+   protected static synchronized JAXBContext getJAXBContext() throws JAXBException {
+      JAXBContext context = jaxbContextReference != null ? jaxbContextReference.get() : null;
+      if (context == null) {
+         context = JAXBContext.newInstance(InfinispanConfiguration.class);
+         jaxbContextReference = new SoftReference<JAXBContext>(context);
+      }
+
+      return context;
+   }
+
+   /**
+    * Converts an instance of GlobalConfiguration, Configuration or InfinispanConfiguration to
+    * its XML representation.
+    *
+    * @param compatibleConfigurationInstance
+    *         a configuration instance that support XML marshaling.
+    * @return a string containing the formatted XML representation of the given instance.
+    */
+   protected static String toXmlString(Object compatibleConfigurationInstance) {
+      try {
+         StringWriter writer = new StringWriter(1024);
+         try {
+            Marshaller m = getJAXBContext().createMarshaller();
+            m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            m.marshal(compatibleConfigurationInstance, writer);
+            return writer.toString();
+         } finally {
+            writer.close();
+         }
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
    }
 
    private static SAXSource replaceProperties(Reader config, XMLFilter filter) throws Exception {
@@ -416,5 +448,14 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    @Override
    public void willUnmarshall(Object parent) {
       // no-op
+   }
+
+   /**
+    * Converts this configuration instance to an XML representation containing the current settings.
+    *
+    * @return a string containing the formatted XML representation of this configuration instance.
+    */
+   public String toXmlString() {
+      return toXmlString(this);
    }
 }
