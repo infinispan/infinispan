@@ -10,6 +10,8 @@ import org.infinispan.server.core.transport.Transport
 import scala.collection.JavaConversions._
 import org.infinispan.server.core.{ProtocolServer, Logging}
 import org.jboss.netty.util.{ThreadNameDeterminer, ThreadRenamingRunnable}
+import org.infinispan.util.logging.LogFactory
+import org.jboss.netty.logging.{InternalLoggerFactory, Log4JLoggerFactory}
 
 /**
  * A Netty based transport.
@@ -71,6 +73,10 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
             name
          }
       })
+      // Make netty use log4j, otherwise it goes to JDK logging.
+      if (LogFactory.IS_LOG4J_AVAILABLE)
+         InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory)
+
       val bootstrap = new ServerBootstrap(factory)
       bootstrap.setPipelineFactory(pipeline)
       bootstrap.setOption("child.tcpNoDelay", tcpNoDelay) // Sets server side tcpNoDelay
