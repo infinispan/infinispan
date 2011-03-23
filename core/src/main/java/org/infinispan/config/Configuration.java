@@ -118,7 +118,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       /**
        * Concurrency level for lock containers. Adjust this value according to the number of
-       * concurrent threads interating with Infinispan. Similar to the concurrencyLevel tuning
+       * concurrent threads interacting with Infinispan. Similar to the concurrencyLevel tuning
        * parameter seen in the JDK's ConcurrentHashMap.
        *
        * @param concurrencyLevel
@@ -270,22 +270,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public interface DeadlockDetectionConfig {
       /**
        * Toggle to enable/disable deadlock detection
-<<<<<<< HEAD
-       *
-       * @param useEagerDeadlockDetection
-=======
->>>>>>> ISPN-272 - Implement XA recovery in TransactionXaAdapter - ongoing work
        */
       DeadlockDetectionConfig enabled(Boolean enabled);
 
       /**
        * Time period that determines how often is lock acquisition attempted within maximum time
        * allowed to acquire a particular lock
-<<<<<<< HEAD
-       *
-       * @param eagerDeadlockSpinDuration
-=======
->>>>>>> ISPN-272 - Implement XA recovery in TransactionXaAdapter - ongoing work
+       * @param duration in milliseconds
        */
       DeadlockDetectionConfig spinDuration(Long duration);
    }
@@ -1868,7 +1859,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * Returns the {@link org.infinispan.config.CustomInterceptorConfig}, if any, associated with this configuration
     * object. The custom interceptors will be added to the cache at startup in the sequence defined by this list.
     *
-    * @return List of cutom interceptors, never null
+    * @return List of custom interceptors, never null
     */
    @SuppressWarnings("unchecked")
    public List<CustomInterceptorConfig> getCustomInterceptors() {
