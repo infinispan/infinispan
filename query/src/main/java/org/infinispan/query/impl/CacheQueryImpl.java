@@ -139,13 +139,13 @@ public class CacheQueryImpl implements CacheQuery {
    public List<Object> list() throws SearchException {
       hSearchQuery.getTimeoutManager().start();
       final List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
-      CacheLoader loader = getLoader();
+      EntityLoader loader = getLoader();
       List list = loader.load( entityInfos.toArray( new EntityInfo[entityInfos.size()] ) );
       return list;
    }
 
-   private CacheLoader getLoader() {
-      return new CacheLoader(cache);
+   private EntityLoader getLoader() {
+      return new EntityLoader(cache);
    }
    
    private List<Object> fromEntityInfosToKeys(final List<EntityInfo> entityInfos) {
