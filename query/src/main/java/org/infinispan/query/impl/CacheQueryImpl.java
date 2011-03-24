@@ -31,9 +31,9 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.FullTextFilter;
 import org.hibernate.search.SearchException;
-import org.hibernate.search.engine.SearchFactoryImplementor;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.HSQuery;
+import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryIterator;
@@ -51,7 +51,7 @@ public class CacheQueryImpl implements CacheQuery {
    private final Cache cache;
    private final HSQuery hSearchQuery;
 
-   public CacheQueryImpl(Query luceneQuery, SearchFactoryImplementor searchFactory, Cache cache, Class<?>... classes) {
+   public CacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory, Cache cache, Class<?>... classes) {
       this.cache = cache;
       hSearchQuery = searchFactory.createHSQuery();
       hSearchQuery

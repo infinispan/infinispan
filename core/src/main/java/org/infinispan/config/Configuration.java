@@ -1084,6 +1084,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public boolean isIndexLocalOnly() {
       return indexing.isIndexLocalOnly();
    }
+   
+   public TypedProperties getIndexingProperties() {
+      return indexing.properties;
+   }
 
    public boolean isFetchInMemoryState() {
       return clustering.stateRetrieval.fetchInMemoryState;
@@ -3848,6 +3852,25 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          setIndexLocalOnly(indexLocalOnly);
          return this;
       }
+      
+      @XmlElement(name = "properties")
+      protected TypedProperties properties = EMPTY_PROPERTIES;
+      
+      @Override
+      public IndexingConfig withProperties(Properties properties) {
+         testImmutability("properties");
+         this.properties = toTypedProperties(properties);
+         return this;
+      }
+
+      @Override
+      public IndexingConfig addProperty(String key, String value) {
+         if (properties == EMPTY_PROPERTIES) {
+            properties = new TypedProperties();
+         }
+         this.properties.setProperty(key, value);
+         return this;
+      }
 
       @Override
       public IndexingConfig disable() {
@@ -3875,6 +3898,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
          if (indexLocalOnly != null ? !indexLocalOnly.equals(that.indexLocalOnly) : that.indexLocalOnly != null)
             return false;
+         
+         if (!properties.equals(that.properties))
+            return false;
 
          return true;
       }
@@ -3883,6 +3909,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public int hashCode() {
          int result = enabled != null ? enabled.hashCode() : 0;
          result = 31 * result + (indexLocalOnly != null ? indexLocalOnly.hashCode() : 0);
+         result = 31 * result + (properties != null ? properties.hashCode() : 0);
          return result;
       }
 
@@ -3897,10 +3924,15 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             QueryConfigurationBean dolly = (QueryConfigurationBean) super.clone();
             dolly.enabled = enabled;
             dolly.indexLocalOnly = indexLocalOnly;
+            dolly.properties = properties;
             return dolly;
          } catch (CloneNotSupportedException shouldNotHappen) {
             throw new RuntimeException("Should not happen!", shouldNotHappen);
          }
+      }
+      
+      public String toString(){
+         return "Indexing[enabled="+enabled+",localOnly="+indexLocalOnly+"]";
       }
    }
 

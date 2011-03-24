@@ -28,8 +28,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryFactory;
-import org.infinispan.query.backend.QueryHelper;
-import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -51,7 +49,6 @@ import static org.infinispan.config.Configuration.CacheMode.LOCAL;
 public class KeyTypeTest extends SingleCacheManagerTest{
 
    Cache<Object, Person> cache;
-   QueryHelper qh;
    Person person1;
 
    public KeyTypeTest() {
@@ -61,10 +58,12 @@ public class KeyTypeTest extends SingleCacheManagerTest{
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultClusteredConfig(LOCAL, true);
-      c.fluent().indexing().indexLocalOnly(false);
+      c.fluent()
+         .indexing()
+         .indexLocalOnly(false)
+         .addProperty("hibernate.search.default.directory_provider", "ram");
       cacheManager = TestCacheManagerFactory.createCacheManager(c, true);
       cache = cacheManager.getCache();
-      qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class);
 
       person1 = new Person();
       person1.setName("Navin");
@@ -97,7 +96,7 @@ public class KeyTypeTest extends SingleCacheManagerTest{
 
       // Going to search the 'blurb' field for 'owns'
       Term term = new Term ("blurb", "owns");
-      CacheQuery cacheQuery = new QueryFactory(cache, qh).getQuery(new TermQuery(term));
+      CacheQuery cacheQuery = new QueryFactory(cache).getQuery(new TermQuery(term));
       assert cacheQuery.getResultSize() == 9;
 
       List<Object> found = cacheQuery.list();
@@ -117,7 +116,7 @@ public class KeyTypeTest extends SingleCacheManagerTest{
       cache.put(key3, person1);
 
       Term term = new Term("blurb", "owns");
-      CacheQuery cacheQuery = new QueryFactory(cache, qh).getQuery(new TermQuery(term));
+      CacheQuery cacheQuery = new QueryFactory(cache).getQuery(new TermQuery(term));
       int i;
       assert (i = cacheQuery.getResultSize()) == 3 : "Expected 3, was " + i;
    }

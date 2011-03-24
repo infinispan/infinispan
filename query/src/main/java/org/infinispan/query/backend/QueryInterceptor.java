@@ -24,7 +24,8 @@ package org.infinispan.query.backend;
 import org.hibernate.search.backend.TransactionContext;
 import org.hibernate.search.backend.Work;
 import org.hibernate.search.backend.WorkType;
-import org.hibernate.search.engine.SearchFactoryImplementor;
+import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.store.DirectoryProvider;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -38,8 +39,12 @@ import org.infinispan.marshall.MarshalledValue;
 
 import javax.transaction.TransactionManager;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.infinispan.query.backend.KeyTransformationHandler.keyToString;
 
@@ -51,17 +56,22 @@ import static org.infinispan.query.backend.KeyTransformationHandler.keyToString;
  * However, if the a cache would not be putting the data locally, the interceptor will not index it.
  *
  * @author Navin Surtani
+ * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 4.0
  */
 public class QueryInterceptor extends CommandInterceptor {
 
-   protected SearchFactoryImplementor searchFactory;
+   private final SearchFactoryIntegrator searchFactory;
+   private final ConcurrentHashMap<Class,Class> knownClasses = new ConcurrentHashMap<Class,Class>();
+   private final Lock mutating = new ReentrantLock();
    protected TransactionManager transactionManager;
 
-   @Inject
-   public void init(SearchFactoryImplementor searchFactory, TransactionManager transactionManager) {
+   public QueryInterceptor(SearchFactoryIntegrator searchFactory) {
       this.searchFactory = searchFactory;
-      this.transactionManager = transactionManager;
+   }
+
+   @Inject
+   public void init(TransactionManager transactionManager) {
    }
 
    protected boolean shouldModifyIndexes(InvocationContext ctx) {
@@ -79,18 +89,19 @@ public class QueryInterceptor extends CommandInterceptor {
          // First making a check to see if the key is already in the cache or not. If it isn't we can add the key no problem,
          // otherwise we need to be updating the indexes as opposed to simply adding to the indexes.
          Object key = command.getKey();
-         Object value = command.getValue();
+         Object value = extractValue(command.getValue());
+         updateKnownTypesIfNeeded( value );
          CacheEntry entry = ctx.lookupEntry(key);
 
          // New entry so we will add it to the indexes.
          if(entry.isCreated()) {
             log.debug("Entry is created");
-            addToIndexes(extractValue(value), extractValue(key));
+            addToIndexes(value, extractValue(key));
          }
          else{
             // This means that the entry is just modified so we need to update the indexes and not add to them.
             log.debug("Entry is changed");
-            updateIndexes(extractValue(value), extractValue(key));
+            updateIndexes(value, extractValue(key));
          }
 
       }
@@ -102,9 +113,11 @@ public class QueryInterceptor extends CommandInterceptor {
       // remove the object out of the cache first.
       Object valueRemoved = invokeNextInterceptor(ctx, command);
 
-      if (command.isSuccessful() && !command.isNonExistent() && shouldModifyIndexes(ctx))
-         removeFromIndexes(extractValue(valueRemoved), extractValue(command.getKey()));
-
+      if (command.isSuccessful() && !command.isNonExistent() && shouldModifyIndexes(ctx)) {
+         Object value = extractValue(valueRemoved);
+         updateKnownTypesIfNeeded( value );
+         removeFromIndexes( value, extractValue(command.getKey()));
+      }
       return valueRemoved;
    }
 
@@ -114,10 +127,14 @@ public class QueryInterceptor extends CommandInterceptor {
       if (valueReplaced != null && shouldModifyIndexes(ctx)) {
 
          Object[] parameters = command.getParameters();
+         Object p1 = extractValue(parameters[1]);
+         Object p2 = extractValue(parameters[2]);
+         updateKnownTypesIfNeeded( p1 );
+         updateKnownTypesIfNeeded( p2 );
          Object key = extractValue(command.getKey());
 
-         removeFromIndexes(extractValue(parameters[1]), key);
-         addToIndexes(extractValue(parameters[2]), key);
+         removeFromIndexes(p1, key);
+         addToIndexes(p2, key);
       }
 
       return valueReplaced;
@@ -133,7 +150,9 @@ public class QueryInterceptor extends CommandInterceptor {
          // Loop through all the keys and put those key, value pairings into lucene.
 
          for (Map.Entry entry : dataMap.entrySet()) {
-            addToIndexes(extractValue(entry.getValue()), extractValue(entry.getKey()));
+            Object value = extractValue(entry.getValue());
+            updateKnownTypesIfNeeded( value );
+            addToIndexes(value, extractValue(entry.getKey()));
          }
       }
       return mapPut;
@@ -148,12 +167,13 @@ public class QueryInterceptor extends CommandInterceptor {
       if (shouldModifyIndexes(ctx)) {
          if (trace) log.trace("shouldModifyIndexes() is true and we can clear the indexes");
 
-         Set<Class<?>> classes = searchFactory.getDocumentBuildersIndexedEntities().keySet();
-         for (Class c : classes) {
+         for (Class c : this.knownClasses.keySet()) {
+            DirectoryProvider[] providers = this.searchFactory.getDirectoryProviders(c);
             Serializable id = null;
-            if (log.isDebugEnabled()) log.debug("Clearing indexes for class: - " + c);
-            searchFactory.getWorker().performWork(new Work<Object>(c, id, WorkType.PURGE_ALL),
+            if (providers != null && providers.length > 0) { //check as not all known classes are indexed
+               searchFactory.getWorker().performWork(new Work<Object>(c, id, WorkType.PURGE_ALL),
                                                   new TransactionalEventTransactionContext(transactionManager));
+            }
          }
       }
       return returnValue;
@@ -196,5 +216,60 @@ public class QueryInterceptor extends CommandInterceptor {
          return ((MarshalledValue) wrappedValue).get();
       else
          return wrappedValue;
+   }
+
+   public void enableClasses(Class<?>[] classes) {
+      if ( classes == null || classes.length == 0 ) {
+         return;
+      }
+      enableClassesIncrementally(classes, false);
+   }
+   
+   private void enableClassesIncrementally(Class<?>[] classes, boolean locked) {
+      ArrayList<Class> toAdd = null;
+      for (Class type : classes) {
+         if (knownClasses.contains(type) == false) {
+            if (toAdd==null)
+               toAdd = new ArrayList<Class>(classes.length);
+            toAdd.add(type);
+         }
+      }
+      if (toAdd == null) {
+         return;
+      }
+      if (locked) {
+         Set<Class> existingClasses = knownClasses.keySet();
+         int index = existingClasses.size();
+         Class[] all = (Class[]) existingClasses.toArray(new Class[existingClasses.size()+toAdd.size()]);
+         for (Class toAddClass : toAdd) {
+            all[index++] = toAddClass;
+         }
+         searchFactory.addClasses(all);
+         for (Class type : toAdd) {
+            knownClasses.put(type, type);
+         }
+      } else {
+         mutating.lock();
+         try {
+            enableClassesIncrementally(classes, true);
+         } finally {
+            mutating.unlock();
+         }
+      }
+   }
+   
+   private void updateKnownTypesIfNeeded(Object value) {
+      if ( value != null ) {
+         Class<? extends Object> potentialNewType = value.getClass();
+         if ( ! this.knownClasses.contains(potentialNewType) ) {
+            mutating.lock();
+            try {
+               enableClassesIncrementally( new Class[]{potentialNewType}, true);
+            }
+            finally {
+               mutating.unlock();
+            }
+         }
+      }
    }
 }
