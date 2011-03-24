@@ -1,6 +1,8 @@
 package org.infinispan.tx.recovery;
 
 import org.infinispan.config.Configuration;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.testng.annotations.Test;
 
 /**
@@ -11,6 +13,7 @@ public class RecoveryWithDefaultCacheReplTest extends RecoveryWithDefaultCacheDi
    @Override
    protected Configuration configure() {
       Configuration config = super.configure();
+      config.configureTransaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class);
       config.configureClustering().mode(Configuration.CacheMode.REPL_SYNC);
       return config;
    }

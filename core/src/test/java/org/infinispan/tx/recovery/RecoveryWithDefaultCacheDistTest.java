@@ -3,6 +3,7 @@ package org.infinispan.tx.recovery;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.testng.annotations.Test;
@@ -24,7 +25,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
    @Override
    protected void createCacheManagers() throws Throwable {
       configuration = configure();
-      createCluster(configuration, true, 2);
+      createCluster(configuration, false, 2);
       waitForClusterToForm();
 
       //check that a default cache has been created
@@ -34,6 +35,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
 
    protected Configuration  configure() {
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
+      configuration.configureTransaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class);
       configuration.configureLocking().useLockStriping(false);
       configuration.configureTransaction().configureRecovery().enabled(true);
       configuration.configureClustering().configureHash().rehashEnabled(false);
@@ -103,11 +105,12 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       assert inDoubtTransactions.contains(new SerializableXid(t1_2.getXid()));
       assert inDoubtTransactions.contains(new SerializableXid(t1_3.getXid()));
 
-      addClusterEnabledCacheManager(configuration);
+      addClusterEnabledCacheManager(configuration, false);
       defineRecoveryCache(1);
       TestingUtil.blockUntilViewsReceived(60000, cache(0), cache(1));
       DummyTransaction t1_4 = RecoveryTestUtil.beginAndSuspendTx(cache(1));
       RecoveryTestUtil.prepareTransaction(t1_4);
+      log.trace("Before main recovery call.");
       RecoveryTestUtil.assertPrepared(4, t1_4);
 
       //now second call would only return 1 prepared tx as we only go over the network once

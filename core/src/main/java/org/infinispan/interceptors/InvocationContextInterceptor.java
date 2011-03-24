@@ -33,7 +33,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.transaction.xa.TransactionTable;
+import org.infinispan.transaction.TransactionTable;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;

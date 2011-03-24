@@ -1,11 +1,12 @@
 package org.infinispan.factories;
 
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.transaction.xa.TransactionTable;
-import org.infinispan.transaction.xa.recovery.RecoveryEnabledTransactionTable;
+import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.xa.XaTransactionTable;
+import org.infinispan.transaction.xa.recovery.RecoveryAwareTransactionTable;
 
 /**
- * Factory for {@link org.infinispan.transaction.xa.TransactionTable} objects.
+ * Factory for {@link org.infinispan.transaction.TransactionTable} objects.
  *
  * @author Mircea.Markus@jboss.com
  * @since 5.0
@@ -15,10 +16,13 @@ public class TransactionTableFactory extends AbstractNamedCacheComponentFactory 
 
    @Override
    public <T> T construct(Class<T> componentType) {
-      if (configuration.isTransactionRecoveryEnabled()) {
-         return (T) new RecoveryEnabledTransactionTable();
-      } else {
-         return (T) new TransactionTable();
-      }
+      if (!configuration.isUseSynchronizationForTransactions()) {
+         if (configuration.isTransactionRecoveryEnabled()) {
+            return (T) new RecoveryAwareTransactionTable();
+         } else {
+            return (T) new XaTransactionTable();
+         }
+      } else return (T) new TransactionTable();
+
    }
 }

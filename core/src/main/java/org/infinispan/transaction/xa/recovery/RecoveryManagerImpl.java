@@ -8,9 +8,9 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.RemoteTransaction;
-import org.infinispan.transaction.xa.TransactionTable;
+import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -44,7 +44,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    private final String cacheName;
 
 
-   private volatile RecoveryEnabledTransactionTable txTable;
+   private volatile RecoveryAwareTransactionTable txTable;
 
    /**
     * we only broadcast the first time when node is started, then we just return the local cached prepared
@@ -61,7 +61,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    public void init(RpcManager rpcManager, CommandsFactory commandsFactory, TransactionTable txTable) {
       this.rpcManager = rpcManager;
       this.commandFactory = commandsFactory;
-      this.txTable = (RecoveryEnabledTransactionTable)txTable;
+      this.txTable = (RecoveryAwareTransactionTable)txTable;
    }
 
    @Override
@@ -98,6 +98,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
 
    @Override
    public void removeRecoveryInformation(Collection<Address> lockOwners, Xid xid, boolean sync) {
+      //todo make sure this gets broad casted or at least flushed
       if (rpcManager != null) {
          RemoveRecoveryInfoCommand ftc = commandFactory.buildRemoveRecoveryInfoCommand(Collections.singletonList(xid));
          rpcManager.invokeRemotely(lockOwners, ftc, false);
@@ -116,7 +117,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    }
 
    /**
-    * A transaction is in doubt if it is {@link org.infinispan.transaction.xa.RemoteTransaction#isInDoubt()}.
+    * A transaction is in doubt if it is {@link org.infinispan.transaction.RemoteTransaction#isInDoubt()}.
     */
    @Override
    public List<Xid> getLocalInDoubtTransactions() {
@@ -125,9 +126,14 @@ public class RecoveryManagerImpl implements RecoveryManager {
          RecoveryAwareRemoteTransaction rt = entry.getValue();
          RecoveryInfoKey cacheNamePair = entry.getKey();
          if (cacheNamePair.sameCacheName(cacheName) && rt.isInDoubt()) {
-            result.add(((XidAware)rt.getGlobalTransaction()).getXid());
+            XidAware globalTransaction = (XidAware) rt.getGlobalTransaction();
+            if (log.isTraceEnabled()) {
+               log.trace("Found in doubt transaction: %s", globalTransaction);
+            }
+            result.add(globalTransaction.getXid());
          }
       }
+      if (log.isTraceEnabled()) log.trace("Returning %s ", result);
       return result;
    }
 
@@ -169,7 +175,9 @@ public class RecoveryManagerImpl implements RecoveryManager {
 
    private Map<Address, Response> getAllPreparedTxFromCluster() {
       GetInDoubtTransactionsCommand command = commandFactory.buildGetInDoubtTransactionsCommand();
-      return rpcManager.invokeRemotely(null, command, true, false);
+      Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(null, command, true, false);
+      if (log.isTraceEnabled()) log.trace("getAllPreparedTxFromCluster received from cluster: %s", addressResponseMap);
+      return addressResponseMap;
    }
 
    public ConcurrentMap<RecoveryInfoKey, RecoveryAwareRemoteTransaction> getPreparedTransactions() {

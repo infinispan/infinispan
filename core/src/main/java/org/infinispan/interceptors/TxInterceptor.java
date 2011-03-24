@@ -1,7 +1,5 @@
 package org.infinispan.interceptors;
 
-import org.infinispan.CacheException;
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -26,10 +24,10 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionLog;
-import org.infinispan.transaction.xa.LocalTransaction;
-import org.infinispan.transaction.xa.TransactionTable;
-import org.infinispan.transaction.xa.TransactionXaAdapter;
+import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
@@ -42,9 +40,6 @@ import javax.transaction.RollbackException;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.Xid;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -59,7 +54,6 @@ import java.util.concurrent.atomic.AtomicLong;
 @MBean(objectName = "Transactions", description = "Component that manages the cache's participation in JTA transactions.")
 public class TxInterceptor extends CommandInterceptor {
 
-   private TransactionManager tm;
    private TransactionLog transactionLog;
    private TransactionTable txTable;
 
@@ -68,22 +62,20 @@ public class TxInterceptor extends CommandInterceptor {
    private final AtomicLong rollbacks = new AtomicLong(0);
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statisticsEnabled;
-   private CommandsFactory commandsFactory;
    private InvocationContextContainer icc;
-   private InterceptorChain invoker;
    private RecoveryManager recoveryManager;
+   protected TransactionCoordinator txCoordinator;
 
 
    @Inject
-   public void init(TransactionManager tm, TransactionTable txTable, TransactionLog transactionLog, Configuration c, CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker, RecoveryManager rm) {
+   public void init(TransactionTable txTable, TransactionLog transactionLog, Configuration c, InvocationContextContainer icc,
+                   RecoveryManager rm, TransactionCoordinator txCoordinator) {
       this.configuration = c;
-      this.tm = tm;
       this.transactionLog = transactionLog;
       this.txTable = txTable;
-      this.commandsFactory = commandsFactory;
       this.icc = icc;
-      this.invoker = invoker;
       this.recoveryManager = rm;
+      this.txCoordinator = txCoordinator;
       setStatisticsEnabled(configuration.isExposeJmxStatistics());
    }
 
@@ -205,23 +197,7 @@ public class TxInterceptor extends CommandInterceptor {
       if (isNotValid(status)) throw new IllegalStateException("Transaction " + transaction +
             " is not in a valid state to be invoking cache operations on.");
       LocalTransaction localTransaction = txTable.getOrCreateLocalTransaction(transaction, ctx);
-      if (!localTransaction.isEnlisted()) { //make sure that you only enlist it once
-         try {
-            transaction.enlistResource(new TransactionXaAdapter(localTransaction, txTable, commandsFactory, configuration, invoker, icc, recoveryManager));
-         } catch (Exception e) {
-            Xid xid = localTransaction.getXid();
-            if (xid != null && !ctx.getLockedKeys().isEmpty()) {
-               log.debug("Attempting a rollback to clear stale resources!");
-               try {
-                  TransactionXaAdapter.rollbackImpl(xid, commandsFactory, icc, invoker, txTable, recoveryManager);
-               } catch (XAException xae) {
-                  log.debug("Caught exception attempting to clean up " + xid, xae);
-               }
-            }
-            log.error("Failed to enlist TransactionXaAdapter to transaction");
-            throw new CacheException(e);
-         }
-      }
+      txTable.enlist(transaction, localTransaction);
       return localTransaction;
    }
 

@@ -1,17 +1,17 @@
 package org.infinispan.transaction.xa.recovery;
 
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.LocalTransaction;
+import org.infinispan.transaction.xa.LocalXaTransaction;
 
 import javax.transaction.Transaction;
 
 /**
- * Extends {@link LocalTransaction} and adds recovery related information.
+ * Extends {@link org.infinispan.transaction.xa.LocalXaTransaction} and adds recovery related information.
  *
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-public class RecoveryAwareLocalTransaction extends LocalTransaction implements RecoveryAwareTransaction {
+public class RecoveryAwareLocalTransaction extends LocalXaTransaction implements RecoveryAwareTransaction {
 
    private boolean prepared;
 
