@@ -57,7 +57,7 @@ public class RemoveRecoveryInfoCommand extends RecoveryCommand {
 
    @Override
    public String toString() {
-      return "ForgetTxCommand{" +
+      return "RemoveRecoveryInfoCommand {" +
             "xids=" + (xids == null ? null : Arrays.asList(xids)) +
             "} " + super.toString();
    }
