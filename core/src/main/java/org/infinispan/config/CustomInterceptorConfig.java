@@ -83,6 +83,8 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
 
    public CustomInterceptorConfig() {
       super();
+      this.isFirst = true;
+      overriddenConfigurationElements.add("isFirst");
    }
 
    /**
@@ -103,12 +105,16 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       this.index = index;
       this.after = after;
       this.before = before;
-      overriddenConfigurationElements.add("interceptor");
+      if (interceptor != null) overriddenConfigurationElements.add("interceptor");
+
+      // No way to tell here, unfortunately...
       overriddenConfigurationElements.add("isFirst");
       overriddenConfigurationElements.add("isLast");
-      overriddenConfigurationElements.add("index");
-      overriddenConfigurationElements.add("after");
-      overriddenConfigurationElements.add("before");
+
+      if (index > -1) overriddenConfigurationElements.add("index");
+
+      if (after != null && after.length() > 0) overriddenConfigurationElements.add("after");
+      if (before != null && before.length() > 0) overriddenConfigurationElements.add("before");
    }
 
    /**
@@ -127,10 +133,13 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       isFirst = first;
       isLast = last;
       this.index = index;
-      overriddenConfigurationElements.add("interceptor");
+      if (interceptor != null) overriddenConfigurationElements.add("interceptor");
+
+      // No way to tell here, unfortunately...
       overriddenConfigurationElements.add("isFirst");
       overriddenConfigurationElements.add("isLast");
-      overriddenConfigurationElements.add("index");
+
+      if (index > -1) overriddenConfigurationElements.add("index");
 
       if (after != null) {
          this.after = after.getName();
@@ -149,6 +158,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * @param interceptor
     */
    public CustomInterceptorConfig(CommandInterceptor interceptor) {
+      this();
       this.interceptor = interceptor;
       overriddenConfigurationElements.add("interceptor");
    }
