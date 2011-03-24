@@ -62,7 +62,8 @@ public class RehashControlCommand extends BaseRpcCommand {
       LEAVE_DRAIN_TX_PREPARES,
       JOIN_TX_LOG_REQ,
       JOIN_TX_FINAL_LOG_REQ,
-      JOIN_TX_LOG_CLOSE
+      JOIN_TX_LOG_CLOSE,
+      JOIN_ABORT
    }
 
    Type type;
@@ -156,6 +157,9 @@ public class RehashControlCommand extends BaseRpcCommand {
             return lockAndDrainTxLog();
          case JOIN_TX_LOG_CLOSE:
             unlockAndCloseTxLog();
+            return null;
+         case JOIN_ABORT:
+            distributionManager.abortJoin(sender);
             return null;
       }
       throw new CacheException("Unknown rehash control command type " + type);

@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.concurrent.Future;
 
 import static org.infinispan.commands.control.RehashControlCommand.Type.*;
+import static org.infinispan.commands.control.RehashControlCommand.Type.JOIN_ABORT;
 import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
 import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
 
@@ -60,12 +61,14 @@ public class JoinTask extends RehashTask {
       long start = System.currentTimeMillis();
       if (log.isDebugEnabled()) log.debug("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s", getMyAddress(), distributionManager.isJoinComplete());
       ConsistentHash chOld, chNew;
+      boolean cleanup = false;
       try {
          if (distributionManager.isJoinComplete()) {
             throw new IllegalStateException("Join on " + getMyAddress() + " cannot be complete without rehash to finishing");
          }
          // 1.  Get chOld from coord.         
          chOld = retrieveOldConsistentHash();
+         cleanup = true;
 
          // 2.  new CH instance
          if (chOld.getCaches().contains(self))
@@ -113,10 +116,18 @@ public class JoinTask extends RehashTask {
          }
 
       } catch (Exception e) {
-         log.error("Caught exception!", e);
+         log.error("Caught exception!  Aborting join.", e);
+         broadcastAbort(cleanup);
          throw new CacheException("Unexpected exception", e);
       } finally {
          log.info("%s completed join rehash in %s!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
+      }
+   }
+
+   private void broadcastAbort(boolean cleanup) {
+      if (cleanup) {
+         RehashControlCommand abortCommand = cf.buildRehashControlCommand(JOIN_ABORT, self);
+         rpcManager.broadcastRpcCommand(abortCommand, false, true);
       }
    }
 

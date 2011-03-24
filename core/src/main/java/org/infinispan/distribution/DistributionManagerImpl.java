@@ -42,6 +42,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -431,10 +432,6 @@ public class DistributionManagerImpl implements DistributionManager {
       this.consistentHash = consistentHash;
    }
 
-   public void setOldConsistentHash(ConsistentHash oldConsistentHash) {
-      this.oldConsistentHash = oldConsistentHash;
-   }
-
    @ManagedOperation(description = "Determines whether a given key is affected by an ongoing rehash, if any.")
    @Operation(displayName = "Could key be affected by rehash?")
    public boolean isAffectedByRehash(@Parameter(name = "key", description = "Key to check") Object key) {
@@ -479,13 +476,13 @@ public class DistributionManagerImpl implements DistributionManager {
          topologyInfo.addNodeTopologyInfo(a, nodeTopologyInfo);
          if (trace) log.trace("Node topology info added(%s).  Topology info is %s", nodeTopologyInfo, topologyInfo);
          ConsistentHash chOld = consistentHash;
-         if (chOld instanceof UnionConsistentHash) throw new RuntimeException("Not expecting a union CH!");
+         if (chOld instanceof UnionConsistentHash) throw new RuntimeException("Not expecting an instance of UnionConsistentHash!");
          oldConsistentHash = chOld;
          joiner = a;
          ConsistentHash chNew = ConsistentHashHelper.createConsistentHash(configuration, chOld.getCaches(), topologyInfo, a);
          consistentHash = new UnionConsistentHash(chOld, chNew);
       }
-      if (trace) log.trace("New CH is %s", consistentHash);
+      if (trace) log.trace("New ConsistentHash is %s", consistentHash);
       return topologyInfo.getNodeTopologyInfo(rpcManager.getAddress());
    }
 
@@ -558,6 +555,7 @@ public class DistributionManagerImpl implements DistributionManager {
          // how long do we wait for a startup?
          if (e.isNeedsToRejoin()) {
             try {
+               joinComplete = false;
                join();
             } catch (Exception e1) {
                log.fatal("Unable to recover from a partition merge!", e1);
@@ -628,6 +626,20 @@ public class DistributionManagerImpl implements DistributionManager {
    public void setJoinComplete(boolean joinComplete) {
       this.joinComplete = joinComplete;
       if (joinComplete) this.finalJoinPhaseLatch.countDown();
+   }
+
+   public void abortJoin(Address joiner) {
+      if (Util.safeEquals(joiner, this.joiner)) {
+         this.joiner = null;
+         if (consistentHash instanceof UnionConsistentHash)
+            consistentHash = ((UnionConsistentHash) consistentHash).getOldConsistentHash();
+      }
+
+      // if this is the coordinator, then the joiner is set in a CAS-safe variable.
+      if (JOINER_CAS.compareAndSet(this, joiner, null)) {
+         if (consistentHash instanceof UnionConsistentHash)
+            consistentHash = ((UnionConsistentHash) consistentHash).getOldConsistentHash();
+      }
    }
 
    void drainLocalTransactionLog(RemoteTransactionLogger tlog) {
