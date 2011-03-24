@@ -20,8 +20,9 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.transaction.xa;
+package org.infinispan.transaction;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
@@ -39,11 +40,14 @@ import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.MembershipArithmetic;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.synchronization.SyncLocalTransaction;
+import org.infinispan.transaction.synchronization.SynchronizationAdapter;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
-import javax.transaction.xa.Xid;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,7 +61,7 @@ import java.util.concurrent.TimeUnit;
 import static java.util.Collections.emptySet;
 
 /**
- * Repository for {@link org.infinispan.transaction.xa.RemoteTransaction} and {@link
+ * Repository for {@link RemoteTransaction} and {@link
  * org.infinispan.transaction.xa.TransactionXaAdapter}s (locally originated transactions).
  *
  * @author Mircea.Markus@jboss.com
@@ -73,12 +77,12 @@ public class TransactionTable {
 
    protected final ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions = new ConcurrentHashMap<GlobalTransaction, RemoteTransaction>();
 
-   protected final ConcurrentMap<Xid, LocalTransaction> xid2LocalTx = new ConcurrentHashMap<Xid, LocalTransaction>();
 
    private final Object listener = new StaleTransactionCleanup();
    
-   private Configuration configuration;
-   private InvocationContextContainer icc;
+   protected Configuration configuration;
+   protected InvocationContextContainer icc;
+   protected TransactionCoordinator txCoordinator;
    private InterceptorChain invoker;
    private CacheNotifier notifier;
    private RpcManager rpcManager;
@@ -89,7 +93,7 @@ public class TransactionTable {
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration,
                           InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier,
-                          TransactionFactory gtf, EmbeddedCacheManager cm) {
+                          TransactionFactory gtf, EmbeddedCacheManager cm, TransactionCoordinator txCoordinator) {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.icc = icc;
@@ -97,6 +101,7 @@ public class TransactionTable {
       this.notifier = notifier;
       this.txFactory = gtf;
       this.cm = cm;
+      this.txCoordinator = txCoordinator;
    }
 
    @Start
@@ -143,14 +148,6 @@ public class TransactionTable {
       return transaction.getLockedKeys();
    }
 
-   public LocalTransaction getLocalTransaction(Xid xid) {
-      return this.xid2LocalTx.get(xid);
-   }
-
-   public void addLocalTransactionMapping(LocalTransaction localTransaction) {
-      if (localTransaction.getXid() == null) throw new IllegalStateException("Initialize xid first!");
-      this.xid2LocalTx.put(localTransaction.getXid(), localTransaction);
-   }
 
    public void remoteTransactionPrepared(GlobalTransaction gtx) {
       //do nothing
@@ -158,6 +155,17 @@ public class TransactionTable {
 
    public void localTransactionPrepared(LocalTransaction localTransaction) {
       //nothing, only used by recovery
+   }
+
+   public void enlist(Transaction transaction, LocalTransaction localTransaction) {
+      SynchronizationAdapter sync = new SynchronizationAdapter(localTransaction, txCoordinator);
+      try {
+         transaction.registerSynchronization(sync);
+      } catch (Exception e) {
+         log.warn("Failed synchronization registration", e);
+         throw new CacheException(e);
+      }
+      ((SyncLocalTransaction) localTransaction).setEnlisted(true);
    }
 
    @Listener
@@ -223,7 +231,7 @@ public class TransactionTable {
    }
 
    /**
-    * Returns the {@link org.infinispan.transaction.xa.RemoteTransaction} associated with the supplied transaction id.
+    * Returns the {@link RemoteTransaction} associated with the supplied transaction id.
     * Returns null if no such association exists.
     */
    public RemoteTransaction getRemoteTransaction(GlobalTransaction txId) {
@@ -231,10 +239,10 @@ public class TransactionTable {
    }
 
    /**
-    * Creates and register a {@link org.infinispan.transaction.xa.RemoteTransaction} based on the supplied params.
+    * Creates and register a {@link RemoteTransaction} based on the supplied params.
     * Returns the created transaction.
     *
-    * @throws IllegalStateException if an attempt to create a {@link org.infinispan.transaction.xa.RemoteTransaction}
+    * @throws IllegalStateException if an attempt to create a {@link RemoteTransaction}
     *                               for an already registered id is made.
     */
    public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications) {
@@ -244,10 +252,10 @@ public class TransactionTable {
    }
 
    /**
-    * Creates and register a {@link org.infinispan.transaction.xa.RemoteTransaction} with no modifications. Returns the
+    * Creates and register a {@link RemoteTransaction} with no modifications. Returns the
     * created transaction.
     *
-    * @throws IllegalStateException if an attempt to create a {@link org.infinispan.transaction.xa.RemoteTransaction}
+    * @throws IllegalStateException if an attempt to create a {@link RemoteTransaction}
     *                               for an already registered id is made.
     */
    public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx) {
@@ -289,12 +297,11 @@ public class TransactionTable {
     * if such an tx exists.
     */
    public boolean removeLocalTransaction(LocalTransaction localTransaction) {
-      xid2LocalTx.remove(localTransaction.getXid());
       return localTransactions.remove(localTransaction.getTransaction()) != null;
    }
 
    /**
-    * Removes the {@link org.infinispan.transaction.xa.RemoteTransaction} corresponding to the given tx.
+    * Removes the {@link RemoteTransaction} corresponding to the given tx.
     */
    public void remoteTransactionCompleted(GlobalTransaction gtx) {
       remoteTransactions.remove(gtx);

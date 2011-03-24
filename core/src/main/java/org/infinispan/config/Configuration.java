@@ -204,6 +204,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        */
       TransactionConfig syncCommitPhase(Boolean syncCommitPhase);
 
+
+      /**
+       * If enabled then {@link javax.transaction.Synchronization} is used (v.s. {@link javax.transaction.xa.XAResource})
+       * to coordinate transaction commit/prepares with the TransactionManager. {@link javax.transaction.Synchronization}
+       * have the advantage that TMs can optimise 2PC with a 1PC where only 1 other XAResource is present.
+       */
+      TransactionConfig useSynchronization(Boolean useSynchronization);
+
       /**
        * If true, the cluster-wide rollback phase in two-phase commit (2PC) transactions will be
        * synchronous, so Infinispan will wait for responses from all nodes to which the rollback was
@@ -1738,6 +1746,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return transaction.recovery.getRecoveryInfoCacheName();
    }
 
+   /**
+    *
+    * @see TransactionConfig#useSynchronization(Boolean)
+    */
+   public boolean isUseSynchronizationForTransactions() {
+      return transaction.isUseSynchronization();
+   }
+
    // ------------------------------------------------------------------------------------------------------------
    //   HELPERS
    // ------------------------------------------------------------------------------------------------------------
@@ -1921,6 +1937,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setUseEagerLocking")
       protected Boolean useEagerLocking = false;
 
+      protected Boolean useSynchronization = false;
+
       @Dynamic
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setEagerLockSingleNode")
       protected Boolean eagerLockSingleNode = false;
@@ -1979,6 +1997,21 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return this;
       }
 
+      @Override
+      public TransactionConfig useSynchronization(Boolean useSynchronization) {
+         setUseSynchronization(useSynchronization);
+         return this;
+      }
+
+      @XmlAttribute
+      public Boolean isUseSynchronization() {
+         return useSynchronization;
+      }
+
+      public void setUseSynchronization(Boolean useSynchronization) {
+         testImmutability("useSynchronization");
+         this.useSynchronization = useSynchronization;
+      }
 
       @XmlAttribute
       public Boolean isSyncRollbackPhase() {

@@ -2,7 +2,7 @@ package org.infinispan.context.impl;
 
 import javax.transaction.Transaction;
 
-import org.infinispan.transaction.xa.AbstractCacheTransaction;
+import org.infinispan.transaction.AbstractCacheTransaction;
 
 import java.util.Collection;
 import java.util.HashSet;

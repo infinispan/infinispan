@@ -2,9 +2,9 @@ package org.infinispan.context.impl;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.transaction.xa.AbstractCacheTransaction;
+import org.infinispan.transaction.AbstractCacheTransaction;
+import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.RemoteTransaction;
 import org.infinispan.util.BidirectionalMap;
 
 import javax.transaction.Transaction;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Context to be used for transaction that originated remotelly.
+ * Context to be used for transaction that originated remotely.
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño

@@ -8,16 +8,9 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.RemoteTransaction;
-import org.infinispan.transaction.xa.TransactionTable;
-
-import java.util.Collections;
-import java.util.Set;
 
 import static java.util.Collections.emptySet;
 

@@ -24,17 +24,22 @@ public class APIDistTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
+      Configuration cfg = createConfig();
+      cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
+      cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
+      registerCacheManager(cm1, cm2);
+      cm1.getCache();
+      key = new MagicKey(cm2.getCache(), "Key mapped to Cache2");
+   }
+
+   protected Configuration createConfig() {
       Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
       cfg.setL1CacheEnabled(false); // no L1 enabled
       cfg.setLockAcquisitionTimeout(100);
       cfg.setNumOwners(1);
       cfg.setSyncCommitPhase(true);
       cfg.setSyncRollbackPhase(true);
-      cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
-      cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
-      registerCacheManager(cm1, cm2);
-      cm1.getCache();
-      key = new MagicKey(cm2.getCache(), "Key mapped to Cache2");
+      return cfg;
    }
 
    public void testLockAndGet() throws SystemException, NotSupportedException {

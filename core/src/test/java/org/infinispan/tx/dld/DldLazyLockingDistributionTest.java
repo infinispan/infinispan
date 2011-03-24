@@ -26,10 +26,7 @@ public class DldLazyLockingDistributionTest extends BaseDldLazyLockingTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-      config.setUnsafeUnreliableReturnValues(true);
-      config.setNumOwners(1);
-      config.setEnableDeadlockDetection(true);
+      Configuration config = updatedConfig();
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(config, true);
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(config, true);
       registerCacheManager(cm1);
@@ -45,6 +42,14 @@ public class DldLazyLockingDistributionTest extends BaseDldLazyLockingTest {
 
       rpcManager0 = DldLazyLockingReplicationTest.replaceRpcManager(cache(0));
       rpcManager1 = DldLazyLockingReplicationTest.replaceRpcManager(cache(1));
+   }
+
+   protected Configuration updatedConfig() {
+      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+      config.setUnsafeUnreliableReturnValues(true);
+      config.setNumOwners(1);
+      config.setEnableDeadlockDetection(true);
+      return config;
    }
 
    public void testSymmetricDeadlock() {

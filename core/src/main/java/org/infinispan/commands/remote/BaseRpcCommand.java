@@ -33,4 +33,11 @@ public abstract class BaseRpcCommand implements CacheRpcCommand {
    public String getCacheName() {
       return cacheName;
    }
+
+   @Override
+   public String toString() {
+      return "BaseRpcCommand{" +
+            "cacheName='" + cacheName + '\'' +
+            '}';
+   }
 }

@@ -42,7 +42,7 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
    public void setUp() {
       lc = createMock(LockContainer.class);
       lockManager = new DeadlockDetectingLockManagerMock(SPIN_DURATION, true, lc, config);
-      lockOwner = (DldGlobalTransaction) gtf.instantiateGlobalTransaction();
+      lockOwner = (DldGlobalTransaction) gtf.newGlobalTransaction();
    }
 
 
@@ -75,7 +75,7 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
    }
 
    public void testLocalDeadlock() throws Exception {
-      final DldGlobalTransaction ddgt = (DldGlobalTransaction) gtf.instantiateGlobalTransaction();
+      final DldGlobalTransaction ddgt = (DldGlobalTransaction) gtf.newGlobalTransaction();
 
       InvocationContext localTxContext = buildLocalTxIc(ddgt);
 

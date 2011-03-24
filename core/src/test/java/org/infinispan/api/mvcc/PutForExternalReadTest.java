@@ -6,7 +6,6 @@ import org.infinispan.Cache;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -17,7 +16,8 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.xa.TransactionTable;
+import org.infinispan.transaction.TransactionTable;
+
 import static org.testng.AssertJUnit.*;
 import org.testng.annotations.Test;
 

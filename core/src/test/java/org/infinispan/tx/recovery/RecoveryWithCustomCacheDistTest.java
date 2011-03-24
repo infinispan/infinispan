@@ -18,8 +18,8 @@ public class RecoveryWithCustomCacheDistTest extends RecoveryWithDefaultCacheDis
       configuration = super.configure();
       configuration.configureTransaction().configureRecovery().recoveryInfoCacheName(CUSTOM_CACHE);
 
-      registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(configuration, true));
-      registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(configuration, true));
+      registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(configuration, false));
+      registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(configuration, false));
 
       recoveryCache = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
       manager(0).defineConfiguration(CUSTOM_CACHE, recoveryCache);

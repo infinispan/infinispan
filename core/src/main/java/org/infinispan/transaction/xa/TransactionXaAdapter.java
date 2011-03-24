@@ -1,13 +1,9 @@
 package org.infinispan.transaction.xa;
 
-import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.impl.LocalTxInvocationContext;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.transaction.TransactionCoordinator;
+import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.infinispan.util.logging.Log;
@@ -32,43 +28,32 @@ public class TransactionXaAdapter implements XAResource {
    private int txTimeout;
 
    private final InvocationContextContainer icc;
-   private final InterceptorChain invoker;
-
-   private final CommandsFactory commandsFactory;
    private final Configuration configuration;
 
-   private final TransactionTable txTable;
+   private final XaTransactionTable txTable;
+
+   private final TransactionCoordinator txCoordinator;
 
    /**
     * XAResource is associated with a transaction between enlistment (XAResource.start()) XAResource.end(). It's only the
     * boundary methods (prepare, commit, rollback) that need to be "stateless".
     * Reefer to section 3.4.4 from JTA spec v.1.1
     */
-   private final LocalTransaction localTransaction;
+   private final LocalXaTransaction localTransaction;
 
    private final RecoveryManager recoveryManager;
 
    private volatile RecoveryManager.RecoveryIterator recoveryIterator;
 
 
-   public TransactionXaAdapter(LocalTransaction localTransaction, TransactionTable txTable, CommandsFactory commandsFactory,
-                               Configuration configuration, InterceptorChain invoker, InvocationContextContainer icc, RecoveryManager rm) {
+   public TransactionXaAdapter(LocalXaTransaction localTransaction, TransactionTable txTable,
+                               Configuration configuration, InvocationContextContainer icc, RecoveryManager rm, TransactionCoordinator txCoordinator) {
       this.localTransaction = localTransaction;
-      this.txTable = txTable;
-      this.commandsFactory = commandsFactory;
+      this.txTable = (XaTransactionTable) txTable;
       this.configuration = configuration;
-      this.invoker = invoker;
       this.icc = icc;
       this.recoveryManager = rm;
-   }
-
-   /**
-    * This is to be used for creating XAResource objects that should only be used for recovery: i.e. only for calling {@link #recover(int)}.
-    * Useful as certain TM implementations (e.g. JBossTM) would use an lookup interface for obtaining a reference to an XAResource implementation.
-    * (in the case of JBossTM it is com.arjuna.ats.jta.recovery.XAResourceRecovery).
-    */
-   public TransactionXaAdapter(TransactionTable txTable) {
-      this (null, txTable, null, null, null, null, null);
+      this.txCoordinator = txCoordinator;
    }
 
    /**
@@ -76,35 +61,8 @@ public class TransactionXaAdapter implements XAResource {
     */
    public int prepare(Xid externalXid) throws XAException {
       Xid xid = convertXid(externalXid);
-      LocalTransaction localTransaction = getLocalTransactionAndValidate(xid);
-      
-      validateNotMarkedForRollback(localTransaction);
-
-      if (configuration.isOnePhaseCommit()) {
-         if (trace) log.trace("Received prepare for tx: %s. Skipping call as 1PC will be used.", xid);
-         return XA_OK;
-      }
-
-      PrepareCommand prepareCommand = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), configuration.isOnePhaseCommit());
-      if (trace) log.trace("Sending prepare command through the chain: " + prepareCommand);
-
-      LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-      ctx.setLocalTransaction(localTransaction);
-      try {
-         invoker.invoke(ctx, prepareCommand);
-         if (localTransaction.isReadOnly()) {
-            if (trace) log.trace("Readonly transaction: " + localTransaction.getGlobalTransaction());
-            // force a cleanup to release any objects held.  Some TMs don't call commit if it is a READ ONLY tx.  See ISPN-845
-            commit(xid, false);
-            return XA_RDONLY;
-         } else {
-            txTable.localTransactionPrepared(localTransaction);
-            return XA_OK;
-         }
-      } catch (Throwable e) {
-         log.error("Error while processing PrepareCommand", e);
-         throw new XAException(XAException.XAER_RMERR);
-      }
+      LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
+      return txCoordinator.prepare(localTransaction);
    }
 
    /**
@@ -112,34 +70,12 @@ public class TransactionXaAdapter implements XAResource {
     */
    public void commit(Xid externalXid, boolean isOnePhase) throws XAException {
       Xid xid = convertXid(externalXid);
-      LocalTransaction localTransaction = getLocalTransactionAndValidate(xid);
+      LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
 
       if (trace) log.trace("Committing transaction %s", localTransaction.getGlobalTransaction());
       try {
-         LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-         ctx.setLocalTransaction(localTransaction);
-         if (configuration.isOnePhaseCommit() || isOnePhase) {
-            validateNotMarkedForRollback(localTransaction);
-
-            if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
-            PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
-            try {
-               invoker.invoke(ctx, command);
-               forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction);
-            } catch (Throwable e) {
-               log.error("Error while processing 1PC PrepareCommand", e);
-               throw new XAException(XAException.XAER_RMERR);
-            }
-         } else {
-            CommitCommand commitCommand = commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
-            try {
-               invoker.invoke(ctx, commitCommand);
-               forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction);
-            } catch (Throwable e) {
-               log.error("Error while processing 1PC PrepareCommand", e);
-               throw new XAException(XAException.XAER_RMERR);
-            }
-         }
+         txCoordinator.commit(localTransaction, isOnePhase);
+         forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction);
       } finally {
          cleanupImpl(localTransaction, txTable, icc);
       }
@@ -149,24 +85,10 @@ public class TransactionXaAdapter implements XAResource {
     * Same comment as for {@link #prepare(javax.transaction.xa.Xid)} applies for commit.
     */   
    public void rollback(Xid externalXid) throws XAException {
-      rollbackImpl(convertXid(externalXid), commandsFactory, icc, invoker, txTable, recoveryManager);
-   }
-
-   public static void rollbackImpl(Xid xid, CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker, TransactionTable txTable, RecoveryManager rm) throws XAException {
-      LocalTransaction localTransaction = getLocalTransactionAndValidateImpl(xid, txTable);
-      if (trace) log.trace("rollback transaction %s ", localTransaction.getGlobalTransaction());
-      RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
-      LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-      ctx.setLocalTransaction(localTransaction);
-      try {
-         invoker.invoke(ctx, rollbackCommand);
-         forgetSuccessfullyCompletedTransaction(rm, xid, localTransaction);
-      } catch (Throwable e) {
-         log.error("Exception while rollback", e);
-         throw new XAException(XAException.XA_HEURHAZ);
-      } finally {
-         cleanupImpl(localTransaction, txTable, icc);
-      }
+      Xid xid = convertXid(externalXid);
+      LocalXaTransaction localTransaction1 = getLocalTransactionAndValidateImpl(xid, txTable);
+      txCoordinator.rollback(localTransaction1);
+      forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction1);
    }
 
    public void start(Xid externalXid, int i) throws XAException {
@@ -257,31 +179,23 @@ public class TransactionXaAdapter implements XAResource {
             '}';
    }
 
-   private void validateNotMarkedForRollback(LocalTransaction localTransaction) throws XAException {
-      if (localTransaction.isMarkedForRollback()) {
-         if (trace) log.trace("Transaction already marked for rollback: %s", localTransaction);
-         throw new XAException(XAException.XA_RBROLLBACK);
-      }
-   }
-
-   private static void cleanupImpl(LocalTransaction localTransaction, TransactionTable txTable, InvocationContextContainer icc) {
+   private static void cleanupImpl(LocalXaTransaction localTransaction, TransactionTable txTable, InvocationContextContainer icc) {
       txTable.removeLocalTransaction(localTransaction);
       icc.suspend();
    }
 
-   private static void forgetSuccessfullyCompletedTransaction(RecoveryManager recoveryManager, Xid xid, LocalTransaction localTransaction) {
-      //todo make sure this gets broad casted or at least flushed
-      if (recoveryManager != null) {
+   private void forgetSuccessfullyCompletedTransaction(RecoveryManager recoveryManager, Xid xid, LocalXaTransaction localTransaction) {
+      if (configuration.isTransactionRecoveryEnabled()) {
          recoveryManager.removeRecoveryInformation(localTransaction.getRemoteLocksAcquired(), xid, false);
       }
    }
 
-   private LocalTransaction getLocalTransactionAndValidate(Xid xid) throws XAException {
+   private LocalXaTransaction getLocalTransactionAndValidate(Xid xid) throws XAException {
       return getLocalTransactionAndValidateImpl(xid, txTable);
    }
 
-   private static LocalTransaction getLocalTransactionAndValidateImpl(Xid xid, TransactionTable txTable) throws XAException {
-      LocalTransaction localTransaction = txTable.getLocalTransaction(xid);
+   private static LocalXaTransaction getLocalTransactionAndValidateImpl(Xid xid, XaTransactionTable txTable) throws XAException {
+      LocalXaTransaction localTransaction = txTable.getLocalTransaction(xid);
       if  (localTransaction == null) {
          if (trace) log.trace("no tx found for %s", xid);
          throw new XAException(XAException.XAER_NOTA);
@@ -289,7 +203,7 @@ public class TransactionXaAdapter implements XAResource {
       return localTransaction;
    }
 
-   public LocalTransaction getLocalTransaction() {
+   public LocalXaTransaction getLocalTransaction() {
       return localTransaction;
    }
 

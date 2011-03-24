@@ -3,14 +3,14 @@ package org.infinispan.transaction.xa.recovery;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.RemoteTransaction;
+import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.List;
 
 /**
- * Extends {@link RemoteTransaction} and adds recovery related information and functionality.
+ * Extends {@link org.infinispan.transaction.RemoteTransaction} and adds recovery related information and functionality.
  *
  * @author Mircea.Markus@jboss.com
  * @since 5.0
@@ -66,5 +66,16 @@ public class RecoveryAwareRemoteTransaction extends RemoteTransaction implements
    @Override
    public void setPrepared(boolean prepared) {
       this.prepared = prepared;
+   }
+
+   @Override
+   public String toString() {
+      return "RecoveryAwareRemoteTransaction{" +
+            "prepared=" + prepared +
+            ", isOrphan=" + isOrphan +
+            ", modifications=" + modifications +
+            ", lookedUpEntries=" + lookedUpEntries +
+            ", tx=" + tx +
+            "} ";
    }
 }

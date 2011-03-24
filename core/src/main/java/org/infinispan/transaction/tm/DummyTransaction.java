@@ -340,4 +340,8 @@ public class DummyTransaction implements Transaction {
    public DummyXid getXid() {
       return xid;
    }
+
+   public Collection<Synchronization> getEnlistedSynchronization() {
+      return syncs;
+   }
 }

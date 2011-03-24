@@ -2,6 +2,7 @@ package org.infinispan.remoting.responses;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.GetInDoubtTransactionsCommand;
 
 /**
  * The default response generator for most cache modes
@@ -11,9 +12,13 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
  */
 public class DefaultResponseGenerator implements ResponseGenerator {
    public Response getResponse(CacheRpcCommand command, Object returnValue) {
-      if (returnValue != null && command instanceof ClusteredGetCommand)
+      if (returnValue == null) return null;
+      if (command.getCommandId() == ClusteredGetCommand.COMMAND_ID)
          return new SuccessfulResponse(returnValue);
-      else
+      else if (command.getCommandId() == GetInDoubtTransactionsCommand.COMMAND_ID){
+         return new SuccessfulResponse(returnValue);
+      } else {
          return null; // saves on serializing a response!
+      }
    }
 }

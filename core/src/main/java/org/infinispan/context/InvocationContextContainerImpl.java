@@ -30,8 +30,8 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.transaction.xa.LocalTransaction;
-import org.infinispan.transaction.xa.TransactionTable;
+import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.transaction.TransactionTable;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
