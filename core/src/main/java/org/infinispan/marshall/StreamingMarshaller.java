@@ -44,6 +44,7 @@ import java.io.OutputStream;
  * @see Marshaller
  */
 @ThreadSafe
+@Scope(Scopes.GLOBAL)
 public interface StreamingMarshaller extends Marshaller {
 
    /**
