@@ -22,7 +22,7 @@ public interface RecoveryManager {
     * Implementation can take advantage of several optimisations:
     * <pre>
     * - in order to get all tx from the cluster a broadcast is performed. This can be performed only once (assuming the call
-    *   is successful), the first time this method is called. Aftert that a local, cached list of tx prepared on this node is returned.
+    *   is successful), the first time this method is called. After that a local, cached list of tx prepared on this node is returned.
     * - during the broadcast just return the list of prepared transactions that are not originated on other active nodes of the
     * cluster.
     * </pre>
@@ -51,7 +51,7 @@ public interface RecoveryManager {
     * Returns the list of remote transaction prepared on this node for which the originator(i.e. the node where the tx
     * stared) is no longer part of the cluster.
     *
-    * @see org.infinispan.transaction.xa.RemoteTransaction#isInDoubt()
+    * @see org.infinispan.transaction.RemoteTransaction#isInDoubt()
     */
    List<Xid> getLocalInDoubtTransactions();
 

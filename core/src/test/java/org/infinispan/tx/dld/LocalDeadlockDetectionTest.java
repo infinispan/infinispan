@@ -32,14 +32,19 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
-      Configuration configuration = getDefaultStandaloneConfig(true);
-      configuration.setEnableDeadlockDetection(true);
-      configuration.setUseLockStriping(false);
-      configuration.setExposeJmxStatistics(true);
+      Configuration configuration = createConfig();
       cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
       lockManager = (DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache);
       return cacheManager;
+   }
+
+   protected Configuration createConfig() {
+      Configuration configuration = getDefaultStandaloneConfig(true);
+      configuration.setEnableDeadlockDetection(true);
+      configuration.setUseLockStriping(false);
+      configuration.setExposeJmxStatistics(true);
+      return configuration;
    }
 
    @BeforeMethod
@@ -149,7 +154,6 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
 
       assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t1.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
       assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t2.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
-      System.out.println("After begin");
 
       t1.setKeyValue("k1", "value_1_t1");
       t2.setKeyValue("k2", "value_2_t2");
@@ -177,7 +181,7 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
       assert lockManager.getOwner("k1") == lockManager.getOwner("k2");
 
       if (response1 instanceof Exception) {
-         assert PerCacheExecutorThread.OperationsResult.COMMIT_TX_OK == t2.execute(PerCacheExecutorThread.Operations.COMMIT_TX);
+         assertEquals(PerCacheExecutorThread.OperationsResult.COMMIT_TX_OK, t2.execute(PerCacheExecutorThread.Operations.COMMIT_TX));
          assert t1.execute(PerCacheExecutorThread.Operations.COMMIT_TX) instanceof RollbackException;
       } else {
          assert PerCacheExecutorThread.OperationsResult.COMMIT_TX_OK == t1.execute(PerCacheExecutorThread.Operations.COMMIT_TX);

@@ -2,10 +2,11 @@ package org.infinispan.transaction.xa.recovery;
 
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.LocalTransaction;
-import org.infinispan.transaction.xa.RemoteTransaction;
-import org.infinispan.transaction.xa.TransactionTable;
+import org.infinispan.transaction.xa.LocalXaTransaction;
+import org.infinispan.transaction.xa.XaTransactionTable;
 
 import javax.transaction.xa.Xid;
 import java.util.LinkedList;
@@ -13,12 +14,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Transaction table that delegates prepared transaction's management to the {@link org.infinispan.transaction.xa.recovery.RecoveryManager}.
+ * Transaction table that delegates prepared transaction's management to the {@link RecoveryManager}.
  *
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-public class RecoveryAwareTransactionTable extends TransactionTable {
+public class RecoveryAwareTransactionTable extends XaTransactionTable {
 
    private RecoveryManagerImpl recoveryManager;
 
@@ -63,7 +64,7 @@ public class RecoveryAwareTransactionTable extends TransactionTable {
 
    public List<Xid> getLocalPreparedXids() {
       List<Xid> result = new LinkedList<Xid>();
-      for (Map.Entry<Xid, LocalTransaction> e : xid2LocalTx.entrySet()) {
+      for (Map.Entry<Xid, LocalXaTransaction> e : xid2LocalTx.entrySet()) {
          RecoveryAwareLocalTransaction value = (RecoveryAwareLocalTransaction) e.getValue();
          if (value.isPrepared()) {
             result.add(e.getKey());

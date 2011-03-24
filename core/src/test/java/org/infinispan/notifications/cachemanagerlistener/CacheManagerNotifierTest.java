@@ -13,7 +13,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.xa.TransactionTable.StaleTransactionCleanup;
+import org.infinispan.transaction.TransactionTable.StaleTransactionCleanup;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 

@@ -1,7 +1,9 @@
-package org.infinispan.transaction.xa;
+package org.infinispan.transaction;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.BidirectionalLinkedHashMap;
 import org.infinispan.util.BidirectionalMap;
 

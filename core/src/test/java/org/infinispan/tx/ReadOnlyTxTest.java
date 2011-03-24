@@ -7,8 +7,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.transaction.xa.LocalTransaction;
-import org.infinispan.transaction.xa.TransactionTable;
+import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -31,7 +31,7 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
       tm().begin();
       assert cache.get("k") == null;
       Transaction transaction = tm().suspend();
-      LocalTransaction localTransaction = txTable().getLocalTransaction(transaction);
+      LocalXaTransaction localTransaction = (LocalXaTransaction) txTable().getLocalTransaction(transaction);
       assert localTransaction != null && localTransaction.isReadOnly();
    }
 
@@ -40,7 +40,7 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
       cache.put("k", "v");
       assert TestingUtil.extractLockManager(cache).isLocked("k");
       Transaction transaction = tm().suspend();
-      LocalTransaction localTransaction = txTable().getLocalTransaction(transaction);
+      LocalXaTransaction localTransaction = (LocalXaTransaction) txTable().getLocalTransaction(transaction);
       assert localTransaction != null && !localTransaction.isReadOnly();
    }
 
@@ -50,7 +50,7 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
       cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get("k");
       assert TestingUtil.extractLockManager(cache).isLocked("k");
       Transaction transaction = tm().suspend();
-      LocalTransaction localTransaction = txTable().getLocalTransaction(transaction);
+      LocalXaTransaction localTransaction = (LocalXaTransaction) txTable().getLocalTransaction(transaction);
       assert localTransaction != null && !localTransaction.isReadOnly();
    }
 

@@ -150,7 +150,7 @@ public class GlobalTransaction implements Cloneable {
 
       @Override
       public GlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         GlobalTransaction gtx = txFactory.instantiateGlobalTransaction();
+         GlobalTransaction gtx = txFactory.newGlobalTransaction();
          gtx.id = input.readLong();
          gtx.addr = (Address) input.readObject();
          return gtx;

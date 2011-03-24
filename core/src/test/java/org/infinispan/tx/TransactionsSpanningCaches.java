@@ -15,10 +15,16 @@ import javax.transaction.TransactionManager;
 public class TransactionsSpanningCaches extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(new Configuration(), true);
+      Configuration defaultCacheConfig = new Configuration();
+      amendConfig(defaultCacheConfig);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(defaultCacheConfig, true);
       cm.defineConfiguration("c1", cm.getCache().getConfiguration());
       cm.defineConfiguration("c2", cm.getCache().getConfiguration());
       return cm;
+   }
+
+   protected void amendConfig(Configuration defaultCacheConfig) {
+      //ignore
    }
 
    public void testCommitSpanningCaches() throws Exception {

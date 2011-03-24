@@ -31,11 +31,7 @@ public class DldLazyLockingReplicationTest extends BaseDldLazyLockingTest {
    protected DeadlockDetectingLockManager ddLm2; 
 
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
-      config.setEnableDeadlockDetection(true);
-      config.setSyncCommitPhase(true);
-      config.setSyncRollbackPhase(true);
-      config.setUseLockStriping(false);
+      Configuration config = createConfiguration();
       assert config.isEnableDeadlockDetection();
       createClusteredCaches(2, config);
       assert config.isEnableDeadlockDetection();
@@ -56,6 +52,15 @@ public class DldLazyLockingReplicationTest extends BaseDldLazyLockingTest {
 
       ddLm1 = (DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache(0));
       ddLm2 = (DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache(1));
+   }
+
+   protected Configuration createConfiguration() {
+      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
+      config.setEnableDeadlockDetection(true);
+      config.setSyncCommitPhase(true);
+      config.setSyncRollbackPhase(true);
+      config.setUseLockStriping(false);
+      return config;
    }
 
 
@@ -99,7 +104,6 @@ public class DldLazyLockingReplicationTest extends BaseDldLazyLockingTest {
       t2.setKeyValue("key", "value2");
       assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t1.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
       assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t2.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
-      System.out.println("After begin");
 
       t1.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
       t2.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
