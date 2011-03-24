@@ -25,27 +25,48 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
-import org.hibernate.search.engine.SearchFactoryImplementor;
+import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
-import org.infinispan.query.backend.QueryHelper;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.CacheQueryImpl;
 
 /**
  * Class that is used to build {@link org.infinispan.query.CacheQuery}
  *
  * @author Navin Surtani
+ * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 4.0
  */
 public class QueryFactory {
 
    private final Cache cache;
-   private final SearchFactoryImplementor searchFactory;
-
-   public QueryFactory(Cache cache, QueryHelper qh) {
-      this.cache = cache;
-      this.searchFactory = qh.getSearchFactory();
+   private final SearchFactoryIntegrator searchFactory;
+   private final QueryInterceptor queryInterceptor;
+   private final Version luceneVersion;
+   
+   public QueryFactory(Cache cache) {
+      this(cache, null);
    }
 
+   public QueryFactory(Cache cache, Version luceneVersion) {
+      this.luceneVersion = luceneVersion == null ? Version.LUCENE_CURRENT : luceneVersion;
+      if (cache==null) {
+         throw new IllegalArgumentException("cache parameter shall not be null");
+      }
+      this.cache = cache;
+      this.searchFactory = extractType(cache, SearchFactoryIntegrator.class);
+      this.queryInterceptor = extractType(cache, QueryInterceptor.class);
+   }
+
+   private static <T> T extractType(Cache cache, Class<T> class1) {
+      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+      T component = componentRegistry.getComponent(class1);
+      if (component==null) {
+         throw new IllegalArgumentException("Indexing was not enabled on this cache. " + class1 + " not found in registry");
+      }
+      return component;
+   }
 
    /**
     * This is a simple method that will just return a {@link CacheQuery}, filtered according to a set of classes passed
@@ -56,6 +77,7 @@ public class QueryFactory {
     * @return the query object which can be used to iterate through results
     */
    public CacheQuery getQuery(Query luceneQuery, Class<?>... classes) {
+      queryInterceptor.enableClasses(classes);
       return new CacheQueryImpl(luceneQuery, searchFactory, cache, classes);
    }
 
@@ -76,15 +98,17 @@ public class QueryFactory {
     * @param search - the String that you want to be using to search
     * @return {@link org.infinispan.query.CacheQuery} result
     */
-   public CacheQuery getBasicQuery(String field, String search, Version luceneVersion) throws org.apache.lucene.queryParser.ParseException {
+   public CacheQuery getBasicQuery(String field, String search) throws org.apache.lucene.queryParser.ParseException {
       QueryParser parser = new QueryParser(luceneVersion, field, new StandardAnalyzer(luceneVersion));
       org.apache.lucene.search.Query luceneQuery = parser.parse(search);
       return new CacheQueryImpl(luceneQuery, searchFactory, cache);
    }
    
-   @Deprecated
-   public CacheQuery getBasicQuery(String field, String search) throws org.apache.lucene.queryParser.ParseException {
-      return getBasicQuery(field, search, Version.LUCENE_CURRENT);
+   public CacheQuery getBasicQuery(String field, String search, Class<?>... classes) throws org.apache.lucene.queryParser.ParseException {
+      queryInterceptor.enableClasses(classes);
+      QueryParser parser = new QueryParser(luceneVersion, field, new StandardAnalyzer(luceneVersion));
+      org.apache.lucene.search.Query luceneQuery = parser.parse(search);
+      return new CacheQueryImpl(luceneQuery, searchFactory, cache);
    }
    
 }

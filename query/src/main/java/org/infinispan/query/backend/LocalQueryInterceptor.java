@@ -21,7 +21,7 @@
  */
 package org.infinispan.query.backend;
 
-import org.hibernate.search.engine.SearchFactoryImplementor;
+import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 
@@ -39,14 +39,14 @@ import javax.transaction.TransactionManager;
  */
 public class LocalQueryInterceptor extends QueryInterceptor {
 
+   public LocalQueryInterceptor(SearchFactoryIntegrator searchFactory) {
+      super(searchFactory);
+   }
+
    @Inject
-   public void init(SearchFactoryImplementor searchFactory, TransactionManager transactionManager) {
-
+   public void init(TransactionManager transactionManager) {
       log.debug("Entered LocalQueryInterceptor.init()");
-
       // Fields on superclass.
-
-      this.searchFactory = searchFactory;
       this.transactionManager = transactionManager;
    }
 

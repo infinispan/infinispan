@@ -21,19 +21,133 @@
  */
 package org.infinispan.query.impl;
 
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
+
+import org.hibernate.search.cfg.SearchConfiguration;
+import org.hibernate.search.spi.SearchFactoryBuilder;
+import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.infinispan.config.Configuration;
+import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.interceptors.DistLockingInterceptor;
+import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.LockingInterceptor;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
+import org.infinispan.query.backend.LocalQueryInterceptor;
+import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.backend.SearchableCacheConfiguration;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
+/**
+ * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down
+ * it at cache stop.
+ * 
+ * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ */
 public class LifecycleManager extends AbstractModuleLifecycle {
+   
+   private static final Log log = LogFactory.getLog(LifecycleManager.class);
+   
+   private final Map<String,SearchFactoryIntegrator> searchFactoriesToShutdown = new TreeMap<String,SearchFactoryIntegrator>();
 
-    @Override
-    public void cacheStarted(ComponentRegistry cr, String cacheName) {
-       // TODO: at this point, initialise the query interceptor and inject into the cache's interceptor chain?  Essentially the work done in QueryHelper
-       // this can only be completed once we have HSEARCH-397 in place so that the indexable types can be gathered on the fly, rather than a-priori
-    }
+   /**
+    * Registers the Search interceptor in the cache before it gets started
+    */
+   @Override
+   public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
+      Configuration cfg = cr.getComponent(Configuration.class);
+      if (cfg.isIndexingEnabled()) {
+         log.info("Registering Query interceptor");
+         SearchFactoryIntegrator searchFactory = getSearchFactory(cfg.getIndexingProperties(), cr);
+         createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
+      }
+   }
+   
+   private void createQueryInterceptorIfNeeded(ComponentRegistry cr, Configuration cfg, SearchFactoryIntegrator searchFactory) {
+      QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
+      if (queryInterceptor == null) {
+         queryInterceptor = buildQueryInterceptor(cfg, searchFactory);
+         cr.registerComponent(queryInterceptor, QueryInterceptor.class);
+         if (cfg.getCacheMode().isDistributed()) {
+            cfg.getCustomInterceptors().add(
+                  new CustomInterceptorConfig(queryInterceptor, false, false,
+                        -1, DistLockingInterceptor.class.getName(), ""));
+         } else {
+            cfg.getCustomInterceptors().add(
+                  new CustomInterceptorConfig(queryInterceptor, false, false,
+                        -1, LockingInterceptor.class.getName(), ""));
+         }
+      }
+   }
 
-    @Override
-    public void cacheStopped(ComponentRegistry cr, String cacheName) {
-       // TODO: do we need to "shut down" anything in Hibernate Search?
-    }
+   private QueryInterceptor buildQueryInterceptor(Configuration cfg, SearchFactoryIntegrator searchFactory) {
+      if ( cfg.isIndexLocalOnly() ) {
+         return new LocalQueryInterceptor(searchFactory);
+      }
+      else {
+         return new QueryInterceptor(searchFactory);
+      }
+   }
+
+   @Override
+   public void cacheStarted(ComponentRegistry cr, String cacheName) {
+      if ( ! verifyChainContainsQueryInterceptor(cr) ) {
+         throw new IllegalStateException( "It was expected to find the Query interceptor registered in the InterceptorChain but it wasn't found" );
+      }
+   }
+
+   private boolean verifyChainContainsQueryInterceptor(ComponentRegistry cr) {
+      Configuration cfg = cr.getComponent(Configuration.class);
+      if (cfg.isIndexingEnabled()) {
+         InterceptorChain interceptorChain = cr.getComponent(InterceptorChain.class);
+         CommandInterceptor chainElement = interceptorChain.getFirstInChain();
+         if (chainElement instanceof QueryInterceptor) {
+            return true;
+         }
+         while (chainElement.hasNext()) {
+            chainElement = chainElement.getNext();
+            if (chainElement instanceof QueryInterceptor) {
+               return true;
+            }
+         }
+         return false;
+      }
+      else {
+         return true;
+      }
+   }
+
+   private SearchFactoryIntegrator getSearchFactory(Properties indexingProperties, ComponentRegistry cr) {
+       SearchFactoryIntegrator searchFactory = cr.getComponent(SearchFactoryIntegrator.class);
+       //defend against multiple initialization:
+       if (searchFactory==null) {
+          // Set up the search factory for Hibernate Search first.
+          SearchConfiguration config = new SearchableCacheConfiguration(new Class[0], indexingProperties);
+          searchFactory = new SearchFactoryBuilder().configuration(config).buildSearchFactory();
+          cr.registerComponent(searchFactory, SearchFactoryIntegrator.class);
+       }
+      return searchFactory;
+   }
+   
+   @Override
+   public void cacheStopping(ComponentRegistry cr, String cacheName) {
+      //TODO move this to cacheStopped event (won't work right now as the ComponentRegistry is half empty at that point: ISPN-1006)
+      SearchFactoryIntegrator searchFactoryImplementor = cr.getComponent(SearchFactoryIntegrator.class);
+      if (searchFactoryImplementor != null) {
+         searchFactoriesToShutdown.put(cacheName, searchFactoryImplementor);
+      }
+   }
+   
+   @Override
+   public void cacheStopped(ComponentRegistry cr, String cacheName) {
+      SearchFactoryIntegrator searchFactoryIntegrator = searchFactoriesToShutdown.get(cacheName);
+      if (searchFactoryIntegrator != null) {
+         searchFactoryIntegrator.close();
+      }
+   }
+
 }
