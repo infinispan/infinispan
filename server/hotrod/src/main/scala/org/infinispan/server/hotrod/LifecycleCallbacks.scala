@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod
 import org.infinispan.lifecycle.AbstractModuleLifecycle
 import org.infinispan.factories.GlobalComponentRegistry
 import org.infinispan.server.core.ExternalizerIds
+import org.infinispan.config.GlobalConfiguration
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
@@ -13,7 +14,7 @@ import org.infinispan.server.core.ExternalizerIds
  */
 class LifecycleCallbacks extends AbstractModuleLifecycle {
 
-   override def cacheManagerStarting(gcr: GlobalComponentRegistry) {
+   override def cacheManagerStarting(gcr: GlobalComponentRegistry, gc: GlobalConfiguration) {
       val globalCfg = gcr.getGlobalConfiguration;
       globalCfg.addExternalizer(ExternalizerIds.TOPOLOGY_ADDRESS, new TopologyAddress.Externalizer)
       globalCfg.addExternalizer(ExternalizerIds.TOPOLOGY_VIEW, new TopologyView.Externalizer)
