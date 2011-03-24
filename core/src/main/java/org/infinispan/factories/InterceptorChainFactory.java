@@ -76,47 +76,47 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       // add marshallable check interceptor for situations where we want to figure out before marshalling
       if (configuration.isUseLazyDeserialization() || configuration.isUseAsyncMarshalling()
             || configuration.isUseReplQueue() || hasAsyncStore())
-         interceptorChain.appendIntereceptor(createInterceptor(IsMarshallableInterceptor.class));
+         interceptorChain.appendInterceptor(createInterceptor(IsMarshallableInterceptor.class));
 
       // NOW add the ICI if we are using batching!
       if (invocationBatching)
-         interceptorChain.appendIntereceptor(createInterceptor(InvocationContextInterceptor.class));
+         interceptorChain.appendInterceptor(createInterceptor(InvocationContextInterceptor.class));
 
       // load the cache management interceptor next
       if (configuration.isExposeJmxStatistics())
-         interceptorChain.appendIntereceptor(createInterceptor(CacheMgmtInterceptor.class));
+         interceptorChain.appendInterceptor(createInterceptor(CacheMgmtInterceptor.class));
 
       // load the tx interceptor
       if (configuration.getCacheMode().isDistributed())
-         interceptorChain.appendIntereceptor(createInterceptor(DistTxInterceptor.class));
+         interceptorChain.appendInterceptor(createInterceptor(DistTxInterceptor.class));
       else
-         interceptorChain.appendIntereceptor(createInterceptor(TxInterceptor.class));
+         interceptorChain.appendInterceptor(createInterceptor(TxInterceptor.class));
 
       if(configuration.isUseEagerLocking())
-         interceptorChain.appendIntereceptor(createInterceptor(ImplicitEagerLockingInterceptor.class));
+         interceptorChain.appendInterceptor(createInterceptor(ImplicitEagerLockingInterceptor.class));
 
       if (configuration.isUseLazyDeserialization())
-         interceptorChain.appendIntereceptor(createInterceptor(MarshalledValueInterceptor.class));
+         interceptorChain.appendInterceptor(createInterceptor(MarshalledValueInterceptor.class));
 
-      interceptorChain.appendIntereceptor(createInterceptor(NotificationInterceptor.class));
+      interceptorChain.appendInterceptor(createInterceptor(NotificationInterceptor.class));
 
       if (configuration.isEnableDeadlockDetection()) {
-         interceptorChain.appendIntereceptor(createInterceptor(DeadlockDetectingInterceptor.class));
+         interceptorChain.appendInterceptor(createInterceptor(DeadlockDetectingInterceptor.class));
       }
 
       if (configuration.isUsingCacheLoaders()) {
          if (configuration.getCacheLoaderManagerConfig().isPassivation()) {
-            interceptorChain.appendIntereceptor(createInterceptor(ActivationInterceptor.class));
-            interceptorChain.appendIntereceptor(createInterceptor(PassivationInterceptor.class));
+            interceptorChain.appendInterceptor(createInterceptor(ActivationInterceptor.class));
+            interceptorChain.appendInterceptor(createInterceptor(PassivationInterceptor.class));
          } else {
-            interceptorChain.appendIntereceptor(createInterceptor(CacheLoaderInterceptor.class));
+            interceptorChain.appendInterceptor(createInterceptor(CacheLoaderInterceptor.class));
             switch (configuration.getCacheMode()) {
                case DIST_SYNC:
                case DIST_ASYNC:
-                  interceptorChain.appendIntereceptor(createInterceptor(DistCacheStoreInterceptor.class));
+                  interceptorChain.appendInterceptor(createInterceptor(DistCacheStoreInterceptor.class));
                   break;
                default:
-                  interceptorChain.appendIntereceptor(createInterceptor(CacheStoreInterceptor.class));
+                  interceptorChain.appendInterceptor(createInterceptor(CacheStoreInterceptor.class));
                   break;
             }
          }
@@ -124,29 +124,29 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
 
       if (configuration.getCacheMode().isDistributed())
-         interceptorChain.appendIntereceptor(createInterceptor(DistLockingInterceptor.class));
+         interceptorChain.appendInterceptor(createInterceptor(DistLockingInterceptor.class));
       else
-         interceptorChain.appendIntereceptor(createInterceptor(LockingInterceptor.class));
+         interceptorChain.appendInterceptor(createInterceptor(LockingInterceptor.class));
 
       switch (configuration.getCacheMode()) {
          case REPL_SYNC:
          case REPL_ASYNC:
-            interceptorChain.appendIntereceptor(createInterceptor(ReplicationInterceptor.class));
+            interceptorChain.appendInterceptor(createInterceptor(ReplicationInterceptor.class));
             break;
          case INVALIDATION_SYNC:
          case INVALIDATION_ASYNC:
-            interceptorChain.appendIntereceptor(createInterceptor(InvalidationInterceptor.class));
+            interceptorChain.appendInterceptor(createInterceptor(InvalidationInterceptor.class));
             break;
          case DIST_SYNC:
          case DIST_ASYNC:
-            interceptorChain.appendIntereceptor(createInterceptor(DistributionInterceptor.class));
+            interceptorChain.appendInterceptor(createInterceptor(DistributionInterceptor.class));
             break;
          case LOCAL:
             //Nothing...
       }
 
       CommandInterceptor callInterceptor = createInterceptor(CallInterceptor.class);
-      interceptorChain.appendIntereceptor(callInterceptor);
+      interceptorChain.appendInterceptor(callInterceptor);
       if (log.isTraceEnabled()) log.trace("Finished building default interceptor chain.");
       buildCustomInterceptors(interceptorChain, configuration.getCustomInterceptors());
       return interceptorChain;
@@ -169,7 +169,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          if (config.isFirst())
             interceptorChain.addInterceptor(getOrCreateCustomInterceptor(config), 0);
          else if (config.isLast())
-            interceptorChain.appendIntereceptor(getOrCreateCustomInterceptor(config));
+            interceptorChain.appendInterceptor(getOrCreateCustomInterceptor(config));
          else if (config.getIndex() >= 0)
             interceptorChain.addInterceptor(getOrCreateCustomInterceptor(config), config.getIndex());
          else if (config.getAfter() != null) {

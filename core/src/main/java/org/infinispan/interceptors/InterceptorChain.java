@@ -257,7 +257,7 @@ public class InterceptorChain {
    /**
     * Appends at the end.
     */
-   public synchronized void appendIntereceptor(CommandInterceptor ci) {
+   public synchronized void appendInterceptor(CommandInterceptor ci) {
       CommandInterceptor it = firstInChain;
       while (it.hasNext()) it = it.getNext();
       it.setNext(ci);
