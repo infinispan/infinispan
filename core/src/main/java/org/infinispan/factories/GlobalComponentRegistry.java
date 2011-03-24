@@ -2,8 +2,6 @@ package org.infinispan.factories;
 
 import org.infinispan.CacheException;
 import org.infinispan.config.GlobalConfiguration;
-import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.DEFAULT;
-import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.REGISTER;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -22,6 +20,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.DEFAULT;
+import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.REGISTER;
+
 /**
  * A global component registry where shared components are stored.
  *
@@ -32,8 +33,7 @@ import java.util.Map;
 @SurvivesRestarts
 public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
-   private Log log = LogFactory.getLog(GlobalComponentRegistry.class);
-   private static final String NAMED_REGISTRY_PREFIX = "NamedComponentRegistry:";
+   private static final Log log = LogFactory.getLog(GlobalComponentRegistry.class);
    /**
     * Hook to shut down the cache when the JVM exits.
     */
@@ -44,7 +44,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
     */
    private boolean invokedFromShutdownHook;
 
-   private GlobalConfiguration globalConfiguration;
+   private final GlobalConfiguration globalConfiguration;
 
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
@@ -131,7 +131,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
       if (needToNotify) {
          for (ModuleLifecycle l : moduleLifecycles) {
-            l.cacheManagerStarting(this);
+            l.cacheManagerStarting(this, globalConfiguration);
          }
       }
       super.start();
