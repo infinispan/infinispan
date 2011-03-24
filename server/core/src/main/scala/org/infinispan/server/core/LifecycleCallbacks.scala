@@ -13,7 +13,7 @@ import org.infinispan.config.GlobalConfiguration
  */
 class LifecycleCallbacks extends AbstractModuleLifecycle {
 
-   override def cacheManagerStarting(gcr: GlobalComponentRegistry) = addExternalizer(gcr.getGlobalConfiguration)
+   override def cacheManagerStarting(gcr: GlobalComponentRegistry, gc: GlobalConfiguration) = addExternalizer(gc)
 
    private[core] def addExternalizer(globalCfg : GlobalConfiguration) =
       globalCfg.addExternalizer(ExternalizerIds.SERVER_CACHE_VALUE, new CacheValue.Externalizer)

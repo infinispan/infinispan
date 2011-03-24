@@ -37,7 +37,7 @@ import org.infinispan.lifecycle.AbstractModuleLifecycle;
 public class LifecycleCallbacks extends AbstractModuleLifecycle {
 
    @Override
-   public void cacheManagerStarting(GlobalComponentRegistry gcr) {
+   public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration gcs) {
       GlobalConfiguration globalCfg = gcr.getGlobalConfiguration();
       globalCfg.addExternalizer(1000, new NodeKey.Externalizer());
       globalCfg.addExternalizer(1001, new Fqn.Externalizer());
