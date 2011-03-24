@@ -31,12 +31,12 @@ import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIA
 public class ComponentRegistry extends AbstractComponentRegistry {
 
    // cached component scopes
-   static final Map<Class, Scopes> componentScopeLookup = new HashMap<Class, Scopes>();
+   private static final Map<Class, Scopes> componentScopeLookup = new HashMap<Class, Scopes>();
 
-   GlobalComponentRegistry globalComponents;
-   String cacheName;
-   Log log = LogFactory.getLog(ComponentRegistry.class);
-   CacheManagerNotifier cacheManagerNotifier;
+   private final GlobalComponentRegistry globalComponents;
+   private final String cacheName;
+   private static final Log log = LogFactory.getLog(ComponentRegistry.class);
+   private CacheManagerNotifier cacheManagerNotifier;
 
    @Inject
    public void setCacheManagerNotifier(CacheManagerNotifier cacheManagerNotifier) {
