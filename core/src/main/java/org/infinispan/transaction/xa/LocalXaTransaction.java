@@ -41,7 +41,7 @@ public class LocalXaTransaction extends LocalTransaction {
 
    @Override
    public String toString() {
-      return "LocalTransactionXa{" +
+      return "LocalXaTransaction{" +
             "xid=" + xid +
             "} " + super.toString();
    }
