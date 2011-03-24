@@ -27,7 +27,6 @@ import org.infinispan.CacheDelegate;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.jmx.CacheJmxRegistration;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.ReflectionCache;
 
@@ -74,21 +73,33 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
    protected AdvancedCache<K, V> createAndWire(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
                                                String cacheName, ReflectionCache reflectionCache) throws Exception {
-      AdvancedCache<K, V> spi = new CacheDelegate<K, V>(cacheName);
-      bootstrap(cacheName, spi, configuration, globalComponentRegistry, reflectionCache);
-      return spi;
+      AdvancedCache<K, V> cache = new CacheDelegate<K, V>(cacheName);
+      bootstrap(cacheName, cache, configuration, globalComponentRegistry, reflectionCache);
+      return cache;
    }
 
    /**
     * Bootstraps this factory with a Configuration and a ComponentRegistry.
     */
-   private void bootstrap(String cacheName, AdvancedCache spi, Configuration configuration,
+   private void bootstrap(String cacheName, AdvancedCache cache, Configuration configuration,
                           GlobalComponentRegistry globalComponentRegistry, ReflectionCache reflectionCache) {
       this.configuration = configuration;
 
       // injection bootstrap stuff
-      componentRegistry = new ComponentRegistry(cacheName, configuration, spi, globalComponentRegistry, reflectionCache);
+      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, reflectionCache);
       componentRegistry.registerDefaultClassLoader(defaultClassLoader);
+
+      // Notify any registered module lifecycle listeners that the cache is starting.
+      componentRegistry.notifyCacheStarting(configuration);
+
+      /*
+         --------------------------------------------------------------------------------------------------------------
+         This is where the bootstrap really happens.  Registering the cache in the component registry will cause
+         the component registry to look at the cache's @Inject methods, and construct various components and their
+         dependencies, in turn.
+         --------------------------------------------------------------------------------------------------------------
+       */
+      componentRegistry.registerComponent(cache, Cache.class);
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class);
    }
 
