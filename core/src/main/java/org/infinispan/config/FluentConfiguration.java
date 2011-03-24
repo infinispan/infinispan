@@ -91,7 +91,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
 
       /**
        * Concurrency level for lock containers. Adjust this value according to the number of
-       * concurrent threads interating with Infinispan. Similar to the concurrencyLevel tuning
+       * concurrent threads interacting with Infinispan. Similar to the concurrencyLevel tuning
        * parameter seen in the JDK's ConcurrentHashMap.
        *
        * @param concurrencyLevel
@@ -636,10 +636,40 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * indexes are shared across a cluster to prevent redundant indexing of updates.
        *
        * @param indexLocalOnly
+       * @return <code>this</code>, for method chaining
        */
       IndexingConfig indexLocalOnly(Boolean indexLocalOnly);
 
+      /**
+       * Indexing is disabled by default, but using the fluent API entering the {@link #indexing()}
+       * method enables Indexing implicitly. If needed, this method can be used to disable it.
+       * @return <code>this</code>, for method chaining
+       */
       IndexingConfig disable();
+      
+      /**
+       * <p>The Query engine relies on properties for configuration.</p>
+       * <p>These properties are passed directly to the embedded Hibernate Search engine, so
+       * for the complete and up to date documentation about available properties
+       * refer to the Hibernate Search reference of the version you're using with Infinispan Query.</p>
+       * @see <a href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate Search</a>
+       * @param properties
+       * @return <code>this</code>, for method chaining
+       */
+      IndexingConfig withProperties(Properties properties);
+      
+      /**
+       * <p>Defines a single property. Can be used multiple times to define all needed properties,
+       * but the full set is overriden by {@link #withProperties(Properties)}.</p>
+       * <p>These properties are passed directly to the embedded Hibernate Search engine, so
+       * for the complete and up to date documentation about available properties
+       * refer to the Hibernate Search reference of the version you're using with Infinispan Query.</p>
+       * @see <a href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate Search</a>
+       * @param key Property key
+       * @param value Property value
+       * @return <code>this</code>, for method chaining
+       */
+      IndexingConfig addProperty(String key, String value);
    }
 
    public static interface DataContainerConfig extends FluentTypes {

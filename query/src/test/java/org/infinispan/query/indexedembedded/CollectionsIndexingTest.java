@@ -20,7 +20,6 @@
 package org.infinispan.query.indexedembedded;
 
 import java.util.List;
-import java.util.Properties;
 
 import junit.framework.Assert;
 
@@ -28,11 +27,8 @@ import org.apache.lucene.queryParser.ParseException;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.QueryFactory;
-import org.infinispan.query.backend.QueryHelper;
-import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -42,26 +38,20 @@ import org.testng.annotations.Test;
  */
 public class CollectionsIndexingTest extends SingleCacheManagerTest {
 
-   private QueryHelper qh;
    private QueryFactory qf;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultStandaloneConfig(true);
-      c.fluent().indexing().indexLocalOnly(true);
+      c.fluent()
+         .indexing()
+         .indexLocalOnly(false)
+         .addProperty("hibernate.search.default.directory_provider", "ram");
       return TestCacheManagerFactory.createCacheManager(c, true);
    }
 
    @BeforeClass
    public void prepareSearchFactory() throws Exception {
-      Properties p = new Properties();
-      p.setProperty("hibernate.search.default.directory_provider", "org.hibernate.search.store.RAMDirectoryProvider");
-      qh = new QueryHelper(cache, p, City.class, Country.class);
-      qf = new QueryFactory(cache, qh);
-   }
-   
-   @AfterClass
-   public void closeSearchFactory() {
-      qh.close();
+      qf = new QueryFactory(cache);
    }
    
    @AfterMethod
@@ -71,7 +61,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
    
    @Test
    public void searchOnEmptyIndex() throws ParseException {
-      List<Object> list = qf.getBasicQuery("countryName", "Italy", TestQueryHelperFactory.getLuceneVersion()).list();
+      List<Object> list = qf.getBasicQuery("countryName", "Italy", Country.class, City.class).list();
       Assert.assertEquals( 0 , list.size() );
    }
    
@@ -80,7 +70,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       Country italy = new Country();
       italy.countryName = "Italy";
       cache.put("IT", italy);
-      List<Object> list = qf.getBasicQuery("countryName", "Italy", TestQueryHelperFactory.getLuceneVersion()).list();
+      List<Object> list = qf.getBasicQuery("countryName", "Italy", Country.class, City.class).list();
       Assert.assertEquals( 1 , list.size() );
    }
    
@@ -95,7 +85,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       uk.cities.add(newcastle);
       uk.cities.add(london);
       cache.put("UK", uk);
-      List<Object> list = qf.getBasicQuery("cities.name", "Newcastle", TestQueryHelperFactory.getLuceneVersion()).list();
+      List<Object> list = qf.getBasicQuery("cities.name", "Newcastle", Country.class, City.class).list();
       Assert.assertEquals( 1 , list.size() );
       Assert.assertTrue( uk == list.get(0) );
    }
