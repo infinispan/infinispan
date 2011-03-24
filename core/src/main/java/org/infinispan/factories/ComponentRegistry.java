@@ -142,17 +142,21 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       // able to locate this registry via the InboundInvocationHandler
       this.globalComponents.registerNamedComponentRegistry(this, cacheName);
 
-      if (needToNotify) {
-         for (ModuleLifecycle l : moduleLifecycles) {
-            l.cacheStarting(this, cacheName);
-         }
-      }
+      if (needToNotify) notifyCacheStarting(getConfiguration());
+
       super.start();
+
       if (needToNotify && state == ComponentStatus.RUNNING) {
          for (ModuleLifecycle l : moduleLifecycles) {
             l.cacheStarted(this, cacheName);
          } 
          cacheManagerNotifier.notifyCacheStarted(cacheName);
+      }
+   }
+
+   void notifyCacheStarting(Configuration configuration) {
+      for (ModuleLifecycle l : moduleLifecycles) {
+         l.cacheStarting(this, configuration, cacheName);
       }
    }
 
