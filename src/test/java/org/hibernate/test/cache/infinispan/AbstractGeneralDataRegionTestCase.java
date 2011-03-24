@@ -37,7 +37,7 @@ import org.hibernate.cache.Region;
 import org.hibernate.cache.infinispan.InfinispanRegionFactory;
 import org.hibernate.cache.infinispan.util.CacheAdapter;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.service.internal.ServiceRegistryImpl;
+import org.hibernate.service.internal.BasicServiceRegistryImpl;
 
 import org.junit.Test;
 
@@ -403,7 +403,7 @@ public abstract class AbstractGeneralDataRegionTestCase extends AbstractRegionIm
 	private void evictOrRemoveTest() throws Exception {
 		Configuration cfg = createConfiguration();
 		InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
-				new ServiceRegistryImpl( cfg.getProperties() ),
+				new BasicServiceRegistryImpl( cfg.getProperties() ),
 				cfg,
 				getCacheTestSupport()
 		);
@@ -420,7 +420,7 @@ public abstract class AbstractGeneralDataRegionTestCase extends AbstractRegionIm
 
 		cfg = createConfiguration();
 		regionFactory = CacheTestUtil.startRegionFactory(
-				new ServiceRegistryImpl( cfg.getProperties() ),
+				new BasicServiceRegistryImpl( cfg.getProperties() ),
 				cfg,
 				getCacheTestSupport()
 		);
@@ -466,7 +466,7 @@ public abstract class AbstractGeneralDataRegionTestCase extends AbstractRegionIm
 	private void evictOrRemoveAllTest(String configName) throws Exception {
 		Configuration cfg = createConfiguration();
 		InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
-				new ServiceRegistryImpl( cfg.getProperties() ),
+				new BasicServiceRegistryImpl( cfg.getProperties() ),
 				cfg,
 				getCacheTestSupport()
 		);
@@ -484,7 +484,7 @@ public abstract class AbstractGeneralDataRegionTestCase extends AbstractRegionIm
 
 		cfg = createConfiguration();
 		regionFactory = CacheTestUtil.startRegionFactory(
-				new ServiceRegistryImpl( cfg.getProperties() ),
+				new BasicServiceRegistryImpl( cfg.getProperties() ),
 				cfg,
 				getCacheTestSupport()
 		);
