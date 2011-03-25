@@ -58,21 +58,18 @@ public class JoinTask extends RehashTask {
       return null;
    }
 
-   protected boolean getPermissionToJoin() throws Exception {
-      boolean gotPermission;
+   protected void getPermissionToJoin() throws Exception {
       if (distributionManager.isJoinComplete()) {
          throw new IllegalStateException("Join on " + getMyAddress() + " cannot be complete without rehash to finishing");
       }
       // 1.  Get chOld from coord.
       chOld = retrieveOldConsistentHash();
-      gotPermission = true;
 
       // 2.  new CH instance
       if (chOld.getCaches().contains(self))
          chNew = chOld;
       else
          chNew = createConsistentHash(configuration, chOld.getCaches(), distributionManager.getTopologyInfo(), self);
-      return gotPermission;
    }
 
    protected void signalJoinRehashEnd() {
@@ -84,52 +81,56 @@ public class JoinTask extends RehashTask {
       if (log.isDebugEnabled())
          log.debug("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s", getMyAddress(), distributionManager.isJoinComplete());
       boolean cleanup = false;
+      boolean aborted = false;
       try {
-         cleanup = getPermissionToJoin();
+         getPermissionToJoin();
+         // After this point, if we fail, we need to inform the cluster of any failures we may see.
+         cleanup = true;
 
          distributionManager.setConsistentHash(chNew);
-         try {
-            if (configuration.isRehashEnabled()) {
-               // Broadcast new temp CH
-               broadcastNewConsistentHash();
+         if (configuration.isRehashEnabled()) {
+            // Broadcast new temp CH
+            broadcastNewConsistentHash();
 
-               // pull state from everyone.
-               Address myAddress = rpcManager.getTransport().getAddress();
+            // pull state from everyone.
+            Address myAddress = rpcManager.getTransport().getAddress();
 
-               RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE_JOIN, myAddress, null, chOld, chNew, null);
+            RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE_JOIN, myAddress, null, chOld, chNew, null);
 
-               List<Address> addressesWhoMaySendStuff = getAddressesWhoMaySendStuff(chNew, configuration.getNumOwners());
-               Set<Future<Void>> stateRetrievalProcesses = new HashSet<Future<Void>>(addressesWhoMaySendStuff.size());
+            List<Address> addressesWhoMaySendStuff = getAddressesWhoMaySendStuff(chNew, configuration.getNumOwners());
+            Set<Future<Void>> stateRetrievalProcesses = new HashSet<Future<Void>>(addressesWhoMaySendStuff.size());
 
-               // This process happens in parallel
-               for (Address stateProvider : addressesWhoMaySendStuff) {
-                  stateRetrievalProcesses.add(
-                        statePullExecutor.submit(new JoinStateGrabber(stateProvider, cmd, chNew))
-                  );
-               }
-
-               // Wait for all the state retrieval tasks to complete
-               for (Future<Void> f : stateRetrievalProcesses) f.get();
-
-            } else {
-               broadcastNewConsistentHash();
-               if (trace) log.trace("Rehash not enabled, so not pulling state.");
+            // This process happens in parallel
+            for (Address stateProvider : addressesWhoMaySendStuff) {
+               stateRetrievalProcesses.add(
+                     statePullExecutor.submit(new JoinStateGrabber(stateProvider, cmd, chNew))
+               );
             }
-         } finally {
-            // wait for any enqueued remote commands to finish...
-            distributionManager.setJoinComplete(true);
-            distributionManager.setRehashInProgress(false);
-            inboundInvocationHandler.blockTillNoLongerRetrying(cf.getCacheName());
-            signalJoinRehashEnd();
-            if (configuration.isRehashEnabled()) invalidateInvalidHolders(chOld, chNew);
-         }
 
+            // Wait for all the state retrieval tasks to complete
+            for (Future<Void> f : stateRetrievalProcesses) f.get();
+
+         } else {
+            broadcastNewConsistentHash();
+            if (trace) log.trace("Rehash not enabled, so not pulling state.");
+         }
       } catch (Exception e) {
          log.error("Caught exception!  Aborting join.", e);
          broadcastAbort(cleanup);
+         aborted = true;
          throw new CacheException("Unexpected exception", e);
       } finally {
-         log.info("%s completed join rehash in %s!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
+         // wait for any enqueued remote commands to finish...
+         distributionManager.setJoinComplete(true);
+         distributionManager.setRehashInProgress(false);
+         inboundInvocationHandler.blockTillNoLongerRetrying(cf.getCacheName());
+         if (!aborted) {
+            signalJoinRehashEnd();
+            if (configuration.isRehashEnabled()) invalidateInvalidHolders(chOld, chNew);
+            log.info("%s completed join rehash in %s!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
+         } else {
+            log.info("%s aborted join rehash after %s!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
+         }
       }
    }
 

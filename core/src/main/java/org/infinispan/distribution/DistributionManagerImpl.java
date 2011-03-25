@@ -626,6 +626,7 @@ public class DistributionManagerImpl implements DistributionManager {
       if (this.joiner.compareAndSet(joiner, null)) {
          if (consistentHash instanceof UnionConsistentHash)
             consistentHash = ((UnionConsistentHash) consistentHash).getOldConsistentHash();
+         topologyInfo.removeNodeInfo(joiner);
       }
    }
 
@@ -720,6 +721,10 @@ public class DistributionManagerImpl implements DistributionManager {
 
    public TopologyInfo getTopologyInfo() {
       return topologyInfo;
+   }
+
+   public void setTopologyInfo(TopologyInfo ti) {
+      this.topologyInfo = ti;
    }
 
    public boolean awaitLeaveRehashAcks(Set<Address> stateReceivers, long timeout) throws InterruptedException {
