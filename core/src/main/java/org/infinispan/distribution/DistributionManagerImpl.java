@@ -30,7 +30,9 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
+import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.MembershipArithmetic;
@@ -42,7 +44,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -61,7 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -112,10 +113,7 @@ public class DistributionManagerImpl implements DistributionManager {
     * Address of a joiner node requesting to join Infinispan cluster. Each node in the cluster is aware of joiner's
     * identity. After joiner successfully joins (or fails to join), joiner field is nullified
     */
-   private volatile Address joiner;
-
-   private static final AtomicReferenceFieldUpdater<DistributionManagerImpl, Address> JOINER_CAS =
-         AtomicReferenceFieldUpdater.newUpdater(DistributionManagerImpl.class, Address.class, "joiner");
+   private final AtomicReference<Address> joiner = new AtomicReference<Address>(null);
 
    private DataContainer dataContainer;
    private InterceptorChain interceptorChain;
@@ -453,12 +451,13 @@ public class DistributionManagerImpl implements DistributionManager {
          Thread.currentThread().interrupt();
       }
 
-      if (JOINER_CAS.compareAndSet(this, null, a)) {
+
+      if (joiner.compareAndSet(null, a)) {
          if (trace) log.trace("Allowing %s to join", a);
          return new HashSet<Address>(consistentHash.getCaches());
       } else {
          if (trace)
-            log.trace("Not alowing %s to join since there is a join already in progress for node %s", a, joiner);
+            log.trace("Not alowing %s to join since there is a join already in progress for node %s", a, joiner.get());
          return null;
       }
    }
@@ -471,14 +470,15 @@ public class DistributionManagerImpl implements DistributionManager {
             consistentHash = uch.getNewConsistentHash();
             oldConsistentHash = null;
          }
-         joiner = null;
+         joiner.set(null);
       } else {
          topologyInfo.addNodeTopologyInfo(a, nodeTopologyInfo);
          if (trace) log.trace("Node topology info added(%s).  Topology info is %s", nodeTopologyInfo, topologyInfo);
          ConsistentHash chOld = consistentHash;
-         if (chOld instanceof UnionConsistentHash) throw new RuntimeException("Not expecting an instance of UnionConsistentHash!");
+         if (chOld instanceof UnionConsistentHash)
+            throw new RuntimeException("Not expecting an instance of UnionConsistentHash!");
          oldConsistentHash = chOld;
-         joiner = a;
+         joiner.set(a);
          ConsistentHash chNew = ConsistentHashHelper.createConsistentHash(configuration, chOld.getCaches(), topologyInfo, a);
          consistentHash = new UnionConsistentHash(chOld, chNew);
       }
@@ -547,21 +547,17 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Listener
    public class ViewChangeListener {
+      @Merged
+      public void handleMerge(MergeEvent e) {
+         if (log.isDebugEnabled()) log.debug("Forcing a rehash since this is a merge.");
+         MergeTask mergeTask = new MergeTask(rpcManager, cf, configuration, dataContainer, DistributionManagerImpl.this, inboundInvocationHandler, e.getNewMembers(), e.getSubgroupsMerged());
+         joinFuture = rehashExecutor.submit(mergeTask);
+      }
 
       @ViewChanged
       public void handleViewChange(ViewChangedEvent e) {
-         if (trace) log.trace("view change received. Needs to re-join? " + e.isNeedsToRejoin());
-         boolean started;
-         // how long do we wait for a startup?
-         if (e.isNeedsToRejoin()) {
-            try {
-               joinComplete = false;
-               join();
-            } catch (Exception e1) {
-               log.fatal("Unable to recover from a partition merge!", e1);
-            }
-         } else {
-
+         if (!e.isMergeView()) {
+            boolean started;
             try {
                started = startLatch.await(5, TimeUnit.MINUTES);
                if (started) rehash(e.getNewMembers(), e.getOldMembers());
@@ -586,8 +582,6 @@ public class DistributionManagerImpl implements DistributionManager {
       boolean nodeLeaving;
       try {
          nodeLeaving = !leavers.isEmpty();
-//         if (trace)
-//            log.trace("Node leaving? %s RehashInProgress? %s Leavers = %s", nodeLeaving, rehashInProgress, leavers);
       } finally {
          chSwitchLock.readLock().unlock();
       }
@@ -629,14 +623,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public void abortJoin(Address joiner) {
-      if (Util.safeEquals(joiner, this.joiner)) {
-         this.joiner = null;
-         if (consistentHash instanceof UnionConsistentHash)
-            consistentHash = ((UnionConsistentHash) consistentHash).getOldConsistentHash();
-      }
-
-      // if this is the coordinator, then the joiner is set in a CAS-safe variable.
-      if (JOINER_CAS.compareAndSet(this, joiner, null)) {
+      if (this.joiner.compareAndSet(joiner, null)) {
          if (consistentHash instanceof UnionConsistentHash)
             consistentHash = ((UnionConsistentHash) consistentHash).getOldConsistentHash();
       }

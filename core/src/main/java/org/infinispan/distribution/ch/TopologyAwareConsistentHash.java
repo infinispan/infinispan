@@ -38,6 +38,8 @@ import static java.lang.Math.min;
  * @since 4.2
  */
 public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
+   private TopologyInfo topologyInfo;
+
    public TopologyAwareConsistentHash() {
    }
 
@@ -176,5 +178,24 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       public Set<Class<? extends TopologyAwareConsistentHash>> getTypeClasses() {
          return Util.<Class<? extends TopologyAwareConsistentHash>>asSet(TopologyAwareConsistentHash.class);
       }
+   }
+
+   @Override
+   public void setTopologyInfo(TopologyInfo topologyInfo) {
+      this.topologyInfo = topologyInfo;
+   }
+
+   public TopologyInfo getTopologyInfo() {
+      return topologyInfo;
+   }
+
+   @Override
+   public String toString() {
+      return "TopologyAwareConsistentHash {" +
+            "addresses=" + caches +
+            ", positions=" + positions +
+            ", topologyInfo=" + topologyInfo +
+            ", addressToHashIds=" + addressToHashIds +
+            "}";
    }
 }
