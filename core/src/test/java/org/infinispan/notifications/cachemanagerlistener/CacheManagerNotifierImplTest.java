@@ -29,7 +29,7 @@ public class CacheManagerNotifierImplTest extends AbstractInfinispanTest {
    public void testNotifyViewChanged() {
       Address a = EasyMock.createNiceMock(Address.class);
       List<Address> addresses = Collections.emptyList();
-      n.notifyViewChange(addresses, addresses, a, 100, false);
+      n.notifyViewChange(addresses, addresses, a, 100, false, false);
 
       assert cl.invocationCount == 1;
       assert ((ViewChangedEvent) cl.getEvent()).getLocalAddress() == a;

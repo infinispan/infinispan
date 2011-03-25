@@ -44,4 +44,6 @@ public interface ViewChangedEvent extends Event {
    boolean isNeedsToRejoin();
 
    int getViewId();
+
+   boolean isMergeView();
 }

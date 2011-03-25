@@ -1,7 +1,5 @@
 package org.infinispan.notifications.cachemanagerlistener;
 
-import static org.easymock.EasyMock.*;
-
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
@@ -19,6 +17,8 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
+
+import static org.easymock.EasyMock.*;
 
 @Test(groups = "unit", testName = "notifications.cachemanagerlistener.CacheManagerNotifierTest")
 public class CacheManagerNotifierTest extends AbstractInfinispanTest {
@@ -50,7 +50,7 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
       CacheManagerNotifier mockNotifier = createMock(CacheManagerNotifier.class);
       CacheManagerNotifier origNotifier = TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, mockNotifier, true);
       try {
-         mockNotifier.notifyViewChange(isA(List.class), isA(List.class), eq(myAddress), anyInt(), anyBoolean());
+         mockNotifier.notifyViewChange(isA(List.class), isA(List.class), eq(myAddress), anyInt(), anyBoolean(), eq(false));
          replay(mockNotifier);
          // start a second cache.
          Cache c2 = cm2.getCache("cache");

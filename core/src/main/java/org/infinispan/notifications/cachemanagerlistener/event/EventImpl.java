@@ -22,6 +22,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    int viewId;
    private boolean needsToRejoin;
    private List<List<Address>> subgroupsMerged;
+   private boolean mergeView;
 
    public EventImpl() {
    }
@@ -121,6 +122,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       result = 31 * result + viewId;
       result = 31 * result + (needsToRejoin ? 1 : 0);
       result = 31 * result + (subgroupsMerged == null ? 0 : subgroupsMerged.hashCode());
+      result = 31 * result + (mergeView ? 1 : 0);
       return result;
    }
 
@@ -134,6 +136,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
               ", viewId=" + viewId +
               ", needsToRejoin=" + needsToRejoin +
               ", subgroupsMerged=" + subgroupsMerged +
+              ", mergeView=" + mergeView +
               '}';
    }
 
@@ -152,5 +155,13 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    public List<List<Address>> getSubgroupsMerged() {
       return this.subgroupsMerged;
    }
+
+   public boolean isMergeView() {
+      return mergeView;
+   }
+
+   public void setMergeView(boolean b) {
+        mergeView = b;
+     }
 
 }

@@ -8,7 +8,6 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
-import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.Event;
@@ -63,10 +62,11 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       this.cacheManager = cacheManager;
    }
 
-   public void notifyViewChange(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, boolean needsToRejoin) {
+   public void notifyViewChange(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, boolean needsToRejoin, boolean isMerge) {
       if (!viewChangedListeners.isEmpty()) {
          EventImpl e = new EventImpl();
          e.setLocalAddress(myAddress);
+         e.setMergeView(isMerge);
          e.setViewId(viewId);
          e.setNewMembers(members);
          e.setOldMembers(oldMembers);
@@ -82,6 +82,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
          EventImpl e = new EventImpl();
          e.setLocalAddress(myAddress);
          e.setViewId(viewId);
+         e.setMergeView(true);
          e.setNewMembers(members);
          e.setOldMembers(oldMembers);
          e.setCacheManager(cacheManager);

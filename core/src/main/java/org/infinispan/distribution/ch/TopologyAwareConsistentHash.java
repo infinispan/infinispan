@@ -39,6 +39,8 @@ import static java.lang.Math.min;
  */
 @Marshallable(externalizer = TopologyAwareConsistentHash.Externalizer.class, id = Ids.TOPOLOGY_AWARE_CH)
 public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
+   private TopologyInfo topologyInfo;
+
    public TopologyAwareConsistentHash() {
    }
 
@@ -168,5 +170,24 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
          }
          return ch;
       }
+   }
+
+   @Override
+   public void setTopologyInfo(TopologyInfo topologyInfo) {
+      this.topologyInfo = topologyInfo;
+   }
+
+   public TopologyInfo getTopologyInfo() {
+      return topologyInfo;
+   }
+
+   @Override
+   public String toString() {
+      return "TopologyAwareConsistentHash {" +
+            "addresses=" + caches +
+            ", positions=" + positions +
+            ", topologyInfo=" + topologyInfo +
+            ", addressToHashIds=" + addressToHashIds +
+            "}";
    }
 }
