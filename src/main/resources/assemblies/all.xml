@@ -53,6 +53,7 @@
                      <exclude>**/*.cmd</exclude>
                      <exclude>**/*.py</exclude>
                      <exclude>**/*.rb</exclude>
+                     <exclude>**/infinispan-module.properties</exclude>
                      <exclude>org/*</exclude>
                   </excludes>
                </fileSet>
@@ -179,6 +180,7 @@
                      <exclude>**/*.cmd</exclude>
                      <exclude>**/*.py</exclude>
                      <exclude>**/*.rb</exclude>
+                     <exclude>**/infinispan-module.properties</exclude>
                      <exclude>**/*.dat.gz</exclude>
                   </excludes>
                </fileSet>
