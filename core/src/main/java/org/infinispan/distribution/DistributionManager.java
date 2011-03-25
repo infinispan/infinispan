@@ -191,5 +191,7 @@ public interface DistributionManager {
    void setJoinComplete(boolean value);
 
    void abortJoin(Address sender);
+
+   void setTopologyInfo(TopologyInfo ti);
 }
 
