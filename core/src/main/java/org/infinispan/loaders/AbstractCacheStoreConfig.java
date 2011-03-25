@@ -59,12 +59,16 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
    
 
    @Override
-   public AsyncStoreConfig configureAsyncStore() {
+   public AsyncStoreConfig asyncStore() {
+      async.setEnabled(true);
+      async.setCacheStoreConfig(this);
       return async;
    }
 
    @Override
-   public SingletonStoreConfig configureSingletonStore() {
+   public SingletonStoreConfig singletonStore() {
+      singletonStore.setSingletonStoreEnabled(true);
+      singletonStore.setCacheStoreConfig(this);
       return singletonStore;
    }
 
@@ -89,7 +93,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
 
    /**
     * If true, CacheStore#purgeExpired() call will be done synchronously
-    * 
+    *
     * @param purgeSynchronously
     */
    public void setPurgeSynchronously(Boolean purgeSynchronously) {
@@ -112,10 +116,18 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
     * The number of threads to use when purging asynchronously.
     * 
     * @param purgerThreads
-    */
+    * @deprecated use {@link #purgerThreads(Integer)} instead
+   */
+   @Deprecated
    public void setPurgerThreads(Integer purgerThreads) {
       testImmutability("purgerThreads");
       this.purgerThreads = purgerThreads;
+   }
+
+   @Override
+   public CacheStoreConfig purgerThreads(Integer purgerThreads) {
+      setPurgerThreads(purgerThreads);
+      return this;
    }
 
    @XmlAttribute

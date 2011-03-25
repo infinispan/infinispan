@@ -111,7 +111,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
 
    public void testForeignExternalizerMultiClassTypesViaSameExternalizer() {
       GlobalConfiguration globalCfg = new GlobalConfiguration();
-      globalCfg.addExternalizer(new MultiIdViaClassExternalizer());
+      globalCfg.fluent().serialization().addExternalizer(new MultiIdViaClassExternalizer());
       JBossMarshaller jbmarshaller = new JBossMarshaller();
       ClassLoader cl = Thread.currentThread().getContextClassLoader();
       try {
@@ -126,7 +126,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
 
    public void testForeignExternalizerMultiClassNameTypesViaSameExternalizer() {
       GlobalConfiguration globalCfg = new GlobalConfiguration();
-      globalCfg.addExternalizer(868, new MultiIdViaClassNameExternalizer());
+      globalCfg.fluent().serialization().addExternalizer(868, new MultiIdViaClassNameExternalizer());
       JBossMarshaller jbmarshaller = new JBossMarshaller();
       ClassLoader cl = Thread.currentThread().getContextClassLoader();
       try {
@@ -141,26 +141,19 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
 
    private GlobalConfiguration createForeignExternalizerGlobalConfig(int id) {
       GlobalConfiguration globalCfg = GlobalConfiguration.getClusteredDefault();
-      List<ExternalizerConfig> list = new ArrayList<ExternalizerConfig>();
-      GlobalConfiguration.ExternalizersType type = new GlobalConfiguration.ExternalizersType();
-      ExternalizerConfig externalizer = new ExternalizerConfig();
-      externalizer.setId(id);
-      externalizer.setExternalizerClass("org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj$Externalizer");
-      list.add(externalizer);
-      type.setExternalizerConfigs(list);
-      globalCfg.setExternalizersType(type);
+      globalCfg.fluent().serialization().addExternalizer(IdViaBothObj.Externalizer.class);
       return globalCfg;
    }
 
    private GlobalConfiguration createMultiForeignExternalizerGlobalConfig(int id, boolean doSetId) {
       GlobalConfiguration globalCfg = GlobalConfiguration.getClusteredDefault();
       if (doSetId)
-         globalCfg.addExternalizer(id, new IdViaConfigObj.Externalizer());
+         globalCfg.fluent().serialization().addExternalizer(id, new IdViaConfigObj.Externalizer());
       else
-         globalCfg.addExternalizer(new IdViaConfigObj.Externalizer());
+         globalCfg.fluent().serialization().addExternalizer(new IdViaConfigObj.Externalizer());
 
-      globalCfg.addExternalizer(new IdViaAnnotationObj.Externalizer());
-      globalCfg.addExternalizer(3456, new IdViaBothObj.Externalizer());
+      globalCfg.fluent().serialization().addExternalizer(new IdViaAnnotationObj.Externalizer());
+      globalCfg.fluent().serialization().addExternalizer(3456, new IdViaBothObj.Externalizer());
       return globalCfg;
    }
 

@@ -135,4 +135,11 @@ public class TypedProperties extends Properties {
       else
          return getProperty(key, defaultValue);
    }
+
+   @Override
+   public TypedProperties setProperty(String key, String value) {
+      super.setProperty(key, value);
+      return this;
+   }
+
 }

@@ -12,9 +12,8 @@ import org.testng.annotations.Test;
 public class RecoveryWithDefaultCacheReplTest extends RecoveryWithDefaultCacheDistTest {
    @Override
    protected Configuration configure() {
-      Configuration config = super.configure();
-      config.configureTransaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class);
-      config.configureClustering().mode(Configuration.CacheMode.REPL_SYNC);
-      return config;
+      return super.configure().fluent()
+            .transaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class)
+            .clustering().mode(Configuration.CacheMode.REPL_SYNC).build();
    }
 }

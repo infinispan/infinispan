@@ -84,7 +84,7 @@ public class DataContainerTest {
    public void testCustomDataContainer() throws IOException {
 
    	Configuration configuration = new Configuration();
-   	configuration.setDataContainer(new QueryableDataContainer());
+   	configuration.fluent().dataContainer().dataContainer(new QueryableDataContainer());
    	
       EmbeddedCacheManager cm = new DefaultCacheManager(configuration);
       

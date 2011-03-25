@@ -14,7 +14,8 @@ import org.infinispan.config.GlobalConfiguration
  */
 class LifecycleCallbacks extends AbstractModuleLifecycle {
 
-   override def cacheManagerStarting(gcr: GlobalComponentRegistry, gc: GlobalConfiguration) =
-      gcr.getGlobalConfiguration.addExternalizer(ExternalizerIds.MEMCACHED_CACHE_VALUE, new MemcachedValue.Externalizer)
+   override def cacheManagerStarting(gcr: GlobalComponentRegistry, globalCfg: GlobalConfiguration) =
+      globalCfg.fluent.serialization.addExternalizer(
+         ExternalizerIds.MEMCACHED_CACHE_VALUE, new MemcachedValue.Externalizer)
 
 }

@@ -69,25 +69,9 @@ public class ForeignExternalizerTest extends MultipleCacheManagersTest {
 
    protected GlobalConfiguration createForeignExternalizerGlobalConfig() {
       GlobalConfiguration globalCfg = GlobalConfiguration.getClusteredDefault();
-      List<ExternalizerConfig> list = new ArrayList<ExternalizerConfig>();
-      ExternalizersType type = new ExternalizersType();
-
-      ExternalizerConfig externalizer = new ExternalizerConfig();
-      externalizer.setId(1234);
-      externalizer.setExternalizerClass("org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj$Externalizer");
-      list.add(externalizer);
-
-      externalizer = new ExternalizerConfig();
-      externalizer.setExternalizerClass("org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj$Externalizer");
-      list.add(externalizer);
-
-      externalizer = new ExternalizerConfig();
-      externalizer.setId(3456);
-      externalizer.setExternalizerClass("org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj$Externalizer");
-      list.add(externalizer);
-
-      type.setExternalizerConfigs(list);
-      globalCfg.setExternalizersType(type);
+      globalCfg.fluent().serialization().addExternalizer(1234, IdViaConfigObj.Externalizer.class);
+      globalCfg.fluent().serialization().addExternalizer(IdViaAnnotationObj.Externalizer.class);
+      globalCfg.fluent().serialization().addExternalizer(3456, IdViaBothObj.Externalizer.class);
       return globalCfg;
    }
 

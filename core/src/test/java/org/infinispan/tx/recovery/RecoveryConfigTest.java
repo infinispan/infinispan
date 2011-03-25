@@ -48,10 +48,10 @@ public class RecoveryConfigTest extends SingleCacheManagerTest {
    public void testRecoveryWithDefaultCache() {
       Configuration recoveryDefaultCache = cacheManager.getCache("withRecoveryDefaultCache").getConfiguration();
       assert recoveryDefaultCache.isTransactionRecoveryEnabled();
-      assertEquals(recoveryDefaultCache.getTransactionRecoveryCacheName(), Configuration.RecoveryConfig.DEFAULT_RECOVERY_INFO_CACHE);
+      assertEquals(recoveryDefaultCache.getTransactionRecoveryCacheName(), Configuration.RecoveryType.DEFAULT_RECOVERY_INFO_CACHE);
       RecoveryManagerImpl recoveryManager = rm(cacheManager.getCache("withRecoveryDefaultCache"));
       Cache<RecoveryInfoKey,RecoveryAwareRemoteTransaction> preparedTransactions = (Cache<RecoveryInfoKey, RecoveryAwareRemoteTransaction>) recoveryManager.getPreparedTransactions();
-      assertEquals(preparedTransactions.getName(), Configuration.RecoveryConfig.DEFAULT_RECOVERY_INFO_CACHE);
+      assertEquals(preparedTransactions.getName(), Configuration.RecoveryType.DEFAULT_RECOVERY_INFO_CACHE);
    }
 
    public void testNoRecovery() {
