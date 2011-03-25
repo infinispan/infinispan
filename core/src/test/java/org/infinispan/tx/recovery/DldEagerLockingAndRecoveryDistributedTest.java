@@ -11,8 +11,6 @@ import org.testng.annotations.Test;
 public class DldEagerLockingAndRecoveryDistributedTest extends DldEagerLockingDistributedTest {
    @Override
    protected Configuration createConfiguration() {
-      Configuration c = super.createConfiguration();
-      c.configureTransaction().configureRecovery().enabled(true);
-      return c;
+      return super.createConfiguration().fluent().transaction().recovery().build();
    }
 }

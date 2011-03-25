@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -21,6 +21,7 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.config.AbstractConfigurationBeanWithGCR;
 import org.infinispan.marshall.Externalizer;
 
 import javax.xml.bind.annotation.XmlAccessType;

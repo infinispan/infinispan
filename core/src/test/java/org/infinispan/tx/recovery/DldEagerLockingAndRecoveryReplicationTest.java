@@ -11,8 +11,6 @@ import org.testng.annotations.Test;
 public class DldEagerLockingAndRecoveryReplicationTest extends DldEagerLockingReplicationTest {
 
    protected Configuration getConfiguration() throws Exception {
-      Configuration configuration = super.getConfiguration();
-      configuration.configureTransaction().configureRecovery().enabled(true);
-      return configuration;
+      return super.getConfiguration().fluent().transaction().recovery().build();
    }
 }

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -36,13 +36,16 @@ import org.infinispan.lifecycle.AbstractModuleLifecycle;
 public class LifecycleCallbacks extends AbstractModuleLifecycle {
 
    @Override
-   public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration gc) {
-      GlobalConfiguration globalCfg = gcr.getGlobalConfiguration();
-      globalCfg.addExternalizer(new ChunkCacheKey.Externalizer());
-      globalCfg.addExternalizer(new FileCacheKey.Externalizer());
-      globalCfg.addExternalizer(new FileListCacheKey.Externalizer());
-      globalCfg.addExternalizer(new FileMetadata.Externalizer());
-      globalCfg.addExternalizer(new FileReadLockKey.Externalizer());
+   public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
+      globalCfg.fluent()
+         .serialization()
+            .addExternalizer()
+            .addExternalizer(new ChunkCacheKey.Externalizer())
+            .addExternalizer(new FileCacheKey.Externalizer())
+            .addExternalizer(new FileListCacheKey.Externalizer())
+            .addExternalizer(new FileMetadata.Externalizer())
+            .addExternalizer(new FileReadLockKey.Externalizer())
+         .build();
    }
 
 }

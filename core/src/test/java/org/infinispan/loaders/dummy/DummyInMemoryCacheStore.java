@@ -7,6 +7,7 @@ import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.util.Util;
@@ -239,16 +240,34 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
          return debug;
       }
 
+      /**
+       * @deprecated use {@link #debug(boolean)}
+       */
+      @Deprecated
       public void setDebug(boolean debug) {
          this.debug = debug;
+      }
+
+      public Cfg debug(boolean debug) {
+         setDebug(debug);
+         return this;
       }
 
       public String getStore() {
          return store;
       }
 
+      /**
+       * @deprecated use {@link #store(String)}
+       */
+      @Deprecated
       public void setStore(String store) {
          this.store = store;
+      }
+
+      public Cfg store(String store) {
+         setStore(store);
+         return this;
       }
 
       @Override
@@ -260,12 +279,56 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
          return cleanBetweenRestarts;
       }
 
+      public Cfg cleanBetweenRestarts(boolean cleanBetweenRestarts) {
+         this.cleanBetweenRestarts = cleanBetweenRestarts;
+         return this;
+      }
+
+      /**
+       * @deprecated use {@link #failKey(Object)}
+       */
+      @Deprecated
       public void setFailKey(Object failKey) {
          this.failKey = failKey;
       }
 
+      public Cfg failKey(Object failKey) {
+         setFailKey(failKey);
+         return this;
+      }
+
       public void failIfNeeded(Object key) {
          if(failKey != null && failKey.equals(key)) throw new RuntimeException("Induced failure on key:" + key);
+      }
+
+      @Override
+      public Cfg fetchPersistentState(Boolean fetchPersistentState) {
+         super.fetchPersistentState(fetchPersistentState);
+         return this;
+      }
+
+      @Override
+      public Cfg ignoreModifications(Boolean ignoreModifications) {
+         super.ignoreModifications(ignoreModifications);
+         return this;
+      }
+
+      @Override
+      public Cfg purgeOnStartup(Boolean purgeOnStartup) {
+         super.purgeOnStartup(purgeOnStartup);
+         return this;
+      }
+
+      @Override
+      public Cfg purgerThreads(Integer purgerThreads) {
+         super.purgerThreads(purgerThreads);
+         return this;
+      }
+
+      @Override
+      public Cfg purgeSynchronously(Boolean purgeSynchronously) {
+         super.purgeSynchronously(purgeSynchronously);
+         return this;
       }
    }
 }
