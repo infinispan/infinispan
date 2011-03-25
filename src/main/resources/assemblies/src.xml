@@ -27,7 +27,7 @@
                 <exclude>**/*.iws</exclude>
                 <exclude>**/*.log</exclude>
                 <exclude>**/*.lck</exclude>
-                <exclude>**/Horizon-BdbjeCacheStore/**</exclude>
+                <exclude>**/*-BdbjeCacheStore/**</exclude>
                 <exclude>**/coretarget/**</exclude>
             </excludes>
         </fileSet>
