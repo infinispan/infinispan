@@ -148,7 +148,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       assert gc.getMarshallerClass().equals("org.infinispan.marshall.VersionAwareMarshaller");
       assert gc.getMarshallVersionString().equals("1.0");
-      List<ExternalizerConfig> externalizers = gc.getExternalizersType().getExternalizerConfigs();
+      List<ExternalizerConfig> externalizers = gc.getExternalizers();
       assert externalizers.size() == 3;
       ExternalizerConfig externalizer = externalizers.get(0);
       assert externalizer.getId() == 1234;

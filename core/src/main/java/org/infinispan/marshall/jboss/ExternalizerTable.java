@@ -280,8 +280,7 @@ class ExternalizerTable implements ObjectTable {
    private void loadForeignMarshallables(GlobalConfiguration globalCfg) {
       if (log.isTraceEnabled())
          log.trace("Loading user defined externalizers");
-      ExternalizersType type = globalCfg.getExternalizersType();
-      List<ExternalizerConfig> configs = type.getExternalizerConfigs();
+      List<ExternalizerConfig> configs = globalCfg.getExternalizers();
       for (ExternalizerConfig config : configs) {
          Externalizer ext = config.getExternalizer() != null ? config.getExternalizer()
                : (Externalizer) Util.getInstance(config.getExternalizerClass());

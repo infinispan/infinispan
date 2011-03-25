@@ -1,6 +1,7 @@
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
+import org.infinispan.config.FluentConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -277,14 +278,14 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    private EmbeddedCacheManager getManagerWithStore(Method m, boolean isClustered, boolean isStoreShared, String storePrefix) {
       String storeName = storePrefix + m.getName();
       Configuration c = new Configuration();
-      Configuration.LoadersConfig loaders = c.configureLoaders();
+      FluentConfiguration.LoadersConfig loaders = c.fluent().loaders();
       if (isStoreShared)
          loaders = loaders.shared(true);
 
-      loaders.addCacheLoaderConfig(
+      loaders.addCacheLoader(
             new DummyInMemoryCacheStore.Cfg(storeName));
       if (isClustered) {
-         c.configureClustering().mode(Configuration.CacheMode.REPL_SYNC);
+         c.fluent().clustering().mode(Configuration.CacheMode.REPL_SYNC);
          return TestCacheManagerFactory.createClusteredCacheManager(c);
       }
 

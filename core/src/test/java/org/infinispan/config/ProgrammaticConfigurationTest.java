@@ -1,31 +1,42 @@
 package org.infinispan.config;
 
 import java.util.List;
+import java.util.Properties;
 
-import org.infinispan.config.Configuration.CacheMode;
-import org.infinispan.config.Configuration.ClusteringConfig;
-import org.infinispan.config.Configuration.EvictionConfig;
-import org.infinispan.config.Configuration.ExpirationConfig;
-import org.infinispan.config.Configuration.LoadersConfig;
-import org.infinispan.config.Configuration.LockingConfig;
-import org.infinispan.config.GlobalConfiguration.ExecutorFactoryConfig;
-import org.infinispan.config.GlobalConfiguration.GlobalJmxStatisticsConfig;
-import org.infinispan.config.GlobalConfiguration.TransportConfig;
+import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.DefaultDataContainer;
+import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.executors.DefaultExecutorFactory;
-import org.infinispan.executors.ExecutorFactory;
-import org.infinispan.loaders.CacheLoaderConfig;
-import org.infinispan.loaders.decorators.AsyncStoreConfig;
-import org.infinispan.loaders.decorators.SingletonStoreConfig;
+import org.infinispan.executors.DefaultScheduledExecutorFactory;
+import org.infinispan.interceptors.CacheLoaderInterceptor;
+import org.infinispan.interceptors.CacheStoreInterceptor;
+import org.infinispan.interceptors.CallInterceptor;
+import org.infinispan.interceptors.DistributionInterceptor;
+import org.infinispan.interceptors.LockingInterceptor;
+import org.infinispan.jmx.JBossMBeanServerLookup;
+import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.marshall.exts.ArrayListExternalizer;
+import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
+import org.infinispan.remoting.ReplicationQueueImpl;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.util.TypedProperties;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.hash.MurmurHash3;
 import org.testng.annotations.Test;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 /**
- * // TODO: Document this
+ * Programmatic configuration test.
  * 
  * @author Galder Zamarreño
  * @since 4.1
@@ -42,80 +53,266 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
    }
 
    public void testGlobalConfiguration() {
-      GlobalConfiguration gc = new GlobalConfiguration();
-      GlobalJmxStatisticsConfig jmxStatistics = gc.configureGlobalJmxStatistics();
-      jmxStatistics.allowDuplicateDomains(true).enabled(true);
+      GlobalConfiguration gc = new GlobalConfiguration().fluent()
+         .transport()
+            .clusterName("boo").distributedSyncTimeout(999L)
+            .addProperty("configurationFile", "jgroups-tcp.xml")
+            .machineId("id").rackId("rack").strictPeerToPeer(true)
+         .globalJmxStatistics()
+            .jmxDomain("org.my.infinispan")
+            .allowDuplicateDomains(true).cacheManagerName("BooMooCacheManager")
+            .mBeanServerLookupClass(JBossMBeanServerLookup.class)
+            .withProperties(new TypedProperties()
+                                  .setProperty("jb", "oss"))
+            .addProperty("na", "me")
+         .serialization()
+            .version("2.2").marshallerClass(VersionAwareMarshaller.class)
+            .addExternalizer(ReplicableCommandExternalizer.class)
+            .addExternalizer(999, ArrayListExternalizer.class)
+         .asyncListenerExecutor()
+            .factory(DefaultExecutorFactory.class)
+            .addProperty("maxThreads", "6")
+            .addProperty("threadNamePrefix", "AsyncListenerThread2")
+         .asyncTransportExecutor()
+            .factory(DefaultExecutorFactory.class)
+            .withProperties(new TypedProperties()
+                                  .setProperty("maxThreads", "26")
+                                  .setProperty("threadNamePrefix", "AsyncSerializationThread2"))
+         .evictionScheduledExecutor()
+            .factory(DefaultScheduledExecutorFactory.class)
+            .addProperty("threadNamePrefix", "EvictionThread2")
+         .replicationQueueScheduledExecutor()
+            .factory(DefaultScheduledExecutorFactory.class)
+            .addProperty("threadNamePrefix", "ReplicationQueueThread2")
+         .shutdown()
+            .hookBehavior(ShutdownHookBehavior.DONT_REGISTER)
+         .build()
+      ;
 
-      TransportConfig transport = gc.configureTransport();
-      transport.clusterName("blah").machineId("id").rackId("rack").strictPeerToPeer(true);
+      assertEquals("boo", gc.getClusterName());
+      assertEquals(999L, gc.getDistributedSyncTimeout());
+      assertEquals("jgroups-tcp.xml", gc.getTransportProperties().getProperty("configurationFile"));
+      assertEquals("rack", gc.getRackId());
+      assertEquals("id", gc.getMachineId());
+      assert gc.isStrictPeerToPeer();
 
-      ExecutorFactoryConfig<ExecutorFactory> asyncTransportExecutor = gc.configureAsyncTransportExecutor();
-      asyncTransportExecutor.factory(DefaultExecutorFactory.class).addProperty("blah", "blah");
-
-      assert gc.isAllowDuplicateDomains();
+      assertEquals("org.my.infinispan", gc.getJmxDomain());
       assert gc.isExposeGlobalJmxStatistics();
+      assert gc.isAllowDuplicateDomains();
+      assertEquals("BooMooCacheManager", gc.getCacheManagerName());
+      assertEquals(JBossMBeanServerLookup.class.getName(), gc.getMBeanServerLookup());
+      assertEquals("oss", gc.getMBeanServerProperties().getProperty("jb"));
+      assertEquals("me", gc.getMBeanServerProperties().getProperty("na"));
 
-      assert gc.getMachineId().equals("id");
-      assert gc.getRackId().equals("rack");
-      assert gc.getClusterName().equals("blah");
+      assertEquals("2.2", gc.getMarshallVersionString());
+      List<ExternalizerConfig> exts = gc.getExternalizers();
+      assertEquals(2, exts.size());
+      assertEquals(ReplicableCommandExternalizer.class.getName(), exts.get(0).getExternalizerClass());
+      assertEquals(ArrayListExternalizer.class.getName(), exts.get(1).getExternalizerClass());
+      assert 999 == exts.get(1).getId();
 
-      assert gc.getAsyncTransportExecutorFactoryClass().equals(
-               DefaultExecutorFactory.class.getName());
+      assertEquals(DefaultExecutorFactory.class.getName(), gc.getAsyncListenerExecutorFactoryClass());
+      Properties asyncListenerExecutorProps = gc.getAsyncListenerExecutorProperties();
+      assertEquals("6", asyncListenerExecutorProps.getProperty("maxThreads"));
+      assertEquals("AsyncListenerThread2", asyncListenerExecutorProps.getProperty("threadNamePrefix"));
+
+      assertEquals(DefaultExecutorFactory.class.getName(), gc.getAsyncTransportExecutorFactoryClass());
+      Properties asyncTransportExecutorProps = gc.getAsyncTransportExecutorProperties();
+      assertEquals("26", asyncTransportExecutorProps.getProperty("maxThreads"));
+      assertEquals("AsyncSerializationThread2", asyncTransportExecutorProps.getProperty("threadNamePrefix"));
+
+      assertEquals(DefaultScheduledExecutorFactory.class.getName(), gc.getEvictionScheduledExecutorFactoryClass());
+      Properties evictionScheduledExecutorProps = gc.getEvictionScheduledExecutorProperties();
+      assertEquals("EvictionThread2", evictionScheduledExecutorProps.getProperty("threadNamePrefix"));
+
+      assertEquals(DefaultScheduledExecutorFactory.class.getName(), gc.getReplicationQueueScheduledExecutorFactoryClass());
+      Properties replicationQueueScheduledExecutorProps = gc.getReplicationQueueScheduledExecutorProperties();
+      assertEquals("ReplicationQueueThread2", replicationQueueScheduledExecutorProps.getProperty("threadNamePrefix"));
+
+      assert ShutdownHookBehavior.DONT_REGISTER == gc.getShutdownHookBehavior();
+
+      gc = new GlobalConfiguration();
+      assert !gc.isExposeGlobalJmxStatistics();
    }
-   
+
    public void testConfiguration() {
-      Configuration c = new Configuration();
-      LockingConfig locking = c.configureLocking();
-      locking.isolationLevel(IsolationLevel.REPEATABLE_READ).lockAcquisitionTimeout(1000L);
-      
-      ExpirationConfig expiration = c.configureExpiration();
-      expiration.lifespan(1000L).maxIdle(1000L);
-      
-      EvictionConfig eviction = c.configureEviction();
-      eviction.maxEntries(1000).strategy(EvictionStrategy.LRU);
-      
-      ClusteringConfig clustering = c.configureClustering();
-      clustering.configureAsync().asyncMarshalling(true).replQueueInterval(1000L);
-      clustering.configureHash().rehashEnabled(true).rehashRpcTimeout(1000L);
-      clustering.configureL1().enabled(true).onRehash(true).lifespan(1000L);
-      clustering.configureStateRetrieval().alwaysProvideInMemoryState(true).initialRetryWaitTime(1000L);
-      clustering.mode(CacheMode.DIST_SYNC);
-      
-      LoadersConfig loaders = c.configureLoaders();
-      loaders.passivation(true).preload(true).shared(false);
-      FileCacheStoreConfig fcsc = new FileCacheStoreConfig();
-      fcsc.configureAsyncStore().enabled(true).flushLockTimeout(1000L);
-      fcsc.configureSingletonStore().pushStateTimeout(1000L).enabled(true);
-      loaders.addCacheLoaderConfig(fcsc);
-      
-      c.configureTransaction().cacheStopTimeout(1000).syncCommitPhase(true);
-      c.configureInterceptors().addCustomInterceptor(new CustomInterceptorConfig());
-      
-      assert c.getIsolationLevel().equals(IsolationLevel.REPEATABLE_READ);
-      assert c.getLockAcquisitionTimeout() == 1000;
-      
-      assert c.getEvictionStrategy().equals(EvictionStrategy.LRU);
-      assert c.getEvictionMaxEntries() == 1000;
-      
-      assert c.isUseAsyncMarshalling();
-      assert c.getReplQueueInterval() == 1000;
-      assert c.isRehashEnabled();
-      assert c.getRehashRpcTimeout() == 1000;
-      
-      assert c.isL1CacheEnabled() && c.isL1OnRehash() && c.getL1Lifespan()==1000;
-      assert c.isAlwaysProvideInMemoryState() && c.getStateRetrievalInitialRetryWaitTime()==1000;
-      
-      CacheLoaderManagerConfig managerConfig = c.getCacheLoaderManagerConfig();
-      assert managerConfig.isPassivation() && managerConfig.isPreload() && !managerConfig.isShared();
-      assert managerConfig.getCacheLoaderConfigs().size() == 1;
-      
-      List<CacheLoaderConfig> loaderConfigs = managerConfig.getCacheLoaderConfigs();
-      FileCacheStoreConfig cacheLoaderConfig = (FileCacheStoreConfig) loaderConfigs.get(0);
-      AsyncStoreConfig storeConfig = cacheLoaderConfig.getAsyncStoreConfig();
-      assert storeConfig.isEnabled() && storeConfig.getFlushLockTimeout() ==1000;
-      SingletonStoreConfig singletonStoreConfig = cacheLoaderConfig.getSingletonStoreConfig();
-      assert singletonStoreConfig.getPushStateTimeout() == 1000 && singletonStoreConfig.isSingletonStoreEnabled();
-            
-      assert c.getCacheStopTimeout() == 1000 && c.isSyncCommitPhase();       
+      Configuration c = new Configuration().fluent()
+         .locking()
+            .concurrencyLevel(1234).isolationLevel(IsolationLevel.SERIALIZABLE)
+            .lockAcquisitionTimeout(8888L).useLockStriping(false).writeSkewCheck(true)
+         .loaders()
+            .shared(true).passivation(false)
+            .addCacheLoader(
+               new FileCacheStoreConfig()
+                  .purgeOnStartup(true)
+                  .location("/tmp2").streamBufferSize(1615)
+                  .asyncStore()
+                     .threadPoolSize(14).flushLockTimeout(777L)
+                     .shutdownTimeout(666L)
+                  .fetchPersistentState(false).ignoreModifications(true)
+                  .singletonStore()
+                     .pushStateWhenCoordinator(true).pushStateTimeout(8989L)
+                  .purgeSynchronously(false))
+            .addCacheLoader(
+               new DummyInMemoryCacheStore.Cfg()
+                  .debug(true).cleanBetweenRestarts(false).failKey("fail")
+                  .purgeOnStartup(false)
+                  .asyncStore()
+                     .threadPoolSize(21)
+                  .purgeSynchronously(true))
+            .addCacheLoader(
+               new ClusterCacheLoaderConfig().remoteCallTimeout(7694L))
+            .preload(true)
+         .transaction()
+            .cacheStopTimeout(1928).eagerLockSingleNode(false)
+            .syncCommitPhase(true).syncRollbackPhase(false).useEagerLocking(false)
+            .recovery()
+               .recoveryInfoCacheName("mmmmmircea")
+            .transactionManagerLookup(new DummyTransactionManagerLookup())
+         .deadlockDetection()
+            .spinDuration(8373L)
+         .customInterceptors()
+            .add(new LockingInterceptor()).first()
+            .add(new DistributionInterceptor()).last()
+            .add(new CallInterceptor()).atIndex(8)
+            .add(new CacheStoreInterceptor()).after(LockingInterceptor.class)
+            .add(new CacheLoaderInterceptor()).before(CallInterceptor.class)
+         .eviction()
+            .maxEntries(7676).strategy(EvictionStrategy.FIFO)
+            .threadPolicy(EvictionThreadPolicy.PIGGYBACK).wakeUpInterval(7585L)
+         .expiration()
+            .maxIdle(8392L).lifespan(4372L)
+         .clustering()
+            .mode(Configuration.CacheMode.INVALIDATION_SYNC)
+            .async()
+               .replQueueClass(ReplicationQueueImpl.class)
+               .asyncMarshalling(false)
+               .replQueueInterval(5738L)
+               .replQueueMaxElements(19191)
+               .useReplQueue(true)
+            .l1()
+               .lifespan(65738L).onRehash(true)
+            .stateRetrieval()
+               .alwaysProvideInMemoryState(false).fetchInMemoryState(true)
+               .initialRetryWaitTime(8989L).retryWaitTimeIncreaseFactor(4)
+               .numRetries(8).logFlushTimeout(533L).maxNonProgressingLogWrites(434)
+               .timeout(7383L)
+            .hash()
+               .hashFunctionClass(MurmurHash3.class)
+               .consistentHashClass(DefaultConsistentHash.class)
+               .numOwners(200).rehashWait(74843L).rehashRpcTimeout(374L)
+               .rehashEnabled(false)
+         .indexing()
+            .indexLocalOnly(true)
+         .dataContainer()
+            .dataContainerClass(DefaultDataContainer.class)
+            .dataContainer(new QueryableDataContainer())
+            .addProperty("a-property", "a-value")
+         .unsafe()
+            .unreliableReturnValues(false)
+         .jmxStatistics()
+         .lazyDeserialization()
+         .invocationBatching()
+         .build();
+
+      assert c.isInvocationBatchingEnabled();
+      assert c.isUseLazyDeserialization();
+      assert c.isExposeJmxStatistics();
+      assert !c.isUnsafeUnreliableReturnValues();
+
+      assert c.getDataContainer() instanceof QueryableDataContainer;
+      assertEquals(DefaultDataContainer.class.getName(), c.getDataContainerClass());
+      assertEquals("a-value", c.getDataContainerProperties().getProperty("a-property"));
+
+      assert c.isIndexingEnabled();
+      assert c.isIndexLocalOnly();
+
+      assert !c.isAlwaysProvideInMemoryState();
+      assert c.isFetchInMemoryState();
+      assert 8989L == c.getStateRetrievalInitialRetryWaitTime();
+      assert 4 == c.getStateRetrievalRetryWaitTimeIncreaseFactor();
+      assert 8 == c.getStateRetrievalNumRetries();
+      assert 533L == c.getStateRetrievalLogFlushTimeout();
+      assert 434 == c.getStateRetrievalMaxNonProgressingLogWrites();
+      assert 7383L == c.getStateRetrievalTimeout();
+      assertEquals(MurmurHash3.class.getName(), c.getHashFunctionClass());
+      assertEquals(DefaultConsistentHash.class.getName(), c.getConsistentHashClass());
+      assert 200 == c.getNumOwners();
+      assert 74843L == c.getRehashWaitTime();
+      assert 374L == c.getRehashRpcTimeout();
+      assert !c.isRehashEnabled();
+
+      assert c.isL1CacheEnabled();
+      assert c.isL1OnRehash();
+      assert 65738L == c.getL1Lifespan();
+      assert Configuration.CacheMode.INVALIDATION_SYNC == c.getCacheMode();
+      assert !c.isUseAsyncMarshalling();
+      assertEquals(ReplicationQueueImpl.class.getName(), c.getReplQueueClass());
+      assert 5738L == c.getReplQueueInterval();
+      assert 19191 == c.getReplQueueMaxElements();
+      assert c.isUseReplQueue();
+
+      assert 4372L == c.getExpirationLifespan();
+      assert 8392L == c.getExpirationMaxIdle();
+
+      assert 7676 == c.getEvictionMaxEntries();
+      assert EvictionStrategy.FIFO == c.getEvictionStrategy();
+      assert EvictionThreadPolicy.PIGGYBACK == c.getEvictionThreadPolicy();
+      assert 7585L == c.getEvictionWakeUpInterval();
+
+      List<CustomInterceptorConfig> customInterceptors = c.getCustomInterceptors();
+      assert customInterceptors.get(0).getInterceptor() instanceof LockingInterceptor;
+      assert customInterceptors.get(1).getInterceptor() instanceof DistributionInterceptor;
+      assert customInterceptors.get(2).getInterceptor() instanceof CallInterceptor;
+      assert customInterceptors.get(3).getInterceptor() instanceof CacheStoreInterceptor;
+      assert customInterceptors.get(4).getInterceptor() instanceof CacheLoaderInterceptor;
+
+      assert c.isDeadlockDetectionEnabled();
+      assert 8373L == c.getDeadlockDetectionSpinDuration();
+
+      assert 1928 == c.getCacheStopTimeout();
+      assert !c.isEagerLockSingleNode();
+      assert c.isSyncCommitPhase();
+      assert !c.isSyncRollbackPhase();
+      assert !c.isUseEagerLocking();
+      assert c.getTransactionManagerLookup() instanceof DummyTransactionManagerLookup;
+      assert c.isTransactionRecoveryEnabled();
+      assertEquals("mmmmmircea", c.getTransactionRecoveryCacheName());
+
+      ClusterCacheLoaderConfig clusterLoaderConfig = (ClusterCacheLoaderConfig) c.getCacheLoaders().get(2);
+      assert 7694L == clusterLoaderConfig.getRemoteCallTimeout();
+
+      DummyInMemoryCacheStore.Cfg dummyStoreConfig = (DummyInMemoryCacheStore.Cfg) c.getCacheLoaders().get(1);
+      assert dummyStoreConfig.isDebug();
+      assert !dummyStoreConfig.isCleanBetweenRestarts();
+      assert !dummyStoreConfig.isPurgeOnStartup();
+      assert dummyStoreConfig.isPurgeSynchronously();
+      assert 21 == dummyStoreConfig.asyncStore().getThreadPoolSize();
+      assert dummyStoreConfig.isPurgeSynchronously();
+
+      FileCacheStoreConfig storeConfig = (FileCacheStoreConfig) c.getCacheLoaders().get(0);
+      assertEquals("/tmp2", storeConfig.getLocation());
+      assert 1615 == storeConfig.getStreamBufferSize();
+      assert storeConfig.isPurgeOnStartup();
+      assert 14 == storeConfig.asyncStore().getThreadPoolSize();
+      assert 777L == storeConfig.asyncStore().getFlushLockTimeout();
+      assert 666L == storeConfig.asyncStore().getShutdownTimeout();
+      assert !storeConfig.isFetchPersistentState();
+      assert storeConfig.isIgnoreModifications();
+      assert storeConfig.singletonStore().isPushStateWhenCoordinator();
+      assert 8989L == storeConfig.singletonStore().getPushStateTimeout();
+      assert !storeConfig.isPurgeSynchronously();
+
+      assert c.isCacheLoaderShared();
+      assert !c.isCacheLoaderPassivation();
+      assert c.isCacheLoaderPreload();
+      assert !c.isFetchPersistentState();
+
+      assert 1234 == c.getConcurrencyLevel();
+      assert IsolationLevel.SERIALIZABLE == c.getIsolationLevel();
+      assert 8888L == c.getLockAcquisitionTimeout();
+      assert !c.isUseLockStriping();
+      assert c.isWriteSkewCheck();
    }
+
 }

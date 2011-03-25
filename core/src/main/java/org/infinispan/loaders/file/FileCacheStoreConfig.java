@@ -1,6 +1,8 @@
 package org.infinispan.loaders.file;
 
+import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
+import org.infinispan.loaders.decorators.AsyncStoreConfig;
 
 /**
  * Configures {@link org.infinispan.loaders.file.FileCacheStore}.  This allows you to tune a number of characteristics
@@ -42,18 +44,61 @@ public class FileCacheStoreConfig extends LockSupportCacheStoreConfig {
       return location;
    }
 
+   /**
+    * @deprecated The visibility of this will be reduced, use {@link #location(String)}
+    */
+   @Deprecated
    public void setLocation(String location) {
       testImmutability("location");
       this.location = location;
    }
 
+   public FileCacheStoreConfig location(String location) {
+      setLocation(location);
+      return this;
+   }
 
    public int getStreamBufferSize() {
       return streamBufferSize;
    }
 
+   /**
+    * @deprecated The visibility of this will be reduced, use {@link #streamBufferSize(int)} instead
+    */
+   @Deprecated
    public void setStreamBufferSize(int streamBufferSize) {
       testImmutability("steamBufferSize");
       this.streamBufferSize = streamBufferSize;
+   }
+
+   public FileCacheStoreConfig streamBufferSize(int streamBufferSize) {
+      setStreamBufferSize(streamBufferSize);
+      return this;
+   }
+
+   // Method overrides below are used to make configuration more fluent.
+
+   @Override
+   public FileCacheStoreConfig purgeOnStartup(Boolean purgeOnStartup) {
+      super.purgeOnStartup(purgeOnStartup);
+      return this;
+   }
+
+   @Override
+   public FileCacheStoreConfig purgeSynchronously(Boolean purgeSynchronously) {
+      super.purgeSynchronously(purgeSynchronously);
+      return this;
+   }
+
+   @Override
+   public FileCacheStoreConfig fetchPersistentState(Boolean fetchPersistentState) {
+      super.fetchPersistentState(fetchPersistentState);
+      return this;
+   }
+
+   @Override
+   public FileCacheStoreConfig ignoreModifications(Boolean ignoreModifications) {
+      super.ignoreModifications(ignoreModifications);
+      return this;
    }
 }

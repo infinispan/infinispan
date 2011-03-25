@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
+
 package org.infinispan.factories;
 
 import org.infinispan.Cache;
@@ -33,7 +55,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
          String recoveryCacheName = configuration.getTransactionRecoveryCacheName();
          if (log.isTraceEnabled()) log.trace("Using recovery cache name %s", recoveryCacheName);
          EmbeddedCacheManager cm = componentRegistry.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
-         boolean useDefaultCache = recoveryCacheName.equals(Configuration.RecoveryConfig.DEFAULT_RECOVERY_INFO_CACHE);
+         boolean useDefaultCache = recoveryCacheName.equals(Configuration.RecoveryType.DEFAULT_RECOVERY_INFO_CACHE);
 
          //if use a defined cache
          if (!useDefaultCache) {
@@ -62,9 +84,9 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
 
    private Configuration getDefaultRecoveryCacheConfig() {
       Configuration config = new Configuration();
-      config.configureClustering().mode(Configuration.CacheMode.LOCAL);
-      config.configureExpiration().lifespan(DEFAULT_EXPIRY);
-      config.configureTransaction().configureRecovery().enabled(false);
+      config.fluent().clustering().mode(Configuration.CacheMode.LOCAL);
+      config.fluent().expiration().lifespan(DEFAULT_EXPIRY);
+      config.fluent().transaction().recovery();
       return config;
    }
 

@@ -25,9 +25,11 @@ public class LocalRecoveryTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
-      cm.getDefaultConfiguration().configureTransaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class);
-      cm.getDefaultConfiguration().configureTransaction().configureRecovery().enabled(true);
-      cm.getDefaultConfiguration().configureLocking().useLockStriping(false);
+      cm.getDefaultConfiguration().fluent()
+         .transaction()
+            .transactionManagerLookupClass(DummyTransactionManagerLookup.class)
+            .recovery()
+         .locking().useLockStriping(false);
       return cm;
    }
 

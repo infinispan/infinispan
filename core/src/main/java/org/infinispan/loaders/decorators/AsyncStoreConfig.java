@@ -5,6 +5,9 @@ import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationDoc;
 import org.infinispan.config.ConfigurationDocRef;
 import org.infinispan.config.Dynamic;
+import org.infinispan.loaders.AbstractCacheStoreConfig;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheStoreConfig;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -22,7 +25,7 @@ import javax.xml.bind.annotation.XmlAttribute;
  */
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 @ConfigurationDoc(name="async",parentName="loader")
-public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
+public class AsyncStoreConfig extends AbstractDecoratorConfigurationBean {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = -8596800049019004961L;
@@ -50,23 +53,14 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
     * If true, all modifications to this cache store happen asynchronously, on a separate thread.
     * 
     * @param enabled
+    * @deprecated The visibility of this method will be reduced in favour of more fluent writer method calls.
     */
+   @Deprecated
    public void setEnabled(Boolean enabled) {
       testImmutability("enabled");
       this.enabled = enabled;
    }
    
-   /**
-    * If true, all modifications to this cache store happen asynchronously, on a separate thread.
-    * 
-    * @param enabled
-    */
-   public AsyncStoreConfig enabled(Boolean enabled) {
-      testImmutability("enabled");
-      this.enabled = enabled;
-      return this;
-   }
-
    @XmlAttribute
    public Integer getThreadPoolSize() {
       return threadPoolSize;
@@ -76,7 +70,9 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
     * Size of the thread pool whose threads are responsible for applying the modifications.
     * 
     * @param threadPoolSize
+    * @deprecated The visibility of this method will be reduced. Use {@link #threadPoolSize(Integer)} instead.
     */
+   @Deprecated
    public void setThreadPoolSize(Integer threadPoolSize) {
       testImmutability("threadPoolSize");
       this.threadPoolSize = threadPoolSize;      
@@ -103,7 +99,9 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
     * periodically.
     * 
     * @param stateLockTimeout
+    * @deprecated The visibility of this method will be reduced. Use {@link #flushLockTimeout(Long)} instead.
     */
+   @Deprecated
    public AsyncStoreConfig setFlushLockTimeout(Long stateLockTimeout) {
       testImmutability("flushLockTimeout");
       this.flushLockTimeout = stateLockTimeout;
@@ -133,7 +131,9 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
     * sure to not loose data
     * 
     * @param shutdownTimeout
+    * @deprecated The visibility of this method will be reduced. Use {@link #shutdownTimeout(Long)} instead.
     */
+   @Deprecated
    public void setShutdownTimeout(Long shutdownTimeout) {
       testImmutability("shutdownTimeout");
       this.shutdownTimeout = shutdownTimeout;
@@ -154,14 +154,11 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
 
    @Override
    public AsyncStoreConfig clone() {
-      try {
-         return (AsyncStoreConfig) super.clone();
-      } catch (CloneNotSupportedException e) {
-         throw new RuntimeException("Should not happen!", e);
-      }
+      return (AsyncStoreConfig) super.clone();
    }
 
    public void accept(ConfigurationBeanVisitor v) {
       v.visitAsyncStoreConfig(this);
    }
+
 }

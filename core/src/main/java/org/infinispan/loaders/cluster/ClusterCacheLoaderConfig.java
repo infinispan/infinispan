@@ -21,8 +21,17 @@ public class ClusterCacheLoaderConfig extends AbstractCacheLoaderConfig {
       return remoteCallTimeout;
    }
 
+   /**
+    * @deprecated The visibility of this will be reduced, {@link #remoteCallTimeout(long)}
+    */
+   @Deprecated
    public void setRemoteCallTimeout(long remoteCallTimeout) {
       testImmutability("remoteCallTimeout");
       this.remoteCallTimeout = remoteCallTimeout;
+   }
+
+   public ClusterCacheLoaderConfig remoteCallTimeout(long remoteCallTimeout) {
+      setRemoteCallTimeout(remoteCallTimeout);
+      return this;
    }
 }
