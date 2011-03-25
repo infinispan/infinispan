@@ -25,6 +25,12 @@ public class TopologyInfo {
       this.address2TopologyInfo.putAll(topologyInfo.address2TopologyInfo);
    }
 
+   public TopologyInfo(TopologyInfo topologyInfo, Collection<NodeTopologyInfo> mergeWith) {
+      this(topologyInfo);
+      for (NodeTopologyInfo nti: mergeWith)
+         addNodeTopologyInfo(nti.getAddress(), nti);
+   }
+
    public void addNodeTopologyInfo(Address addr, NodeTopologyInfo ti) {
       address2TopologyInfo.put(addr, ti);
    }
