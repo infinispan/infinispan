@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -235,24 +236,39 @@ public class RpcManagerImpl implements RpcManager {
       }
    }
 
-   public final void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<Object> l) {
+   public final <T>void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<T> l) {
       invokeRemotelyInFuture(recipients, rpc, false, l);
    }
 
-   public final void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l) {
+   public final <T> void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<T> l) {
       invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, l, configuration.getSyncReplTimeout());
    }
 
-   public final void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l, final long timeout) {
+   public final <T> void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<T> l, final long timeout) {
       if (trace) log.trace("%s invoking in future call %s to recipient list %s", t.getAddress(), rpc, recipients);
-      Callable<Object> c = new Callable<Object>() {
-         public Object call() {
-            invokeRemotely(recipients, rpc, true, usePriorityQueue, timeout);
-            l.notifyDone();
-            return null;
+      final CountDownLatch futureSet = new CountDownLatch(1);
+      Callable<T> c = new Callable<T>() {
+         public T call() {
+            T result = null;
+            try {
+               result = (T)invokeRemotely(recipients, rpc, true, usePriorityQueue, timeout);
+            } catch (CacheException t) {
+               result = (T)t.getCause();
+               throw t;
+            } finally {
+               try {
+                  futureSet.await();
+               } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+               } finally {
+                  l.notifyDone();
+               }
+            }
+            return result;
          }
       };
       l.setNetworkFuture(asyncExecutor.submit(c));
+      futureSet.countDown();      
    }
 
    public Transport getTransport() {

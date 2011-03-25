@@ -21,36 +21,16 @@
  */
 package org.infinispan.distexec.mapreduce;
 
-import java.io.Serializable;
+import org.infinispan.config.Configuration;
+import org.testng.annotations.Test;
 
-/**
- * Reduces a list of results T from map phase of MapReduceTask. Infinispan distributed execution
- * environment creates one instance of Reducer per execution node.
- * 
- * @author Manik Surtani
- * @author Vladimir Blagojevic
- * 
- * @since 5.0
- */
-public interface Reducer<T, R> extends Serializable{
+@Test
+public class SimpleTwoNodesMapReduceTest extends BaseMapReduceTest {
 
-   /**
-    * Reduces a result T from map phase and return R.
-    * <p>
-    * 
-    * Assume that on Infinispan node N, an instance of Mapper was mapped and invoked on k many
-    * key/value pairs. Each T(i) in the list of all T's returned from map phase executed on
-    * Infinispan node N is passed to reducer along with previsouly computed R(i-1). Finally the last
-    * invocation of reducer on T(k), R is returned to a distributed task that originated map/reduce
-    * request.
-    * 
-    * @param mapResult
-    *           result T of map phase
-    * @param previouslyReduced
-    *           previously accumulated reduced result
-    * @return result R
-    * 
-    */
-   R reduce(T mapResult, R previouslyReduced);
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      Configuration cfg = getDefaultClusteredConfig(getCacheMode(), true);
+      createClusteredCaches(2, cacheName(), cfg);
+   }
 
 }

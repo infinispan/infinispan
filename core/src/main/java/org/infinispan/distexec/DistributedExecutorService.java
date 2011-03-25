@@ -26,8 +26,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import org.infinispan.util.concurrent.NotifyingFuture;
+
 /**
- * An Executor that provides methods to submit tasks for an execution on a cluster Infinispan nodes.
+ * An ExecutorService that provides methods to submit tasks for an execution on a cluster of Infinispan nodes.
  * <p>
  * 
  * Every DistributedExecutorService is bound to one particular cache and the tasks submitted will
@@ -49,6 +51,13 @@ import java.util.concurrent.Future;
  * @since 5.0
  */
 public interface DistributedExecutorService extends ExecutorService {
+   
+   @Override
+   public <T> NotifyingFuture<T> submit(Callable<T> task);
+   
+   
+   @Override
+   public <T> NotifyingFuture<T> submit(Runnable task, T result);
 
    /**
     * Submits given Callable task for an execution on a single Infinispan node

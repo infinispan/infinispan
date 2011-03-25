@@ -38,7 +38,7 @@ import org.infinispan.remoting.transport.Address;
  */
 public class AbstractDistributedTask<K, V, T, R> {
 
-   private final Cache<K,V> cache;
+   protected final Cache<K,V> cache;
 
    public AbstractDistributedTask(Cache<K,V> cache) {
       super();

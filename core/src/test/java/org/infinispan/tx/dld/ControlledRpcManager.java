@@ -138,20 +138,20 @@ public class ControlledRpcManager implements RpcManager {
       realOne.broadcastRpcCommandInFuture(rpc, usePriorityQueue, future);
    }
 
-
-   public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<Object> future) {
+   
+   public <T> void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<T> future) {
       log.trace("ControlledRpcManager.invokeRemotelyInFuture1");
       waitFirst(rpc);
       realOne.invokeRemotelyInFuture(recipients, rpc, future);
    }
 
-   public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future) {
+   public <T> void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<T> future) {
       log.trace("ControlledRpcManager.invokeRemotelyInFuture2");
       waitFirst(rpc);
       realOne.invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, future);
    }
 
-   public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future, long timeout) {
+   public <T> void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<T> future, long timeout) {
       log.trace("ControlledRpcManager.invokeRemotelyInFuture3");
       waitFirst(rpc);
       realOne.invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, future, timeout);

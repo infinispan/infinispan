@@ -167,7 +167,7 @@ public interface RpcManager {
     * @param rpc        command to execute remotely
     * @param future     the future which will be passed back to the user
     */
-   void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<Object> future);
+   <T> void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<T> future);
 
    /**
     * The same as {@link #invokeRemotely(java.util.Collection, org.infinispan.commands.ReplicableCommand, boolean)}
@@ -179,7 +179,7 @@ public interface RpcManager {
     * @param usePriorityQueue if true, a priority queue is used
     * @param future           the future which will be passed back to the user
     */
-   void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future);
+   <T> void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<T> future);
 
    /**
     * The same as {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand,
@@ -191,7 +191,7 @@ public interface RpcManager {
     * @param future           the future which will be passed back to the user
     * @param timeout          after which to give up (in millis)
     */
-   void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> future, final long timeout);
+   <T> void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<T> future, final long timeout);
 
    /**
     * @return a reference to the underlying transport.
