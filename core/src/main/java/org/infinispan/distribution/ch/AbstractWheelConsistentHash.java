@@ -96,9 +96,8 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
 
    @Override
    public String toString() {
-      return "AbstractWheelConsistentHash{" +
+      return getClass().getSimpleName() + " {" +
             "addresses=" + caches +
-            ", topologyInfo=" + topologyInfo +
             ", positions=" + positions +
             ", addressToHashIds=" + addressToHashIds +
             "}";

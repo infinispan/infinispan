@@ -10,6 +10,6 @@ import java.util.List;
  * @author Manik Surtani
  * @version 4.2
  */
-public interface MergeEvent {
+public interface MergeEvent extends ViewChangedEvent {
    List<List<Address>> getSubgroupsMerged();
 }
