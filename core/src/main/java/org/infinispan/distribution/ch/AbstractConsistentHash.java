@@ -25,7 +25,6 @@ import java.util.TreeSet;
 public abstract class AbstractConsistentHash implements ConsistentHash {
 
    protected volatile Set<Address> caches;
-   protected TopologyInfo topologyInfo;
 
    @Override
    public void setCaches(Set<Address> caches) {
@@ -59,18 +58,12 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
 
    @Override
    public void setTopologyInfo(TopologyInfo topologyInfo) {
-      this.topologyInfo = topologyInfo;
-   }
-
-   public TopologyInfo getTopologyInfo() {
-      return topologyInfo;
    }
 
    @Override
    public String toString() {
-      return "AbstractConsistentHash{" +
+      return getClass().getSimpleName() + " {" +
             "caches=" + caches +
-            ", topologyInfo=" + topologyInfo +
             '}';
    }
 }
