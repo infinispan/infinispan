@@ -1,12 +1,10 @@
-<?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-cachestore-parent</artifactId>
-      <version>4.2.1-SNAPSHOT</version>
+      <version>4.2.1.FINAL</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-cachestore-cloud</artifactId>
@@ -35,8 +33,8 @@
          <version>${version.jclouds}</version>
       </dependency>
 
-      <!-- =========================================================== -->
-      <!-- optional cloud provider plug-ins.  You'd need at least one! -->
+      
+      
       <dependency>
          <groupId>org.jclouds</groupId>
          <artifactId>jclouds-allblobstore</artifactId>
@@ -44,7 +42,7 @@
          <scope>optional</scope>
       </dependency>
 
-      <!-- =========================================================== -->
+      
 
       <dependency>
          <groupId>org.apache.commons</groupId>
