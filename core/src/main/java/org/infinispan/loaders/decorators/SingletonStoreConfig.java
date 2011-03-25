@@ -4,6 +4,8 @@ import org.infinispan.config.AbstractNamedCacheConfigurationBean;
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationDoc;
 import org.infinispan.config.ConfigurationDocRef;
+import org.infinispan.loaders.AbstractCacheStoreConfig;
+import org.infinispan.loaders.CacheStoreConfig;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -23,7 +25,7 @@ import javax.xml.bind.annotation.XmlAttribute;
  */
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 @ConfigurationDoc(name="singletonStore")
-public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
+public class SingletonStoreConfig extends AbstractDecoratorConfigurationBean {
 
    private static final long serialVersionUID = 824251894176131850L;
    
@@ -45,7 +47,9 @@ public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
     * If true, the singleton store cache store is enabled.
     * 
     * @param singletonStoreEnabled
+    * @deprecated The visibility of this method will be reduced. Use {@link org.infinispan.loaders.CacheStoreConfig#singletonStore()} instead.
     */
+   @Deprecated
    public void setSingletonStoreEnabled(Boolean singletonStoreEnabled) {
       testImmutability("enabled");
       this.enabled = singletonStoreEnabled;
@@ -73,7 +77,9 @@ public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
     * and there's a gap in time until the new coordinator is elected.
     * 
     * @param pushStateWhenCoordinator
+    * @deprecated The visibility of this method will be reduced. Use {@link #pushStateWhenCoordinator(Boolean)} instead.
     */
+   @Deprecated
    public void setPushStateWhenCoordinator(Boolean pushStateWhenCoordinator) {
       testImmutability("pushStateWhenCoordinator");
       this.pushStateWhenCoordinator = pushStateWhenCoordinator;
@@ -102,7 +108,9 @@ public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
     * that the process of pushing the in-memory state to the underlying cache loader should take.
     * 
     * @param pushStateTimeout
+    * @deprecated The visibility of this method will be reduced. Use {@link #pushStateTimeout(Long)} instead.
     */
+   @Deprecated
    public void setPushStateTimeout(Long pushStateTimeout) {
       testImmutability("pushStateTimeout");
       this.pushStateTimeout = pushStateTimeout;
@@ -122,11 +130,7 @@ public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
 
    @Override
    public SingletonStoreConfig clone() {
-      try {
-         return (SingletonStoreConfig) super.clone();
-      } catch (CloneNotSupportedException e) {
-         throw new RuntimeException("Should not happen", e);
-      }
+      return (SingletonStoreConfig) super.clone();
    }
 
    public void accept(ConfigurationBeanVisitor v) {

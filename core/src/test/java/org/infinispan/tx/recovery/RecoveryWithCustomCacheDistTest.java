@@ -16,7 +16,7 @@ public class RecoveryWithCustomCacheDistTest extends RecoveryWithDefaultCacheDis
    @Override
    protected void createCacheManagers() throws Throwable {
       configuration = super.configure();
-      configuration.configureTransaction().configureRecovery().recoveryInfoCacheName(CUSTOM_CACHE);
+      configuration.fluent().transaction().recovery().recoveryInfoCacheName(CUSTOM_CACHE);
 
       registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(configuration, false));
       registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(configuration, false));

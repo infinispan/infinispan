@@ -14,10 +14,10 @@ import org.infinispan.config.GlobalConfiguration
  */
 class LifecycleCallbacks extends AbstractModuleLifecycle {
 
-   override def cacheManagerStarting(gcr: GlobalComponentRegistry, gc: GlobalConfiguration) {
-      val globalCfg = gcr.getGlobalConfiguration;
-      globalCfg.addExternalizer(ExternalizerIds.TOPOLOGY_ADDRESS, new TopologyAddress.Externalizer)
-      globalCfg.addExternalizer(ExternalizerIds.TOPOLOGY_VIEW, new TopologyView.Externalizer)
+   override def cacheManagerStarting(gcr: GlobalComponentRegistry, globalCfg: GlobalConfiguration) {
+      globalCfg.fluent.serialization
+         .addExternalizer(ExternalizerIds.TOPOLOGY_ADDRESS, new TopologyAddress.Externalizer)
+         .addExternalizer(ExternalizerIds.TOPOLOGY_VIEW, new TopologyView.Externalizer)
    }
 
 }

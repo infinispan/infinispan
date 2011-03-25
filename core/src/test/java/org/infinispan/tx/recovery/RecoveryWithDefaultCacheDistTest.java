@@ -35,10 +35,11 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
 
    protected Configuration  configure() {
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      configuration.configureTransaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class);
-      configuration.configureLocking().useLockStriping(false);
-      configuration.configureTransaction().configureRecovery().enabled(true);
-      configuration.configureClustering().configureHash().rehashEnabled(false);
+      configuration.fluent().locking().useLockStriping(false);
+      configuration.fluent().transaction()
+         .transactionManagerLookupClass(DummyTransactionManagerLookup.class)
+         .recovery();
+      configuration.fluent().clustering().hash().rehashEnabled(false);
       return configuration;
    }
 
@@ -155,6 +156,6 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
    }
 
    protected String getRecoveryCacheName() {
-      return Configuration.RecoveryConfig.DEFAULT_RECOVERY_INFO_CACHE;
+      return Configuration.RecoveryType.DEFAULT_RECOVERY_INFO_CACHE;
    }
 }
