@@ -59,6 +59,7 @@ public class RehashControlCommand extends BaseRpcCommand {
       JOIN_TX_LOG_REQ,
       JOIN_TX_FINAL_LOG_REQ,
       JOIN_TX_LOG_CLOSE,
+      FETCH_TOPOLOGY_INFO,
       JOIN_ABORT
    }
 
@@ -157,6 +158,8 @@ public class RehashControlCommand extends BaseRpcCommand {
          case JOIN_ABORT:
             distributionManager.abortJoin(sender);
             return null;
+         case FETCH_TOPOLOGY_INFO:
+            return distributionManager.getTopologyInfo().getAllTopologyInfo();
       }
       throw new CacheException("Unknown rehash control command type " + type);
    }
