@@ -93,7 +93,10 @@ public enum Flag {
    SKIP_CACHE_STORE,
    /**
     * Skips loading an entry from any configured {@link CacheStore}s. Useful for example to perform a put() operation
-    * while not interested in the return value of put() which would return the eventually existing previous value.
+    * while not interested in the return value of <tt>put()</tt> which would return the eventually existing previous value.
+    * <br>
+    * Note that if you want to ignore the return value of <tt>put()</tt> and you are in distributed mode
+    * you should also use the {@link #SKIP_REMOTE_LOOKUP} flag.
     */
    SKIP_CACHE_LOAD,
    /**
@@ -107,6 +110,9 @@ public enum Flag {
     * or exists(), or to provide an overwritten return value for a put() or remove().  This would render return values
     * for some operations (such as {@link Cache#put(Object, Object)} or {@link Cache#remove(Object)} unusable, in
     * exchange for the performance gains of reducing remote calls.
+    * <br>
+    * Note that if you want to ignore the return value of <tt>put()</tt> and you have configured a cache store
+    * you should also use the {@link #SKIP_CACHE_LOAD} flag.
     */
    SKIP_REMOTE_LOOKUP,
 
