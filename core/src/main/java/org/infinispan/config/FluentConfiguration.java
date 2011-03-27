@@ -238,6 +238,9 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
     * Defines recovery configuration for the cache.
     */
    public static interface RecoveryConfig extends TransactionConfig {
+
+      RecoveryConfig disable();
+
       /**
        * Sets the name of the cache where recovery related information is held. If not specified defaults to
        * a cache named {@link Configuration.RecoveryType#DEFAULT_RECOVERY_INFO_CACHE}
@@ -249,6 +252,9 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
     * Configures deadlock detection.
     */
    public static interface DeadlockDetectionConfig extends FluentTypes {
+
+      DeadlockDetectionConfig disable();
+
       /**
        * Time period that determines how often is lock acquisition attempted within maximum time
        * allowed to acquire a particular lock
@@ -549,6 +555,8 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @param onRehash
        */
       L1Config onRehash(Boolean onRehash);
+
+      L1Config disable();
    }
 
    /**
@@ -607,6 +615,8 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @param indexLocalOnly
        */
       IndexingConfig indexLocalOnly(Boolean indexLocalOnly);
+
+      IndexingConfig disable();
    }
 
    public static interface DataContainerConfig extends FluentTypes {
@@ -806,7 +816,6 @@ abstract class AbstractFluentConfigurationBean extends AbstractNamedCacheConfigu
       this.config = config;
       return this;
    }
-
 
 }
 

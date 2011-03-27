@@ -249,6 +249,8 @@ public class FluentGlobalConfiguration extends AbstractConfigurationBeanWithGCR 
        * @param mBeanServerLookupInstance An instance of {@link org.infinispan.jmx.MBeanServerLookup}
        */
       GlobalJmxStatisticsConfig mBeanServerLookup(MBeanServerLookup mBeanServerLookupInstance);
+
+      GlobalJmxStatisticsConfig disable();
    }
 
    /**

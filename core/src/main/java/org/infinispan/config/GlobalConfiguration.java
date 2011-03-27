@@ -68,6 +68,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     */
    public static final short DEFAULT_MARSHALL_VERSION = Version.getVersionShort();
 
+   @XmlTransient
    FluentGlobalConfiguration fluentGlobalConfig = new FluentGlobalConfiguration(this);
 
    @XmlElement
@@ -722,16 +723,39 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public GlobalConfiguration clone() {
       try {
          GlobalConfiguration dolly = (GlobalConfiguration) super.clone();
-         if (asyncListenerExecutor != null) dolly.asyncListenerExecutor = asyncListenerExecutor.clone();
-         if (asyncTransportExecutor != null) dolly.asyncTransportExecutor = asyncTransportExecutor.clone();
-         if (evictionScheduledExecutor != null) dolly.evictionScheduledExecutor = evictionScheduledExecutor.clone();
-         if (replicationQueueScheduledExecutor != null)
+         if (asyncListenerExecutor != null) {
+            dolly.asyncListenerExecutor = asyncListenerExecutor.clone();
+            dolly.asyncListenerExecutor.setGlobalConfiguration(dolly);
+         }
+         if (asyncTransportExecutor != null) {
+            dolly.asyncTransportExecutor = asyncTransportExecutor.clone();
+            dolly.asyncTransportExecutor.setGlobalConfiguration(dolly);
+         }
+         if (evictionScheduledExecutor != null) {
+            dolly.evictionScheduledExecutor = evictionScheduledExecutor.clone();
+            dolly.evictionScheduledExecutor.setGlobalConfiguration(dolly);
+         }
+         if (replicationQueueScheduledExecutor != null) {
             dolly.replicationQueueScheduledExecutor = replicationQueueScheduledExecutor.clone();
-         if (globalJmxStatistics != null)
+            dolly.evictionScheduledExecutor.setGlobalConfiguration(dolly);
+         }
+         if (globalJmxStatistics != null) {
             dolly.globalJmxStatistics = (GlobalJmxStatisticsType) globalJmxStatistics.clone();
-         if (transport != null) dolly.transport = transport.clone();
-         if (serialization != null) dolly.serialization = (SerializationType) serialization.clone();
-         if (shutdown != null) dolly.shutdown = (ShutdownType) shutdown.clone();
+            dolly.globalJmxStatistics.setGlobalConfiguration(dolly);
+         }
+         if (transport != null) {
+            dolly.transport = transport.clone();
+            dolly.transport.setGlobalConfiguration(dolly);
+         }
+         if (serialization != null) {
+            dolly.serialization = (SerializationType) serialization.clone();
+            dolly.serialization.setGlobalConfiguration(dolly);
+         }
+         if (shutdown != null) {
+            dolly.shutdown = (ShutdownType) shutdown.clone();
+            dolly.shutdown.setGlobalConfiguration(dolly);
+         }
+         dolly.fluentGlobalConfig = new FluentGlobalConfiguration(dolly);
          return dolly;
       } catch (CloneNotSupportedException e) {
          throw new CacheException("Problems cloning configuration component!", e);
@@ -1334,7 +1358,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
       @Override
       public <T> SerializationConfig addExternalizer(int id, Externalizer<T> externalizer) {
-         externalizerTypes.addExternalizer(new ExternalizerConfig().setExternalizer(externalizer));
+         externalizerTypes.addExternalizer(
+               new ExternalizerConfig().setId(id).setExternalizer(externalizer));
          return this;
       }
    }
@@ -1568,6 +1593,12 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
             mBeanServerLookupInstance = (MBeanServerLookup) Util.getInstance(mBeanServerLookup);
 
          return mBeanServerLookupInstance;
+      }
+
+      @Override
+      public GlobalJmxStatisticsConfig disable() {
+         setEnabled(false);
+         return this;
       }
 
       /**
