@@ -57,9 +57,12 @@ import java.util.Set;
  * operation, and better performance. In order to be able to store non-string keys, it relies on an {@link
  * org.infinispan.loaders.keymappers.Key2StringMapper}.
  * <p/>
- * The actual storage table is defined through configuration {@link JdbcStringBasedCacheStore}. The table can be
+ * Note that only the keys are stored as strings, the values are still saved as binary data. Using a character
+ * data type for the value column will result in unmarshalling errors.
+ * <p/>
+ * The actual storage table is defined through configuration {@link JdbcStringBasedCacheStoreConfig}. The table can be
  * created/dropped on-the-fly, at deployment time. For more details consult javadoc for {@link
- * JdbcStringBasedCacheStore}.
+ * JdbcStringBasedCacheStoreConfig}.
  * <p/>
  * It is recommended to use {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore}} over
  * {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore}} whenever it is possible, as is has a better performance.

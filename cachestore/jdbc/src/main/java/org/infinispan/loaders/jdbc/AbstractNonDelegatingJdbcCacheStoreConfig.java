@@ -76,7 +76,13 @@ public abstract class AbstractNonDelegatingJdbcCacheStoreConfig extends Abstract
    }
 
    /**
-    * Sets the type of the column where data will be binary stored. BLOB-like type, DBMS dependent. Mandatory.
+    * Sets the type of the column where data will be binary stored. It should be a binary type like <tt>BLOB</tt>.
+    * Mandatory.
+    * <br>
+    * Character types like <tt>CLOB</tt>/<tt>LONGVARCHAR</tt>/<tt>VARCHAR</tt> are <b>not</b> supported.
+    * <br>
+    * Note that on MySQL you need to use <a href="http://dev.mysql.com/doc/refman/5.0/en/server-sql-mode.html#sqlmode_strict_all_tables">strict mode</a>
+    * or the database will truncate long values without raising any errors, leading to unmarshalling errors on load.
     */
    public void setDataColumnType(String dataColumnType) {
       testImmutability("tableManipulation");
