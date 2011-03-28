@@ -4,6 +4,7 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResult;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.manager.CacheContainer;
@@ -276,6 +277,14 @@ public class RemoteCacheManager implements CacheContainer {
       this(config, true);
    }
 
+   /**
+    * Retrieves a named cache from the remote server if the cache has been
+    * defined, otherwise if the cache name is underfined, it will return null.
+    *
+    * @param cacheName name of cache to retrieve
+    * @return a cache instance identified by cacheName or null if the cache
+    *         name has not been defined
+    */
    public <K, V> RemoteCache<K, V> getCache(String cacheName) {
       return getCache(cacheName, forceReturnValueDefault);
    }
@@ -284,6 +293,12 @@ public class RemoteCacheManager implements CacheContainer {
       return createRemoteCache(cacheName, forceReturnValue);
    }
 
+   /**
+    * Retrieves the default cache from the remote server.
+    *
+    * @return a remote cache instance that can be used to send requests to the
+    *         default cache in the server
+    */
    public <K, V> RemoteCache<K, V> getCache() {
       return getCache(forceReturnValueDefault);
    }
@@ -345,8 +360,16 @@ public class RemoteCacheManager implements CacheContainer {
          if (!cacheName2RemoteCache.containsKey(cacheName)) {
             RemoteCacheImpl<K, V> result = new RemoteCacheImpl<K, V>(this, cacheName);
             startRemoteCache(result);
-            cacheName2RemoteCache.put(cacheName, result);
-            return result;
+            // If ping not successful assume that the cache does not exist
+            // Default cache is always started, so don't do for it
+            if (!cacheName.equals(CacheContainer.DEFAULT_CACHE_NAME) &&
+                  transportFactory != null &&
+                  result.ping() == PingResult.CACHE_DOES_NOT_EXIST) {
+               return null;
+            } else {
+               cacheName2RemoteCache.put(cacheName, result);
+               return result;
+            }
          } else {
             return cacheName2RemoteCache.get(cacheName);
          }

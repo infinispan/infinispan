@@ -84,6 +84,10 @@ public class OperationsFactory implements HotRodConstants {
       return new BulkGetOperation(transportFactory, cacheNameBytes, topologyId, flags(), size);
    }
 
+   public PingOperation newPingOperation() {
+      return new PingOperation(topologyId, transportFactory.getTransport(), cacheNameBytes);
+   }
+
    private Flag[] flags() {
       Flag[] flags = this.flagsMap.get();
       this.flagsMap.remove();

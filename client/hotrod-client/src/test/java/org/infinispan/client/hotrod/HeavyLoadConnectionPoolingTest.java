@@ -86,6 +86,6 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
          Thread.sleep(1000);
       }
       assertEquals(1, connectionPool.getNumIdle());
-      assertEquals(0, connectionPool.getNumActive());
+      assertEquals(1, connectionPool.getNumActive());
    }
 }

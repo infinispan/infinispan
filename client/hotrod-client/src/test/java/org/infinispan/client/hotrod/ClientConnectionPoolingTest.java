@@ -157,7 +157,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
          Thread.sleep(1000);
       }
       log.info("Connection pool is " + connectionPool);
-      assertEquals(1, connectionPool.getNumActive(hrServ1Addr));
+      assertEquals(2, connectionPool.getNumActive(hrServ1Addr));
       assertEquals(1, connectionPool.getNumActive(hrServ2Addr));
       assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));
       assertEquals(0, connectionPool.getNumIdle(hrServ2Addr));
@@ -191,14 +191,14 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       assertExistKeyValue("k7", "v7");
       assertExistKeyValue("k8", "v8");
 
-      assertEquals(0, connectionPool.getNumActive(hrServ1Addr));
+      assertEquals(1, connectionPool.getNumActive(hrServ1Addr));
       assertEquals(0, connectionPool.getNumActive(hrServ2Addr));
 
-      assertEquals(2, connectionPool.getNumIdle(hrServ1Addr));
+      assertEquals(1, connectionPool.getNumIdle(hrServ1Addr));
       assertEquals(2, connectionPool.getNumIdle(hrServ2Addr));
 
 
-      assertEquals(2, connectionPool.getNumIdle(hrServ1Addr));
+      assertEquals(1, connectionPool.getNumIdle(hrServ1Addr));
       assertEquals(2, connectionPool.getNumIdle(hrServ2Addr));
    }
 

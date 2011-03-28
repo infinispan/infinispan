@@ -113,7 +113,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
    }
 
    public void testHashInfoRetrieved() throws InterruptedException {
-      assert tcpConnectionFactory.getServers().size() == 1;
+      assert tcpConnectionFactory.getServers().size() == 3;
       for (int i = 0; i < 10; i++) {
          remoteCache.put("k", "v");
          if (tcpConnectionFactory.getServers().size() == 3) break;

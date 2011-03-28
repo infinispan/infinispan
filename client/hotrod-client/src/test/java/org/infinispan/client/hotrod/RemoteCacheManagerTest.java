@@ -92,15 +92,13 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
       remoteCacheManager.stop();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*CacheNotFoundException.*")
    public void testGetUndefinedCache() {
       Properties p = new Properties();
       p.setProperty(ConfigurationProperties.SERVER_LIST, "127.0.0.1:" + port);
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(p, false);
       assert !remoteCacheManager.isStarted();
       remoteCacheManager.start();
-      RemoteCache<Object, Object> cache = remoteCacheManager.getCache("Undefined1234");
-      cache.put("aKey", "aValue");
+      assert null == remoteCacheManager.getCache("Undefined1234");
    }
 
    private void assertWorks(RemoteCacheManager remoteCacheManager) {
