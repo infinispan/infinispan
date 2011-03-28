@@ -380,6 +380,10 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return result;
    }
 
+   public PingOperation.PingResult ping() {
+      return operationsFactory.newPingOperation().execute();
+   }
+
    private byte[] obj2bytes(Object o, boolean isKey) {
       try {
          return marshaller.objectToByteBuffer(o, isKey ? estimateKeySize : estimateValueSize);

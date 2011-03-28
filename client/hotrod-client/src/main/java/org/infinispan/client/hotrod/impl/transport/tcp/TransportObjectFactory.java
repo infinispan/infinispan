@@ -45,9 +45,9 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
       return tcpTransport;
    }
 
-   private boolean ping(TcpTransport tcpTransport, AtomicInteger topologyId) {
-      PingOperation po = new PingOperation(null, topologyId, tcpTransport);
-      return (Boolean)po.execute();
+   private PingOperation.PingResult ping(TcpTransport tcpTransport, AtomicInteger topologyId) {
+      PingOperation po = new PingOperation(topologyId, tcpTransport);
+      return po.execute();
    }
 
    /**
@@ -59,7 +59,7 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
       if (log.isTraceEnabled()) {
          log.trace("About to validate(ping) connection to server " + key + ". TcpTransport is " + transport);
       }
-      return ping(transport, topologyId);
+      return ping(transport, topologyId) == PingOperation.PingResult.SUCCESS;
    }
 
    @Override
