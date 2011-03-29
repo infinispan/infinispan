@@ -68,7 +68,6 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
    public void run() throws Exception {
       // Verify querying works
       CacheQuery cacheQuery = createCacheQuery(m_cache, "", "Id:2?");
-      System.out.println("Hits: " + cacheQuery.getResultSize());
 
       // Remove something that exists
       m_transactionManager.begin();

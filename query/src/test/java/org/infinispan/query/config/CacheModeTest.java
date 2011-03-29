@@ -33,7 +33,6 @@ public class CacheModeTest extends AbstractInfinispanTest {
          cc = TestCacheManagerFactory.createCacheManager(m, true);
          boolean found = false;
          for (CommandInterceptor i : cc.getCache().getAdvancedCache().getInterceptorChain()) {
-            System.out.println("  Testing " + i.getClass().getSimpleName());
             if (i instanceof QueryInterceptor) found = true;
          }
          assert found : "Didn't find a query interceptor in the chain!!";
