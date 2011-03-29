@@ -22,6 +22,8 @@ public class RecoveryWithCustomCacheDistTest extends RecoveryWithDefaultCacheDis
       registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(configuration, false));
 
       recoveryCache = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
+      // Explicitly disable recovery in recovery cache per se.
+      recoveryCache.fluent().transaction().recovery().disable();
       manager(0).defineConfiguration(CUSTOM_CACHE, recoveryCache);
       manager(1).defineConfiguration(CUSTOM_CACHE, recoveryCache);
 
