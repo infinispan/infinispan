@@ -101,7 +101,6 @@ public class EagerIteratorTest {
    public void testFirst() {
       assert iterator.isFirst() : "We should be pointing at the first element";
       Object next = iterator.next();
-      System.out.println(next);
 
       assert next == dummyResults.get(keys.get(0));
 
@@ -203,7 +202,6 @@ public class EagerIteratorTest {
    public void testNextAndHasNext() {
       iterator.first();
       for (int i = 0; i < keys.size(); i++) {
-         System.out.println("Loop number count: - " + (i + 1));
          Object expectedValue = dummyResults.get(keys.get(i));
          assert iterator.hasNext(); // should have next as long as we are less than the number of elements.
          assert expectedValue == iterator.next(); // tests next()

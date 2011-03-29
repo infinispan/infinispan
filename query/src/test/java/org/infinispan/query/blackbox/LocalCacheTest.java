@@ -131,7 +131,6 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       found = cacheQuery.list();
 
-      System.out.println("Found size is: - " + found.size());
       assert found.size() == 1;
       assert found.get(0).equals(person1);
    }
@@ -293,7 +292,6 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       CacheQuery cacheQuery = new QueryFactory(cache).getQuery(luceneQuery);
 
       // We know that we've got all 3 hits.
-      System.out.println("****** Res " + cacheQuery.list());
       assert cacheQuery.getResultSize() == 3 : "Expected 3, got " + cacheQuery.getResultSize();
 
       cache.clear();

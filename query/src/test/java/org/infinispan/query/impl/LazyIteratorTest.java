@@ -152,7 +152,6 @@ public class LazyIteratorTest {
       assert iterator.isFirst() : "We should be pointing at the first element";
       Object next = iterator.next();
 
-      System.out.println(next);
       assert next == persons[1];
       assert !iterator.isFirst();
 
