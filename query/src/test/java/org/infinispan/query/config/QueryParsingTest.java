@@ -39,19 +39,17 @@ import java.io.InputStream;
 public class QueryParsingTest extends AbstractInfinispanTest {
 
    public void testQueryConfig() throws Exception {
-      String config = TestingUtil.INFINISPAN_START_TAG +
+      String config = TestingUtil.INFINISPAN_START_TAG + "\n" +
             "   <global>\n" +
-            "      <transport clusterName=\"demoCluster\"/>\n" +
+            "      <transport clusterName=\"demoCluster\" />\n" +
             "   </global>\n" +
-            "\n" +
             "   <default>\n" +
-            "      <clustering mode=\"replication\">\n" +
-            "      </clustering>\n" +
-            "      <indexing enabled=\"true\" indexLocalOnly=\"true\"/>\n" +
+            "      <clustering mode=\"replication\" />\n" +
+            "      <indexing enabled=\"true\" indexLocalOnly=\"true\" />\n" +
             "   </default>\n" +
             TestingUtil.INFINISPAN_END_TAG;
 
-      System.out.println(config);
+      System.out.println("Using test configuration:\n\n" + config + "\n");
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
       InputStream schema = InfinispanConfiguration.findSchemaInputStream();

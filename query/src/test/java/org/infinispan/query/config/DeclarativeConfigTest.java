@@ -47,7 +47,7 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      String config = TestingUtil.INFINISPAN_START_TAG +
+      String config = TestingUtil.INFINISPAN_START_TAG + "\n" +
             "   <default>\n" +
             "      <indexing enabled=\"true\" indexLocalOnly=\"true\">\n" +
             "         <properties>\n" +
@@ -55,7 +55,7 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
             "         </properties>\n" +
             "      </indexing>\n" +
             "   </default>\n" + TestingUtil.INFINISPAN_END_TAG;
-
+      System.out.println("Using test configuration:\n\n" + config + "\n");
       InputStream is = new ByteArrayInputStream(config.getBytes());
       try {
          cacheManager = TestCacheManagerFactory.fromStream(is);
