@@ -34,7 +34,7 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
 
       try {
          Configuration c = SingleCacheManagerTest.getDefaultClusteredConfig(LOCAL, true);
-         c.configureIndexing().enabled(true).indexLocalOnly(false);
+         c.fluent().indexing().indexLocalOnly(false);
          cc = TestCacheManagerFactory.createCacheManager(c, true);
          Cache<?, ?> cache = cc.getCache();
          TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class, AnotherGrassEater.class);

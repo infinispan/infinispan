@@ -294,6 +294,12 @@ interface FluentGlobalTypes {
 
    FluentGlobalConfiguration.TransportConfig transport();
 
+   /**
+    * This method allows configuration of the global, or cache manager level,
+    * jmx statistics. When this method is called, it automatically enables
+    * global jmx statistics. So, if you want it to be disabled, make sure you call
+    * {@link org.infinispan.config.FluentGlobalConfiguration.GlobalJmxStatisticsConfig#disable()}
+    */
    FluentGlobalConfiguration.GlobalJmxStatisticsConfig globalJmxStatistics();
 
    FluentGlobalConfiguration.SerializationConfig serialization();

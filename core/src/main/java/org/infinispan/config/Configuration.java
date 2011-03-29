@@ -44,23 +44,7 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.hash.Hash;
 import org.infinispan.util.hash.MurmurHash3;
-import org.infinispan.config.FluentConfiguration.LockingConfig;
-import org.infinispan.config.FluentConfiguration.TransactionConfig;
-import org.infinispan.config.FluentConfiguration.DeadlockDetectionConfig;
-import org.infinispan.config.FluentConfiguration.RecoveryConfig;
-import org.infinispan.config.FluentConfiguration.CustomInterceptorPosition;
-import org.infinispan.config.FluentConfiguration.CustomInterceptorsConfig;
-import org.infinispan.config.FluentConfiguration.EvictionConfig;
-import org.infinispan.config.FluentConfiguration.ExpirationConfig;
-import org.infinispan.config.FluentConfiguration.ClusteringConfig;
-import org.infinispan.config.FluentConfiguration.AsyncConfig;
-import org.infinispan.config.FluentConfiguration.SyncConfig;
-import org.infinispan.config.FluentConfiguration.StateRetrievalConfig;
-import org.infinispan.config.FluentConfiguration.HashConfig;
-import org.infinispan.config.FluentConfiguration.L1Config;
-import org.infinispan.config.FluentConfiguration.IndexingConfig;
-import org.infinispan.config.FluentConfiguration.DataContainerConfig;
-import org.infinispan.config.FluentConfiguration.UnsafeConfig;
+import org.infinispan.config.FluentConfiguration.*;
 
 import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
@@ -3416,7 +3400,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @see <a href="../../../config.html#ce_default_lazyDeserialization">Configuration reference</a>
     */
    @ConfigurationDoc(name = "lazyDeserialization")
-   public static class LazyDeserialization extends BooleanAttributeType {
+   public static class LazyDeserialization extends BooleanAttributeType implements LazyDeserializationConfig {
       /**
        * The serialVersionUID
        */
@@ -3451,7 +3435,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @see <a href="../../../config.html#ce_default_jmxStatistics">Configuration reference</a>
     */
    @ConfigurationDoc(name = "jmxStatistics")
-   public static class JmxStatistics extends BooleanAttributeType {
+   public static class JmxStatistics extends BooleanAttributeType implements JmxStatisticsConfig {
       /**
        * The serialVersionUID
        */
@@ -3487,7 +3471,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @see <a href="../../../config.html#ce_default_invocationBatching">Configuration reference</a>
     */
    @ConfigurationDoc(name = "invocationBatching")
-   public static class InvocationBatching extends BooleanAttributeType {
+   public static class InvocationBatching extends BooleanAttributeType implements InvocationBatchingConfig {
       /**
        * The serialVersionUID
        */
