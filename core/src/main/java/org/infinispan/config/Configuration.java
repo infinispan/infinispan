@@ -498,6 +498,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       setCacheMode(cacheMode);
    }
 
+   /**
+    * Pluggable data container class which must implement
+    * {@link org.infinispan.container.DataContainer}
+    */
    public String getDataContainerClass() {
       return dataContainer.dataContainerClass;
    }
@@ -1893,6 +1897,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    @XmlAccessorType(XmlAccessType.PROPERTY)
+   @ConfigurationDoc(name = "recovery", parentName = "transaction")
    public static class RecoveryType extends AbstractFluentConfigurationBean implements RecoveryConfig {
       public static final String DEFAULT_RECOVERY_INFO_CACHE = "__recoveryInfoCacheName__";
 
@@ -2597,7 +2602,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        */
       private static final long serialVersionUID = -959027510815676570L;
 
-      @ConfigurationDocRef(bean = Configuration.class, targetElement = "setDataContainerClass")
+      @ConfigurationDocRef(name = "class", bean = Configuration.class, targetElement = "getDataContainerClass")
       protected String dataContainerClass = DefaultDataContainer.class.getName();
 
       @XmlElement(name = "properties")
