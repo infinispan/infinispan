@@ -71,9 +71,10 @@ public class QueryParsingTest extends AbstractInfinispanTest {
       assert dolly.isIndexLocalOnly();
 
       // test mergeability
-      Configuration other = new Configuration();
-      other.setUseLazyDeserialization(true);
-      other.configureLocking().useLockStriping(false);
+      Configuration other = new Configuration().fluent()
+         .lazyDeserialization()
+         .locking().useLockStriping(false)
+         .build();
       other.applyOverrides(dolly);
       assert other.isUseLazyDeserialization();
       assert !other.isUseLockStriping();

@@ -47,7 +47,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultStandaloneConfig(true);
-      c.configureIndexing().enabled(true).indexLocalOnly(true);
+      c.fluent().indexing().indexLocalOnly(true);
       return TestCacheManagerFactory.createCacheManager(c, true);
    }
 

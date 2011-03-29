@@ -227,7 +227,10 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       TransactionConfig cacheStopTimeout(Integer cacheStopTimeout);
 
       /**
-       * Configures recovery support for distributed transactions.
+       * This method allows configuration of the transaction recovery cache.
+       * When this method is called, it automatically enables recovery. So,
+       * if you want it to be disabled, make sure you call
+       * {@link org.infinispan.config.FluentConfiguration.RecoveryConfig#disable()}
        */
       RecoveryConfig recovery();
 
@@ -391,9 +394,10 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       StateRetrievalConfig stateRetrieval();
 
       /**
-       * Configure l1 sub element
-       *
-       * @return L1Config element
+       * This method allows configuration of the L1 cache for distributed
+       * caches. When this method is called, it automatically enables L1. So,
+       * if you want it to be disabled, make sure you call
+       * {@link org.infinispan.config.FluentConfiguration.L1Config#disable()}
        */
       L1Config l1();
 
@@ -655,6 +659,12 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       UnsafeConfig unreliableReturnValues(Boolean unreliableReturnValues);
 
    }
+
+   public static interface LazyDeserializationConfig extends FluentTypes {}
+
+   public static interface JmxStatisticsConfig extends FluentTypes {}
+
+   public static interface InvocationBatchingConfig extends FluentTypes {}
 }
 
 interface FluentTypes {
@@ -665,6 +675,12 @@ interface FluentTypes {
 
    FluentConfiguration.TransactionConfig transaction();
 
+   /**
+    * This method allows configuration of the deadlock detection. When this
+    * method is called, it automatically enables deadlock detection. So, if
+    * you want it to be disabled, make sure you call
+    * {@link org.infinispan.config.FluentConfiguration.DeadlockDetectionConfig#disable()}
+    */
    FluentConfiguration.DeadlockDetectionConfig deadlockDetection();
 
    FluentConfiguration.CustomInterceptorsConfig customInterceptors();
@@ -675,17 +691,35 @@ interface FluentTypes {
 
    FluentConfiguration.ClusteringConfig clustering();
 
+   /**
+    * This method allows configuration of the indexing subsystem. When
+    * this method is called, it automatically enables indexing. So, if you
+    * want it to be disabled, make sure you call
+    * {@link org.infinispan.config.FluentConfiguration.IndexingConfig#disable()}
+    */
    FluentConfiguration.IndexingConfig indexing();
 
    FluentConfiguration.DataContainerConfig dataContainer();
 
    FluentConfiguration.UnsafeConfig unsafe();
 
-   FluentTypes jmxStatistics();
+   /**
+    * This method allows configuration of jmx statistics. When this method is
+    * called, it automatically enables jmx statistics.
+    */
+   FluentConfiguration.JmxStatisticsConfig jmxStatistics();
 
-   FluentTypes lazyDeserialization();
+   /**
+    * This method allows configuration of lazy deserialization. When this
+    * method is called, it automatically enables lazy deserialization.
+    */
+   FluentConfiguration.LazyDeserializationConfig lazyDeserialization();
 
-   FluentTypes invocationBatching();
+   /**
+    * This method allows configuration of invocation batching. When
+    * this method is called, it automatically enables invocation batching.
+    */
+   FluentConfiguration.InvocationBatchingConfig invocationBatching();
 
    Configuration build();
 }
@@ -752,17 +786,17 @@ abstract class AbstractFluentConfigurationBean extends AbstractNamedCacheConfigu
    }
 
    @Override
-   public FluentTypes jmxStatistics() {
+   public FluentConfiguration.JmxStatisticsConfig jmxStatistics() {
       return config.jmxStatistics.enabled(true);
    }
 
    @Override
-   public FluentTypes lazyDeserialization() {
+   public FluentConfiguration.LazyDeserializationConfig lazyDeserialization() {
       return config.lazyDeserialization.enabled(true);
    }
 
    @Override
-   public FluentTypes invocationBatching() {
+   public FluentConfiguration.InvocationBatchingConfig invocationBatching() {
       return config.invocationBatching.enabled(true);
    }
 
