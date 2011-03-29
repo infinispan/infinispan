@@ -37,8 +37,7 @@ import javax.xml.bind.annotation.XmlType;
  * @since 5.0
  */
 @XmlAccessorType(XmlAccessType.PROPERTY)
-@XmlType(name = "marshallable")
-@ConfigurationDoc(name = "marshallable")
+@ConfigurationDoc(name = "externalizer")
 public class ExternalizerConfig extends AbstractConfigurationBeanWithGCR {
 
    /** The serialVersionUID */
