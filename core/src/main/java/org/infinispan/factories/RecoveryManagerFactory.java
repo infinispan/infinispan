@@ -86,7 +86,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
       Configuration config = new Configuration();
       config.fluent().clustering().mode(Configuration.CacheMode.LOCAL);
       config.fluent().expiration().lifespan(DEFAULT_EXPIRY);
-      config.fluent().transaction().recovery();
+      config.fluent().recovery().disable();
       return config;
    }
 

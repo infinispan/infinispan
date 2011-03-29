@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.infinispan.marshall.ForeignExternalizerTest.*;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test the behaviour of JBoss Marshalling based {@link org.infinispan.marshall.StreamingMarshaller} implementation
@@ -103,7 +104,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       ClassLoader cl = Thread.currentThread().getContextClassLoader();
       try {
          jbmarshaller.start(cl, new RemoteCommandsFactory(), null, globalCfg);
-         assert 3456 == jbmarshaller.externalizerTable.getExternalizerId(new IdViaBothObj());
+         assertEquals(3456, jbmarshaller.externalizerTable.getExternalizerId(new IdViaBothObj()));
       } finally {
          jbmarshaller.stop();
       }
@@ -141,7 +142,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
 
    private GlobalConfiguration createForeignExternalizerGlobalConfig(int id) {
       GlobalConfiguration globalCfg = GlobalConfiguration.getClusteredDefault();
-      globalCfg.fluent().serialization().addExternalizer(IdViaBothObj.Externalizer.class);
+      globalCfg.fluent().serialization().addExternalizer(id, IdViaBothObj.Externalizer.class);
       return globalCfg;
    }
 

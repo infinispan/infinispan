@@ -27,6 +27,8 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.CacheStoreConfig;
 
+import javax.xml.bind.annotation.XmlTransient;
+
 /**
  * Class to aid decorators to be able to fluently modify parent properties.
  * I.e. async store to enable navigating to cache store configuration.
@@ -44,6 +46,7 @@ public abstract class AbstractDecoratorConfigurationBean
    }
 
    @Override
+   @XmlTransient
    public String getCacheLoaderClassName() {
       return cacheStoreConfig.getCacheLoaderClassName();
    }
@@ -54,11 +57,13 @@ public abstract class AbstractDecoratorConfigurationBean
    }
 
    @Override
+   @XmlTransient
    public Boolean isPurgeOnStartup() {
       return cacheStoreConfig.isPurgeOnStartup();
    }
 
    @Override
+   @XmlTransient
    public Boolean isFetchPersistentState() {
       return cacheStoreConfig.isFetchPersistentState();
    }
@@ -84,6 +89,7 @@ public abstract class AbstractDecoratorConfigurationBean
    }
 
    @Override
+   @XmlTransient
    public Boolean isIgnoreModifications() {
       return cacheStoreConfig.isIgnoreModifications();
    }
@@ -99,6 +105,7 @@ public abstract class AbstractDecoratorConfigurationBean
    }
 
    @Override
+   @XmlTransient
    public SingletonStoreConfig getSingletonStoreConfig() {
       return cacheStoreConfig.getSingletonStoreConfig();
    }
@@ -109,6 +116,7 @@ public abstract class AbstractDecoratorConfigurationBean
    }
 
    @Override
+   @XmlTransient
    public AsyncStoreConfig getAsyncStoreConfig() {
       return cacheStoreConfig.getAsyncStoreConfig();
    }
@@ -119,6 +127,7 @@ public abstract class AbstractDecoratorConfigurationBean
    }
 
    @Override
+   @XmlTransient
    public Boolean isPurgeSynchronously() {
       return cacheStoreConfig.isPurgeSynchronously();
    }

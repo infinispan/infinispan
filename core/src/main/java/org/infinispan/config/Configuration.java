@@ -108,6 +108,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    //   CONFIGURATION OPTIONS
    // ------------------------------------------------------------------------------------------------------------
 
+   @XmlTransient
    FluentConfiguration fluentConfig = new FluentConfiguration(this);
 
    @XmlElement
@@ -951,8 +952,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * </p>
     * 
     * @param threshold the threshold over which to use a multicast
-    * 
+    * @deprecated Use {@link FluentConfiguration.L1Config#invalidationThreshold(Integer)} instead
     */
+   @Deprecated
    public void setL1InvalidationThreshold(int threshold) {
       this.clustering.l1.setInvalidationThreshold(threshold);
    }
@@ -1337,23 +1339,72 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public Configuration clone() {
       try {
          Configuration dolly = (Configuration) super.clone();
-         if (clustering != null) dolly.clustering = clustering.clone();
+         if (clustering != null) {
+            dolly.clustering = clustering.clone();
+            dolly.clustering.setConfiguration(dolly);
+         }
          if (globalConfiguration != null) dolly.globalConfiguration = globalConfiguration.clone();
-         if (locking != null) dolly.locking = (LockingType) locking.clone();
-         if (loaders != null) dolly.loaders = loaders.clone();
-         if (transaction != null) dolly.transaction = (TransactionType) transaction.clone();
-         if (customInterceptors != null) dolly.customInterceptors = customInterceptors.clone();
-         if (dataContainer != null) dolly.dataContainer = (DataContainerType) dataContainer.clone();
-         if (eviction != null) dolly.eviction = (EvictionType) eviction.clone();
-         if (expiration != null) dolly.expiration = (ExpirationType) expiration.clone();
-         if (unsafe != null) dolly.unsafe = (UnsafeType) unsafe.clone();
-         if (clustering != null) dolly.clustering = clustering.clone();
-         if (jmxStatistics != null) dolly.jmxStatistics = (JmxStatistics) jmxStatistics.clone();
-         if (lazyDeserialization != null) dolly.lazyDeserialization = (LazyDeserialization) lazyDeserialization.clone();
-         if (invocationBatching != null) dolly.invocationBatching = (InvocationBatching) invocationBatching.clone();
-         if (deadlockDetection != null) dolly.deadlockDetection = (DeadlockDetectionType) deadlockDetection.clone();
-         if (transaction != null) dolly.transaction = transaction.clone();
-         if (indexing != null) dolly.indexing = indexing.clone();
+         if (locking != null) {
+            dolly.locking = (LockingType) locking.clone();
+            dolly.locking.setConfiguration(dolly);
+         }
+         if (loaders != null) {
+            dolly.loaders = loaders.clone();
+            dolly.loaders.setConfiguration(dolly);
+         }
+         if (transaction != null) {
+            dolly.transaction = transaction.clone();
+            dolly.transaction.setConfiguration(dolly);
+         }
+         if (customInterceptors != null) {
+            dolly.customInterceptors = customInterceptors.clone();
+            dolly.customInterceptors.setConfiguration(dolly);
+         }
+         if (dataContainer != null) {
+            dolly.dataContainer = (DataContainerType) dataContainer.clone();
+            dolly.dataContainer.setConfiguration(dolly);
+         }
+         if (eviction != null) {
+            dolly.eviction = (EvictionType) eviction.clone();
+            dolly.eviction.setConfiguration(dolly);
+         }
+         if (expiration != null) {
+            dolly.expiration = (ExpirationType) expiration.clone();
+            dolly.expiration.setConfiguration(dolly);
+         }
+         if (unsafe != null) {
+            dolly.unsafe = (UnsafeType) unsafe.clone();
+            dolly.unsafe.setConfiguration(dolly);
+         }
+         if (clustering != null) {
+            dolly.clustering = clustering.clone();
+            dolly.clustering.setConfiguration(dolly);
+         }
+         if (jmxStatistics != null) {
+            dolly.jmxStatistics = (JmxStatistics) jmxStatistics.clone();
+            dolly.jmxStatistics.setConfiguration(dolly);
+         }
+         if (lazyDeserialization != null) {
+            dolly.lazyDeserialization = (LazyDeserialization) lazyDeserialization.clone();
+            dolly.lazyDeserialization.setConfiguration(dolly);
+         }
+         if (invocationBatching != null) {
+            dolly.invocationBatching = (InvocationBatching) invocationBatching.clone();
+            dolly.invocationBatching.setConfiguration(dolly);
+         }
+         if (deadlockDetection != null) {
+            dolly.deadlockDetection = (DeadlockDetectionType) deadlockDetection.clone();
+            dolly.deadlockDetection.setConfiguration(dolly);
+         }
+         if (transaction != null) {
+            dolly.transaction = transaction.clone();
+            dolly.transaction.setConfiguration(dolly);
+         }
+         if (indexing != null) {
+            dolly.indexing = indexing.clone();
+            dolly.indexing.setConfiguration(dolly);
+         }
+         dolly.fluentConfig = new FluentConfiguration(dolly);
          return dolly;
       } catch (CloneNotSupportedException e) {
          throw new CacheException("Unexpected!", e);
@@ -1510,14 +1561,21 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @Override
       public TransactionConfig useSynchronization(Boolean useSynchronization) {
-         testImmutability("useSynchronization");
-         this.useSynchronization = useSynchronization;
-         return this;
+         return setUseSynchronization(useSynchronization);
       }
 
       @XmlAttribute
       public Boolean isUseSynchronization() {
          return useSynchronization;
+      }
+
+      /**
+       * Needed for JAXB
+       */
+      private TransactionConfig setUseSynchronization(Boolean useSynchronization) {
+         testImmutability("useSynchronization");
+         this.useSynchronization = useSynchronization;
+         return this;
       }
 
       @XmlAttribute
@@ -1613,7 +1671,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @Override
       public RecoveryConfig recovery() {
-         recovery.enabled(true);
+         recovery.setEnabled(true);
          recovery.setConfiguration(config);
          return recovery;
       }
@@ -1858,17 +1916,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       private String recoveryInfoCacheName = DEFAULT_RECOVERY_INFO_CACHE;
 
-      RecoveryConfig enabled(boolean enabled) {
-         testImmutability("enabled");
-         this.enabled = enabled;
-         return this;
-      }
-
       @Override
-      public RecoveryConfig recoveryInfoCacheName(String cacheName) {
-         testImmutability("recoveryInfoCacheName");
-         this.recoveryInfoCacheName  = cacheName;
-         return this;
+      public RecoveryConfig disable() {
+         return setEnabled(false);
       }
 
       @XmlAttribute(required = false)
@@ -1876,15 +1926,37 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return enabled;
       }
 
+      /**
+       * Needed for JAXB
+       */
+      private RecoveryType setEnabled(boolean enabled) {
+         testImmutability("enabled");
+         this.enabled = enabled;
+         return this;
+      }
+
+      @Override
+      public RecoveryConfig recoveryInfoCacheName(String cacheName) {
+         return setRecoveryInfoCacheName(cacheName);
+      }
+
       @XmlAttribute (required = false)
       public String getRecoveryInfoCacheName() {
          return recoveryInfoCacheName;
       }
 
+      /**
+       * Needed for JAXB
+       */
+      private RecoveryType setRecoveryInfoCacheName(String recoveryInfoCacheName) {
+         testImmutability("recoveryInfoCacheName");
+         this.recoveryInfoCacheName = recoveryInfoCacheName;
+         return this;
+      }
+
       public void accept(ConfigurationBeanVisitor v) {
          v.visitRecoveryType(this);
       }
-
    }
 
    /**
@@ -2558,14 +2630,20 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return dataContainerClass;
       }
 
-      @Override
-      public DataContainerConfig dataContainerClass(Class<? extends DataContainer> dataContainerClass) {
+      /**
+       * Needed for JAXB
+       */
+      private DataContainerType setDataContainerClass(String dataContainerClass) {
          testImmutability("dataContainerClass");
-         this.dataContainerClass = dataContainerClass.getName();
+         this.dataContainerClass = dataContainerClass;
          return this;
       }
 
-      @XmlTransient
+      @Override
+      public DataContainerConfig dataContainerClass(Class<? extends DataContainer> dataContainerClass) {
+         return setDataContainerClass(dataContainerClass.getName());
+      }
+
       public DataContainerConfig withProperties(Properties properties) {
          testImmutability("properties");
          this.properties = toTypedProperties(properties);
@@ -3211,14 +3289,26 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return this;
       }
       
-      @XmlAttribute
+      @Override
+      public L1Config invalidationThreshold(Integer threshold) {
+         setInvalidationThreshold(threshold);
+         return this;
+      }
+      
+     
       public void setInvalidationThreshold(Integer threshold) {
          testImmutability("invalidationThreshold");
          this.invalidationThreshold = threshold;
       }
       
+      @XmlAttribute
       public Integer getInvalidationThreshold() {
 	      return invalidationThreshold;
+      }
+
+      @Override
+      public L1Config disable() {
+         return setEnabled(false);
       }
 
       @Override
@@ -3286,6 +3376,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return this;
       }
 
+      public BooleanAttributeType disable() {
+         setEnabled(false);
+         return this;
+      }
+
       /**
        * @deprecated The visibility of this will be reduced, use {@link #enabled(Boolean)} instead
        */
@@ -3342,6 +3437,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          super.enabled(enabled);
          return this;
       }
+
+      @Override
+      public LazyDeserialization disable() {
+         super.disable();
+         return this;
+      }
    }
 
    /**
@@ -3369,6 +3470,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public JmxStatistics enabled(Boolean enabled) {
          super.enabled(enabled);
+         return this;
+      }
+
+      @Override
+      public JmxStatistics disable() {
+         super.disable();
          return this;
       }
    }
@@ -3399,6 +3506,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       protected InvocationBatching setConfiguration(Configuration config) {
          super.setConfiguration(config);
+         return this;
+      }
+
+      @Override
+      public InvocationBatching disable() {
+         super.disable();
          return this;
       }
    }
@@ -3464,6 +3577,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       protected DeadlockDetectionType setConfiguration(Configuration config) {
          super.setConfiguration(config);
+         return this;
+      }
+
+      @Override
+      public DeadlockDetectionConfig disable() {
+         setEnabled(false);
          return this;
       }
 
@@ -3738,6 +3857,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       public IndexingConfig indexLocalOnly(Boolean indexLocalOnly) {
          setIndexLocalOnly(indexLocalOnly);
+         return this;
+      }
+
+      @Override
+      public IndexingConfig disable() {
+         setEnabled(false);
          return this;
       }
 

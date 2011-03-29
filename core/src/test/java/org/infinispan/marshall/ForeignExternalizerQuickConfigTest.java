@@ -41,10 +41,10 @@ public class ForeignExternalizerQuickConfigTest extends ForeignExternalizerTest 
    @Override
    protected GlobalConfiguration createForeignExternalizerGlobalConfig() {
       GlobalConfiguration globalCfg = GlobalConfiguration.getClusteredDefault();
-      globalCfg.fluent().serialization().addExternalizer(new IdViaAnnotationObj.Externalizer());
-      globalCfg.fluent().serialization().addExternalizer(1234, new IdViaConfigObj.Externalizer());
-      globalCfg.fluent().serialization().addExternalizer(new IdViaAnnotationObj.Externalizer());
-      globalCfg.fluent().serialization().addExternalizer(3456, new IdViaBothObj.Externalizer());
+      globalCfg.fluent().serialization()
+         .addExternalizer(1234, new IdViaConfigObj.Externalizer())
+         .addExternalizer(new IdViaAnnotationObj.Externalizer())
+         .addExternalizer(3456, new IdViaBothObj.Externalizer());
       return globalCfg;
    }
 

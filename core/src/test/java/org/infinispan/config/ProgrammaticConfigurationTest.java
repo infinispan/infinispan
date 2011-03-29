@@ -169,6 +169,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
             .recovery()
                .recoveryInfoCacheName("mmmmmircea")
             .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .useSynchronization(true)
          .deadlockDetection()
             .spinDuration(8373L)
          .customInterceptors()
@@ -278,6 +279,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
       assert c.getTransactionManagerLookup() instanceof DummyTransactionManagerLookup;
       assert c.isTransactionRecoveryEnabled();
       assertEquals("mmmmmircea", c.getTransactionRecoveryCacheName());
+      assert c.isUseSynchronizationForTransactions();
 
       ClusterCacheLoaderConfig clusterLoaderConfig = (ClusterCacheLoaderConfig) c.getCacheLoaders().get(2);
       assert 7694L == clusterLoaderConfig.getRemoteCallTimeout();
