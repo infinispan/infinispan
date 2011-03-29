@@ -44,6 +44,7 @@ public class RecoveryTestUtil {
       DummyTransactionManager dummyTm = (DummyTransactionManager) TestingUtil.getTransactionManager(cache);
       dummyTm.begin();
       String key = "k" + count++;
+      System.out.println("key = " + key);
       cache.put(key, "v");
       return (DummyTransaction) dummyTm.suspend();
    }
