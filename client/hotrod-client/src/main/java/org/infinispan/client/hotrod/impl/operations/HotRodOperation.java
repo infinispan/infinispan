@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod.impl.operations;
 import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.exceptions.HotRodTimeoutException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -68,7 +67,7 @@ public abstract class HotRodOperation implements HotRodConstants {
       //todo change once TX support is added
       transport.writeByte(NO_TX);
       if (log.isTraceEnabled()) {
-         log.trace("wrote header for message " + messageId + ". Operation code: " + operationCode + ". Flags: " + Integer.toHexString(flagInt));
+         log.trace("wrote header for message %d. Operation code: %#04x. Flags: %#x", messageId, operationCode, flagInt);
       }
       return messageId;
    }
@@ -79,28 +78,30 @@ public abstract class HotRodOperation implements HotRodConstants {
    protected short readHeaderAndValidate(Transport transport, long messageId, short opRespCode) {
       short magic = transport.readByte();
       if (magic != HotRodConstants.RESPONSE_MAGIC) {
-         String message = "Invalid magic number. Expected " + Integer.toHexString(HotRodConstants.RESPONSE_MAGIC) + " and received " + Integer.toHexString(magic);
-         log.error(message);
-         throw new InvalidResponseException(message);
+         String message = "Invalid magic number. Expected %#x and received %#x";
+         log.error(message, HotRodConstants.RESPONSE_MAGIC, magic);
+         throw new InvalidResponseException(String.format(message, HotRodConstants.RESPONSE_MAGIC, magic));
       }
       long receivedMessageId = transport.readVLong();
       if (receivedMessageId != messageId) {
-         String message = "Invalid message id. Expected " + Long.toHexString(messageId) + " and received " + Long.toHexString(receivedMessageId);
-         log.error(message);
-         throw new InvalidResponseException(message);
+         String message = "Invalid message id. Expected %d and received %d";
+         log.error(message, messageId, receivedMessageId);
+         throw new InvalidResponseException(String.format(message, messageId, receivedMessageId));
       }
       if (log.isTraceEnabled()) {
-         log.trace("Received response for message id: " + receivedMessageId);
+         log.trace("Received response for message id: %d", receivedMessageId);
       }
       short receivedOpCode = transport.readByte();
       if (receivedOpCode != opRespCode) {
          if (receivedOpCode == HotRodConstants.ERROR_RESPONSE) {
             checkForErrorsInResponseStatus(transport.readByte(), messageId, transport);
          }
-         throw new InvalidResponseException("Invalid response operation. Expected " + Integer.toHexString(opRespCode) + " and received " + Integer.toHexString(receivedOpCode));
+         throw new InvalidResponseException(String.format(
+               "Invalid response operation. Expected %#x and received %#x",
+               opRespCode, receivedOpCode));
       }
       if (log.isTraceEnabled()) {
-         log.trace("Received operation code is: " + receivedOpCode);
+         log.trace("Received operation code is: %#04x", receivedOpCode);
       }
       short status = transport.readByte();
       // There's not need to check for errors in status here because if there
@@ -111,7 +112,7 @@ public abstract class HotRodOperation implements HotRodConstants {
 
    protected void checkForErrorsInResponseStatus(short status, long messageId, Transport transport) {
       final boolean isTrace = log.isTraceEnabled();
-      if (isTrace) log.trace("Received operation status: " + status);
+      if (isTrace) log.trace("Received operation status: %#x", status);
 
       switch ((int) status) {
          case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
@@ -130,7 +131,7 @@ public abstract class HotRodOperation implements HotRodConstants {
             throw new HotRodClientException(msgFromServer, messageId, status);
          }
          default: {
-            throw new IllegalStateException("Unknown status: " + Integer.toHexString(status));
+            throw new IllegalStateException(String.format("Unknown status: %#04x", status));
          }
       }
    }
@@ -150,8 +151,9 @@ public abstract class HotRodOperation implements HotRodConstants {
       int clusterSize = transport.readVInt();
 
       if (log.isTraceEnabled()) {
-         log.trace("Topology change request: newTopologyId=" + newTopologyId + ", numKeyOwners=" + numKeyOwners +
-               ", hashFunctionVersion=" + hashFunctionVersion + ", hashSpaceSize=" + hashSpace + ", clusterSize=" + clusterSize);
+         log.trace("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
+                   "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
+             newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
       }
 
       LinkedHashMap<InetSocketAddress, Integer> servers2HashCode = new LinkedHashMap<InetSocketAddress, Integer>();
@@ -160,16 +162,16 @@ public abstract class HotRodOperation implements HotRodConstants {
          String host = transport.readString();
          int port = transport.readUnsignedShort();
          if (log.isTraceEnabled()) {
-            log.trace("Server read:" + host + ":" + port);
+            log.trace("Server read: %s:%d", host, port);
          }
          int hashCode = transport.read4ByteInt();
          servers2HashCode.put(new InetSocketAddress(host, port), hashCode);
          if (log.isTraceEnabled()) {
-            log.trace("Hash code is: " + hashCode);
+            log.trace("Hash code is: %d", hashCode);
          }
       }
       if (log.isInfoEnabled()) {
-         log.info("New topology: " + servers2HashCode);
+         log.info("New topology: %s", servers2HashCode);
       }
       transport.getTransportFactory().updateServers(servers2HashCode.keySet());
       if (hashFunctionVersion == 0) {
