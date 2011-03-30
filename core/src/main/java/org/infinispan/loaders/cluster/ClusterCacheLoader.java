@@ -51,17 +51,23 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       if (!(isCacheReady() && isLocalCall())) return null;
       ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(key, cache.getName());
-      Collection<Response> response = doRemoteCall(clusteredGetCommand);
-      if (response.isEmpty()) return null;
-      if (response.size() > 1)
-         throw new CacheLoaderException("Response length is always 0 or 1, received: " + response);
-      for (Response r : response) {
+      Collection<Response> responses = doRemoteCall(clusteredGetCommand);
+      if (responses.isEmpty()) return null;
+
+      // Remove duplicates before deciding if multiple responses were received
+      Set<Response> setResponses = new HashSet(responses);
+      if (setResponses.size() > 1)
+         throw new CacheLoaderException(String.format(
+               "Responses contains more than 1 element and these elements are not equal, so can't decide which one to use: %s",
+               setResponses));
+
+      for (Response r : setResponses) {
          if (r.isSuccessful() && r instanceof SuccessfulResponse) {
             InternalCacheValue value = (InternalCacheValue) ((SuccessfulResponse) r).getResponseValue();
             return value.toInternalCacheEntry(key);
          }
       }
-      String message = "Unknown response from remote cache: " + response;
+      String message = "Unknown responses from remote cache: " + responses;
       log.error(message);
       throw new CacheLoaderException(message);
    }
