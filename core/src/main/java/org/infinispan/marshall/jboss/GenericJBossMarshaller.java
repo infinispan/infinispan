@@ -99,14 +99,19 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
       ClassLoader toUse = defaultCl;
       Thread current = Thread.currentThread();
       ClassLoader old = current.getContextClassLoader();
-      if (old != null) toUse = old;
 
-      try {
-         current.setContextClassLoader(toUse);
-         out.writeObject(obj);
+      if (old == null) {
+         // need to have a context class loader set for the ContextClassResolver to work
+         try {
+            current.setContextClassLoader(toUse);
+            out.writeObject(obj);
+         }
+         finally {
+            current.setContextClassLoader(old);
+         }
       }
-      finally {
-         current.setContextClassLoader(old);
+      else {
+         out.writeObject(obj);
       }
    }
 
@@ -207,8 +212,8 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
                isMarshallable = false;
             } finally {
                isMarshallableMap.putIfAbsent(clazz, isMarshallable);
-               return isMarshallable;
             }
+            return isMarshallable;
          }
          return false;
       }
