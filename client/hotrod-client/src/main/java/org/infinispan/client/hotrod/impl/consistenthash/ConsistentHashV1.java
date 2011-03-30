@@ -52,7 +52,9 @@ public class ConsistentHashV1 implements ConsistentHash {
          return socketAddress;
       } else {
          InetSocketAddress socketAddress = candidates.get(candidates.firstKey());
-         log.trace("Found candidate: " + socketAddress);
+         if (log.isTraceEnabled()) {
+            log.trace("Found candidate: " + socketAddress);
+         }
          return socketAddress;
       }
    }

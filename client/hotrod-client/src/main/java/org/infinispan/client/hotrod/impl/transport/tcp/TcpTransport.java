@@ -8,6 +8,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.channels.SocketChannel;
@@ -31,6 +33,8 @@ public class TcpTransport extends AbstractTransport {
    private static final boolean trace = log.isTraceEnabled();
 
    private final Socket socket;
+   private final InputStream socketInputStream;
+   private final OutputStream socketOutputStream;
    private final InetSocketAddress serverAddress;
    private final long id = ID_COUNTER.incrementAndGet();
 
@@ -42,6 +46,8 @@ public class TcpTransport extends AbstractTransport {
          socket = socketChannel.socket();
          socket.setTcpNoDelay(transportFactory.isTcpNoDelay());
          socket.setSoTimeout(transportFactory.getSoTimeout());
+         socketInputStream = socket.getInputStream();
+         socketOutputStream = socket.getOutputStream();
       } catch (IOException e) {
          String message = "Could not connect to server: " + serverAddress;
          log.error(message, e);
@@ -51,7 +57,7 @@ public class TcpTransport extends AbstractTransport {
 
    public void writeVInt(int vInt) {
       try {
-         writeUnsignedInt(socket.getOutputStream(), vInt);
+         writeUnsignedInt(socketOutputStream, vInt);
       } catch (IOException e) {
          throw new TransportException(e);
       }
@@ -59,7 +65,7 @@ public class TcpTransport extends AbstractTransport {
 
    public void writeVLong(long l) {
       try {
-         writeUnsignedLong(socket.getOutputStream(), l);
+         writeUnsignedLong(socketOutputStream, l);
       } catch (IOException e) {
          throw new TransportException(e);
       }
@@ -67,7 +73,7 @@ public class TcpTransport extends AbstractTransport {
 
    public long readVLong() {
       try {
-         return readUnsignedLong(socket.getInputStream());
+         return readUnsignedLong(socketInputStream);
       } catch (IOException e) {
          throw new TransportException(e);
       }
@@ -75,7 +81,7 @@ public class TcpTransport extends AbstractTransport {
 
    public int readVInt() {
       try {
-         return readUnsignedInt(socket.getInputStream());
+         return readUnsignedInt(socketInputStream);
       } catch (IOException e) {
          throw new TransportException(e);
       }
@@ -83,7 +89,7 @@ public class TcpTransport extends AbstractTransport {
 
    protected void writeBytes(byte[] toAppend) {
       try {
-         socket.getOutputStream().write(toAppend);
+         socketOutputStream.write(toAppend);
          if (trace)
             log.trace("Wrote " + toAppend.length + " bytes");
       } catch (IOException e) {
@@ -94,7 +100,7 @@ public class TcpTransport extends AbstractTransport {
    @Override
    public void writeByte(short toWrite) {
       try {
-         socket.getOutputStream().write(toWrite);
+         socketOutputStream.write(toWrite);
          if (trace)
             log.trace("Wrote byte " + toWrite);
 
@@ -105,7 +111,7 @@ public class TcpTransport extends AbstractTransport {
 
    public void flush() {
       try {
-         socket.getOutputStream().flush();
+         socketOutputStream.flush();
          if (trace)
             log.trace("Flushed socket: " + socket);
 
@@ -117,7 +123,7 @@ public class TcpTransport extends AbstractTransport {
    public short readByte() {
       int resultInt;
       try {
-         resultInt = socket.getInputStream().read();
+         resultInt = socketInputStream.read();
       } catch (IOException e) {
          throw new TransportException(e);
       }
@@ -146,7 +152,7 @@ public class TcpTransport extends AbstractTransport {
             if (trace) {
                log.trace("Offset: " + offset + ", len=" + len + ", size=" + size);
             }
-            read = socket.getInputStream().read(result, offset, len);
+            read = socketInputStream.read(result, offset, len);
          } catch (IOException e) {
             throw new TransportException(e);
          }
