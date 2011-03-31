@@ -17,6 +17,8 @@ import org.infinispan.util.{TypedProperties, ByteArrayKey, Util};
 import org.infinispan.server.core.Main._
 import org.infinispan.config.{CacheLoaderManagerConfig, Configuration}
 import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig
+import collection.mutable
+import collection.immutable
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -53,7 +55,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
       // and we know that the rank calculator listener is registered
 
       // Start defined caches to avoid issues with lazily started caches
-      for (cacheName <- asIterator(cacheManager.getCacheNames.iterator))
+      for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator))
          cacheManager.getCache(cacheName)
 
       // If clustered, set up a cache for topology information
@@ -71,7 +73,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 
    private def addSelfToTopologyView(host: String, port: Int, cacheManager: EmbeddedCacheManager) {
       topologyCache = cacheManager.getCache(TopologyCacheName)
-      address = TopologyAddress(host, port, Map.empty, cacheManager.getAddress)
+      address = createTopologyAddress(host, port)
       val isDebug = isDebugEnabled
       if (isDebug) debug("Local topology address is %s", address)
       cacheManager.addListener(new CrashedMemberDetectorListener)
@@ -92,6 +94,55 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
       }
       if (!updated)
          throw new CacheException("Unable to update topology view, so aborting startup")
+   }
+
+   private def createTopologyAddress(host: String, port: Int): TopologyAddress = {
+      val hashIds = mutable.Map.empty[String, Int]
+      val clusterAddress: Address = cacheManager.getAddress
+
+      // Default cache hash id
+     updateHashIds(hashIds, cacheManager.getCache(), "")
+
+      // Rest of cache has ids except the topology cache of course!
+      for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator)) {
+         updateHashIds(hashIds, cacheManager.getCache(cacheName), cacheName)
+      }
+
+      TopologyAddress(host, port, immutable.Map[String, Int]() ++ hashIds, cacheManager.getAddress)
+   }
+
+   private def updateHashIds(hashIds: mutable.Map[String, Int], cache: Cache[ByteArrayKey, CacheValue], hashIdKey: String) {
+      val clusterAddress: Address = cacheManager.getAddress
+      val cacheDm = cache.getAdvancedCache.getDistributionManager
+      // TODO The following could be a bit more elegant
+      // TODO And could be consolidated with other waiting time such as to update view
+      if (cacheDm != null) {
+          // sleep time between retries
+         val minSleepTime = 500
+         val maxSleepTime = 2000
+         val maxWaitTime = cache.getConfiguration.getRehashRpcTimeout() * 10 // after which we give up!
+         val giveupTime = System.currentTimeMillis + maxWaitTime
+         var hashIdRetrieved = false
+         do {
+            try {
+               hashIds += (hashIdKey -> cacheDm.getConsistentHash.getHashId(clusterAddress))
+               hashIdRetrieved = true
+            } catch {
+               case u: UnsupportedOperationException => {
+                  if (isDebugEnabled)
+                     debug("Unable to get all hash ids due to rehashing being in process.")
+                  var time = rand.nextInt((maxSleepTime - minSleepTime) / 10)
+                  time = (time * 10) + minSleepTime
+                  if (isTraceEnabled)
+                     trace("Sleeping for %s", Util.prettyPrintTime(time))
+                  Thread.sleep(time) // sleep for a while and retry
+               }
+            }
+         } while(!hashIdRetrieved && System.currentTimeMillis() < giveupTime)
+
+         if (!hashIdRetrieved)
+            throw new CacheException("Unable to retrieve hash ids for cache with name=%s on startup".format(cache.getName))
+      }
    }
 
    private def updateTopologyView(replaced: Boolean, updateStartTime: Long)(f: TopologyView => Boolean): Boolean = {
