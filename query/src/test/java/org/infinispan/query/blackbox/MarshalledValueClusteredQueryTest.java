@@ -21,12 +21,11 @@
  */
 package org.infinispan.query.blackbox;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.config.FluentConfiguration;
 import org.testng.annotations.Test;
 
 /**
  * Clustered version of {@link org.infinispan.query.blackbox.MarshalledValueQueryTest}
- *
  *
  * @author Navin Surtani
  * @since 4.0
@@ -35,8 +34,8 @@ import org.testng.annotations.Test;
 public class MarshalledValueClusteredQueryTest extends ClusteredCacheTest {
    
    @Override
-   protected void enhanceConfig(Configuration c) {
-      c.setUseLazyDeserialization(true);
+   protected void enhanceConfig(FluentConfiguration c) {
+      c.lazyDeserialization();
    }
    
 }

@@ -27,7 +27,6 @@ import org.hibernate.search.annotations.ProvidedId;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -67,7 +66,7 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
 
    public void run() throws Exception {
       // Verify querying works
-      CacheQuery cacheQuery = createCacheQuery(m_cache, "", "Id:2?");
+      createCacheQuery(m_cache, "", "Id:2?");
 
       // Remove something that exists
       m_transactionManager.begin();
