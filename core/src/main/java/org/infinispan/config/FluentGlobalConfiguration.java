@@ -277,7 +277,7 @@ public class FluentGlobalConfiguration extends AbstractConfigurationBeanWithGCR 
       /**
        * Set key/value properties to this executor factory configuration
        *
-       * @param props Prpperties
+       * @param props Properties
        * @return this ExecutorFactoryConfig
        */
       ExecutorFactoryConfig<T> withProperties(Properties props);

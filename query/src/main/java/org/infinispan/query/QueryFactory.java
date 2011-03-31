@@ -49,6 +49,7 @@ public class QueryFactory {
       this(cache, null);
    }
 
+   @SuppressWarnings("deprecation")
    public QueryFactory(Cache cache, Version luceneVersion) {
       this.luceneVersion = luceneVersion == null ? Version.LUCENE_CURRENT : luceneVersion;
       if (cache==null) {
