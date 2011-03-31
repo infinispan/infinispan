@@ -84,6 +84,10 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       uk.countryName = "United Kingdom";
       uk.cities.add(newcastle);
       uk.cities.add(london);
+      
+      //verify behaviour on multiple insertions as well:
+      cache.put("UK", uk);
+      cache.put("UK", uk);
       cache.put("UK", uk);
       List<Object> list = qf.getBasicQuery("cities.name", "Newcastle", Country.class, City.class).list();
       Assert.assertEquals( 1 , list.size() );

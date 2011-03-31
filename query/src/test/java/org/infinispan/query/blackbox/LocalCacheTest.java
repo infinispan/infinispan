@@ -380,7 +380,13 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
 
       cache.put(key1, person1);
+      
+      // person2 is verified as number of matches in multiple tests,
+      // so verify duplicate insertion doesn't affect result counts:
       cache.put(key2, person2);
+      cache.put(key2, person2);
+      cache.put(key2, person2);
+      
       cache.put(key3, person3);
       cache.put(anotherGrassEaterKey, anotherGrassEater);
    }
