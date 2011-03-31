@@ -46,7 +46,7 @@ public class EntityLoader {
 
    public List load(EntityInfo... entityInfos) {
       int size = entityInfos.length;
-      ArrayList list = new ArrayList(size);
+      ArrayList<Object> list = new ArrayList<Object>(size);
       for (EntityInfo e : entityInfos) {
          list.add(load(e));
       }

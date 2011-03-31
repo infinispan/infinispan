@@ -34,7 +34,7 @@ import org.hibernate.search.engine.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.SearchFactoryImplementor;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.config.FluentConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -323,13 +323,13 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    }
    
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration c = getDefaultClusteredConfig(LOCAL, true);
-      c.fluent()
+      FluentConfiguration cfg = getDefaultClusteredConfig(LOCAL, true).fluent();
+      cfg
          .indexing()
-         .indexLocalOnly(false)
-         .addProperty("hibernate.search.default.directory_provider", "ram");
-      enhanceConfig(c);
-      return TestCacheManagerFactory.createCacheManager(c, true);
+            .indexLocalOnly(false)
+            .addProperty("hibernate.search.default.directory_provider", "ram");
+      enhanceConfig(cfg);
+      return TestCacheManagerFactory.createCacheManager(cfg.build(), true);
    }
    
    public void testEntityDiscovery() {
@@ -391,7 +391,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       cache.put(anotherGrassEaterKey, anotherGrassEater);
    }
    
-   protected void enhanceConfig(Configuration c) {
+   protected void enhanceConfig(FluentConfiguration c) {
       // no op, meant to be overridden
    }
 

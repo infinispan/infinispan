@@ -21,11 +21,10 @@
  */
 package org.infinispan.query.blackbox;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.config.FluentConfiguration;
 import org.testng.annotations.Test;
 
 /**
- *
  * Test class such that it's possible to run queries on objects with the configuration setUseLazyDeserialization = true
  *
  * @author Navin Surtani
@@ -34,8 +33,8 @@ import org.testng.annotations.Test;
 @Test(groups="functional", testName = "query.blackbox.MarshalledValueQueryTest")
 public class MarshalledValueQueryTest extends LocalCacheTest {
    @Override
-   protected void enhanceConfig(Configuration c) {
-      c.setUseLazyDeserialization(true);
+   protected void enhanceConfig(FluentConfiguration c) {
+      c.lazyDeserialization();
    }
 }
 

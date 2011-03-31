@@ -25,7 +25,7 @@ import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
+import org.infinispan.config.FluentConfiguration;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryFactory;
@@ -66,19 +66,19 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   protected void enhanceConfig(Configuration c) {
+   protected void enhanceConfig(FluentConfiguration cacheCfg) {
       // meant to be overridden
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration cacheCfg = getDefaultClusteredConfig(REPL_SYNC);
-      cacheCfg.fluent()
+      FluentConfiguration cacheCfg = getDefaultClusteredConfig(REPL_SYNC).fluent();
+      cacheCfg
          .indexing()
          .indexLocalOnly(false)
          .addProperty("hibernate.search.default.directory_provider", "ram");
       enhanceConfig(cacheCfg);
-      List<Cache<String, Person>> caches = createClusteredCaches(2, /*"query-cache",*/ cacheCfg);
+      List<Cache<String, Person>> caches = createClusteredCaches(2, /*"query-cache",*/ cacheCfg.build());
       cache1 = caches.get(0);
       cache2 = caches.get(1);
    }

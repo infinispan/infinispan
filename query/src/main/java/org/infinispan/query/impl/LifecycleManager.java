@@ -29,7 +29,7 @@ import org.hibernate.search.cfg.SearchConfiguration;
 import org.hibernate.search.spi.SearchFactoryBuilder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.CustomInterceptorConfig;
+import org.infinispan.config.FluentConfiguration.CustomInterceptorPosition;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.DistLockingInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
@@ -72,14 +72,15 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       if (queryInterceptor == null) {
          queryInterceptor = buildQueryInterceptor(cfg, searchFactory);
          cr.registerComponent(queryInterceptor, QueryInterceptor.class);
+         CustomInterceptorPosition customInterceptorPosition = cfg.fluent()
+               .customInterceptors()
+               .add(queryInterceptor);
          if (cfg.getCacheMode().isDistributed()) {
-            cfg.getCustomInterceptors().add(
-                  new CustomInterceptorConfig(queryInterceptor, false, false,
-                        -1, DistLockingInterceptor.class.getName(), ""));
+            customInterceptorPosition
+               .after(DistLockingInterceptor.class);
          } else {
-            cfg.getCustomInterceptors().add(
-                  new CustomInterceptorConfig(queryInterceptor, false, false,
-                        -1, LockingInterceptor.class.getName(), ""));
+            customInterceptorPosition
+               .after(LockingInterceptor.class);
          }
       }
    }

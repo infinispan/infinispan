@@ -140,7 +140,7 @@ public class CacheQueryImpl implements CacheQuery {
       hSearchQuery.getTimeoutManager().start();
       final List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
       EntityLoader loader = getLoader();
-      List list = loader.load( entityInfos.toArray( new EntityInfo[entityInfos.size()] ) );
+      List<Object> list = loader.load( entityInfos.toArray( new EntityInfo[entityInfos.size()] ) );
       return list;
    }
 

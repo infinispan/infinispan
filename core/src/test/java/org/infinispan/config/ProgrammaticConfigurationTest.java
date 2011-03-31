@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Properties;
 
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
@@ -203,12 +202,13 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
                .consistentHashClass(DefaultConsistentHash.class)
                .numOwners(200).rehashWait(74843L).rehashRpcTimeout(374L)
                .rehashEnabled(false)
-         .indexing()
-            .indexLocalOnly(true)
          .dataContainer()
             .dataContainerClass(DefaultDataContainer.class)
             .dataContainer(new QueryableDataContainer())
             .addProperty("a-property", "a-value")
+         .indexing()
+            .indexLocalOnly(true)
+            .addProperty("indexing", "in memory")
          .unsafe()
             .unreliableReturnValues(false)
          .jmxStatistics()
@@ -227,6 +227,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
 
       assert c.isIndexingEnabled();
       assert c.isIndexLocalOnly();
+      assert c.getIndexingProperties().getProperty("indexing").equals("in memory");
 
       assert !c.isAlwaysProvideInMemoryState();
       assert c.isFetchInMemoryState();

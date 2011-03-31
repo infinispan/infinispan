@@ -81,7 +81,7 @@ public class KeyTransformationHandler {
             int indexOfSecondDelimiter = s.indexOf(":", 2);
             String keyClassName = s.substring(2, indexOfSecondDelimiter);
             String keyAsString = s.substring(indexOfSecondDelimiter + 1);
-            Transformer t;
+            Transformer t = null;
             // try and locate class
             Class keyClass = null;
             try {
@@ -89,7 +89,9 @@ public class KeyTransformationHandler {
             } catch (ClassNotFoundException e) {
                log.error("Could not locate class " + keyClass, e);
             }
-            t = getTransformer(keyClass);
+            if (keyClass != null) {
+               t = getTransformer(keyClass);
+            }
             if (t == null) throw new CacheException("Cannot find an appropriate Transformer for key type " + keyClass);
             return t.fromString(keyAsString);
       }
