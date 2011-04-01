@@ -28,7 +28,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.remoting.transport.Transport;
 
@@ -78,40 +78,40 @@ public class FluentGlobalConfiguration extends AbstractConfigurationBeanWithGCR 
       SerializationConfig version(short marshallVersion);
 
       /**
-       * Adds an Exteralizer with the give id.
+       * Adds an {@link org.infinispan.marshall.AdvancedExternalizer} with the give id.
        *
-       * @param <T>     type of the object that the Externalizer marshalls
+       * @param <T>     type of the object that the AdvancedExternalizer marshalls
        * @param clazz   externalizer class
        * @param id      id of externlizer
        * @return this   ExternalizersConfig
        */
-      <T> SerializationConfig addExternalizer(int id, Class<? extends Externalizer<T>> clazz);
+      <T> SerializationConfig addAdvancedExternalizer(int id, Class<? extends AdvancedExternalizer<T>> clazz);
 
       /**
-       * Adds an Externalizer.
+       * Adds an {@link org.infinispan.marshall.AdvancedExternalizer}.
        *
-       * @param <T>     type of the object that the Externalizer marshalls
+       * @param <T>     type of the object that the AdvancedExternalizer marshalls
        * @param clazz   externalizer class
        * @return this   ExternalizersConfig
        */
-      <T> SerializationConfig addExternalizer(Class<? extends Externalizer<T>> clazz);
+      <T> SerializationConfig addAdvancedExternalizer(Class<? extends AdvancedExternalizer<T>> clazz);
 
       /**
-       * Helper method that allows for quick registration of an {@link Externalizer} implementation
+       * Helper method that allows for quick registration of an {@link org.infinispan.marshall.AdvancedExternalizer} implementation
        * alongside its corresponding identifier. Remember that the identifier needs to a be positive
        * number, including 0, and cannot clash with other identifiers in the system.
        *
        * @param id
-       * @param externalizer
+       * @param advancedExternalizer
        */
-      <T> SerializationConfig addExternalizer(int id, Externalizer<T> externalizer);
+      <T> SerializationConfig addAdvancedExternalizer(int id, AdvancedExternalizer<T> advancedExternalizer);
 
       /**
-       * Helper method that allows for quick registration of {@link Externalizer} implementations.
+       * Helper method that allows for quick registration of {@link org.infinispan.marshall.AdvancedExternalizer} implementations.
        *
-       * @param externalizers
+       * @param advancedExternalizers
        */
-      <T> SerializationConfig addExternalizer(Externalizer<T>... externalizers);
+      <T> SerializationConfig addAdvancedExternalizer(AdvancedExternalizer<T>... advancedExternalizers);
    }
 
    /**

@@ -72,128 +72,157 @@ public abstract class AbstractConfigurationBeanVisitor implements ConfigurationB
 
    protected transient Log log = LogFactory.getLog(getClass());
 
+   @Override
    public void visitInfinispanConfiguration(InfinispanConfiguration bean) {
    }
    
+   @Override
    public void visitAsyncStoreConfig(AsyncStoreConfig bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitAsyncType(AsyncType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitBooleanAttributeType(BooleanAttributeType bean) {
       defaultVisit(bean);
-
    }
 
+   @Override
    public void visitCacheLoaderConfig(CacheLoaderConfig bean) {
 
    }
 
+   @Override
    public void visitCacheLoaderManagerConfig(CacheLoaderManagerConfig bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitClusteringType(ClusteringType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitConfiguration(Configuration bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitCustomInterceptorsType(CustomInterceptorsType bean) {
       defaultVisit(bean);
    }
    
+   @Override
    public void visitDataContainerType(DataContainerType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitDeadlockDetectionType(DeadlockDetectionType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitEvictionType(EvictionType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitExpirationType(ExpirationType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitFactoryClassWithPropertiesType(FactoryClassWithPropertiesType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitGlobalConfiguration(GlobalConfiguration bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitGlobalJmxStatisticsType(GlobalJmxStatisticsType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitHashType(HashType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitL1Type(L1Type bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitLockingType(LockingType bean) {
       defaultVisit(bean);
    }
    
+   @Override
    public void visitQueryConfigurationBean(QueryConfigurationBean bean) {
       defaultVisit(bean);
    }
 
-
+   @Override
    public void visitSerializationType(SerializationType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitShutdownType(ShutdownType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitSingletonStoreConfig(SingletonStoreConfig bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitStateRetrievalType(StateRetrievalType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitSyncType(SyncType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitTransactionType(TransactionType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitTransportType(TransportType bean) {
       defaultVisit(bean);
    }
 
+   @Override
    public void visitUnsafeType(UnsafeType bean) {
       defaultVisit(bean);
    }
    
+   @Override
    public void visitCustomInterceptorConfig(CustomInterceptorConfig bean) {
       defaultVisit(bean);
    }
    
-   public void visitExternalizerConfig(ExternalizerConfig bean) {
+   @Override
+   public void visitAdvancedExternalizerConfig(AdvancedExternalizerConfig bean) {
       defaultVisit(bean);
    }
    
-   public void visitExternalizersType(GlobalConfiguration.ExternalizersType bean) {
+   @Override
+   public void visitAdvancedExternalizersType(GlobalConfiguration.AdvancedExternalizersType bean) {
       defaultVisit(bean);
    }
 

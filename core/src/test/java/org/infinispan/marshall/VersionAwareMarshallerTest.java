@@ -39,15 +39,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.container.entries.ImmortalCacheValue;
-import org.infinispan.container.entries.InternalEntryFactory;
-import org.infinispan.container.entries.MortalCacheEntry;
-import org.infinispan.container.entries.MortalCacheValue;
-import org.infinispan.container.entries.TransientCacheEntry;
-import org.infinispan.container.entries.TransientCacheValue;
-import org.infinispan.container.entries.TransientMortalCacheEntry;
-import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.container.entries.*;
 import org.infinispan.context.Flag;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.jboss.JBossMarshallingTest.CustomReadObjectMethod;
@@ -71,7 +63,7 @@ import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.marshalling.TraceInformation;
+import org.jboss.marshalling.*;
 import org.jgroups.stack.IpAddress;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeTest;
@@ -82,7 +74,10 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.util.*;
+
+import static org.infinispan.test.TestingUtil.k;
 
 @Test(groups = "functional", testName = "marshall.VersionAwareMarshallerTest")
 public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
@@ -474,6 +469,11 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       byte[] bytes = marshaller.objectToByteBuffer(child2Obj);
       marshaller.objectFromByteBuffer(bytes);
    }
+
+   public void testPojoWithJBossMarshallingExternalizer(Method m) throws Exception {
+      PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(27, k(m));
+      marshallAndAssertEquality(pojo);
+   }
    
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {
       byte[] bytes = marshaller.objectToByteBuffer(writeObj);
@@ -554,4 +554,5 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
            this.someInt = someInt;
        }
    }
+
 }

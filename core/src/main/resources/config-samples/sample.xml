@@ -147,7 +147,7 @@
 
       <!--
          Used to customize the marshaller used to serialize objects and deserialize byte streams.  Also allows you to
-         specify custom externalizers for custom user types.
+         specify custom advancedExternalizers for custom user types.
 
          See:
 
@@ -156,14 +156,14 @@
        -->
       <!--<serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0">-->
 
-      <!--<externalizers>-->
-      <!-- Externalizer defined as inner static class, with id set via XML configuration -->
-      <!--<externalizer id="1234" externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj$Externalizer"/>-->
-      <!-- Externalizer defined as inner static class, with id set via annotation -->
-      <!--<externalizer externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj$Externalizer"/>-->
-      <!-- Externalizer defined as inner static class, with id set both via XML config and annotation -->
-      <!--<externalizer id="3456" externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj$Externalizer"/>-->
-      <!--</externalizers>-->
+      <!--<advancedExternalizers>-->
+      <!-- AdvancedExternalizer defined as inner static class, with id set via XML configuration -->
+      <!--<advancedExternalizer id="1234" externalizerClass="org.infinispan.marshall.AdvancedExternalizerTestt$IdViaConfigObj$AdvancedExternalizer"/>-->
+      <!-- AdvancedExternalizer defined as inner static class, with id set via annotation -->
+      <!--<advancedExternalizer externalizerClass="org.infinispan.marshall.AdvancedExternalizerTestt$IdViaAnnotationObj$AdvancedExternalizer"/>-->
+      <!-- AdvancedExternalizer defined as inner static class, with id set both via XML config and annotation -->
+      <!--<advancedExternalizer id="3456" externalizerClass="org.infinispan.marshall.AdvancedExternalizerTestt$IdViaBothObj$AdvancedExternalizer"/>-->
+      <!--</advancedExternalizers>-->
       <!--</serialization>-->
 
       <!--
