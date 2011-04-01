@@ -1235,16 +1235,24 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return clustering.hash.rehashWait;
    }
 
+   /**
+    * Returns true if transaction recovery information is collected.
+    */
    public boolean isTransactionRecoveryEnabled() {
       return transaction.recovery.isEnabled();
    }
 
+   /**
+    * Returns the name of the cache used in order to keep recovery information.
+    */
    public String getTransactionRecoveryCacheName() {
       return transaction.recovery.getRecoveryInfoCacheName();
    }
 
    /**
-    * @see TransactionConfig#useSynchronization(Boolean)
+    * If enabled Infinispan enlists within transactions as a {@link javax.transaction.Synchronization}. If disabled
+    * (default) then Infinispan enlists as an {@link javax.transaction.xa.XAResource}, being able to fully participate
+    * in distributed transaction. More about this <a href="http://community.jboss.org/wiki/Infinispantransactions#Enlisting_Synchronization">here</a>.
     */
    public boolean isUseSynchronizationForTransactions() {
       return transaction.isUseSynchronization();
@@ -1482,7 +1490,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setUseEagerLocking")
       protected Boolean useEagerLocking = false;
 
-      // TODO Mircea, documentation missing?
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "isUseSynchronizationForTransactions")
       protected Boolean useSynchronization = false;
 
       @Dynamic
@@ -1905,8 +1913,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public static class RecoveryType extends AbstractFluentConfigurationBean implements RecoveryConfig {
       public static final String DEFAULT_RECOVERY_INFO_CACHE = "__recoveryInfoCacheName__";
 
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "isTransactionRecoveryEnabled")
       private boolean enabled = false;
 
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "getTransactionRecoveryCacheName")
       private String recoveryInfoCacheName = DEFAULT_RECOVERY_INFO_CACHE;
 
       @Override
