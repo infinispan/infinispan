@@ -20,26 +20,42 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.server.hotrod
+package org.infinispan.marshall.jboss;
 
-import org.infinispan.lifecycle.AbstractModuleLifecycle
-import org.infinispan.factories.GlobalComponentRegistry
-import org.infinispan.config.GlobalConfiguration
-import org.infinispan.server.core.ExternalizerIds._
+import org.infinispan.marshall.Externalizer;
+import org.jboss.marshalling.Creator;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
- * Module lifecycle callbacks implementation that enables module specific
- * {@link org.infinispan.marshall.AdvancedExternalizer} implementations to be registered.
+ * // TODO: Document this
  *
  * @author Galder Zamarreño
- * @since 5.0
+ * @since // TODO
  */
-class LifecycleCallbacks extends AbstractModuleLifecycle {
+public class JBossExternalizerAdapter implements org.jboss.marshalling.Externalizer {
 
-   override def cacheManagerStarting(gcr: GlobalComponentRegistry, globalCfg: GlobalConfiguration) {
-      globalCfg.fluent.serialization
-         .addAdvancedExternalizer(TOPOLOGY_ADDRESS, new TopologyAddress.Externalizer)
-         .addAdvancedExternalizer(TOPOLOGY_VIEW, new TopologyView.Externalizer)
+   final Externalizer externalizer;
+
+   public JBossExternalizerAdapter(Externalizer externalizer) {
+      this.externalizer = externalizer;
+   }
+
+   @Override
+   public void writeExternal(Object subject, ObjectOutput output) throws IOException {
+      externalizer.writeObject(output, subject);
+   }
+
+   @Override
+   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator) throws IOException, ClassNotFoundException {
+      return externalizer.readObject(input);
+   }
+
+   @Override
+   public void readExternal(Object subject, ObjectInput input) throws IOException, ClassNotFoundException {
+      // No-op
    }
 
 }

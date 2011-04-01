@@ -20,26 +20,27 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.server.hotrod
+package org.infinispan.marshall;
 
-import org.infinispan.lifecycle.AbstractModuleLifecycle
-import org.infinispan.factories.GlobalComponentRegistry
-import org.infinispan.config.GlobalConfiguration
-import org.infinispan.server.core.ExternalizerIds._
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Module lifecycle callbacks implementation that enables module specific
- * {@link org.infinispan.marshall.AdvancedExternalizer} implementations to be registered.
+ * // TODO: Document this
  *
  * @author Galder Zamarreño
- * @since 5.0
+ * @since // TODO
  */
-class LifecycleCallbacks extends AbstractModuleLifecycle {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@Inherited
+@Documented
+public @interface MarshallableBy {
 
-   override def cacheManagerStarting(gcr: GlobalComponentRegistry, globalCfg: GlobalConfiguration) {
-      globalCfg.fluent.serialization
-         .addAdvancedExternalizer(TOPOLOGY_ADDRESS, new TopologyAddress.Externalizer)
-         .addAdvancedExternalizer(TOPOLOGY_VIEW, new TopologyView.Externalizer)
-   }
+   Class<? extends Externalizer> value();
 
 }

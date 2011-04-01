@@ -41,11 +41,11 @@
       </transport>
 
       <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0">
-         <externalizers>
-            <externalizer id="1234" externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaConfigObj$Externalizer"/>
-            <externalizer externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaAnnotationObj$Externalizer"/>
-            <externalizer id="3456" externalizerClass="org.infinispan.marshall.ForeignExternalizerTest$IdViaBothObj$Externalizer"/>
-         </externalizers>
+         <advancedExternalizers>
+            <advancedExternalizer id="1234" externalizerClass="org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj$Externalizer"/>
+            <advancedExternalizer externalizerClass="org.infinispan.marshall.AdvancedExternalizerTest$IdViaAnnotationObj$Externalizer"/>
+            <advancedExternalizer id="3456" externalizerClass="org.infinispan.marshall.AdvancedExternalizerTest$IdViaBothObj$Externalizer"/>
+         </advancedExternalizers>
       </serialization>
 
       <globalJmxStatistics enabled="false" jmxDomain="funky_domain"

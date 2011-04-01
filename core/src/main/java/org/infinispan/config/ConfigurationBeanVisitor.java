@@ -37,7 +37,7 @@ import org.infinispan.config.Configuration.StateRetrievalType;
 import org.infinispan.config.Configuration.SyncType;
 import org.infinispan.config.Configuration.TransactionType;
 import org.infinispan.config.Configuration.UnsafeType;
-import org.infinispan.config.GlobalConfiguration.ExternalizersType;
+import org.infinispan.config.GlobalConfiguration.AdvancedExternalizersType;
 import org.infinispan.config.GlobalConfiguration.FactoryClassWithPropertiesType;
 import org.infinispan.config.GlobalConfiguration.GlobalJmxStatisticsType;
 import org.infinispan.config.GlobalConfiguration.SerializationType;
@@ -122,9 +122,9 @@ public interface ConfigurationBeanVisitor {
 
    void visitCustomInterceptorConfig(CustomInterceptorConfig customInterceptorConfig);  
    
-   void visitExternalizersType(ExternalizersType bean);
+   void visitAdvancedExternalizersType(AdvancedExternalizersType bean);
    
-   void visitExternalizerConfig(ExternalizerConfig config);
+   void visitAdvancedExternalizerConfig(AdvancedExternalizerConfig config);
 
    void visitRecoveryType(Configuration.RecoveryType config);
 

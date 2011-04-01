@@ -29,10 +29,10 @@ import org.infinispan.atomic.ClearOperation;
 import org.infinispan.atomic.PutOperation;
 import org.infinispan.atomic.RemoveOperation;
 import org.infinispan.commands.RemoteCommandsFactory;
+import org.infinispan.config.AdvancedExternalizerConfig;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.config.ExternalizerConfig;
+import org.infinispan.config.AdvancedExternalizerConfig;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.config.GlobalConfiguration.ExternalizersType;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.MortalCacheEntry;
@@ -48,7 +48,7 @@ import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.loaders.bucket.Bucket;
-import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.StreamingMarshaller;
@@ -89,9 +89,9 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
- * The Externalizer table maintains information necessary to be able to map a particular type with the corresponding
- * {@link Externalizer} implementation that it marshall, and it also keeps information of which {@link Externalizer}
- * should be used to read data from a buffer given a particular {@link Externalizer} identifier.
+ * The externalizer table maintains information necessary to be able to map a particular type with the corresponding
+ * {@link org.infinispan.marshall.AdvancedExternalizer} implementation that it marshall, and it also keeps information of which {@link org.infinispan.marshall.AdvancedExternalizer}
+ * should be used to read data from a buffer given a particular {@link org.infinispan.marshall.AdvancedExternalizer} identifier.
  *
  * These tables govern how either internal Infinispan classes, or user defined classes, are marshalled to a given
  * output, or how these are unmarshalled from a given input.
@@ -101,15 +101,15 @@ import java.util.WeakHashMap;
  */
 class ExternalizerTable implements ObjectTable {
    private static final Log log = LogFactory.getLog(ExternalizerTable.class);
-   private final Set<Externalizer> internalExternalizers = new HashSet<Externalizer>();
+   private final Set<AdvancedExternalizer> internalExternalizers = new HashSet<AdvancedExternalizer>();
 
    /**
-    * Contains mapping of classes to their corresponding Externalizer classes via ExternalizerAdapter instances.
+    * Contains mapping of classes to their corresponding externalizer classes via ExternalizerAdapter instances.
     */
    private final Map<Class<?>, ExternalizerAdapter> writers = new WeakHashMap<Class<?>, ExternalizerAdapter>();
 
    /**
-    * Contains mapping of ids to their corresponding Externalizer classes via ExternalizerAdapter instances.
+    * Contains mapping of ids to their corresponding AdvancedExternalizer classes via ExternalizerAdapter instances.
     * This maps contains mappings for both internal and foreign or user defined externalizers.
     *
     * Internal ids are only allowed to be unsigned bytes (0 to 254). 255 is an special id that signals the
@@ -171,7 +171,7 @@ class ExternalizerTable implements ObjectTable {
       internalExternalizers.add(new SerializableXid.XidExternalizer());
    }
 
-   void addInternalExternalizer(Externalizer ext) {
+   void addInternalExternalizer(AdvancedExternalizer ext) {
       internalExternalizers.add(ext);
    }
 
@@ -250,7 +250,7 @@ class ExternalizerTable implements ObjectTable {
    }
 
    private void loadInternalMarshallables(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller) {
-      for (Externalizer ext : internalExternalizers) {
+      for (AdvancedExternalizer ext : internalExternalizers) {
          if (ext instanceof ReplicableCommandExternalizer)
             ((ReplicableCommandExternalizer) ext).inject(cmdFactory);
          if (ext instanceof MarshalledValue.Externalizer)
@@ -272,7 +272,7 @@ class ExternalizerTable implements ObjectTable {
             updateExtReadersWriters(adapter, typeClass, readerIndex);
       } else {
          throw new ConfigurationException(String.format(
-               "Externalizer's getTypeClasses must return a non-empty set",
+               "AdvancedExternalizer's getTypeClasses must return a non-empty set",
                adapter.externalizer.getClass().getName()));
       }
    }
@@ -280,10 +280,10 @@ class ExternalizerTable implements ObjectTable {
    private void loadForeignMarshallables(GlobalConfiguration globalCfg) {
       if (log.isTraceEnabled())
          log.trace("Loading user defined externalizers");
-      List<ExternalizerConfig> configs = globalCfg.getExternalizers();
-      for (ExternalizerConfig config : configs) {
-         Externalizer ext = config.getExternalizer() != null ? config.getExternalizer()
-               : (Externalizer) Util.getInstance(config.getExternalizerClass());
+      List<AdvancedExternalizerConfig> configs = globalCfg.getExternalizers();
+      for (AdvancedExternalizerConfig config : configs) {
+         AdvancedExternalizer ext = config.getAdvancedExternalizer() != null ? config.getAdvancedExternalizer()
+               : (AdvancedExternalizer) Util.getInstance(config.getExternalizerClass());
 
          // If no XML or programmatic config, id in annotation is used
          // as long as it's not default one (meaning, user did not set it).
@@ -291,7 +291,8 @@ class ExternalizerTable implements ObjectTable {
          Integer id = ext.getId();
          if (config.getId() == null && id == null)
             throw new ConfigurationException(String.format(
-                  "No externalizer identifier set for externalizer %s", ext.getClass().getName()));
+                  "No advanced externalizer identifier set for externalizer %s",
+                  ext.getClass().getName()));
          else if (config.getId() != null)
             id = config.getId();
 
@@ -308,7 +309,7 @@ class ExternalizerTable implements ObjectTable {
       // in the readers map and the externalizers are different (they're from different classes)
       if (prevReader != null && !prevReader.equals(adapter))
          throw new ConfigurationException(String.format(
-               "Duplicate id found! Externalizer id=%d for %s is shared by another externalizer (%s). Reader index is %d",
+               "Duplicate id found! AdvancedExternalizer id=%d for %s is shared by another externalizer (%s). Reader index is %d",
                adapter.id, typeClass, prevReader.externalizer.getClass().getName(), readerIndex));
 
       if (log.isTraceEnabled())
@@ -317,7 +318,7 @@ class ExternalizerTable implements ObjectTable {
 
    }
 
-   private int checkInternalIdLimit(int id, Externalizer ext) {
+   private int checkInternalIdLimit(int id, AdvancedExternalizer ext) {
       if (id >= Ids.MAX_ID)
          throw new ConfigurationException(String.format(
                "Internal %s externalizer is using an id(%d) that exceeed the limit. It needs to be smaller than %d",
@@ -325,7 +326,7 @@ class ExternalizerTable implements ObjectTable {
       return id;
    }
 
-   private int checkForeignIdLimit(int id, Externalizer ext) {
+   private int checkForeignIdLimit(int id, AdvancedExternalizer ext) {
       if (id < 0)
          throw new ConfigurationException(String.format(
                "Foreign %s externalizer is using a negative id(%d). Only positive id values are allowed.",
@@ -339,9 +340,9 @@ class ExternalizerTable implements ObjectTable {
 
    static class ExternalizerAdapter implements Writer {
       final int id;
-      final Externalizer externalizer;
+      final AdvancedExternalizer externalizer;
 
-      ExternalizerAdapter(int id, Externalizer externalizer) {
+      ExternalizerAdapter(int id, AdvancedExternalizer externalizer) {
          this.id = id;
          this.externalizer = externalizer;
       }
@@ -386,7 +387,7 @@ class ExternalizerTable implements ObjectTable {
    static class ForeignExternalizerAdapter extends ExternalizerAdapter {
       final int foreignId;
 
-      ForeignExternalizerAdapter(int foreignId, Externalizer externalizer) {
+      ForeignExternalizerAdapter(int foreignId, AdvancedExternalizer externalizer) {
          super(Ids.MAX_ID, externalizer);
          this.foreignId = foreignId;
       }
