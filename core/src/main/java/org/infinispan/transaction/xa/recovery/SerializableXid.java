@@ -73,12 +73,25 @@ public class SerializableXid implements Xid {
 
    @Override
    public String toString() {
-      //todo use a implementation that is more consistent with JBossTM
-      return "XidImpl{" +
-            "branchQualifier=" + Util.printArray(branchQualifier, false) +
-            ", globalTransactionId=" + Util.printArray(globalTransactionId, false) +
-            ", formatId=" + formatId +
-            '}';
+      //taken from com.arjuna.ats.jta.xa.XID
+      StringBuilder stringBuilder = new StringBuilder();
+      stringBuilder.append("< ");
+      stringBuilder.append(formatId);
+      stringBuilder.append(", ");
+      stringBuilder.append(globalTransactionId.length);
+      stringBuilder.append(", ");
+      stringBuilder.append(branchQualifier.length);
+      stringBuilder.append(", ");
+
+      for (byte aGlobalTransactionId : globalTransactionId) {
+         stringBuilder.append(aGlobalTransactionId);
+      }
+      stringBuilder.append(", ");
+      for (byte aBranchQualifier : branchQualifier) {
+         stringBuilder.append(aBranchQualifier);
+      }
+      stringBuilder.append(" >");
+      return stringBuilder.toString();
    }
 
    public static class XidExternalizer extends AbstractExternalizer<SerializableXid> {
