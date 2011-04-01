@@ -19,12 +19,14 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.infinispan.lucene;
 
 import java.util.List;
 
+import org.infinispan.config.AdvancedExternalizerConfig;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.ExternalizerConfig;
+import org.infinispan.config.AdvancedExternalizerConfig;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -49,8 +51,8 @@ public class ExternalizersEnabledTest extends SingleCacheManagerTest {
    
    @Test
    public void testExternalizerDefined() {
-      List<ExternalizerConfig> externalizerConfigs = cacheManager.getGlobalConfiguration().getExternalizers();
-      Assert.assertEquals(5, externalizerConfigs.size());
+      List<AdvancedExternalizerConfig> advancedExternalizerConfigs = cacheManager.getGlobalConfiguration().getExternalizers();
+      Assert.assertEquals(5, advancedExternalizerConfigs.size());
    }
 
 }

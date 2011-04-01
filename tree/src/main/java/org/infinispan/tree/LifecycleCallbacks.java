@@ -28,7 +28,7 @@ import org.infinispan.lifecycle.AbstractModuleLifecycle;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
- * {@link org.infinispan.marshall.Externalizer} implementations to be registered.
+ * {@link org.infinispan.marshall.AdvancedExternalizer} implementations to be registered.
  *
  * Information about the valid id range can be found <a href="http://community.jboss.org/docs/DOC-16198">here</a>
  *
@@ -40,8 +40,8 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
       globalCfg.fluent().serialization()
-         .addExternalizer(1000, new NodeKey.Externalizer())
-         .addExternalizer(1001, new Fqn.Externalizer());
+         .addAdvancedExternalizer(1000, new NodeKey.Externalizer())
+         .addAdvancedExternalizer(1001, new Fqn.Externalizer());
    }
 
 }

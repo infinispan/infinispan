@@ -19,6 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.infinispan.lucene;
 
 import org.infinispan.config.GlobalConfiguration;
@@ -27,7 +28,7 @@ import org.infinispan.lifecycle.AbstractModuleLifecycle;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
- * {@link org.infinispan.marshall.Externalizer} implementations to be registered.
+ * {@link org.infinispan.marshall.AdvancedExternalizer} implementations to be registered.
  * 
  * @author Galder Zamarreño
  * @author Sanne Grinovero
@@ -39,12 +40,11 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
       globalCfg.fluent()
          .serialization()
-            .addExternalizer()
-            .addExternalizer(new ChunkCacheKey.Externalizer())
-            .addExternalizer(new FileCacheKey.Externalizer())
-            .addExternalizer(new FileListCacheKey.Externalizer())
-            .addExternalizer(new FileMetadata.Externalizer())
-            .addExternalizer(new FileReadLockKey.Externalizer())
+            .addAdvancedExternalizer(new ChunkCacheKey.Externalizer())
+            .addAdvancedExternalizer(new FileCacheKey.Externalizer())
+            .addAdvancedExternalizer(new FileListCacheKey.Externalizer())
+            .addAdvancedExternalizer(new FileMetadata.Externalizer())
+            .addAdvancedExternalizer(new FileReadLockKey.Externalizer())
          .build();
    }
 

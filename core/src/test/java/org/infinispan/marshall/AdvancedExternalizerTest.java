@@ -24,9 +24,7 @@ package org.infinispan.marshall;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.ExternalizerConfig;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.config.GlobalConfiguration.ExternalizersType;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -37,19 +35,20 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
+import static org.infinispan.test.TestingUtil.k;
+import static org.testng.AssertJUnit.assertEquals;
+
 /**
- * Tests configuration of user defined {@link Externalizer} implementations
+ * Tests configuration of user defined {@link AdvancedExternalizer} implementations
  *
  * @author Galder Zamarreño
  * @since 5.0
  */
-@Test(groups = "functional", testName = "marshall.ForeignExternalizerTest")
-public class ForeignExternalizerTest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "marshall.AdvancedExternalizerTest")
+public class AdvancedExternalizerTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -69,9 +68,10 @@ public class ForeignExternalizerTest extends MultipleCacheManagersTest {
 
    protected GlobalConfiguration createForeignExternalizerGlobalConfig() {
       GlobalConfiguration globalCfg = GlobalConfiguration.getClusteredDefault();
-      globalCfg.fluent().serialization().addExternalizer(1234, IdViaConfigObj.Externalizer.class);
-      globalCfg.fluent().serialization().addExternalizer(IdViaAnnotationObj.Externalizer.class);
-      globalCfg.fluent().serialization().addExternalizer(3456, IdViaBothObj.Externalizer.class);
+      globalCfg.fluent().serialization()
+         .addAdvancedExternalizer(1234, IdViaConfigObj.Externalizer.class)
+         .addAdvancedExternalizer(IdViaAnnotationObj.Externalizer.class)
+         .addAdvancedExternalizer(3456, IdViaBothObj.Externalizer.class);
       return globalCfg;
    }
 

@@ -16,7 +16,7 @@ import scala.collection.JavaConversions._
  * serialization.  The reason for supporting both methods is to enable
  * third-party libraries to be able to marshall/unmarshall them using standard
  * JVM serialization rules.  The Infinispan marshalling layer will always
- * chose the most performant one, aka the Externalizer method.
+ * chose the most performant one, aka the externalizer method.
  *
  * @author Galder Zamarreño
  * @since 4.1

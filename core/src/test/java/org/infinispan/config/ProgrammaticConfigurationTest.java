@@ -66,8 +66,8 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
             .addProperty("na", "me")
          .serialization()
             .version("2.2").marshallerClass(VersionAwareMarshaller.class)
-            .addExternalizer(ReplicableCommandExternalizer.class)
-            .addExternalizer(999, ArrayListExternalizer.class)
+            .addAdvancedExternalizer(ReplicableCommandExternalizer.class)
+            .addAdvancedExternalizer(999, ArrayListExternalizer.class)
          .asyncListenerExecutor()
             .factory(DefaultExecutorFactory.class)
             .addProperty("maxThreads", "6")
@@ -104,7 +104,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
       assertEquals("me", gc.getMBeanServerProperties().getProperty("na"));
 
       assertEquals("2.2", gc.getMarshallVersionString());
-      List<ExternalizerConfig> exts = gc.getExternalizers();
+      List<AdvancedExternalizerConfig> exts = gc.getExternalizers();
       assertEquals(2, exts.size());
       assertEquals(ReplicableCommandExternalizer.class.getName(), exts.get(0).getExternalizerClass());
       assertEquals(ArrayListExternalizer.class.getName(), exts.get(1).getExternalizerClass());

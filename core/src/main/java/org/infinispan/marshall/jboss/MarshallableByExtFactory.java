@@ -20,26 +20,36 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.server.hotrod
+package org.infinispan.marshall.jboss;
 
-import org.infinispan.lifecycle.AbstractModuleLifecycle
-import org.infinispan.factories.GlobalComponentRegistry
-import org.infinispan.config.GlobalConfiguration
-import org.infinispan.server.core.ExternalizerIds._
+import org.infinispan.marshall.MarshallableBy;
+import org.jboss.marshalling.AnnotationClassExternalizerFactory;
+import org.jboss.marshalling.ClassExternalizerFactory;
+import org.jboss.marshalling.Externalizer;
 
 /**
- * Module lifecycle callbacks implementation that enables module specific
- * {@link org.infinispan.marshall.AdvancedExternalizer} implementations to be registered.
+ * // TODO: Document this
  *
  * @author Galder Zamarreño
- * @since 5.0
+ * @since // TODO
  */
-class LifecycleCallbacks extends AbstractModuleLifecycle {
+public class MarshallableByExtFactory implements ClassExternalizerFactory {
 
-   override def cacheManagerStarting(gcr: GlobalComponentRegistry, globalCfg: GlobalConfiguration) {
-      globalCfg.fluent.serialization
-         .addAdvancedExternalizer(TOPOLOGY_ADDRESS, new TopologyAddress.Externalizer)
-         .addAdvancedExternalizer(TOPOLOGY_VIEW, new TopologyView.Externalizer)
+   final ClassExternalizerFactory jbmarExtFactory = new AnnotationClassExternalizerFactory();
+
+   @Override
+   public Externalizer getExternalizer(Class<?> type) {
+      MarshallableBy ann = type.getAnnotation(MarshallableBy.class);
+      if (ann == null) {
+         // Check for JBoss Marshaller's @Externalize
+         return jbmarExtFactory.getExternalizer(type);
+      } else {
+         try {
+            return new JBossExternalizerAdapter(ann.value().newInstance());
+         } catch (Exception e) {
+            throw new IllegalArgumentException(String.format(
+                  "Cannot instantiate externalizer for %s", type), e);
+         }
+      }
    }
-
 }

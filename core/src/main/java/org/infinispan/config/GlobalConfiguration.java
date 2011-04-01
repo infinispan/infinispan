@@ -14,7 +14,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.remoting.transport.Transport;
@@ -633,8 +633,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       serialization.setVersion(marshallVersion);
    }
 
-   public List<ExternalizerConfig> getExternalizers() {
-      return serialization.externalizerTypes.externalizers;
+   public List<AdvancedExternalizerConfig> getExternalizers() {
+      return serialization.externalizerTypes.advancedExternalizers;
    }
 
    public long getDistributedSyncTimeout() {
@@ -1267,8 +1267,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
       private short versionShort;
 
-      @XmlElement(name = "externalizers")
-      protected ExternalizersType externalizerTypes = new ExternalizersType();
+      @XmlElement(name = "advancedExternalizers")
+      protected AdvancedExternalizersType externalizerTypes = new AdvancedExternalizersType();
 
       public SerializationType() {
          super();
@@ -1334,14 +1334,14 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       }
 
       @Override
-      public <T> SerializationConfig addExternalizer(Class<? extends Externalizer<T>> clazz) {
-         addExternalizer(Integer.MAX_VALUE, clazz);
+      public <T> SerializationConfig addAdvancedExternalizer(Class<? extends AdvancedExternalizer<T>> clazz) {
+         addAdvancedExternalizer(Integer.MAX_VALUE, clazz);
          return this;
       }
 
       @Override
-      public <T> SerializationConfig addExternalizer(int id, Class<? extends Externalizer<T>> clazz) {
-         ExternalizerConfig ec = new ExternalizerConfig();
+      public <T> SerializationConfig addAdvancedExternalizer(int id, Class<? extends AdvancedExternalizer<T>> clazz) {
+         AdvancedExternalizerConfig ec = new AdvancedExternalizerConfig();
          ec.setExternalizerClass(clazz.getName());
          if (id != Integer.MAX_VALUE)
             ec.setId(id);
@@ -1350,16 +1350,16 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       }
 
       @Override
-      public <T> SerializationConfig addExternalizer(Externalizer<T>... externalizers) {
-         for (Externalizer ext : externalizers)
-            externalizerTypes.addExternalizer(new ExternalizerConfig().setExternalizer(ext));
+      public <T> SerializationConfig addAdvancedExternalizer(AdvancedExternalizer<T>... advancedExternalizers) {
+         for (AdvancedExternalizer ext : advancedExternalizers)
+            externalizerTypes.addExternalizer(new AdvancedExternalizerConfig().setAdvancedExternalizer(ext));
          return this;
       }
 
       @Override
-      public <T> SerializationConfig addExternalizer(int id, Externalizer<T> externalizer) {
+      public <T> SerializationConfig addAdvancedExternalizer(int id, AdvancedExternalizer<T> advancedExternalizer) {
          externalizerTypes.addExternalizer(
-               new ExternalizerConfig().setId(id).setExternalizer(externalizer));
+               new AdvancedExternalizerConfig().setId(id).setAdvancedExternalizer(advancedExternalizer));
          return this;
       }
    }
@@ -1370,48 +1370,44 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * @see <a href="../../../config.html#ce_global_serialization_marshallers">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.FIELD)
-   @ConfigurationDoc(name = "externalizers")
-   public static class ExternalizersType extends AbstractConfigurationBeanWithGCR {
+   @ConfigurationDoc(name = "advancedExternalizers")
+   public static class AdvancedExternalizersType extends AbstractConfigurationBeanWithGCR {
       /**
        * The serialVersionUID
        */
       private static final long serialVersionUID = -496116709223466807L;
 
-      @XmlElement(name = "externalizer")
-      private List<ExternalizerConfig> externalizers = new ArrayList<ExternalizerConfig>();
+      @XmlElement(name = "advancedExternalizer")
+      private List<AdvancedExternalizerConfig> advancedExternalizers = new ArrayList<AdvancedExternalizerConfig>();
 
       @Override
-      public ExternalizersType clone() throws CloneNotSupportedException {
-         ExternalizersType dolly = (ExternalizersType) super.clone();
-         if (externalizers != null) {
-            dolly.externalizers = new ArrayList<ExternalizerConfig>();
-            for (ExternalizerConfig config : externalizers) {
-               ExternalizerConfig clone = (ExternalizerConfig) config.clone();
-               dolly.externalizers.add(clone);
+      public AdvancedExternalizersType clone() throws CloneNotSupportedException {
+         AdvancedExternalizersType dolly = (AdvancedExternalizersType) super.clone();
+         if (advancedExternalizers != null) {
+            dolly.advancedExternalizers = new ArrayList<AdvancedExternalizerConfig>();
+            for (AdvancedExternalizerConfig config : advancedExternalizers) {
+               AdvancedExternalizerConfig clone = (AdvancedExternalizerConfig) config.clone();
+               dolly.advancedExternalizers.add(clone);
             }
          }
          return dolly;
       }
 
       public void accept(ConfigurationBeanVisitor v) {
-         for (ExternalizerConfig i : externalizers) {
+         for (AdvancedExternalizerConfig i : advancedExternalizers) {
             i.accept(v);
          }
-         v.visitExternalizersType(this);
-      }
-
-      public List<ExternalizerConfig> getExternalizerConfigs() {
-         return externalizers;
+         v.visitAdvancedExternalizersType(this);
       }
 
       @Override
       public boolean equals(Object o) {
          if (this == o) return true;
-         if (!(o instanceof ExternalizersType)) return false;
+         if (!(o instanceof AdvancedExternalizersType)) return false;
 
-         ExternalizersType that = (ExternalizersType) o;
+         AdvancedExternalizersType that = (AdvancedExternalizersType) o;
 
-         if (externalizers != null ? !externalizers.equals(that.externalizers) : that.externalizers != null)
+         if (advancedExternalizers != null ? !advancedExternalizers.equals(that.advancedExternalizers) : that.advancedExternalizers != null)
             return false;
 
          return true;
@@ -1419,11 +1415,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
       @Override
       public int hashCode() {
-         return externalizers != null ? externalizers.hashCode() : 0;
+         return advancedExternalizers != null ? advancedExternalizers.hashCode() : 0;
       }
 
-      ExternalizersType addExternalizer(ExternalizerConfig e) {
-         this.externalizers.add(e);
+      AdvancedExternalizersType addExternalizer(AdvancedExternalizerConfig e) {
+         this.advancedExternalizers.add(e);
          return this;
       }
 

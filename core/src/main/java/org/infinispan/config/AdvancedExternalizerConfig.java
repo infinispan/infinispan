@@ -19,16 +19,15 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.infinispan.config;
 
-import org.infinispan.config.AbstractConfigurationBeanWithGCR;
-import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.AdvancedExternalizer;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
 
 /**
  * Defines custom Externalizers to be registered with marshalling framework
@@ -37,53 +36,53 @@ import javax.xml.bind.annotation.XmlType;
  * @since 5.0
  */
 @XmlAccessorType(XmlAccessType.PROPERTY)
-@ConfigurationDoc(name = "externalizer")
-public class ExternalizerConfig extends AbstractConfigurationBeanWithGCR {
+@ConfigurationDoc(name = "advancedExternalizer")
+public class AdvancedExternalizerConfig extends AbstractConfigurationBeanWithGCR {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = -5161505617995274887L;
 
-   @ConfigurationDocRef(bean = ExternalizerConfig.class, targetElement = "setExternalizerClass")
+   @ConfigurationDocRef(bean = AdvancedExternalizerConfig.class, targetElement = "setExternalizerClass")
    protected String externalizerClass;
 
-   private Externalizer externalizer;
+   private AdvancedExternalizer advancedExternalizer;
 
-   @ConfigurationDocRef(bean = ExternalizerConfig.class, targetElement = "setId")
+   @ConfigurationDocRef(bean = AdvancedExternalizerConfig.class, targetElement = "setId")
    protected Integer id;
 
    public String getExternalizerClass() {
-      if (externalizerClass == null && externalizer != null)
-         externalizerClass = externalizer.getClass().getName();
+      if (externalizerClass == null && advancedExternalizer != null)
+         externalizerClass = advancedExternalizer.getClass().getName();
 
       return externalizerClass;
    }
 
    /**
-    * Fully qualified class name of an {@link org.infinispan.marshall.Externalizer}
+    * Fully qualified class name of an {@link org.infinispan.marshall.AdvancedExternalizer}
     * implementation that knows how to marshall or unmarshall instances of one, or
     * several, user-defined, types.
     * 
     * @param externalizerClass
     */
    @XmlAttribute
-   public ExternalizerConfig setExternalizerClass(String externalizerClass) {
+   public AdvancedExternalizerConfig setExternalizerClass(String externalizerClass) {
       this.externalizerClass = externalizerClass;
       return this;
    }
 
    public Integer getId() {
-      if (id == null && externalizer != null)
-         id = externalizer.getId();
+      if (id == null && advancedExternalizer != null)
+         id = advancedExternalizer.getId();
       return id;
    }
 
    /**
-    * This identifier distinguishes between different user-defined {@link Externalizer}
+    * This identifier distinguishes between different user-defined {@link org.infinispan.marshall.AdvancedExternalizer}
     * implementations, providing a more performant way to ship class information around
     * rather than passing class names or class information in general around.
     *
     * Only positive ids are allowed, and you can use any number as long as it does not
-    * clash with an already existing number for a {@link Externalizer} implementation.
+    * clash with an already existing number for a {@link org.infinispan.marshall.AdvancedExternalizer} implementation.
     *
     * If there're any clashes, Infinispan will abort startup and will provide class
     * information of the ids clashing.
@@ -91,32 +90,32 @@ public class ExternalizerConfig extends AbstractConfigurationBeanWithGCR {
     * @param id
     */
    @XmlAttribute
-   public ExternalizerConfig setId(Integer id) {
+   public AdvancedExternalizerConfig setId(Integer id) {
       this.id = id;
       return this;
    }
 
-   @XmlTransient // Prevent JAXB from thinking that externalizer is an XML attribute
-   public Externalizer getExternalizer() {
-      return externalizer;
+   @XmlTransient // Prevent JAXB from thinking that advancedExternalizer is an XML attribute
+   public AdvancedExternalizer getAdvancedExternalizer() {
+      return advancedExternalizer;
    }
 
-   public ExternalizerConfig setExternalizer(Externalizer externalizer) {
-      this.externalizer = externalizer;
+   public AdvancedExternalizerConfig setAdvancedExternalizer(AdvancedExternalizer advancedExternalizer) {
+      this.advancedExternalizer = advancedExternalizer;
       return this;
    }
 
    public String toString() {
-      return "ExternalizerConfig{";
+      return "AdvancedExternalizerConfig{";
    }
 
    public boolean equals(Object o) {
       if (this == o)
          return true;
-      if (!(o instanceof ExternalizerConfig))
+      if (!(o instanceof AdvancedExternalizerConfig))
          return false;
 
-      ExternalizerConfig that = (ExternalizerConfig) o;
+      AdvancedExternalizerConfig that = (AdvancedExternalizerConfig) o;
       if (externalizerClass != null && !externalizerClass.equals(that.externalizerClass))
          return false;
       if (id != null && !id.equals(that.id))
@@ -133,6 +132,6 @@ public class ExternalizerConfig extends AbstractConfigurationBeanWithGCR {
    }
 
    public void accept(ConfigurationBeanVisitor v) {
-      v.visitExternalizerConfig(this);
+      v.visitAdvancedExternalizerConfig(this);
    }
 }
