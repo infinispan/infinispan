@@ -158,14 +158,16 @@ public class TransactionTable {
    }
 
    public void enlist(Transaction transaction, LocalTransaction localTransaction) {
-      SynchronizationAdapter sync = new SynchronizationAdapter(localTransaction, txCoordinator);
-      try {
-         transaction.registerSynchronization(sync);
-      } catch (Exception e) {
-         log.warn("Failed synchronization registration", e);
-         throw new CacheException(e);
+      if (!localTransaction.isEnlisted()) {
+         SynchronizationAdapter sync = new SynchronizationAdapter(localTransaction, txCoordinator);
+         try {
+            transaction.registerSynchronization(sync);
+         } catch (Exception e) {
+            log.warn("Failed synchronization registration", e);
+            throw new CacheException(e);
+         }
+         ((SyncLocalTransaction) localTransaction).setEnlisted(true);
       }
-      ((SyncLocalTransaction) localTransaction).setEnlisted(true);
    }
 
    @Listener
