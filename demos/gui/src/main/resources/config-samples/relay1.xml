@@ -5,7 +5,7 @@
       xmlns="urn:infinispan:config:4.2">
    
    <global>
-      <transport clusterName="demoCluster1">
+      <transport clusterName="demoCluster1" siteId="nyc">
          <properties>
             <property name="configurationFile" value="config-samples/jgroups-relay1.xml" />
          </properties>
@@ -14,12 +14,13 @@
    </global>
 
    <default>
+      <locking isolationLevel="NONE"/>
+      <unsafe unreliableReturnValues="true"/>
       <jmxStatistics enabled="true"/>
       <clustering mode="distribution">
          <l1 enabled="false" lifespan="10000"/>
-         <hash numOwners="2" rehashWait="5000" rehashRpcTimeout="10000" />
-         <!--<hash numOwners="2" rehashWait="5000" rehashRpcTimeout="10000"
-                   class="org.infinispan.distribution.ch.TopologyAwareConsistentHash"/>-->
+         <hash numOwners="2" rehashWait="5000" rehashRpcTimeout="10000"
+                   class="org.infinispan.distribution.ch.TopologyAwareConsistentHash"/>
          <async/>
       </clustering>
    </default>

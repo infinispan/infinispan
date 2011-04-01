@@ -40,7 +40,7 @@ public class Version {
 
    public static final String major = "4.2";
    public static final String version = major + ".1-SNAPSHOT";
-   public static final String codename = "Ursus";
+   public static final String codename = "Bela";
    public static final String projectName = "Infinispan";
    static final byte[] version_id = {'0', '4', '2', '1', 'S'};
    private static final int MAJOR_SHIFT = 11;

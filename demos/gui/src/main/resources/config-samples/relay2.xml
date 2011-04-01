@@ -5,21 +5,23 @@
       xmlns="urn:infinispan:config:4.2">
    
    <global>
-      <transport clusterName="demoCluster2">
+      <transport clusterName="demoCluster2" siteId="zrh">
          <properties>
             <property name="configurationFile" value="config-samples/jgroups-relay2.xml" />
          </properties>
       </transport>
       <globalJmxStatistics enabled="true"/>
+
    </global>
 
    <default>
+      <locking isolationLevel="NONE"/>
+      <unsafe unreliableReturnValues="true"/>
       <jmxStatistics enabled="true"/>
       <clustering mode="distribution">
          <l1 enabled="false" lifespan="10000"/>
-         <hash numOwners="2" rehashWait="5000" rehashRpcTimeout="10000" />
-         <!--<hash numOwners="2" rehashWait="5000" rehashRpcTimeout="10000"
-                   class="org.infinispan.distribution.ch.TopologyAwareConsistentHash"/>-->
+         <hash numOwners="2" rehashWait="5000" rehashRpcTimeout="10000"
+                   class="org.infinispan.distribution.ch.TopologyAwareConsistentHash"/>
          <async/>
       </clustering>
    </default>
