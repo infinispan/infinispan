@@ -14,8 +14,8 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Named cache specific components
@@ -26,7 +26,7 @@ import java.util.Map;
 public class ComponentRegistry extends AbstractComponentRegistry {
 
    // cached component scopes
-   private static final Map<Class, Scopes> componentScopeLookup = new HashMap<Class, Scopes>();
+   private static final Map<Class, Scopes> componentScopeLookup = new ConcurrentHashMap<Class, Scopes>();
 
    private final GlobalComponentRegistry globalComponents;
    private final String cacheName;
@@ -124,6 +124,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private boolean isGlobal(Class clazz) {
       Scopes componentScope = componentScopeLookup.get(clazz);
       if (componentScope == null) {
+         // Because the detectScope call is not protected by a lock, we can end up doing duplicate work
+         // However this will happen rarely enough that we can afford to ignore the duplicate work.
          componentScope = ScopeDetector.detectScope(clazz);
          componentScopeLookup.put(clazz, componentScope);
       }
