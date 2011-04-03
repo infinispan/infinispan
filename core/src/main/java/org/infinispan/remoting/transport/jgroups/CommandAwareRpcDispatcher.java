@@ -372,9 +372,10 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          long giveupTime = System.currentTimeMillis() + timeout;
          boolean notTimedOut = true;
          synchronized (this) {
-            notTimedOut = giveupTime > System.currentTimeMillis();
-            while (notTimedOut && expectedResponses > 0 && retval == null)
+            while (notTimedOut && expectedResponses > 0 && retval == null) {
+               notTimedOut = giveupTime > System.currentTimeMillis();
                this.wait(timeout);
+            }
          }
 
          // if we've got here, we either have the response we need or aren't expecting any more responses - or have run out of time.
