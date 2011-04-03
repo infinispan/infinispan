@@ -116,7 +116,8 @@ public class InfinispanDirectory extends Directory {
       this.metadataCache = metadataCache.getAdvancedCache();
       this.chunksCache = chunksCache.getAdvancedCache();
       this.indexName = indexName;
-      this.setLockFactory(lf);
+      this.lockFactory = lf;
+      this.lockFactory.setLockPrefix(this.getLockID());
       this.chunkSize = chunkSize;
       this.fileOps = new FileListOperations(this.metadataCache, indexName);
       this.readLocks = readLocker;

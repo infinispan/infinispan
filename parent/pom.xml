@@ -490,7 +490,7 @@
             <activeByDefault>false</activeByDefault>
          </activation>
          <properties>
-            <version.lucene>3.0.2</version.lucene>
+            <version.lucene>3.1.0</version.lucene>
          </properties>
       </profile>
       <profile>
