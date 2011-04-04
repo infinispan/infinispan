@@ -6,7 +6,7 @@
 
    <global>
       <transport clusterName="luceneDemoCluster" />
-      <globalJmxStatistics enabled="true"/>
+      <globalJmxStatistics enabled="true" allowDuplicateDomains="true"/>
    </global>
 
    <default>
