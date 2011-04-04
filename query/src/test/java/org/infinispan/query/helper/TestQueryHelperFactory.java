@@ -27,12 +27,14 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.CacheQuery;
-import org.infinispan.query.QueryFactory;
+import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
 
 /**
  * Creates a test query helper
@@ -54,8 +56,10 @@ public class TestQueryHelperFactory {
    }
 
    public static CacheQuery createCacheQuery(Cache m_cache, String fieldName, String searchString) throws ParseException {
-      QueryFactory queryFactory = new QueryFactory(m_cache, getLuceneVersion());
-      CacheQuery cacheQuery = queryFactory.getBasicQuery(fieldName, searchString);
+      QueryParser qp = createQueryParser(fieldName);
+      Query parsedQuery = qp.parse(searchString);
+      SearchManager queryFactory = Search.getSearchManager(m_cache);
+      CacheQuery cacheQuery = queryFactory.getQuery(parsedQuery);
       return cacheQuery;
    }
    
