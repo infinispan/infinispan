@@ -21,10 +21,9 @@
  */
 package org.infinispan.query;
 
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.util.Version;
+import org.hibernate.search.SearchFactory;
+import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
@@ -38,20 +37,13 @@ import org.infinispan.query.impl.CacheQueryImpl;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 4.0
  */
-public class QueryFactory {
+class SearchManagerImpl implements SearchManager {
 
    private final Cache cache;
    private final SearchFactoryIntegrator searchFactory;
    private final QueryInterceptor queryInterceptor;
-   private final Version luceneVersion;
    
-   public QueryFactory(Cache cache) {
-      this(cache, null);
-   }
-
-   @SuppressWarnings("deprecation")
-   public QueryFactory(Cache cache, Version luceneVersion) {
-      this.luceneVersion = luceneVersion == null ? Version.LUCENE_CURRENT : luceneVersion;
+   SearchManagerImpl(Cache cache) {
       if (cache==null) {
          throw new IllegalArgumentException("cache parameter shall not be null");
       }
@@ -69,47 +61,30 @@ public class QueryFactory {
       return component;
    }
 
-   /**
-    * This is a simple method that will just return a {@link CacheQuery}, filtered according to a set of classes passed
-    * in.  If no classes are passed in, it is assumed that no type filtering is performed.
-    *
-    * @param luceneQuery - {@link org.apache.lucene.search.Query}
-    * @param classes - only return results of type that matches this list of acceptable types
-    * @return the query object which can be used to iterate through results
+   /* (non-Javadoc)
+    * @see org.infinispan.query.SearchManager#getQuery(org.apache.lucene.search.Query, java.lang.Class)
     */
+   @Override
    public CacheQuery getQuery(Query luceneQuery, Class<?>... classes) {
       queryInterceptor.enableClasses(classes);
       return new CacheQueryImpl(luceneQuery, searchFactory, cache, classes);
    }
 
-   /**
-    * This method is a basic query. The user provides 2 strings and internally the {@link
-    * org.apache.lucene.search.Query} is built.
-    * <p/>
-    * The first string is the field that they are searching and the second one is the search that they want to run.
-    * <p/>
-    * For example: -
-    * <p/>
-    * {@link org.infinispan.query.CacheQuery} cq = new QueryFactory
-    * <p/>
-    * The query is built by use of a {@link org.apache.lucene.queryParser.QueryParser} and a {@link
-    * org.apache.lucene.analysis.standard.StandardAnalyzer} </p>
-    *
-    * @param field  - the field on the class that you are searching
-    * @param search - the String that you want to be using to search
-    * @return {@link org.infinispan.query.CacheQuery} result
+   /* (non-Javadoc)
+    * @see org.infinispan.query.SearchManager#buildQueryBuilderForClass(java.lang.Class)
     */
-   public CacheQuery getBasicQuery(String field, String search) throws org.apache.lucene.queryParser.ParseException {
-      QueryParser parser = new QueryParser(luceneVersion, field, new StandardAnalyzer(luceneVersion));
-      org.apache.lucene.search.Query luceneQuery = parser.parse(search);
-      return new CacheQueryImpl(luceneQuery, searchFactory, cache);
+   @Override
+   public EntityContext buildQueryBuilderForClass(Class<?> entityType) {
+      queryInterceptor.enableClasses(new Class[] { entityType });
+      return searchFactory.buildQueryBuilder().forEntity(entityType);
    }
    
-   public CacheQuery getBasicQuery(String field, String search, Class<?>... classes) throws org.apache.lucene.queryParser.ParseException {
-      queryInterceptor.enableClasses(classes);
-      QueryParser parser = new QueryParser(luceneVersion, field, new StandardAnalyzer(luceneVersion));
-      org.apache.lucene.search.Query luceneQuery = parser.parse(search);
-      return new CacheQueryImpl(luceneQuery, searchFactory, cache);
+   /* (non-Javadoc)
+    * @see org.infinispan.query.SearchManager#getSearchFactory()
+    */
+   @Override
+   public SearchFactory getSearchFactory() {
+      return searchFactory;
    }
    
 }

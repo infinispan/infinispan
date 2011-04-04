@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2009-2011, Red Hat Middleware LLC, and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
  * full listing of individual contributors.
  *
@@ -26,12 +26,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.FullTextFilter;
 import org.hibernate.search.SearchException;
 import org.hibernate.search.query.engine.spi.EntityInfo;
+import org.hibernate.search.query.engine.spi.FacetManager;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
@@ -65,9 +67,9 @@ public class CacheQueryImpl implements CacheQuery {
     *
     * @param filter - lucene filter
     */
-   public void setFilter(Filter filter) {
+   public CacheQuery filter(Filter filter) {
       hSearchQuery.filter( filter );
-      // return this; //TODO make API builder-friendly?
+      return this;
    }
 
    /**
@@ -77,9 +79,9 @@ public class CacheQueryImpl implements CacheQuery {
       return hSearchQuery.queryResultSize();
    }
 
-   public void setSort(Sort sort) {
+   public CacheQuery sort(Sort sort) {
       hSearchQuery.sort( sort );
-      // return this; //TODO make API builder-friendly?
+      return this;
    }
 
    /**
@@ -97,8 +99,9 @@ public class CacheQueryImpl implements CacheQuery {
     *
     * @param name of filter.
     */
-   public void disableFullTextFilter(String name) {
+   public CacheQuery disableFullTextFilter(String name) {
       hSearchQuery.disableFullTextFilter( name );
+      return this;
    }
 
    /**
@@ -107,14 +110,14 @@ public class CacheQueryImpl implements CacheQuery {
     * @param firstResult index to be set.
     * @throws IllegalArgumentException if the index given is less than zero.
     */
-   public void setFirstResult(int firstResult) {
+   public CacheQuery firstResult(int firstResult) {
       hSearchQuery.firstResult( firstResult );
-   // return this; //TODO make API builder-friendly?
+      return this;
    }
    
-   public void setMaxResults(int maxResults) {
+   public CacheQuery maxResults(int maxResults) {
       hSearchQuery.maxResults( maxResults );
-      // return this; //TODO make API builder-friendly?
+      return this;
    }
 
    public QueryIterator iterator() throws SearchException {
@@ -155,6 +158,22 @@ public class CacheQueryImpl implements CacheQuery {
          keyList.add(cacheKey);
       }
       return keyList;
+   }
+
+   @Override
+   public FacetManager getFacetManager() {
+      return hSearchQuery.getFacetManager();
+   }
+
+   @Override
+   public Explanation explain(int documentId) {
+      return hSearchQuery.explain(documentId);
+   }
+
+   @Override
+   public CacheQuery projection(String... fields) {
+      hSearchQuery.projection(fields);
+      return this;
    }
 
 }
