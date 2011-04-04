@@ -641,7 +641,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       IndexingConfig indexLocalOnly(Boolean indexLocalOnly);
 
       /**
-       * Indexing is disabled by default, but using the fluent API entering the {@link #indexing()}
+       * Indexing is disabled by default, but using the fluent API entering the {@link FluentTypes#indexing()}
        * method enables Indexing implicitly. If needed, this method can be used to disable it.
        * @return <code>this</code>, for method chaining
        */
