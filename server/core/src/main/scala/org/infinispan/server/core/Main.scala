@@ -34,6 +34,7 @@ object Main extends Logging {
    val PROP_KEY_TOPOLOGY_LOCK_TIMEOUT = "infinispan.server.topology.lock_timeout"
    val PROP_KEY_TOPOLOGY_REPL_TIMEOUT = "infinispan.server.topology.repl_timeout"
    val PROP_KEY_TOPOLOGY_STATE_TRANSFER = "infinispan.server.topology.state_transfer"
+   val PROP_KEY_CACHE_MANAGER_CLASS = "infinispan.server.cache_manager_class"
    val HOST_DEFAULT = "127.0.0.1"
    val MASTER_THREADS_DEFAULT = 0
    val WORKER_THREADS_DEFAULT = 0
@@ -105,7 +106,7 @@ object Main extends Logging {
       server = Util.getInstance(clazz).asInstanceOf[ProtocolServer]
 
       val configFile = props.getProperty(PROP_KEY_CACHE_CONFIG)
-      cacheManager = if (configFile == null) createCacheManagerNoConfig else new DefaultCacheManager(configFile)
+      cacheManager = instantiateCacheManager(configFile)
       // Servers need a shutdown hook to close down network layer, so there's no need for an extra shutdown hook.
       // Removing Infinispan's hook also makes shutdown procedures for server and cache manager sequential, avoiding
       // issues with having the JGroups channel disconnected before it's removed itself from the topology view.
@@ -114,16 +115,50 @@ object Main extends Logging {
       server.start(props, cacheManager)
    }
 
-   private def createCacheManagerNoConfig: EmbeddedCacheManager = {
+   private def instantiateCacheManager(configFile: String): EmbeddedCacheManager = {
+	   var clazzName = props.getProperty(PROP_KEY_CACHE_MANAGER_CLASS)
+	   val clazz =
+         if (null == clazzName)
+	  	      classOf[DefaultCacheManager]
+	      else
+	  	      Class.forName(clazzName)
+
+	   if (null == configFile)
+	  	   createCacheManagerNoConfig(clazz.asInstanceOf[Class[EmbeddedCacheManager]])
+	   else
+	  	   createCacheManager(clazz.asInstanceOf[Class[EmbeddedCacheManager]], configFile)
+   }
+
+   private def createCacheManagerNoConfig(clazz: Class[EmbeddedCacheManager]): EmbeddedCacheManager = {
       val globalCfg = new GlobalConfiguration
       globalCfg.setExposeGlobalJmxStatistics(true)
       val defaultCfg = new Configuration
       defaultCfg.setExposeJmxStatistics(true)
-      new DefaultCacheManager(globalCfg, defaultCfg)
+      try {
+    	  val constructor = clazz.getConstructor(classOf[GlobalConfiguration], classOf[Configuration])
+    	  return constructor.newInstance(globalCfg, defaultCfg)
+      } catch {
+	  	   case e: NoSuchMethodException => {
+            throw new Exception(
+               "%s does not have a constructor that takes GlobalConfiguration and Configuration instances".format(clazz), e)
+	  	   }
+	   }
+   }
+
+   private def createCacheManager(clazz: Class[EmbeddedCacheManager], configFile: String): EmbeddedCacheManager = {
+	   try {
+		   val constructor = clazz.getConstructor(classOf[String])
+		   return constructor.newInstance(configFile)
+	   } catch {
+	  	   case e: NoSuchMethodException => {
+            throw new Exception(
+              "%s does not have a constructor that takes a config file path".format(clazz), e)
+	  	   }
+	   }
    }
 
    private def processCommandLine(args: Array[String]) {
-      val sopts = "-:hD:Vp:l:m:t:c:r:i:n:s:e:o:x:k:u:a:"
+      val sopts = "-:hD:Vp:l:m:t:c:r:i:n:s:e:o:x:k:u:a:f:"
       val lopts = Array(
          new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
          new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'V'),
@@ -140,7 +175,8 @@ object Main extends Logging {
          new LongOpt("proxy_host", LongOpt.REQUIRED_ARGUMENT, null, 'o'),
          new LongOpt("topo_lock_timeout", LongOpt.REQUIRED_ARGUMENT, null, 'k'),
          new LongOpt("topo_repl_timeout", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
-         new LongOpt("topo_state_transfer", LongOpt.REQUIRED_ARGUMENT, null, 'a')
+         new LongOpt("topo_state_transfer", LongOpt.REQUIRED_ARGUMENT, null, 'a'),
+         new LongOpt("cache_manager_class", LongOpt.REQUIRED_ARGUMENT, null, 'f')
          )
       val getopt = new Getopt("startServer", args, sopts, lopts)
       var code: Int = 0
@@ -168,6 +204,7 @@ object Main extends Logging {
             case 'k' => props.setProperty(PROP_KEY_TOPOLOGY_LOCK_TIMEOUT, getopt.getOptarg)
             case 'u' => props.setProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, getopt.getOptarg)
             case 'a' => props.setProperty(PROP_KEY_TOPOLOGY_STATE_TRANSFER, getopt.getOptarg)
+            case 'f' => props.setProperty(PROP_KEY_CACHE_MANAGER_CLASS, getopt.getOptarg)
             case 'D' => {
                val arg = getopt.getOptarg
                var name = ""
@@ -246,6 +283,8 @@ object Main extends Logging {
       println("    -a, --topo_state_trasfer=          Enabling topology information state transfer means that when a server starts it retrieves this information from a different node.")
       println("          [true|false]                 Otherwise, if set to false, the topology information is lazily loaded if not available locally.")
       println
+      println("    -f, --cache_manager_class=<clazz>  Cache manager class name to be used instead of the default one (it has to extend org.infinispan.manager.EmbeddedCacheManager).")
+      println
       println("    -D<name>[=<value>]                 Set a system property")
       println
       System.exit(0)
@@ -253,6 +292,10 @@ object Main extends Logging {
 }
 
 private class ShutdownHook(server: ProtocolServer, cacheManager: CacheContainer) extends Thread with Logging {
+
+   // Constructor code inline
+   setName("ShutdownHookThread")
+
    override def run {
       if (server != null) {
          info("Posting Shutdown Request to the server...")
