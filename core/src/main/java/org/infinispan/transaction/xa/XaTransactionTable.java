@@ -70,4 +70,12 @@ public class XaTransactionTable extends TransactionTable {
          }
       }
    }
+
+   public RecoveryManager getRecoveryManager() {
+      return recoveryManager;
+   }
+
+   public void setRecoveryManager(RecoveryManager recoveryManager) {
+      this.recoveryManager = recoveryManager;
+   }
 }
