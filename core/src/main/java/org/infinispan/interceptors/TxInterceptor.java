@@ -28,6 +28,7 @@ import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
@@ -97,7 +98,7 @@ public class TxInterceptor extends CommandInterceptor {
       }
       if (!ctx.isOriginLocal()) {
          if (command.isOnePhaseCommit()) {
-            txTable.remoteTransactionCompleted(command.getGlobalTransaction());
+            markCompleted(ctx, command.getGlobalTransaction());
          } else {
             txTable.remoteTransactionPrepared(command.getGlobalTransaction());
          }
@@ -109,6 +110,7 @@ public class TxInterceptor extends CommandInterceptor {
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (this.statisticsEnabled) commits.incrementAndGet();
       Object result = invokeNextInterceptor(ctx, command);
+      markCompleted(ctx, command.getGlobalTransaction());
       transactionLog.logCommit(command.getGlobalTransaction());
       return result;
    }
@@ -116,7 +118,9 @@ public class TxInterceptor extends CommandInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (this.statisticsEnabled) rollbacks.incrementAndGet();
-      transactionLog.rollback(command.getGlobalTransaction());
+      GlobalTransaction globalTransaction = command.getGlobalTransaction();
+      transactionLog.rollback(globalTransaction);
+      markCompleted(ctx, globalTransaction);
       return invokeNextInterceptor(ctx, command);
    }
 
@@ -211,6 +215,10 @@ public class TxInterceptor extends CommandInterceptor {
          return false;
       }
       return true;
+   }
+
+   private void markCompleted(TxInvocationContext ctx, GlobalTransaction globalTransaction) {
+      if (!ctx.isOriginLocal()) txTable.remoteTransactionCompleted(globalTransaction);
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component")
