@@ -51,7 +51,9 @@ public class SampleConfigFilesCorrectnessTest {
          EmbeddedCacheManager dcm = TestCacheManagerFactory.fromXml(getRootFolder() + "/" + aConfFile, true);
          try {
             dcm.getCache();
-            assert !appender.isFoundUnknownWarning();
+            assert !appender.isFoundUnknownWarning() : String.format(
+                  "Unknown warning discovered in file %s: %s",
+                  aConfFile, appender.unknownWarning());
             for (String cacheName : dcm.getCacheNames()) {
                dcm.getCache(cacheName);
                assert !appender.isFoundUnknownWarning();
@@ -90,8 +92,12 @@ public class SampleConfigFilesCorrectnessTest {
             {
                   "Falling back to DummyTransactionManager from Infinispan",
                   "Please set your max receive buffer in the OS correctly",
+                  "receive buffer of socket java.net.MulticastSocket@",
+                  "Property ec2.access_key could not be replaced as intended",
+                  "Property ec2.access_secret could not be replaced as intended",
+                  "Property ec2.bucket could not be replaced as intended",
             };
-      boolean foundUnknownWarning = false;
+      String unknownWarning;
 
       /**
        * As this test runs in parallel with other tests tha also log information, we should disregard other possible
@@ -104,15 +110,13 @@ public class SampleConfigFilesCorrectnessTest {
       protected void append(LoggingEvent event) {
          if (event.getLevel().equals(Level.WARN) && isExpectedThread()) {
             boolean skipPrinting = false;
-            foundUnknownWarning = true;
             for (String knownWarn : TOLERABLE_WARNINGS) {
-               if (event.getMessage().toString().indexOf(knownWarn) >= 0) {
+               if (event.getMessage().toString().indexOf(knownWarn) >= 0)
                   skipPrinting = true;
-                  foundUnknownWarning = false;
-               }
             }
 
             if (!skipPrinting) {
+               unknownWarning = event.getMessage().toString();
                System.out.println("InMemoryAppender ****** " + event.getMessage().toString());
                System.out.println("TOLERABLE_WARNINGS: " + Arrays.toString(TOLERABLE_WARNINGS));
             }
@@ -128,7 +132,11 @@ public class SampleConfigFilesCorrectnessTest {
       }
 
       public boolean isFoundUnknownWarning() {
-         return foundUnknownWarning;
+         return unknownWarning != null;
+      }
+
+      public String unknownWarning() {
+         return unknownWarning;
       }
 
       public boolean isExpectedThread() {
