@@ -62,8 +62,6 @@ public class TxInterceptor extends CommandInterceptor {
    private final AtomicLong rollbacks = new AtomicLong(0);
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statisticsEnabled;
-   private InvocationContextContainer icc;
-   private RecoveryManager recoveryManager;
    protected TransactionCoordinator txCoordinator;
 
 
@@ -73,8 +71,6 @@ public class TxInterceptor extends CommandInterceptor {
       this.configuration = c;
       this.transactionLog = transactionLog;
       this.txTable = txTable;
-      this.icc = icc;
-      this.recoveryManager = rm;
       this.txCoordinator = txCoordinator;
       setStatisticsEnabled(configuration.isExposeJmxStatistics());
    }
