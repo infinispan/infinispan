@@ -114,12 +114,8 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext(getOrigin());
       ctxt.setRemoteTransaction(transaction);
 
-      try {
-         if (trace) log.trace("About to execute tx command " + this);
-         return invoker.invoke(ctxt, this);
-      } finally {
-         txTable.remoteTransactionCompleted(globalTx);
-      }
+      if (trace) log.trace("About to execute tx command " + this);
+      return invoker.invoke(ctxt, this);
    }
 
    protected void visitRemoteTransaction(RemoteTransaction tx) {
