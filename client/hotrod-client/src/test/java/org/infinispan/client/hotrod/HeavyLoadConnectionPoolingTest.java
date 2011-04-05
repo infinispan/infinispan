@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -62,7 +63,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       hotRodServer.stop();
    }
 
-   public void testHeavyLoad() throws InterruptedException {
+   public void testHeavyLoad() throws InterruptedException, ExecutionException {
       List<WorkerThread> workers = new ArrayList<WorkerThread>();
 
       //create 20 threads and do work with them
@@ -76,8 +77,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       }
 
       for (WorkerThread wt: workers) {
-         wt.stopWorker();
-         wt.waitToFinish();
+         wt.stop();
       }
       //now wait for the idle thread to wake up and clean them
       for (int i = 0; i < 50; i++) {
