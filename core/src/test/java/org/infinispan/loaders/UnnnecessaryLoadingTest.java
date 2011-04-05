@@ -27,7 +27,7 @@ import java.util.Set;
  * @author Sanne Grinovero
  * @version 4.1
  */
-@Test(testName = "loaders.UnnnecessaryLoadingTest", groups = "functional")
+@Test(testName = "loaders.UnnnecessaryLoadingTest", groups = "functional", sequential = true)
 public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
    CacheStore store;
    
@@ -45,7 +45,6 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       return cm;
    }
 
-   @Test
    public void testRepeatedLoads() throws CacheLoaderException {
       CountingCacheStore countingCS = getCountingCacheStore();
       store.store(InternalEntryFactory.create("k1", "v1"));
@@ -64,7 +63,6 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
    }
 
-   @Test
    public void testSkipCacheFlagUsage() throws CacheLoaderException {
       CountingCacheStore countingCS = getCountingCacheStore();
       
@@ -123,7 +121,6 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       return countingCS;
    }
    
-   @Test
    public void testSkipCacheLoadFlagUsage() throws CacheLoaderException {
       CountingCacheStore countingCS = getCountingCacheStore();
       
