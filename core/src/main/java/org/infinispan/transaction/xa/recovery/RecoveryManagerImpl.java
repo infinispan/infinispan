@@ -9,7 +9,6 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.RemoteTransaction;
-import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -155,10 +154,6 @@ public class RecoveryManagerImpl implements RecoveryManager {
       for (RecoveryAwareRemoteTransaction rt : preparedTransactions.values()) {
          rt.computeOrphan(leavers);
       }
-   }
-
-   public void remoteTransactionCompleted(GlobalTransaction txId) {
-      preparedTransactions.remove(new RecoveryInfoKey(((XidAware)txId).getXid(), cacheName));
    }
 
    public RemoteTransaction getPreparedTransaction(Xid xid) {

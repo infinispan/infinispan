@@ -59,7 +59,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
 
    @Override
    public void remoteTransactionCompleted(GlobalTransaction gtx) {
-      recoveryManager.remoteTransactionCompleted(gtx);
+      //ignore the call, the transaction will be removed async at a further point in time
    }
 
    public List<Xid> getLocalPreparedXids() {
