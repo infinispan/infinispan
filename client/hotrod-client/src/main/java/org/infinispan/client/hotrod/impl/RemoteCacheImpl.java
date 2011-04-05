@@ -10,6 +10,7 @@ import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedExcep
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.async.NotifyingFutureImpl;
 import org.infinispan.client.hotrod.impl.operations.*;
+import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.logging.Log;
@@ -380,8 +381,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return result;
    }
 
-   public PingOperation.PingResult ping() {
-      return operationsFactory.newPingOperation().execute();
+   public PingOperation.PingResult ping(Transport transport) {
+      return operationsFactory.newPingOperation(transport).execute();
    }
 
    private byte[] obj2bytes(Object o, boolean isKey) {
