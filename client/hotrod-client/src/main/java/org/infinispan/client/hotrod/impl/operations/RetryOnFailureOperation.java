@@ -32,8 +32,8 @@ public abstract class RetryOnFailureOperation extends HotRodOperation {
    @Override
    public Object execute() {
       int retryCount = 0;
-      Transport transport = getTransport(retryCount);
-      do {
+      while (shouldRetry(retryCount)) {
+         Transport transport = getTransport(retryCount);
          try {
             return executeOperation(transport);
          } catch (TransportException te) {
@@ -41,11 +41,9 @@ public abstract class RetryOnFailureOperation extends HotRodOperation {
          } finally {
             releaseTransport(transport);
          }
-         if (shouldRetry(retryCount)) {
-            transport = getTransport(retryCount);
-         }
+
          retryCount++;
-      } while (shouldRetry(retryCount));
+      }
       throw new IllegalStateException("We should not reach here!");
    }
 
@@ -55,7 +53,7 @@ public abstract class RetryOnFailureOperation extends HotRodOperation {
 
    protected void logErrorAndThrowExceptionIfNeeded(int i, TransportException te) {
       String message = "Transport exception. Retry " + i + " out of " + transportFactory.getTransportCount();
-      if (i == transportFactory.getTransportCount() - 1 || transportFactory.getTransportCount() < 0) {
+      if (i >= transportFactory.getTransportCount() - 1 || transportFactory.getTransportCount() < 0) {
          log.warn(message, te);
          throw te;
       } else {
