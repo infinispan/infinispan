@@ -5,6 +5,7 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResult;
+import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.manager.CacheContainer;
@@ -363,8 +364,7 @@ public class RemoteCacheManager implements CacheContainer {
             // If ping not successful assume that the cache does not exist
             // Default cache is always started, so don't do for it
             if (!cacheName.equals(CacheContainer.DEFAULT_CACHE_NAME) &&
-                  transportFactory != null &&
-                  result.ping() == PingResult.CACHE_DOES_NOT_EXIST) {
+                  ping(result) == PingResult.CACHE_DOES_NOT_EXIST) {
                return null;
             } else {
                cacheName2RemoteCache.put(cacheName, result);
@@ -373,6 +373,19 @@ public class RemoteCacheManager implements CacheContainer {
          } else {
             return cacheName2RemoteCache.get(cacheName);
          }
+      }
+   }
+
+   private <K, V> PingResult ping(RemoteCacheImpl<K, V> cache) {
+      if (transportFactory == null) {
+         return PingResult.FAIL;
+      }
+
+      Transport transport = transportFactory.getTransport();
+      try {
+         return cache.ping(transport);
+      } finally {
+        transportFactory.releaseTransport(transport);
       }
    }
 
