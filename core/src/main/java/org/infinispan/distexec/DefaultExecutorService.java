@@ -62,8 +62,9 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Infinispan's implementation of an {@link ExecutorService}. This ExecutorService provides methods
- * to submit tasks for an execution on a cluster of Infinispan nodes.
+ * Infinispan's implementation of an {@link ExecutorService} and {@link DistributedExecutorService}.
+ * This ExecutorService provides methods to submit tasks for an execution on a cluster of Infinispan
+ * nodes.
  * <p>
  * 
  * 
@@ -77,8 +78,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 5.0
  * 
  */
-public class DefaultExecutorService extends AbstractExecutorService implements
-         DistributedExecutorService {
+public class DefaultExecutorService extends AbstractExecutorService implements DistributedExecutorService {
 
    private static final Log log = LogFactory.getLog(DefaultExecutorService.class);
    protected final AtomicBoolean isShutdown = new AtomicBoolean(false);

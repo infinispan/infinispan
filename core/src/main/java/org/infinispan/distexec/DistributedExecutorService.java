@@ -56,20 +56,17 @@ public interface DistributedExecutorService extends ExecutorService {
     * as input. If all keys are not available locally at node N they will be retrieved from the
     * cluster.
     * 
-    * @param <T>
-    * @param <K>
-    * @param task
-    * @param input
-    * @return
+    * @param task a task to execute across Infinispan cluster
+    * @param input input keys for this task, effective if and only if task is instance of {@link DistributedCallable} 
+    * @return a list of Futures, one future per Infinispan cluster node where task was executed
     */
    public <T, K> Future<T> submit(Callable<T> task, K... input);
 
    /**
     * Submits the given Callable task for an execution on all available Infinispan nodes.
     * 
-    * @param <T>
-    * @param task
-    * @return
+    * @param task a task to execute across Infinispan cluster
+    * @return a list of Futures, one future per Infinispan cluster node where task was executed
     */
    public <T> List<Future<T>> submitEverywhere(Callable<T> task);
 
@@ -82,11 +79,9 @@ public interface DistributedExecutorService extends ExecutorService {
     * migrate given Callable instance to those nodes, execute it and return result as a list of
     * Futures
     * 
-    * @param <T>
-    * @param <K>
-    * @param task
-    * @param input
-    * @return
+    * @param task a task to execute across Infinispan cluster
+    * @param input input keys for this task, effective if and only if task is instance of {@link DistributedCallable} 
+    * @return a list of Futures, one future per Infinispan cluster node where task was executed
     */
    public <T, K > List<Future<T>> submitEverywhere(Callable<T> task, K... input);
 }

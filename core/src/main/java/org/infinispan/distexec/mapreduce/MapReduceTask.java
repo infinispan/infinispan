@@ -18,7 +18,6 @@
  */
 package org.infinispan.distexec.mapreduce;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -63,7 +62,7 @@ import org.infinispan.util.logging.LogFactory;
  * and {@link Reducer} seamlessly across Infinispan nodes.
  * <p>
  * 
- * Unless otherwise specified using {@link MapReduceTask#onKeys(Serializable...)} filter all available 
+ * Unless otherwise specified using {@link MapReduceTask#onKeys(Object...)} filter all available 
  * key/value pairs of a specified cache will be used as input data for this task.
  * 
  * For example, MapReduceTask that counts number of word occurrences in a particular cache where 
@@ -82,7 +81,7 @@ import org.infinispan.util.logging.LogFactory;
  * 
  * <pre>
  *    private static class WordCountMapper implements Mapper&lt;String, String, String,Integer&gt; {
- *     @Override
+ *     
  *     public void map(String key, String value, Collector&lt;String, Integer&gt; collector) {
  *        StringTokenizer tokens = new StringTokenizer(value);
  *       while (tokens.hasMoreElements()) {
@@ -93,7 +92,7 @@ import org.infinispan.util.logging.LogFactory;
  *  }
  *
  *   private static class WordCountReducer implements Reducer&lt;String, Integer&gt; {
- *      @Override
+ *     
  *      public Integer reduce(String key, Iterator&lt;Integer&gt; iter) {
  *         int sum = 0;
  *         while (iter.hasNext()) {
@@ -112,7 +111,7 @@ import org.infinispan.util.logging.LogFactory;
  * <p>
  * 
  * If you are not familiar with concept of map reduce distributed execution model 
- * start here {@link http://labs.google.com/papers/mapreduce.html}
+ * start with Google's MapReduce research <a href="http://labs.google.com/papers/mapreduce.html">paper</a>.
  * 
  * 
  * @author Manik Surtani
@@ -121,7 +120,7 @@ import org.infinispan.util.logging.LogFactory;
  * 
  * @since 5.0
  */
-public class MapReduceTask<KIn extends Serializable, VIn extends Serializable, KOut extends Serializable, VOut extends Serializable> {
+public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
    private static final Log log = LogFactory.getLog(MapReduceTask.class);
 

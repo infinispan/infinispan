@@ -19,9 +19,10 @@
 package org.infinispan.distexec.mapreduce;
 
 /**
- * OutputCollector is the intermediate key/value result data output collector for {@link Mapper}
+ * OutputCollector is the intermediate key/value result data output collector given to each {@link Mapper}
  * 
- * @see Mapper
+ * @see Mapper#map(Object, Object, Collector)
+ * 
  * @author Mircea Markus
  * @author Sanne Grinovero
  * @since 5.0
