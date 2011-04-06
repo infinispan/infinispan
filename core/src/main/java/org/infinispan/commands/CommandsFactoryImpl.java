@@ -26,9 +26,11 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
+import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
+import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -53,6 +55,8 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.distexec.mapreduce.Mapper;
+import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.KnownComponentNames;
@@ -76,6 +80,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import static org.infinispan.commands.control.RehashControlCommand.Type.LEAVE_DRAIN_TX;
 import static org.infinispan.commands.control.RehashControlCommand.Type.LEAVE_DRAIN_TX_PREPARES;
@@ -339,6 +344,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
             RemoveRecoveryInfoCommand ftx = (RemoveRecoveryInfoCommand) c;
             ftx.init(recoveryManager);
             break;
+         case MapReduceCommand.COMMAND_ID:
+            MapReduceCommand mrc = (MapReduceCommand)c;
+            mrc.init(this, interceptorChain, icc, distributionManager,cache.getAdvancedCache().getRpcManager().getAddress());
+            break;
+         case DistributedExecuteCommand.COMMAND_ID:
+            DistributedExecuteCommand dec = (DistributedExecuteCommand)c;
+            dec.init(cache);
+            break;   
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -384,4 +397,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(List<Xid> xids) {
       return new RemoveRecoveryInfoCommand(xids, cacheName);
    }
+   
+   @Override
+   public <T> DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys) {
+      return new DistributedExecuteCommand(keys, callable);
+   }
+
+   @Override
+   public MapReduceCommand buildMapReduceCommand(Mapper m, Reducer r, Address sender, Collection keys) {
+      return new MapReduceCommand(m, r, cacheName, keys);
+   }         
 }

@@ -24,9 +24,11 @@ package org.infinispan.commands;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
+import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -47,6 +49,8 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
+import org.infinispan.distexec.mapreduce.Mapper;
+import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -58,6 +62,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * A factory to build commands, initializing and injecting dependencies accordingly.  Commands built for a specific,
@@ -306,4 +311,25 @@ public interface CommandsFactory {
     * Builds a {@link org.infinispan.commands.remote.RemoveRecoveryInfoCommand}.
     */
    RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(List<Xid> xids);
+   
+   /**
+    * Builds a DistributedExecuteCommand used for migration and execution of distributed Callables and Runnables. 
+    * 
+    * @param callable the callable task
+    * @param sender sender's Address
+    * @param keys keys used in Callable 
+    * @return a DistributedExecuteCommand
+    */
+   <T>DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys);
+   
+   /**
+    * Builds a MapReduceCommand used for migration and execution of MapReduce tasks.
+    * 
+    * @param m Mapper for MapReduceTask
+    * @param r Reducer for MapReduceTask
+    * @param sender sender's Address
+    * @param keys keys used in MapReduceTask
+    * @return a MapReduceCommand
+    */
+   MapReduceCommand buildMapReduceCommand(Mapper m, Reducer r, Address sender, Collection keys);
 }

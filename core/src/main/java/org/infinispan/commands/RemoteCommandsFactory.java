@@ -5,7 +5,9 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.module.ModuleCommandFactory;
+import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.RemoveRecoveryInfoCommand;
 import org.infinispan.commands.remote.GetInDoubtTransactionsCommand;
@@ -136,6 +138,12 @@ public class RemoteCommandsFactory {
          case GetInDoubtTransactionsCommand.COMMAND_ID:
             command = new GetInDoubtTransactionsCommand();
             break;
+         case MapReduceCommand.COMMAND_ID:
+            command = new MapReduceCommand();    
+            break;
+         case DistributedExecuteCommand.COMMAND_ID:
+            command = new DistributedExecuteCommand<Object>();
+            break;   
          default:
             ModuleCommandFactory mcf = commandFactories.get(id);
             if (mcf != null)
