@@ -671,4 +671,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Could not register object with name: %s (%s)", id = 138)
    void couldNotRegisterObjectName(ObjectName objectName, InstanceAlreadyExistsException e);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Infinispan configuration schema could not be resolved locally nor fetched from URL. Local path=%s, schema path=%s, schema URL=%s", id = 139)
+   void couldNotResolveConfigurationSchema(String localPath, String schemaPath, String schemaURL);
+
 }

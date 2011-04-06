@@ -70,9 +70,7 @@ public class PropsKeyedObjectPoolFactory extends GenericKeyedObjectPoolFactory {
    public Object getValue(Properties p, String name, Object defaultValue) {
       Object propValue = p.get(name);
       if (propValue == null) {
-         if (log.isTraceEnabled()) {
-            log.tracef("%s property not specified, using default value(%)", name, defaultValue);
-         }
+         log.tracef("%s property not specified, using default value (%s)", name, defaultValue);
          return defaultValue;
       } else {
          log.tracef("%s = %s", name, propValue);
