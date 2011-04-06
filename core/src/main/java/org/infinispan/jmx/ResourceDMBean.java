@@ -97,7 +97,7 @@ public class ResourceDMBean implements DynamicMBean {
       for (AttributeEntry entry : atts.values()) {
          info = entry.getInfo();
          attrInfo[i++] = info;
-         if (log.isInfoEnabled()) {
+         if (log.isTraceEnabled()) {
             log.trace("Attribute " + info.getName() + "[r=" + info.isReadable() + ",w="
                     + info.isWritable() + ",is=" + info.isIs() + ",type=" + info.getType() + "]");
          }

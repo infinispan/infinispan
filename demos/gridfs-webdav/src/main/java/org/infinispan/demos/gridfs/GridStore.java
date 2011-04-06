@@ -102,14 +102,14 @@ public class GridStore implements IWebdavStore {
    }
 
    public void createFolder(ITransaction transaction, String uri) throws WebdavException {
-      log.trace("GridStore.createFolder(" + uri + ")");
+      log.trace("GridStore.createFolder(%s)", uri);
       File file = fs.getFile(root, uri);
       if (!file.mkdir())
          throw new WebdavException("cannot create folder: " + uri);
    }
 
    public void createResource(ITransaction transaction, String uri) throws WebdavException {
-      log.trace("GridStore.createResource(" + uri + ")");
+      log.trace("GridStore.createResource(%s)", uri);
       File file = fs.getFile(root, uri);
       try {
          if (!file.createNewFile())
@@ -125,7 +125,7 @@ public class GridStore implements IWebdavStore {
                                   InputStream is, String contentType, String characterEncoding)
            throws WebdavException {
 
-      log.trace("GridStore.setResourceContent(" + uri + ")");
+      log.trace("GridStore.setResourceContent(%s)", uri);
       File file = fs.getFile(root, uri);
       try {
          OutputStream os = fs.getOutput((GridFile) file);
@@ -159,7 +159,7 @@ public class GridStore implements IWebdavStore {
    }
 
    public String[] getChildrenNames(ITransaction transaction, String uri) throws WebdavException {
-      log.trace("GridStore.getChildrenNames(" + uri + ")");
+      log.trace("GridStore.getChildrenNames(%s)", uri);
       File file = fs.getFile(root, uri);
       String[] childrenNames = null;
       if (file.isDirectory()) {
@@ -180,13 +180,13 @@ public class GridStore implements IWebdavStore {
    public void removeObject(ITransaction transaction, String uri) throws WebdavException {
       File file = fs.getFile(root, uri);
       boolean success = file.delete();
-      log.trace("GridStore.removeObject(" + uri + ")=" + success);
+      log.trace("GridStore.removeObject(%s)=%s", uri, success);
       if (!success)
          throw new WebdavException("cannot delete object: " + uri);
    }
 
    public InputStream getResourceContent(ITransaction transaction, String uri) throws WebdavException {
-      log.trace("GridStore.getResourceContent(" + uri + ")");
+      log.trace("GridStore.getResourceContent(%s)", uri);
       File file = fs.getFile(root, uri);
 
       InputStream in;
@@ -202,7 +202,7 @@ public class GridStore implements IWebdavStore {
    }
 
    public long getResourceLength(ITransaction transaction, String uri) throws WebdavException {
-      log.trace("GridStore.getResourceLength(" + uri + ")");
+      log.trace("GridStore.getResourceLength(%s)", uri);
       File file = fs.getFile(root, uri);
       return file.length();
    }

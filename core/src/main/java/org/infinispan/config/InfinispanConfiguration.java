@@ -63,7 +63,7 @@ import java.util.Map;
  * InfinispanConfiguration encapsulates root component of Infinispan XML configuration. Can be empty
  * for sensible defaults throughout, however that would only give you the most basic of local,
  * non-clustered caches.
- * 
+ *
  * @author Vladimir Blagojevic
  * @since 4.0
  */
@@ -328,33 +328,36 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
       if (localPathToSchema != null) {
          is = fileLookup.lookupFile(localPathToSchema);
          if (is != null) {
-            log.debug("Using schema " + localPathToSchema);
+            log.debug("Using schema %s", localPathToSchema);
             return is;
          }
-         log.debug("Could not find schema on path " + localPathToSchema + ", resolving "
-                 + SCHEMA_SYSTEM_PROPERTY + " to " + schemaPath());
+         if (log.isDebugEnabled()) {
+            log.debug("Could not find schema on path %s, resolving %s to %s",
+                       localPathToSchema, SCHEMA_SYSTEM_PROPERTY, schemaPath());
+         }
       }
 
       //2. resolve local schema path in infinispan distro
       is = fileLookup.lookupFile(schemaPath());
       if (is != null) {
-         log.debug("Using schema " + schemaPath());
+         log.debug("Using schema %s", schemaPath());
          return is;
       }
-      log.debug("Could not find schema on path " + schemaPath() + ", resolving "
-              + SCHEMA_URL_SYSTEM_PROPERTY + " to " + schemaURL());
+      if (log.isDebugEnabled()) {
+         log.debug("Could not find schema on path %s, resolving %s to %s",
+                    schemaPath(), SCHEMA_SYSTEM_PROPERTY, schemaURL());
+      }
 
       //3. resolve URL
       try {
          is = new URL(schemaURL()).openStream();
-         log.debug("Using schema " + schemaURL());
+         log.debug("Using schema %s", schemaURL());
          return is;
       } catch (Exception e) {
       }
 
-      log.warn("Infinispan schema could not be resolved locally nor fetched from URL. Local path="
-              + localPathToSchema + ", schemaPath=" + schemaPath() + ",schemaURL="
-              + schemaURL());
+      log.warn("Infinispan configuration schema could not be resolved locally nor fetched from URL. Local path=%s, schema path=%s, schema URL=%s",
+              localPathToSchema, schemaPath(), schemaURL());
       return null;
    }
 

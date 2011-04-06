@@ -94,7 +94,7 @@ public final class PerCacheExecutorThread extends Thread {
          } catch (InterruptedException e) {
             throw new RuntimeException(e);
          }
-         log.trace("about to process operation " + operation);
+         log.trace("about to process operation %s", operation);
          switch (operation) {
             case BEGGIN_TX: {
                TransactionManager txManager = TestingUtil.getTransactionManager(cache);
@@ -179,7 +179,7 @@ public final class PerCacheExecutorThread extends Thread {
    }
 
    private void setResponse(Object e) {
-      log.trace("setResponse to " + e);
+      log.trace("setResponse to %s", e);
       response = e;
    }
 

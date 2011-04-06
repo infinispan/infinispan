@@ -102,7 +102,7 @@ public class ClassFinder {
             files.add(new File(path));
          }
       }
-      log.debug("Looking for infinispan classes in " + files);     
+      log.debug("Looking for infinispan classes in %s", files);
       if (files.isEmpty()) {
          return Collections.emptyList();
       } else {

@@ -125,8 +125,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
       for (String[] knownJNDIManager : knownJNDIManagers) {
          Object jndiObject;
          try {
-            if (log.isDebugEnabled())
-               log.debug("Trying to lookup TransactionManager for " + knownJNDIManager[1]);
+            log.debug("Trying to lookup TransactionManager for %s", knownJNDIManager[1]);
             jndiObject = ctx.lookup(knownJNDIManager[0]);
          }
          catch (NamingException e) {
@@ -136,7 +135,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
          }
          if (jndiObject instanceof TransactionManager) {
             tm = (TransactionManager) jndiObject;
-            log.debug("Found TransactionManager for " + knownJNDIManager[1]);
+            log.debug("Found TransactionManager for %s", knownJNDIManager[1]);
             return;
          }
       }
