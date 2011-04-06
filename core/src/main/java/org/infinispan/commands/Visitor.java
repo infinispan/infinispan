@@ -22,6 +22,7 @@
 package org.infinispan.commands;
 
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
@@ -90,4 +91,7 @@ public interface Visitor {
    Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable;
 
    Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable;
+   
+   Object visitDistributedExecuteCommand(InvocationContext ctx, DistributedExecuteCommand<?> command) throws Throwable;
+     
 }

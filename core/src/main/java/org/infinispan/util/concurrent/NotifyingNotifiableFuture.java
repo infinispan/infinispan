@@ -8,8 +8,8 @@ import java.util.concurrent.Future;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface NotifyingNotifiableFuture<Object> extends NotifyingFuture<Object> {
+public interface NotifyingNotifiableFuture<T> extends NotifyingFuture<T> {
    void notifyDone();
 
-   void setNetworkFuture(Future<Object> future);
+   void setNetworkFuture(Future<T> future);
 }
