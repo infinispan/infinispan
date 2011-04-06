@@ -360,33 +360,35 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
       if (localPathToSchema != null) {
          is = fileLookup.lookupFile(localPathToSchema);
          if (is != null) {
-            log.debug("Using schema " + localPathToSchema);
+            log.debugf("Using schema %s", localPathToSchema);
             return is;
          }
-         log.debug("Could not find schema on path " + localPathToSchema + ", resolving "
-                 + SCHEMA_SYSTEM_PROPERTY + " to " + schemaPath());
+         if (log.isDebugEnabled()) {
+            log.debugf("Could not find schema on path %s, resolving %s to %s",
+                       localPathToSchema, SCHEMA_SYSTEM_PROPERTY, schemaPath());
+         }
       }
 
       //2. resolve local schema path in infinispan distro
       is = fileLookup.lookupFile(schemaPath());
       if (is != null) {
-         log.debug("Using schema " + schemaPath());
+         log.debugf("Using schema %s", schemaPath());
          return is;
       }
-      log.debug("Could not find schema on path " + schemaPath() + ", resolving "
-              + SCHEMA_URL_SYSTEM_PROPERTY + " to " + schemaURL());
+      if (log.isDebugEnabled()) {
+         log.debugf("Could not find schema on path %s, resolving %s to %s",
+                    schemaPath(), SCHEMA_SYSTEM_PROPERTY, schemaURL());
+      }
 
       //3. resolve URL
       try {
          is = new URL(schemaURL()).openStream();
-         log.debug("Using schema " + schemaURL());
+         log.debugf("Using schema %s", schemaURL());
          return is;
       } catch (Exception e) {
       }
 
-      log.warn("Infinispan schema could not be resolved locally nor fetched from URL. Local path="
-              + localPathToSchema + ", schemaPath=" + schemaPath() + ",schemaURL="
-              + schemaURL());
+      log.couldNotResolveConfigurationSchema(localPathToSchema, schemaPath(), schemaURL());
       return null;
    }
 
