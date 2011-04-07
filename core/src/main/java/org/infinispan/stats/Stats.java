@@ -36,6 +36,12 @@ public interface Stats {
    long getTimeSinceStart();
 
    /**
+    * Returns the number of entries currently in this cache instance. When
+    * the cache is configured with distribution, this method only returns the
+    * number of entries in the local cache instance. In other words, it does
+    * not attempt to communicate with other nodes to find out about the data
+    * stored in other nodes in the cluster that is not available locally.
+    *
     * @return Number of entries currently in the cache.
     */
    int getCurrentNumberOfEntries();
