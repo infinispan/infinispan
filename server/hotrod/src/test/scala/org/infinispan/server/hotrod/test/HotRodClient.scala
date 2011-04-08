@@ -5,15 +5,12 @@ import org.jboss.netty.bootstrap.ClientBootstrap
 import java.net.InetSocketAddress
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
 import org.jboss.netty.channel._
-import org.jboss.netty.buffer.{ChannelBuffer, ChannelBuffers}
-import org.jboss.netty.handler.codec.replay.ReplayingDecoder
+import org.jboss.netty.buffer.ChannelBuffer
 import org.testng.Assert._
 import org.infinispan.server.hotrod._
 import org.infinispan.server.hotrod.Response
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.OperationResponse._
-import org.infinispan.server.core.transport.NoState
-import org.infinispan.server.core.transport.netty.{ChannelBufferAdapter}
 import org.infinispan.server.core.Logging
 import collection.mutable
 import collection.immutable
@@ -23,6 +20,8 @@ import java.util.concurrent.{ConcurrentHashMap, Executors}
 import java.util.concurrent.atomic.{AtomicLong}
 import org.infinispan.test.TestingUtil
 import org.infinispan.util.{ByteArrayKey, Util}
+import org.infinispan.server.core.transport.ExtendedChannelBuffer._
+import org.jboss.netty.handler.codec.replay.{VoidEnum, ReplayingDecoder}
 
 /**
  * A very simply Hot Rod client for testing purpouses. It's a quick and dirty client implementation done for testing
@@ -225,46 +224,46 @@ private class Encoder extends OneToOneEncoder {
       trace("Encode %s so that it's sent to the server", msg)
       msg match {
          case partial: PartialOp => {
-            val buffer = new ChannelBufferAdapter(ChannelBuffers.dynamicBuffer)
+            val buffer = dynamicBuffer
             buffer.writeByte(partial.magic.asInstanceOf[Byte]) // magic
-            buffer.writeUnsignedLong(partial.id) // message id
+            writeUnsignedLong(partial.id, buffer) // message id
             buffer.writeByte(10) // version
             buffer.writeByte(partial.code) // opcode
-            buffer.getUnderlyingChannelBuffer
+            buffer
          }
          case op: Op => {
-            val buffer = new ChannelBufferAdapter(ChannelBuffers.dynamicBuffer)
+            val buffer = dynamicBuffer
             buffer.writeByte(op.magic.asInstanceOf[Byte]) // magic
-            buffer.writeUnsignedLong(op.id) // message id
+            writeUnsignedLong(op.id, buffer) // message id
             buffer.writeByte(10) // version
             buffer.writeByte(op.code) // opcode
             if (!op.cacheName.isEmpty) {
-               buffer.writeRangedBytes(op.cacheName.getBytes()) // cache name length + cache name
+               writeRangedBytes(op.cacheName.getBytes(), buffer) // cache name length + cache name
             } else {
-               buffer.writeUnsignedInt(0) // Zero length
+               writeUnsignedInt(0, buffer) // Zero length
             }
-            buffer.writeUnsignedInt(op.flags) // flags
+            writeUnsignedInt(op.flags, buffer) // flags
             buffer.writeByte(op.clientIntel) // client intelligence
-            buffer.writeUnsignedInt(op.topologyId) // topology id
-            buffer.writeRangedBytes(new Array[Byte](0))
+            writeUnsignedInt(op.topologyId, buffer) // topology id
+            writeRangedBytes(new Array[Byte](0), buffer)
             if (op.code != 0x13 && op.code != 0x15 && op.code != 0x17 && op.code != 0x19) { // if it's a key based op...
-               buffer.writeRangedBytes(op.key) // key length + key
+               writeRangedBytes(op.key, buffer) // key length + key
                if (op.value != null) {
                   if (op.code != 0x0D) { // If it's not removeIfUnmodified...
-                     buffer.writeUnsignedInt(op.lifespan) // lifespan
-                     buffer.writeUnsignedInt(op.maxIdle) // maxIdle
+                     writeUnsignedInt(op.lifespan, buffer) // lifespan
+                     writeUnsignedInt(op.maxIdle, buffer) // maxIdle
                   }
                   if (op.code == 0x09 || op.code == 0x0D) {
                      buffer.writeLong(op.version)
                   }
                   if (op.code != 0x0D) { // If it's not removeIfUnmodified...
-                     buffer.writeRangedBytes(op.value) // value length + value
+                     writeRangedBytes(op.value, buffer) // value length + value
                   }
                }
             } else if (op.code == 0x19) {
-               buffer.writeUnsignedInt(op.asInstanceOf[BulkGetOp].count) // Entry count
+               writeUnsignedInt(op.asInstanceOf[BulkGetOp].count, buffer) // Entry count
             }
-            buffer.getUnderlyingChannelBuffer
+            buffer
          }
       }
    }
@@ -275,38 +274,37 @@ object HotRodClient {
    val idCounter = new AtomicLong
 }
 
-private class Decoder(client: HotRodClient) extends ReplayingDecoder[NoState] with Logging {
+private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] with Logging {
 
-   override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: NoState): Object = {
+   override def decode(ctx: ChannelHandlerContext, ch: Channel, buf: ChannelBuffer, state: VoidEnum): Object = {
       trace("Decode response from server")
-      val buf = new ChannelBufferAdapter(buffer)
       val magic = buf.readUnsignedByte
-      val id = buf.readUnsignedLong
+      val id = readUnsignedLong(buf)
       val opCode = OperationResponse.apply(buf.readUnsignedByte)
       val status = OperationStatus.apply(buf.readUnsignedByte)
       val topologyChangeMarker = buf.readUnsignedByte
       val op = client.idToOp.get(id)
       val topologyChangeResponse =
          if (topologyChangeMarker == 1) {
-            val topologyId = buf.readUnsignedInt
+            val topologyId = readUnsignedInt(buf)
             if (op.clientIntel == 2) {
-               val numberClusterMembers = buf.readUnsignedInt
+               val numberClusterMembers = readUnsignedInt(buf)
                val viewArray = new Array[TopologyAddress](numberClusterMembers)
                for (i <- 0 until numberClusterMembers) {
-                  val host = buf.readString
-                  val port = buf.readUnsignedShort
+                  val host = readString(buf)
+                  val port = readUnsignedShort(buf)
                   viewArray(i) = TopologyAddress(host, port, Map.empty, null)
                }
                Some(TopologyAwareResponse(TopologyView(topologyId, viewArray.toList)))
             } else if (op.clientIntel == 3) {
-               val numOwners = buf.readUnsignedShort
+               val numOwners = readUnsignedShort(buf)
                val hashFunction = buf.readByte
-               val hashSpace = buf.readUnsignedInt
-               val numberClusterMembers = buf.readUnsignedInt
+               val hashSpace = readUnsignedInt(buf)
+               val numberClusterMembers = readUnsignedInt(buf)
                val viewArray = new Array[TopologyAddress](numberClusterMembers)
                for (i <- 0 until numberClusterMembers) {
-                  val host = buf.readString
-                  val port = buf.readUnsignedShort
+                  val host = readString(buf)
+                  val port = readUnsignedShort(buf)
                   val hashId = buf.readInt
                   viewArray(i) = TopologyAddress(host, port, Map(op.cacheName -> hashId), null)
                }
@@ -319,17 +317,17 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[NoState] wi
          }
       val resp: Response = opCode match {
          case StatsResponse => {
-            val size = buf.readUnsignedInt
+            val size = readUnsignedInt(buf)
             val stats = mutable.Map.empty[String, String]
             for (i <- 1 to size) {
-               stats += (buf.readString -> buf.readString)
+               stats += (readString(buf) -> readString(buf))
             }
             new TestStatsResponse(id, op.cacheName, op.clientIntel, immutable.Map[String, String]() ++ stats, op.topologyId, topologyChangeResponse)
          }
          case PutResponse | PutIfAbsentResponse | ReplaceResponse | ReplaceIfUnmodifiedResponse
               | RemoveResponse | RemoveIfUnmodifiedResponse => {
             if (op.flags == 1) {
-               val length = buf.readUnsignedInt
+               val length = readUnsignedInt(buf)
                if (length == 0) {
                   new TestResponseWithPrevious(id, op.cacheName, op.clientIntel, opCode, status,
                      op.topologyId, None, topologyChangeResponse)
@@ -346,7 +344,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[NoState] wi
          case GetWithVersionResponse  => {
             if (status == Success) {
                val version = buf.readLong
-               val data = Some(buf.readRangedBytes)
+               val data = Some(readRangedBytes(buf))
                new TestGetWithVersionResponse(id, op.cacheName, op.clientIntel, opCode, status,
                   op.topologyId, data, version, topologyChangeResponse)
             } else{
@@ -356,7 +354,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[NoState] wi
          }
          case GetResponse => {
             if (status == Success) {
-               val data = Some(buf.readRangedBytes)
+               val data = Some(readRangedBytes(buf))
                new TestGetResponse(id, op.cacheName, op.clientIntel, opCode, status, op.topologyId, data, topologyChangeResponse)
             } else{
                new TestGetResponse(id, op.cacheName, op.clientIntel, opCode, status, op.topologyId, None, topologyChangeResponse)
@@ -366,7 +364,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[NoState] wi
             var done = buf.readByte
             val bulkBuffer = mutable.Map.empty[ByteArrayKey, Array[Byte]]
             while (done == 1) {
-               bulkBuffer += (new ByteArrayKey(buf.readRangedBytes) -> buf.readRangedBytes)
+               bulkBuffer += (new ByteArrayKey(readRangedBytes(buf)) -> readRangedBytes(buf))
                done = buf.readByte
             }
             val bulk = immutable.Map[ByteArrayKey, Array[Byte]]() ++ bulkBuffer
@@ -374,9 +372,9 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[NoState] wi
          }
          case ErrorResponse => {
             if (op == null)
-               new TestErrorResponse(id, "", 0, status, 0, buf.readString, topologyChangeResponse)
+               new TestErrorResponse(id, "", 0, status, 0, readString(buf), topologyChangeResponse)
             else
-               new TestErrorResponse(id, op.cacheName, op.clientIntel, status, op.topologyId, buf.readString, topologyChangeResponse)
+               new TestErrorResponse(id, op.cacheName, op.clientIntel, status, op.topologyId, readString(buf), topologyChangeResponse)
          }
 
       }

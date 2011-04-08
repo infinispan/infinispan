@@ -1,9 +1,8 @@
-package org.infinispan.server.core.transport.netty
+package org.infinispan.server.core.transport
 
 import org.jboss.netty.channel._
 import org.infinispan.server.core.ProtocolServer
 import org.jboss.netty.handler.timeout.IdleStateHandler
-import org.infinispan.server.core.transport.IdleStateHandlerProvider
 import org.jboss.netty.util.{HashedWheelTimer, Timer}
 
 /**
@@ -22,7 +21,7 @@ class NettyChannelPipelineFactory(server: ProtocolServer, encoder: ChannelDownst
 
    override def getPipeline: ChannelPipeline = {
       val pipeline = Channels.pipeline
-      pipeline.addLast("decoder", new DecoderAdapter(server.getDecoder, transport))
+      pipeline.addLast("decoder", server.getDecoder)
       if (encoder != null)
          pipeline.addLast("encoder", encoder)
       // Idle timeout logic is disabled with -1 or 0 values

@@ -2,10 +2,10 @@ package org.infinispan.server.hotrod
 
 import org.infinispan.server.core.RequestParameters
 import org.infinispan.server.core.CacheValue
-import org.infinispan.server.core.transport.{ChannelBuffer}
 import org.infinispan.Cache
 import org.infinispan.stats.Stats
 import org.infinispan.util.ByteArrayKey
+import org.jboss.netty.buffer.ChannelBuffer
 
 /**
  * This class represents the work to be done by a decoder of a particular Hot Rod protocol version.

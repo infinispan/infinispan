@@ -51,8 +51,8 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
-import org.infinispan.server.core.transport.Encoder;
-import org.infinispan.server.core.transport.Decoder;
+import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
+import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
 
 /**
  * An HTTP server which serves Web Socket requests on an Infinispan cacheManager.
@@ -70,11 +70,11 @@ public class WebSocketServer extends AbstractProtocolServer {
       super("WebSocketServerThread");
    }
 
-   public Encoder getEncoder() {
+   public OneToOneEncoder getEncoder() {
       return null;
    }
 
-   public Decoder getDecoder() {
+   public ReplayingDecoder getDecoder() {
       return null;
    }
 

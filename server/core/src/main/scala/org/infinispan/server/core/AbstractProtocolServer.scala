@@ -1,13 +1,12 @@
 package org.infinispan.server.core
 
 import java.net.InetSocketAddress
-import transport.netty.{EncoderAdapter, NettyTransport}
-import transport.Transport
 import org.infinispan.server.core.VersionGenerator._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.Main._
 import java.util.Properties
 import org.infinispan.util.{TypedProperties, Util}
+import transport.NettyTransport
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -20,7 +19,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
    protected var port: Int = _
    protected var masterThreads: Int = _
    protected var workerThreads: Int = _
-   protected var transport: Transport = _
+   protected var transport: NettyTransport = _
    protected var cacheManager: EmbeddedCacheManager = _
 
    def start(properties: Properties, cacheManager: EmbeddedCacheManager, defaultPort: Int) {
@@ -73,9 +72,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
 
    def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {
       val address = new InetSocketAddress(host, port)
-      val encoder = getEncoder
-      val nettyEncoder = if (encoder != null) new EncoderAdapter(encoder) else null
-      transport = new NettyTransport(this, nettyEncoder, address, masterThreads, workerThreads, idleTimeout,
+      transport = new NettyTransport(this, getEncoder, address, masterThreads, workerThreads, idleTimeout,
          threadNamePrefix, tcpNoDelay, sendBufSize, recvBufSize)
       transport.start
    }

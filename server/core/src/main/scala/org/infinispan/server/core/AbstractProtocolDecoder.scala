@@ -7,9 +7,12 @@ import java.util.concurrent.TimeUnit
 import org.infinispan.stats.Stats
 import org.infinispan.server.core.VersionGenerator._
 import transport._
-import transport.ChannelBuffers._
 import org.infinispan.util.Util
 import java.io.StreamCorruptedException
+import transport.ExtendedChannelBuffer._
+import org.jboss.netty.handler.codec.replay.ReplayingDecoder
+import org.jboss.netty.buffer.ChannelBuffer
+import org.jboss.netty.channel._
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -17,7 +20,8 @@ import java.io.StreamCorruptedException
  * @author Galder Zamarreño
  * @since 4.1
  */
-abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
+abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTransport)
+        extends ReplayingDecoder[DecoderState](true) {
    import AbstractProtocolDecoder._
 
    type SuitableParameters <: RequestParameters
@@ -26,7 +30,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
    private val versionCounter = new AtomicInteger
    private val isTrace = isTraceEnabled
 
-   override def decode(ctx: ChannelHandlerContext, buffer: ChannelBuffer): AnyRef = {
+   override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
       var optionalHeader: Option[SuitableHeader] = None
       try {
          optionalHeader = readHeader(buffer)
@@ -57,7 +61,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
             // we need to fire the exception explicitly so that requests can
             // carry on being processed on same connection after a client error
             if (isClientError) {
-               Channels.fireExceptionCaught(ctx.getChannel, serverException)
+               Channels.fireExceptionCaught(ch, serverException)
                null
             } else {
                throw serverException
@@ -73,7 +77,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
       (k, params)
    }
 
-   def decodeLast(ctx: ChannelHandlerContext, buffer: ChannelBuffer): AnyRef = null // no-op
+   override def decodeLast(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = null // no-op
 
    private def writeResponse(ch: Channel, response: AnyRef) {
       if (response != null) {
@@ -170,6 +174,11 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
       }
    }
 
+   override def channelOpen(ctx: ChannelHandlerContext, e: ChannelStateEvent) {
+      transport.acceptedChannels.add(e.getChannel)
+      super.channelOpen(ctx, e)
+   }
+
    protected def readHeader(b: ChannelBuffer): Option[SuitableHeader]
 
    protected def getCache(h: SuitableHeader): Cache[K, V]
@@ -235,7 +244,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
 
 object AbstractProtocolDecoder extends Logging {
    private val SecondsInAMonth = 60 * 60 * 24 * 30
-   private val DefaultTimeUnit = TimeUnit.MILLISECONDS 
+   private val DefaultTimeUnit = TimeUnit.MILLISECONDS
 }
 
 class RequestHeader(val op: Enumeration#Value) {
