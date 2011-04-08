@@ -30,6 +30,7 @@ import static org.hibernate.TestLogger.LOG;
 import java.util.Set;
 
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
+import org.jboss.logging.Logger;
 
 import org.hibernate.cache.GeneralDataRegion;
 import org.hibernate.cache.QueryResultsRegion;
@@ -43,7 +44,6 @@ import org.junit.Test;
 
 import org.hibernate.test.cache.infinispan.util.CacheTestUtil;
 
-import static org.hibernate.testing.TestLogger.LOG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -54,6 +54,7 @@ import static org.junit.Assert.assertNull;
  * @since 3.5
  */
 public abstract class AbstractGeneralDataRegionTestCase extends AbstractRegionImplTestCase {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     protected static final String KEY = "Key";
@@ -376,6 +377,10 @@ public abstract class AbstractGeneralDataRegionTestCase extends AbstractRegionIm
 }
 >>>>>>> HHH-5949 - Migrate, complete and integrate TransactionFactory as a service
 =======
+=======
+	private static final Logger log = Logger.getLogger( AbstractGeneralDataRegionTestCase.class );
+
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 	protected static final String KEY = "Key";
 
 	protected static final String VALUE1 = "value1";
@@ -544,7 +549,7 @@ public abstract class AbstractGeneralDataRegionTestCase extends AbstractRegionIm
 			BatchModeTransactionManager.getInstance().rollback();
 		}
 		catch (Exception e) {
-			LOG.error( e.getMessage(), e );
+			log.error( e.getMessage(), e );
 		}
 	}
 }

@@ -48,6 +48,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
+import org.jboss.logging.Logger;
 
 >>>>>>> HHH-5942 - Migrate to JUnit 4
 import org.hibernate.cache.CacheDataDescription;
@@ -79,7 +80,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 =======
 
-import static org.hibernate.testing.TestLogger.LOG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -92,6 +92,7 @@ import static org.junit.Assert.assertTrue;
  * @since 3.5
  */
 public abstract class AbstractEntityRegionAccessStrategyTestCase extends AbstractNonFunctionalTestCase {
+	private static final Logger log = Logger.getLogger( AbstractEntityRegionAccessStrategyTestCase.class );
 
 <<<<<<< HEAD
     public static final String REGION_NAME = "test/com.foo.test";
@@ -1062,12 +1063,20 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 		}
 
 		if ( node1Exception != null ) {
+<<<<<<< HEAD
 			log.error( "node1 saw an exception", node1Exception );
+=======
+            log.error("node1 saw an exception", node1Exception);
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 			assertEquals( "node1 saw no exceptions", null, node1Exception );
 		}
 
 		if ( node2Exception != null ) {
+<<<<<<< HEAD
 			log.error( "node2 saw an exception", node2Exception );
+=======
+            log.error("node2 saw an exception", node2Exception);
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 			assertEquals( "node2 saw no exceptions", null, node2Exception );
 		}
 	}
@@ -1132,7 +1141,11 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 					BatchModeTransactionManager.getInstance().commit();
 				}
 				catch (Exception e) {
+<<<<<<< HEAD
 					log.error( "node1 caught exception", e );
+=======
+                    log.error("node1 caught exception", e);
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 					node1Exception = e;
 					rollback();
 				}
@@ -1173,7 +1186,11 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 					BatchModeTransactionManager.getInstance().commit();
 				}
 				catch (Exception e) {
+<<<<<<< HEAD
 					log.error( "node2 caught exception", e );
+=======
+                    log.error("node2 caught exception", e);
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 					node2Exception = e;
 					rollback();
 				}
@@ -1237,7 +1254,11 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 					BatchModeTransactionManager.getInstance().commit();
 				}
 				catch (Exception e) {
+<<<<<<< HEAD
 					log.error( "node1 caught exception", e );
+=======
+                    log.error("node1 caught exception", e);
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 					node1Exception = e;
 					rollback();
 				}
@@ -1273,7 +1294,11 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 					BatchModeTransactionManager.getInstance().commit();
 				}
 				catch (Exception e) {
+<<<<<<< HEAD
 					log.error( "node1 caught exception", e );
+=======
+                    log.error("node1 caught exception", e);
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 					node1Exception = e;
 					rollback();
 				}
@@ -1326,6 +1351,7 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 				try {
 					long txTimestamp = System.currentTimeMillis();
 					BatchModeTransactionManager.getInstance().begin();
+<<<<<<< HEAD
 					log.debug( "Transaction began, get initial value" );
 					assertEquals( "Correct initial value", VALUE1, localAccessStrategy.get( KEY, txTimestamp ) );
 					log.debug( "Now update value" );
@@ -1334,11 +1360,25 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 					readLatch.countDown();
 					readerUnlocked = true;
 					log.debug( "Await commit" );
+=======
+                    log.debug("Transaction began, get initial value");
+					assertEquals( "Correct initial value", VALUE1, localAccessStrategy.get( KEY, txTimestamp ) );
+                    log.debug("Now update value");
+					localAccessStrategy.update( KEY, VALUE2, new Integer( 2 ), new Integer( 1 ) );
+                    log.debug("Notify the read latch");
+					readLatch.countDown();
+					readerUnlocked = true;
+                    log.debug("Await commit");
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 					commitLatch.await();
 					BatchModeTransactionManager.getInstance().commit();
 				}
 				catch (Exception e) {
+<<<<<<< HEAD
 					log.error( "node1 caught exception", e );
+=======
+                    log.error("node1 caught exception", e);
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 					node1Exception = e;
 					rollback();
 				}
@@ -1350,7 +1390,11 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 					if ( !readerUnlocked ) {
 						readLatch.countDown();
 					}
+<<<<<<< HEAD
 					log.debug( "Completion latch countdown" );
+=======
+                    log.debug("Completion latch countdown");
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 					completionLatch.countDown();
 				}
 			}
@@ -1362,9 +1406,15 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 				try {
 					long txTimestamp = System.currentTimeMillis();
 					BatchModeTransactionManager.getInstance().begin();
+<<<<<<< HEAD
 					log.debug( "Transaction began, await read latch" );
 					readLatch.await();
 					log.debug( "Read latch acquired, verify local access strategy" );
+=======
+                    log.debug("Transaction began, await read latch");
+					readLatch.await();
+                    log.debug("Read latch acquired, verify local access strategy");
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 
 					// This won't block w/ mvc and will read the old value
 					Object expected = VALUE1;
@@ -1373,7 +1423,11 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 					BatchModeTransactionManager.getInstance().commit();
 				}
 				catch (Exception e) {
+<<<<<<< HEAD
 					log.error( "node1 caught exception", e );
+=======
+                    log.error("node1 caught exception", e);
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 					node1Exception = e;
 					rollback();
 				}
@@ -1383,7 +1437,11 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 				}
 				finally {
 					commitLatch.countDown();
+<<<<<<< HEAD
 					log.debug( "Completion latch countdown" );
+=======
+                    log.debug("Completion latch countdown");
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 					completionLatch.countDown();
 				}
 			}
@@ -1471,7 +1529,11 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 		sleep( 250 );
 
 		if ( evict ) {
+<<<<<<< HEAD
 			log.debug( "Call evict all locally" );
+=======
+            log.debug("Call evict all locally");
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 			localAccessStrategy.evictAll();
 		}
 		else {
@@ -1512,7 +1574,11 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 			BatchModeTransactionManager.getInstance().rollback();
 		}
 		catch (Exception e) {
+<<<<<<< HEAD
 			log.error( e.getMessage(), e );
+=======
+            log.error(e.getMessage(), e);
+>>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
 		}
 	}
 <<<<<<< HEAD
