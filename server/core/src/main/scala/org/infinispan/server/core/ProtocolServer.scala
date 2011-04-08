@@ -1,8 +1,9 @@
 package org.infinispan.server.core
 
-import transport.{Decoder, Encoder}
 import org.infinispan.manager.{EmbeddedCacheManager}
 import java.util.Properties
+import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
+import org.jboss.netty.handler.codec.replay.ReplayingDecoder
 
 /**
  * Represents a protocol compliant server.
@@ -35,11 +36,11 @@ trait ProtocolServer {
     * back to client. This method can return null if the server has no encoder. You can find an example of the server
     * that has no encoder in the Memcached server.
     */
-   def getEncoder: Encoder
+   def getEncoder: OneToOneEncoder
 
    /**
     * Gets the decoder for this protocol server. The decoder is responsible for reading client requests.
     * This method cannot return null.
     */
-   def getDecoder: Decoder
+   def getDecoder: ReplayingDecoder[DecoderState]
 }

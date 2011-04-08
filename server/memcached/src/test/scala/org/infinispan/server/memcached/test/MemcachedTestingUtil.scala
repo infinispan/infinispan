@@ -4,7 +4,6 @@ import java.lang.reflect.Method
 import net.spy.memcached.{DefaultConnectionFactory, MemcachedClient}
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicInteger
-import org.infinispan.server.core.transport.Decoder
 import org.infinispan.server.memcached.{MemcachedDecoder, MemcachedValue, MemcachedServer}
 import org.infinispan.manager.EmbeddedCacheManager
 import java.util.{Properties, Arrays}
@@ -56,8 +55,8 @@ trait MemcachedTestingUtil {
 
    def startMemcachedTextServer(cacheManager: EmbeddedCacheManager, port: Int, cacheName: String): MemcachedServer = {
       val server = new MemcachedServer {
-         override def getDecoder: Decoder =
-            new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue](cacheName), scheduler)
+         override def getDecoder =
+            new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue](cacheName), scheduler, transport)
 
          override def startDefaultCache = getCacheManager.getCache(cacheName)
       }

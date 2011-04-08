@@ -2,11 +2,9 @@ package org.infinispan.server.core
 
 import org.testng.annotations.Test
 import java.util.Properties
-import transport.{Decoder, Encoder}
 import org.infinispan.server.core.Main._
 import org.infinispan.manager.{DefaultCacheManager, EmbeddedCacheManager}
 import org.testng.Assert._
-import java.net.InetSocketAddress
 import java.lang.reflect.Method
 import org.infinispan.util.TypedProperties
 
@@ -180,9 +178,9 @@ class AbstractProtocolServerTest {
          super.start(properties, cacheManager, 12345)
       }
 
-      override def getEncoder: Encoder = null
+      override def getEncoder = null
 
-      override def getDecoder: Decoder = null
+      override def getDecoder = null
 
       override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int,
                                   typedProps: TypedProperties) {

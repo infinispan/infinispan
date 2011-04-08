@@ -1,7 +1,6 @@
 package org.infinispan.server.memcached
 
 import org.infinispan.server.core.AbstractProtocolServer
-import org.infinispan.server.core.transport.{Decoder, Encoder}
 import java.util.concurrent.Executors
 import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Properties
@@ -22,9 +21,9 @@ class MemcachedServer extends AbstractProtocolServer("Memcached") {
       super.start(properties, cacheManager, 11211)
    }
 
-   override def getEncoder: Encoder = null
+   override def getEncoder = null
 
-   override def getDecoder: Decoder = new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue], scheduler)
+   override def getDecoder = new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue], scheduler, transport)
 
    override def stop {
       super.stop

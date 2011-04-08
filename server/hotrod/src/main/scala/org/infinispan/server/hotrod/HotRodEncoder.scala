@@ -1,13 +1,16 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.server.core.transport.{ChannelBuffer, ChannelHandlerContext, Channel, Encoder}
 import OperationStatus._
-import org.infinispan.server.core.transport.ChannelBuffers._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.Cache
 import org.infinispan.server.core.{CacheValue, Logging}
 import org.infinispan.util.ByteArrayKey
 import scala.collection.JavaConversions._
+import org.jboss.netty.channel.ChannelHandlerContext
+import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
+import org.jboss.netty.channel.Channel
+import org.jboss.netty.buffer.ChannelBuffer
+import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 
 /**
  * Hot Rod specific encoder.
@@ -15,7 +18,7 @@ import scala.collection.JavaConversions._
  * @author Galder Zamarreño
  * @since 4.1
  */
-class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
+class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends OneToOneEncoder {
    import HotRodEncoder._
    import HotRodServer._
 
@@ -23,7 +26,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
    private lazy val topologyCache: Cache[String, TopologyView] =
       if (isClustered) cacheManager.getCache(TopologyCacheName) else null
 
-   override def encode(ctx: ChannelHandlerContext, channel: Channel, msg: AnyRef): AnyRef = {
+   override def encode(ctx: ChannelHandlerContext, ch: Channel, msg: AnyRef): AnyRef = {
       val isTrace = isTraceEnabled
 
       if (isTrace) trace("Encode msg %s", msg)
@@ -33,21 +36,21 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
       msg match {
          case r: ResponseWithPrevious => {
             if (r.previous == None)
-               buffer.writeUnsignedInt(0)
+               writeUnsignedInt(0, buffer)
             else
-               buffer.writeRangedBytes(r.previous.get)
+               writeRangedBytes(r.previous.get, buffer)
          }
          case s: StatsResponse => {
-            buffer.writeUnsignedInt(s.stats.size)
+            writeUnsignedInt(s.stats.size, buffer)
             for ((key, value) <- s.stats) {
-               buffer.writeString(key)
-               buffer.writeString(value)
+               writeString(key, buffer)
+               writeString(value, buffer)
             }
          }
          case g: GetWithVersionResponse => {
             if (g.status == Success) {
                buffer.writeLong(g.version)
-               buffer.writeRangedBytes(g.data.get)
+               writeRangedBytes(g.data.get, buffer)
             }
          }
          case g: BulkGetResponse => {
@@ -61,14 +64,14 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
                }
                for (entry <- iterator) {
                   buffer.writeByte(1) // Not done
-                  buffer.writeRangedBytes(entry.getKey.getData)
-                  buffer.writeRangedBytes(entry.getValue.data)
+                  writeRangedBytes(entry.getKey.getData, buffer)
+                  writeRangedBytes(entry.getValue.data, buffer)
                }
                buffer.writeByte(0) // Done
             }
          }
-         case g: GetResponse => if (g.status == Success) buffer.writeRangedBytes(g.data.get)
-         case e: ErrorResponse => buffer.writeString(e.msg)
+         case g: GetResponse => if (g.status == Success) writeRangedBytes(g.data.get, buffer)
+         case e: ErrorResponse => writeString(e.msg, buffer)
          case _ => if (buffer == null) throw new IllegalArgumentException("Response received is unknown: " + msg);         
       }
       buffer
@@ -101,7 +104,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
    private def writeHeader(r: Response, isTrace: Boolean, topologyResp: AbstractTopologyResponse): ChannelBuffer = {
       val buffer = dynamicBuffer
       buffer.writeByte(Magic.byteValue)
-      buffer.writeUnsignedLong(r.messageId)
+      writeUnsignedLong(r.messageId, buffer)
       buffer.writeByte(r.operation.id.byteValue)
       buffer.writeByte(r.status.id.byteValue)
       if (topologyResp != null) {
@@ -123,25 +126,25 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
    private def writeTopologyHeader(t: TopologyAwareResponse, buffer: ChannelBuffer, isTrace: Boolean) {
       if (isTrace) trace("Write topology change response header %s", t)
       buffer.writeByte(1) // Topology changed
-      buffer.writeUnsignedInt(t.view.topologyId)
-      buffer.writeUnsignedInt(t.view.members.size)
+      writeUnsignedInt(t.view.topologyId, buffer)
+      writeUnsignedInt(t.view.members.size, buffer)
       t.view.members.foreach{address =>
-         buffer.writeString(address.host)
-         buffer.writeUnsignedShort(address.port)
+         writeString(address.host, buffer)
+         writeUnsignedShort(address.port, buffer)
       }
    }
 
    private def writeHashTopologyHeader(t: TopologyAwareResponse, buffer: ChannelBuffer, isTrace: Boolean) {
       if (isTrace) trace("Return limited hash distribution aware header in spite of having a hash aware client %s", t)
       buffer.writeByte(1) // Topology changed
-      buffer.writeUnsignedInt(t.view.topologyId)
-      buffer.writeUnsignedShort(0) // Num key owners
+      writeUnsignedInt(t.view.topologyId, buffer)
+      writeUnsignedShort(0, buffer) // Num key owners
       buffer.writeByte(0) // Hash function
-      buffer.writeUnsignedInt(0) // Hash space
-      buffer.writeUnsignedInt(t.view.members.size)
+      writeUnsignedInt(0, buffer) // Hash space
+      writeUnsignedInt(t.view.members.size, buffer)
       t.view.members.foreach{address =>
-         buffer.writeString(address.host)
-         buffer.writeUnsignedShort(address.port)
+         writeString(address.host, buffer)
+         writeUnsignedShort(address.port, buffer)
          buffer.writeInt(0) // Address' hash id
       }
    }
@@ -149,14 +152,14 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
    private def writeHashTopologyHeader(h: HashDistAwareResponse, buffer: ChannelBuffer, r: Response, isTrace: Boolean) {
       if (isTrace) trace("Write hash distribution change response header %s", h)
       buffer.writeByte(1) // Topology changed
-      buffer.writeUnsignedInt(h.view.topologyId)
-      buffer.writeUnsignedShort(h.numOwners) // Num key owners
+      writeUnsignedInt(h.view.topologyId, buffer)
+      writeUnsignedShort(h.numOwners, buffer) // Num key owners
       buffer.writeByte(h.hashFunction) // Hash function
-      buffer.writeUnsignedInt(h.hashSpace) // Hash space
-      buffer.writeUnsignedInt(h.view.members.size)
+      writeUnsignedInt(h.hashSpace, buffer) // Hash space
+      writeUnsignedInt(h.view.members.size, buffer)
       h.view.members.foreach{address =>
-         buffer.writeString(address.host)
-         buffer.writeUnsignedShort(address.port)
+         writeString(address.host, buffer)
+         writeUnsignedShort(address.port, buffer)
          val hashId = address.hashIds.get(r.cacheName).get
          buffer.writeInt(hashId) // Address' hash id
       }

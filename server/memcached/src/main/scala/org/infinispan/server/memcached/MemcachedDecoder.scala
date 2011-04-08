@@ -9,12 +9,14 @@ import java.nio.channels.ClosedChannelException
 import java.util.concurrent.atomic.AtomicLong
 import org.infinispan.stats.Stats
 import org.infinispan.server.core._
+import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import org.infinispan.{AdvancedCache, Version, CacheException, Cache}
-import org.infinispan.server.core.transport.ChannelBuffers._
 import org.infinispan.util.Util
 import collection.mutable.{HashMap, ListBuffer}
 import scala.collection.immutable
-import transport.{ChannelHandlerContext, ChannelBuffer}
+import org.jboss.netty.buffer.ChannelBuffer
+import org.jboss.netty.channel.ChannelHandlerContext
+import transport.NettyTransport
 
 /**
  * A Memcached protocol specific decoder
@@ -22,8 +24,8 @@ import transport.{ChannelHandlerContext, ChannelBuffer}
  * @author Galder Zamarreño
  * @since 4.1
  */
-class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: ScheduledExecutorService)
-      extends AbstractProtocolDecoder[String, MemcachedValue] with TextProtocolUtil {
+class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: ScheduledExecutorService, transport: NettyTransport)
+      extends AbstractProtocolDecoder[String, MemcachedValue](transport) with TextProtocolUtil {
    import RequestResolver._
 
    type SuitableParameters = MemcachedParameters
