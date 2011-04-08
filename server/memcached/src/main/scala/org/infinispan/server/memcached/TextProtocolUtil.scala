@@ -1,6 +1,6 @@
 package org.infinispan.server.memcached
 
-import org.infinispan.server.core.transport.ChannelBuffer
+import org.jboss.netty.buffer.ChannelBuffer
 
 /**
  * Memcached text protocol utilities.
@@ -60,11 +60,14 @@ trait TextProtocolUtil {
    }
 
    def readLine(buffer: ChannelBuffer): String = {
-      if (buffer.readableBytes > 0)
+      if (readableBytes(buffer) > 0)
          readLine(buffer, new StringBuilder())         
       else
          ""
    }
+
+   private def readableBytes(buffer: ChannelBuffer): Int =
+      buffer.writerIndex - buffer.readerIndex
 
    private def readLine(buffer: ChannelBuffer, sb: StringBuilder): String = {
       var next = buffer.readByte

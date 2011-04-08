@@ -7,10 +7,13 @@ import OperationStatus._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.hotrod.ProtocolFlag._
 import org.infinispan.server.hotrod.OperationResponse._
+import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import java.nio.channels.ClosedChannelException
 import org.infinispan.{CacheException, Cache}
 import org.infinispan.util.ByteArrayKey
 import java.io.{IOException, StreamCorruptedException}
+import org.jboss.netty.buffer.ChannelBuffer
+import org.jboss.netty.channel.ChannelHandlerContext
 
 /**
  * Top level Hot Rod decoder that after figuring out the version, delegates the rest of the reading to the
@@ -19,7 +22,8 @@ import java.io.{IOException, StreamCorruptedException}
  * @author Galder Zamarreño
  * @since 4.1
  */
-class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocolDecoder[ByteArrayKey, CacheValue] {
+class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTransport)
+        extends AbstractProtocolDecoder[ByteArrayKey, CacheValue](transport) {
    import HotRodDecoder._
    import HotRodServer._
    
@@ -47,7 +51,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
          }
       }
 
-      val messageId = buffer.readUnsignedLong
+      val messageId = readUnsignedLong(buffer)
       
       try {
          val version = buffer.readUnsignedByte

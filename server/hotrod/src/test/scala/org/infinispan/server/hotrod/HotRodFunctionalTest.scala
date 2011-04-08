@@ -9,6 +9,7 @@ import org.infinispan.server.core.CacheValue
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.test._
 import org.infinispan.util.ByteArrayKey
+import org.infinispan.test.TestingUtil.generateRandomString
 
 /**
  * Hot Rod server functional test.
@@ -373,5 +374,11 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
             assertTrue(Arrays.equals(bulkData.get(key).get, v(m, i + "v-")))            
          }
       }
+   }
+
+   def testPut1mbSizeKey(m: Method) {
+      val key = generateRandomString(1024 * 1024).getBytes
+      val status = client.put(key , 0, 0, v(m)).status
+      assertStatus(status, Success)
    }
 }

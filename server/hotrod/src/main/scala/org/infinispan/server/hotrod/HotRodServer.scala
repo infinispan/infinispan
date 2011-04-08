@@ -1,6 +1,5 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.server.core.transport.{Decoder, Encoder}
 import org.infinispan.config.Configuration.CacheMode
 import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged
@@ -37,9 +36,9 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 
    def getAddress: TopologyAddress = address
 
-   override def getEncoder: Encoder = new HotRodEncoder(getCacheManager)
+   override def getEncoder = new HotRodEncoder(getCacheManager)
 
-   override def getDecoder: Decoder = new HotRodDecoder(getCacheManager)
+   override def getDecoder = new HotRodDecoder(getCacheManager, transport)
 
    override def start(p: Properties, cacheManager: EmbeddedCacheManager) {
       val properties = if (p == null) new Properties else p
