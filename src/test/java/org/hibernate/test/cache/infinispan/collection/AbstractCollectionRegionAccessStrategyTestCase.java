@@ -31,6 +31,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
+import org.jboss.logging.Logger;
 
 import org.hibernate.cache.CacheDataDescription;
 import org.hibernate.cache.access.AccessType;
@@ -53,7 +54,6 @@ import org.hibernate.test.cache.infinispan.NodeEnvironment;
 import org.hibernate.test.cache.infinispan.functional.cluster.DualNodeJtaTransactionManagerImpl;
 import org.hibernate.test.cache.infinispan.util.CacheTestUtil;
 
-import static org.hibernate.testing.TestLogger.LOG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -66,6 +66,7 @@ import static org.junit.Assert.assertTrue;
  * @since 3.5
  */
 public abstract class AbstractCollectionRegionAccessStrategyTestCase extends AbstractNonFunctionalTestCase {
+	private static final Logger log = Logger.getLogger( AbstractCollectionRegionAccessStrategyTestCase.class );
 
 	public static final String REGION_NAME = "test/com.foo.test";
 	public static final String KEY_BASE = "KEY";
@@ -170,11 +171,11 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 					pferLatch.await( 2, TimeUnit.SECONDS );
 				}
 				catch (InterruptedException e) {
-					LOG.debug( "Interrupted" );
+					log.debug( "Interrupted" );
 					Thread.currentThread().interrupt();
 				}
 				catch (Exception e) {
-					LOG.error( "Error", e );
+					log.error( "Error", e );
 					throw new RuntimeException( "Error", e );
 				}
 				return acquired;
@@ -250,7 +251,7 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 					BatchModeTransactionManager.getInstance().commit();
 				}
 				catch (Exception e) {
-					LOG.error( "node1 caught exception", e );
+					log.error( "node1 caught exception", e );
 					node1Exception = e;
 					rollback();
 				}
@@ -294,7 +295,7 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 					BatchModeTransactionManager.getInstance().commit();
 				}
 				catch (Exception e) {
-					LOG.error( "node2 caught exception", e );
+					log.error( "node2 caught exception", e );
 					node2Exception = e;
 					rollback();
 				}
@@ -459,7 +460,7 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 			BatchModeTransactionManager.getInstance().rollback();
 		}
 		catch (Exception e) {
-			LOG.error( e.getMessage(), e );
+			log.error( e.getMessage(), e );
 		}
 
 	}
