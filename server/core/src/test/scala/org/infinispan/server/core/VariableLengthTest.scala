@@ -1,9 +1,9 @@
-package org.infinispan.server.hotrod
+package org.infinispan.server.core
 
 import org.testng.annotations.Test
 import org.jboss.netty.buffer.{ChannelBuffers}
 import org.testng.Assert._
-import org.infinispan.server.core.transport.netty.{ChannelBufferAdapter}
+import transport.ExtendedChannelBuffer._
 
 /**
  * Variable length number test.
@@ -87,23 +87,19 @@ class VariableLengthTest {
 //   }
 
    private def writeReadInt(num: Int, expected: Int) {
-      val buffer = new ChannelBufferAdapter(ChannelBuffers.directBuffer(1024))
+      val buffer = ChannelBuffers.directBuffer(1024)
       assert(buffer.writerIndex == 0)
-//      VInt.write(buffer, num)
-      buffer.writeUnsignedInt(num)
+      writeUnsignedInt(num, buffer)
       assertEquals(buffer.writerIndex, expected)
-//      assertEquals(VInt.read(buffer), num)
-      assertEquals(buffer.readUnsignedInt, num)
+      assertEquals(readUnsignedInt(buffer), num)
    }
 
    private def writeReadLong(num: Long, expected: Int) {
-      val buffer = new ChannelBufferAdapter(ChannelBuffers.directBuffer(1024))
+      val buffer = ChannelBuffers.directBuffer(1024)
       assert(buffer.writerIndex == 0)
-//      VLong.write(buffer, num)
-      buffer.writeUnsignedLong(num)
+      writeUnsignedLong(num, buffer)
       assertEquals(buffer.writerIndex, expected)
-//      assertEquals(VLong.read(buffer), num)
-      assertEquals(buffer.readUnsignedLong, num)
+      assertEquals(readUnsignedLong(buffer), num)
    }
 
 //   def testEquals128Old() {

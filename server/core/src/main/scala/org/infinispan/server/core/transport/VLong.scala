@@ -1,5 +1,7 @@
 package org.infinispan.server.core.transport
 
+import org.jboss.netty.buffer.ChannelBuffer
+
 /**
  * Reads and writes unsigned variable length long values. Even though it's deprecated, do not
  * remove from source code for the moment because it's a good scala example and could be used

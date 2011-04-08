@@ -3,7 +3,6 @@ package org.infinispan.server.hotrod
 import org.infinispan.server.core.Operation._
 import HotRodOperation._
 import OperationStatus._
-import org.infinispan.server.core.transport.{ChannelBuffer}
 import org.infinispan.Cache
 import org.infinispan.stats.Stats
 import org.infinispan.server.core._
@@ -13,6 +12,8 @@ import org.infinispan.util.concurrent.TimeoutException
 import java.io.IOException
 import org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP
 import org.infinispan.util.ByteArrayKey
+import org.jboss.netty.buffer.ChannelBuffer
+import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -45,13 +46,13 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
       }
       if (isTraceEnabled) trace("Operation code: %d has been matched to %s", streamOp, op)
       
-      val cacheName = buffer.readString
-      val flag = buffer.readUnsignedInt match {
+      val cacheName = readString(buffer)
+      val flag = readUnsignedInt(buffer) match {
          case 0 => NoFlag
          case 1 => ForceReturnPreviousValue
       }
       val clientIntelligence = buffer.readUnsignedByte
-      val topologyId = buffer.readUnsignedInt
+      val topologyId = readUnsignedInt(buffer)
       //todo use these once transaction support is added
       val txId = buffer.readByte
       if (txId != 0) throw new UnsupportedOperationException("Transaction types other than 0 (NO_TX) is not supported at this stage.  Saw TX_ID of " + txId)
@@ -59,7 +60,7 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
       new HotRodHeader(op, messageId, cacheName, flag, clientIntelligence, topologyId, this)
    }
 
-   override def readKey(buffer: ChannelBuffer): ByteArrayKey = new ByteArrayKey(buffer.readRangedBytes)
+   override def readKey(buffer: ChannelBuffer): ByteArrayKey = new ByteArrayKey(readRangedBytes(buffer))
 
    override def readParameters(header: HotRodHeader, buffer: ChannelBuffer): Option[RequestParameters] = {
       header.op match {
@@ -69,18 +70,18 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
             val lifespan = readLifespanOrMaxIdle(buffer)
             val maxIdle = readLifespanOrMaxIdle(buffer)
             val version = buffer.readLong
-            Some(new RequestParameters(buffer.readRangedBytes, lifespan, maxIdle, version))
+            Some(new RequestParameters(readRangedBytes(buffer), lifespan, maxIdle, version))
          }
          case _ => {
             val lifespan = readLifespanOrMaxIdle(buffer)
             val maxIdle = readLifespanOrMaxIdle(buffer)
-            Some(new RequestParameters(buffer.readRangedBytes, lifespan, maxIdle, -1))
+            Some(new RequestParameters(readRangedBytes(buffer), lifespan, maxIdle, -1))
          }
       }
    }
 
    private def readLifespanOrMaxIdle(buffer: ChannelBuffer): Int = {
-      val stream = buffer.readUnsignedInt
+      val stream = readUnsignedInt(buffer)
       if (stream <= 0) -1 else stream
    }
 
@@ -151,7 +152,7 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
          }
          case PingRequest => new Response(h.messageId, h.cacheName, h.clientIntel, PingResponse, Success, h.topologyId)
          case BulkGetRequest => {
-            val count = buffer.readUnsignedInt
+            val count = readUnsignedInt(buffer)
             if (isTraceEnabled) trace("About to create bulk response, count = " + count)
             new BulkGetResponse(h.messageId, h.cacheName, h.clientIntel, BulkGetResponse, Success, h.topologyId, count)
          }
