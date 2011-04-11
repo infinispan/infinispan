@@ -28,10 +28,11 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
 
-import java.util.concurrent.ConcurrentHashMap;
+import javax.transaction.TransactionManager;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -70,7 +71,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
                cm.defineConfiguration(recoveryCacheName, config);
             }
          }
-         return (RecoveryManager) withRecoveryCache(cacheName, recoveryCacheName, cm);
+         return (RecoveryManager) buildRecoveryManager(cacheName, recoveryCacheName, cm, useDefaultCache);
       } else {
          return null;
       }
@@ -84,14 +85,30 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
 
    private Configuration getDefaultRecoveryCacheConfig() {
       Configuration config = new Configuration();
+      //the recovery cache should not participate in main cache's transactions, especially because removals
+      // from this cache are executed in the context of a finalised transaction and cause issues.
+      config.fluent().transaction().transactionManagerLookup(new TransactionManagerLookup() {
+         @Override
+         public TransactionManager getTransactionManager() throws Exception {
+            return null;
+         }
+      });
       config.fluent().clustering().mode(Configuration.CacheMode.LOCAL);
       config.fluent().expiration().lifespan(DEFAULT_EXPIRY);
       config.fluent().recovery().disable();
       return config;
    }
 
-   private RecoveryManager withRecoveryCache(String cacheName, String recoveryCacheName, EmbeddedCacheManager cm) {
+   private RecoveryManager buildRecoveryManager(String cacheName, String recoveryCacheName, EmbeddedCacheManager cm, boolean isDefault) {
+      if (log.isTraceEnabled()) log.trace("About to obtain a reference to the recovery cache: %s", recoveryCacheName);
       Cache recoveryCache = cm.getCache(recoveryCacheName);
+      String txLookup = recoveryCache.getConfiguration().getTransactionManagerLookupClass();
+      if (!isDefault && txLookup.equals(configuration.getTransactionManagerLookupClass())) {
+         //see comment in getDefaultRecoveryCacheConfig
+         throw new ConfigurationException("Same transaction manager lookup(" + txLookup +" used by both recovery cache ("
+                                                + recoveryCacheName +") and main cache(" + cacheName + "). This is not allowed!");
+      }
+      if (log.isTraceEnabled()) log.trace("Obtained a reference to the recovery cache: %s", recoveryCacheName);
       return new RecoveryManagerImpl(recoveryCache,  cacheName);
    }
 }

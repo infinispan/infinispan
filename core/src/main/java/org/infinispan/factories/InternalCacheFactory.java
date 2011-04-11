@@ -29,6 +29,7 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.ReflectionCache;
+import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 
 /**
  * An internal factory for constructing Caches.  Used by the {@link DefaultCacheManager}, this is not intended as public
@@ -101,6 +102,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
        */
       componentRegistry.registerComponent(cache, Cache.class);
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class);
+      componentRegistry.registerComponent(new RecoveryAdminOperations(), RecoveryAdminOperations.class);
    }
 
    /**

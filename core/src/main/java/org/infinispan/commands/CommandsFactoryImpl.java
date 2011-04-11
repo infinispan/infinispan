@@ -34,8 +34,10 @@ import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.GetInDoubtTransactionsCommand;
-import org.infinispan.commands.remote.RemoveRecoveryInfoCommand;
+import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
+import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
+import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
+import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -283,7 +285,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case PrepareCommand.COMMAND_ID:
             PrepareCommand pc = (PrepareCommand) c;
             pc.init(interceptorChain, icc, txTable);
-            pc.initialize(notifier);
+            pc.initialize(notifier, recoveryManager);
             if (pc.getModifications() != null)
                for (ReplicableCommand nested : pc.getModifications())  {
                   initializeReplicableCommand(nested, false);
@@ -351,7 +353,15 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case DistributedExecuteCommand.COMMAND_ID:
             DistributedExecuteCommand dec = (DistributedExecuteCommand)c;
             dec.init(cache);
-            break;   
+            break;
+         case GetInDoubtTxInfoCommand.COMMAND_ID:
+            GetInDoubtTxInfoCommand gidTxInfoCommand = (GetInDoubtTxInfoCommand)c;
+            gidTxInfoCommand.init(recoveryManager);
+            break;
+         case CompleteTransactionCommand.COMMAND_ID:
+            CompleteTransactionCommand ccc = (CompleteTransactionCommand)c;
+            ccc.init(recoveryManager);
+            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -394,8 +404,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(List<Xid> xids) {
-      return new RemoveRecoveryInfoCommand(xids, cacheName);
+   public RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(Xid xid) {
+      return new RemoveRecoveryInfoCommand(xid, cacheName);
    }
    
    @Override
@@ -406,5 +416,20 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public MapReduceCommand buildMapReduceCommand(Mapper m, Reducer r, Address sender, Collection keys) {
       return new MapReduceCommand(m, r, cacheName, keys);
-   }         
+   }
+
+   @Override
+   public GetInDoubtTxInfoCommand buildGetInDoubtTxInfoCommand() {
+      return new GetInDoubtTxInfoCommand(cacheName);
+   }
+
+   @Override
+   public CompleteTransactionCommand buildCompleteTransactionCommand(Xid xid, boolean commit) {
+      return new CompleteTransactionCommand(cacheName, xid, commit);
+   }
+
+   @Override
+   public RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(long internalId) {
+      return new RemoveRecoveryInfoCommand(internalId, cacheName);
+   }
 }

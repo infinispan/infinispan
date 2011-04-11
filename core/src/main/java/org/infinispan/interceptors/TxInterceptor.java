@@ -16,7 +16,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -29,7 +28,6 @@ import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
@@ -67,8 +65,7 @@ public class TxInterceptor extends CommandInterceptor {
 
 
    @Inject
-   public void init(TransactionTable txTable, TransactionLog transactionLog, Configuration c, InvocationContextContainer icc,
-                   RecoveryManager rm, TransactionCoordinator txCoordinator) {
+   public void init(TransactionTable txTable, TransactionLog transactionLog, Configuration c, TransactionCoordinator txCoordinator) {
       this.configuration = c;
       this.transactionLog = transactionLog;
       this.txTable = txTable;
@@ -98,7 +95,7 @@ public class TxInterceptor extends CommandInterceptor {
       }
       if (!ctx.isOriginLocal()) {
          if (command.isOnePhaseCommit()) {
-            markCompleted(ctx, command.getGlobalTransaction());
+            markCompleted(ctx, command.getGlobalTransaction(), true);
          } else {
             txTable.remoteTransactionPrepared(command.getGlobalTransaction());
          }
@@ -110,7 +107,7 @@ public class TxInterceptor extends CommandInterceptor {
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (this.statisticsEnabled) commits.incrementAndGet();
       Object result = invokeNextInterceptor(ctx, command);
-      markCompleted(ctx, command.getGlobalTransaction());
+      markCompleted(ctx, command.getGlobalTransaction(), true);
       transactionLog.logCommit(command.getGlobalTransaction());
       return result;
    }
@@ -118,9 +115,8 @@ public class TxInterceptor extends CommandInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (this.statisticsEnabled) rollbacks.incrementAndGet();
-      GlobalTransaction globalTransaction = command.getGlobalTransaction();
-      transactionLog.rollback(globalTransaction);
-      markCompleted(ctx, globalTransaction);
+      transactionLog.rollback(command.getGlobalTransaction());
+      markCompleted(ctx, command.getGlobalTransaction(), false);
       return invokeNextInterceptor(ctx, command);
    }
 
@@ -217,8 +213,8 @@ public class TxInterceptor extends CommandInterceptor {
       return true;
    }
 
-   private void markCompleted(TxInvocationContext ctx, GlobalTransaction globalTransaction) {
-      if (!ctx.isOriginLocal()) txTable.remoteTransactionCompleted(globalTransaction);
+   private void markCompleted(TxInvocationContext ctx, GlobalTransaction globalTransaction, boolean committed) {
+      if (!ctx.isOriginLocal()) txTable.remoteTransactionCompleted(globalTransaction, committed);
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component")

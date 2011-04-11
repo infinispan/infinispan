@@ -55,8 +55,12 @@ trait MemcachedTestingUtil {
 
    def startMemcachedTextServer(cacheManager: EmbeddedCacheManager, port: Int, cacheName: String): MemcachedServer = {
       val server = new MemcachedServer {
-         override def getDecoder =
-            new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue](cacheName), scheduler, transport)
+
+         override def getDecoder: MemcachedDecoder = {
+            var memcachedDecoder: MemcachedDecoder = new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue](cacheName), scheduler, transport)
+            memcachedDecoder.versionGenerator = this.versionGenerator
+            memcachedDecoder
+         }
 
          override def startDefaultCache = getCacheManager.getCache(cacheName)
       }

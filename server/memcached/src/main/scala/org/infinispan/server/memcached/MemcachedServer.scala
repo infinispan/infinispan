@@ -23,7 +23,11 @@ class MemcachedServer extends AbstractProtocolServer("Memcached") {
 
    override def getEncoder = null
 
-   override def getDecoder = new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue], scheduler, transport)
+   override def getDecoder: MemcachedDecoder = {
+      var memcachedDecoder: MemcachedDecoder = new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue], scheduler, transport)
+      memcachedDecoder.versionGenerator = this.versionGenerator
+      memcachedDecoder
+   }
 
    override def stop {
       super.stop

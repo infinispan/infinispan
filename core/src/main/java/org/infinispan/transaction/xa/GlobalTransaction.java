@@ -56,7 +56,6 @@ public class GlobalTransaction implements Cloneable {
    protected transient Address addr = null;
    private transient int hash_code = -1;  // in the worst case, hashCode() returns 0, then increases, so we're safe here
    private transient boolean remote = false;
-   private Xid xid;
 
    /**
     * empty ctor used by externalization.

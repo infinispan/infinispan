@@ -7,6 +7,7 @@ import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.Status;
 import java.util.List;
 
 /**
@@ -22,6 +23,8 @@ public class RecoveryAwareRemoteTransaction extends RemoteTransaction implements
    private boolean prepared;
 
    private boolean isOrphan;
+
+   private Integer status;
 
    public RecoveryAwareRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
       super(modifications, tx);
@@ -66,16 +69,39 @@ public class RecoveryAwareRemoteTransaction extends RemoteTransaction implements
    @Override
    public void setPrepared(boolean prepared) {
       this.prepared = prepared;
+      if (prepared) status = Status.STATUS_PREPARED;
    }
 
    @Override
    public String toString() {
-      return "RecoveryAwareRemoteTransaction{" +
-            "prepared=" + prepared +
+      return getClass().getSimpleName() +
+            "{prepared=" + prepared +
             ", isOrphan=" + isOrphan +
             ", modifications=" + modifications +
             ", lookedUpEntries=" + lookedUpEntries +
             ", tx=" + tx +
             "} ";
+   }
+
+   /**
+    * Called when after the 2nd phase of a 2PC is successful.
+    *
+    * @param committed true if tx successfully committed, false if tx successfully rolled back.
+    */
+   public void markCompleted(boolean committed) {
+      status = committed ? Status.STATUS_COMMITTED : Status.STATUS_ROLLEDBACK;
+   }
+
+   /**
+    * Following values might be returned:
+    * <ul>
+    *    <li> - {@link Status#STATUS_PREPARED} if the tx is prepared </li>
+    *    <li> - {@link Status#STATUS_COMMITTED} if the tx is committed</li>
+    *    <li> - {@link Status#STATUS_ROLLEDBACK} if the tx is rollback</li>
+    *    <li> - null otherwise</li>
+    * </ul>
+    */
+   public Integer getStatus() {
+      return status;
    }
 }
