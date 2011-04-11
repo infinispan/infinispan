@@ -52,14 +52,14 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    def testPutOnUndefinedCache(m: Method) {
       var resp = client.execute(0xA0, 0x01, "boomooo", k(m), 0, 0, v(m), 0, 1, 0).asInstanceOf[TestErrorResponse]
       assertTrue(resp.msg.contains("CacheNotFoundException"))
-      assertEquals(resp.status, ServerError, "Status should have been 'ServerError' but instead was: " + resp.status)
+      assertEquals(resp.status, ParseError, "Status should have been 'ParseError' but instead was: " + resp.status)
       client.assertPut(m)
    }
 
    def testPutOnTopologyCache(m: Method) {
       val resp = client.execute(0xA0, 0x01, TopologyCacheName, k(m), 0, 0, v(m), 0, 1, 0).asInstanceOf[TestErrorResponse]
       assertTrue(resp.msg.contains("Remote requests are not allowed to topology cache."))
-      assertEquals(resp.status, ServerError, "Status should have been 'ServerError' but instead was: " + resp.status)
+      assertEquals(resp.status, ParseError, "Status should have been 'ParseError' but instead was: " + resp.status)
       client.assertPut(m)
    }
 
