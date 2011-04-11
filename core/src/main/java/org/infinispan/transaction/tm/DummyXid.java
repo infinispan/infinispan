@@ -49,12 +49,13 @@ public class DummyXid implements Xid {
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (o == null || !(o instanceof Xid)) return false;
 
-      DummyXid dummyXid = (DummyXid) o;
+      Xid other = (Xid) o;
 
-      if (!Arrays.equals(branchQualifier, dummyXid.branchQualifier)) return false;
-      if (!Arrays.equals(globalTransactionId, dummyXid.globalTransactionId)) return false;
+      if (((Xid) o).getFormatId() != getFormatId()) return false;
+      if (!Arrays.equals(branchQualifier, other.getBranchQualifier())) return false;
+      if (!Arrays.equals(globalTransactionId, other.getGlobalTransactionId())) return false;
 
       return true;
    }

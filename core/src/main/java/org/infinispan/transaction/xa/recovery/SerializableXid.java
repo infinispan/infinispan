@@ -52,13 +52,13 @@ public class SerializableXid implements Xid {
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (o == null || !(o instanceof Xid)) return false;
 
-      SerializableXid xid = (SerializableXid) o;
+      Xid xid = (Xid) o;
 
-      if (formatId != xid.formatId) return false;
-      if (!Arrays.equals(branchQualifier, xid.branchQualifier)) return false;
-      if (!Arrays.equals(globalTransactionId, xid.globalTransactionId)) return false;
+      if (formatId != xid.getFormatId()) return false;
+      if (!Arrays.equals(branchQualifier, xid.getBranchQualifier())) return false;
+      if (!Arrays.equals(globalTransactionId, xid.getGlobalTransactionId())) return false;
 
       return true;
    }

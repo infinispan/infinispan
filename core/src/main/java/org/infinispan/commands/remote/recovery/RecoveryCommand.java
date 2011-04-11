@@ -1,5 +1,6 @@
-package org.infinispan.commands.remote;
+package org.infinispan.commands.remote.recovery;
 
+import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 
 /**
@@ -13,6 +14,10 @@ public abstract class RecoveryCommand extends BaseRpcCommand {
    protected RecoveryManager recoveryManager;
 
    public RecoveryCommand() {
+   }
+
+   protected RecoveryCommand(String cacheName) {
+      super(cacheName);
    }
 
    public void init(RecoveryManager rm) {

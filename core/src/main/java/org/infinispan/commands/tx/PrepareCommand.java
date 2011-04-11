@@ -30,6 +30,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -56,9 +57,11 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    protected WriteCommand[] modifications;
    protected boolean onePhaseCommit;
    protected CacheNotifier notifier;
+   protected RecoveryManager recoveryManager;
 
-   public void initialize(CacheNotifier notifier) {
+   public void initialize(CacheNotifier notifier, RecoveryManager recoveryManager) {
       this.notifier = notifier;
+      this.recoveryManager = recoveryManager;
    }
 
    public PrepareCommand(GlobalTransaction gtx, boolean onePhaseCommit, WriteCommand... modifications) {
@@ -76,9 +79,14 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    public PrepareCommand() {
    }
 
-   public final Object perform(InvocationContext ignored) throws Throwable {
+   public Object perform(InvocationContext ignored) throws Throwable {
       if (ignored != null)
          throw new IllegalStateException("Expected null context!");
+
+      if (recoveryManager != null && recoveryManager.isTransactionPrepared(globalTx)) {
+         log.trace("The transaction %s is already prepared. Skipping prepare call.", globalTx);
+         return null;
+      }
 
       // 1. first create a remote transaction
       RemoteTransaction remoteTransaction = txTable.getRemoteTransaction(globalTx);

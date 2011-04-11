@@ -21,7 +21,7 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction implements XidAware {
+public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction implements RecoverableTransactionIdentifier {
 
    public RecoveryAwareDldGlobalTransaction() {
    }
@@ -31,6 +31,8 @@ public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction impl
    }
 
    private volatile Xid xid;
+
+   private volatile long internalId;
 
    @Override
    public Xid getXid() {
@@ -42,6 +44,16 @@ public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction impl
       this.xid = xid;
    }
 
+   @Override
+   public long getInternalId() {
+      return internalId;
+   }
+
+   @Override
+   public void setInternalId(long internalId) {
+      this.internalId = internalId;
+   }
+
    public static class Externalizer extends AbstractExternalizer<RecoveryAwareDldGlobalTransaction> {
       private final DldGlobalTransaction.Externalizer delegate = new DldGlobalTransaction.Externalizer(new TransactionFactory(true, true));
 
@@ -49,6 +61,7 @@ public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction impl
       public void writeObject(ObjectOutput output, RecoveryAwareDldGlobalTransaction xidGtx) throws IOException {
          delegate.writeObject(output, xidGtx);
          output.writeObject(xidGtx.xid);
+         output.writeLong(xidGtx.internalId);
       }
 
       @Override
@@ -57,6 +70,7 @@ public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction impl
          RecoveryAwareDldGlobalTransaction xidGtx = (RecoveryAwareDldGlobalTransaction) delegate.readObject(input);
          Xid xid = (Xid) input.readObject();
          xidGtx.setXid(xid);
+         xidGtx.setInternalId(input.readLong());
          return xidGtx;
       }
 
@@ -69,5 +83,13 @@ public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction impl
       public Set<Class<? extends RecoveryAwareDldGlobalTransaction>> getTypeClasses() {
          return Util.<Class<? extends RecoveryAwareDldGlobalTransaction>>asSet(RecoveryAwareDldGlobalTransaction.class);
       }
+   }
+
+   @Override
+   public String toString() {
+      return getClass().getSimpleName() +
+            "{xid=" + xid +
+            ", internalId=" + internalId +
+            "} " + super.toString();
    }
 }

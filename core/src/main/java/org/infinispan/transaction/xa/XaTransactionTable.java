@@ -34,7 +34,10 @@ public class XaTransactionTable extends TransactionTable {
 
    @Override
    public boolean removeLocalTransaction(LocalTransaction localTx) {
-      boolean result = super.removeLocalTransaction(localTx);
+      boolean result = false;
+      if (localTx.getTransaction() != null) {//this can be null when we force the invocation during recovery, perhaps on a remote node
+         result = super.removeLocalTransaction(localTx);
+      }
       LocalXaTransaction xaLocalTransaction = (LocalXaTransaction) localTx;
       xid2LocalTx.remove(xaLocalTransaction.getXid());
       return result;
@@ -77,5 +80,10 @@ public class XaTransactionTable extends TransactionTable {
 
    public void setRecoveryManager(RecoveryManager recoveryManager) {
       this.recoveryManager = recoveryManager;
+   }
+
+   @Override
+   public int getLocalTxCount() {
+      return xid2LocalTx.size();
    }
 }

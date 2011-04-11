@@ -32,8 +32,10 @@ import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.GetInDoubtTransactionsCommand;
-import org.infinispan.commands.remote.RemoveRecoveryInfoCommand;
+import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
+import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
+import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
+import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -303,14 +305,14 @@ public interface CommandsFactory {
    String getCacheName();
 
    /**
-    * Builds a {@link org.infinispan.commands.remote.GetInDoubtTransactionsCommand}.
+    * Builds a {@link org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand}.
     */
    GetInDoubtTransactionsCommand buildGetInDoubtTransactionsCommand();
 
    /**
-    * Builds a {@link org.infinispan.commands.remote.RemoveRecoveryInfoCommand}.
+    * Builds a {@link org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand}.
     */
-   RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(List<Xid> xids);
+   RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(Xid xid);
    
    /**
     * Builds a DistributedExecuteCommand used for migration and execution of distributed Callables and Runnables. 
@@ -332,4 +334,22 @@ public interface CommandsFactory {
     * @return a MapReduceCommand
     */
    MapReduceCommand buildMapReduceCommand(Mapper m, Reducer r, Address sender, Collection keys);
+
+   /**
+    * @see GetInDoubtTxInfoCommand
+    */
+   GetInDoubtTxInfoCommand buildGetInDoubtTxInfoCommand();
+
+   /**
+    * Builds a CompleteTransactionCommand command.
+    * @param xid the xid identifying the transaction we want to complete.
+    * @param commit commit(true) or rollback(false)?
+    */
+   CompleteTransactionCommand buildCompleteTransactionCommand(Xid xid, boolean commit);
+
+   /**
+    * @param internalId the internal id identifying the transaction to be removed.
+    * @see RemoveRecoveryInfoCommand
+    */
+   RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(long internalId);
 }

@@ -67,6 +67,9 @@ public class ResourceDMBean implements DynamicMBean {
    private static final Class<?>[] primitives = {int.class, byte.class, short.class, long.class,
            float.class, double.class, boolean.class, char.class};
 
+   private static final Class<?>[] primitiveArrays = {int[].class, byte[].class, short[].class, long[].class,
+           float[].class, double[].class, boolean[].class, char[].class};
+
    private static final String MBEAN_DESCRITION = "Dynamic MBean Description";
 
    private final Log log = LogFactory.getLog(ResourceDMBean.class);
@@ -229,6 +232,7 @@ public class ResourceDMBean implements DynamicMBean {
       } catch (ClassNotFoundException cnfe) {
          // Could be a primitive - let's check
          for (Class<?> primitive : primitives) if (name.equals(primitive.getName())) return primitive;
+         for (Class<?> primitive : primitiveArrays) if (name.equals(primitive.getName())) return primitive;
       }
       throw new ClassNotFoundException("Class " + name + " cannot be found");
    }

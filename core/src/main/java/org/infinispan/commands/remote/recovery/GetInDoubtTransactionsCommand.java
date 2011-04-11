@@ -1,4 +1,4 @@
-package org.infinispan.commands.remote;
+package org.infinispan.commands.remote.recovery;
 
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.Ids;
@@ -30,7 +30,7 @@ public class GetInDoubtTransactionsCommand extends RecoveryCommand {
 
    @Override
    public List<Xid> perform(InvocationContext ctx) throws Throwable {
-      List<Xid> localInDoubtTransactions = recoveryManager.getLocalInDoubtTransactions();
+      List<Xid> localInDoubtTransactions = recoveryManager.getInDoubtTransactions();
       if (log.isTraceEnabled()) log.trace("Returning result %s", localInDoubtTransactions);
       return localInDoubtTransactions;
    }

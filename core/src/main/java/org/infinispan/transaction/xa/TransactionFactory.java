@@ -3,7 +3,11 @@ package org.infinispan.transaction.xa;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.synchronization.SyncLocalTransaction;
@@ -11,6 +15,7 @@ import org.infinispan.transaction.xa.recovery.RecoveryAwareDldGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareLocalTransaction;
+import org.infinispan.util.ClusterIdGenerator;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -28,6 +33,13 @@ public class TransactionFactory {
 
    private TxFactoryEnum txFactoryEnum;
 
+   private EmbeddedCacheManager cm;
+   private Configuration configuration;
+   private boolean recoveryEnabled;
+   private ClusterIdGenerator clusterIdGenerator;
+   private boolean isClustered;
+   private RpcManager rpcManager;
+
    private enum TxFactoryEnum {
 
       DLD_RECOVERY_XA {
@@ -37,8 +49,10 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote) {
-            return addToinCoss(new RecoveryAwareDldGlobalTransaction(addr, remote));
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered) {
+            RecoveryAwareDldGlobalTransaction dldGlobalTransaction = new RecoveryAwareDldGlobalTransaction(addr, remote);
+            dldGlobalTransaction.setInternalId(clusterIdGenerator.newVersion(clustered));
+            return addCoinToss(dldGlobalTransaction);
          }
 
          @Override
@@ -64,8 +78,8 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote) {
-            return addToinCoss(new DldGlobalTransaction(addr, remote));
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered) {
+            return addCoinToss(new DldGlobalTransaction(addr, remote));
          }
 
          @Override
@@ -91,8 +105,8 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote) {
-            return addToinCoss(new DldGlobalTransaction(addr, remote));
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered) {
+            return addCoinToss(new DldGlobalTransaction(addr, remote));
          }
 
          @Override
@@ -117,8 +131,10 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote) {
-            return new RecoveryAwareGlobalTransaction(addr, remote);
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered) {
+            RecoveryAwareGlobalTransaction recoveryAwareGlobalTransaction = new RecoveryAwareGlobalTransaction(addr, remote);
+            recoveryAwareGlobalTransaction.setInternalId(clusterIdGenerator.newVersion(clustered));
+            return recoveryAwareGlobalTransaction;
          }
 
          @Override
@@ -143,7 +159,7 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote) {
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered) {
             return new GlobalTransaction(addr, remote);
          }
 
@@ -169,7 +185,7 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote) {
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered) {
             return new GlobalTransaction(addr, remote);
          }
 
@@ -191,14 +207,14 @@ public class TransactionFactory {
 
 
       public abstract LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx);
-      public abstract GlobalTransaction newGlobalTransaction(Address addr, boolean remote);
+      public abstract GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered);
       public abstract GlobalTransaction newGlobalTransaction();
 
       protected long generateRandomId() {
          return rnd.nextLong();
       }
 
-      protected GlobalTransaction addToinCoss(DldGlobalTransaction dldGlobalTransaction) {
+      protected GlobalTransaction addCoinToss(DldGlobalTransaction dldGlobalTransaction) {
          dldGlobalTransaction.setCoinToss(generateRandomId());
          return dldGlobalTransaction;
       }
@@ -219,7 +235,7 @@ public class TransactionFactory {
    }
 
    public GlobalTransaction newGlobalTransaction(Address addr, boolean remote) {
-      return txFactoryEnum.newGlobalTransaction(addr, remote);
+      return txFactoryEnum.newGlobalTransaction(addr, remote, this.clusterIdGenerator, isClustered);
    }
 
    public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx) {
@@ -249,21 +265,44 @@ public class TransactionFactory {
 
 
    @Inject
-   public void init(Configuration configuration) {
+   public void init(Configuration configuration, EmbeddedCacheManager cm, RpcManager rpcManager) {
+      this.cm = cm;
+      this.configuration = configuration;
+      this.rpcManager = rpcManager;
+   }
+
+   @Start
+   public void start() {
       boolean dldEnabled = configuration.isEnableDeadlockDetection();
-      boolean recoveryEnabled = configuration.isTransactionRecoveryEnabled();
       boolean xa = !configuration.isUseSynchronizationForTransactions();
+      recoveryEnabled = configuration.isTransactionRecoveryEnabled();
       init(dldEnabled, recoveryEnabled, xa);
+      isClustered = configuration.getCacheMode().isClustered();
+      if (recoveryEnabled) {
+         clusterIdGenerator = new ClusterIdGenerator();
+         ClusterIdGenerator.RankCalculator rcl = clusterIdGenerator.getRankCalculatorListener();
+         cm.addListener(rcl);
+         if (rpcManager != null) {
+            Transport transport = rpcManager.getTransport();
+            rcl.calculateRank(rpcManager.getAddress(), transport.getMembers(), transport.getViewId());
+         }
+      }
    }
 
    private void init(boolean dldEnabled, boolean recoveryEnabled, boolean xa) {
-      if (dldEnabled && recoveryEnabled && xa) txFactoryEnum = TxFactoryEnum.DLD_RECOVERY_XA;
-      if (dldEnabled && !recoveryEnabled && xa) txFactoryEnum = TxFactoryEnum.DLD_NORECOVERY_XA;
-      if (dldEnabled && !recoveryEnabled && !xa) txFactoryEnum = TxFactoryEnum.DLD_NORECOVERY_NOXA;
-      if (!dldEnabled && recoveryEnabled && xa) txFactoryEnum = TxFactoryEnum.NODLD_RECOVERY_XA;
-      if (!dldEnabled && !recoveryEnabled && xa) txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_XA;
-      if (!dldEnabled && !recoveryEnabled && !xa) txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_NOXA;
-
+      if (dldEnabled && recoveryEnabled && xa) {
+         txFactoryEnum = TxFactoryEnum.DLD_RECOVERY_XA;
+      } else if (dldEnabled && !recoveryEnabled && xa) {
+         txFactoryEnum = TxFactoryEnum.DLD_NORECOVERY_XA;
+      } else if (dldEnabled && !recoveryEnabled && !xa) {
+         txFactoryEnum = TxFactoryEnum.DLD_NORECOVERY_NOXA;
+      } else  if (!dldEnabled && recoveryEnabled && xa) {
+         txFactoryEnum = TxFactoryEnum.NODLD_RECOVERY_XA;
+      } else if (!dldEnabled && !recoveryEnabled && xa) {
+         txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_XA;
+      } else if (!dldEnabled && !recoveryEnabled && !xa) {
+         txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_NOXA;
+      }
       if (log.isTraceEnabled()) log.trace("Setting factory enum to %s", txFactoryEnum);
 
       if (txFactoryEnum == null) {

@@ -4,7 +4,6 @@ import org.infinispan.Cache
 import Operation._
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
-import org.infinispan.server.core.VersionGenerator._
 import transport._
 import java.io.StreamCorruptedException
 import transport.ExtendedChannelBuffer._
@@ -12,6 +11,7 @@ import org.jboss.netty.handler.codec.replay.ReplayingDecoder
 import org.jboss.netty.buffer.ChannelBuffer
 import org.jboss.netty.channel._
 import DecoderState._
+import org.infinispan.util.ClusterIdGenerator
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -25,6 +25,8 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
 
    type SuitableParameters <: RequestParameters
    type SuitableHeader <: RequestHeader
+
+   var versionGenerator: ClusterIdGenerator = _
 
    private val versionCounter = new AtomicInteger
    private val isTrace = isTraceEnabled
@@ -273,8 +275,10 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
 
    protected def createServerException(e: Exception, b: ChannelBuffer): (Exception, Boolean)
 
-   protected def generateVersion(cache: Cache[K, V]): Long =
-      newVersion(cache.getAdvancedCache.getRpcManager != null)
+   protected def generateVersion(cache: Cache[K, V]): Long = {
+      val rpcManager = cache.getAdvancedCache.getRpcManager
+      versionGenerator.newVersion(rpcManager != null)
+   }
 
    /**
     * Transforms lifespan pass as seconds into milliseconds

@@ -38,7 +38,11 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 
    override def getEncoder = new HotRodEncoder(getCacheManager)
 
-   override def getDecoder = new HotRodDecoder(getCacheManager, transport)
+   override def getDecoder() : HotRodDecoder = {
+      var hotRodDecoder: HotRodDecoder = new HotRodDecoder(getCacheManager, transport)
+      hotRodDecoder.versionGenerator = this.versionGenerator
+      hotRodDecoder
+   }
 
    override def start(p: Properties, cacheManager: EmbeddedCacheManager) {
       val properties = if (p == null) new Properties else p

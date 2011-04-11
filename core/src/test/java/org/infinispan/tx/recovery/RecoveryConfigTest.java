@@ -41,7 +41,7 @@ public class RecoveryConfigTest extends SingleCacheManagerTest {
       assert withRecoveryAndCache.isTransactionRecoveryEnabled();
       assertEquals(withRecoveryAndCache.getTransactionRecoveryCacheName(), "noRecovery");
       RecoveryManagerImpl recoveryManager = rm(cacheManager.getCache("withRecoveryAndCache"));
-      Cache<RecoveryInfoKey,RecoveryAwareRemoteTransaction> preparedTransactions = (Cache<RecoveryInfoKey, RecoveryAwareRemoteTransaction>) recoveryManager.getPreparedTransactions();
+      Cache<RecoveryInfoKey,RecoveryAwareRemoteTransaction> preparedTransactions = (Cache<RecoveryInfoKey, RecoveryAwareRemoteTransaction>) recoveryManager.getInDoubtTransactionsMap();
       assertEquals(preparedTransactions.getName(), "noRecovery");
    }
 
@@ -50,7 +50,7 @@ public class RecoveryConfigTest extends SingleCacheManagerTest {
       assert recoveryDefaultCache.isTransactionRecoveryEnabled();
       assertEquals(recoveryDefaultCache.getTransactionRecoveryCacheName(), Configuration.RecoveryType.DEFAULT_RECOVERY_INFO_CACHE);
       RecoveryManagerImpl recoveryManager = rm(cacheManager.getCache("withRecoveryDefaultCache"));
-      Cache<RecoveryInfoKey,RecoveryAwareRemoteTransaction> preparedTransactions = (Cache<RecoveryInfoKey, RecoveryAwareRemoteTransaction>) recoveryManager.getPreparedTransactions();
+      Cache<RecoveryInfoKey,RecoveryAwareRemoteTransaction> preparedTransactions = (Cache<RecoveryInfoKey, RecoveryAwareRemoteTransaction>) recoveryManager.getInDoubtTransactionsMap();
       assertEquals(preparedTransactions.getName(), Configuration.RecoveryType.DEFAULT_RECOVERY_INFO_CACHE);
    }
 

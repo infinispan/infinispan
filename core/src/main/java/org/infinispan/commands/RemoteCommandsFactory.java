@@ -9,8 +9,10 @@ import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.RemoveRecoveryInfoCommand;
-import org.infinispan.commands.remote.GetInDoubtTransactionsCommand;
+import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
+import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
+import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
+import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -144,6 +146,12 @@ public class RemoteCommandsFactory {
          case DistributedExecuteCommand.COMMAND_ID:
             command = new DistributedExecuteCommand<Object>();
             break;   
+         case GetInDoubtTxInfoCommand.COMMAND_ID:
+            command = new GetInDoubtTxInfoCommand();
+            break;
+         case CompleteTransactionCommand.COMMAND_ID:
+            command = new CompleteTransactionCommand();
+            break;
          default:
             ModuleCommandFactory mcf = commandFactories.get(id);
             if (mcf != null)

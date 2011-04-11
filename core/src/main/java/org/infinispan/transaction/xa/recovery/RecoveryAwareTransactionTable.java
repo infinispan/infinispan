@@ -7,11 +7,17 @@ import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.XaTransactionTable;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.Transaction;
 import javax.transaction.xa.Xid;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Transaction table that delegates prepared transaction's management to the {@link RecoveryManager}.
@@ -20,6 +26,8 @@ import java.util.Map;
  * @since 5.0
  */
 public class RecoveryAwareTransactionTable extends XaTransactionTable {
+
+   private static Log log = LogFactory.getLog(RecoveryAwareTransactionTable.class);
 
    private RecoveryManagerImpl recoveryManager;
 
@@ -31,11 +39,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    @Override
    public void remoteTransactionPrepared(GlobalTransaction gtx) {
       RecoveryAwareRemoteTransaction remoteTransaction = (RecoveryAwareRemoteTransaction) remoteTransactions.get(gtx);
-      remoteTransaction.setPrepared(true);
-      RemoteTransaction preparedTx = remoteTransactions.remove(remoteTransaction.getGlobalTransaction());
-      if (preparedTx == null)
-         throw new IllegalStateException("This tx has just been prepared, cannot be missing from here!");
-      recoveryManager.registerPreparedTransaction(remoteTransaction);
+         remoteTransaction.setPrepared(true);
    }
 
    @Override
@@ -45,7 +49,16 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
 
    @Override
    protected void updateStateOnNodesLeaving(List<Address> leavers) {
-      recoveryManager.nodesLeft(leavers);
+      Iterator<Map.Entry<GlobalTransaction,RemoteTransaction>> it = remoteTransactions.entrySet().iterator();
+      while (it.hasNext()) {
+         RecoveryAwareRemoteTransaction recTx = (RecoveryAwareRemoteTransaction) it.next().getValue();
+         recTx.computeOrphan(leavers);
+         if (recTx.isInDoubt()) {
+            recoveryManager.registerInDoubtTransaction(recTx);
+            it.remove();
+         }
+      }
+      //this cleans up the transactions that are not yet prepared
       super.updateStateOnNodesLeaving(leavers);
    }
 
@@ -54,12 +67,12 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
       RemoteTransaction remoteTransaction = remoteTransactions.get(txId);
       if (remoteTransaction != null) return remoteTransaction;
       //also look in the recovery manager, as this transaction might be prepared
-      return recoveryManager.getPreparedTransaction(((XidAware) txId).getXid());
+      return recoveryManager.getPreparedTransaction(((RecoverableTransactionIdentifier) txId).getXid());
    }
 
    @Override
-   public void remoteTransactionCompleted(GlobalTransaction gtx) {
-      //ignore the call, the transaction will be removed async at a further point in time
+   public void remoteTransactionCompleted(GlobalTransaction gtx, boolean committed) {
+      ((RecoveryAwareRemoteTransaction)getRemoteTransaction(gtx)).markCompleted(committed);
    }
 
    public List<Xid> getLocalPreparedXids() {
@@ -71,5 +84,53 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
          }
       }
       return result;
+   }
+
+   public void removeCompletedRemoteTransactions(Xid id) {
+      Iterator<Map.Entry<GlobalTransaction, RemoteTransaction>> it = remoteTransactions.entrySet().iterator();
+      while (it.hasNext()) {
+         Map.Entry<GlobalTransaction, RemoteTransaction> next = it.next();
+         RecoverableTransactionIdentifier gtx = (RecoverableTransactionIdentifier) next.getKey();
+         if (id.equals(gtx.getXid())) {
+            it.remove();
+         }
+      }
+   }
+
+   public void failureCompletingTransaction(Transaction tx) {
+      RecoveryAwareLocalTransaction remove = (RecoveryAwareLocalTransaction) localTransactions.get(tx);
+      remove.setCompletionFailed(true);
+      if (log.isTraceEnabled())
+         log.trace("Marked as completion failed %s", remove);
+      //we should only keep it in the xid2LocalTx map
+      localTransactions.remove(tx);
+   }
+
+   public Set<RecoveryAwareLocalTransaction> getLocalTxThatFailedToComplete() {
+      Set<RecoveryAwareLocalTransaction> result = new HashSet<RecoveryAwareLocalTransaction>();
+      for (LocalTransaction lTx : xid2LocalTx.values()) {
+         RecoveryAwareLocalTransaction lTx1 = (RecoveryAwareLocalTransaction) lTx;
+         if (lTx1.isCompletionFailed()) {
+            result.add(lTx1);
+         }
+      }
+      return result;
+   }
+
+
+   /**
+    * Iterates over the remote transactions and returns the XID of the one that has an internal id equal with
+    * the supplied internal Id.
+    */
+   public Xid getRemoteTransactionXid(Long internalId) {
+      for (RemoteTransaction rTx : remoteTransactions.values()) {
+         RecoveryAwareGlobalTransaction gtx = (RecoveryAwareGlobalTransaction) rTx.getGlobalTransaction();
+         if (gtx.getInternalId() == internalId) {
+            if (log.isTraceEnabled()) log.trace("Found xid %s matching internal id %s", gtx.getXid(), internalId);
+            return gtx.getXid();
+         }
+      }
+      if (log.isTraceEnabled()) log.trace("Could not find remote transactions matching internal id %s", internalId);
+      return null;
    }
 }
