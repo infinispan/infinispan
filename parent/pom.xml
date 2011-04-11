@@ -102,7 +102,7 @@
       <version.jbossjts>4.9.0.GA</version.jbossjts>
       <version.jbossts-common>4.6.1.GA</version.jbossts-common>
       <version.jcipannotations>1.0</version.jcipannotations>
-      <version.jclouds>1.0-beta-7</version.jclouds>
+      <version.jclouds>1.0-beta-9b</version.jclouds>
       <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
       <version.jgroups>2.12.0.Final</version.jgroups>
@@ -423,6 +423,14 @@
 
    <repositories>
       <repository>
+         <id>atlas</id>
+         <url>https://maven.atlassian.com/content/groups/public</url>
+      </repository>
+      <repository>
+         <id>jboss</id>
+         <url>http://repository.jboss.org/maven2</url>
+      </repository>
+      <repository>
          <id>scala-tools.org</id>
          <name>Scala-tools Maven2 Repository</name>
          <url>http://scala-tools.org/repo-releases</url>
@@ -434,6 +442,11 @@
    </repositories>
 
    <pluginRepositories>
+      <pluginRepository>
+         <id>jboss</id>
+         <url>http://repository.jboss.org/maven2</url>
+      </pluginRepository>
+
       <pluginRepository>
          <id>scala-tools.org</id>
          <name>Scala-tools Maven2 Repository</name>

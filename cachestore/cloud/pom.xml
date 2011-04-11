@@ -26,12 +26,12 @@
          <version>${version.jclouds}</version>
       </dependency>
       <dependency>
-         <groupId>org.jclouds</groupId>
+         <groupId>org.jclouds.driver</groupId>
          <artifactId>jclouds-enterprise</artifactId>
          <version>${version.jclouds}</version>
       </dependency>
       <dependency>
-         <groupId>org.jclouds</groupId>
+         <groupId>org.jclouds.driver</groupId>
          <artifactId>jclouds-log4j</artifactId>
          <version>${version.jclouds}</version>
       </dependency>
@@ -102,22 +102,6 @@
       </plugins>
    </build>
 
-   <repositories>
-      <repository>
-         <id>jclouds</id>
-         <url>http://jclouds.googlecode.com/svn/repo</url>
-         <snapshots>
-            <enabled>false</enabled>
-         </snapshots>
-      </repository>
-      <repository>
-         <id>jclouds-snapshots</id>
-         <url>http://jclouds.rimuhosting.com/maven2/snapshots</url>
-         <snapshots>
-            <enabled>true</enabled>
-         </snapshots>
-      </repository>
-   </repositories>
    <profiles>
       <profile>
          <id>integration</id>
