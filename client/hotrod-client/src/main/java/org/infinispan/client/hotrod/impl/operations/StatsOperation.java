@@ -54,6 +54,8 @@ public class StatsOperation extends RetryOnFailureOperation {
       Map<String, String> result;
       // 1) write header
       long messageId = writeHeader(transport, STATS_REQUEST);
+      transport.flush();
+
       readHeaderAndValidate(transport, messageId, STATS_RESPONSE);
       int nrOfStats = transport.readVInt();
 
