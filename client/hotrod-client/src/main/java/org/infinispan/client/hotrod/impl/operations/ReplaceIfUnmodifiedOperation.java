@@ -57,6 +57,8 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation {
       transport.writeVInt(maxIdle);
       transport.writeLong(version);
       transport.writeArray(value);
+      transport.flush();
+
       return returnVersionedOperationResponse(transport, messageId, REPLACE_IF_UNMODIFIED_RESPONSE);
    }
 }
