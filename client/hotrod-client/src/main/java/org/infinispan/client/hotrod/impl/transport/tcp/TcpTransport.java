@@ -29,6 +29,8 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -56,7 +58,7 @@ public class TcpTransport extends AbstractTransport {
 
    private final Socket socket;
    private final InputStream socketInputStream;
-   private final OutputStream socketOutputStream;
+   private final BufferedOutputStream socketOutputStream;
    private final InetSocketAddress serverAddress;
    private final long id = ID_COUNTER.incrementAndGet();
 
@@ -68,8 +70,9 @@ public class TcpTransport extends AbstractTransport {
          socket = socketChannel.socket();
          socket.setTcpNoDelay(transportFactory.isTcpNoDelay());
          socket.setSoTimeout(transportFactory.getSoTimeout());
-         socketInputStream = socket.getInputStream();
-         socketOutputStream = socket.getOutputStream();
+         socketInputStream = new BufferedInputStream(socket.getInputStream(), socket.getReceiveBufferSize());
+         // ensure we don't send a packet for every output byte
+         socketOutputStream = new BufferedOutputStream(socket.getOutputStream(), socket.getSendBufferSize());
       } catch (IOException e) {
          String message = "Could not connect to server: " + serverAddress;
          log.error(message, e);

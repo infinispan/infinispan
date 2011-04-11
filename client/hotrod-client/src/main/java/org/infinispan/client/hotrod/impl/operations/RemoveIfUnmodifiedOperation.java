@@ -54,6 +54,7 @@ public class RemoveIfUnmodifiedOperation extends AbstractKeyOperation {
       //2) write message body
       transport.writeArray(key);
       transport.writeLong(version);
+      transport.flush();
 
       //process response and return
       return returnVersionedOperationResponse(transport, messageId, REMOVE_IF_UNMODIFIED_RESPONSE);

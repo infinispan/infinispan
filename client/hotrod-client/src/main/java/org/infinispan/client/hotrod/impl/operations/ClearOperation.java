@@ -50,6 +50,8 @@ public class ClearOperation extends RetryOnFailureOperation {
    @Override
    protected Object executeOperation(Transport transport) {
       long messageId = writeHeader(transport, CLEAR_REQUEST);
+      transport.flush();
+
       readHeaderAndValidate(transport, messageId, CLEAR_RESPONSE);
       return null;
    }

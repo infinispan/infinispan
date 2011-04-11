@@ -54,6 +54,8 @@ public class PingOperation extends HotRodOperation {
       boolean success;
       try {
          long messageId = writeHeader(transport, HotRodConstants.PING_REQUEST);
+         transport.flush();
+
          short respStatus = readHeaderAndValidate(transport, messageId, HotRodConstants.PING_RESPONSE);
          if (respStatus == HotRodConstants.NO_ERROR_STATUS) {
             if (log.isTraceEnabled())
