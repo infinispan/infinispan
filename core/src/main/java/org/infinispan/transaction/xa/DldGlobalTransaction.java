@@ -44,7 +44,8 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
 
    /**
-    * Sets the reandom number that defines the coin toss.
+    * Sets the random number that defines the coin toss. A coin toss is a random number that is used when a deadlock is
+    * detected for deciding which transaction should commit and which should rollback.
     */
    public void setCoinToss(long coinToss) {
       this.coinToss = coinToss;

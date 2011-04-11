@@ -98,5 +98,4 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
          throw new IllegalStateException("Different sizes!");
       return result;
    }
-
 }

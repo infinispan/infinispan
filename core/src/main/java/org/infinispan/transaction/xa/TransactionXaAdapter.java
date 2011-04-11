@@ -56,6 +56,16 @@ public class TransactionXaAdapter implements XAResource {
       this.txCoordinator = txCoordinator;
    }
 
+   public TransactionXaAdapter(TransactionTable txTable, Configuration configuration, InvocationContextContainer icc,
+                               RecoveryManager rm, TransactionCoordinator txCoordinator) {
+      this.txTable = (XaTransactionTable) txTable;
+      this.configuration = configuration;
+      this.icc = icc;
+      this.recoveryManager = rm;
+      this.txCoordinator = txCoordinator;
+      localTransaction = null;
+   }
+
    /**
     * This can be call for any transaction object. See Section 3.4.6 (Resource Sharing) from JTA spec v1.1.
     */
@@ -73,12 +83,8 @@ public class TransactionXaAdapter implements XAResource {
       LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
 
       if (trace) log.trace("Committing transaction %s", localTransaction.getGlobalTransaction());
-      try {
-         txCoordinator.commit(localTransaction, isOnePhase);
-         forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction);
-      } finally {
-         cleanupImpl(localTransaction, txTable, icc);
-      }
+      txCoordinator.commit(localTransaction, isOnePhase);
+      forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction);
    }
 
    /**
@@ -107,7 +113,7 @@ public class TransactionXaAdapter implements XAResource {
       Xid xid = convertXid(externalXid);
       if (trace) log.trace("forget called for xid %s", xid);
       try {
-         recoveryManager.removeRecoveryInformation(null, xid, true);
+         recoveryManager.removeRecoveryInformationFromCluster(null, xid, true);
       } catch (Exception e) {
          log.warn("Exception removing recovery information: ", e);
          throw new XAException(XAException.XAER_RMERR);
@@ -179,14 +185,9 @@ public class TransactionXaAdapter implements XAResource {
             '}';
    }
 
-   private static void cleanupImpl(LocalXaTransaction localTransaction, TransactionTable txTable, InvocationContextContainer icc) {
-      txTable.removeLocalTransaction(localTransaction);
-      icc.suspend();
-   }
-
    private void forgetSuccessfullyCompletedTransaction(RecoveryManager recoveryManager, Xid xid, LocalXaTransaction localTransaction) {
       if (configuration.isTransactionRecoveryEnabled()) {
-         recoveryManager.removeRecoveryInformation(localTransaction.getRemoteLocksAcquired(), xid, false);
+         recoveryManager.removeRecoveryInformationFromCluster(localTransaction.getRemoteLocksAcquired(), xid, false);
       }
    }
 

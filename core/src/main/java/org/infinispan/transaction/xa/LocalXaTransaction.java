@@ -1,7 +1,7 @@
 package org.infinispan.transaction.xa;
 
 import org.infinispan.transaction.LocalTransaction;
-import org.infinispan.transaction.xa.recovery.XidAware;
+import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.Xid;
@@ -22,8 +22,8 @@ public class LocalXaTransaction extends LocalTransaction {
 
    public void setXid(Xid xid) {
       this.xid  = xid;
-      if (tx instanceof XidAware) {
-         ((XidAware) tx).setXid(xid);
+      if (tx instanceof RecoverableTransactionIdentifier) {
+         ((RecoverableTransactionIdentifier) tx).setXid(xid);
       }
    }
 

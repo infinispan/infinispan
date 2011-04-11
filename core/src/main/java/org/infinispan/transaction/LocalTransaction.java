@@ -66,8 +66,12 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 	   return remoteLockedNodes;
    }
 
-   public void markForRollback() {
-      isMarkedForRollback = true;
+   public void clearRemoteLocksAcquired() {
+      if (remoteLockedNodes != null) remoteLockedNodes.clear();
+   }
+
+   public void markForRollback(boolean markForRollback) {
+      isMarkedForRollback = markForRollback;
    }
 
    public boolean isMarkedForRollback() {
@@ -126,4 +130,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
             "} " + super.toString();
    }
 
+   public void setModifications(List<WriteCommand> modifications) {
+      this.modifications = modifications;
+   }
 }

@@ -12,6 +12,7 @@ import javax.transaction.xa.Xid;
 
 import java.util.List;
 
+import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -51,25 +52,25 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
    }
 
    public void testLocalAndRemoteTransaction() throws Exception {
-      DummyTransaction t0 = RecoveryTestUtil.beginAndSuspendTx(cache(0));
-      DummyTransaction t1 = RecoveryTestUtil.beginAndSuspendTx(cache(1));
-      RecoveryTestUtil.assertPrepared(0, t0, t1);
+      DummyTransaction t0 = beginAndSuspendTx(cache(0));
+      DummyTransaction t1 = beginAndSuspendTx(cache(1));
+      assertPrepared(0, t0, t1);
 
-      RecoveryTestUtil.prepareTransaction(t0);
-      RecoveryTestUtil.assertPrepared(1, t0);
-      RecoveryTestUtil.assertPrepared(0, t1);
+      prepareTransaction(t0);
+      assertPrepared(1, t0);
+      assertPrepared(0, t1);
 
-      RecoveryTestUtil.prepareTransaction(t1);
-      RecoveryTestUtil.assertPrepared(1, t0);
-      RecoveryTestUtil.assertPrepared(1, t1);
+      prepareTransaction(t1);
+      assertPrepared(1, t0);
+      assertPrepared(1, t1);
 
-      RecoveryTestUtil.commitTransaction(t0);
-      RecoveryTestUtil.assertPrepared(0, t0);
-      RecoveryTestUtil.assertPrepared(1, t1);
+      commitTransaction(t0);
+      assertPrepared(0, t0);
+      assertPrepared(1, t1);
 
-      RecoveryTestUtil.commitTransaction(t1);
-      RecoveryTestUtil.assertPrepared(0, t0);
-      RecoveryTestUtil.assertPrepared(0, t1);
+      commitTransaction(t1);
+      assertPrepared(0, t0);
+      assertPrepared(0, t1);
 
       eventually(new Condition() {
          @Override
@@ -82,25 +83,26 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
    }
 
    public void testNodeCrashesAfterPrepare() throws Exception {
-      DummyTransaction t1_1 = RecoveryTestUtil.beginAndSuspendTx(cache(1));
-      RecoveryTestUtil.prepareTransaction(t1_1);
-      DummyTransaction t1_2 = RecoveryTestUtil.beginAndSuspendTx(cache(1));
-      RecoveryTestUtil.prepareTransaction(t1_2);
-      DummyTransaction t1_3 = RecoveryTestUtil.beginAndSuspendTx(cache(1));
-      RecoveryTestUtil.prepareTransaction(t1_3);
+      DummyTransaction t1_1 = beginAndSuspendTx(cache(1));
+      prepareTransaction(t1_1);
+      DummyTransaction t1_2 = beginAndSuspendTx(cache(1));
+      prepareTransaction(t1_2);
+      DummyTransaction t1_3 = beginAndSuspendTx(cache(1));
+      prepareTransaction(t1_3);
 
-      assertEquals(cache(0, getRecoveryCacheName()).size(), 3);
       manager(1).stop();
       super.cacheManagers.remove(1);
       TestingUtil.blockUntilViewReceived(cache(0), 1, 60000);
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return RecoveryTestUtil.rm(cache(0)).getLocalInDoubtTransactions().size() == 3;
+            int size = rm(cache(0)).getInDoubtTransactionInfo().size();
+            System.out.println("size = " + size);
+            return size == 3;
          }
       });
 
-      List<Xid> inDoubtTransactions = RecoveryTestUtil.rm(cache(0)).getLocalInDoubtTransactions();
+      List<Xid> inDoubtTransactions = rm(cache(0)).getInDoubtTransactions();
       assertEquals(3, inDoubtTransactions.size());
       assert inDoubtTransactions.contains(new SerializableXid(t1_1.getXid()));
       assert inDoubtTransactions.contains(new SerializableXid(t1_2.getXid()));
@@ -109,18 +111,18 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       addClusterEnabledCacheManager(configuration, false);
       defineRecoveryCache(1);
       TestingUtil.blockUntilViewsReceived(60000, cache(0), cache(1));
-      DummyTransaction t1_4 = RecoveryTestUtil.beginAndSuspendTx(cache(1));
-      RecoveryTestUtil.prepareTransaction(t1_4);
+      DummyTransaction t1_4 = beginAndSuspendTx(cache(1));
+      prepareTransaction(t1_4);
       log.trace("Before main recovery call.");
-      RecoveryTestUtil.assertPrepared(4, t1_4);
+      assertPrepared(4, t1_4);
 
       //now second call would only return 1 prepared tx as we only go over the network once
-      RecoveryTestUtil.assertPrepared(1, t1_4);
+      assertPrepared(1, t1_4);
 
-      RecoveryTestUtil.commitTransaction(t1_4);
-      RecoveryTestUtil.assertPrepared(0, t1_4);
+      commitTransaction(t1_4);
+      assertPrepared(0, t1_4);
 
-      inDoubtTransactions = RecoveryTestUtil.rm(cache(0)).getLocalInDoubtTransactions();
+      inDoubtTransactions = rm(cache(0)).getInDoubtTransactions();
       assertEquals(3, inDoubtTransactions.size());
       assert inDoubtTransactions.contains(new SerializableXid(t1_1.getXid()));
       assert inDoubtTransactions.contains(new SerializableXid(t1_2.getXid()));
@@ -133,10 +135,10 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return RecoveryTestUtil.rm(cache(0)).getLocalInDoubtTransactions().size() == 2;
+            return rm(cache(0)).getInDoubtTransactionInfo().size() == 2;
          }
       });
-      inDoubtTransactions = RecoveryTestUtil.rm(cache(0)).getLocalInDoubtTransactions();
+      inDoubtTransactions = rm(cache(0)).getInDoubtTransactions();
       assertEquals(2, inDoubtTransactions.size());
       assert inDoubtTransactions.contains(new SerializableXid(t1_2.getXid()));
       assert inDoubtTransactions.contains(new SerializableXid(t1_3.getXid()));
@@ -146,10 +148,10 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return RecoveryTestUtil.rm(cache(0)).getLocalInDoubtTransactions().size() == 0;
+            return rm(cache(0)).getInDoubtTransactionInfo().size() == 0;
          }
       });
-      assertEquals(0, RecoveryTestUtil.rm(cache(0)).getLocalInDoubtTransactions().size());
+      assertEquals(0, rm(cache(0)).getInDoubtTransactionInfo().size());
    }
 
    protected void defineRecoveryCache(int cacheManagerIndex) {

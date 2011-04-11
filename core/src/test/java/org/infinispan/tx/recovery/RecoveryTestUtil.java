@@ -24,9 +24,18 @@ public class RecoveryTestUtil {
       xaResource.commit(xaResource.getLocalTransaction().getXid(), false);
    }
 
-   public static void prepareTransaction(DummyTransaction suspend1) throws XAException {
+   public static void rollbackTransaction(DummyTransaction dtx) throws XAException {
+      TransactionXaAdapter xaResource = (TransactionXaAdapter) dtx.firstEnlistedResource();
+      xaResource.commit(xaResource.getLocalTransaction().getXid(), false);
+   }
+
+   public static void prepareTransaction(DummyTransaction suspend1) {
       TransactionXaAdapter xaResource = (TransactionXaAdapter) suspend1.firstEnlistedResource();
-      xaResource.prepare(xaResource.getLocalTransaction().getXid());
+      try {
+         xaResource.prepare(xaResource.getLocalTransaction().getXid());
+      } catch (XAException e) {
+         throw new RuntimeException(e);
+      }
    }
 
    public static void assertPrepared(int count, DummyTransaction...tx) throws XAException {
@@ -40,12 +49,16 @@ public class RecoveryTestUtil {
       return (RecoveryManagerImpl) TestingUtil.extractComponentRegistry(cache).getComponent(RecoveryManager.class);
    }
 
-   public static DummyTransaction beginAndSuspendTx(Cache cache) throws NotSupportedException, SystemException {
+   public static DummyTransaction beginAndSuspendTx(Cache cache) {
       DummyTransactionManager dummyTm = (DummyTransactionManager) TestingUtil.getTransactionManager(cache);
-      dummyTm.begin();
-      String key = "k" + count++;
-      System.out.println("key = " + key);
-      cache.put(key, "v");
-      return (DummyTransaction) dummyTm.suspend();
+      try {
+         dummyTm.begin();
+         String key = "k" + count++;
+         System.out.println("key = " + key);
+         cache.put(key, "v");
+         return (DummyTransaction) dummyTm.suspend();
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
    }
 }

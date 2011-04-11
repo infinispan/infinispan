@@ -20,9 +20,11 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-public class RecoveryAwareGlobalTransaction extends GlobalTransaction implements XidAware {
+public class RecoveryAwareGlobalTransaction extends GlobalTransaction implements RecoverableTransactionIdentifier {
 
    private volatile Xid xid;
+
+   private volatile long internalId;
 
    public RecoveryAwareGlobalTransaction() {
       super();
@@ -42,6 +44,24 @@ public class RecoveryAwareGlobalTransaction extends GlobalTransaction implements
       this.xid = xid;
    }
 
+   @Override
+   public long getInternalId() {
+      return internalId;
+   }
+
+   @Override
+   public void setInternalId(long internalId) {
+      this.internalId = internalId;
+   }
+
+   @Override
+   public String toString() {
+      return getClass().getSimpleName() +
+            "{xid=" + xid +
+            ", internalId=" + internalId +
+            "} " + super.toString();
+   }
+
    public static class Externalizer extends AbstractExternalizer<RecoveryAwareGlobalTransaction> {
       private final GlobalTransaction.Externalizer delegate = new GlobalTransaction.Externalizer(new TransactionFactory(false, true));
 
@@ -49,6 +69,7 @@ public class RecoveryAwareGlobalTransaction extends GlobalTransaction implements
       public void writeObject(ObjectOutput output, RecoveryAwareGlobalTransaction xidGtx) throws IOException {
          delegate.writeObject(output, xidGtx);
          output.writeObject(xidGtx.xid);
+         output.writeLong(xidGtx.getInternalId());
       }
 
       @Override
@@ -57,6 +78,7 @@ public class RecoveryAwareGlobalTransaction extends GlobalTransaction implements
          RecoveryAwareGlobalTransaction xidGtx = (RecoveryAwareGlobalTransaction) delegate.readObject(input);
          Xid xid = (Xid) input.readObject();
          xidGtx.setXid(xid);
+         xidGtx.setInternalId(input.readLong());
          return xidGtx;
       }
 

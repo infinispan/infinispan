@@ -1,24 +1,37 @@
 package org.infinispan.transaction.xa.recovery;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.remote.RemoveRecoveryInfoCommand;
-import org.infinispan.commands.remote.GetInDoubtTransactionsCommand;
+import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
+import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
+import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
+import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.RemoteTransaction;
+import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.LocalXaTransaction;
+import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.Status;
+import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -36,14 +49,18 @@ public class RecoveryManagerImpl implements RecoveryManager {
 
    /**
     * This relies on XIDs for different TMs being unique. E.g. for JBossTM this is correct as long as we have the right
-    * config for <IP,port/process,sequencenumber>. This is expected to stand true for all major TM on the market.
+    * config for <IP,port/process,sequence number>. This is expected to stand true for all major TM on the market.
     */
-   private final ConcurrentMap<RecoveryInfoKey, RecoveryAwareRemoteTransaction> preparedTransactions;
+   private final ConcurrentMap<RecoveryInfoKey, RecoveryAwareRemoteTransaction> inDoubtTransactions;
 
    private final String cacheName;
 
 
    private volatile RecoveryAwareTransactionTable txTable;
+
+   private TransactionCoordinator txCoordinator;
+
+   private TransactionFactory txFactory;
 
    /**
     * we only broadcast the first time when node is started, then we just return the local cached prepared
@@ -52,24 +69,35 @@ public class RecoveryManagerImpl implements RecoveryManager {
    private volatile boolean broadcastForPreparedTx = true;
 
    public RecoveryManagerImpl(ConcurrentMap<RecoveryInfoKey, RecoveryAwareRemoteTransaction> recoveryHolder, String cacheName) {
-      this.preparedTransactions = recoveryHolder;
+      this.inDoubtTransactions = recoveryHolder;
       this.cacheName = cacheName;
    }
 
    @Inject
-   public void init(RpcManager rpcManager, CommandsFactory commandsFactory, TransactionTable txTable) {
+   public void init(RpcManager rpcManager, CommandsFactory commandsFactory, TransactionTable txTable,
+                    TransactionCoordinator txCoordinator, TransactionFactory txFactory) {
       this.rpcManager = rpcManager;
       this.commandFactory = commandsFactory;
       this.txTable = (RecoveryAwareTransactionTable)txTable;
+      this.txCoordinator = txCoordinator;
+      this.txFactory = txFactory;
    }
 
    @Override
    public RecoveryIterator getPreparedTransactionsFromCluster() {
-      //1. get local transactions first
       PreparedTxIterator iterator = new PreparedTxIterator();
+
+      //1. get local transactions first
+      //add the locally prepared transactions. The list of prepared transactions (even if they are not in-doubt)
+      //is mandated by the recovery process according to the JTA spec: "The transaction manager calls this [i.e. recover]
+      // method during recovery to obtain the list of transaction branches that are currently in prepared or heuristically
+      // completed states."
       iterator.add(txTable.getLocalPreparedXids());
 
-      //2. then the remote ones
+      //2. now also add the in-doubt transactions.
+      iterator.add(getInDoubtTransactions());
+
+      //3. then the remote ones
       if (notOnlyMeInTheCluster() && broadcastForPreparedTx) {
          boolean success = true;
          Map<Address, Response> responses = getAllPreparedTxFromCluster();
@@ -96,50 +124,136 @@ public class RecoveryManagerImpl implements RecoveryManager {
    }
 
    @Override
-   public void removeRecoveryInformation(Collection<Address> lockOwners, Xid xid, boolean sync) {
+   public void removeRecoveryInformationFromCluster(Collection<Address> lockOwners, Xid xid, boolean sync) {
       //todo make sure this gets broad casted or at least flushed
       if (rpcManager != null) {
-         RemoveRecoveryInfoCommand ftc = commandFactory.buildRemoveRecoveryInfoCommand(Collections.singletonList(xid));
-         rpcManager.invokeRemotely(lockOwners, ftc, false);
+         RemoveRecoveryInfoCommand ftc = commandFactory.buildRemoveRecoveryInfoCommand(xid);
+         rpcManager.invokeRemotely(lockOwners, ftc, sync);
       }
+      removeRecoveryInformation(xid);
    }
 
-
    @Override
-   public void removeLocalRecoveryInformation(List<Xid> xids) {
-      for (Xid xid : xids) {
-         RemoteTransaction remove = preparedTransactions.remove(new RecoveryInfoKey(xid, cacheName));
-         if (remove != null && log.isTraceEnabled()) {
-            log.trace("removed xid: %s", xid);
-         }
+   public void removeRecoveryInformationFromCluster(Collection<Address> where, long internalId, boolean sync) {
+      if (rpcManager != null) {
+         RemoveRecoveryInfoCommand ftc = commandFactory.buildRemoveRecoveryInfoCommand(internalId);
+         rpcManager.invokeRemotely(where, ftc, sync);
       }
+      removeRecoveryInformation(internalId);
    }
 
-   /**
-    * A transaction is in doubt if it is {@link org.infinispan.transaction.RemoteTransaction#isInDoubt()}.
-    */
    @Override
-   public List<Xid> getLocalInDoubtTransactions() {
-      List<Xid> result = new ArrayList<Xid>();
-      for (Map.Entry<RecoveryInfoKey, RecoveryAwareRemoteTransaction> entry : preparedTransactions.entrySet()) {
-         RecoveryAwareRemoteTransaction rt = entry.getValue();
-         RecoveryInfoKey cacheNamePair = entry.getKey();
-         if (cacheNamePair.sameCacheName(cacheName) && rt.isInDoubt()) {
-            XidAware globalTransaction = (XidAware) rt.getGlobalTransaction();
-            if (log.isTraceEnabled()) {
-               log.trace("Found in doubt transaction: %s", globalTransaction);
+   public void removeRecoveryInformation(Xid xid) {
+      RecoveryAwareTransaction remove = inDoubtTransactions.remove(new RecoveryInfoKey(xid, cacheName));
+      if (remove != null) {
+         if (log.isTraceEnabled()) log.trace("removed in doubt xid: %s", xid);
+      }
+      txTable.removeCompletedRemoteTransactions(xid);
+   }
+
+   @Override
+   public void removeRecoveryInformation(Long internalId) {
+      Xid remoteTransactionXid = txTable.getRemoteTransactionXid(internalId);
+      if (remoteTransactionXid != null) {
+         removeRecoveryInformation(remoteTransactionXid);
+      } else {
+         for (RecoveryAwareRemoteTransaction raRemoteTx : inDoubtTransactions.values()) {
+            RecoverableTransactionIdentifier globalTransaction = (RecoverableTransactionIdentifier) raRemoteTx.getGlobalTransaction();
+            if (internalId.equals(globalTransaction.getInternalId())) {
+               Xid xid = globalTransaction.getXid();
+               if (log.isTraceEnabled()) log.trace("Found transaction xid %s that maps internal id %s", xid, internalId);
+               removeRecoveryInformation(xid);
+               return;
             }
-            result.add(globalTransaction.getXid());
          }
+      }
+      if (log.isTraceEnabled()) log.trace("Could not find tx to map to internal id %s", internalId);
+   }
+
+   @Override
+   public List<Xid> getInDoubtTransactions() {
+      List<Xid> result = new ArrayList<Xid>();
+      Set<RecoveryInfoKey> recoveryInfoKeys = inDoubtTransactions.keySet();
+      for (RecoveryInfoKey key : recoveryInfoKeys) {
+         if (key.cacheName.equals(cacheName))
+            result.add(key.xid);
       }
       if (log.isTraceEnabled()) log.trace("Returning %s ", result);
       return result;
    }
 
+   @Override
+   public Set<InDoubtTxInfo> getInDoubtTransactionInfo() {
+      List<Xid> txs = getInDoubtTransactions();
+      Set<RecoveryAwareLocalTransaction> localTxs = txTable.getLocalTxThatFailedToComplete();
+      if (log.isTraceEnabled())
+         log.trace("Local transactions that failed to complete is %s", localTxs);
+      Set<InDoubtTxInfo> result = new HashSet<InDoubtTxInfo>();
+      for (RecoveryAwareLocalTransaction r : localTxs) {
+         long internalId = ((RecoverableTransactionIdentifier) r.getGlobalTransaction()).getInternalId();
+         result.add(new InDoubtTxInfoImpl(r.getXid(), internalId));
+      }
+      for (Xid xid : txs) {
+         RecoveryAwareTransaction pTx = getPreparedTransaction(xid);
+         if (pTx == null) continue; //might be removed concurrently, 2check for null
+         RecoverableTransactionIdentifier gtx = (RecoverableTransactionIdentifier) pTx.getGlobalTransaction();
+         int status;
+         if (pTx instanceof RecoveryAwareRemoteTransaction) {
+            status = ((RecoveryAwareRemoteTransaction)pTx).getStatus();
+         } else { //if it is local transaction then it can only be prepared
+            status = Status.STATUS_PREPARED;
+         }
+         InDoubtTxInfoImpl infoInDoubt = new InDoubtTxInfoImpl(xid, gtx.getInternalId(), status);
+         result.add(infoInDoubt);
+      }
+      if (log.isTraceEnabled()) log.trace("The set of in-doubt txs from this node is %s", result);
+      return result;
+   }
 
-   public void registerPreparedTransaction(RecoveryAwareRemoteTransaction remoteTransaction) {
-      Xid xid = ((XidAware)remoteTransaction.getGlobalTransaction()).getXid();
-      RemoteTransaction previous = preparedTransactions.put(new RecoveryInfoKey(xid, cacheName), remoteTransaction);
+   @Override
+   public Set<InDoubtTxInfo> getInDoubtTransactionInfoFromCluster() {
+      Map<Xid, InDoubtTxInfoImpl> result = new HashMap<Xid, InDoubtTxInfoImpl>();
+      if (rpcManager != null) {
+         GetInDoubtTxInfoCommand inDoubtTxInfoCommand = commandFactory.buildGetInDoubtTxInfoCommand();
+         Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(null, inDoubtTxInfoCommand, true, false);
+         for (Map.Entry<Address, Response> re : addressResponseMap.entrySet()) {
+            Response r = re.getValue();
+            if (!isSuccessful(r)) {
+               throw new CacheException("Could not fetch in doubt transactions: " + r);
+            }
+            Set<InDoubtTxInfoImpl> infoInDoubtSet = (Set<InDoubtTxInfoImpl>) ((SuccessfulResponse) r).getResponseValue();
+            for (InDoubtTxInfoImpl infoInDoubt : infoInDoubtSet) {
+               InDoubtTxInfoImpl inDoubtTxInfo = result.get(infoInDoubt.getXid());
+               if (inDoubtTxInfo == null) {
+                  inDoubtTxInfo = infoInDoubt;
+                  result.put(infoInDoubt.getXid(), inDoubtTxInfo);
+               } else {
+                  inDoubtTxInfo.addStatus(infoInDoubt.getStatus());
+               }
+               inDoubtTxInfo.addOwner(re.getKey());
+            }
+         }
+      }
+      Set<InDoubtTxInfo> onThisNode = getInDoubtTransactionInfo();
+      Iterator<InDoubtTxInfo> iterator = onThisNode.iterator();
+      while (iterator.hasNext()) {
+         InDoubtTxInfo info = iterator.next();
+         InDoubtTxInfoImpl inDoubtTxInfo = result.get(info.getXid());
+         if (inDoubtTxInfo != null) {
+            inDoubtTxInfo.setLocal(true);
+            iterator.remove();
+         } else {
+            ((InDoubtTxInfoImpl)info).setLocal(true);
+         }
+      }
+      HashSet<InDoubtTxInfo> value = new HashSet<InDoubtTxInfo>(result.values());
+      value.addAll(onThisNode);
+      return value;
+   }
+
+   public void registerInDoubtTransaction(RecoveryAwareRemoteTransaction remoteTransaction) {
+      Xid xid = ((RecoverableTransactionIdentifier)remoteTransaction.getGlobalTransaction()).getXid();
+      RecoveryAwareTransaction previous = inDoubtTransactions.put(new RecoveryInfoKey(xid, cacheName), remoteTransaction);
       if (previous != null) {
          log.error("There's already a prepared transaction with this xid: %s. New transaction is %s. Are there two " +
                          "different transactions having same Xid in the cluster?", previous, remoteTransaction);
@@ -148,16 +262,80 @@ public class RecoveryManagerImpl implements RecoveryManager {
    }
 
 
-   public void nodesLeft(List<Address> leavers) {
-      if (log.isTraceEnabled())
-         log.trace("Handling leavers: %s. There are %s prepared transactions to check", leavers, preparedTransactions.values().size());
-      for (RecoveryAwareRemoteTransaction rt : preparedTransactions.values()) {
-         rt.computeOrphan(leavers);
+   public RecoveryAwareRemoteTransaction getPreparedTransaction(Xid xid) {
+      return inDoubtTransactions.get(new RecoveryInfoKey(xid, cacheName));
+   }
+
+   @Override
+   public String forceTransactionCompletion(Xid xid, boolean commit) {
+      //this means that we have this as a local transaction that originated here
+      LocalXaTransaction localTransaction = txTable.getLocalTransaction(xid);
+      if (localTransaction != null) {
+         localTransaction.clearRemoteLocksAcquired();
+         return completeTransaction(localTransaction, commit, xid);
+      } else {
+         RecoveryAwareTransaction tx = getPreparedTransaction(xid);
+         if (tx instanceof LocalTransaction) {
+            LocalTransaction ltx = (LocalTransaction) tx;
+            ltx.markForRollback(false);
+            if (log.isTraceEnabled()) log.trace("About to complete local transaction %s", xid);
+            return completeTransaction(ltx, commit, xid);
+         } else {
+            if (tx == null) return "Could not find transaction " + xid;
+            GlobalTransaction globalTransaction = tx.getGlobalTransaction();
+            globalTransaction.setAddress(rpcManager.getAddress());
+            globalTransaction.setRemote(false);
+            RecoveryAwareLocalTransaction localTx = (RecoveryAwareLocalTransaction) txFactory.newLocalTransaction(null, globalTransaction);
+            localTx.setModifications(tx.getModifications());
+            localTx.setXid(xid);
+            localTx.setAffectedKeys(((RecoveryAwareRemoteTransaction) tx).getAffectedKeys());
+            localTx.setLookedUpEntries(tx.getLookedUpEntries());
+            return completeTransaction(localTx, commit, xid);
+         }
       }
    }
 
-   public RemoteTransaction getPreparedTransaction(Xid xid) {
-      return preparedTransactions.get(new RecoveryInfoKey(xid, cacheName));
+   private String completeTransaction(LocalTransaction localTx, boolean commit, Xid xid) {
+      if (commit) {
+         try {
+            txCoordinator.prepare(localTx);
+            txCoordinator.commit(localTx, false);
+         } catch (XAException e) {
+            log.warn("Could not commit local tx " + localTx, e);
+            return "Could not commit transaction " + xid + " : " + e.getMessage();
+         }
+      } else {
+         try {
+            txCoordinator.rollback(localTx);
+         } catch (XAException e) {
+            log.warn("Could not rollback local tx " + localTx, e);
+            return "Could not commit transaction " + xid + " : " + e.getMessage();
+         }
+      }
+      removeRecoveryInformationFromCluster(null, xid, false);
+      return commit ? "Commit successful!" : "Rollback successful";
+   }
+
+   @Override
+   public String forceTransactionCompletionFromCluster(Xid xid, Address where, boolean commit) {
+      CompleteTransactionCommand ctc = commandFactory.buildCompleteTransactionCommand(xid, commit);
+      Map<Address, Response> responseMap = rpcManager.invokeRemotely(Collections.singleton(where), ctc, true, false);
+      if (responseMap.size() != 1 || responseMap.get(where) == null) {
+         log.error("Expected response size is 1, received %s", responseMap);
+         throw new CacheException("Expected response size is 1, received " + responseMap);
+      }
+      return (String) ((SuccessfulResponse) responseMap.get(where)).getResponseValue();
+   }
+
+   @Override
+   public boolean isTransactionPrepared(GlobalTransaction globalTx) {
+      Xid xid = ((RecoverableTransactionIdentifier) globalTx).getXid();
+      RecoveryAwareRemoteTransaction remoteTransaction = (RecoveryAwareRemoteTransaction) txTable.getRemoteTransaction(globalTx);
+      boolean remotePrepared = remoteTransaction != null && remoteTransaction.isPrepared();
+      boolean result = inDoubtTransactions.get(new RecoveryInfoKey(xid, cacheName)) != null //if it is in doubt must be prepared
+            || txTable.getLocalPreparedXids().contains(xid) || remotePrepared;
+      if (log.isTraceEnabled()) log.trace("Is tx %s prepared? %s", xid, result);
+      return result;
    }
 
    private boolean isSuccessful(Response thisResponse) {
@@ -175,7 +353,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       return addressResponseMap;
    }
 
-   public ConcurrentMap<RecoveryInfoKey, RecoveryAwareRemoteTransaction> getPreparedTransactions() {
-      return preparedTransactions;
+   public ConcurrentMap<RecoveryInfoKey, RecoveryAwareRemoteTransaction> getInDoubtTransactionsMap() {
+      return inDoubtTransactions;
    }
 }

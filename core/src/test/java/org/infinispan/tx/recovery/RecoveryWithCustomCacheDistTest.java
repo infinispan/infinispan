@@ -2,7 +2,12 @@ package org.infinispan.tx.recovery;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
+import org.infinispan.transaction.lookup.JBossTransactionManagerLookup;
+import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.testng.annotations.Test;
+
+import javax.transaction.TransactionManager;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -11,6 +16,7 @@ import org.testng.annotations.Test;
 public class RecoveryWithCustomCacheDistTest extends RecoveryWithDefaultCacheDistTest {
 
    private static final String CUSTOM_CACHE = "customCache";
+
    private Configuration recoveryCache;
 
    @Override
@@ -22,6 +28,7 @@ public class RecoveryWithCustomCacheDistTest extends RecoveryWithDefaultCacheDis
       registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(configuration, false));
 
       recoveryCache = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
+      recoveryCache.fluent().transaction().transactionManagerLookupClass(JBossTransactionManagerLookup.class);
       // Explicitly disable recovery in recovery cache per se.
       recoveryCache.fluent().transaction().recovery().disable();
       manager(0).defineConfiguration(CUSTOM_CACHE, recoveryCache);

@@ -69,6 +69,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.recovery.InDoubtTxInfoImpl;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareDldGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.SerializableXid;
@@ -170,8 +171,8 @@ class ExternalizerTable implements ObjectTable {
 
       internalExternalizers.add(new RemoteTransactionLogDetails.Externalizer());
       internalExternalizers.add(new SerializableXid.XidExternalizer());
-      
       internalExternalizers.add(new VirtualAddress.Externalizer());
+      internalExternalizers.add(new InDoubtTxInfoImpl.Externalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer ext) {

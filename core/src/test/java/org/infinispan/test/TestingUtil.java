@@ -901,7 +901,6 @@ public class TestingUtil {
    public static ObjectName getCacheObjectName(String jmxDomain, String cacheName, String component) throws Exception {
       return getCacheObjectName(jmxDomain, cacheName, component, "DefaultCacheManager");
    }
-
    public static ObjectName getCacheObjectName(String jmxDomain, String cacheName, String component, String cacheManagerName) throws Exception {
       return new ObjectName(jmxDomain + ":type=Cache,manager=" + ObjectName.quote(cacheManagerName)
             + ",name=" + ObjectName.quote(cacheName) + ",component=" + component);

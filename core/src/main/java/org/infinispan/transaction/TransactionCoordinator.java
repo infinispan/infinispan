@@ -96,7 +96,9 @@ public class TransactionCoordinator {
             PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
             try {
                invoker.invoke(ctx, command);
+               txTable.removeLocalTransaction(localTransaction);
             } catch (Throwable e) {
+               txTable.failureCompletingTransaction(ctx.getTransaction());
                log.error("Error while processing 1PC PrepareCommand", e);
                throw new XAException(XAException.XAER_RMERR);
             }
@@ -104,13 +106,15 @@ public class TransactionCoordinator {
             CommitCommand commitCommand = commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
             try {
                invoker.invoke(ctx, commitCommand);
+               txTable.removeLocalTransaction(localTransaction);
             } catch (Throwable e) {
-               log.error("Error while processing 1PC PrepareCommand", e);
+               txTable.failureCompletingTransaction(ctx.getTransaction());
+               log.error("Error while processing 2PC PrepareCommand", e);
                throw new XAException(XAException.XAER_RMERR);
             }
          }
       } finally {
-         cleanupImpl(localTransaction, txTable, icc);
+         icc.suspend();
       }
    }
 
@@ -121,16 +125,14 @@ public class TransactionCoordinator {
       ctx.setLocalTransaction(localTransaction);
       try {
          invoker.invoke(ctx, rollbackCommand);
+         txTable.removeLocalTransaction(localTransaction);
       } catch (Throwable e) {
+         txTable.failureCompletingTransaction(ctx.getTransaction());
          log.error("Exception while rollback", e);
          throw new XAException(XAException.XA_HEURHAZ);
       } finally {
-         cleanupImpl(localTransaction, txTable, icc);
+         icc.suspend();
       }
    }
 
-   private static void cleanupImpl(LocalTransaction localTransaction, TransactionTable txTable, InvocationContextContainer icc) {
-      txTable.removeLocalTransaction(localTransaction);
-      icc.suspend();
-   }
 }

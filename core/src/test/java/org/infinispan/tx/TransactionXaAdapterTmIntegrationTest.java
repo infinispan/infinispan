@@ -75,7 +75,7 @@ public class TransactionXaAdapterTmIntegrationTest {
    }
 
    public void testPrepareTxMarkedForRollback() {
-      localTx.markForRollback();
+      localTx.markForRollback(true);
       try {
          xaAdapter.prepare(xid);
          assert false;

@@ -48,6 +48,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -83,10 +84,10 @@ public class TransactionTable {
    protected Configuration configuration;
    protected InvocationContextContainer icc;
    protected TransactionCoordinator txCoordinator;
+   protected TransactionFactory txFactory;
    private InterceptorChain invoker;
    private CacheNotifier notifier;
    private RpcManager rpcManager;
-   private TransactionFactory txFactory;
    private ExecutorService lockBreakingService;
    private EmbeddedCacheManager cm;
 
@@ -170,6 +171,10 @@ public class TransactionTable {
       }
    }
 
+   public void failureCompletingTransaction(Transaction tx) {
+      removeLocalTransaction(localTransactions.get(tx));
+   }
+
    @Listener
    public class StaleTransactionCleanup {
       @ViewChanged
@@ -181,7 +186,7 @@ public class TransactionTable {
             if (configuration.isUseEagerLocking() && configuration.isEagerLockSingleNode() && configuration.getCacheMode().isDistributed()) {
                for (LocalTransaction localTx : localTransactions.values()) {
                   if (localTx.hasRemoteLocksAcquired(leavers)) {
-                     localTx.markForRollback();
+                     localTx.markForRollback(true);
                   }
                }
             }
@@ -192,7 +197,11 @@ public class TransactionTable {
          try {
             lockBreakingService.submit(new Runnable() {
                public void run() {
+                  try {
                   updateStateOnNodesLeaving(leavers);
+                  } catch (Exception e) {
+                     log.error("Exception whilst updating state", e);
+                  }
                }
             });
          } catch (RejectedExecutionException ree) {
@@ -305,8 +314,9 @@ public class TransactionTable {
    /**
     * Removes the {@link RemoteTransaction} corresponding to the given tx.
     */
-   public void remoteTransactionCompleted(GlobalTransaction gtx) {
-      remoteTransactions.remove(gtx);
+   public void remoteTransactionCompleted(GlobalTransaction gtx, boolean committed) {
+      RemoteTransaction remove = remoteTransactions.remove(gtx);
+      if (log.isTraceEnabled()) log.trace("Removing remote transaction as it is completed: %s", remove);
    }
 
    private boolean removeRemoteTransaction(GlobalTransaction txId) {
@@ -331,5 +341,9 @@ public class TransactionTable {
 
    public boolean containRemoteTx(GlobalTransaction globalTransaction) {
       return remoteTransactions.containsKey(globalTransaction);
+   }
+
+   public Collection<RemoteTransaction> getRemoteTransactions() {
+      return remoteTransactions.values();
    }
 }
