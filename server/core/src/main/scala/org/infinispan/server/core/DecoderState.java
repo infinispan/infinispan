@@ -23,12 +23,13 @@
 package org.infinispan.server.core;
 
 /**
- * // TODO: Document this
+ * Protocol decoding state
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 4.2
  */
 public enum DecoderState {
+   READ_HEADER,
    READ_KEY,
    READ_VALUE,
 }
