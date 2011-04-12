@@ -26,6 +26,10 @@ import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
+import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.distexec.DefaultExecutorService;
+import org.infinispan.distexec.DistributedExecutorService;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -77,6 +81,17 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
          task.onKeys("1","2","3");
       }      
       return task; 
+   }
+   
+   @Test(expectedExceptions={IllegalStateException.class})
+   public void testImproperCacheStateForMapReduceTask() {
+
+      GlobalConfiguration gc = GlobalConfiguration.getNonClusteredDefault();
+      Configuration c = new Configuration();
+      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc, c, true);
+      Cache<Object, Object> cache = defaultCacheManager.getCache();
+      MapReduceTask<Object, Object, String, Integer> task = new MapReduceTask<Object, Object, String, Integer>(
+               cache);
    }
 
 
