@@ -32,6 +32,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
@@ -40,6 +41,7 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -128,12 +130,22 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    private Reducer<KOut, VOut> reducer;
 
    private final Collection<KIn> keys;
-   private final Cache<KIn, VIn> cache;
+   private final AdvancedCache<KIn, VIn> cache;
 
-   public MapReduceTask(Cache<KIn, VIn> cache) {
-      if (cache == null)
-         throw new NullPointerException("A valid reference of cache is needed " + cache);
-      this.cache = cache;
+   /**
+    * Create a new MapReduceTask given a master cache node. All distributed task executions will be
+    * initiated from this cache node.
+    * 
+    * @param masterCacheNode
+    *           cache node initiating map reduce task
+    */
+   public MapReduceTask(Cache<KIn, VIn> masterCacheNode) {
+      if (masterCacheNode == null)
+         throw new NullPointerException("Can not use " + masterCacheNode
+                  + " cache for MapReduceTask");
+
+      ensureProperCacheState(masterCacheNode.getAdvancedCache());
+      this.cache = masterCacheNode.getAdvancedCache();
       this.keys = new LinkedList<KIn>();
    }
 
@@ -200,11 +212,11 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       
       if (reducer == null)
          throw new NullPointerException("A valid reference of Reducer is not set " + reducer);
-      
-      ComponentRegistry registry = cache.getAdvancedCache().getComponentRegistry();
-      RpcManager rpc = cache.getAdvancedCache().getRpcManager();
-      InvocationContextContainer icc = cache.getAdvancedCache().getInvocationContextContainer();
-      DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+            
+      ComponentRegistry registry = cache.getComponentRegistry();
+      RpcManager rpc = cache.getRpcManager();
+      InvocationContextContainer icc = cache.getInvocationContextContainer();
+      DistributionManager dm = cache.getDistributionManager();
       InterceptorChain invoker = registry.getComponent(InterceptorChain.class);
       CommandsFactory factory = registry.getComponent(CommandsFactory.class);
       
@@ -382,7 +394,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    }
 
    protected Map<Address, List<KIn>> mapKeysToNodes() {
-      DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+      DistributionManager dm = cache.getDistributionManager();
       Map<Address, List<KIn>> addressToKey = new HashMap<Address, List<KIn>>();
       for (KIn key : keys) {
          List<Address> nodesForKey = dm.locate(key);
@@ -395,6 +407,21 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          keysAtNode.add(key);
       }
       return addressToKey;
+   }
+   
+   private void ensureProperCacheState(AdvancedCache<KIn, VIn> cache) throws NullPointerException,
+            IllegalStateException {
+      
+      if (cache.getRpcManager() == null)
+         throw new IllegalStateException("Can not use non-clustered cache for MapReduceTask");
+
+      if (cache.getStatus() != ComponentStatus.RUNNING)
+         throw new IllegalStateException("Invalid cache state " + cache.getStatus());
+
+      if (cache.getDistributionManager() == null) {
+         throw new IllegalStateException("Cache mode should be DIST, rather than "
+                           + cache.getConfiguration().getCacheModeString());
+      }
    }
 
    private boolean inputTaskKeysEmpty() {

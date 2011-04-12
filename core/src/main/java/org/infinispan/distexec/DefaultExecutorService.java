@@ -45,12 +45,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -82,29 +83,38 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
    private static final Log log = LogFactory.getLog(DefaultExecutorService.class);
    protected final AtomicBoolean isShutdown = new AtomicBoolean(false);
-   protected final Cache cache;
+   protected final AdvancedCache cache;
    protected final RpcManager rpc;
    protected final InterceptorChain invoker;
    protected final CommandsFactory factory;
 
-   public DefaultExecutorService(Cache cache) {
+   /**
+    * Create a new DefaultExecutorService given a master cache node. All distributed task executions
+    * will be initiated from this cache node.
+    * 
+    * @param masterCacheNode
+    *           cache node initiating map reduce task
+    */
+   public DefaultExecutorService(Cache masterCacheNode) {
       super();
-      this.cache = cache;
-      this.rpc = cache.getAdvancedCache().getRpcManager();
-      ComponentRegistry registry = cache.getAdvancedCache().getComponentRegistry();
-      this.invoker = registry.getComponent(InterceptorChain.class);
-      this.factory = registry.getComponent(CommandsFactory.class);
+      if (masterCacheNode == null)
+         throw new NullPointerException("Can not use " + masterCacheNode
+                  + " cache for DefaultExecutorService");
+      
+      ensureProperCacheState(masterCacheNode.getAdvancedCache());
+      this.cache = masterCacheNode.getAdvancedCache();
+      this.rpc = cache.getRpcManager();
+      this.invoker = cache.getComponentRegistry().getComponent(InterceptorChain.class);
+      this.factory = cache.getComponentRegistry().getComponent(CommandsFactory.class);
    }
 
    @Override
-   public <T> NotifyingFuture<T> submit(Runnable task, T result) {
-      // This cast is okay cause we control creation of the task
+   public <T> NotifyingFuture<T> submit(Runnable task, T result) {      
       return (NotifyingFuture<T>) super.submit(task, result);
    }
 
    @Override
    public <T> NotifyingFuture<T> submit(Callable<T> task) {
-      // This cast is okay cause we control creation of the task
       return (NotifyingFuture<T>) super.submit(task);
    }
 
@@ -278,7 +288,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
    @Override
    public <T, K> Future<T> submit(Callable<T> task, K... input) {
-      if (task == null) throw new NullPointerException();
+      if (task == null) throw new NullPointerException();      
       
       if(inputKeysSpecified(input)){
          Map<Address, List<K>> nodesKeysMap = mapKeysToNodes(input);
@@ -301,7 +311,6 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    @Override
    public <T> List<Future<T>> submitEverywhere(Callable<T> task) {
       if (task == null) throw new NullPointerException();
-      
       List<Future<T>> futures = new ArrayList<Future<T>>();
       List<Address> members = rpc.getTransport().getMembers();
       Address me = rpc.getAddress();
@@ -321,7 +330,6 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    @Override
    public <T, K> List<Future<T>> submitEverywhere(Callable<T> task, K... input) {
       if (task == null) throw new NullPointerException();
-           
       if(inputKeysSpecified(input)) {
          List<Future<T>> futures = new ArrayList<Future<T>>();
          Address me = rpc.getAddress();
@@ -386,7 +394,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    protected <K> Map<Address, List<K>> mapKeysToNodes(K... input) {
-      DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+      DistributionManager dm = cache.getDistributionManager();
       Map<Address, List<K>> addressToKey = new HashMap<Address, List<K>>();
       for (K key : input) {
          List<Address> nodesForKey = dm.locate(key);
@@ -430,6 +438,16 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          chosen.add(address);
       }
       return chosen;
+   }
+   
+   private void ensureProperCacheState(AdvancedCache cache) throws NullPointerException,
+            IllegalStateException {
+      
+      if (cache.getRpcManager() == null)
+         throw new IllegalStateException("Can not use non-clustered cache for DefaultExecutorService");
+
+      if (cache.getStatus() != ComponentStatus.RUNNING)
+         throw new IllegalStateException("Invalid cache state " + cache.getStatus());
    }
    
    /**
