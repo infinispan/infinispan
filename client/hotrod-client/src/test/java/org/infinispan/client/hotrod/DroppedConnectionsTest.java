@@ -55,7 +55,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
       GenericKeyedObjectPool keyedObjectPool = transportFactory.getConnectionPool();
       InetSocketAddress address = new InetSocketAddress("127.0.0.1", hotRodServer.getPort());
 
-      assertEquals(1, keyedObjectPool.getNumActive(address));
+      assertEquals(0, keyedObjectPool.getNumActive(address));
       assertEquals(1, keyedObjectPool.getNumIdle(address));
 
       TcpTransport tcpConnection = (TcpTransport) keyedObjectPool.borrowObject(address);
@@ -64,7 +64,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
       tcpConnection.destroy();
 
       assertEquals("v", rc.get("k"));
-      assertEquals(1, keyedObjectPool.getNumActive(address));
+      assertEquals(0, keyedObjectPool.getNumActive(address));
       assertEquals(1, keyedObjectPool.getNumIdle(address));
 
       TcpTransport tcpConnection2 = (TcpTransport) keyedObjectPool.borrowObject(address);

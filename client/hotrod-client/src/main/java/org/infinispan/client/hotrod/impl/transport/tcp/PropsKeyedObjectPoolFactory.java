@@ -27,6 +27,7 @@ public class PropsKeyedObjectPoolFactory extends GenericKeyedObjectPoolFactory {
       _testOnReturn = booleanProp(props, "testOnReturn", false);
       _timeBetweenEvictionRunsMillis = intProp(props, "timeBetweenEvictionRunsMillis", 2 * 60 * 1000);
       _minEvictableIdleTimeMillis = longProp(props, "minEvictableIdleTimeMillis", 5 * 60 * 1000);
+      _numTestsPerEvictionRun = intProp(props, "numTestsPerEvictionRun", 3);
       _testWhileIdle = booleanProp(props, "testWhileIdle", true);
       _minIdle = intProp(props, "minIdle", 1);
       _lifo = booleanProp(props, "lifo", true);
