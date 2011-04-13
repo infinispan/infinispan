@@ -106,12 +106,21 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
    public void tearDown() throws ExecutionException, InterruptedException {
       hotRodServer1.stop();
       hotRodServer2.stop();
+
       workerThread1.stop();
       workerThread2.stop();
       workerThread3.stop();
       workerThread4.stop();
       workerThread5.stop();
       workerThread6.stop();
+
+      workerThread1.awaitTermination();
+      workerThread2.awaitTermination();
+      workerThread3.awaitTermination();
+      workerThread4.awaitTermination();
+      workerThread5.awaitTermination();
+      workerThread6.awaitTermination();
+
       remoteCacheManager.stop();
    }
 
@@ -193,6 +202,13 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
          dt1.allow();
          dt2.allow();
       }
+
+      // give the servers some time to process the operations
+      eventually(new Condition() {
+         public boolean isSatisfied() throws Exception {
+            return connectionPool.getNumActive() == 0;
+         }
+      }, 1000);
 
       assertExistKeyValue("k3", "v3");
       assertExistKeyValue("k4", "v4");

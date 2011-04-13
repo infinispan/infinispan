@@ -91,10 +91,17 @@ public class WorkerThread {
    }
 
    /**
+    * Returns without waiting for the threads to finish.
+    */
+   public void stop() {
+      executor.shutdown();
+   }
+
+   /**
     * Only returns when the last operation on this thread has finished.
     */
-   public void stop() throws InterruptedException, ExecutionException {
-      executor.shutdown();
+   public void awaitTermination() throws InterruptedException, ExecutionException {
+      executor.awaitTermination(1, TimeUnit.SECONDS);
       if (future != null) {
          future.get();
       }
