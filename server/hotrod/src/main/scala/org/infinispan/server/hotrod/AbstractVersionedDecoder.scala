@@ -27,12 +27,12 @@ abstract class AbstractVersionedDecoder {
    /**
     * Read the parameters of the operation, if present.
     */
-   def readParameters(header: HotRodHeader, buffer: ChannelBuffer): RequestParameters
+   def readParameters(header: HotRodHeader, buffer: ChannelBuffer): (RequestParameters, Boolean)
 
    /**
     * Read the value part of the operation.
     */
-   def createValue(params: RequestParameters, nextVersion: Long): CacheValue
+   def createValue(params: RequestParameters, nextVersion: Long, rawValue: Array[Byte]): CacheValue
 
    /**
     * Create a successful response.

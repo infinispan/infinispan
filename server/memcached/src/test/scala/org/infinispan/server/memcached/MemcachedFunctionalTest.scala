@@ -461,9 +461,14 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    }
 
    def testQuit(m: Method) {
-      var f = client.set(k(m), 0, "0")
+      val f = client.set(k(m), 0, "0")
       assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
       sendNoWait("quit\r\n")
+   }
+
+   def testSetBigSizeValue(m: Method) {
+      val f = client.set(k(m), 0, generateRandomString(1024 * 1024).getBytes)
+      assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
    }
 
 //   def testRegex {
