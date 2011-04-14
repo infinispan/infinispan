@@ -70,20 +70,22 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
 
    private def readKey(buffer: ChannelBuffer): ByteArrayKey = new ByteArrayKey(readRangedBytes(buffer))
 
-   override def readParameters(header: HotRodHeader, buffer: ChannelBuffer): RequestParameters = {
+   override def readParameters(header: HotRodHeader, buffer: ChannelBuffer): (RequestParameters, Boolean) = {
       header.op match {
-         case RemoveRequest => null
-         case RemoveIfUnmodifiedRequest => new RequestParameters(null, -1, -1, buffer.readLong)
+         case RemoveRequest => (null, true)
+         case RemoveIfUnmodifiedRequest => (new RequestParameters(-1, -1, -1, buffer.readLong), true)
          case ReplaceIfUnmodifiedRequest => {
             val lifespan = readLifespanOrMaxIdle(buffer)
             val maxIdle = readLifespanOrMaxIdle(buffer)
             val version = buffer.readLong
-            new RequestParameters(readRangedBytes(buffer), lifespan, maxIdle, version)
+            val valueLength = readUnsignedInt(buffer)
+            (new RequestParameters(valueLength, lifespan, maxIdle, version), false)
          }
          case _ => {
             val lifespan = readLifespanOrMaxIdle(buffer)
             val maxIdle = readLifespanOrMaxIdle(buffer)
-            new RequestParameters(readRangedBytes(buffer), lifespan, maxIdle, -1)
+            val valueLength = readUnsignedInt(buffer)
+            (new RequestParameters(valueLength, lifespan, maxIdle, -1), false)
          }
       }
    }
@@ -93,8 +95,8 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
       if (stream <= 0) -1 else stream
    }
 
-   override def createValue(params: RequestParameters, nextVersion: Long): CacheValue =
-      new CacheValue(params.data, nextVersion)
+   override def createValue(params: RequestParameters, nextVersion: Long, rawValue: Array[Byte]): CacheValue =
+      new CacheValue(rawValue, nextVersion)
 
    override def createSuccessResponse(header: HotRodHeader, prev: CacheValue): AnyRef =
       createResponse(header, toResponse(header.op), Success, prev)
@@ -142,7 +144,7 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
       h.op match {
          case RemoveIfUnmodifiedRequest => {
             val k = readKey(buffer)
-            val params = readParameters(h, buffer)
+            val params = readParameters(h, buffer)._1
             val prev = cache.get(k)
             if (prev != null) {
                if (prev.version == params.streamVersion) {

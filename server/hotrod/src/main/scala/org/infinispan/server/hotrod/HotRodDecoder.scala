@@ -94,11 +94,17 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
    override def readKey(b: ChannelBuffer): (ByteArrayKey, Boolean) =
       header.decoder.readKey(header, b)
 
-   override def readParameters(b: ChannelBuffer) =
-      params = header.decoder.readParameters(header, b)
+   override def readParameters(ch: Channel, b: ChannelBuffer): Boolean = {
+      val (parameters, endOfOp) = header.decoder.readParameters(header, b)
+      params = parameters
+      endOfOp
+   }
+
+   override protected def readValue(b: ChannelBuffer) =
+      b.readBytes(rawValue)
 
    override def createValue(nextVersion: Long): CacheValue =
-      header.decoder.createValue(params, nextVersion)
+      header.decoder.createValue(params, nextVersion, rawValue)
 
    override def createSuccessResponse(prev: CacheValue): AnyRef =
       header.decoder.createSuccessResponse(header, prev)
@@ -115,13 +121,13 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
    override def createMultiGetResponse(pairs: Map[ByteArrayKey, CacheValue]): AnyRef =
       null // Unsupported
 
-   override protected def customReadHeader(ch: Channel, buffer: ChannelBuffer): AnyRef =
+   override protected def customDecodeHeader(ch: Channel, buffer: ChannelBuffer): AnyRef =
       writeResponse(ch, header.decoder.customReadHeader(header, buffer, cache))
 
-   override protected def customReadKey(ch: Channel, buffer: ChannelBuffer): AnyRef =
+   override protected def customDecodeKey(ch: Channel, buffer: ChannelBuffer): AnyRef =
       writeResponse(ch, header.decoder.customReadKey(header, buffer, cache))
 
-   override protected def customReadValue(ch: Channel, buffer: ChannelBuffer): AnyRef =
+   override protected def customDecodeValue(ch: Channel, buffer: ChannelBuffer): AnyRef =
       writeResponse(ch, header.decoder.customReadValue(header, buffer, cache))
 
    override def createStatsResponse: AnyRef =
