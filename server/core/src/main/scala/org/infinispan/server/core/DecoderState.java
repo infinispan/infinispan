@@ -29,7 +29,8 @@ package org.infinispan.server.core;
  * @since 4.2
  */
 public enum DecoderState {
-   READ_HEADER,
-   READ_KEY,
-   READ_VALUE,
+   DECODE_HEADER,
+   DECODE_KEY,
+   DECODE_PARAMETERS,
+   DECODE_VALUE,
 }

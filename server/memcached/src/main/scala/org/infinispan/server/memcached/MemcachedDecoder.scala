@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicLong
 import org.infinispan.server.core._
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import org.infinispan.{AdvancedCache, Version, CacheException, Cache}
-import org.infinispan.util.Util
 import collection.mutable.{HashMap, ListBuffer}
 import scala.collection.immutable
 import org.jboss.netty.buffer.ChannelBuffer
@@ -97,8 +96,9 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       } else k
    }
 
-   override def readParameters(b: ChannelBuffer) {
+   override def readParameters(ch: Channel, b: ChannelBuffer): Boolean = {
       val line = readLine(b)
+      var endOfOp = false
       params =
          if (!line.isEmpty) {
             if (isTraceEnabled) trace("Operation parameters: %s", line)
@@ -106,7 +106,10 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
             try {
                header.op match {
                   case RemoveRequest => readRemoveParameters(args)
-                  case IncrementRequest | DecrementRequest => readIncrDecrParameters(args)
+                  case IncrementRequest | DecrementRequest => {
+                     endOfOp = true
+                     readIncrDecrParameters(args)
+                  }
                   case FlushAllRequest => readFlushAllParameters(args)
                   case _ => readStorageParameters(args, b)
                }
@@ -116,17 +119,18 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
          } else {
             null // For example when delete <key> is sent without any further parameters, or flush_all without delay
          }
+      endOfOp
    }
 
    private def readRemoveParameters(args: Array[String]): MemcachedParameters = {
       val delayedDeleteTime = parseDelayedDeleteTime(args)
       val noReply = if (delayedDeleteTime == -1) parseNoReply(0, args) else false
-      new MemcachedParameters(null, -1, -1, -1, noReply, 0, "", 0)
+      new MemcachedParameters(-1, -1, -1, -1, noReply, 0, "", 0)
    }
 
    private def readIncrDecrParameters(args: Array[String]): MemcachedParameters = {
       val delta = args(0)
-      new MemcachedParameters(null, -1, -1, -1, parseNoReply(1, args), 0, delta, 0)
+      new MemcachedParameters(-1, -1, -1, -1, parseNoReply(1, args), 0, delta, 0)
    }
 
    private def readFlushAllParameters(args: Array[String]): MemcachedParameters = {
@@ -143,7 +147,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
             }
          }
       val noReply = if (!noReplyFound) parseNoReply(1, args) else true
-      new MemcachedParameters(null, -1, -1, -1, noReply, 0, "", flushDelay)
+      new MemcachedParameters(-1, -1, -1, -1, noReply, 0, "", flushDelay)
    }
 
    private def readStorageParameters(args: Array[String], b: ChannelBuffer): MemcachedParameters = {
@@ -167,14 +171,16 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       }
       index += 1
       val noReply = parseNoReply(index, args)
-      val data = new Array[Byte](length)
-      b.readBytes(data, 0, data.length)
+      new MemcachedParameters(length, lifespan, -1, streamVersion, noReply, flags, "", 0)
+   }
+
+   override protected def readValue(b: ChannelBuffer) {
+      b.readBytes(rawValue)
       readLine(b) // read the rest of line to clear CRLF after value Byte[]
-      new MemcachedParameters(data, lifespan, -1, streamVersion, noReply, flags, "", 0)
    }
 
    override def createValue(nextVersion: Long): MemcachedValue =
-      new MemcachedValue(params.data, nextVersion, params.flags)
+      new MemcachedValue(rawValue, nextVersion, params.flags)
 
    private def getFlags(flags: String): Long = {
       if (flags == null) throw new EOFException("No flags passed")
@@ -224,7 +230,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
 
    override def getCache: Cache[String, MemcachedValue] = cache
 
-   override protected def customReadHeader(ch: Channel, buffer: ChannelBuffer): AnyRef = {
+   override protected def customDecodeHeader(ch: Channel, buffer: ChannelBuffer): AnyRef = {
       header.op match {
          case FlushAllRequest => flushAll(buffer, ch, false) // Without params
          case VersionRequest => {
@@ -234,31 +240,31 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       }
    }
 
-   override protected def customReadKey(ch: Channel, buffer: ChannelBuffer): AnyRef = {
+   override protected def customDecodeKey(ch: Channel, buffer: ChannelBuffer): AnyRef = {
       header.op match {
          case AppendRequest | PrependRequest | IncrementRequest | DecrementRequest => {
-            k = readKey(buffer)._1
-            checkpointTo(READ_VALUE)
+            key = readKey(buffer)._1
+            checkpointTo(DECODE_PARAMETERS)
          }
          case FlushAllRequest => flushAll(buffer, ch, true) // With params
          case QuitRequest => closeChannel(ch)
       }
    }
 
-   override protected def customReadValue(ch: Channel, buffer: ChannelBuffer): AnyRef = {
+   override protected def customDecodeValue(ch: Channel, buffer: ChannelBuffer): AnyRef = {
       val op = header.op
-      readParameters(buffer)
       op match {
          case AppendRequest | PrependRequest => {
-            val prev = cache.get(k)
+            readValue(buffer)
+            val prev = cache.get(key)
             val ret =
                if (prev != null) {
                   val concatenated = header.op match {
-                     case AppendRequest => concat(prev.data, params.data);
-                     case PrependRequest => concat(params.data, prev.data);
+                     case AppendRequest => concat(prev.data, rawValue);
+                     case PrependRequest => concat(rawValue, prev.data);
                   }
                   val next = createValue(concatenated, generateVersion(cache), params.flags)
-                  val replaced = cache.replace(k, prev, next);
+                  val replaced = cache.replace(key, prev, next);
                   if (replaced)
                      if (!params.noReply) STORED else null
                   else // If there's a concurrent modification on this key, treat it as we couldn't replace it
@@ -268,43 +274,46 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
                }
             writeResponse(ch, ret)
          }
-         case IncrementRequest | DecrementRequest => {
-            val prev = cache.get(k)
-            val ret =
-               if (prev != null) {
-                  val prevCounter = BigInt(new String(prev.data))
-                  val delta = validateDelta(params.delta)
-                  val newCounter =
-                     header.op match {
-                        case IncrementRequest => {
-                           val candidateCounter = prevCounter + delta
-                           if (candidateCounter > MAX_UNSIGNED_LONG) 0 else candidateCounter
-                        }
-                        case DecrementRequest => {
-                           val candidateCounter = prevCounter - delta
-                           if (candidateCounter < 0) 0 else candidateCounter
-                        }
-                     }
-                  val next = createValue(newCounter.toString.getBytes, generateVersion(cache), params.flags)
-                  val replaced = cache.replace(k, prev, next)
-                  if (replaced) {
-                     if (isStatsEnabled) if (op == IncrementRequest) incrHits.incrementAndGet() else decrHits.incrementAndGet
-                     if (!params.noReply) new String(next.data) + CRLF else null
-                  } else {
-                     // If there's a concurrent modification on this key, the spec does not say what to do, so treat it as exceptional
-                     throw new CacheException("Value modified since we retrieved from the cache, old value was " + prevCounter)
-                  }
-               } else {
-                  if (isStatsEnabled) if (op == IncrementRequest) incrMisses.incrementAndGet() else decrMisses.incrementAndGet
-                  if (!params.noReply) NOT_FOUND else null
-               }
-            writeResponse(ch, ret)
-         }
+         case IncrementRequest | DecrementRequest => incrDecr(ch)
       }
    }
 
+   private def incrDecr(ch: Channel): AnyRef = {
+      val prev = cache.get(key)
+      val op = header.op
+      val ret =
+         if (prev != null) {
+            val prevCounter = BigInt(new String(prev.data))
+            val delta = validateDelta(params.delta)
+            val newCounter =
+               op match {
+                  case IncrementRequest => {
+                     val candidateCounter = prevCounter + delta
+                     if (candidateCounter > MAX_UNSIGNED_LONG) 0 else candidateCounter
+                  }
+                  case DecrementRequest => {
+                     val candidateCounter = prevCounter - delta
+                     if (candidateCounter < 0) 0 else candidateCounter
+                  }
+               }
+            val next = createValue(newCounter.toString.getBytes, generateVersion(cache), params.flags)
+            val replaced = cache.replace(key, prev, next)
+            if (replaced) {
+               if (isStatsEnabled) if (op == IncrementRequest) incrHits.incrementAndGet() else decrHits.incrementAndGet
+               if (!params.noReply) new String(next.data) + CRLF else null
+            } else {
+               // If there's a concurrent modification on this key, the spec does not say what to do, so treat it as exceptional
+               throw new CacheException("Value modified since we retrieved from the cache, old value was " + prevCounter)
+            }
+         } else {
+            if (isStatsEnabled) if (op == IncrementRequest) incrMisses.incrementAndGet() else decrMisses.incrementAndGet
+            if (!params.noReply) NOT_FOUND else null
+         }
+      writeResponse(ch, ret)
+   }
+
    private def flushAll(b: ChannelBuffer, ch: Channel, isReadParams: Boolean): AnyRef = {
-      if (isReadParams) readParameters(b)
+      if (isReadParams) readParameters(ch, b)
       val flushFunction = (cache: AdvancedCache[String, MemcachedValue]) => cache.withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STORE).clear
       val flushDelay = if (params == null) 0 else params.flushDelay
       if (flushDelay == 0)
@@ -511,13 +520,14 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
    }
 }
 
-class MemcachedParameters(override val data: Array[Byte], override val lifespan: Int,
+class MemcachedParameters(override val valueLength: Int, override val lifespan: Int,
                           override val maxIdle: Int, override val streamVersion: Long,
                           val noReply: Boolean, val flags: Long, val delta: String,
-                          val flushDelay: Int) extends RequestParameters(data, lifespan, maxIdle, streamVersion) {
+                          val flushDelay: Int)
+        extends RequestParameters(valueLength, lifespan, maxIdle, streamVersion) {
    override def toString = {
       new StringBuilder().append("MemcachedParameters").append("{")
-         .append("data=").append(Util.printArray(data, true))
+         .append("valueLength=").append(valueLength)
          .append(", lifespan=").append(lifespan)
          .append(", maxIdle=").append(maxIdle)
          .append(", streamVersion=").append(streamVersion)

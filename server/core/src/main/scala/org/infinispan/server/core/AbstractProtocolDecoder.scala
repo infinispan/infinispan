@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
 import org.infinispan.server.core.VersionGenerator._
 import transport._
-import org.infinispan.util.Util
 import java.io.StreamCorruptedException
 import transport.ExtendedChannelBuffer._
 import org.jboss.netty.handler.codec.replay.ReplayingDecoder
@@ -21,7 +20,7 @@ import DecoderState._
  * @since 4.1
  */
 abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTransport)
-        extends ReplayingDecoder[DecoderState](READ_HEADER, true) {
+        extends ReplayingDecoder[DecoderState](DECODE_HEADER, true) {
    import AbstractProtocolDecoder._
 
    type SuitableParameters <: RequestParameters
@@ -32,16 +31,18 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
 
    protected var header: SuitableHeader = null.asInstanceOf[SuitableHeader]
    protected var params: SuitableParameters = null.asInstanceOf[SuitableParameters]
-   protected var k: K = null.asInstanceOf[K]
+   protected var key: K = null.asInstanceOf[K]
+   protected var rawValue: Array[Byte] = null.asInstanceOf[Array[Byte]]
    protected var cache: Cache[K, V] = null
 
    override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
       val ch = ctx.getChannel
       try {
          state match {
-            case READ_HEADER => readHeader(ch, buffer, state)
-            case READ_KEY => readKey(ch, buffer, state)
-            case READ_VALUE => readValue(ch, buffer, state)
+            case DECODE_HEADER => decodeHeader(ch, buffer, state)
+            case DECODE_KEY => decodeKey(ch, buffer, state)
+            case DECODE_PARAMETERS => decodeParameters(ch, buffer, state)
+            case DECODE_VALUE => decodeValue(ch, buffer, state)
          }
       } catch {
          case e: Exception => {
@@ -51,7 +52,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
             // carry on being processed on same connection after a client error
             if (isClientError) {
                Channels.fireExceptionCaught(ch, serverException)
-               checkpointTo(READ_HEADER)
+               checkpointTo(DECODE_HEADER)
                null
             } else {
                throw serverException
@@ -61,7 +62,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
       }
    }
 
-   private def readHeader(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
+   private def decodeHeader(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
       val (optHeader, endOfOp) = readHeader(buffer)
       if (optHeader == None) return null // Something went wrong reading the header, so get more bytes
       header = optHeader.get
@@ -69,34 +70,48 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
       if (endOfOp) {
          header.op match {
             case StatsRequest => writeResponse(ch, createStatsResponse)
-            case _ => customReadHeader(ch, buffer)
+            case _ => customDecodeHeader(ch, buffer)
          }
       } else {
-         checkpointTo(READ_KEY)
+         checkpointTo(DECODE_KEY)
       }
    }
 
-   private def readKey(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
+   private def decodeKey(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
       header.op match {
          case PutRequest | PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest | RemoveRequest => {
-            val (key, endOfOp) = readKey(buffer)
-            k = key
+            val (k, endOfOp) = readKey(buffer)
+            key = k
             if (endOfOp) {
                // If it's the end of the operation, it can only be a remove
                writeResponse(ch, remove)
             } else {
-               checkpointTo(READ_VALUE)
+               checkpointTo(DECODE_PARAMETERS)
             }
          }
          case GetRequest | GetWithVersionRequest => writeResponse(ch, get(buffer))
-         case _ => customReadKey(ch, buffer)
+         case _ => customDecodeKey(ch, buffer)
       }
    }
 
-   private def readValue(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
+   private def decodeParameters(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
+      val endOfOp = readParameters(ch, buffer)
+      if (!endOfOp && params.valueLength > 0) {
+         // Create value holder and checkpoint only if there's more to read
+         rawValue = new Array[Byte](params.valueLength)
+         checkpointTo(DECODE_VALUE)
+      } else if (params.valueLength == 0){
+         rawValue = Array.empty
+         decodeValue(ch, buffer, state)
+      } else {
+         decodeValue(ch, buffer, state)
+      }
+   }
+
+   private def decodeValue(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
       val ret = header.op match {
          case PutRequest | PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest | RemoveRequest => {
-            readParameters(buffer)
+            readValue(buffer)
             header.op match {
                case PutRequest => put
                case PutIfAbsentRequest => putIfAbsent
@@ -105,7 +120,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
                case RemoveRequest => remove
             }
          }
-         case _ => customReadValue(ch, buffer)
+         case _ => customDecodeValue(ch, buffer)
       }
       writeResponse(ch, ret)
    }
@@ -124,13 +139,13 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
             case _ => ch.write(response)
          }
       }
-      checkpointTo(READ_HEADER)
+      checkpointTo(DECODE_HEADER)
    }
 
    private def put: AnyRef = {
       val v = createValue(generateVersion(cache))
       // Get an optimised cache in case we can make the operation more efficient
-      val prev = getOptimizedCache(cache).put(k, v,
+      val prev = getOptimizedCache(cache).put(key, v,
          toMillis(params.lifespan), DefaultTimeUnit,
          toMillis(params.maxIdle), DefaultTimeUnit)
       createSuccessResponse(prev)
@@ -139,10 +154,10 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    protected def getOptimizedCache(c: Cache[K, V]): Cache[K, V] = c
 
    private def putIfAbsent: AnyRef = {
-      var prev = cache.get(k)
+      var prev = cache.get(key)
       if (prev == null) { // Generate new version only if key not present
          val v = createValue(generateVersion(cache))
-         prev = cache.putIfAbsent(k, v,
+         prev = cache.putIfAbsent(key, v,
             toMillis(params.lifespan), DefaultTimeUnit,
             toMillis(params.maxIdle), DefaultTimeUnit)
       }
@@ -153,10 +168,10 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    }
 
    private def replace: AnyRef = {
-      var prev = cache.get(k)
+      var prev = cache.get(key)
       if (prev != null) { // Generate new version only if key present
          val v = createValue(generateVersion(cache))
-         prev = cache.replace(k, v,
+         prev = cache.replace(key, v,
             toMillis(params.lifespan), DefaultTimeUnit,
             toMillis(params.maxIdle), DefaultTimeUnit)
       }
@@ -167,12 +182,12 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    }
 
    private def replaceIfUmodified: AnyRef = {
-      val prev = cache.get(k)
+      val prev = cache.get(key)
       if (prev != null) {
          if (prev.version == params.streamVersion) {
             // Generate new version only if key present and version has not changed, otherwise it's wasteful
             val v = createValue(generateVersion(cache))
-            val replaced = cache.replace(k, prev, v);
+            val replaced = cache.replace(key, prev, v);
             if (replaced)
                createSuccessResponse(prev)
             else
@@ -184,7 +199,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    }
 
    private def remove: AnyRef = {
-      val prev = cache.remove(k)
+      val prev = cache.remove(key)
       if (prev != null)
          createSuccessResponse(prev)
       else
@@ -192,7 +207,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    }
 
    protected def get(buffer: ChannelBuffer): AnyRef =
-      createGetResponse(k, cache.get(readKey(buffer)._1))
+      createGetResponse(key, cache.get(readKey(buffer)._1))
 
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
       error("Exception reported", e.getCause)
@@ -230,7 +245,9 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
     */
    protected def readKey(b: ChannelBuffer): (K, Boolean)
 
-   protected def readParameters(b: ChannelBuffer)
+   protected def readParameters(ch: Channel, b: ChannelBuffer): Boolean
+
+   protected def readValue(b: ChannelBuffer)
 
    protected def createValue(nextVersion: Long): V
 
@@ -248,11 +265,11 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
 
    protected def createStatsResponse: AnyRef
 
-   protected def customReadHeader(ch: Channel, buffer: ChannelBuffer): AnyRef
+   protected def customDecodeHeader(ch: Channel, buffer: ChannelBuffer): AnyRef
 
-   protected def customReadKey(ch: Channel, buffer: ChannelBuffer): AnyRef
+   protected def customDecodeKey(ch: Channel, buffer: ChannelBuffer): AnyRef
 
-   protected def customReadValue(ch: Channel, buffer: ChannelBuffer): AnyRef
+   protected def customDecodeValue(ch: Channel, buffer: ChannelBuffer): AnyRef
 
    protected def createServerException(e: Exception, b: ChannelBuffer): (Exception, Boolean)
 
@@ -295,10 +312,10 @@ class RequestHeader(val op: Enumeration#Value) {
    }
 }
 
-class RequestParameters(val data: Array[Byte], val lifespan: Int, val maxIdle: Int, val streamVersion: Long) {
+class RequestParameters(val valueLength: Int, val lifespan: Int, val maxIdle: Int, val streamVersion: Long) {
    override def toString = {
       new StringBuilder().append("RequestParameters").append("{")
-         .append("data=").append(Util.printArray(data, true))
+         .append("valueLength=").append(valueLength)
          .append(", lifespan=").append(lifespan)
          .append(", maxIdle=").append(maxIdle)
          .append(", streamVersion=").append(streamVersion)

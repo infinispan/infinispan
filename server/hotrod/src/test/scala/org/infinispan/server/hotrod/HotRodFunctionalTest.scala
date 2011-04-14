@@ -376,9 +376,16 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       }
    }
 
-   def testPut1mbSizeKey(m: Method) {
+   def testPutBigSizeKey(m: Method) {
       val key = generateRandomString(1024 * 1024).getBytes
-      val status = client.put(key , 0, 0, v(m)).status
+      val status = client.put(key, 0, 0, v(m)).status
       assertStatus(status, Success)
    }
+
+   def testPutBigSizeValue(m: Method) {
+      val value = generateRandomString(1024 * 1024).getBytes
+      val status = client.put(k(m), 0, 0, value).status
+      assertStatus(status, Success)
+   }
+
 }
