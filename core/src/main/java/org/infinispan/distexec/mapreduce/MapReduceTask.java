@@ -40,13 +40,17 @@ import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.AbstractInProcessFuture;
 import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -131,6 +135,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
    private final Collection<KIn> keys;
    private final AdvancedCache<KIn, VIn> cache;
+   protected final Marshaller marshaller;
 
    /**
     * Create a new MapReduceTask given a master cache node. All distributed task executions will be
@@ -144,9 +149,12 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          throw new NullPointerException("Can not use " + masterCacheNode
                   + " cache for MapReduceTask");
 
-      ensureProperCacheState(masterCacheNode.getAdvancedCache());
+      ensureProperCacheState(masterCacheNode.getAdvancedCache());      
       this.cache = masterCacheNode.getAdvancedCache();
       this.keys = new LinkedList<KIn>();
+      
+      GlobalComponentRegistry globalRegistry = cache.getComponentRegistry().getGlobalComponentRegistry();
+      this.marshaller = globalRegistry.getComponent(StreamingMarshaller.class);      
    }
 
    /**
@@ -206,6 +214,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     * 
     * @return a Map where each key is an output key and value is reduced value for that output key
     */
+   @SuppressWarnings("unchecked")
    public Map<KOut, VOut> execute() throws CacheException {
       if (mapper == null)
          throw new NullPointerException("A valid reference of Mapper is not set " + mapper);
@@ -242,7 +251,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             Address address = e.getKey();
             List<KIn> keys = e.getValue();
             if (address.equals(rpc.getAddress())) {
-               selfCmd = factory.buildMapReduceCommand(mapper, reducer, rpc.getAddress(), keys);
+               selfCmd = factory.buildMapReduceCommand(clone(mapper), clone(reducer), rpc.getAddress(), keys);
             } else {
                cmd = factory.buildMapReduceCommand(mapper, reducer, rpc.getAddress(), keys);
                try {
@@ -284,7 +293,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       Map<KOut, List<VOut>> reduceMap = new HashMap<KOut, List<VOut>>();
       for (Entry<Address, Response> e : results.entrySet()) {
          Response rsp = e.getValue();
-         if (rsp.isSuccessful() && rsp.isValid()) {
+         if (rsp.isSuccessful() && rsp.isValid()) {            
             Map<KOut, VOut> reducedResponse = (Map<KOut, VOut>) ((SuccessfulResponse) rsp).getResponseValue();
             groupKeys(reduceMap, reducedResponse);
          } else if (rsp instanceof ExceptionResponse) {
@@ -407,6 +416,14 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          keysAtNode.add(key);
       }
       return addressToKey;
+   }
+   
+   protected Mapper<KIn, VIn, KOut, VOut> clone(Mapper<KIn, VIn, KOut, VOut> mapper){      
+      return Util.cloneWithMarshaller(marshaller, mapper);
+   }
+   
+   protected Reducer<KOut, VOut> clone(Reducer<KOut, VOut> reducer){      
+      return Util.cloneWithMarshaller(marshaller, reducer);
    }
    
    private void ensureProperCacheState(AdvancedCache<KIn, VIn> cache) throws NullPointerException,

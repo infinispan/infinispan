@@ -50,12 +50,17 @@ import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
@@ -87,6 +92,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    protected final RpcManager rpc;
    protected final InterceptorChain invoker;
    protected final CommandsFactory factory;
+   protected final Marshaller marshaller;
 
    /**
     * Create a new DefaultExecutorService given a master cache node. All distributed task executions
@@ -102,10 +108,15 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                   + " cache for DefaultExecutorService");
       
       ensureProperCacheState(masterCacheNode.getAdvancedCache());
+      
       this.cache = masterCacheNode.getAdvancedCache();
+      ComponentRegistry registry = cache.getComponentRegistry();      
+      GlobalComponentRegistry globalRegistry = cache.getComponentRegistry().getGlobalComponentRegistry();
+      
       this.rpc = cache.getRpcManager();
-      this.invoker = cache.getComponentRegistry().getComponent(InterceptorChain.class);
-      this.factory = cache.getComponentRegistry().getComponent(CommandsFactory.class);
+      this.invoker = registry.getComponent(InterceptorChain.class);
+      this.factory = registry.getComponent(CommandsFactory.class);
+      this.marshaller = globalRegistry.getComponent(StreamingMarshaller.class);
    }
 
    @Override
@@ -260,7 +271,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          } else {
             throw new IllegalArgumentException("Runnable command is not Serializable  " + command);
          }         
-         sendForRemoteExecution(randomClusterMemberOtherThanSelf(), cmd);
+         executeFuture(randomClusterMemberOtherThanSelf(), cmd);
       } else {
          throw new RejectedExecutionException();
       }
@@ -298,9 +309,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          ArrayList<Address> nodes = new ArrayList<Address>(nodesKeysMap.keySet());
          boolean invokeOnSelf = (nodes.size() == 1 && nodes.get(0).equals(me));
          if (invokeOnSelf) {
-            invokeLocally(f);
+            executeFuture(me, f);
          } else {
-            sendForRemoteExecution(randomClusterMemberExcludingSelf(nodes), f);
+            executeFuture(randomClusterMemberExcludingSelf(nodes), f);
          }
          return f;
       } else {
@@ -314,15 +325,16 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       List<Future<T>> futures = new ArrayList<Future<T>>();
       List<Address> members = rpc.getTransport().getMembers();
       Address me = rpc.getAddress();
-      for (Address address : members) {
-         DistributedExecuteCommand<T> c = factory.buildDistributedExecuteCommand(task, me, null);
+      for (Address target : members) {
+         DistributedExecuteCommand<T> c = null;
+         if (target.equals(me)) {
+            c = factory.buildDistributedExecuteCommand(clone(task), me, null);
+         } else {
+            c = factory.buildDistributedExecuteCommand(task, me, null);
+         }
          DistributedRunnableFuture<T> f = new DistributedRunnableFuture<T>(c);
          futures.add(f);
-         if (address.equals(me)) {
-            invokeLocally(f);
-         } else {
-            sendForRemoteExecution(address, f);
-         }
+         executeFuture(target, f);         
       }    
       return futures;
    }
@@ -335,28 +347,38 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          Address me = rpc.getAddress();
          Map<Address, List<K>> nodesKeysMap = mapKeysToNodes(input);
          for (Entry<Address, List<K>> e : nodesKeysMap.entrySet()) {
-            Address target = e.getKey();            
-            DistributedExecuteCommand<T> c = factory.buildDistributedExecuteCommand(task, me, e.getValue());
+            Address target = e.getKey();   
+            DistributedExecuteCommand<T> c = null;
+            if (target.equals(me)) {
+               c = factory.buildDistributedExecuteCommand(clone(task), me, e.getValue());
+            } else {
+               c = factory.buildDistributedExecuteCommand(task, me, e.getValue());
+            }
             DistributedRunnableFuture<T> f = new DistributedRunnableFuture<T>(c);
             futures.add(f);
-            if (target.equals(me)) {
-               invokeLocally(f);
-            } else {
-               sendForRemoteExecution(target, f);
-            }
+            executeFuture(target, f);            
          }
          return futures;
       } else {
          return submitEverywhere(task);
       }
    }
+   
+   protected <T> Callable<T> clone(Callable<T> task){
+     return Util.cloneWithMarshaller(marshaller, task);
+   }
 
-   protected <T> void sendForRemoteExecution(Address address, DistributedRunnableFuture<T> f) {
-      log.debug("Sending %s to remote execution at node %s", f, address);
-      try {
-         rpc.invokeRemotelyInFuture(Collections.singletonList(address), f.getCommand(), (DistributedRunnableFuture<Object>) f);
-      } catch (Throwable e) {
-         log.warn("Falied remote execution on node " + address, e);
+   protected <T> void executeFuture(Address address, DistributedRunnableFuture<T> f) {
+      if (rpc.getAddress().equals(address)) {
+         invokeLocally(f);
+      } else {
+         log.debug("Sending %s to remote execution at node %s", f, address);
+         try {
+            rpc.invokeRemotelyInFuture(Collections.singletonList(address), f.getCommand(),
+                     (DistributedRunnableFuture<Object>) f);
+         } catch (Throwable e) {
+            log.warn("Falied remote execution on node " + address, e);
+         }
       }
    }
    
@@ -371,18 +393,19 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             
             @Override
             public Object call() throws Exception {
-               Map<Address,Response> results = new HashMap<Address, Response>();   
+               Map<Address,Response> rspMap = new HashMap<Address, Response>();   
                Object result = null;
                future.getCommand().init(cache);
                try {
                   result = future.getCommand().perform(null);
-                  results.put(rpc.getAddress(), new SuccessfulResponse(result));
+                  rspMap.put(rpc.getAddress(), new SuccessfulResponse(result));
+                  result = rspMap;
                } catch (Throwable e) {
                   result = e;
                } finally {
                   future.notifyDone();
                }
-               return results;
+               return result;
             }
          };
          final FutureTask<Object> task = new FutureTask<Object>(call);
