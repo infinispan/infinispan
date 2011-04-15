@@ -27,14 +27,12 @@ import java.util.concurrent.Future;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.distexec.DefaultExecutorService;
-import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
 /**
- * 
+ * BaseTest for MapReduceTask
  * 
  * @author Vladimir Blagojevic
  */
@@ -53,7 +51,9 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       return "mapreducecache";
    }
    
-   private MapReduceTask<String, String, String, Integer> testinvokeMapReduce(String keys[]) throws Exception {
+   private MapReduceTask<String, String, String, Integer> testinvokeMapReduce(String keys[],
+            Mapper<String, String, String, Integer> mapper, Reducer<String, Integer> reducer)
+            throws Exception {
       Cache c1 = cache(0, cacheName());
       Cache c2 = cache(1, cacheName());
 
@@ -76,11 +76,15 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       c2.put("214", "RedHat community");
 
       MapReduceTask<String, String, String, Integer> task = new MapReduceTask<String, String, String, Integer>(c1);
-      task.mappedWith(new WordCountMapper()).reducedWith(new WordCountReducer());
+      task.mappedWith(mapper).reducedWith(reducer);
       if(keys != null && keys.length>0){
-         task.onKeys("1","2","3");
-      }      
+         task.onKeys(keys);
+      } 
       return task; 
+   }
+   
+   private MapReduceTask<String, String, String, Integer> testinvokeMapReduce(String keys[]) throws Exception{
+      return testinvokeMapReduce(keys,new WordCountMapper(), new WordCountReducer());
    }
    
    @Test(expectedExceptions={IllegalStateException.class})
@@ -102,6 +106,16 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       assert count == 3;
       count = mapReduce.get("RedHat");
       assert count == 2;
+   }
+   
+   /**
+    * Tests isolation as mapper and reducer get invoked across the cluster
+    * https://issues.jboss.org/browse/ISPN-1041
+    * 
+    * @throws Exception
+    */
+   public void testMapperReducerIsolation() throws Exception{
+      testinvokeMapReduce(null, new IsolationMapper(), new IsolationReducer());
    }
    
    public void testinvokeMapReduceOnAllKeysAsync() throws Exception {
@@ -225,6 +239,32 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
             sum += i;
          }
          return sum;
+      }
+   }
+   
+   private static class IsolationMapper implements Mapper<String, String, String,Integer> {
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 1993535517358319862L;
+      private int count = 0;
+
+      
+      @Override
+      public void map(String key, String value, Collector<String, Integer> collector) {
+         assert count == 0;                
+         count++;
+      }
+   }
+
+   private static class IsolationReducer implements Reducer<String, Integer> {
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 6069777605143824777L;
+      private int count = 0;
+
+      @Override
+      public Integer reduce(String key, Iterator<Integer> iter) {
+         assert count == 0;
+         count++;
+         return count;
       }
    }
 }

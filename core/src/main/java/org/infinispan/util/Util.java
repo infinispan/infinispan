@@ -23,6 +23,7 @@ package org.infinispan.util;
 
 import org.infinispan.CacheException;
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.marshall.Marshaller;
 
 import java.io.Closeable;
 import java.io.InputStream;
@@ -176,6 +177,29 @@ public final class Util {
       if (classname == null) throw new IllegalArgumentException("Cannot load null class!");
       Class clazz = loadClassStrict(classname);
       return getInstanceStrict(clazz);
+   }
+   
+   /**
+    * Clones parameter x of type T with a given Marshaller reference;
+    * 
+    * 
+    * @return a deep clone of an object parameter x 
+    */
+   @SuppressWarnings("unchecked")
+   public static <T> T cloneWithMarshaller(Marshaller marshaller, T x){
+      if (marshaller == null)
+         throw new IllegalArgumentException("Cannot use null Marshaller for clone");
+      
+      byte[] byteBuffer = null;
+      try {
+         byteBuffer = marshaller.objectToByteBuffer(x);
+         return (T) marshaller.objectFromByteBuffer(byteBuffer);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException(e);      
+      } catch (Exception e) {
+         throw new CacheException(e);
+      }     
    }
 
 

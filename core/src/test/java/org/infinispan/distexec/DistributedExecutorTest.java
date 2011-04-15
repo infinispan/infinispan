@@ -116,6 +116,22 @@ public class DistributedExecutorTest extends BaseDistFunctionalTest {
 
       assert exceptionCount == 1;
    }
+   
+   /**
+    * Tests Callable isolation as it gets invoked across the cluster
+    * https://issues.jboss.org/browse/ISPN-1041
+    * 
+    * @throws Exception
+    */
+   public void testCallableIsolation() throws Exception {
+      DefaultExecutorService des = new DefaultExecutorService(c1);
+
+      List<Future<Integer>> list = des.submitEverywhere(new SimpleCallableWithField());
+      assert list != null && !list.isEmpty();
+      for (Future<Integer> f : list) {
+         assert f.get() == 0 ;
+      }
+   }
 
    public void testTaskCancellation() throws Exception {
 
@@ -221,6 +237,18 @@ public class DistributedExecutorTest extends BaseDistFunctionalTest {
       @Override
       public Integer call() throws Exception {
          return 1;
+      }
+   }
+   
+   static class SimpleCallableWithField implements Callable<Integer>, Serializable {
+      
+      /** The serialVersionUID */
+      private static final long serialVersionUID = -6262148927734766558L;
+      private int count; 
+
+      @Override
+      public Integer call() throws Exception {
+         return count++;
       }
    }
 
