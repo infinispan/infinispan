@@ -78,7 +78,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Start
    public void start() {
-      isL1CacheEnabled = l1Manager != null;
+      isL1CacheEnabled = configuration.isL1CacheEnabled();
       needReliableReturnValues = !configuration.isUnsafeUnreliableReturnValues();
       
    }
