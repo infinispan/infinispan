@@ -21,7 +21,7 @@ import static org.testng.AssertJUnit.assertEquals;
 @Test(groups = "functional", testName = "notification.MergeViewTest")
 public class MergeViewTest extends MultipleCacheManagersTest {
 
-   private static Log log = LogFactory.getLog(MergeViewTest.class);
+   private static final Log log = LogFactory.getLog(MergeViewTest.class);
 
    private DISCARD discard;
    private MergeListener ml0;

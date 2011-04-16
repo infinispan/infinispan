@@ -24,7 +24,7 @@ import java.util.Random;
 @Test(groups = "functional" , testName="statetransfer.StateTransferLargeObjectTest")
 public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
 
-   private static Log log = LogFactory.getLog(StateTransferLargeObjectTest.class);
+   private static final Log log = LogFactory.getLog(StateTransferLargeObjectTest.class);
    
    private Cache c0;
    private Cache c1;

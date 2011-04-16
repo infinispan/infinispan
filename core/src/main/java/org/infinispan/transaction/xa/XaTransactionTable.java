@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class XaTransactionTable extends TransactionTable {
 
-   private static Log log = LogFactory.getLog(XaTransactionTable.class);
+   private static final Log log = LogFactory.getLog(XaTransactionTable.class);
 
    protected final ConcurrentMap<Xid, LocalXaTransaction> xid2LocalTx = new ConcurrentHashMap<Xid, LocalXaTransaction>();
    private RecoveryManager recoveryManager;

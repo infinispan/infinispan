@@ -27,7 +27,7 @@ import static javax.transaction.xa.XAResource.XA_RDONLY;
  */
 public class TransactionCoordinator {
 
-   private static Log log = LogFactory.getLog(TransactionCoordinator.class);
+   private static final Log log = LogFactory.getLog(TransactionCoordinator.class);
    private CommandsFactory commandsFactory;
    private InvocationContextContainer icc;
    private InterceptorChain invoker;

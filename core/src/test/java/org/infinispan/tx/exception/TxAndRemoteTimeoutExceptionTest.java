@@ -38,7 +38,7 @@ import static org.testng.Assert.assertEquals;
 @Test(groups = "functional", testName = "tx.TestTxAndRemoteTimeoutException")
 public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
 
-   private static Log log = LogFactory.getLog(TxAndRemoteTimeoutExceptionTest.class);
+   private static final Log log = LogFactory.getLog(TxAndRemoteTimeoutExceptionTest.class);
 
    private LockManager lm1;
    private LockManager lm0;

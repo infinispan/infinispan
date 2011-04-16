@@ -24,7 +24,7 @@ import java.util.Random;
  */
 public class TransactionFactory {
 
-   private static Log log = LogFactory.getLog(TransactionFactory.class);
+   private static final Log log = LogFactory.getLog(TransactionFactory.class);
 
    private TxFactoryEnum txFactoryEnum;
 
