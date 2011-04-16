@@ -122,7 +122,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
 
          if (cr == null) {
             if (log.isInfoEnabled()) log.info("Cache named %s does not exist on this cache manager!", cacheName);
-            return new ExceptionResponse(new NamedCacheNotFoundException(cacheName));
+            return new ExceptionResponse(new NamedCacheNotFoundException(cacheName, "Cannot process command " + cmd + " on node " + transport.getAddress()));
          }
       }
 
