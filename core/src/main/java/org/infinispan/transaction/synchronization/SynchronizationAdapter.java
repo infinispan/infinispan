@@ -19,7 +19,7 @@ import javax.transaction.xa.XAException;
  */
 public class SynchronizationAdapter implements Synchronization {
 
-   private static Log log = LogFactory.getLog(SynchronizationAdapter.class);
+   private static final Log log = LogFactory.getLog(SynchronizationAdapter.class);
 
    private final LocalTransaction localTransaction;
    private final TransactionCoordinator txCoordinator;

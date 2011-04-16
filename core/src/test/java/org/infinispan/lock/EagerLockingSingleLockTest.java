@@ -57,7 +57,7 @@ public class EagerLockingSingleLockTest extends MultipleCacheManagersTest {
    private KeyAffinityService kaf;
    private ThreadPoolExecutor poolExecutor;
 
-   private static Log log = LogFactory.getLog(EagerLockingSingleLockTest.class);
+   private static final Log log = LogFactory.getLog(EagerLockingSingleLockTest.class);
 
    @Override
    protected void createCacheManagers() throws Throwable {

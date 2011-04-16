@@ -35,7 +35,7 @@ import static org.testng.Assert.assertEquals;
 @Test (testName = "tx.timeout.TxAndInvalidationTimeoutTest", groups = "functional")
 public class TxAndInvalidationTimeoutTest extends MultipleCacheManagersTest {
 
-   private static Log log = LogFactory.getLog(TxAndInvalidationTimeoutTest.class);
+   private static final Log log = LogFactory.getLog(TxAndInvalidationTimeoutTest.class);
 
    private LockManager lm1;
    private LockManager lm0;

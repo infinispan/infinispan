@@ -26,7 +26,7 @@ import static org.testng.Assert.assertEquals;
 @Test(groups = "functional", testName = "distribution.TopologyAwareConsistentHashTest")
 public class TopologyAwareConsistentHashTest {
    
-   private static Log log = LogFactory.getLog(TopologyAwareConsistentHashTest.class);
+   private static final Log log = LogFactory.getLog(TopologyAwareConsistentHashTest.class);
 
    TopologyInfo ti;
    TopologyAwareConsistentHash ch;

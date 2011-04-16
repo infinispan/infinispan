@@ -52,7 +52,7 @@ import java.util.Set;
  */
 public class LockControlCommand extends AbstractTransactionBoundaryCommand implements FlagAffectedCommand {
 
-   private static Log log = LogFactory.getLog(LockControlCommand.class);
+   private static final Log log = LogFactory.getLog(LockControlCommand.class);
 
    public static final int COMMAND_ID = 3;
    private Set<Object> keys;

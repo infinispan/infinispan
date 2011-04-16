@@ -21,7 +21,7 @@ import static java.util.Collections.emptySet;
  */
 public class DldGlobalTransaction extends GlobalTransaction {
 
-   private static Log log = LogFactory.getLog(DldGlobalTransaction.class);
+   private static final Log log = LogFactory.getLog(DldGlobalTransaction.class);
 
    public static final boolean trace = log.isTraceEnabled();
 
