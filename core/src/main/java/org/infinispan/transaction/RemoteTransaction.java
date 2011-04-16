@@ -23,7 +23,7 @@ import java.util.Set;
  */
 public class RemoteTransaction extends AbstractCacheTransaction implements Cloneable {
 
-   private static Log log = LogFactory.getLog(RemoteTransaction.class);
+   private static final Log log = LogFactory.getLog(RemoteTransaction.class);
 
    private volatile boolean valid = true;
 

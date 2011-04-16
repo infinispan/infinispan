@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class RecoveryManagerImpl implements RecoveryManager {
 
-   private static Log log = LogFactory.getLog(RecoveryManagerImpl.class);
+   private static final Log log = LogFactory.getLog(RecoveryManagerImpl.class);
 
    private volatile RpcManager rpcManager;
    private volatile CommandsFactory commandFactory;

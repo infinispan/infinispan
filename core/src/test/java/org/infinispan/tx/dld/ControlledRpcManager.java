@@ -25,7 +25,7 @@ import java.util.concurrent.CountDownLatch;
 */
 public class ControlledRpcManager implements RpcManager {
 
-   private static Log log = LogFactory.getLog(ControlledRpcManager.class);
+   private static final Log log = LogFactory.getLog(ControlledRpcManager.class);
 
    private volatile CountDownLatch replicationLatch;
 

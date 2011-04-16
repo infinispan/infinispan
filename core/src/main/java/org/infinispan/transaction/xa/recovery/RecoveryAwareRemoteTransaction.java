@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class RecoveryAwareRemoteTransaction extends RemoteTransaction implements RecoveryAwareTransaction {
 
-   private static Log log = LogFactory.getLog(RecoveryAwareRemoteTransaction.class);
+   private static final Log log = LogFactory.getLog(RecoveryAwareRemoteTransaction.class);
 
    private boolean prepared;
 
