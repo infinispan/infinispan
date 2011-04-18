@@ -204,7 +204,7 @@ public class TestNameVerifier {
       modules.add("cachestore/bdbje");
       modules.add("cachestore/jdbc");
       modules.add("cachestore/jdbm");
-      modules.add("jopr-plugin");
+      modules.add("rhq-plugin");
       modules.add("tree");
    }
 
