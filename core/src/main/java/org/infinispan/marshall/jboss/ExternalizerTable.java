@@ -46,6 +46,7 @@ import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.ch.UnionConsistentHash;
+import org.infinispan.distribution.ch.VirtualAddress;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.Externalizer;
@@ -169,6 +170,8 @@ class ExternalizerTable implements ObjectTable {
 
       internalExternalizers.add(new RemoteTransactionLogDetails.Externalizer());
       internalExternalizers.add(new SerializableXid.XidExternalizer());
+      
+      internalExternalizers.add(new VirtualAddress.Externalizer());
    }
 
    void addInternalExternalizer(Externalizer ext) {

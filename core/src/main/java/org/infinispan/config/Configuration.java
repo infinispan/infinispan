@@ -1226,6 +1226,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public int getNumOwners() {
       return clustering.hash.numOwners;
    }
+   
+   public int getNumVirtualNodes() {
+      return clustering.hash.numVirtualNodes;
+   }
 
    public boolean isRehashEnabled() {
       return clustering.hash.rehashEnabled;
@@ -3044,6 +3048,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setRehashEnabled")
       protected Boolean rehashEnabled = true;
+      
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "numVirtualNodes")
+      protected Integer numVirtualNodes = 0;
 
       public void accept(ConfigurationBeanVisitor v) {
          v.visitHashType(this);
@@ -3095,6 +3102,26 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public Integer getNumOwners() {
          return numOwners;
       }
+      
+      @XmlAttribute
+      public Integer getNumVirtualNodes() {
+         return numVirtualNodes;
+      }
+      
+      public HashConfig numVirtualNodes(Integer numVirtualNodes) {
+         setNumVirtualNodes(numVirtualNodes);
+         return this;
+      }
+      
+      /**
+       * @deprecated The visibility of this will be reduced, use {@link #numVirtualNodes(Integer)}
+       */
+      @Deprecated
+      public void setNumVirtualNodes(Integer numVirtualNodes) {
+         testImmutability("numVirtualNodes");
+         this.numVirtualNodes = numVirtualNodes;
+      }
+
 
       /**
        * @deprecated The visibility of this will be reduced, use {@link #numOwners(Integer)}
@@ -3186,6 +3213,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (hashFunctionClass != null ? !hashFunctionClass.equals(hashType.hashFunctionClass) : hashType.hashFunctionClass != null)
             return false;
          if (numOwners != null ? !numOwners.equals(hashType.numOwners) : hashType.numOwners != null) return false;
+         if (numVirtualNodes != null ? !numVirtualNodes.equals(hashType.numVirtualNodes) : hashType.numVirtualNodes != null) return false;
          if (rehashRpcTimeout != null ? !rehashRpcTimeout.equals(hashType.rehashRpcTimeout) : hashType.rehashRpcTimeout != null)
             return false;
          if (rehashWait != null ? !rehashWait.equals(hashType.rehashWait) : hashType.rehashWait != null) return false;
@@ -3199,6 +3227,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          int result = consistentHashClass != null ? consistentHashClass.hashCode() : 0;
          result = 31 * result + (hashFunctionClass != null ? hashFunctionClass.hashCode() : 0);
          result = 31 * result + (numOwners != null ? numOwners.hashCode() : 0);
+         result = 31 * result + (numVirtualNodes != null ? numVirtualNodes.hashCode() : 0);
          result = 31 * result + (rehashWait != null ? rehashWait.hashCode() : 0);
          result = 31 * result + (rehashRpcTimeout != null ? rehashRpcTimeout.hashCode() : 0);
          result = 31 * result + (rehashEnabled ? 0 : 1);
