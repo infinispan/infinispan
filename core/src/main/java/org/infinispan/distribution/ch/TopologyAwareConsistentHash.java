@@ -50,24 +50,28 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
    @Override
    public List<Address> locate(Object key, int replCount) {
       Address owner = getOwner(key);
+      if (trace) log.trace("Owner of key %s identified as %s", key, owner);
       int ownerCount = min(replCount, caches.size());
-      return getOwners(owner, ownerCount);
+      List<Address> owners = getOwners(owner, ownerCount);
+      return owners;
    }
 
    @Override
    public List<Address> getStateProvidersOnLeave(Address leaver, int replCount) {
       Set<Address> result = new HashSet<Address>();
 
+      Address realLeaver = getRealAddress(leaver);
+      
       //1. first get all the node that replicated on leaver
       for (Address address : caches) {
          if (address.equals(leaver)) continue;
-         if (getOwners(address, replCount).contains(leaver)) {
+         if (getOwners(address, replCount).contains(realLeaver)) {
             result.add(address);
          }
       }
 
       //2. then get first leaver's backup
-      List<Address> addressList = getOwners(leaver, replCount);
+      List<Address> addressList = getOwners(realLeaver, replCount);
       if (addressList.size() > 1) {
          result.add(addressList.get(1));
       }
@@ -84,42 +88,48 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
    }
 
    private List<Address> getOwners(Address address, int numOwners) {
+      Address realAddress = getRealAddress(address);
       int ownerHash = getNormalizedHash(address);
       Collection<Address> beforeOnWheel = positions.headMap(ownerHash).values();
       Collection<Address> afterOnWheel = positions.tailMap(ownerHash).values();
       ArrayList<Address> processSequence = new ArrayList<Address>(afterOnWheel);
       processSequence.addAll(beforeOnWheel);
       List<Address> result = new ArrayList<Address>();
-      result.add(processSequence.remove(0));
+      result.add(getRealAddress(processSequence.remove(0)));
       int level = 0;
       while (result.size() < numOwners) {
          Iterator<Address> addrIt = processSequence.iterator();
          while (addrIt.hasNext()) {
             Address a = addrIt.next();
+            Address ra = getRealAddress(a);
             switch (level) {
                case 0: { //site level
-                  if (!topologyInfo.isSameSite(address, a)) {
-                     result.add(a);
+                  if (!topologyInfo.isSameSite(realAddress, ra)) {
+                     if (trace) log.trace("Owner (different site) identified as %s", a);
+                     result.add(ra);
                      addrIt.remove();
                   }
                   break;
                }
                case 1: { //rack level
-                  if (!topologyInfo.isSameRack(address, a)) {
-                     result.add(a);
+                  if (!topologyInfo.isSameRack(realAddress, ra)) {
+                     if (trace) log.trace("Owner (different rack) identified as %s", a);
+                     result.add(ra);
                      addrIt.remove();
                   }
                   break;
                }
                case 2: { //machine level
-                  if (!topologyInfo.isSameMachine(address, a)) {
-                     result.add(a);
+                  if (!topologyInfo.isSameMachine(realAddress, ra)) {
+                     if (trace) log.trace("Owner (different machine) identified as %s", a);
+                     result.add(ra);
                      addrIt.remove();
                   }
                   break;
                }
                case 3: { //just add them in sequence
-                  result.add(a);
+                  if (trace) log.trace("Owner (same machine) identified as %s", a);
+                  result.add(ra);
                   addrIt.remove();
                   break;
                }
@@ -198,4 +208,10 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
             ", addressToHashIds=" + addressToHashIds +
             "}";
    }
+   
+   @Override
+   protected boolean isVirtualNodesEnabled() {
+      return numVirtualNodes > 1;
+   }
+   
 }

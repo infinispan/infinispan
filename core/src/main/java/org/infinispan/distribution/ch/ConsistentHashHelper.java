@@ -45,15 +45,19 @@ public class ConsistentHashHelper {
       ConsistentHash ch = (ConsistentHash) Util.getInstance(c.getConsistentHashClass());
       if (ch instanceof AbstractWheelConsistentHash) {
          Hash h = (Hash) Util.getInstance(c.getHashFunctionClass());
-         ((AbstractWheelConsistentHash) ch).setHashFunction(h);
+         AbstractWheelConsistentHash wch = (AbstractWheelConsistentHash) ch;
+         wch.setHashFunction(h);
+         wch.setNumVirtualNodes(c.getNumVirtualNodes());
       }
       return ch;
    }
 
-   private static ConsistentHash constructConsistentHashInstance(Class<? extends ConsistentHash> clazz, Hash hash) {
+   private static ConsistentHash constructConsistentHashInstance(Class<? extends ConsistentHash> clazz, Hash hash, int numVirtualNodes) {
       ConsistentHash ch = Util.getInstance(clazz);
       if (ch instanceof AbstractWheelConsistentHash) {
-         ((AbstractWheelConsistentHash) ch).setHashFunction(hash);
+         AbstractWheelConsistentHash wch = (AbstractWheelConsistentHash) ch;
+         wch.setHashFunction(hash);
+         wch.setNumVirtualNodes(numVirtualNodes);
       }
       return ch;
    }
@@ -132,10 +136,13 @@ public class ConsistentHashHelper {
     */
    public static ConsistentHash createConsistentHash(ConsistentHash template, Collection<Address> addresses, TopologyInfo topologyInfo) {
       Hash hf = null;
+      int numVirtualNodes = 1;
       if (template instanceof AbstractWheelConsistentHash) {
-         hf = ((AbstractWheelConsistentHash) template).hashFunction;
+         AbstractWheelConsistentHash wTemplate = (AbstractWheelConsistentHash) template;
+         hf = wTemplate.hashFunction;
+         numVirtualNodes = wTemplate.numVirtualNodes;
       }
-      ConsistentHash ch = constructConsistentHashInstance(template.getClass(), hf);
+      ConsistentHash ch = constructConsistentHashInstance(template.getClass(), hf, numVirtualNodes);
       if (addresses != null && !addresses.isEmpty())  ch.setCaches(toSet(addresses));
       ch.setTopologyInfo(topologyInfo);
       return ch;

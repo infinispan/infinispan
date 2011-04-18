@@ -39,7 +39,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
       for (Address a : candidates.values()) {
          if (numOwnersFound < numCopiesToFind) {
-            owners.add(a);
+            owners.add(getRealAddress(a));
             numOwnersFound++;
          } else {
             break;
@@ -49,7 +49,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       if (numOwnersFound < numCopiesToFind) {
          for (Address a : positions.values()) {
             if (numOwnersFound < numCopiesToFind) {
-               owners.add(a);
+               owners.add(getRealAddress(a));
                numOwnersFound++;
             } else {
                break;
@@ -69,7 +69,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       int nodesTested = 0;
       for (Address a : candidates.values()) {
          if (nodesTested < numCopiesToFind) {
-            if (a.equals(target)) return true;
+            if (getRealAddress(a).equals(target)) return true;
             nodesTested++;
          } else {
             break;
@@ -80,7 +80,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
       if (nodesTested < numCopiesToFind) {
          for (Address a : positions.values()) {
             if (nodesTested < numCopiesToFind) {
-               if (a.equals(target)) return true;
+               if (getRealAddress(a).equals(target)) return true;
                nodesTested++;
             } else {
                break;
@@ -171,7 +171,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
    public List<Address> getStateProvidersOnJoin(Address self, int replCount) {
       List<Address> l = new LinkedList<Address>();
-      List<Address> cachesList = new LinkedList<Address>(this.caches);
+      List<Address> cachesList = new LinkedList<Address>(getRealAddresses(this.caches));
       int selfIdx = cachesList.indexOf(self);
       if (selfIdx >= replCount - 1) {
          l.addAll(cachesList.subList(selfIdx - replCount + 1, selfIdx));
@@ -194,7 +194,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
    public List<Address> getStateProvidersOnLeave(Address leaver, int replCount) {
       if (trace) log.trace("List of addresses is: %s. leaver is: %s", caches, leaver);
       Set<Address> holders = new HashSet<Address>();
-      for (Address address : caches) {
+      for (Address address : getRealAddresses(caches)) {
          if (isAdjacent(leaver, address)) {
             holders.add(address);
             if (trace) log.trace("%s is state holder", address);
