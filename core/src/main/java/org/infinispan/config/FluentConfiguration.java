@@ -625,6 +625,21 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @param rehashEnabled
        */
       HashConfig rehashEnabled(Boolean rehashEnabled);
+      
+      /**
+       * Controls the number of virtual nodes per "real" node. You can read more about virtual nodes
+       * at ...
+       * 
+       * If numVirtualNodes is 1, then virtual nodes are disabled. The topology aware consistent hash
+       * must be used if you wish to take advnatage of virtual nodes.
+       * 
+       * A default of 1 is used.
+       * 
+       * @param numVirtualNodes the number of virtual nodes. Must be >0.
+       * @throws IllegalArgumentException if numVirtualNodes <0
+       * 
+       */
+      HashConfig numVirtualNodes(Integer numVirtualNodes);
    }
 
    /**
