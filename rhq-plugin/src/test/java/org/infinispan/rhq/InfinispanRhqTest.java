@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.infinispan.jopr;
+package org.infinispan.rhq;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
@@ -29,7 +29,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  *
  * @author Heiko W. Rupp
  */
-public class InfinispanJoprTest {
+public class InfinispanRhqTest {
 
    private static final String MY_CUSTOM_CACHE = "myCustomCache";
 

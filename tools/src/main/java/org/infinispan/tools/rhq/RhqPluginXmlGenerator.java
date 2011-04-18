@@ -1,4 +1,4 @@
-package org.infinispan.tools.jopr;
+package org.infinispan.tools.rhq;
 /*
  * JBoss, Home of Professional Open Source.
  * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
@@ -103,7 +103,7 @@ public class RhqPluginXmlGenerator {
       root.setPluginName("Infinispan");
       root.setPluginDescription("Supports management and monitoring of Infinispan");
       root.setName("Infinispan Cache Manager");
-      root.setPkg("org.infinispan.jopr");
+      root.setPkg("org.infinispan.rhq");
       root.setDependsOnJmxPlugin(true);
       root.setDiscoveryClass("CacheManagerDiscovery");
       root.setComponentClass("CacheManagerComponent");
@@ -118,7 +118,7 @@ public class RhqPluginXmlGenerator {
 
       Props cache = new Props();
       cache.setName("Infinispan Cache");
-      cache.setPkg("org.infinispan.jopr");
+      cache.setPkg("org.infinispan.rhq");
       cache.setDependsOnJmxPlugin(true);
       cache.setDiscoveryClass("CacheDiscovery");
       cache.setComponentClass("CacheComponent");
