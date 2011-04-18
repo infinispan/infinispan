@@ -43,7 +43,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -58,11 +57,8 @@ import org.infinispan.util.concurrent.locks.LockManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Interceptor to implement <a href="http://wiki.jboss.org/wiki/JBossCacheMVCC">MVCC</a> functionality.
@@ -351,32 +347,7 @@ public class LockingInterceptor extends CommandInterceptor {
          cleanupLocks(ctx, true);
       } else {
          if (trace) log.trace("Transactional.  Not cleaning up locks till the transaction ends.");
-         if (useReadCommitted) {
-            Map<Object, CacheEntry> lookedUpEntries = ctx.getLookedUpEntries();
-            if (lookedUpEntries != null && !lookedUpEntries.isEmpty()) {
-               // This should be a Set but we can use an ArrayList instead for efficiency since we know that the elements
-               // will always be unique as they are keys from a Map.  Also, we know the maximum size so this ArrayList 
-               // should never resize.
-               List<Object> keysToRemove = new ArrayList<Object>(lookedUpEntries.size());
-               for (Map.Entry<Object, CacheEntry> e : lookedUpEntries.entrySet()) {
-                  if (!lockManager.possiblyLocked(e.getValue()) && !possiblyLockedInContext(ctx, e.getKey())) keysToRemove.add(e.getKey());
-               }
-
-               if (!keysToRemove.isEmpty()) {
-                  if (trace)
-                     log.trace("Removing keys %s since they have not been modified.  Context currently contains %s keys", keysToRemove, ctx.getLookedUpEntries().size());
-                  for (Object key : keysToRemove) ctx.removeLookedUpEntry(key);
-                  if (trace) log.trace("After removal, context contains %s keys", ctx.getLookedUpEntries().size());
-               }
-            }
-         }
       }
-   }
-
-   private boolean possiblyLockedInContext(InvocationContext ctx, Object key) {
-      if (ctx instanceof LocalTxInvocationContext) {
-         return ((LocalTxInvocationContext) ctx).getAffectedKeys().contains(key);
-      } else return false;
    }
 
    private void cleanupLocks(InvocationContext ctx, boolean commit) {
