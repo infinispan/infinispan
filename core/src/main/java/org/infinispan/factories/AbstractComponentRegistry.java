@@ -312,10 +312,11 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       return getOrCreateComponent(componentClass, componentClass.getName());
    }
 
+   @SuppressWarnings("unchecked")
    protected <T> T getOrCreateComponent(Class<T> componentClass, String name) {
       if (DEBUG_DEPENDENCIES) debugStack.push(name);
 
-      T component;
+      Object component;
       Component oldWrapper = lookupComponent(componentClass, name);
       if (oldWrapper != null) {
          component = unwrapComponent(oldWrapper);
@@ -340,7 +341,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
 
       if (DEBUG_DEPENDENCIES) debugStack.pop();
-      return component;
+      return (T) component;
    }
 
    /**
@@ -495,14 +496,14 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       Component wrapper = lookupComponent(type, name);
       if (wrapper == null) return null;
 
-      return unwrapComponent(wrapper);
+      return (T) unwrapComponent(wrapper);
    }
 
    /**
     * Get the component from a wrapper, properly handling <code>null</code> components.
     */
-   private <T> T unwrapComponent(Component wrapper) {
-      return (T) (wrapper.instance == NULL_COMPONENT ? null : wrapper.instance);
+   private Object unwrapComponent(Component wrapper) {
+      return wrapper.instance == NULL_COMPONENT ? null : wrapper.instance;
    }
 
    /**
