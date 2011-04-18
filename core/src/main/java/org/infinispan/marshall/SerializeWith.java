@@ -30,17 +30,23 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * // TODO: Document this
+ * Indicate that this class should be serialized with an instance of the given
+ * externalizer class.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Inherited
 @Documented
-public @interface MarshallableBy {
+public @interface SerializeWith {
 
+   /**
+    * Specify the externalizer class to be used by the annotated class.
+    *
+    * @return the externalizer type
+    */
    Class<? extends Externalizer> value();
 
 }

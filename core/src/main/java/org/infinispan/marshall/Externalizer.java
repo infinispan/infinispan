@@ -49,7 +49,7 @@ import java.io.Serializable;
  * framework as well.  In the simplest possible form, users just need to
  * provide an {@link Externalizer} implementation for the type that they want
  * to marshall/unmarshall, and then annotate the marshalled type class with
- * {@link MarshallableBy} indicating the externalizer class to use and that's
+ * {@link SerializeWith} indicating the externalizer class to use and that's
  * all about it.  At runtime JBoss Marshaller will inspect the object and
  * discover that's marshallable thanks to the annotation and so marshall it
  * using the externalizer class passed.
@@ -69,7 +69,7 @@ import java.io.Serializable;
  *    class, the payload sizes generated via this method are not the most
  *    efficient.</li>
  *    <li>This model requires for the marshalled class to be annoated with
- *    {@link MarshallableBy} but a user might need to provide an Externalizer
+ *    {@link SerializeWith} but a user might need to provide an Externalizer
  *    for a class for which source code is not available, or for any other
  *    constraints, it cannot be modified.</li>
  *    <li>The use of annotations by this model might be limiting for framework

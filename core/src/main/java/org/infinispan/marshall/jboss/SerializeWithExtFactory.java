@@ -22,24 +22,27 @@
 
 package org.infinispan.marshall.jboss;
 
-import org.infinispan.marshall.MarshallableBy;
+import org.infinispan.marshall.SerializeWith;
 import org.jboss.marshalling.AnnotationClassExternalizerFactory;
 import org.jboss.marshalling.ClassExternalizerFactory;
 import org.jboss.marshalling.Externalizer;
 
 /**
- * // TODO: Document this
+ * JBoss Marshalling plugin class for {@link ClassExternalizerFactory} that
+ * allows for Infinispan annotations to be used instead of JBoss Marshalling
+ * ones in order to discover which classes are serializable with Infinispan
+ * externalizers.
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 5.0
  */
-public class MarshallableByExtFactory implements ClassExternalizerFactory {
+public class SerializeWithExtFactory implements ClassExternalizerFactory {
 
    final ClassExternalizerFactory jbmarExtFactory = new AnnotationClassExternalizerFactory();
 
    @Override
    public Externalizer getExternalizer(Class<?> type) {
-      MarshallableBy ann = type.getAnnotation(MarshallableBy.class);
+      SerializeWith ann = type.getAnnotation(SerializeWith.class);
       if (ann == null) {
          // Check for JBoss Marshaller's @Externalize
          return jbmarExtFactory.getExternalizer(type);
