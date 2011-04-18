@@ -7,7 +7,6 @@ import org.infinispan.marshall.AbstractMarshaller;
 import org.infinispan.util.ConcurrentWeakKeyHashMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.marshalling.AnnotationClassExternalizerFactory;
 import org.jboss.marshalling.ContextClassResolver;
 import org.jboss.marshalling.ExceptionListener;
 import org.jboss.marshalling.MarshallerFactory;
@@ -26,7 +25,6 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -60,7 +58,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
       configuration.setExceptionListener(new DebuggingExceptionListener());
       // ContextClassResolver provides same functionality as MarshalledValueInputStream
       configuration.setClassResolver(new ContextClassResolver());
-      configuration.setClassExternalizerFactory(new MarshallableByExtFactory());
+      configuration.setClassExternalizerFactory(new SerializeWithExtFactory());
       configuration.setVersion(2);
 
    }

@@ -44,7 +44,7 @@ import java.util.Set;
  * however, this externalizer method requires externalizers to be registered
  * on cache manager creation time via XML or programmatic configuration. On
  * the contrary, externalizers based on {@link Externalizer} and
- * {@link MarshallableBy} require no pre-registration whatsoever.
+ * {@link SerializeWith} require no pre-registration whatsoever.
  *
  * Internally, Infinispan uses this advanced externalizer mechanism in order
  * to marshall/unmarshall internal classes.

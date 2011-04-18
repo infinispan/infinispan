@@ -71,13 +71,13 @@ public class MarshallExternalPojosTest extends MultipleCacheManagersTest {
    }
 
    public void testReplicateMarshallableByPojo(Method m) {
-      PojoWithMarshallableBy pojo = new PojoWithMarshallableBy(17, k(m));
+      PojoWithSerializeWith pojo = new PojoWithSerializeWith(17, k(m));
       doReplicatePojo(m, pojo);
    }
 
    @Test(dependsOnMethods = "testReplicateMarshallableByPojo")
    public void testReplicateMarshallableByPojoToNewJoiningNode(Method m) {
-      PojoWithMarshallableBy pojo = new PojoWithMarshallableBy(85, k(m));
+      PojoWithSerializeWith pojo = new PojoWithSerializeWith(85, k(m));
       doReplicatePojoToNewJoiningNode(m, pojo);
    }
 
