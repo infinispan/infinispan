@@ -93,10 +93,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    private Map<Class, Class<? extends AbstractComponentFactory>> defaultFactories = null;
 
-   protected static final Object NULL_COMPONENT = new Object();
+   private static final Object NULL_COMPONENT = new Object();
 
    // component and method containers
-   final Map<String, Component> componentLookup = new HashMap<String, Component>();
+   private final Map<String, Component> componentLookup = new HashMap<String, Component>(1);
 
    protected static List<ModuleLifecycle> moduleLifecycles;
 
@@ -109,9 +109,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    }
 
 
-   volatile ComponentStatus state = ComponentStatus.INSTANTIATED;
+   protected volatile ComponentStatus state = ComponentStatus.INSTANTIATED;
 
-   final ReflectionCache reflectionCache;
+   private final ReflectionCache reflectionCache;
 
    public AbstractComponentRegistry(ReflectionCache reflectionCache) {
       this.reflectionCache = reflectionCache;
@@ -188,11 +188,24 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @param component component to register
     * @param type      type of component
     */
-   public void registerComponent(Object component, Class type) {
+   public final void registerComponent(Object component, Class type) {
       registerComponent(component, type.getName());
    }
 
-   public void registerComponent(Object component, String name) {
+   public final void registerComponent(Object component, String name) {
+      boolean nonVolatile = ReflectionUtil.isAnnotationPresent(component.getClass(), SurvivesRestarts.class);
+      registerComponentInternal(component, name, nonVolatile);
+   }
+
+   protected final void registerNonVolatileComponent(Object component, String name) {
+      registerComponentInternal(component, name, true);
+   }
+
+   protected final void registerNonVolatileComponent(Object component, Class type) {
+      registerNonVolatileComponent(component, type.getName());
+   }
+
+   protected void registerComponentInternal(Object component, String name, boolean nonVolatile) {
       if (component == null)
          throw new NullPointerException("Cannot register a null component under name [" + name + "]");
       Component old = componentLookup.get(name);
@@ -211,17 +224,17 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          old.instance = component;
          old.methodsScanned = false;
          c = old;
-
-         if (state == ComponentStatus.RUNNING) populateLifecycleMethods();
       } else {
          c = new Component();
          c.name = name;
          c.instance = component;
          componentLookup.put(name, c);
       }
-      c.nonVolatile = ReflectionUtil.isAnnotationPresent(component.getClass(), SurvivesRestarts.class);
+      c.nonVolatile = nonVolatile;
+
       addComponentDependencies(c);
       // inject dependencies for this component
+      // we inject dependencies only after the component is already in the map to support cyclical dependencies
       c.injectDependencies();
 
       if (old == null) getLog().trace("Registering component %s under name %s", c, name);
@@ -302,12 +315,13 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    protected <T> T getOrCreateComponent(Class<T> componentClass, String name) {
       if (DEBUG_DEPENDENCIES) debugStack.push(name);
 
-      T component = getComponent(componentClass, name);
-
-      if (component == null) {
-         // first see if this has been injected externally.
+      T component;
+      Component oldWrapper = lookupComponent(componentClass, name);
+      if (oldWrapper != null) {
+         component = unwrapComponent(oldWrapper);
+      } else {
+         // see if this has been injected externally.
          component = getFromConfiguration(componentClass);
-         boolean attemptedFactoryConstruction = false;
 
          if (component == null) {
             // create this component and add it to the registry
@@ -315,16 +329,13 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             component = factory instanceof NamedComponentFactory ?
                     ((NamedComponentFactory) factory).construct(componentClass, name)
                     : factory.construct(componentClass);
-            attemptedFactoryConstruction = true;
-
          }
 
          if (component != null) {
-            registerComponent(component, componentClass);
-         } else if (attemptedFactoryConstruction) {
-            if (getLog().isTraceEnabled())
-               getLog().trace("Registering a null for component %s", componentClass.getSimpleName());
-            registerNullComponent(componentClass);
+            registerComponent(component, name);
+         } else {
+             getLog().trace("Registering a null for component %s", name);
+            registerNullComponent(name);
          }
       }
 
@@ -428,10 +439,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    /**
     * registers a special "null" component that has no dependencies.
     *
-    * @param type type of component to register as a null
+    * @param name name of component to register as a null
     */
-   void registerNullComponent(Class type) {
-      registerComponent(NULL_COMPONENT, type);
+   protected final void registerNullComponent(String name) {
+      registerComponent(NULL_COMPONENT, name);
    }
 
    /**
@@ -484,6 +495,13 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       Component wrapper = lookupComponent(type, name);
       if (wrapper == null) return null;
 
+      return unwrapComponent(wrapper);
+   }
+
+   /**
+    * Get the component from a wrapper, properly handling <code>null</code> components.
+    */
+   private <T> T unwrapComponent(Component wrapper) {
       return (T) (wrapper.instance == NULL_COMPONENT ? null : wrapper.instance);
    }
 

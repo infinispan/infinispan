@@ -46,7 +46,6 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.Immutables;
-import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
@@ -57,8 +56,6 @@ import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -68,6 +65,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -120,7 +118,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    private final ConcurrentMap<String, CacheWrapper> caches = new ConcurrentHashMap<String, CacheWrapper>();
    private final ConcurrentMap<String, Configuration> configurationOverrides = new ConcurrentHashMap<String, Configuration>();
    private final GlobalComponentRegistry globalComponentRegistry;
-   private final ReentrantPerEntryLockContainer cacheNameLockContainer;
+   private final ReentrantLock cacheCreateLock;
    private final ReflectionCache reflectionCache = new ReflectionCache();
 
    /**
@@ -211,7 +209,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       this.defaultConfiguration = defaultConfiguration == null ? new Configuration() : defaultConfiguration.clone();
       this.defaultConfiguration.accept(new ConfigurationValidatingVisitor());
       this.globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, reflectionCache);
-      this.cacheNameLockContainer = new ReentrantPerEntryLockContainer(this.defaultConfiguration.getConcurrencyLevel());
+      this.cacheCreateLock = new ReentrantLock();
       if (start)
          start();
    }
@@ -252,7 +250,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             configurationOverrides.put(entry.getKey(), c);
          }
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, reflectionCache);
-         cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());
+         cacheCreateLock = new ReentrantLock();
       } catch (RuntimeException re) {
          throw new ConfigurationException(re);
       }
@@ -296,7 +294,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             configurationOverrides.put(entry.getKey(), c);
          }
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, reflectionCache);
-         cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());
+         cacheCreateLock = new ReentrantLock();
       } catch (ConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {
@@ -347,7 +345,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          }
 
          globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, reflectionCache);
-         cacheNameLockContainer = new ReentrantPerEntryLockContainer(defaultConfiguration.getConcurrencyLevel());
+         cacheCreateLock = new ReentrantLock();
       } catch (RuntimeException re) {
          throw new ConfigurationException(re);
       }
@@ -434,7 +432,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
       boolean acquired = false;
       try {
-         if (cacheNameLockContainer.acquireLock(cacheName, defaultConfiguration.getLockAcquisitionTimeout(), MILLISECONDS) != null) {
+         if (cacheCreateLock.tryLock(defaultConfiguration.getLockAcquisitionTimeout(), MILLISECONDS)) {
             acquired = true;
             return createCache(cacheName);
          } else {
@@ -445,7 +443,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          throw new CacheException("Interrupted while trying to get lock on cache with cache name " + cacheName, e);
       } finally {
          if (acquired)
-            cacheNameLockContainer.releaseLock(cacheName);
+            cacheCreateLock.unlock();
       }
    }
 

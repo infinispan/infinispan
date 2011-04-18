@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ComponentRegistry extends AbstractComponentRegistry {
 
    // cached component scopes
-   private static final Map<Class, Scopes> componentScopeLookup = new ConcurrentHashMap<Class, Scopes>();
+   private static final Map<Class, Scopes> componentScopeLookup = new ConcurrentHashMap<Class, Scopes>(1);
 
    private final GlobalComponentRegistry globalComponents;
    private final String cacheName;
@@ -79,10 +79,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    @SuppressWarnings("unchecked")
    public final <T> T getLocalComponent(Class<T> componentType, String name) {
-      Component wrapper = lookupLocalComponent(componentType, name);
-      if (wrapper == null) return null;
-
-      return (T) (wrapper.instance == NULL_COMPONENT ? null : wrapper.instance);
+      return super.getComponent(componentType, name);
    }
 
    public final <T> T getLocalComponent(Class<T> componentType) {
@@ -113,11 +110,11 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   public final void registerComponent(Object component, String name) {
+   protected void registerComponentInternal(Object component, String name, boolean nonVolatile) {
       if (isGlobal(component.getClass())) {
-         globalComponents.registerComponent(component, name);
+         globalComponents.registerComponentInternal(component, name, nonVolatile);
       } else {
-         super.registerComponent(component, name);
+         super.registerComponentInternal(component, name, nonVolatile);
       }
    }
 
@@ -135,9 +132,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    @Override
    public void start() {
-      if (globalComponents.getStatus() != ComponentStatus.RUNNING || globalComponents.getStatus() != ComponentStatus.INITIALIZING) {
-         globalComponents.start();
-      }
+      globalComponents.start();
       boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
 
       // set this up *before* starting the components since some components - specifically state transfer - needs to be
