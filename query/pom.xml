@@ -38,6 +38,10 @@
                  <artifactId>dom4j</artifactId>
                  <groupId>dom4j</groupId>
              </exclusion>
+             <exclusion>
+                 <artifactId>hibernate-search-analyzers</artifactId>
+                 <groupId>org.hibernate</groupId>
+             </exclusion>
          </exclusions>
       </dependency>
 
