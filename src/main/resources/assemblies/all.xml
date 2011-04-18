@@ -143,7 +143,7 @@
             <include>org.infinispan:infinispan-cachestore-s3</include>
             <include>org.infinispan:infinispan-gui-demo</include>
             <include>org.infinispan:infinispan-ec2-demo</include>
-            <include>org.infinispan:infinispan-jopr-plugin</include>
+            <include>org.infinispan:infinispan-rhq-plugin</include>
             <include>org.infinispan:infinispan-tree</include>
             <include>org.infinispan:infinispan-query</include>
             <include>org.infinispan:infinispan-server-rest</include>
