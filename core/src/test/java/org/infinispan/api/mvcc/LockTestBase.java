@@ -223,6 +223,39 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       assertNoLocks();
    }
 
+   public void testUpdateDoesntBlockRead() throws Exception {
+      LockTestBaseTL tl = threadLocal.get();
+      Cache<String, String> cache = tl.cache;
+      TransactionManager tm = tl.tm;
+      cache.put("k", "v");
+
+      // Change K
+      tm.begin();
+      cache.put("k", "v2");
+      assertLocked("k");
+      Transaction write = tm.suspend();
+
+      // now start a read and confirm that the write doesn't block it.
+      tm.begin();
+      assert "v".equals(cache.get("k"));
+      Transaction read = tm.suspend();
+
+      // commit the write
+      tm.resume(write);
+      tm.commit();
+
+      assertNoLocks();
+
+      tm.resume(read);
+      if (repeatableRead)
+         assert "v".equals(cache.get("k")) : "Should have repeatable read";
+      else
+         assert "v2".equals(cache.get("k")) : "Read committed should see committed changes";
+      tm.commit();
+      assertNoLocks();
+   }
+
+
    public void testWriteDoesntBlockReadNonexistent() throws Exception {
       LockTestBaseTL tl = threadLocal.get();
       Cache<String, String> cache = tl.cache;
@@ -266,8 +299,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       try {
          cache.put("k", "v");
          assert false : "Should fail lock acquisition";
-      }
-      catch (TimeoutException expected) {
+      } catch (TimeoutException expected) {
 //         expected.printStackTrace();  // for debugging
       }
       tm.rollback();
