@@ -44,7 +44,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down
- * it at cache stop.
+ * at cache stop.
  * 
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  */
