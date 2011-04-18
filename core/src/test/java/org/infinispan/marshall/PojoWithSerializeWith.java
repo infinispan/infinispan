@@ -29,21 +29,21 @@ import java.io.ObjectOutput;
 /**
  * A test pojo that is marshalled using Infinispan's
  * {@link org.infinispan.marshall.Externalizer} which is annotated with
- * {@link MarshallableBy}
+ * {@link SerializeWith}
  *
  * @author Galder Zamarreño
  * @since 5.0
  */
-@MarshallableBy(PojoWithMarshallableBy.Externalizer.class)
-public class PojoWithMarshallableBy {
+@SerializeWith(PojoWithSerializeWith.Externalizer.class)
+public class PojoWithSerializeWith {
 
    final PojoWithAttributes pojo;
 
-   public PojoWithMarshallableBy(int age, String key) {
+   public PojoWithSerializeWith(int age, String key) {
       this.pojo = new PojoWithAttributes(age, key);
    }
 
-   public PojoWithMarshallableBy(PojoWithAttributes pojo) {
+   public PojoWithSerializeWith(PojoWithAttributes pojo) {
       this.pojo = pojo;
    }
 
@@ -52,7 +52,7 @@ public class PojoWithMarshallableBy {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      PojoWithMarshallableBy that = (PojoWithMarshallableBy) o;
+      PojoWithSerializeWith that = (PojoWithSerializeWith) o;
 
       if (pojo != null ? !pojo.equals(that.pojo) : that.pojo != null)
          return false;
@@ -65,15 +65,15 @@ public class PojoWithMarshallableBy {
       return pojo != null ? pojo.hashCode() : 0;
    }
 
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<PojoWithMarshallableBy> {
+   public static class Externalizer implements org.infinispan.marshall.Externalizer<PojoWithSerializeWith> {
       @Override
-      public void writeObject(ObjectOutput output, PojoWithMarshallableBy object) throws IOException {
+      public void writeObject(ObjectOutput output, PojoWithSerializeWith object) throws IOException {
          PojoWithAttributes.writeObject(output, object.pojo);
       }
 
       @Override
-      public PojoWithMarshallableBy readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new PojoWithMarshallableBy(PojoWithAttributes.readObject(input));
+      public PojoWithSerializeWith readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new PojoWithSerializeWith(PojoWithAttributes.readObject(input));
       }
    }
 }
