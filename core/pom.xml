@@ -1,13 +1,11 @@
-<?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>5.0.0-SNAPSHOT</version>
+      <version>5.0.0.BETA2</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
@@ -23,10 +21,7 @@
          <version>${version.jgroups}</version>
       </dependency>
 
-      <!--
-         For the JTA 1.1 API; consuming projects can safely
-         exclude this and replace with any valid source of this API, such as a Java EE app server. 
-         -->
+      
       <dependency>
          <groupId>org.jboss.javaee</groupId>
          <artifactId>jboss-transaction-api</artifactId>
@@ -82,11 +77,7 @@
    </dependencies>
    <build>
       <plugins>
-         <!--
-        Generates XML schema for Infinispan configuration files
-        Run with mvn exec:java
-        For more details see:
-        http://mojo.codehaus.org/exec-maven-plugin/usage.html -->
+         
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
@@ -110,7 +101,7 @@
       <pluginManagement>
         <plugins>
             <plugin>
-                <!-- This plugin's configuration is used in m2e only. -->
+                
                 <groupId>org.eclipse.m2e</groupId>
                 <artifactId>lifecycle-mapping</artifactId>
                 <version>1.0.0</version>
@@ -127,7 +118,7 @@
                                     </goals>
                                 </pluginExecutionFilter>
                                 <action>
-                                    <ignore></ignore>
+                                    <ignore />
                                 </action>
                             </pluginExecution>
                         </pluginExecutions>
