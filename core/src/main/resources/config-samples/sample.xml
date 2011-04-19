@@ -231,7 +231,7 @@
 
          http://community.jboss.org/wiki/Marshalling#Lazy_Deserialization
       -->
-      <!--<lazyDeserialization enabled="true"/>-->
+      <!--<storeAsBinary enabled="true"/>-->
 
       <!--
          Used to enable invocation batching and allow the use of Cache.startBatch()/endBatch() methods.

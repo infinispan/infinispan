@@ -213,10 +213,10 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getLockAcquisitionTimeout() == 20000;
       assert c.getConcurrencyLevel() == 1000;
       assert c.getIsolationLevel() == IsolationLevel.REPEATABLE_READ;
-      assert !c.isUseLazyDeserialization();
+      assert !c.isStoreAsBinary();
 
-      c = getNamedCacheConfig(namedCaches, "lazyDeserialization");
-      assert c.isUseLazyDeserialization();
+      c = getNamedCacheConfig(namedCaches, "storeAsBinary");
+      assert c.isStoreAsBinary();
 
       c = getNamedCacheConfig(namedCaches, "withLoader");
       CacheLoaderManagerConfig loaderManagerConfig = c.getCacheLoaderManagerConfig();
@@ -345,8 +345,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getIsolationLevel() == IsolationLevel.REPEATABLE_READ;
 
       c = defaultCfg.clone();
-      c.applyOverrides(getNamedCacheConfig(namedCaches, "lazyDeserialization"));
-      assert c.isUseLazyDeserialization();
+      c.applyOverrides(getNamedCacheConfig(namedCaches, "storeAsBinary"));
+      assert c.isStoreAsBinary();
       assert !c.isExposeJmxStatistics();
 
       c = defaultCfg.clone();

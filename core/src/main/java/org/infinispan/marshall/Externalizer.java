@@ -33,7 +33,7 @@ import java.io.Serializable;
  * example, if it needs to store objects in a write-through or write-behind
  * cache store, the objects stored need marshalling.  If a cluster of
  * Infinispan nodes is formed, objects shipped around need marshalling.  Even
- * if you enable lazy deserialization, objects need to marshalled so that they
+ * if you enable storing as binary, objects need to marshalled so that they
  * can be lazily unmarshalled with the correct classloader.
  *
  * Using standard JDK serialization is slow and produces payloads that are too

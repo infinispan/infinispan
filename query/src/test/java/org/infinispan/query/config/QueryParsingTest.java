@@ -70,11 +70,11 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
       // test mergeability
       Configuration other = new Configuration().fluent()
-         .lazyDeserialization()
+         .storeAsBinary()
          .locking().useLockStriping(false)
          .build();
       other.applyOverrides(dolly);
-      assert other.isUseLazyDeserialization();
+      assert other.isStoreAsBinary();
       assert !other.isUseLockStriping();
       assert other.isIndexingEnabled();
       assert other.isIndexLocalOnly();

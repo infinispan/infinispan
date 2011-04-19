@@ -705,7 +705,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
 
    }
 
-   public static interface LazyDeserializationConfig extends FluentTypes {}
+   public static interface StoreAsBinaryConfig extends FluentTypes {}
 
    public static interface JmxStatisticsConfig extends FluentTypes {}
 
@@ -758,7 +758,7 @@ interface FluentTypes {
     * This method allows configuration of lazy deserialization. When this
     * method is called, it automatically enables lazy deserialization.
     */
-   FluentConfiguration.LazyDeserializationConfig lazyDeserialization();
+   FluentConfiguration.StoreAsBinaryConfig storeAsBinary();
 
    /**
     * This method allows configuration of invocation batching. When
@@ -836,8 +836,8 @@ abstract class AbstractFluentConfigurationBean extends AbstractNamedCacheConfigu
    }
 
    @Override
-   public FluentConfiguration.LazyDeserializationConfig lazyDeserialization() {
-      return config.lazyDeserialization.enabled(true);
+   public FluentConfiguration.StoreAsBinaryConfig storeAsBinary() {
+      return config.storeAsBinary.enabled(true);
    }
 
    @Override

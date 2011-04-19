@@ -67,42 +67,42 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object key = command.getKey();
-      if (isLazyDeserialization() || getMightGoRemote(ctx, key))
+      if (isStoreAsBinary() || getMightGoRemote(ctx, key))
          checkMarshallable(key);
       return super.visitGetKeyValueCommand(ctx, command);
    }
 
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      if (isLazyDeserialization() || isClusterInvocation(ctx))
+      if (isStoreAsBinary() || isClusterInvocation(ctx))
          checkMarshallable(command.getKeys());
       return super.visitLockControlCommand(ctx, command);
    }
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      if (isLazyDeserialization() || isClusterInvocation(ctx) || isStoreInvocation(ctx))
+      if (isStoreAsBinary() || isClusterInvocation(ctx) || isStoreInvocation(ctx))
          checkMarshallable(command.getKey(), command.getValue());
       return super.visitPutKeyValueCommand(ctx, command);
    }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      if (isLazyDeserialization() || isClusterInvocation(ctx) || isStoreInvocation(ctx))
+      if (isStoreAsBinary() || isClusterInvocation(ctx) || isStoreInvocation(ctx))
          checkMarshallable(command.getMap());
       return super.visitPutMapCommand(ctx, command);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      if (isLazyDeserialization() || isClusterInvocation(ctx) || isStoreInvocation(ctx))
+      if (isStoreAsBinary() || isClusterInvocation(ctx) || isStoreInvocation(ctx))
          checkMarshallable(command.getKey());
       return super.visitRemoveCommand(ctx, command);
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      if (isLazyDeserialization() || isClusterInvocation(ctx) || isStoreInvocation(ctx))
+      if (isStoreAsBinary() || isClusterInvocation(ctx) || isStoreInvocation(ctx))
          checkMarshallable(command.getKey(), command.getNewValue());
       return super.visitReplaceCommand(ctx, command);
    }
@@ -125,8 +125,8 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
             && !ctx.hasFlag(Flag.SKIP_CACHE_STORE);
    }
 
-   private boolean isLazyDeserialization() {
-      return configuration.isUseLazyDeserialization();
+   private boolean isStoreAsBinary() {
+      return configuration.isStoreAsBinary();
    }
 
    private boolean getMightGoRemote(InvocationContext ctx, Object key) {

@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
 public class MarshalledValueQueryTest extends LocalCacheTest {
    @Override
    protected void enhanceConfig(FluentConfiguration c) {
-      c.lazyDeserialization();
+      c.storeAsBinary();
    }
 }
 

@@ -10,7 +10,7 @@
 
    <default>
       <locking concurrencyLevel="1000" lockAcquisitionTimeout="60000" />
-      <lazyDeserialization enabled="true" />
+      <storeAsBinary enabled="true" />
       <jmxStatistics enabled="true"/>
    </default>
 
