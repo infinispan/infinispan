@@ -59,7 +59,7 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          assert globalConfig.getAsyncListenerExecutorProperties().get("queueSize").equals("1020000");
          assert !defaultConfig.isInvocationBatchingEnabled();
          assert globalConfig.getMarshallerClass().equals(VersionAwareMarshaller.class.getName());
-         assert defaultConfig.isUseLazyDeserialization();
+         assert defaultConfig.isStoreAsBinary();
          assert globalConfig.getClusterName().equals("JBossCache-cluster");
          assert defaultConfig.getCacheMode().equals(Configuration.CacheMode.INVALIDATION_SYNC);
          assert defaultConfig.getStateRetrievalTimeout() == 2120000;

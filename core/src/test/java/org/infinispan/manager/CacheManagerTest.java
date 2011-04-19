@@ -151,12 +151,12 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       Configuration c = new Configuration();
       c.setUseLazyDeserialization(true);
-      Configuration lazy = cm.defineConfiguration("lazyDeserialization", c);
+      Configuration lazy = cm.defineConfiguration("storeAsBinary", c);
       assert lazy.isUseLazyDeserialization();
 
       c = new Configuration();
       c.setEvictionStrategy(EvictionStrategy.LRU);
-      Configuration lazyLru = cm.defineConfiguration("lazyDeserializationWithLRU", "lazyDeserialization", c);
+      Configuration lazyLru = cm.defineConfiguration("lazyDeserializationWithLRU", "storeAsBinary", c);
       assert lazyLru.isUseLazyDeserialization();
       assert lazyLru.getEvictionStrategy() == EvictionStrategy.LRU;
    }

@@ -103,9 +103,9 @@
       <locking isolationLevel="REPEATABLE_READ" concurrencyLevel="1000" lockAcquisitionTimeout="20000"/>
    </namedCache>
 
-   <namedCache name="lazyDeserialization">
+   <namedCache name="storeAsBinary">
       <locking isolationLevel="REPEATABLE_READ" concurrencyLevel="1000" lockAcquisitionTimeout="20000"/>
-      <lazyDeserialization enabled="true"/>
+      <storeAsBinary enabled="true"/>
    </namedCache>
 
    <namedCache name="withLoader">

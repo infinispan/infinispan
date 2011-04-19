@@ -35,7 +35,7 @@ public class MarshalledValueClusteredQueryTest extends ClusteredCacheTest {
    
    @Override
    protected void enhanceConfig(FluentConfiguration c) {
-      c.lazyDeserialization();
+      c.storeAsBinary();
    }
    
 }

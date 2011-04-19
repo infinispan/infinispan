@@ -74,7 +74,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       componentRegistry.registerComponent(interceptorChain, InterceptorChain.class);
 
       // add marshallable check interceptor for situations where we want to figure out before marshalling
-      if (configuration.isUseLazyDeserialization() || configuration.isUseAsyncMarshalling()
+      if (configuration.isStoreAsBinary() || configuration.isUseAsyncMarshalling()
             || configuration.isUseReplQueue() || hasAsyncStore())
          interceptorChain.appendInterceptor(createInterceptor(IsMarshallableInterceptor.class));
 
@@ -95,7 +95,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       if(configuration.isUseEagerLocking())
          interceptorChain.appendInterceptor(createInterceptor(ImplicitEagerLockingInterceptor.class));
 
-      if (configuration.isUseLazyDeserialization())
+      if (configuration.isStoreAsBinary())
          interceptorChain.appendInterceptor(createInterceptor(MarshalledValueInterceptor.class));
 
       interceptorChain.appendInterceptor(createInterceptor(NotificationInterceptor.class));

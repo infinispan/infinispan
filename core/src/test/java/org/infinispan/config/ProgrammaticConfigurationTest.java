@@ -212,12 +212,12 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
          .unsafe()
             .unreliableReturnValues(false)
          .jmxStatistics()
-         .lazyDeserialization()
+         .storeAsBinary()
          .invocationBatching()
          .build();
 
       assert c.isInvocationBatchingEnabled();
-      assert c.isUseLazyDeserialization();
+      assert c.isStoreAsBinary();
       assert c.isExposeJmxStatistics();
       assert !c.isUnsafeUnreliableReturnValues();
 

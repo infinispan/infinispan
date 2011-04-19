@@ -176,7 +176,7 @@
             </xsl:if>
 
             <xsl:if test="serialization[@useLazyDeserialization]">
-               <xsl:element name="lazyDeserialization">
+               <xsl:element name="storeAsBinary">
                   <xsl:attribute name="enabled">
                      <xsl:value-of select="serialization/@useLazyDeserialization"/>
                   </xsl:attribute>
