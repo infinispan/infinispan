@@ -3057,8 +3057,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setRehashEnabled")
       protected Boolean rehashEnabled = true;
       
-      @ConfigurationDocRef(bean = Configuration.class, targetElement = "numVirtualNodes")
-      protected Integer numVirtualNodes = 0;
+      @ConfigurationDocRef(bean = HashConfig.class, targetElement = "numVirtualNodes")
+      protected Integer numVirtualNodes = 1;
 
       public void accept(ConfigurationBeanVisitor v) {
          v.visitHashType(this);
