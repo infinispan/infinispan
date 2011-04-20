@@ -26,7 +26,7 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DataSources;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.JdbcUtil;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.beans.PropertyVetoException;
@@ -46,7 +46,7 @@ import java.util.Properties;
  */
 public class PooledConnectionFactory extends ConnectionFactory {
 
-   private static final Log log = LogFactory.getLog(PooledConnectionFactory.class);
+   private static final Log log = LogFactory.getLog(PooledConnectionFactory.class, Log.class);
    private ComboPooledDataSource pooledDataSource;
 
    @Override
@@ -57,26 +57,26 @@ public class PooledConnectionFactory extends ConnectionFactory {
       try {
          pooledDataSource.setDriverClass(config.getDriverClass()); //loads the jdbc driver
       } catch (PropertyVetoException e) {
-         String message = "Error while instatianting JDBC driver: '" + config.getDriverClass();
-         log.error(message, e);
-         throw new CacheLoaderException(message, e);
+         log.errorInstantiatingJdbcDriver(config.getDriverClass(), e);
+         throw new CacheLoaderException(String.format(
+               "Error while instatianting JDBC driver: '%s'", config.getDriverClass()), e);
       }
       pooledDataSource.setJdbcUrl(config.getConnectionUrl());
       pooledDataSource.setUser(config.getUserName());
       pooledDataSource.setPassword(config.getPassword());
       if (log.isTraceEnabled()) {
-         log.trace("Started connection factory with config: " + config);
+         log.tracef("Started connection factory with config: %s", config);
       }
    }
 
    private void logFileOverride() {
       URL propsUrl = Thread.currentThread().getContextClassLoader().getResource("c3p0.properties");
       URL xmlUrl = Thread.currentThread().getContextClassLoader().getResource("c3p0-config.xml");
-      if (log.isInfoEnabled() && propsUrl != null) {
-         log.info("Found 'c3p0.properties' in classpath: " + propsUrl);
+      if (log.isDebugEnabled() && propsUrl != null) {
+         log.debugf("Found 'c3p0.properties' in classpath: %s", propsUrl);
       }
-      if (log.isInfoEnabled() && xmlUrl != null) {
-         log.info("Found 'c3p0-config.xml' in classpath: " + xmlUrl);
+      if (log.isDebugEnabled() && xmlUrl != null) {
+         log.debugf("Found 'c3p0-config.xml' in classpath: %s", xmlUrl);
       }
    }
 
@@ -84,12 +84,12 @@ public class PooledConnectionFactory extends ConnectionFactory {
    public void stop() {
       try {
          DataSources.destroy(pooledDataSource);
-         if (log.isTraceEnabled()) {
+         if (log.isDebugEnabled()) {
             log.debug("Successfully stopped PooledConnectionFactory.");
          }
       }
       catch (SQLException sqle) {
-         log.warn("Could not destroy C3P0 connection pool: " + pooledDataSource, sqle);
+         log.couldNotDestroyC3p0ConnectionPool(pooledDataSource, sqle);
       }
    }
 
@@ -120,9 +120,10 @@ public class PooledConnectionFactory extends ConnectionFactory {
       if (log.isTraceEnabled()) {
          String operation = checkout ? "checkout" : "release";
          try {
-            log.trace("DataSource before " + operation + " (NumBusyConnectionsAllUsers) : " + pooledDataSource.getNumBusyConnectionsAllUsers() + ", (NumConnectionsAllUsers) : " + pooledDataSource.getNumConnectionsAllUsers());
+            log.tracef("DataSource before %s (NumBusyConnectionsAllUsers) : %d, (NumConnectionsAllUsers) : %d",
+                       operation, pooledDataSource.getNumBusyConnectionsAllUsers(), pooledDataSource.getNumConnectionsAllUsers());
          } catch (SQLException e) {                                                                                                                
-            log.warn("Unexpected", e);
+            log.sqlFailureUnexpected(e);
          }
       }
    }
@@ -131,11 +132,12 @@ public class PooledConnectionFactory extends ConnectionFactory {
       if (log.isTraceEnabled()) {
          String operation = checkout ? "checkout" : "release";
          try {
-            log.trace("DataSource after " + operation + " (NumBusyConnectionsAllUsers) : " + pooledDataSource.getNumBusyConnectionsAllUsers() + ", (NumConnectionsAllUsers) : " + pooledDataSource.getNumConnectionsAllUsers());
+            log.tracef("DataSource after %s (NumBusyConnectionsAllUsers) : %d, (NumConnectionsAllUsers) : %d",
+                      operation, pooledDataSource.getNumBusyConnectionsAllUsers(), pooledDataSource.getNumConnectionsAllUsers());
          } catch (SQLException e) {
-            log.warn("Unexpected", e);
+            log.sqlFailureUnexpected(e);
          }
-         log.trace("Connection " + operation + " : " + connection);
+         log.tracef("Connection %s : %s", operation, connection);
       }
    }
 }

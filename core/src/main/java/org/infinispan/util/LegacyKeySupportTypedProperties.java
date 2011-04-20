@@ -50,7 +50,9 @@ public class LegacyKeySupportTypedProperties extends TypedProperties {
    }
 
    private void warnLegacy(String oldKey, String newKey) {
-      if (log.isInfoEnabled()) log.info("Could not find value for key %s, but did find value under deprecated key %s. Please use %s as support for %s will eventually be discontinued.", newKey, oldKey);
+      if (log.isInfoEnabled())
+            log.infof("Could not find value for key %s, but did find value under deprecated key %s. Please use %s as support for %s will eventually be discontinued.",
+            newKey, oldKey);
    }
 
    @Override

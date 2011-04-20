@@ -128,19 +128,18 @@ public class RecoveryManagerImpl implements RecoveryManager {
             if (isSuccessful(thisResponse)) {
                List<Xid> responseValue = (List<Xid>) ((SuccessfulResponse) thisResponse).getResponseValue();
                if (log.isTraceEnabled()) {
-                  log.trace("Received Xid lists %s from node %s", responseValue, rEntry.getKey());
+                  log.tracef("Received Xid lists %s from node %s", responseValue, rEntry.getKey());
                }
                iterator.add(responseValue);
             } else {
-               log.warn("Missing the list of prepared transactions from node %s. Received response is %s",
-                        rEntry.getKey(), rEntry.getValue());
+               log.missingListPreparedTransactions(rEntry.getKey(), rEntry.getValue());
                success = false;
             }
          }
          //this makes sure that the broadcast only happens once!
          this.broadcastForPreparedTx = !success;
-         if (!broadcastForPreparedTx) log.info("Finished broadcasting for remote prepared transactions. " +
-                                                     "Returning only local values from now on.");
+         if (!broadcastForPreparedTx)
+            log.debug("Finished broadcasting for remote prepared transactions. Returning only local values from now on.");
       }
       return iterator;
    }
@@ -168,7 +167,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    public void removeRecoveryInformation(Xid xid) {
       RecoveryAwareTransaction remove = inDoubtTransactions.remove(new RecoveryInfoKey(xid, cacheName));
       if (remove != null) {
-         if (log.isTraceEnabled()) log.trace("removed in doubt xid: %s", xid);
+         if (log.isTraceEnabled()) log.tracef("removed in doubt xid: %s", xid);
       }
       txTable.removeCompletedRemoteTransactions(xid);
    }
@@ -183,13 +182,13 @@ public class RecoveryManagerImpl implements RecoveryManager {
             RecoverableTransactionIdentifier globalTransaction = (RecoverableTransactionIdentifier) raRemoteTx.getGlobalTransaction();
             if (internalId.equals(globalTransaction.getInternalId())) {
                Xid xid = globalTransaction.getXid();
-               if (log.isTraceEnabled()) log.trace("Found transaction xid %s that maps internal id %s", xid, internalId);
+               if (log.isTraceEnabled()) log.tracef("Found transaction xid %s that maps internal id %s", xid, internalId);
                removeRecoveryInformation(xid);
                return;
             }
          }
       }
-      if (log.isTraceEnabled()) log.trace("Could not find tx to map to internal id %s", internalId);
+      if (log.isTraceEnabled()) log.tracef("Could not find tx to map to internal id %s", internalId);
    }
 
    @Override
@@ -200,7 +199,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
          if (key.cacheName.equals(cacheName))
             result.add(key.xid);
       }
-      if (log.isTraceEnabled()) log.trace("Returning %s ", result);
+      if (log.isTraceEnabled()) log.tracef("Returning %s ", result);
       return result;
    }
 
@@ -209,7 +208,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       List<Xid> txs = getInDoubtTransactions();
       Set<RecoveryAwareLocalTransaction> localTxs = txTable.getLocalTxThatFailedToComplete();
       if (log.isTraceEnabled())
-         log.trace("Local transactions that failed to complete is %s", localTxs);
+         log.tracef("Local transactions that failed to complete is %s", localTxs);
       Set<InDoubtTxInfo> result = new HashSet<InDoubtTxInfo>();
       for (RecoveryAwareLocalTransaction r : localTxs) {
          long internalId = ((RecoverableTransactionIdentifier) r.getGlobalTransaction()).getInternalId();
@@ -228,7 +227,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
          InDoubtTxInfoImpl infoInDoubt = new InDoubtTxInfoImpl(xid, gtx.getInternalId(), status);
          result.add(infoInDoubt);
       }
-      if (log.isTraceEnabled()) log.trace("The set of in-doubt txs from this node is %s", result);
+      if (log.isTraceEnabled()) log.tracef("The set of in-doubt txs from this node is %s", result);
       return result;
    }
 
@@ -277,8 +276,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       Xid xid = ((RecoverableTransactionIdentifier)remoteTransaction.getGlobalTransaction()).getXid();
       RecoveryAwareTransaction previous = inDoubtTransactions.put(new RecoveryInfoKey(xid, cacheName), remoteTransaction);
       if (previous != null) {
-         log.error("There's already a prepared transaction with this xid: %s. New transaction is %s. Are there two " +
-                         "different transactions having same Xid in the cluster?", previous, remoteTransaction);
+         log.preparedTxAlreadyExists(previous, remoteTransaction);
          throw new IllegalStateException("Are there two different transactions having same Xid in the cluster?");
       }
    }
@@ -300,7 +298,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
          if (tx instanceof LocalTransaction) {
             LocalTransaction ltx = (LocalTransaction) tx;
             ltx.markForRollback(false);
-            if (log.isTraceEnabled()) log.trace("About to complete local transaction %s", xid);
+            if (log.isTraceEnabled()) log.tracef("About to complete local transaction %s", xid);
             return completeTransaction(ltx, commit, xid);
          } else {
             if (tx == null) return "Could not find transaction " + xid;
@@ -343,7 +341,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       CompleteTransactionCommand ctc = commandFactory.buildCompleteTransactionCommand(xid, commit);
       Map<Address, Response> responseMap = rpcManager.invokeRemotely(Collections.singleton(where), ctc, true, false);
       if (responseMap.size() != 1 || responseMap.get(where) == null) {
-         log.error("Expected response size is 1, received %s", responseMap);
+         log.expectedJustOneResponse(responseMap);
          throw new CacheException("Expected response size is 1, received " + responseMap);
       }
       return (String) ((SuccessfulResponse) responseMap.get(where)).getResponseValue();
@@ -356,7 +354,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       boolean remotePrepared = remoteTransaction != null && remoteTransaction.isPrepared();
       boolean result = inDoubtTransactions.get(new RecoveryInfoKey(xid, cacheName)) != null //if it is in doubt must be prepared
             || txTable.getLocalPreparedXids().contains(xid) || remotePrepared;
-      if (log.isTraceEnabled()) log.trace("Is tx %s prepared? %s", xid, result);
+      if (log.isTraceEnabled()) log.tracef("Is tx %s prepared? %s", xid, result);
       return result;
    }
 
@@ -371,7 +369,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    private Map<Address, Response> getAllPreparedTxFromCluster() {
       GetInDoubtTransactionsCommand command = commandFactory.buildGetInDoubtTransactionsCommand();
       Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(null, command, true, false);
-      if (log.isTraceEnabled()) log.trace("getAllPreparedTxFromCluster received from cluster: %s", addressResponseMap);
+      if (log.isTraceEnabled()) log.tracef("getAllPreparedTxFromCluster received from cluster: %s", addressResponseMap);
       return addressResponseMap;
    }
 

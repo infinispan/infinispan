@@ -311,12 +311,13 @@ public class TransactionFactory {
       } else if (!dldEnabled && !recoveryEnabled && !xa) {
          txFactoryEnum = TxFactoryEnum.NODLD_NORECOVERY_NOXA;
       }
-      if (log.isTraceEnabled()) log.trace("Setting factory enum to %s", txFactoryEnum);
+      if (log.isTraceEnabled()) log.tracef("Setting factory enum to %s", txFactoryEnum);
 
       if (txFactoryEnum == null) {
-         log.error("Unsupported combination (dldEnabled, recoveryEnabled, xa) = (%s, %s, %s)", dldEnabled, recoveryEnabled, xa);
-         throw new IllegalStateException("Unsupported combination (dldEnabled, recoveryEnabled, xa) = (" + dldEnabled
-                                               + ", " + recoveryEnabled + ", " + xa + ")");
+         log.unsupportedTransactionConfiguration(dldEnabled, recoveryEnabled, xa);
+         throw new IllegalStateException(String.format(
+               "Unsupported combination (dldEnabled, recoveryEnabled, xa) = (%s, %s, %s)",
+               dldEnabled, recoveryEnabled, xa));
       }
    }
 }

@@ -72,7 +72,7 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
    @Override
    public List<Address> locate(Object key, int replCount) {
       Address owner = getOwner(key);
-      if (trace) log.trace("Owner of key %s identified as %s", key, owner);
+      if (trace) log.tracef("Owner of key %s identified as %s", key, owner);
       int ownerCount = min(replCount, caches.size());
       List<Address> owners = getOwners(owner, ownerCount);
       return owners;
@@ -127,7 +127,7 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
             switch (level) {
                case 0: { //site level
                   if (!topologyInfo.isSameSite(realAddress, ra)) {
-                     if (trace) log.trace("Owner (different site) identified as %s", a);
+                     if (trace) log.tracef("Owner (different site) identified as %s", a);
                      result.add(ra);
                      addrIt.remove();
                   }
@@ -135,7 +135,7 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
                }
                case 1: { //rack level
                   if (!topologyInfo.isSameRack(realAddress, ra)) {
-                     if (trace) log.trace("Owner (different rack) identified as %s", a);
+                     if (trace) log.tracef("Owner (different rack) identified as %s", a);
                      result.add(ra);
                      addrIt.remove();
                   }
@@ -143,14 +143,14 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
                }
                case 2: { //machine level
                   if (!topologyInfo.isSameMachine(realAddress, ra)) {
-                     if (trace) log.trace("Owner (different machine) identified as %s", a);
+                     if (trace) log.tracef("Owner (different machine) identified as %s", a);
                      result.add(ra);
                      addrIt.remove();
                   }
                   break;
                }
                case 3: { //just add them in sequence
-                  if (trace) log.trace("Owner (same machine) identified as %s", a);
+                  if (trace) log.tracef("Owner (same machine) identified as %s", a);
                   result.add(ra);
                   addrIt.remove();
                   break;

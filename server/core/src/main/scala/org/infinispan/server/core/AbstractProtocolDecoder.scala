@@ -34,6 +34,7 @@ import org.jboss.netty.buffer.ChannelBuffer
 import org.jboss.netty.channel._
 import DecoderState._
 import org.infinispan.util.ClusterIdGenerator
+import logging.Log
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -42,7 +43,7 @@ import org.infinispan.util.ClusterIdGenerator
  * @since 4.1
  */
 abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTransport)
-        extends ReplayingDecoder[DecoderState](DECODE_HEADER, true) {
+        extends ReplayingDecoder[DecoderState](DECODE_HEADER, true) with Log {
    import AbstractProtocolDecoder._
 
    type SuitableParameters <: RequestParameters
@@ -234,7 +235,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
       createGetResponse(key, cache.get(readKey(buffer)._1))
 
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
-      error("Exception reported", e.getCause)
+      logExceptionReported(e.getCause)
       val ch = ctx.getChannel
       val errorResponse = createErrorResponse(e.getCause)
       if (errorResponse != null) {
@@ -325,7 +326,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
 
 }
 
-object AbstractProtocolDecoder extends Logging {
+object AbstractProtocolDecoder extends Log {
    private val SecondsInAMonth = 60 * 60 * 24 * 30
    private val DefaultTimeUnit = TimeUnit.MILLISECONDS
 }

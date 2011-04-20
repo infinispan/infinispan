@@ -116,7 +116,7 @@ public class TransactionTable {
    private void stop() {
       cm.removeListener(listener);
       lockBreakingService.shutdownNow();
-      if (trace) log.trace("Wait for on-going transactions to finish for %d seconds.", TimeUnit.MILLISECONDS.toSeconds(configuration.getCacheStopTimeout()));
+      if (trace) log.tracef("Wait for on-going transactions to finish for %d seconds.", TimeUnit.MILLISECONDS.toSeconds(configuration.getCacheStopTimeout()));
       long failTime = System.currentTimeMillis() + configuration.getCacheStopTimeout();
       boolean txsOnGoing = areTxsOnGoing();
       while (txsOnGoing && System.currentTimeMillis() < failTime) {
@@ -126,15 +126,14 @@ public class TransactionTable {
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             if (trace) {
-               log.trace("Interrupted waiting for on-going transactions to finish. localTransactions=%s, remoteTransactions%s",
+               log.tracef("Interrupted waiting for on-going transactions to finish. localTransactions=%s, remoteTransactions%s",
                      localTransactions, remoteTransactions);
             }
          }
       }
 
       if (txsOnGoing) {
-         log.warn("Stopping but there're transactions that did not finish in time: localTransactions=%s, remoteTransactions%s",
-                  localTransactions, remoteTransactions);
+         log.unfinishedTransactionsRemain(localTransactions, remoteTransactions);
       } else {
          if (trace) log.trace("All transactions terminated");
       }
@@ -165,7 +164,7 @@ public class TransactionTable {
          try {
             transaction.registerSynchronization(sync);
          } catch (Exception e) {
-            log.warn("Failed synchronization registration", e);
+            log.failedSynchronizationRegistration(e);
             throw new CacheException(e);
          }
          ((SyncLocalTransaction) localTransaction).setEnlisted(true);
@@ -182,7 +181,7 @@ public class TransactionTable {
       public void onViewChange(ViewChangedEvent vce) {
          final List<Address> leavers = MembershipArithmetic.getMembersLeft(vce.getOldMembers(), vce.getNewMembers());
          if (!leavers.isEmpty()) {
-            if (trace) log.trace("Saw %s leavers - kicking off a lock breaking task", leavers.size());
+            if (trace) log.tracef("Saw %s leavers - kicking off a lock breaking task", leavers.size());
             cleanTxForWhichTheOwnerLeft(leavers);
             if (configuration.isUseEagerLocking() && configuration.isEagerLockSingleNode() && configuration.getCacheMode().isDistributed()) {
                for (LocalTransaction localTx : localTransactions.values()) {
@@ -220,20 +219,20 @@ public class TransactionTable {
 
       if (trace) {
          if (toKill.isEmpty())
-            log.trace("No global transactions pertain to originator(s) %s who have left the cluster.", leavers);
+            log.tracef("No global transactions pertain to originator(s) %s who have left the cluster.", leavers);
          else
-            log.trace("%s global transactions pertain to leavers list %s and need to be killed", toKill.size(), leavers);
+            log.tracef("%s global transactions pertain to leavers list %s and need to be killed", toKill.size(), leavers);
       }
 
       for (GlobalTransaction gtx : toKill) {
-         if (trace) log.trace("Killing %s", gtx);
+         if (trace) log.tracef("Killing %s", gtx);
          RollbackCommand rc = new RollbackCommand(gtx);
          rc.init(invoker, icc, TransactionTable.this);
          try {
             rc.perform(null);
-            if (trace) log.trace("Rollback of %s complete.", gtx);
+            if (trace) log.tracef("Rollback of %s complete.", gtx);
          } catch (Throwable e) {
-            log.warn("Unable to roll back gtx " + gtx, e);
+            log.unableToRollbackGlobalTx(gtx, e);
          } finally {
             removeRemoteTransaction(gtx);
          }
@@ -279,9 +278,8 @@ public class TransactionTable {
    private void registerRemoteTransaction(GlobalTransaction gtx, RemoteTransaction rtx) {
       RemoteTransaction transaction = remoteTransactions.put(gtx, rtx);
       if (transaction != null) {
-         String message = "A remote transaction with the given id was already registered!!!";
-         log.error(message);
-         throw new IllegalStateException(message);
+         log.remoteTxAlreadyRegistered();
+         throw new IllegalStateException("A remote transaction with the given id was already registered!!!");
       }
 
       if (trace) log.trace("Created and registered remote transaction " + rtx);
@@ -296,7 +294,7 @@ public class TransactionTable {
       if (current == null) {
          Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
          GlobalTransaction tx = txFactory.newGlobalTransaction(localAddress, false);
-         if (trace) log.trace("Created a new GlobalTransaction %s", tx);
+         if (trace) log.tracef("Created a new GlobalTransaction %s", tx);
          current = txFactory.newLocalTransaction(transaction, tx);
          localTransactions.put(transaction, current);
          notifier.notifyTransactionRegistered(tx, ctx);
@@ -317,13 +315,13 @@ public class TransactionTable {
     */
    public void remoteTransactionCompleted(GlobalTransaction gtx, boolean committed) {
       RemoteTransaction remove = remoteTransactions.remove(gtx);
-      if (log.isTraceEnabled()) log.trace("Removing remote transaction as it is completed: %s", remove);
+      if (log.isTraceEnabled()) log.tracef("Removing remote transaction as it is completed: %s", remove);
    }
 
    private boolean removeRemoteTransaction(GlobalTransaction txId) {
       boolean existed = remoteTransactions.remove(txId) != null;
       if (trace) {
-         log.trace("Removed " + txId + " from transaction table. Transaction existed? " + existed);
+         log.tracef("Removed %s from transaction table. Transaction existed? %b", txId, existed);
       }
       return existed;
    }

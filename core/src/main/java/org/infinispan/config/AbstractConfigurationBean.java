@@ -107,7 +107,7 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
          }
       }
       catch (NoSuchFieldException e) {
-         log.warn("Field " + fieldName + " not found!!");
+         log.fieldNotFound(fieldName);
       }
       finally {
          accessible = false;

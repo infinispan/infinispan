@@ -73,7 +73,7 @@ public abstract class AbstractKeyOperation extends RetryOnFailureOperation {
    protected byte[] returnPossiblePrevValue(Transport transport) {
       if (hasForceReturn(flags)) {
          byte[] bytes = transport.readArray();
-         if (log.isTraceEnabled()) log.trace("Previous value bytes is: " + Util.printArray(bytes, false));
+         if (log.isTraceEnabled()) log.tracef("Previous value bytes is: %s", Util.printArray(bytes, false));
          //0-length response means null
          return bytes.length == 0 ? null : bytes;
       } else {

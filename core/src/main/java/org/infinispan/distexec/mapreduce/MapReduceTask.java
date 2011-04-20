@@ -240,16 +240,16 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          cmd = factory.buildMapReduceCommand(mapper, reducer, rpc.getAddress(), keys);
          selfCmd = cmd;
          try {
-            log.debug("Invoking %s across entire cluster ", cmd);
+            log.debugf("Invoking %s across entire cluster ", cmd);
             Map<Address, Response> map = rpc.invokeRemotely(null, cmd, true, false);
-            log.debug("Invoked %s across entire cluster, results are %s", cmd, map);
+            log.debugf("Invoked %s across entire cluster, results are %s", cmd, map);
             results.putAll(map);
          } catch (Throwable e) {
             throw new CacheException("Could not invoke MapReduce task on remote nodes ", e);
          }
       } else {
          Map<Address, List<KIn>> keysToNodes = mapKeysToNodes();
-         log.debug("Keys to nodes mapping is " + keysToNodes);
+         log.debugf("Keys to nodes mapping is " + keysToNodes);
          List<MapReduceFuture> futures = new ArrayList<MapReduceFuture>();
          for (Entry<Address, List<KIn>> e : keysToNodes.entrySet()) {
             Address address = e.getKey();
@@ -259,11 +259,11 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             } else {
                cmd = factory.buildMapReduceCommand(mapper, reducer, rpc.getAddress(), keys);
                try {
-                  log.debug("Invoking %s on %s", cmd, address);
+                  log.debugf("Invoking %s on %s", cmd, address);
                   MapReduceFuture future = new MapReduceFuture();
                   futures.add(future);
                   rpc.invokeRemotelyInFuture(Collections.singleton(address), cmd, future);                  
-                  log.debug("Invoked %s on %s ", cmd, address);                  
+                  log.debugf("Invoked %s on %s ", cmd, address);
                } catch (Exception ex) {
                   throw new CacheException("Could not invoke MapReduceTask on remote node " + address, ex);
                }
@@ -274,7 +274,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             try {
                result = (Map<Address, Response>) future.get();               
                results.putAll(result);
-               log.debug("Received result from future %s", result);
+               log.debugf("Received result from future %s", result);
             } catch (Exception e1) {
                throw new CacheException("Could not retrieve MapReduceTask result from remote node", e1);
             }            
@@ -283,11 +283,11 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       boolean selfInvoke = selfCmd != null;
       Object localCommandResult = null;
       if (selfInvoke) {
-         log.debug("Invoking %s locally", cmd);
+         log.debugf("Invoking %s locally", cmd);
          selfCmd.init(factory, invoker, icc, dm, rpc.getAddress());
          try {
             localCommandResult = selfCmd.perform(null);
-            log.debug("Invoked %s locally", cmd);
+            log.debugf("Invoked %s locally", cmd);
          } catch (Throwable e1) {
             throw new CacheException("Could not invoke MapReduce task locally ", e1);
          }

@@ -61,11 +61,11 @@ public class PingOperation extends HotRodOperation {
          short respStatus = readHeaderAndValidate(transport, messageId, HotRodConstants.PING_RESPONSE);
          if (respStatus == HotRodConstants.NO_ERROR_STATUS) {
             if (log.isTraceEnabled())
-               log.trace("Successfully validated transport: " + transport);
+               log.tracef("Successfully validated transport: %s", transport);
             return PingResult.SUCCESS;
          } else {
             if (log.isTraceEnabled())
-               log.trace("Unknown response status: " + respStatus);
+               log.tracef("Unknown response status: %s", respStatus);
             return PingResult.FAIL;
          }
       } catch (HotRodClientException e) {
@@ -75,7 +75,7 @@ public class PingOperation extends HotRodOperation {
             return PingResult.FAIL;
       } catch (Exception e) {
          if (log.isTraceEnabled())
-            log.trace("Failed to validate transport: " + transport, e);
+            log.tracef(e, "Failed to validate transport: %s", transport);
          return PingResult.FAIL;
       }
    }

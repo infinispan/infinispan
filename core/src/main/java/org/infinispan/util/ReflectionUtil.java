@@ -144,7 +144,7 @@ public class ReflectionUtil {
          f.set(instance, value);
       }
       catch (Exception e) {
-         log.error("Unable to set value!", e);
+         log.unableToSetValue(e);
       }
    }
 

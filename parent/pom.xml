@@ -122,6 +122,8 @@
       <version.jboss.marshalling>1.2.3.GA</version.jboss.marshalling>
       <version.jbossjta>4.15.0-SNAPSHOT</version.jbossjta>
       <version.org.jboss.logging>3.0.0.Beta5</version.org.jboss.logging>
+      <version.jboss.logging>3.0.0.Beta5</version.jboss.logging>
+      <version.jboss.logging.processor>1.0.0.Beta5</version.jboss.logging.processor>
       <version.jcipannotations>1.0</version.jcipannotations>
       <version.jclouds>1.0-beta-9b</version.jclouds>
       <version.jetty>6.1.25</version.jetty>
@@ -195,6 +197,12 @@
          <artifactId>log4j</artifactId>
          <version>${version.log4j}</version>
          <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.logging</groupId>
+         <artifactId>jboss-logging-processor</artifactId>
+         <version>${version.jboss.logging.processor}</version>
+         <scope>provided</scope>
       </dependency>
 
       <!-- used to serialize non-serializable objects for a dummy marshaller -->

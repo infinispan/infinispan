@@ -40,7 +40,7 @@ import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.query.backend.LocalQueryInterceptor;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
-import org.infinispan.util.logging.Log;
+import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -51,7 +51,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class LifecycleManager extends AbstractModuleLifecycle {
    
-   private static final Log log = LogFactory.getLog(LifecycleManager.class);
+   private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
    
    private final Map<String,SearchFactoryIntegrator> searchFactoriesToShutdown = new TreeMap<String,SearchFactoryIntegrator>();
 
@@ -62,7 +62,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
       Configuration cfg = cr.getComponent(Configuration.class);
       if (cfg.isIndexingEnabled()) {
-         log.info("Registering Query interceptor");
+         log.registeringQueryInterceptor();
          SearchFactoryIntegrator searchFactory = getSearchFactory(cfg.getIndexingProperties(), cr);
          createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
       }

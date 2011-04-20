@@ -59,7 +59,7 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    @AfterClass(alwaysRun = true)
    override def destroy {
       try {
-         log.debug("Test finished, close Hot Rod server", null)
+         log.debug("Test finished, close Hot Rod server")
          hotRodClients.foreach(_.stop)
          hotRodServers.foreach(_.stop)
       } finally {

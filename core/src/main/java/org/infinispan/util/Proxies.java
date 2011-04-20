@@ -87,7 +87,7 @@ public class Proxies {
             try {
                 result = m.invoke(obj, args);
             } catch (Throwable t) {
-                log.warn("Invocation of " + m.getName() + " threw an exception " + t.getCause() + ". Exception is ignored.");
+                log.ignoringException(m.getName(), t.getCause());
             } finally {
             }
             return result;

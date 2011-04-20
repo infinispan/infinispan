@@ -109,7 +109,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
          uncommittedPrepares.clear();
          writeLockOwner = null;
       } catch (IllegalMonitorStateException imse) {
-         log.warn("Unable to stop transaction logging!", imse);
+         log.unableToStopTransactionLogging(imse);
       } finally {
          if (unlock) modsLatch.open();
       }

@@ -69,7 +69,7 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.cassandra.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -85,7 +85,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	private static final String ENTRY_COLUMN_NAME = "entry";
 	private static final String EXPIRATION_KEY = "expiration";
 	private static final int SLICE_SIZE = 100;
-	private static final Log log = LogFactory.getLog(CassandraCacheStore.class);
+	private static final Log log = LogFactory.getLog(CassandraCacheStore.class, Log.class);
 	private static final boolean trace = log.isTraceEnabled();
 
 	private CassandraCacheStoreConfig config;
@@ -154,7 +154,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 			}
 			return ice;
 		} catch (NotFoundException nfe) {
-			log.debug("Key '%s' not found", hashKey);
+			log.debugf("Key '%s' not found", hashKey);
 			return null;
 		} catch (Exception e) {
 			throw new CacheLoaderException(e);
@@ -194,13 +194,13 @@ public class CassandraCacheStore extends AbstractCacheStore {
 					List<ColumnOrSuperColumn> columns = keySlice.getColumns();
 					if (columns.size() > 0) {
 						if (log.isDebugEnabled()) {
-							log.debug("Loading %s", key);
+							log.debugf("Loading %s", key);
 						}
 						byte[] value = columns.get(0).getColumn().getValue();
 						InternalCacheEntry ice = unmarshall(value, key);
 						s.add(ice);
 					} else if (log.isDebugEnabled()) {
-						log.debug("Skipping empty key %s", key);
+						log.debugf("Skipping empty key %s", key);
 					}
 				}
 				if (keySlices.size() < sliceSize) {
@@ -314,7 +314,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	@Override
 	public boolean remove(Object key) throws CacheLoaderException {
 		if (trace)
-			log.trace("remove(\"%s\") ", key);
+			log.tracef("remove(\"%s\") ", key);
 		Cassandra.Client cassandraClient = null;
 		try {
 			cassandraClient = dataSource.getConnection();
@@ -323,7 +323,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 			cassandraClient.batch_mutate(mutationMap, writeConsistencyLevel);
 			return true;
 		} catch (Exception e) {
-			log.error("Exception while removing " + key, e);
+			log.errorRemovingKey(key, e);
 			return false;
 		} finally {
 			dataSource.releaseConnection(cassandraClient);
@@ -365,7 +365,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	private void store0(InternalCacheEntry entry, Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap) throws IOException, UnsupportedKeyTypeException {
 		Object key = entry.getKey();
 		if (trace)
-			log.trace("store(\"%s\") ", key);
+			log.tracef("store(\"%s\") ", key);
 		String cassandraKey = hashKey(key);
 		try {
 			addMutation(mutationMap, ByteBufferUtil.bytes(cassandraKey), config.entryColumnFamily, ByteBuffer.wrap(entryColumnPath.getColumn()), ByteBuffer.wrap(marshall(entry)));

@@ -105,7 +105,7 @@ public class MapReduceCommand extends BaseRpcCommand {
    /**
     * Performs invocation of mapping phase and local reduce phase before returning result to master node
     * 
-    * @param ctx
+    * @param context
     *           invocation context
     * @return Map of intermediate key value pairs
     */
@@ -120,14 +120,14 @@ public class MapReduceCommand extends BaseRpcCommand {
          List<Object> selectedKeys = new ArrayList<Object>();
          for (Object key : nodeLocalKeys) {
             List<Address> locations = dm.locate(key);
-            log.trace("For key %s at %s owners are %s", key, localAddress, locations);
+            log.tracef("For key %s at %s owners are %s", key, localAddress, locations);
             if(locations != null && !locations.isEmpty() && locations.get(0).equals(localAddress)){
                selectedKeys.add(key);               
             }
          }
          keys.addAll(selectedKeys);
       }
-      log.trace("For %s at %s invoking mapper on keys %s",this,localAddress, keys);
+      log.tracef("For %s at %s invoking mapper on keys %s", this, localAddress, keys);
       DefaultCollector<Object,Object> collector = new DefaultCollector<Object, Object>();
       for (Object key : keys) {
          GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, ctx.getFlags());
@@ -146,7 +146,7 @@ public class MapReduceCommand extends BaseRpcCommand {
             reducedMap.put(e.getKey(),list.get(0));
          }
       }                 
-      log.trace("%s executed at %s was reduced to %s", this, localAddress, reducedMap);
+      log.tracef("%s executed at %s was reduced to %s", this, localAddress, reducedMap);
       return reducedMap;
    }
 

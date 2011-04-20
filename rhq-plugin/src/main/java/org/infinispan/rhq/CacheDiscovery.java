@@ -56,18 +56,18 @@ public class CacheDiscovery extends MBeanResourceDiscoveryComponent<CacheManager
       if (trace) log.trace("Connection to ems server established");
 
       String pattern = getAllCachesPattern(ctx.getParentResourceContext().getResourceKey());
-      if (trace) log.trace("Pattern to query is %s", pattern);
+      if (trace) log.tracef("Pattern to query is %s", pattern);
 
       ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(pattern);
       List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
-      if (trace) log.trace("Querying [" + queryUtility.getTranslatedQuery() + "] returned beans: " + beans);
+      if (trace) log.tracef("Querying [%s] returned beans: %s", queryUtility.getTranslatedQuery(), beans);
 
       for (EmsBean bean : beans) {
          /* A discovered resource must have a unique key, that must
           * stay the same when the resource is discovered the next
           * time */
          String name = bean.getAttribute("CacheName").getValue().toString();
-         if (trace) log.trace("Resource name is %s", name);
+         if (trace) log.tracef("Resource name is %s", name);
          DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                ctx.getResourceType(), // Resource Type
                name, // Resource Key

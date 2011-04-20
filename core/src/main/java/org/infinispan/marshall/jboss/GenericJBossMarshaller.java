@@ -158,7 +158,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
       }
 
       if (log.isTraceEnabled())
-         log.trace("Start marshaller after retrieving marshaller from %s",
+         log.tracef("Start marshaller after retrieving marshaller from %s",
                    isReentrant ? "factory" : "thread local");
 
       marshaller.start(Marshalling.createByteOutput(os));
@@ -198,7 +198,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
       }
 
       if (log.isTraceEnabled())
-         log.trace("Start unmarshaller after retrieving marshaller from %s",
+         log.tracef("Start unmarshaller after retrieving marshaller from %s",
                    isReentrant ? "factory" : "thread local");
 
       unmarshaller.start(Marshalling.createByteInput(is));

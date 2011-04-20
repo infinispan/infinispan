@@ -33,7 +33,7 @@ import java.util.Locale;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -44,7 +44,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class TableManipulation implements Cloneable {
 
-   private static final Log log = LogFactory.getLog(TableManipulation.class);
+   private static final Log log = LogFactory.getLog(TableManipulation.class, Log.class);
 
    public static final int DEFAULT_FETCH_SIZE = 100;
 
@@ -155,7 +155,7 @@ public class TableManipulation implements Cloneable {
             + timestampColumnName + " " + timestampColumnType +
             ", PRIMARY KEY (" + idColumnName + "))";
       if (log.isTraceEnabled()) {
-         log.trace("Creating table with following DDL: '" + createTableDdl + "'.");
+         log.tracef("Creating table with following DDL: '%s'.", createTableDdl);
       }
       executeUpdateSql(conn, createTableDdl);
    }
@@ -183,7 +183,7 @@ public class TableManipulation implements Cloneable {
          statement = conn.createStatement();
          statement.executeUpdate(sql);
       } catch (SQLException e) {
-         log.error("Error while creating table; used DDL statement: '" + sql + "'", e);
+         log.errorCreatingTable(sql, e);
          throw new CacheLoaderException(e);
       } finally {
          JdbcUtil.safeClose(statement);
@@ -195,7 +195,7 @@ public class TableManipulation implements Cloneable {
       String clearTable = "DELETE FROM " + getTableName();
       executeUpdateSql(conn, clearTable);
       if (log.isTraceEnabled()) {
-         log.trace("Dropping table with following DDL '" + dropTableDdl + "\'");
+         log.tracef("Dropping table with following DDL '%s'", dropTableDdl);
       }
       executeUpdateSql(conn, dropTableDdl);
    }
@@ -490,7 +490,7 @@ public class TableManipulation implements Cloneable {
             log.debug("Unable to guess database type from JDBC metadata.", e);
          }
          if (databaseType == null) {
-            log.info("Unable to detect database type using connection metadata.  Attempting to guess on driver name.");
+            log.debug("Unable to detect database type using connection metadata.  Attempting to guess on driver name.");
          }
          try {
             String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
@@ -502,7 +502,7 @@ public class TableManipulation implements Cloneable {
          if (databaseType == null) {
             throw new ConfigurationException("Unable to detect database type from JDBC driver name or connection metadata.  Please provide this manually using the 'databaseType' property in your configuration.  Supported database type strings are " + Arrays.toString(DatabaseType.values()));
          } else {
-            log.info("Guessing database type as '" + databaseType + "'.  If this is incorrect, please specify the correct type using the 'databaseType' property in your configuration.  Supported database type strings are " + Arrays.toString(DatabaseType.values()));
+            log.debugf("Guessing database type as '%s'.  If this is incorrect, please specify the correct type using the 'databaseType' property in your configuration.  Supported database type strings are %s", databaseType, Arrays.toString(DatabaseType.values()));
          }
       }
       return databaseType;

@@ -93,10 +93,10 @@ public class StripedLock {
       ReentrantReadWriteLock lock = getLock(key);
       if (exclusive) {
          lock.writeLock().lock();
-         if (log.isTraceEnabled()) log.trace("WL acquired for '" + key + "'");
+         if (log.isTraceEnabled()) log.tracef("WL acquired for '%s'", key);
       } else {
          lock.readLock().lock();
-         if (log.isTraceEnabled()) log.trace("RL acquired for '" + key + "'");
+         if (log.isTraceEnabled()) log.tracef("RL acquired for '%s'", key);
       }
    }
 
@@ -109,7 +109,7 @@ public class StripedLock {
             return lock.readLock().tryLock(millis, TimeUnit.MILLISECONDS);
          }
       } catch (InterruptedException e) {
-         log.warn("Thread insterrupted while trying to acquire lock", e);
+         log.interruptedAcquiringLock(millis, e);
          return false;
       }
    }
@@ -121,10 +121,10 @@ public class StripedLock {
       ReentrantReadWriteLock lock = getLock(key);
       if (lock.isWriteLockedByCurrentThread()) {
          lock.writeLock().unlock();
-         if (log.isTraceEnabled()) log.trace("WL released for '" + key + "'");
+         if (log.isTraceEnabled()) log.tracef("WL released for '%s'", key);
       } else {
          lock.readLock().unlock();
-         if (log.isTraceEnabled()) log.trace("RL released for '" + key + "'");
+         if (log.isTraceEnabled()) log.tracef("RL released for '%s'", key);
       }
    }
 
@@ -192,7 +192,7 @@ public class StripedLock {
             success = toAcquire.tryLock(timeout, TimeUnit.MILLISECONDS);
             if (!success) {
                if (log.isTraceEnabled())
-                  log.trace("Could not aquire lock on " + toAcquire + ". Exclusive?" + exclusive);
+                  log.tracef("Could not aquire lock on %s. Exclusive? %b", toAcquire, exclusive);
                break;
             }
          } catch (InterruptedException e) {

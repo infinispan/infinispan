@@ -22,6 +22,7 @@
  */
 package org.infinispan.server.hotrod
 
+import logging.Log
 import org.infinispan.server.core._
 import transport._
 import OperationStatus._
@@ -187,7 +188,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
    }
 }
 
-object HotRodDecoder extends Logging {
+object HotRodDecoder extends Log {
    private val Magic = 0xA0
    private val Version10 = 10
 }

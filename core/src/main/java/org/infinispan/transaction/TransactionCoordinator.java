@@ -73,19 +73,19 @@ public class TransactionCoordinator {
       validateNotMarkedForRollback(localTransaction);
 
       if (configuration.isOnePhaseCommit()) {
-         if (trace) log.trace("Received prepare for tx: %s. Skipping call as 1PC will be used.", localTransaction);
+         if (trace) log.tracef("Received prepare for tx: %s. Skipping call as 1PC will be used.", localTransaction);
          return XA_OK;
       }
 
       PrepareCommand prepareCommand = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), configuration.isOnePhaseCommit());
-      if (trace) log.trace("Sending prepare command through the chain: " + prepareCommand);
+      if (trace) log.tracef("Sending prepare command through the chain: %s", prepareCommand);
 
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
       ctx.setLocalTransaction(localTransaction);
       try {
          invoker.invoke(ctx, prepareCommand);
          if (localTransaction.isReadOnly()) {
-            if (trace) log.trace("Readonly transaction: " + localTransaction.getGlobalTransaction());
+            if (trace) log.tracef("Readonly transaction: %s", localTransaction.getGlobalTransaction());
             // force a cleanup to release any objects held.  Some TMs don't call commit if it is a READ ONLY tx.  See ISPN-845
             commit(localTransaction, false);
             return XA_RDONLY;
@@ -101,13 +101,13 @@ public class TransactionCoordinator {
 
    private void validateNotMarkedForRollback(LocalTransaction localTransaction) throws XAException {
       if (localTransaction.isMarkedForRollback()) {
-         if (trace) log.trace("Transaction already marked for rollback: %s", localTransaction);
+         if (trace) log.tracef("Transaction already marked for rollback: %s", localTransaction);
          throw new XAException(XAException.XA_RBROLLBACK);
       }
    }
 
    public void commit(LocalTransaction localTransaction, boolean isOnePhase) throws XAException {
-      if (trace) log.trace("Committing transaction %s", localTransaction.getGlobalTransaction());
+      if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
       try {
          LocalTxInvocationContext ctx = icc.createTxInvocationContext();
          ctx.setLocalTransaction(localTransaction);
@@ -121,7 +121,7 @@ public class TransactionCoordinator {
                txTable.removeLocalTransaction(localTransaction);
             } catch (Throwable e) {
                txTable.failureCompletingTransaction(ctx.getTransaction());
-               log.error("Error while processing 1PC PrepareCommand", e);
+               log.errorProcessing1pcPrepareCommand(e);
                throw new XAException(XAException.XAER_RMERR);
             }
          } else {
@@ -131,7 +131,7 @@ public class TransactionCoordinator {
                txTable.removeLocalTransaction(localTransaction);
             } catch (Throwable e) {
                txTable.failureCompletingTransaction(ctx.getTransaction());
-               log.error("Error while processing 2PC PrepareCommand", e);
+               log.errorProcessing1pcPrepareCommand(e);
                throw new XAException(XAException.XAER_RMERR);
             }
          }
@@ -141,7 +141,7 @@ public class TransactionCoordinator {
    }
 
    public void rollback(LocalTransaction localTransaction) throws XAException {
-      if (trace) log.trace("rollback transaction %s ", localTransaction.getGlobalTransaction());
+      if (trace) log.tracef("rollback transaction %s ", localTransaction.getGlobalTransaction());
       RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
       ctx.setLocalTransaction(localTransaction);
@@ -150,7 +150,7 @@ public class TransactionCoordinator {
          txTable.removeLocalTransaction(localTransaction);
       } catch (Throwable e) {
          txTable.failureCompletingTransaction(ctx.getTransaction());
-         log.error("Exception while rollback", e);
+         log.errorRollingBack(e);
          throw new XAException(XAException.XA_HEURHAZ);
       } finally {
          icc.suspend();

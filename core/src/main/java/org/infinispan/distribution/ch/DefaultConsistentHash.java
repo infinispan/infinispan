@@ -214,14 +214,14 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
    }
 
    public List<Address> getStateProvidersOnLeave(Address leaver, int replCount) {
-      if (trace) log.trace("List of addresses is: %s. leaver is: %s", caches, leaver);
+      if (trace) log.tracef("List of addresses is: %s. leaver is: %s", caches, leaver);
       Set<Address> holders = new HashSet<Address>();
       for (Address address : getRealAddresses(caches)) {
          if (isAdjacent(leaver, address)) {
             holders.add(address);
-            if (trace) log.trace("%s is state holder", address);
+            if (trace) log.tracef("%s is state holder", address);
          } else {
-            if (trace) log.trace("%s is NOT state holder", address);
+            if (trace) log.tracef("%s is NOT state holder", address);
          }
       }
       return new ArrayList<Address>(holders);

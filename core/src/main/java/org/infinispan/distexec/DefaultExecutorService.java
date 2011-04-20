@@ -376,12 +376,12 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       if (rpc.getAddress().equals(address)) {
          invokeLocally(f);
       } else {
-         log.debug("Sending %s to remote execution at node %s", f, address);
+         log.debugf("Sending %s to remote execution at node %s", f, address);
          try {
             rpc.invokeRemotelyInFuture(Collections.singletonList(address), f.getCommand(),
                      (DistributedRunnableFuture<Object>) f);
          } catch (Throwable e) {
-            log.warn("Falied remote execution on node " + address, e);
+            log.remoteExecutionFailed(address, e);
          }
       }
    }
@@ -391,7 +391,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    protected <T> void invokeLocally(final DistributedRunnableFuture<T> future) {
-      log.debug("Sending %s to self", future);
+      log.debugf("Sending %s to self", future);
       try {
          Callable<Object> call = new Callable<Object>() {
             
@@ -416,7 +416,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          future.setNetworkFuture((Future<T>) task);         
          task.run();
       } catch (Throwable e1) {
-         log.warn("Falied local execution ", e1);
+         log.localExecutionFailed(e1);
       }
    }
 
@@ -455,7 +455,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       List<Address> chosen = new ArrayList<Address>();
       members.remove(rpc.getAddress());
       if (members.size() < numNeeded) {
-         log.warn("Can not select %s random members for %s", numNeeded, members);
+         log.cannotSelectRandomMembers(numNeeded, members);
          numNeeded = members.size();
       }
       Random r = new Random();

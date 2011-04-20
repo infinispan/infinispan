@@ -79,7 +79,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
       }
       if (entry.isRemoved()) {
          if (trace) {
-            log.trace("Entry has been deleted and is of type " + entry.getClass().getSimpleName());
+            log.tracef("Entry has been deleted and is of type %s", entry.getClass().getSimpleName());
          }
          return null;
       }
@@ -88,7 +88,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
       notifier.notifyCacheEntryVisited(key, value, true, ctx);
       final Object result = returnCacheEntry ? entry : value;
       if (trace) {
-         log.trace("Found value " + result);
+         log.tracef("Found value %s", result);
       }
       notifier.notifyCacheEntryVisited(key, value, false, ctx);
       return result;

@@ -64,7 +64,7 @@ public class RemoteTransactionLoggerImpl implements RemoteTransactionLogger {
    private RemoteTransactionLogDetails extractRemoteTransactionLogDetails(ReplicableCommand c) {
       Map<Address, Response> lr = rpcManager.invokeRemotely(Collections.singleton(targetNode), c, true, true);
       if (lr.size() != 1) {
-         log.warn("Expected just one response; got %s", lr);
+         log.expectedJustOneResponse(lr);
          return RemoteTransactionLogDetails.DEFAULT;
       }
 

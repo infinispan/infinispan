@@ -32,7 +32,7 @@ import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
 import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.net.InetSocketAddress;
@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ThreadSafe
 public class TcpTransportFactory implements TransportFactory {
 
-   private static final Log log = LogFactory.getLog(TcpTransportFactory.class);
+   private static final Log log = LogFactory.getLog(TcpTransportFactory.class, Log.class);
 
    /**
     * These are declared volatile as the thread that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#start(java.util.Properties, java.util.Collection, java.util.concurrent.atomic.AtomicInteger)}
@@ -94,7 +94,7 @@ public class TcpTransportFactory implements TransportFactory {
       try {
          connectionPool.close();
       } catch (Exception e) {
-         log.warn("Exception while shutting down the connection pool.", e);
+         log.errorClosingConnectionPool(e);
       }
    }
 
@@ -102,7 +102,7 @@ public class TcpTransportFactory implements TransportFactory {
    public void updateHashFunction(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, short hashFunctionVersion, int hashSpace) {
       ConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
       if (hash == null) {
-         log.warn("No hash function configured for version: " + hashFunctionVersion);
+         log.noHasHFunctionConfigured(hashFunctionVersion);
       } else {
          hash.init(servers2HashCode, numKeyOwners, hashSpace);
       }
@@ -120,12 +120,12 @@ public class TcpTransportFactory implements TransportFactory {
       if (consistentHash != null) {
          server = consistentHash.getServer(key);
          if (log.isTraceEnabled()) {
-            log.trace("Using consistent hash for determining the server: " + server);
+            log.tracef("Using consistent hash for determining the server: %s", server);
          }
       } else {
          server = balancer.nextServer();
          if (log.isTraceEnabled()) {
-            log.trace("Using the balancer for determining the server: " + server);
+            log.tracef("Using the balancer for determining the server: %s", server);
          }
       }
       return borrowTransportFromPool(server);
@@ -137,17 +137,17 @@ public class TcpTransportFactory implements TransportFactory {
       if (!tcpTransport.isValid()) {
          try {
             if (log.isTraceEnabled()) {
-               log.info("Dropping connection as it is no longer valid: " + tcpTransport);
+               log.tracef("Dropping connection as it is no longer valid: %s", tcpTransport);
             }
             connectionPool.invalidateObject(tcpTransport.getServerAddress(), tcpTransport);
          } catch (Exception e) {
-            log.warn("Could not invalidate connection: " + tcpTransport, e);
+            log.couldNoInvalidateConnection(tcpTransport, e);
          }
       } else {
          try {
             connectionPool.returnObject(tcpTransport.getServerAddress(), tcpTransport);
          } catch (Exception e) {
-            log.warn("Could not release connection: " + tcpTransport, e);
+            log.couldNotReleaseConnection(tcpTransport, e);
          } finally {
             logConnectionInfo(tcpTransport.getServerAddress());
          }
@@ -162,23 +162,23 @@ public class TcpTransportFactory implements TransportFactory {
          Set<InetSocketAddress> failedServers = new HashSet<InetSocketAddress>(servers);
          failedServers.removeAll(newServers);
          if (log.isTraceEnabled()) {
-            log.trace("Current list: " + servers);
-            log.trace("New list: " + newServers);
-            log.trace("Added servers: " + addedServers);
-            log.trace("Removed servers: " + failedServers);
+            log.tracef("Current list: %s", servers);
+            log.tracef("New list: ", newServers);
+            log.tracef("Added servers: ", addedServers);
+            log.tracef("Removed servers: ", failedServers);
          }
          if (failedServers.isEmpty() && newServers.isEmpty()) {
-            log.info("Same list of servers, not changing the pool");
+            log.debug("Same list of servers, not changing the pool");
             return;
          }
 
          //1. first add new servers. For servers that went down, the returned transport will fail for now
          for (InetSocketAddress server : newServers) {
-            log.info("New server added(" + server + "), adding to the pool.");
+            log.newServerAdded(server);
             try {
                connectionPool.addObject(server);
             } catch (Exception e) {
-               log.warn("Failed adding new server " + server, e);
+               log.failedAddingNewServer(server, e);
             }
          }
 
@@ -190,7 +190,7 @@ public class TcpTransportFactory implements TransportFactory {
 
          //3. Now just remove failed servers
          for (InetSocketAddress server : failedServers) {
-            log.info("Server not in cluster anymore(" + server + "), removing from the pool.");
+            log.removingServer(server);
             connectionPool.clear(server);
          }
 
@@ -205,7 +205,7 @@ public class TcpTransportFactory implements TransportFactory {
 
    private void logConnectionInfo(InetSocketAddress server) {
       if (log.isTraceEnabled()) {
-         log.trace("For server " + server + ": active = " + connectionPool.getNumActive(server) + "; idle = " + connectionPool.getNumIdle(server));
+         log.tracef("For server %s: active = %d; idle = %d", server, connectionPool.getNumActive(server), connectionPool.getNumIdle(server));
       }
    }
 
@@ -214,7 +214,7 @@ public class TcpTransportFactory implements TransportFactory {
          return (Transport) connectionPool.borrowObject(server);
       } catch (Exception e) {
          String message = "Could not fetch transport";
-         log.error(message, e);
+         log.couldNotFetchTransport(e);
          throw new TransportException(message, e);
       } finally {
          logConnectionInfo(server);

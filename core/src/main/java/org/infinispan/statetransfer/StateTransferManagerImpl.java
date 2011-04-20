@@ -113,7 +113,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Start(priority = 55)
    // it is imperative that this starts *after* the RpcManager does, and *after* the cache loader manager (if any) inits and preloads
    public void start() throws StateTransferException {
-      log.trace("Data container is %s", Util.hexIdHashCode(dataContainer));
+      log.tracef("Data container is %s", Util.hexIdHashCode(dataContainer));
       cs = clm == null ? null : clm.getCacheStore();
       transientState = configuration.isFetchInMemoryState();
       alwaysProvideTransientState = configuration.isAlwaysProvideInMemoryState();
@@ -132,7 +132,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
          if (log.isDebugEnabled()) {
             long duration = System.currentTimeMillis() - startTime;
-            log.debug("State transfer process completed in %s", Util.prettyPrintTime(duration));
+            log.debugf("State transfer process completed in %s", Util.prettyPrintTime(duration));
          }
       }
    }
@@ -151,7 +151,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       boolean txLogActivated = false;
       try {
          boolean canProvideState = (txLogActivated = transactionLog.activate());
-         if (log.isDebugEnabled()) log.debug("Generating state.  Can provide? %s", canProvideState);
+         if (log.isDebugEnabled()) log.debugf("Generating state.  Can provide? %s", canProvideState);
          oo = marshaller.startObjectOutput(out, false);
 
          // If we can generate state, we've started up 
@@ -185,9 +185,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
       DistributedSync distributedSync = rpcManager.getTransport().getDistributedSync();
 
       try {
-         if (trace) log.trace("Transaction log size is %s", transactionLog.size());
+         if (trace) log.tracef("Transaction log size is %s", transactionLog.size());
          for (int nonProgress = 0, size = transactionLog.size(); size > 0;) {
-            if (trace) log.trace("Tx Log remaining entries = " + size);
+            if (trace) log.tracef("Tx Log remaining entries = %d", size);
             transactionLog.writeCommitLog(marshaller, oo);
             int newSize = transactionLog.size();
 
@@ -232,7 +232,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          TransactionLog.LogEntry logEntry = (TransactionLog.LogEntry) object;
          InvocationContext ctx = invocationContextContainer.createRemoteInvocationContext(null /* No idea if this right PLM */);
          WriteCommand[] mods = logEntry.getModifications();
-         if (trace) log.trace("Mods = %s", Arrays.toString(mods));
+         if (trace) log.tracef("Mods = %s", Arrays.toString(mods));
          for (WriteCommand mod : mods) {
             commandsFactory.initializeReplicableCommand(mod, false);
             ctx.setFlags(CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
@@ -266,7 +266,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             PrepareCommand command = (PrepareCommand) object;
 
             if (!transactionLog.hasPendingPrepare(command)) {
-               if (trace) log.trace("Applying pending prepare %s", command);
+               if (trace) log.tracef("Applying pending prepare %s", command);
                commandsFactory.initializeReplicableCommand(command, false);
                RemoteTxInvocationContext ctx = invocationContextContainer.createRemoteTxInvocationContext(null /* No idea if this right PLM */);
                RemoteTransaction transaction = txTable.createRemoteTransaction(command.getGlobalTransaction(), command.getModifications());
@@ -274,7 +274,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
                ctx.setFlags(CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
                interceptorChain.invoke(ctx, command);
             } else {
-               if (trace) log.trace("Prepare %s not in tx log; not applying", command);
+               if (trace) log.tracef("Prepare %s not in tx log; not applying", command);
             }
             object = marshaller.objectFromObjectStream(oi);
          }
@@ -358,7 +358,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          for (InternalCacheEntry e : dataContainer) {
             if (!e.isExpired()) entries.add(e);
          }
-         if (log.isDebugEnabled()) log.debug("Writing %s StoredEntries to stream", entries.size());
+         if (log.isDebugEnabled()) log.debugf("Writing %s StoredEntries to stream", entries.size());
          marshaller.objectToObjectStream(entries, oo);
       } catch (Exception e) {
          throw new StateTransferException(e);

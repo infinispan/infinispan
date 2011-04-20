@@ -81,12 +81,12 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
       assertHashTopologyReceived(resp.topologyResponse.get, servers, expectedHashIds)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v5-"))
 
-      var cm = addClusterEnabledCacheManager()
+      val cm = addClusterEnabledCacheManager()
       cm.defineConfiguration(cacheName, createCacheConfig)
       val newServer = startHotRodServer(cm, servers.tail.head.getPort + 25)
       val newClient = new HotRodClient("127.0.0.1", newServer.getPort, cacheName, 60)
       try {
-         log.trace("New client started, modify key to be v6-*", null)
+         log.trace("New client started, modify key to be v6-*")
          resp = newClient.put(k(m) , 0, 0, v(m, "v6-"), 3, 2)
          // resp = clients.tail.head.put(k(m) , 0, 0, v(m, "v6-"), 3, 2)
          assertStatus(resp.status, Success)
@@ -103,7 +103,7 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
          assertEquals(hashTopologyResp.numOwners, 2)
          assertEquals(hashTopologyResp.hashFunction, EXPECTED_HASH_FUNCTION_VERSION)
          assertEquals(hashTopologyResp.hashSpace, 10240)
-         log.trace("Get key and verify that's v6-*", null)
+         log.trace("Get key and verify that's v6-*")
          assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v6-"))
       } finally {
          newClient.stop

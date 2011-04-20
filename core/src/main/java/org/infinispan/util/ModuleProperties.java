@@ -114,7 +114,7 @@ public class ModuleProperties extends Properties {
                props.verify();
                map.put(props.getName(), props);
             } catch (Exception e) {
-               log.warn("Could not load module at URL " + url, e);
+               log.couldNotLoadModuleAtUrl(url, e);
             }
          }
       }
@@ -141,7 +141,7 @@ public class ModuleProperties extends Properties {
                }
 
             } catch (Exception e) {
-               log.warn("Module " + m.getKey() + " loaded, but could not be initialized ", e);
+               log.couldNotInitializeModule(m.getKey(), e);
             }
          }
          return lifecycles;

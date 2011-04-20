@@ -28,6 +28,7 @@ import org.infinispan.server.core.Main._
 import java.util.Properties
 import transport.NettyTransport
 import org.infinispan.util.{ClusterIdGenerator, TypedProperties, Util}
+import logging.Log
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -35,7 +36,7 @@ import org.infinispan.util.{ClusterIdGenerator, TypedProperties, Util}
  * @author Galder Zamarreño
  * @since 4.1
  */
-abstract class AbstractProtocolServer(threadNamePrefix: String) extends ProtocolServer with Logging {
+abstract class AbstractProtocolServer(threadNamePrefix: String) extends ProtocolServer with Log {
    protected var host: String = _
    protected var port: Int = _
    protected var masterThreads: Int = _
@@ -79,7 +80,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
          }
 
          if (isDebugEnabled) {
-            debug("Starting server with basic settings: host=%s, port=%d, masterThreads=%s, workerThreads=%d, " +
+            debugf("Starting server with basic settings: host=%s, port=%d, masterThreads=%s, workerThreads=%d, " +
                   "idleTimeout=%d, tcpNoDelay=%b, sendBufSize=%d, recvBufSize=%d", host, port,
                   masterThreads, workerThreads, idleTimeout, tcpNoDelay, sendBufSize, recvBufSize)
          }

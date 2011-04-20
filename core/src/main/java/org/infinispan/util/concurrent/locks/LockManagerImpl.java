@@ -83,14 +83,14 @@ public class LockManagerImpl implements LockManager {
 
    public boolean lockAndRecord(Object key, InvocationContext ctx) throws InterruptedException {
       long lockTimeout = getLockAcquisitionTimeout(ctx);
-      if (trace) log.trace("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
+      if (trace) log.tracef("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
       if (lockContainer.acquireLock(key, lockTimeout, MILLISECONDS) != null) {
          // successfully locked!
          if (ctx instanceof TxInvocationContext) {
             TxInvocationContext tctx = (TxInvocationContext) ctx;
             if (!tctx.isTransactionValid()) {
                Transaction tx = tctx.getTransaction();
-               log.debug("Successfully acquired lock, but the transaction %s is no longer valid!  Releasing lock.", tx);
+               log.debugf("Successfully acquired lock, but the transaction %s is no longer valid!  Releasing lock.", tx);
                lockContainer.releaseLock(key);
                throw new IllegalStateException("Transaction "+tx+" appears to no longer be valid!");
             }
@@ -109,7 +109,7 @@ public class LockManagerImpl implements LockManager {
    }
 
    public void unlock(Object key) {
-      if (trace) log.trace("Attempting to unlock " + key);
+      if (trace) log.tracef("Attempting to unlock %s", key);
       lockContainer.releaseLock(key);
    }
 
@@ -125,7 +125,7 @@ public class LockManagerImpl implements LockManager {
             if (possiblyLocked(entry)) {
                // has been locked!
                Object k = e.getKey();
-               if (trace) log.trace("Attempting to unlock " + k);
+               if (trace) log.tracef("Attempting to unlock %s", k);
                lockContainer.releaseLock(k);
             }
          }
@@ -167,7 +167,7 @@ public class LockManagerImpl implements LockManager {
       // unlocking needs to be done in reverse order.
       ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
       Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
-      if (trace) log.trace("Number of entries in context: %s", entries.size());
+      if (trace) log.tracef("Number of entries in context: %s", entries.size());
 
       while (it.hasNext()) {
          Map.Entry<Object, CacheEntry> e = it.next();
@@ -177,11 +177,11 @@ public class LockManagerImpl implements LockManager {
          // could be null with read-committed
          if (entry != null && entry.isChanged()) entry.rollback();
          else {
-            if (trace) log.trace("Entry for key %s is null, not calling rollbackUpdate", key);
+            if (trace) log.tracef("Entry for key %s is null, not calling rollbackUpdate", key);
          }
          // and then unlock
          if (needToUnlock) {
-            if (trace) log.trace("Releasing lock on [" + key + "] for owner " + owner);
+            if (trace) log.tracef("Releasing lock on [%s] for owner %s", key, owner);
             unlock(key);
          }
       }

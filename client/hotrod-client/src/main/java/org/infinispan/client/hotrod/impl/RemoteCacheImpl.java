@@ -35,7 +35,7 @@ import org.infinispan.client.hotrod.impl.operations.*;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.concurrent.NotifyingFuture;
-import org.infinispan.util.logging.Log;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
-   private static final Log log = LogFactory.getLog(RemoteCacheImpl.class);
+   private static final Log log = LogFactory.getLog(RemoteCacheImpl.class, Log.class);
 
    private Marshaller marshaller;
    private final String name;
@@ -66,7 +66,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    public RemoteCacheImpl(RemoteCacheManager rcm, String name) {
       if (log.isTraceEnabled()) {
-         log.trace("Creating remote cache: " + name);
+         log.tracef("Creating remote cache: %s", name);
       }
       this.name = name;
       this.remoteCacheManager = rcm;
@@ -195,7 +195,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       int lifespanSecs = toSeconds(lifespan, lifespanUnit);
       int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
       if (log.isTraceEnabled()) {
-         log.trace("About to add (K,V): (" + key + ", " + value + ") lifespanSecs:" + lifespanSecs + ", maxIdleSecs:" + maxIdleSecs);
+         log.tracef("About to add (K,V): (%s, %s) lifespanSecs:%d, maxIdleSecs:%d", key, value, lifespanSecs, maxIdleSecs);
       }
       PutOperation op = operationsFactory.newPutKeyValueOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs);
       byte[] result = (byte[]) op.execute();
@@ -318,7 +318,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       byte[] bytes = (byte[]) gco.execute();
       V result = (V) bytes2obj(bytes);
       if (log.isTraceEnabled()) {
-         log.trace("For key(" + key + ") returning " + result);
+         log.tracef("For key(%s) returning %s", key, result);
       }
       return result;
    }
@@ -359,15 +359,15 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public void start() {
-      if (log.isInfoEnabled()) {
-         log.info("Start called, nothing to do here(" + getName() + ")");
+      if (log.isDebugEnabled()) {
+         log.debugf("Start called, nothing to do here(%s)", getName());
       }
    }
 
    @Override
    public void stop() {
-      if (log.isInfoEnabled()) {
-         log.info("Stop called, nothing to do here(" + getName() + ")");
+      if (log.isDebugEnabled()) {
+         log.debugf("Stop called, nothing to do here(%s)", getName());
       }
    }
 
@@ -442,7 +442,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       if (!remoteCacheManager.isStarted()) {
          String message = "Cannot perform operations on a cache associated with an unstarted RemoteCacheManager. Use RemoteCacheManager.start before using the remote cache.";
          if (log.isInfoEnabled()) {
-            log.info(message);
+            log.unstartedRemoteCacheManager();
          }
          throw new RemoteCacheManagerNotStartedException(message);
       }

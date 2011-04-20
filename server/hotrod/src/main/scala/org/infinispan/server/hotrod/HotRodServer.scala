@@ -22,6 +22,7 @@
  */
 package org.infinispan.server.hotrod
 
+import logging.Log
 import org.infinispan.config.Configuration.CacheMode
 import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged
@@ -32,7 +33,7 @@ import org.infinispan.{CacheException, Cache}
 import org.infinispan.remoting.transport.Address
 import org.infinispan.manager.EmbeddedCacheManager
 import java.util.{Properties, Random}
-import org.infinispan.server.core.{CacheValue, Logging, AbstractProtocolServer}
+import org.infinispan.server.core.{CacheValue, AbstractProtocolServer}
 import org.infinispan.eviction.EvictionStrategy
 import org.infinispan.util.{TypedProperties, ByteArrayKey, Util};
 import org.infinispan.server.core.Main._
@@ -48,7 +49,7 @@ import collection.immutable
  * @author Galder Zamarreño
  * @since 4.1
  */
-class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
+class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    import HotRodServer._
    private var isClustered: Boolean = _
    private var address: TopologyAddress = _
@@ -285,16 +286,16 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
                            true // Mark as topology updated because there was no need to do so
                         }
                      } else {
-                        warn("While trying to detect a crashed member, current view returned null")
+                        logViewNullWhileDetectingCrashedMember
                         true
                      }
                   }
                   if (!updated) {
-                     warn("Unable to update topology view after a crashed member left, wait for next view change.")
+                     logUnableToUpdateView
                   }
                }
             } catch {
-               case t: Throwable => error("Error detecting crashed member", t)
+               case t: Throwable => logErrorDetectingCrashedMember(t)
             }
          }
       }
