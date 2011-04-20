@@ -270,7 +270,7 @@ public class RehashControlCommand extends BaseRpcCommand {
          InternalCacheEntry ice = cs.load(k);
          return ice == null ? null : ice.toInternalCacheValue();
       } catch (CacheLoaderException cle) {
-         log.warn("Unable to load " + k + " from cache loader", cle);
+         log.unableToLoadFromCacheLoader(k, cle);
       }
       return null;
    }

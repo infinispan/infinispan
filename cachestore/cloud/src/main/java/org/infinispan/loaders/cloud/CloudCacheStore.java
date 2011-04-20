@@ -38,7 +38,7 @@ import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.cloud.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.stream.Streams;
 import org.jclouds.blobstore.AsyncBlobStore;
@@ -84,7 +84,7 @@ import java.util.concurrent.Future;
  */
 @CacheLoaderMetadata(configurationClass = CloudCacheStoreConfig.class)
 public class CloudCacheStore extends BucketBasedCacheStore {
-   private static final Log log = LogFactory.getLog(CloudCacheStore.class);
+   private static final Log log = LogFactory.getLog(CloudCacheStore.class, Log.class);
    final ThreadLocal<List<Future<?>>> asyncCommandFutures = new ThreadLocal<List<Future<?>>>();
    CloudCacheStoreConfig cfg;
    String containerName;
@@ -178,8 +178,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
                String loc = cfg.getCloudServiceLocation().trim().toLowerCase();
                chosenLoc = idToLocation.get(loc);
                if (chosenLoc == null) {
-                  log.warn("Unable to use configured Cloud Service Location [%s].  Available locations for Cloud Service [%s] are %s",
-                                      loc, cfg.getCloudService(), idToLocation.keySet());
+                  log.unableToConfigureCloudService(loc, cfg.getCloudService(), idToLocation.keySet());
                }
             }
             blobStore.createContainerInLocation(chosenLoc, containerName);
@@ -211,7 +210,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          throw convertToCacheLoaderException("Error while reading from stream", e);
       }
       if (containerName.equals(source)) {
-         log.info("Attempt to load the same cloud bucket (%s) ignored", source);
+         log.attemptToLoadSameBucketIgnored(source);
       } else {
          // TODO implement stream handling. What's the JClouds API to "copy" one bucket to another?
       }
@@ -272,7 +271,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          if (bucket.removeExpiredEntries())
             updateBucket(bucket);
       } catch (CacheLoaderException e) {
-         log.warn("Unable to read blob at %s", blobName, e);
+         log.unableToReadBlob(blobName, e);
       }
    }
 
@@ -295,7 +294,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
                      try {
                         purge();
                      } catch (Exception e) {
-                        log.warn("Problems purging", e);
+                        log.problemsPurging(e);
                      }
                   }
                });
@@ -338,11 +337,11 @@ public class CloudCacheStore extends BucketBasedCacheStore {
             try {
                futures = asyncCommandFutures.get();
                if (log.isTraceEnabled())
-                  log.trace("Futures, in order: %s", futures);
+                  log.tracef("Futures, in order: %s", futures);
                for (Future<?> f : futures) {
                   Object o = f.get();
                   if (log.isTraceEnabled())
-                     log.trace("Future %s returned %s", f, o);
+                     log.tracef("Future %s returned %s", f, o);
                }
             } catch (InterruptedException ie) {
                Thread.currentThread().interrupt();

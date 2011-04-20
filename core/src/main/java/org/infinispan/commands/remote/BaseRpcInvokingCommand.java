@@ -67,10 +67,10 @@ public abstract class BaseRpcInvokingCommand extends BaseRpcCommand {
             ctx = icc.createRemoteInvocationContext(getOrigin());
          }
          if (vc.shouldInvoke(ctx)) {
-            if (trace) log.trace("Invoking command " + cacheCommand + ", with originLocal flag set to " + ctx.isOriginLocal() + ".");
+            if (trace) log.tracef("Invoking command %s, with originLocal flag set to %b", cacheCommand, ctx.isOriginLocal());
             return interceptorChain.invoke(ctx, vc);
          } else {
-            if (trace) log.trace("Not invoking command " + cacheCommand + " since shouldInvoke() returned false with context " + ctx);
+            if (trace) log.tracef("Not invoking command %s since shouldInvoke() returned false with context %s", cacheCommand, ctx);
             return null;
          }
          // we only need to return values for a set of remote calls; not every call.

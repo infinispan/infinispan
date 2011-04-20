@@ -160,26 +160,26 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          // maybe we are still rehashing as a joiner? ISPN-258
          if (isMappedToLocalNode && dmWasRehashingDuringLocalLookup) {
             if (trace)
-               log.trace("Key %s is mapped to local node %s, but a rehash is in progress so may need to look elsewhere", key, rpcManager.getAddress());
+               log.tracef("Key %s is mapped to local node %s, but a rehash is in progress so may need to look elsewhere", key, rpcManager.getAddress());
             // try a remote lookup all the same
             return realRemoteGet(ctx, key, false, isWrite);
          } else {
             if (trace)
-               log.trace("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1.  Owners are %s", key, rpcManager.getAddress(), dm.locate(key));
+               log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1.  Owners are %s", key, rpcManager.getAddress(), dm.locate(key));
          }
       }
       return null;
    }
 
    private Object realRemoteGet(InvocationContext ctx, Object key, boolean storeInL1, boolean isWrite) throws Throwable {
-      if (trace) log.trace("Doing a remote get for key %s", key);
+      if (trace) log.tracef("Doing a remote get for key %s", key);
       // attempt a remote lookup
       InternalCacheEntry ice = dm.retrieveFromRemoteSource(key, ctx);
 
       if (ice != null) {
          if (storeInL1) {
             if (isL1CacheEnabled) {
-               if (trace) log.trace("Caching remotely retrieved entry for key %s in L1", key);
+               if (trace) log.tracef("Caching remotely retrieved entry for key %s in L1", key);
                long lifespan = ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(), configuration.getL1Lifespan());
                PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1, ctx.getFlags());
                entryFactory.wrapEntryForWriting(ctx, key, true, false, ctx.hasLockedKey(key), false, false);
@@ -198,7 +198,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                }
             }
          } else {
-            if (trace) log.trace("Not caching remotely retrieved entry for key %s in L1", key);
+            if (trace) log.tracef("Not caching remotely retrieved entry for key %s in L1", key);
          }
          return ice.getValue();
       }
@@ -317,7 +317,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             }
 
             if (!resendTo.isEmpty()) {
-               log.debug("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
+               log.debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
                // Make sure this is 1-Phase!!
                PrepareCommand pc = cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
                rpcManager.invokeRemotely(resendTo, pc, true, true);
@@ -328,7 +328,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             try {
                f.get();
             } catch (Exception e) {
-               if (log.isInfoEnabled()) log.info("Failed invalidating remote cache: ", e);
+               if (log.isInfoEnabled()) log.failedInvalidatingRemoteCache(e);
             }
          }
       }
@@ -400,7 +400,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             if (ctx.isOriginLocal()) {
                List<Address> rec = recipientGenerator.generateRecipients();
                int numCallRecipients = rec == null ? 0 : rec.size();
-               if (trace) log.trace("Invoking command %s on hosts %s", command, rec);
+               if (trace) log.tracef("Invoking command %s on hosts %s", command, rec);
                
                boolean useFuture = ctx.isUseFutureReturnType();
                if (isL1CacheEnabled && !skipL1Invalidation)
@@ -408,10 +408,10 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                	// owner, nothing happens. If in multicast mode, we this node will send the multicast
                	if (rpcManager.getTransport().getMembers().size() > numCallRecipients) { 
                		// Command was successful, we have a number of receipients and L1 should be flushed, so request any L1 invalidations from this node
-               		if (trace) log.trace("Put occuring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s", command.getAffectedKeys(), dm.getAffectedNodes(command.getAffectedKeys()));
+               		if (trace) log.tracef("Put occuring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s", command.getAffectedKeys(), dm.getAffectedNodes(command.getAffectedKeys()));
                		future = l1Manager.flushCache(recipientGenerator.getKeys(), returnValue, null);
                	} else {
-                     if (trace) log.trace("Not performing invalidation! numCallRecipients=%s", numCallRecipients);
+                     if (trace) log.tracef("Not performing invalidation! numCallRecipients=%s", numCallRecipients);
                   }
                if (!isSingleOwnerAndLocal(recipientGenerator)) {
                   if (useFuture) {
@@ -426,17 +426,17 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                }
                if (future != null && sync) {
                   future.get(); // wait for the inval command to complete
-                  if (trace) log.trace("Finished invalidating keys %s ", recipientGenerator.getKeys());
+                  if (trace) log.tracef("Finished invalidating keys %s ", recipientGenerator.getKeys());
                }
             } else {
             	// Piggyback remote puts and cause L1 invalidations
             	if (isL1CacheEnabled && !skipL1Invalidation) {
                	// Command was successful and L1 should be flushed, so request any L1 invalidations from this node
-            		if (trace) log.trace("Put occuring on node, requesting cache invalidation for keys %s. Origin of command is remote", command.getAffectedKeys());
+            		if (trace) log.tracef("Put occuring on node, requesting cache invalidation for keys %s. Origin of command is remote", command.getAffectedKeys());
             		future = l1Manager.flushCache(recipientGenerator.getKeys(), returnValue, ctx.getOrigin());
             		if (sync) {
             			future.get(); // wait for the inval command to complete
-                     if (trace) log.trace("Finished invalidating keys %s ", recipientGenerator.getKeys());
+                     if (trace) log.tracef("Finished invalidating keys %s ", recipientGenerator.getKeys());
             		}
             	}
             }

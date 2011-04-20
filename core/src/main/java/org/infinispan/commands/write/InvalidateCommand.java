@@ -69,7 +69,7 @@ public class InvalidateCommand extends RemoveCommand {
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       if (trace) {
-         log.trace("Invalidating keys %s", Arrays.toString(keys));
+         log.tracef("Invalidating keys %s", Arrays.toString(keys));
       }
       for (Object k : keys) {
          invalidate(ctx, k);
@@ -79,7 +79,6 @@ public class InvalidateCommand extends RemoveCommand {
 
    protected void invalidate(InvocationContext ctx, Object keyToInvalidate) throws Throwable {
       key = keyToInvalidate; // so that the superclass can see it
-      log.warn("Invalidating key %s", keyToInvalidate);
       super.perform(ctx);
    }
 

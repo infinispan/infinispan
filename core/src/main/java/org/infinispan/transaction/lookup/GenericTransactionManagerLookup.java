@@ -101,7 +101,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
       if (lookupFailed) {
          //fall back to a dummy from Infinispan
          tm = DummyTransactionManager.getInstance();
-         log.warn("Falling back to DummyTransactionManager from Infinispan");
+         log.fallingBackToDummyTm();
       }
       return tm;
    }
@@ -117,7 +117,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
          ctx = new InitialContext();
       }
       catch (NamingException e) {
-         log.error("Failed creating initial JNDI context", e);
+         log.failedToCreateInitialCtx(e);
          lookupFailed = true;
          return;
       }
@@ -126,38 +126,38 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
          Object jndiObject;
          try {
             if (log.isDebugEnabled())
-               log.debug("Trying to lookup TransactionManager for " + knownJNDIManager[1]);
+               log.debugf("Trying to lookup TransactionManager for %s", knownJNDIManager[1]);
             jndiObject = ctx.lookup(knownJNDIManager[0]);
          }
          catch (NamingException e) {
-            log.debug("Failed to perform a lookup for [" + knownJNDIManager[0] + " (" + knownJNDIManager[1]
-                  + ")]");
+            log.debugf("Failed to perform a lookup for [%s (%s)]",
+                      knownJNDIManager[0], knownJNDIManager[1]);
             continue;
          }
          if (jndiObject instanceof TransactionManager) {
             tm = (TransactionManager) jndiObject;
-            log.debug("Found TransactionManager for " + knownJNDIManager[1]);
+            log.debugf("Found TransactionManager for %s", knownJNDIManager[1]);
             return;
          }
       }
       //try to find websphere lookups since we came here
       Class clazz;
       try {
-         log.debug("Trying WebSphere 5.1: " + WS_FACTORY_CLASS_5_1);
+         log.debugf("Trying WebSphere 5.1: %s", WS_FACTORY_CLASS_5_1);
          clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_1);
-         log.debug("Found WebSphere 5.1: " + WS_FACTORY_CLASS_5_1);
+         log.debugf("Found WebSphere 5.1: %s", WS_FACTORY_CLASS_5_1);
       }
       catch (ClassNotFoundException ex) {
          try {
-            log.debug("Trying WebSphere 5.0: " + WS_FACTORY_CLASS_5_0);
+            log.debugf("Trying WebSphere 5.0: %s", WS_FACTORY_CLASS_5_0);
             clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_0);
-            log.debug("Found WebSphere 5.0: " + WS_FACTORY_CLASS_5_0);
+            log.debugf("Found WebSphere 5.0: %s", WS_FACTORY_CLASS_5_0);
          }
          catch (ClassNotFoundException ex2) {
             try {
-               log.debug("Trying WebSphere 4: " + WS_FACTORY_CLASS_4);
+               log.debugf("Trying WebSphere 4: %s", WS_FACTORY_CLASS_4);
                clazz = Util.loadClassStrict(WS_FACTORY_CLASS_4);
-               log.debug("Found WebSphere 4: " + WS_FACTORY_CLASS_4);
+               log.debugf("Found WebSphere 4: %s", WS_FACTORY_CLASS_4);
             }
             catch (ClassNotFoundException ex3) {
                log.debug("Couldn't find any WebSphere TransactionManager factory class, neither for WebSphere version 5.1 nor 5.0 nor 4");
@@ -173,8 +173,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
          tm = (TransactionManager) method.invoke(null, args);
       }
       catch (Exception ex) {
-         log.error("Found WebSphere TransactionManager factory class [" + clazz.getName()
-               + "], but couldn't invoke its static 'getTransactionManager' method", ex);
+         log.unableToInvokeWebsphereStaticGetTmMethod(ex);
       }
    }
 

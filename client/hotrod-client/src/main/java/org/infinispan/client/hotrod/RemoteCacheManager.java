@@ -32,7 +32,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.marshall.Marshaller;
-import org.infinispan.util.logging.Log;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -144,7 +144,7 @@ import static org.infinispan.util.Util.getInstance;
  */
 public class RemoteCacheManager implements CacheContainer {
 
-   private static final Log log = LogFactory.getLog(RemoteCacheManager.class);
+   private static final Log log = LogFactory.getLog(RemoteCacheManager.class, Log.class);
 
    public static final String HOTROD_CLIENT_PROPERTIES = "hotrod-client.properties";
 
@@ -170,7 +170,7 @@ public class RemoteCacheManager implements CacheContainer {
       this(props, start);
       setMarshaller(marshaller);
       if (log.isTraceEnabled())
-         log.trace("Using explicitly set marshaller type: " + marshaller.getClass().getName());
+         log.tracef("Using explicitly set marshaller type: %s", marshaller.getClass().getName());
       if (start) start();
    }
 
@@ -226,7 +226,7 @@ public class RemoteCacheManager implements CacheContainer {
       ClassLoader loader = Thread.currentThread().getContextClassLoader();
       InputStream stream = loader.getResourceAsStream(HOTROD_CLIENT_PROPERTIES);
       if (stream == null) {
-         log.warn("Could not find '" + HOTROD_CLIENT_PROPERTIES + "' file in classpath, using defaults.");
+         log.couldNotFindPropertiesFile(HOTROD_CLIENT_PROPERTIES);
          config = new ConfigurationProperties();
       } else {
          loadFromStream(stream);

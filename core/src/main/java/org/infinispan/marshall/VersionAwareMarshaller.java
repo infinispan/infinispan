@@ -103,7 +103,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
             if (log.isTraceEnabled()) log.trace("Interrupted exception while marshalling", ioe.getCause());
             throw (InterruptedException) ioe.getCause();
          } else {
-            log.error("Exception while marshalling object", ioe);
+            log.errorMarshallingObject(ioe);
             throw ioe;
          }
       } finally {
@@ -130,10 +130,10 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
       ObjectOutput out = defaultMarshaller.startObjectOutput(os, isReentrant);
       try {
          out.writeShort(VERSION_500);
-         if (trace) log.trace("Wrote version %s", VERSION_500);
+         if (trace) log.tracef("Wrote version %s", VERSION_500);
       } catch (Exception e) {
          finishObjectOutput(out);
-         log.error("Unable to read version id from first two bytes of stream, barfing.");
+         log.unableToReadVersionId();
          throw new IOException("Unable to read version id from first two bytes of stream : " + e.getMessage());
       }
       return out;
@@ -162,11 +162,11 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
       int versionId;
       try {
          versionId = in.readShort();
-         if (trace) log.trace("Read version %s", versionId);
+         if (trace) log.tracef("Read version %s", versionId);
       }
       catch (Exception e) {
          finishObjectInput(in);
-         log.error("Unable to read version id from first two bytes of stream, barfing.");
+         log.unableToReadVersionId();
          throw new IOException("Unable to read version id from first two bytes of stream: " + e.getMessage());
       }
       return in;

@@ -53,7 +53,7 @@ public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup
 
    public TransactionManager getTransactionManager() throws Exception {
       TransactionManager tm = (TransactionManager) manager.invoke(null);
-      if (log.isInfoEnabled()) log.info("Retrieving transaction manager %s", tm);
+      if (log.isInfoEnabled()) log.retrievingTm(tm);
       return tm;
    }
 

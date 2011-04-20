@@ -26,7 +26,7 @@ import net.jcip.annotations.ThreadSafe;
 import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.util.logging.Log;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -51,7 +51,7 @@ public class TcpTransport extends AbstractTransport {
    //needed for debugging
    private static AtomicLong ID_COUNTER = new AtomicLong(0);
 
-   private static final Log log = LogFactory.getLog(TcpTransport.class);
+   private static final Log log = LogFactory.getLog(TcpTransport.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private final Socket socket;
@@ -71,8 +71,8 @@ public class TcpTransport extends AbstractTransport {
          socketInputStream = socket.getInputStream();
          socketOutputStream = socket.getOutputStream();
       } catch (IOException e) {
-         String message = "Could not connect to server: " + serverAddress;
-         log.error(message, e);
+         String message = String.format("Could not connect to server: %s" + serverAddress);
+         log.couldNotConnectToServer(serverAddress, e);
          throw new TransportException(message, e);
       }
    }
@@ -113,7 +113,7 @@ public class TcpTransport extends AbstractTransport {
       try {
          socketOutputStream.write(toAppend);
          if (trace)
-            log.trace("Wrote " + toAppend.length + " bytes");
+            log.tracef("Wrote %f bytes", toAppend.length);
       } catch (IOException e) {
          throw new TransportException("Problems writing data to stream", e);
       }
@@ -124,7 +124,7 @@ public class TcpTransport extends AbstractTransport {
       try {
          socketOutputStream.write(toWrite);
          if (trace)
-            log.trace("Wrote byte " + toWrite);
+            log.tracef("Wrote byte %d", toWrite);
 
       } catch (IOException e) {
          throw new TransportException("Problems writing data to stream", e);
@@ -135,7 +135,7 @@ public class TcpTransport extends AbstractTransport {
       try {
          socketOutputStream.flush();
          if (trace)
-            log.trace("Flushed socket: " + socket);
+            log.tracef("Flushed socket: %s", socket);
 
       } catch (IOException e) {
          throw new TransportException(e);
@@ -159,7 +159,7 @@ public class TcpTransport extends AbstractTransport {
       try {
          socket.close();
       } catch (IOException e) {
-         log.warn("Issues closing socket:" + e.getMessage());
+         log.errorClosingSocket(this, e);
       }
    }
 
@@ -172,7 +172,7 @@ public class TcpTransport extends AbstractTransport {
          try {
             int len = size - offset;
             if (trace) {
-               log.trace("Offset: " + offset + ", len=" + len + ", size=" + size);
+               log.tracef("Offset: %d, len=%d, size=%d", offset, len, size);
             }
             read = socketInputStream.read(result, offset, len);
          } catch (IOException e) {
@@ -189,7 +189,7 @@ public class TcpTransport extends AbstractTransport {
          }
       } while (!done);
       if (trace) {
-         log.trace("Successfully read array with size: " + size);
+         log.tracef("Successfully read array with size: %d", size);
       }
       return result;
    }
@@ -231,10 +231,10 @@ public class TcpTransport extends AbstractTransport {
       try {
          socket.close();
          if (trace) {
-            log.trace("Successfully closed socket: " + socket);
+            log.tracef("Successfully closed socket: %s", socket);
          }
       } catch (IOException e) {
-         log.warn("Issues closing transport: " + this, e);
+         log.errorClosingSocket(this, e);
       }
    }
 

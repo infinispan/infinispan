@@ -78,7 +78,7 @@ public class RecoveryAwareRemoteTransaction extends RemoteTransaction implements
     */
    public void computeOrphan(List<Address> leavers) {
       if (leavers.contains(getGlobalTransaction().getAddress())) {
-         if (log.isTraceEnabled()) log.trace("This transaction's originator has left the cluster: %s", getGlobalTransaction());
+         if (log.isTraceEnabled()) log.tracef("This transaction's originator has left the cluster: %s", getGlobalTransaction());
          isOrphan = true;
       }
    }

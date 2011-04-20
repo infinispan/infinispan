@@ -75,7 +75,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
       this.file = new FileMetadata();
       this.file.setBufferSize(bufferSize);
       if (trace) {
-         log.trace("Opened new IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
+         log.tracef("Opened new IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
       }
    }
    
@@ -178,7 +178,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
     */
    private void storeBufferAsChunk(final byte[] bufferToFlush, final int chunkNumber) {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
-      if (trace) log.trace("Storing segment chunk: " + key);
+      if (trace) log.tracef("Storing segment chunk: %s", key);
       chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(key, bufferToFlush);
    }
 
@@ -208,7 +208,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
       fileOps.addFileName(this.fileKey.getFileName());
       if (microbatch) chunksCache.endBatch(true);
       if (trace) {
-         log.trace("Closed IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
+         log.tracef("Closed IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
       }
    }
 

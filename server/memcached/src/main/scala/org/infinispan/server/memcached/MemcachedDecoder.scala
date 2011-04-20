@@ -22,6 +22,7 @@
  */
 package org.infinispan.server.memcached
 
+import logging.Log
 import org.infinispan.server.core.Operation._
 import org.infinispan.server.memcached.MemcachedOperation._
 import org.infinispan.context.Flag
@@ -566,7 +567,7 @@ private class DelayedFlushAll(cache: Cache[String, MemcachedValue],
    override def run() = flushFunction(cache.getAdvancedCache)
 }
 
-private object RequestResolver extends Logging {
+private object RequestResolver extends Log {
    private val operations = Map[String, Enumeration#Value](
       "set" -> PutRequest,
       "add" -> PutIfAbsentRequest,

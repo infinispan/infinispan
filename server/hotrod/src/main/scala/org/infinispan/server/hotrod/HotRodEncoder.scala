@@ -22,10 +22,11 @@
  */
 package org.infinispan.server.hotrod
 
+import logging.Log
 import OperationStatus._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.Cache
-import org.infinispan.server.core.{CacheValue, Logging}
+import org.infinispan.server.core.CacheValue
 import org.infinispan.util.ByteArrayKey
 import scala.collection.JavaConversions._
 import org.jboss.netty.channel.ChannelHandlerContext
@@ -191,6 +192,6 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends OneToOneEncoder 
 
 }
 
-object HotRodEncoder extends Logging {
+object HotRodEncoder extends Log {
    private val Magic = 0xA1
 }

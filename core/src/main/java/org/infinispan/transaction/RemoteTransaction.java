@@ -68,7 +68,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    public void putLookedUpEntry(Object key, CacheEntry e) {
       if (valid) {
          if (log.isTraceEnabled()) {
-            log.trace("Adding key " + key + " to tx " + getGlobalTransaction());
+            log.tracef("Adding key %s to tx %s", key, getGlobalTransaction());
          }
          lookedUpEntries.put(key, e);
       } else {

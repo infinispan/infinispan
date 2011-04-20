@@ -36,5 +36,10 @@ import java.lang.annotation.RetentionPolicy;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Transformable {
-   Class<? extends Transformer> transformer() default DefaultTransformer.class;
+
+   // This should really be Class<? extends Transformer> however, since
+   // migrating to JBoss Logging and using annotation processor for generating
+   // log objects, if the previous definition is used, a compiler bug is hit.
+   // You can find more info in https://issues.jboss.org/browse/ISPN-380
+   Class transformer() default DefaultTransformer.class;
 }

@@ -76,7 +76,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
 
    public boolean lockAndRecord(Object key, InvocationContext ctx) throws InterruptedException {
       long lockTimeout = getLockAcquisitionTimeout(ctx);
-      if (trace) log.trace("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
+      if (trace) log.tracef("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
 
 
       if (ctx.isInTxScope()) {
@@ -84,24 +84,26 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
          final long start = System.currentTimeMillis();
          DldGlobalTransaction thisTx = (DldGlobalTransaction) ctx.getLockOwner();
          thisTx.setLockIntention(key);
-         if (trace) log.trace("Setting lock intention to: " + key);
+         if (trace) log.tracef("Setting lock intention to: %s", key);
 
          while (System.currentTimeMillis() < (start + lockTimeout)) {
             if (lockContainer.acquireLock(key, spinDuration, MILLISECONDS) != null) {
                thisTx.setLockIntention(null); //clear lock intention
-               if (trace) log.trace("successfully acquired lock on " + key + ", returning ...");
+               if (trace) log.tracef("successfully acquired lock on %s, returning ...", key);
                return true;
             } else {
                Object owner = getOwner(key);
                if (!(owner instanceof DldGlobalTransaction)) {
-                  if (trace) log.trace("Not running DLD as lock owner( " + owner + ") is not a transaction");
+                  if (trace) log.tracef("Not running DLD as lock owner(%s) is not a transaction", owner);
                   cannotRunDld.incrementAndGet();
                   continue;
                }
                DldGlobalTransaction lockOwnerTx = (DldGlobalTransaction) owner;
                if (isDeadlockAndIAmLoosing(lockOwnerTx, thisTx, key)) {
                   updateStats(thisTx);
-                  String message = "Deadlock found and we " + thisTx + " shall not continue. Other tx is " + lockOwnerTx;
+                  String message = String.format(
+                        "Deadlock found and we %s shall not continue. Other tx is %s",
+                        thisTx, lockOwnerTx);
                   if (trace) log.trace(message);
                   throw new DeadlockDetectedException(message);
                }
@@ -120,7 +122,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
       //run the lose check first as it is cheaper
       boolean wouldWeLoose = thisTx.wouldLose(lockOwnerTx);
       if (!wouldWeLoose) {
-         if (trace) log.trace("We (" + thisTx + ") wouldn't lose against the other(" + lockOwnerTx + ") transaction, so no point running rest of DLD");
+         if (trace) log.tracef("We (%s) wouldn't lose against the other (%s) transaction, so no point running rest of DLD", thisTx, lockOwnerTx);
          return false;
       }
       //do we have lock on what other tx intends to acquire?
@@ -133,7 +135,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
 
       //if we are here then 1) the other tx has a lock on this local key AND 2) I have a lock on the same key remotely
       if (iHaveRemoteLock && otherHasLocalLock) {
-         if (trace) log.trace("Same key deadlock between %s and %s on key %s.", thisTx, lockOwnerTx, key);
+         if (trace) log.tracef("Same key deadlock between %s and %s on key %s.", thisTx, lockOwnerTx, key);
          return true;
       }
       return false;
@@ -149,18 +151,18 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
          // if trying to acquire a remote lock, a tx first acquires a local lock. 
          if (thisTx.hasLockAtOrigin(lockOwnerTx.getRemoteLockIntention())) {
             if (trace)
-               log.trace("Same key deadlock detected: lock owner tries to acquire lock remotely on " + key + " but we have it!");
+               log.tracef("Same key deadlock detected: lock owner tries to acquire lock remotely on %s but we have it!", key);
             return true;
          }
       } else {
-         if (trace) log.trace("Lock owner is remote: " + lockOwnerTx);
+         if (trace) log.tracef("Lock owner is remote: %s", lockOwnerTx);
       }
       return false;
    }
 
    private boolean ownsLocalIntention(DldGlobalTransaction thisTx, Object lockOwnerTxIntention) {
       boolean result = lockOwnerTxIntention != null && ownsLock(lockOwnerTxIntention, thisTx);
-      if (trace) log.trace("Local intention is '" + lockOwnerTxIntention + "'. Do we own lock for it? " + result + " We == " + thisTx);
+      if (trace) log.tracef("Local intention is '%s'. Do we own lock for it? %s, We == %s", lockOwnerTxIntention, result, thisTx);
       return result;
    }
 

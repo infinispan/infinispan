@@ -22,6 +22,9 @@
  */
 package org.infinispan.loaders.keymappers;
 
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 /**
  * Default implementation for {@link TwoWayKey2StringMapper} that knows how to
  * handle all primitive wrapper keys and Strings.
@@ -32,7 +35,9 @@ package org.infinispan.loaders.keymappers;
  * @since 4.1
  */
 public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
-	private static final char NON_STRING_PREFIX = '\uFEFF';
+   private static final Log log = LogFactory.getLog(DefaultTwoWayKey2StringMapper.class);
+
+   private static final char NON_STRING_PREFIX = '\uFEFF';
 	private static final char SHORT_IDENTIFIER = '1';
 	private static final char BYTE_IDENTIFIER = '2';
 	private static final char LONG_IDENTIFIER = '3';
@@ -68,7 +73,7 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
 
 	@Override
 	public Object getKeyMapping(String key) {
-      System.out.println(">>> " + key) ;
+      if (log.isTraceEnabled()) log.tracef("Get mapping for key: %s", key);
 		if (key.length() > 0 && key.charAt(0) == NON_STRING_PREFIX) {
 			char type = key.charAt(1);
 			String value = key.substring(2);

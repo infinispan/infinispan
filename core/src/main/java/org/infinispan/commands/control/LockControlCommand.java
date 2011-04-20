@@ -154,7 +154,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       if (transaction == null) {
          if (unlock) {
             if (log.isTraceEnabled()) {
-               log.trace("Unlock for non-existant transaction " + globalTx + ". Not doing anything.");
+               log.tracef("Unlock for non-existant transaction %s.  Not doing anything.", globalTx);
             }
             return null;
          }

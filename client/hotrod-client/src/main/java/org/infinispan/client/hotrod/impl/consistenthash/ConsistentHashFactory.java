@@ -58,13 +58,13 @@ public class ConsistentHashFactory {
 
       for (String propName : config.getProperties().stringPropertyNames()) {
          if (propName.startsWith(HASH_FUNCTION_PREFIX)) {
-            if (log.isTraceEnabled()) log.trace("Processing consistent hash: " + propName);
+            if (log.isTraceEnabled()) log.tracef("Processing consistent hash: %s", propName);
             String versionString = propName.substring((HASH_FUNCTION_PREFIX + ".").length());
             int version = Integer.parseInt(versionString);
             String hashFunction = config.getProperties().getProperty(propName);
             version2ConsistentHash.put(version, hashFunction);
             if (log.isTraceEnabled()) {
-               log.trace("Added consistent hash version " + version + ": " + hashFunction);
+               log.tracef("Added consistent hash version %d: %s", version, hashFunction);
             }
          }
       }
@@ -73,9 +73,9 @@ public class ConsistentHashFactory {
    public ConsistentHash newConsistentHash(int version) {
       String hashFunctionClass = version2ConsistentHash.get(version);
       if (hashFunctionClass == null) {
-         if (log.isTraceEnabled()) log.trace("No hash function configured for version " + version);
+         if (log.isTraceEnabled()) log.tracef("No hash function configured for version %d", version);
          hashFunctionClass = ConsistentHashFactory.class.getPackage().getName() + ".ConsistentHashV" + version;
-         if (log.isTraceEnabled()) log.trace("Trying to use default value: " + hashFunctionClass);
+         if (log.isTraceEnabled()) log.tracef("Trying to use default value: %s", hashFunctionClass);
          version2ConsistentHash.put(version, hashFunctionClass);
       }
       return (ConsistentHash) Util.getInstance(hashFunctionClass);

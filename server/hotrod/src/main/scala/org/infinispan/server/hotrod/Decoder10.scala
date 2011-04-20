@@ -22,6 +22,7 @@
  */
 package org.infinispan.server.hotrod
 
+import logging.Log
 import org.infinispan.server.core.Operation._
 import HotRodOperation._
 import OperationStatus._
@@ -43,7 +44,7 @@ import org.infinispan.server.core.transport.ExtendedChannelBuffer._
  * @author Galder Zamarreño
  * @since 4.1
  */
-object Decoder10 extends AbstractVersionedDecoder with Logging {
+object Decoder10 extends AbstractVersionedDecoder with Log {
    import OperationResponse._
    import ProtocolFlag._
    type SuitableHeader = HotRodHeader
@@ -191,7 +192,7 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
          }
          case BulkGetRequest => {
             val count = readUnsignedInt(buffer)
-            if (isTraceEnabled) trace("About to create bulk response, count = " + count)
+            if (isTraceEnabled) trace("About to create bulk response, count = %d", count)
             new BulkGetResponse(h.messageId, h.cacheName, h.clientIntel, BulkGetResponse, Success, h.topologyId, count)
          }
       }

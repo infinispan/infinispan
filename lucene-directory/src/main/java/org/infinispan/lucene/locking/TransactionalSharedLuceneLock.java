@@ -33,7 +33,7 @@ import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.context.Flag;
 import org.infinispan.lucene.FileCacheKey;
-import org.infinispan.util.logging.Log;
+import org.infinispan.lucene.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -49,7 +49,7 @@ import org.infinispan.util.logging.LogFactory;
 @SuppressWarnings("unchecked")
 class TransactionalSharedLuceneLock extends Lock {
 
-   private static final Log log = LogFactory.getLog(TransactionalSharedLuceneLock.class);
+   private static final Log log = LogFactory.getLog(TransactionalSharedLuceneLock.class, Log.class);
    private static final Flag[] lockFlags = new Flag[]{Flag.SKIP_CACHE_STORE};
 
    private final AdvancedCache cache;
@@ -74,14 +74,14 @@ class TransactionalSharedLuceneLock extends Lock {
       Object previousValue = cache.withFlags(lockFlags).putIfAbsent(keyOfLock, keyOfLock);
       if (previousValue == null) {
          if (log.isTraceEnabled()) {
-            log.trace("Lock: %s acquired for index: %s", lockName, indexName);
+            log.tracef("Lock: %s acquired for index: %s", lockName, indexName);
          }
          // we own the lock:
          startTransaction();
          return true;
       } else {
          if (log.isTraceEnabled()) {
-            log.trace("Lock: %s not aquired for index: %s, was taken already.", lockName, indexName);
+            log.tracef("Lock: %s not aquired for index: %s, was taken already.", lockName, indexName);
          }
          return false;
       }
@@ -107,7 +107,7 @@ class TransactionalSharedLuceneLock extends Lock {
    private void clearLock() {
       Object previousValue = cache.withFlags(lockFlags).remove(keyOfLock);
       if (previousValue!=null && log.isTraceEnabled()) {
-         log.trace("Lock removed for index: %s", indexName);
+         log.tracef("Lock removed for index: %s", indexName);
       }
    }
    
@@ -122,7 +122,7 @@ class TransactionalSharedLuceneLock extends Lock {
          }
          locked = cache.withFlags(lockFlags).containsKey(keyOfLock);
       } catch (Exception e) {
-         log.error("Error in suspending transaction", e);
+         log.errorSuspendingTransaction(e);
       } finally {
          if (tx != null) {
             try {
@@ -146,11 +146,11 @@ class TransactionalSharedLuceneLock extends Lock {
       try {
          tm.begin();
       } catch (Exception e) {
-         log.error("Unable to start transaction", e);
+         log.unableToStartTransaction(e);
          throw new IOException("SharedLuceneLock could not start a transaction after having acquired the lock", e);
       }
       if (log.isTraceEnabled()) {
-         log.trace("Batch transaction started for index: %s", indexName);
+         log.tracef("Batch transaction started for index: %s", indexName);
       }
    }
    
@@ -164,11 +164,11 @@ class TransactionalSharedLuceneLock extends Lock {
       try {
          tm.commit();
       } catch (Exception e) {
-         log.error("Unable to commit work done!", e);
+         log.unableToCommitTransaction(e);
          throw new IOException("SharedLuceneLock could not commit a transaction", e);
       }
       if (log.isTraceEnabled()) {
-         log.trace("Batch transaction commited for index: %s", indexName);
+         log.tracef("Batch transaction commited for index: %s", indexName);
       }
    }
 
@@ -185,7 +185,7 @@ class TransactionalSharedLuceneLock extends Lock {
          }
          clearLock();
       } catch (Exception e) {
-         log.error("Error in suspending transaction", e);
+         log.errorSuspendingTransaction(e);
       } finally {
          if (tx != null) {
             try {

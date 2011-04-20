@@ -128,9 +128,9 @@ public class SingletonStore extends AbstractDelegatingStore {
    @Override
    public void store(InternalCacheEntry ed) throws CacheLoaderException {
       if (active) {
-         if (trace) log.trace("Storing key %s.  Instance: %s", ed.getKey(), this);
+         if (trace) log.tracef("Storing key %s.  Instance: %s", ed.getKey(), this);
          super.store(ed);
-      } else if (trace) log.trace("Not storing key %s.  Instance: %s", ed.getKey(), this);
+      } else if (trace) log.tracef("Not storing key %s.  Instance: %s", ed.getKey(), this);
    }
 
    @Override
@@ -253,7 +253,7 @@ public class SingletonStore extends AbstractDelegatingStore {
     */
    protected void activeStatusChanged(boolean newActiveState) throws PushStateException {
       active = newActiveState;
-      log.debug("changed mode %s", this);
+      log.debugf("changed mode %s", this);
       if (active && config.isPushStateWhenCoordinator()) doPushState();
    }
 
@@ -356,7 +356,7 @@ public class SingletonStore extends AbstractDelegatingStore {
                activeStatusChanged(tmp);
             }
             catch (PushStateException e) {
-               log.error("exception reported changing cache active status", e);
+               log.errorChangingSingletonStoreStatus(e);
             }
 
          }

@@ -53,7 +53,7 @@ public class ConsistentHashV1 implements ConsistentHash {
          positions.put(servers2HashCode.get(addr), addr);
       }
       if (log.isTraceEnabled())
-         log.trace("Positions are: " + positions);
+         log.tracef("Positions are: %s", positions);
       this.hashSpace = hashSpace;
    }
 
@@ -65,18 +65,18 @@ public class ConsistentHashV1 implements ConsistentHash {
 
       SortedMap<Integer, InetSocketAddress> candidates = positions.tailMap(hash % hashSpace);
       if (log.isTraceEnabled()) {
-         log.trace("Found possible candidates: " + candidates);
+         log.tracef("Found possible candidates: %s", candidates);
       }
       if (candidates.isEmpty()) {
          InetSocketAddress socketAddress = positions.get(positions.firstKey());
          if (log.isTraceEnabled()) {
-            log.trace("Over the wheel, returning first member: " + socketAddress);
+            log.tracef("Over the wheel, returning first member: %s", socketAddress);
          }
          return socketAddress;
       } else {
          InetSocketAddress socketAddress = candidates.get(candidates.firstKey());
          if (log.isTraceEnabled()) {
-            log.trace("Found candidate: " + socketAddress);
+            log.tracef("Found candidate: %s", socketAddress);
          }
          return socketAddress;
       }

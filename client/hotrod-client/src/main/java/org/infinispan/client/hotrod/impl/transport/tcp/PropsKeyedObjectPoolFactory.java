@@ -71,11 +71,11 @@ public class PropsKeyedObjectPoolFactory extends GenericKeyedObjectPoolFactory {
       Object propValue = p.get(name);
       if (propValue == null) {
          if (log.isTraceEnabled()) {
-            log.trace(name + " property not specified, using default value(" + defaultValue + ")");
+            log.tracef("%s property not specified, using default value(%)", name, defaultValue);
          }
          return defaultValue;
       } else {
-         log.trace(name + " = " + propValue);
+         log.tracef("%s = %s", name, propValue);
          if (defaultValue instanceof Integer) {
             return Integer.parseInt(propValue.toString());
          } else if (defaultValue instanceof Boolean) {

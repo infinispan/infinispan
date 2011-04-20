@@ -93,7 +93,7 @@ public class TypedProperties extends Properties {
          return Integer.parseInt(value);
       }
       catch (NumberFormatException nfe) {
-         log.warn("Unable to convert string property [" + value + "] to an int!  Using default value of " + defaultValue);
+         log.unableToConvertStringPropertyToInt(value, defaultValue);
          return defaultValue;
       }
    }
@@ -115,7 +115,7 @@ public class TypedProperties extends Properties {
          return Long.parseLong(value);
       }
       catch (NumberFormatException nfe) {
-         log.warn("Unable to convert string property [" + value + "] to a long!  Using default value of " + defaultValue);
+         log.unableToConvertStringPropertyToLong(value, defaultValue);
          return defaultValue;
       }
    }
@@ -137,7 +137,7 @@ public class TypedProperties extends Properties {
          return Boolean.parseBoolean(value);
       }
       catch (Exception e) {
-         log.warn("Unable to convert string property [" + value + "] to a boolean!  Using default value of " + defaultValue);
+         log.unableToConvertStringPropertyToBoolean(value, defaultValue);
          return defaultValue;
       }
    }

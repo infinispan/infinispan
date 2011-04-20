@@ -38,7 +38,6 @@
 
    <properties>
       <test.src.dir>src/test/java</test.src.dir>
-      <version.org.jboss.logging>2.0.5.GA</version.org.jboss.logging>
    </properties>
 
    <dependencies>
@@ -73,13 +72,6 @@
          <groupId>org.apache.commons</groupId>
          <artifactId>commons-compress</artifactId>
          <version>${version.commons.compress}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>org.jboss.logging</groupId>
-         <artifactId>jboss-logging-spi</artifactId>
-         <scope>test</scope>
-         <version>${version.org.jboss.logging}</version>
       </dependency>
 
    </dependencies>

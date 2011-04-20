@@ -80,7 +80,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
       if (skip(ctx, key) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
-      log.trace("Stored entry %s under key %s", se, key);
+      log.tracef("Stored entry %s under key %s", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
       return returnValue;
    }
@@ -95,7 +95,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
          if (!skipKey(key)) {
             InternalCacheEntry se = getStoredEntry(key, ctx);
             store.store(se);
-            log.trace("Stored entry %s under key %s", se, key);
+            log.tracef("Stored entry %s under key %s", se, key);
          }
       }
       if (getStatisticsEnabled()) cacheStores.getAndAdd(map.size());
@@ -108,7 +108,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
       Object key = command.getKey();
       if (!skip(ctx, key) && !ctx.isInTxScope() && command.isSuccessful()) {
          boolean resp = store.remove(key);
-         log.trace("Removed entry under key %s and got response %s from CacheStore", key, resp);
+         log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
       }
       return retval;
    }
@@ -122,7 +122,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
 
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
-      log.trace("Stored entry %s under key %s", se, key);
+      log.tracef("Stored entry %s under key %s", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
 
       return returnValue;

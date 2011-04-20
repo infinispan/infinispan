@@ -26,12 +26,14 @@ import java.io.IOException
 import java.security.{PrivilegedAction, AccessController}
 import java.util.concurrent.{ThreadFactory, ExecutionException, Callable, Executors}
 import gnu.getopt.{Getopt, LongOpt}
+import logging.Log
 import org.infinispan.Version
 import java.util.Properties
 import org.infinispan.util.{TypedProperties, Util}
 import org.infinispan.config.{Configuration, GlobalConfiguration}
 import org.infinispan.manager.{EmbeddedCacheManager, CacheContainer, DefaultCacheManager}
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior
+import org.infinispan.util.logging.LogFactory
 
 /**
  * Main class for server startup.
@@ -39,7 +41,7 @@ import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior
  * @author Galder Zamarreño
  * @since 4.1
  */
-object Main extends Logging {
+object Main extends Log {
    
    val PROP_KEY_PORT = "infinispan.server.port"
    val PROP_KEY_HOST = "infinispan.server.host"
@@ -84,7 +86,7 @@ object Main extends Logging {
    def getCacheManager = cacheManager
 
    def main(args: Array[String]) {
-      info("Start main with args: %s", args.mkString(", "))
+      logStartWithArgs(args.mkString(", "))
       val worker = new Callable[Void] {
          override def call = {
             try {
@@ -313,14 +315,16 @@ object Main extends Logging {
    }
 }
 
-private class ShutdownHook(server: ProtocolServer, cacheManager: CacheContainer) extends Thread with Logging {
+private class ShutdownHook(server: ProtocolServer, cacheManager: CacheContainer) extends Thread with Log {
 
    // Constructor code inline
    setName("ShutdownHookThread")
 
+   private lazy val log: Log = LogFactory.getLog(getClass, classOf[Log])
+
    override def run {
       if (server != null) {
-         info("Posting Shutdown Request to the server...")
+         logPostingShutdownRequest
          val tf = new ThreadFactory {
             override def newThread(r: Runnable): Thread = new Thread(r, "StopThread")
          }
