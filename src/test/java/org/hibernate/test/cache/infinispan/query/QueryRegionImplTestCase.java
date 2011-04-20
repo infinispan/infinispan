@@ -46,6 +46,7 @@ import org.hibernate.cache.infinispan.InfinispanRegionFactory;
 import org.hibernate.cache.infinispan.util.CacheAdapter;
 import org.hibernate.cache.infinispan.util.CacheAdapterImpl;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.service.ServiceRegistryBuilder;
 import org.hibernate.service.internal.BasicServiceRegistryImpl;
 
 import junit.framework.AssertionFailedError;
@@ -430,7 +431,7 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 	private void putDoesNotBlockGetTest() throws Exception {
 		Configuration cfg = createConfiguration();
 		InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
-				new BasicServiceRegistryImpl( cfg.getProperties() ),
+				new ServiceRegistryBuilder( cfg.getProperties() ).buildServiceRegistry(),
 				cfg,
 				getCacheTestSupport()
 		);
@@ -530,7 +531,7 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 	private void getDoesNotBlockPutTest() throws Exception {
 		Configuration cfg = createConfiguration();
 		InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
-				new BasicServiceRegistryImpl( cfg.getProperties() ),
+				new ServiceRegistryBuilder( cfg.getProperties() ).buildServiceRegistry(),
 				cfg,
 				getCacheTestSupport()
 		);
