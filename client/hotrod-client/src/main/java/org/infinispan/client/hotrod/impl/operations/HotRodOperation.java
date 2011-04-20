@@ -28,7 +28,7 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.util.logging.Log;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.net.InetSocketAddress;
@@ -49,7 +49,7 @@ public abstract class HotRodOperation implements HotRodConstants {
 
    static final AtomicLong MSG_ID = new AtomicLong();
 
-   private static final Log log = LogFactory.getLog(HotRodOperation.class);
+   private static final Log log = LogFactory.getLog(HotRodOperation.class, Log.class);
 
    protected final Flag[] flags;
 
@@ -89,7 +89,8 @@ public abstract class HotRodOperation implements HotRodConstants {
       //todo change once TX support is added
       transport.writeByte(NO_TX);
       if (log.isTraceEnabled()) {
-         log.trace("wrote header for message %d. Operation code: %#04x. Flags: %#x", messageId, operationCode, flagInt);
+         log.tracef("wrote header for message %d. Operation code: %#04x. Flags: %#x",
+                    messageId, operationCode, flagInt);
       }
       return messageId;
    }
@@ -101,17 +102,17 @@ public abstract class HotRodOperation implements HotRodConstants {
       short magic = transport.readByte();
       if (magic != HotRodConstants.RESPONSE_MAGIC) {
          String message = "Invalid magic number. Expected %#x and received %#x";
-         log.error(message, HotRodConstants.RESPONSE_MAGIC, magic);
+         log.invalidMagicNumber(message, HotRodConstants.RESPONSE_MAGIC, magic);
          throw new InvalidResponseException(String.format(message, HotRodConstants.RESPONSE_MAGIC, magic));
       }
       long receivedMessageId = transport.readVLong();
       if (receivedMessageId != messageId) {
          String message = "Invalid message id. Expected %d and received %d";
-         log.error(message, messageId, receivedMessageId);
+         log.invalidMessageId(message, messageId, receivedMessageId);
          throw new InvalidResponseException(String.format(message, messageId, receivedMessageId));
       }
       if (log.isTraceEnabled()) {
-         log.trace("Received response for message id: %d", receivedMessageId);
+         log.tracef("Received response for message id: %d", receivedMessageId);
       }
       short receivedOpCode = transport.readByte();
       if (receivedOpCode != opRespCode) {
@@ -123,7 +124,7 @@ public abstract class HotRodOperation implements HotRodConstants {
                opRespCode, receivedOpCode));
       }
       if (log.isTraceEnabled()) {
-         log.trace("Received operation code is: %#04x", receivedOpCode);
+         log.tracef("Received operation code is: %#04x", receivedOpCode);
       }
       short status = transport.readByte();
       // There's not need to check for errors in status here because if there
@@ -134,7 +135,7 @@ public abstract class HotRodOperation implements HotRodConstants {
 
    protected void checkForErrorsInResponseStatus(short status, long messageId, Transport transport) {
       final boolean isTrace = log.isTraceEnabled();
-      if (isTrace) log.trace("Received operation status: %#x", status);
+      if (isTrace) log.tracef("Received operation status: %#x", status);
 
       switch ((int) status) {
          case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
@@ -146,9 +147,9 @@ public abstract class HotRodOperation implements HotRodConstants {
             readNewTopologyIfPresent(transport);
             String msgFromServer = transport.readString();
             if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
-               log.trace("Server-side timeout performing operation: %s", msgFromServer);
+               log.tracef("Server-side timeout performing operation: %s", msgFromServer);
             } else {
-               log.warn("Error received from the server: %s", msgFromServer);
+               log.errorFromServer(msgFromServer);
             }
             throw new HotRodClientException(msgFromServer, messageId, status);
          }
@@ -173,7 +174,7 @@ public abstract class HotRodOperation implements HotRodConstants {
       int clusterSize = transport.readVInt();
 
       if (log.isTraceEnabled()) {
-         log.trace("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
+         log.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
                    "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
              newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
       }
@@ -184,16 +185,16 @@ public abstract class HotRodOperation implements HotRodConstants {
          String host = transport.readString();
          int port = transport.readUnsignedShort();
          if (log.isTraceEnabled()) {
-            log.trace("Server read: %s:%d", host, port);
+            log.tracef("Server read: %s:%d", host, port);
          }
          int hashCode = transport.read4ByteInt();
          servers2HashCode.put(new InetSocketAddress(host, port), hashCode);
          if (log.isTraceEnabled()) {
-            log.trace("Hash code is: %d", hashCode);
+            log.tracef("Hash code is: %d", hashCode);
          }
       }
       if (log.isInfoEnabled()) {
-         log.info("New topology: %s", servers2HashCode);
+         log.newTopology(servers2HashCode);
       }
       transport.getTransportFactory().updateServers(servers2HashCode.keySet());
       if (hashFunctionVersion == 0) {

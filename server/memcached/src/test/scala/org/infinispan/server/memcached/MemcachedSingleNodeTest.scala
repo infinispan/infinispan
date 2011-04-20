@@ -56,7 +56,7 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with Memca
    @AfterClass(alwaysRun = true)
    override def destroyAfterClass {
       super.destroyAfterClass
-      log.debug("Test finished, close memcached server", null)
+      log.debug("Test finished, close memcached server")
       shutdownClient
       memcachedServer.stop
    }

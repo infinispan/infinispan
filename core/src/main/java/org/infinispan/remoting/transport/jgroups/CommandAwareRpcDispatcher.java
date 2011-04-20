@@ -93,7 +93,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    protected final boolean isValid(Message req) {
       if (req == null || req.getLength() == 0) {
-         log.error("Message or message buffer is null or empty.");
+         log.msgOrMsgBufferEmpty();
          return false;
       }
 
@@ -155,7 +155,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    private Response executeCommand(CacheRpcCommand cmd, Message req) throws Throwable {
       if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
-      if (trace) log.trace("Attempting to execute command: %s [sender=%s]", cmd, req.getSrc());
+      if (trace) log.tracef("Attempting to execute command: %s [sender=%s]", cmd, req.getSrc());
       return inboundInvocationHandler.handle(cmd, new JGroupsAddress(req.getSrc()));
    }
 
@@ -213,7 +213,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
 
       public RspList call() throws Exception {
-         if (trace) log.trace("Replication task sending %s to addresses %s", command, dests);
+         if (trace) log.tracef("Replication task sending %s to addresses %s", command, dests);
 
          // Replay capability requires responses from all members!
          int mode = supportReplay ? GroupRequest.GET_ALL : this.mode;
@@ -278,7 +278,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          // we only bother parsing responses if we are not in ASYNC mode.
          if (mode != GroupRequest.GET_NONE) {
 
-            if (trace) log.trace("Responses: %s", retval);
+            if (trace) log.tracef("Responses: %s", retval);
 
             // a null response is 99% likely to be due to a marshalling problem - we throw a NSE, this needs to be changed when
             // JGroups supports http://jira.jboss.com/jira/browse/JGRP-193
@@ -308,7 +308,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                   msg.setFlag(Message.DONT_BUNDLE);
 
                   if (trace)
-                     log.trace("Replaying message to ignoring senders: " + ignorers);
+                     log.tracef("Replaying message to ignoring senders: %s", ignorers);
                   RequestOptions opts = new RequestOptions();
                   opts.setMode(GroupRequest.GET_ALL);
                   opts.setTimeout(timeout);
@@ -390,20 +390,20 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             if (sc.processed) {
                // This can happen - it is a race condition in JGroups' NotifyingFuture.setListener() where a listener
                // could be notified twice.
-               if (trace) log.trace("Not processing callback; already processed callback for sender %s", sc.address);
+               if (trace) log.tracef("Not processing callback; already processed callback for sender %s", sc.address);
             } else {
                sc.processed = true;
                Address sender = sc.address;
                try {
                   if (retval == null) {
                      Object response = objectFuture.get();
-                     if (trace) log.trace("Received response: %s from %s", response, sender);
+                     if (trace) log.tracef("Received response: %s from %s", response, sender);
                      filter.isAcceptable(response, sender);
                      if (!filter.needMoreResponses())
                         retval = new RspList(Collections.singleton(new Rsp(sender, response)));
                   } else {
                      if (log.isDebugEnabled())
-                        log.debug("Skipping response from %s since a valid response for this request has already been received", sender);
+                        log.debugf("Skipping response from %s since a valid response for this request has already been received", sender);
                   }
                } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();
@@ -416,7 +416,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                      log.info("Caught a Throwable.", e.getCause());
 
                   if (log.isDebugEnabled())
-                     log.debug("Caught exception %s from sender %s.  Will skip this response.", exception.getClass().getName(), sender);
+                     log.debugf("Caught exception %s from sender %s.  Will skip this response.", exception.getClass().getName(), sender);
                   if (trace) log.trace("Exception caught: ", exception);
                } finally {
                   expectedResponses--;

@@ -277,7 +277,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    private Object processRetVal(Object retVal, InvocationContext ctx) throws IOException, ClassNotFoundException {
       if (retVal instanceof MarshalledValue) {
          if (ctx.isOriginLocal()) {
-            if (trace) log.trace("Return is a marshall value, so extract instance from: %s", retVal);
+            if (trace) log.tracef("Return is a marshall value, so extract instance from: %s", retVal);
             retVal = ((MarshalledValue) retVal).get();
          }
       }
@@ -290,7 +290,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
          if (trace) log.trace("Map is nul; returning an empty map.");
          return Collections.emptyMap();
       }
-      if (trace) log.trace("Wrapping map contents of argument " + m);
+      if (trace) log.tracef("Wrapping map contents of argument %s", m);
       Map copy = new HashMap();
       for (Map.Entry me : m.entrySet()) {
          Object key = me.getKey();

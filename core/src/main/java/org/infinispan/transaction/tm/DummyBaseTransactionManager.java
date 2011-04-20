@@ -188,7 +188,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
    public Transaction suspend() throws SystemException {
       Transaction retval = getTransaction();
       setTransaction(null);
-      if (trace) log.trace("Suspending tx " + retval);
+      if (trace) log.tracef("Suspending tx %s", retval);
       return retval;
    }
 
@@ -203,7 +203,7 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
     *                               If the transaction service fails in an unexpected way.
     */
    public void resume(Transaction tx) throws InvalidTransactionException, IllegalStateException, SystemException {
-      if (trace) log.trace("Resuming tx " + tx);
+      if (trace) log.tracef("Resuming tx %s", tx);
       setTransaction(tx);
    }
 

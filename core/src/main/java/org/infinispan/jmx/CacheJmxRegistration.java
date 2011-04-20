@@ -81,7 +81,7 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
          Set<Component> components = cache.getComponentRegistry().getRegisteredComponents();
          nonCacheComponents = getNonCacheComponents(components);
          registerMBeans(components, cache.getConfiguration().getGlobalConfiguration());
-         log.info("MBeans were successfully registered to the platform mbean server.");
+         log.mbeansSuccessfullyRegistered();
       }
    }
 
@@ -99,7 +99,7 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
          try {
             unregisterMBeans(nonCacheComponents);
          } catch (Exception e) {
-            log.warn("Problems un-registering MBeans", e);
+            log.problemsUnregisteringMBeans(e);
          }
          log.trace("MBeans were successfully unregistered from the mbean server.");
       }
@@ -115,13 +115,11 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
             mBeanServer.unregisterMBean(name);
          }
       } catch (MBeanRegistrationException e) {
-         String message = "Unable to unregister Cache MBeans with pattern " + pattern;
-         log.warn(message, e);
+         log.unableToUnregisterMBeanWithPattern(pattern, e);
       } catch (InstanceNotFoundException e) {
          // Ignore if Cache MBeans not present
       } catch (MalformedObjectNameException e) {
          String message = "Malformed pattern " + pattern;
-         log.error(message, e);
          throw new CacheException(message, e);
       }
    }
@@ -148,11 +146,8 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
          synchronized (managerJmxReg) {
             if (managerJmxReg.jmxDomain == null) {
                if (!tmpJmxDomain.equals(gc.getJmxDomain()) && !gc.isAllowDuplicateDomains()) {
-                  String message = "There's already an cache manager instance registered under '" + gc.getJmxDomain() +
-                        "' JMX domain. If you want to allow multiple instances configured with same JMX domain enable " +
-                        "'allowDuplicateDomains' attribute in 'globalJmxStatistics' config element";
-                  if (log.isErrorEnabled()) log.error(message);
-                  throw new JmxDomainConflictException(message);
+                  log.cacheManagerAlreadyRegistered(gc.getJmxDomain());
+                  throw new JmxDomainConflictException(String.format("Domain already registered %s", gc.getJmxDomain()));
                }
                // Set manager component's jmx domain so that other caches under same manager 
                // can see it, particularly important when jmx is only enabled at the cache level

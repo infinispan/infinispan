@@ -85,7 +85,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
                getCacheNamePrefix()));
       }
 
-      if (trace) log.trace("Invoked with command %s and InvocationContext [%s]", command, ctx);
+      if (trace) log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
       if (ctx == null) throw new IllegalStateException("Null context not allowed!!");
 
       if (ctx.hasFlag(Flag.FAIL_SILENTLY)) {
@@ -100,7 +100,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
             log.trace("Exception while executing code, failing silently...", th);
             return null;
          } else {
-            log.error("Execution error: ", th);            
+            log.executionError(th);
             if (ctx.isInTxScope() && ctx.isOriginLocal()) {
                if (trace) log.trace("Transaction marked for rollback as exception was received.");
                markTxForRollbackAndRethrow(ctx, th);

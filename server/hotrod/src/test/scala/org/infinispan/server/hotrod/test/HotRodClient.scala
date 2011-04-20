@@ -30,10 +30,10 @@ import org.jboss.netty.channel._
 import org.jboss.netty.buffer.ChannelBuffer
 import org.testng.Assert._
 import org.infinispan.server.hotrod._
+import logging.Log
 import org.infinispan.server.hotrod.Response
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.OperationResponse._
-import org.infinispan.server.core.Logging
 import collection.mutable
 import collection.immutable
 import java.lang.reflect.Method
@@ -56,7 +56,7 @@ import org.jboss.netty.handler.codec.replay.{VoidEnum, ReplayingDecoder}
  * @author Galder Zamarreño
  * @since 4.1
  */
-class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeoutSeconds: Int) extends Logging {
+class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeoutSeconds: Int) extends Log {
    val idToOp = new ConcurrentHashMap[Long, Op]    
 
    private lazy val ch: Channel = {
@@ -296,7 +296,7 @@ object HotRodClient {
    val idCounter = new AtomicLong
 }
 
-private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] with Logging {
+private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] with Log {
 
    override def decode(ctx: ChannelHandlerContext, ch: Channel, buf: ChannelBuffer, state: VoidEnum): Object = {
       trace("Decode response from server")
@@ -405,7 +405,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
    }
 
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
-      error("Error", e.getCause)
+      logExceptionReported(e.getCause)
    }
 }
 

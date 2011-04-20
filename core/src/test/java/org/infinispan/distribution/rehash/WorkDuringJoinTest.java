@@ -62,7 +62,7 @@ public class WorkDuringJoinTest extends BaseDistFunctionalTest {
       int i = 0;
       for (Cache<Object, String> c : caches) c.put(keys.get(i++), "v" + i);
 
-      log.info("Initialized with keys %s", keys);
+      log.infof("Initialized with keys %s", keys);
       return keys;
    }
 

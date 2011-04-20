@@ -63,7 +63,7 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
     * Executes commands replicated to the current cache instance by other cache instances.
     */
    public Object perform(InvocationContext ctx) throws Throwable {
-      if (trace) log.trace("Executing remotely originated commands: " + commands.length);
+      if (trace) log.tracef("Executing remotely originated commands: %d", commands.length);
       for (ReplicableCommand command : commands) {
          if (command instanceof TransactionBoundaryCommand) {
             command.perform(null);

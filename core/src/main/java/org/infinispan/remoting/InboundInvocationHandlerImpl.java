@@ -133,7 +133,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          if (embeddedCacheManager.getGlobalConfiguration().isStrictPeerToPeer()) {
             // lets see if the cache is *defined* and perhaps just not started.
             if (isDefined(cacheName)) {
-               log.info("Will try and wait for the cache to start");
+               log.waitForCacheToStart();
                long giveupTime = System.currentTimeMillis() + 30000; // arbitrary (?) wait time for caches to start
                while (cr == null && System.currentTimeMillis() < giveupTime) {
                   Thread.sleep(100);
@@ -143,7 +143,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          }
 
          if (cr == null) {
-            if (log.isInfoEnabled()) log.info("Cache named %s does not exist on this cache manager!", cacheName);
+            if (log.isInfoEnabled()) log.namedCacheDoesNotExist(cacheName);
             return new ExceptionResponse(new NamedCacheNotFoundException(cacheName, "Cannot process command " + cmd + " on node " + transport.getAddress()));
          }
       }
@@ -162,7 +162,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       commandsFactory.initializeReplicableCommand(cmd, true);
 
       try {
-         log.trace("Calling perform() on %s", cmd);
+         log.tracef("Calling perform() on %s", cmd);
          ResponseGenerator respGen = cr.getComponent(ResponseGenerator.class);
          Object retval = cmd.perform(null);
          return respGen.getResponse(cmd, retval);
@@ -211,7 +211,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          while (cr.getStatus().startingUp() && System.currentTimeMillis() < giveupTime)
             LockSupport.parkNanos(MILLISECONDS.toNanos(100));
          if (!cr.getStatus().allowInvocations()) {
-            log.info("Cache named [%s] exists but isn't in a state to handle invocations.  Its state is %s.", cmd.getCacheName(), cr.getStatus());
+            log.cacheCanNotHandleInvocations(cmd.getCacheName(), cr.getStatus());
             return JoinHandle.IGNORE;
          }
 
@@ -270,7 +270,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
                }
                return handleWithWaitForBlocks(cmd, distributedSyncTimeout);
             } catch (TimeoutException te) {
-               log.info("Quietly ignoring clustered get call %s since unable to acquire processing lock, even after %s", cmd, Util.prettyPrintTime(distributedSyncTimeout));
+               log.ignoreClusterGetCall(cmd, Util.prettyPrintTime(distributedSyncTimeout));
                return RequestIgnoredResponse.INSTANCE;
             }
          } else {
@@ -347,7 +347,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          boolean unlock = false;
          try {
             if (enqueueing) {
-               log.trace("Enqueueing command %s since we are enqueueing.", command);
+               log.tracef("Enqueueing command %s since we are enqueueing.", command);
                queue.add(command);
                return RequestIgnoredResponse.INSTANCE;
             } else {
@@ -397,7 +397,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
                enqueuedBlocker.open();
                running = false;
             } catch (Throwable throwable) {
-               log.warn("Caught exception when handling command %s", throwable, c);
+               log.exceptionHandlingCommand(c, throwable);
             } finally {
                if (unlock) distributedSync.releaseProcessingLock(false);
             }

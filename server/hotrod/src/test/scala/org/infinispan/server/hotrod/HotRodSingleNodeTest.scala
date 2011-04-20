@@ -61,7 +61,7 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
 
    @AfterClass(alwaysRun = true)
    override def destroyAfterClass {
-      log.debug("Test finished, close cache, client and Hot Rod server", null)
+      log.debug("Test finished, close cache, client and Hot Rod server")
       super.destroyAfterClass
       shutdownClient
       hotRodServer.stop

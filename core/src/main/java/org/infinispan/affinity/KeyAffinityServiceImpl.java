@@ -142,7 +142,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    @Override
    public void start() {
       if (started) {
-         log.info("Service already started, ignoring call to start!");
+         log.debug("Service already started, ignoring call to start!");
          return;
       }
       List<Address> existingNodes = getExistingNodes();
@@ -165,7 +165,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    @Override
    public void stop() {
       if (!started) {
-         log.info("Ignoring call to stop as service is not started.");
+         log.debug("Ignoring call to stop as service is not started.");
          return;
       }
       started = false;
@@ -184,7 +184,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
 
    public void handleViewChange(ViewChangedEvent vce) {
       if (log.isTraceEnabled()) {
-         log.trace("ViewChange received: " + vce);
+         log.tracef("ViewChange received: %s", vce);
       }
       maxNumberInvariant.writeLock().lock();
       try {
@@ -203,7 +203,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
 
    public void handleCacheStopped(CacheStoppedEvent cse) {
       if (log.isTraceEnabled()) {
-         log.trace("Cache stopped, stopping the service: " + cse);
+         log.tracef("Cache stopped, stopping the service: %s", cse);
       }
       stop();
    }
@@ -255,8 +255,8 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
          try {
             keyProducerStartLatch.await();
          } catch (InterruptedException e) {
-            if (log.isInfoEnabled()) {
-               log.info("Shutting down KeyAffinity service for key set: " + filter);
+            if (log.isDebugEnabled()) {
+               log.debugf("Shutting down KeyAffinity service for key set: %s", filter);
             }
             return true;
          }
@@ -270,8 +270,11 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
             exitingNumberOfKeys.incrementAndGet();
          }
          if (log.isTraceEnabled()) {
-            log.trace((added ? "Successfully" : "Not") + " added key(" + key + ") to the address(" + address + ").");
-            if (added) log.trace("maxNumberOfKeys==" + maxNumberOfKeys + ", exitingNumberOfKeys==" + exitingNumberOfKeys);
+            if (added)
+               log.tracef("Successfully added key(%s) to the address(%s), maxNumberOfKeys=%d, exitingNumberOfKeys=%d",
+                          key, address, maxNumberOfKeys, exitingNumberOfKeys);
+            else
+               log.tracef("Not added key(%s) to the address(%s)", key, address);
          }
       }
 
@@ -295,8 +298,8 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       maxNumberOfKeys.set(address2key.keySet().size() * bufferSize);
       exitingNumberOfKeys.set(0);
       if (log.isTraceEnabled()) {
-         log.trace("resetNumberOfKeys ends with: maxNumberOfKeys=" + maxNumberOfKeys +
-               ", exitingNumberOfKeys=" + exitingNumberOfKeys);
+         log.tracef("resetNumberOfKeys ends with: maxNumberOfKeys=%d, exitingNumberOfKeys=%s",
+                    maxNumberOfKeys, exitingNumberOfKeys);
       }
    }
 
@@ -309,7 +312,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
             address2key.put(address, new ArrayBlockingQueue(bufferSize));
          } else {
             if (log.isTraceEnabled())
-               log.trace("Skipping address: " + address);
+               log.tracef("Skipping address: %s", address);
          }
       }
    }

@@ -24,10 +24,10 @@ package org.infinispan.server.hotrod.test
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.lang.reflect.Method
-import org.infinispan.server.core.Logging
 import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.Assert._
 import org.infinispan.server.hotrod._
+import logging.Log
 import org.infinispan.config.Configuration.CacheMode
 import org.infinispan.config.Configuration
 import org.infinispan.manager.EmbeddedCacheManager
@@ -41,9 +41,7 @@ import org.infinispan.util.{TypedProperties, Util}
  * @author Galder Zamarreño
  * @since 4.1
  */
-object HotRodTestingUtil extends Logging {
-
-   import HotRodTestingUtil._
+object HotRodTestingUtil extends Log {
 
    val EXPECTED_HASH_FUNCTION_VERSION: Byte = 2
 

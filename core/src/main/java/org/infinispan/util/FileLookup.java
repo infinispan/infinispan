@@ -53,7 +53,7 @@ public class FileLookup {
       InputStream is = filename == null || filename.length() == 0 ? null : getAsInputStreamFromClassLoader(filename);
       if (is == null) {
          if (log.isDebugEnabled())
-            log.debug("Unable to find file " + filename + " in classpath; searching for this file on the filesystem instead.");
+            log.debugf("Unable to find file %s in classpath; searching for this file on the filesystem instead.", filename);
          try {
             is = new FileInputStream(filename);
          }

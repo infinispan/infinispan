@@ -22,11 +22,11 @@
  */
 package org.infinispan.rest
 
+import logging.Log
 import scala.collection.JavaConversions._
 import javax.servlet.http.HttpServlet
 import org.infinispan.manager.{EmbeddedCacheManager, DefaultCacheManager}
-import org.infinispan.server.core.Logging
-import javax.servlet.{ServletContext, ServletConfig}
+import javax.servlet.ServletConfig
 
 /**
  * To init the cache manager. Nice to do this on startup as any config problems will be picked up before any
@@ -36,7 +36,7 @@ import javax.servlet.{ServletContext, ServletConfig}
  * @author Galder Zamarreño
  * @since 4.0
  */
-class StartupListener extends HttpServlet with Logging {
+class StartupListener extends HttpServlet with Log {
    override def init(cfg: ServletConfig) {
       super.init(cfg)
 

@@ -62,7 +62,6 @@ public class L1ManagerImpl implements L1Manager {
    }
    
    public void addRequestor(Object key, Address origin) {
-      
       //we do a plain get first as that's likely to be enough
       Collection<Address> as = requestors.get(key);
       
@@ -94,22 +93,22 @@ public class L1ManagerImpl implements L1Manager {
    }
    
    public NotifyingNotifiableFuture<Object> flushCache(Collection<Object> keys, Object retval, Address origin) {
-      if (trace) log.trace("Invalidating L1 caches for keys %s", keys);
+      if (trace) log.tracef("Invalidating L1 caches for keys %s", keys);
       
       NotifyingNotifiableFuture<Object> future = new AggregatingNotifyingFutureImpl(retval, 2);
       
       Collection<Address> invalidationAddresses = buildInvalidationAddressList(keys, origin);
       
       int nodes = invalidationAddresses.size();
-      
+
       if (nodes > 0) {
          // No need to invalidate at all if there is no one to invalidate!
          boolean multicast = isUseMulticast(nodes);
-         
-         if (trace) log.trace("There are %s nodes involved in invalidation. Threshold is: %s; using multicast: %s", nodes, threshold, multicast);
+
+         if (trace) log.tracef("There are %s nodes involved in invalidation. Threshold is: %s; using multicast: %s", nodes, threshold, multicast);
          
          if (multicast) {
-         	if (trace) log.trace("Invalidating keys %s via multicast", keys);
+         	if (trace) log.tracef("Invalidating keys %s via multicast", keys);
          	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(false, keys);
          	try {
          		rpcManager.broadcastRpcCommandInFuture(ic, future);
@@ -121,7 +120,7 @@ public class L1ManagerImpl implements L1Manager {
             	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(false, keys);
             	
                // Ask the caches who have requested from us to remove
-               if (trace) log.trace("Keys %s needs invalidation on %s", keys, invalidationAddresses);
+               if (trace) log.tracef("Keys %s needs invalidation on %s", keys, invalidationAddresses);
                rpcManager.invokeRemotelyInFuture(invalidationAddresses, ic, future);
                return future;
             } finally {

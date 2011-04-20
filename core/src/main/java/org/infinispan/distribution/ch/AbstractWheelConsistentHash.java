@@ -112,18 +112,18 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       positions = new TreeMap<Integer, Address>();
       addressToHashIds = new HashMap<Address, Integer>();
 
-      if (trace) log.trace("Adding %s nodes to cluster", newCaches.size());
+      if (trace) log.tracef("Adding %s nodes to cluster", newCaches.size());
       
       for (Address a : newCaches) {
          if (isVirtualNodesEnabled()) {
-            if (trace) log.trace("Adding %s virtual nodes for real node %s", numVirtualNodes, a);
+            if (trace) log.tracef("Adding %s virtual nodes for real node %s", numVirtualNodes, a);
             for (int i = 0; i < numVirtualNodes; i++) {
                Address va = new VirtualAddress(a, i);
-               if (trace) log.trace("Adding virtual node %s", va);
+               if (trace) log.tracef("Adding virtual node %s", va);
                addNode(va);
             }
          } else {
-            if (trace) log.trace("Adding node %s", a);
+            if (trace) log.tracef("Adding node %s", a);
             addNode(a);
          }
       }
@@ -147,7 +147,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       // TODO: Remove this check since https://jira.jboss.org/jira/browse/ISPN-428 contains a proper fix for this
       if (!addressToHashIds.containsKey(a))
          addressToHashIds.put(a, positionIndex);
-      if (trace) log.trace("Added node %s", a);
+      if (trace) log.tracef("Added node %s", a);
    }
    
    protected Address getRealAddress(Address a) {

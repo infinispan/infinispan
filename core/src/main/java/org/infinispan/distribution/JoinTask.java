@@ -101,7 +101,7 @@ public class JoinTask extends RehashTask {
    protected void performRehash() throws Exception {
       long start = System.currentTimeMillis();
       if (log.isDebugEnabled())
-         log.debug("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s", getMyAddress(), distributionManager.isJoinComplete());
+         log.debugf("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s", getMyAddress(), distributionManager.isJoinComplete());
       boolean cleanup = false;
       boolean aborted = false;
       try {
@@ -137,7 +137,7 @@ public class JoinTask extends RehashTask {
             if (trace) log.trace("Rehash not enabled, so not pulling state.");
          }
       } catch (Exception e) {
-         log.error("Caught exception!  Aborting join.", e);
+         log.abortingJoin(e);
          broadcastAbort(cleanup);
          aborted = true;
          throw new CacheException("Unexpected exception", e);
@@ -149,9 +149,9 @@ public class JoinTask extends RehashTask {
          if (!aborted) {
             signalJoinRehashEnd();
             if (configuration.isRehashEnabled()) invalidateInvalidHolders(chOld, chNew);
-            log.info("%s completed join rehash in %s!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
+            log.joinRehashCompleted(self, Util.prettyPrintTime(System.currentTimeMillis() - start));
          } else {
-            log.info("%s aborted join rehash after %s!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
+            log.joinRehashAborted(self, Util.prettyPrintTime(System.currentTimeMillis() - start));
          }
       }
    }
@@ -181,10 +181,10 @@ public class JoinTask extends RehashTask {
          } else {
             // will ignore unsuccessful response
             if (trace)
-               log.trace("updateTopologyInfo will ignore unsuccessful response (another node may not be ready), got response with success=" + r.isSuccessful() + ", is a " + r.getClass().getSimpleName());
+               log.tracef("updateTopologyInfo will ignore unsuccessful response (another node may not be ready), got response with success=%s, is a %s", r.isSuccessful(), r.getClass().getSimpleName());
          }
       }
-      if (trace) log.trace("Topology after after getting cluster info: " + distributionManager.getTopologyInfo());
+      if (trace) log.tracef("Topology after after getting cluster info: %s", distributionManager.getTopologyInfo());
    }
 
    private ConsistentHash retrieveOldConsistentHash() throws InterruptedException, IllegalAccessException, InstantiationException, ClassNotFoundException {
@@ -207,7 +207,7 @@ public class JoinTask extends RehashTask {
                                              true);
             addresses = parseResponses(resp.values());
             if (log.isDebugEnabled())
-               log.debug("Retrieved old consistent hash address list %s", addresses);
+               log.debugf("Retrieved old consistent hash address list %s", addresses);
          } catch (TimeoutException te) {
             // timed out waiting for responses; retry!
             resp = null;
@@ -220,7 +220,7 @@ public class JoinTask extends RehashTask {
             long time = rand.nextInt((int) (maxSleepTime - minSleepTime) / 10);
             time = (time * 10) + minSleepTime;
             if (trace)
-               log.trace("Sleeping for %s", Util.prettyPrintTime(time));
+               log.tracef("Sleeping for %s", Util.prettyPrintTime(time));
             Thread.sleep(time); // sleep for a while and retry
          } else {
             result = createConsistentHash(configuration, addresses, distributionManager.getTopologyInfo());

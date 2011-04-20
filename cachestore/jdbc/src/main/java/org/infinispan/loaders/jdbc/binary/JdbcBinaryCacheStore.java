@@ -35,7 +35,7 @@ import org.infinispan.loaders.jdbc.JdbcUtil;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -50,8 +50,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-
-import static org.infinispan.loaders.jdbc.DataManipulationHelper.logAndThrow;
 
 /**
  * {@link BucketBasedCacheStore} implementation that will store all the buckets as rows in database, each row
@@ -74,7 +72,7 @@ import static org.infinispan.loaders.jdbc.DataManipulationHelper.logAndThrow;
 @CacheLoaderMetadata(configurationClass = JdbcBinaryCacheStoreConfig.class)
 public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
 
-   private static final Log log = LogFactory.getLog(JdbcBinaryCacheStore.class);
+   private static final Log log = LogFactory.getLog(JdbcBinaryCacheStore.class, Log.class);
 
    private final static byte BINARY_STREAM_DELIMITER = 100;
 
@@ -86,7 +84,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
 
    public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
       if (log.isTraceEnabled())
-         log.trace("Initializing JdbcBinaryCacheStore " + config);
+         log.tracef("Initializing JdbcBinaryCacheStore %s", config);
       super.init(config, cache, m);
       this.config = (JdbcBinaryCacheStoreConfig) config;
       this.cacheName = cache.getName();
@@ -157,7 +155,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
       try {
          String sql = tableManipulation.getInsertRowSql();
          if (log.isTraceEnabled()) {
-            log.trace("Running insertBucket. Sql: '" + sql + "', on bucket: " + bucket);
+            log.tracef("Running insertBucket. Sql: '%s', on bucket: %s", sql, bucket);
          }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
@@ -170,7 +168,9 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
             throw new CacheLoaderException("Unexpected insert result: '" + insertedRows + "'. Expected values is 1");
          }
       } catch (SQLException ex) {
-         logAndThrow(ex, "sql failure while inserting bucket: " + bucket);
+         log.sqlFailureInsertingBucket(bucket, ex);
+         throw new CacheLoaderException(String.format(
+               "Sql failure while inserting bucket: %s", bucket), ex);
       } catch (InterruptedException ie) {
          if (log.isTraceEnabled()) log.trace("Interrupted while marshalling to insert a bucket");
          Thread.currentThread().interrupt();
@@ -186,7 +186,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
       try {
          String sql = tableManipulation.getUpdateRowSql();
          if (log.isTraceEnabled()) {
-            log.trace("Running updateBucket. Sql: '" + sql + "', on bucket: " + bucket);
+            log.tracef("Running updateBucket. Sql: '%s', on bucket: %s", sql, bucket);
          }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
@@ -199,7 +199,9 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
             throw new CacheLoaderException("Unexpected  update result: '" + updatedRows + "'. Expected values is 1");
          }
       } catch (SQLException e) {
-         logAndThrow(e, "sql failure while updating bucket: " + bucket);
+         log.sqlFailureUpdatingBucket(bucket, e);
+         throw new CacheLoaderException(String.format(
+               "Sql failure while updating bucket: %s", bucket), e);
       } catch (InterruptedException ie) {
          if (log.isTraceEnabled()) log.trace("Interrupted while marshalling to update a bucket");
          Thread.currentThread().interrupt();
@@ -216,7 +218,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
       try {
          String sql = tableManipulation.getSelectRowSql();
          if (log.isTraceEnabled()) {
-            log.trace("Running loadBucket. Sql: '" + sql + "', on key: " + keyHashCode);
+            log.tracef("Running loadBucket. Sql: '%s', on key: %s", sql, keyHashCode);
          }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
@@ -229,9 +231,9 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          bucket.setBucketName(bucketName);//bucket name is volatile, so not persisted.
          return bucket;
       } catch (SQLException e) {
-         String message = "sql failure while loading key: " + keyHashCode;
-         log.error(message, e);
-         throw new CacheLoaderException(message, e);
+         log.sqlFailureLoadingKey(keyHashCode, e);
+         throw new CacheLoaderException(String.format(
+               "Sql failure while loading key: %s", keyHashCode), e);
       } finally {
          JdbcUtil.safeClose(rs);
          JdbcUtil.safeClose(ps);
@@ -289,28 +291,29 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          while (rs.next()) {
             String key = rs.getString(2);
             if (immediateLockForWriting(key)) {
-               if (log.isTraceEnabled()) log.trace("Adding bucket keyed " + key + " for purging.");
+               if (log.isTraceEnabled()) log.tracef("Adding bucket keyed %s for purging.", key);
                InputStream binaryStream = rs.getBinaryStream(1);
                Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), binaryStream);
                bucket.setBucketName(key);
                expiredBuckets.add(bucket);
             } else {
                if (log.isTraceEnabled())
-                  log.trace("Could not acquire write lock for " + key + ", this won't be purged even though it has expired elements");
+                  log.tracef("Could not acquire write lock for %s, this won't be purged even though it has expired elements", key);
             }
          }
       } catch (SQLException ex) {
          //if something happens make sure buckets locks are being release
          releaseLocks(expiredBuckets);
          connectionFactory.releaseConnection(conn);
-         logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
+         log.failedClearingJdbcCacheStore(ex);
+         throw new CacheLoaderException("Failed clearing JdbcBinaryCacheStore", ex);
       } finally {
          JdbcUtil.safeClose(ps);
          JdbcUtil.safeClose(rs);
       }
 
       if (log.isTraceEnabled())
-         log.trace("Found following buckets: " + expiredBuckets + " which are about to be expired");
+         log.tracef("Found following buckets: %s which are about to be expired", expiredBuckets);
 
       if (expiredBuckets.isEmpty()) return;
       Set<Bucket> emptyBuckets = new HashSet<Bucket>();
@@ -332,7 +335,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
                updateCount++;
                if (updateCount % batchSize == 0) {
                   ps.executeBatch();
-                  if (log.isTraceEnabled()) log.trace("Flushing batch, update count is: " + updateCount);
+                  if (log.isTraceEnabled()) log.tracef("Flushing batch, update count is: %d", updateCount);
                }
             } else {
                it.remove();
@@ -341,15 +344,16 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          }
          //flush the batch
          if (updateCount % batchSize != 0) {
-            if (log.isTraceEnabled()) log.trace("Flushing batch, update count is: " + updateCount);
+            if (log.isTraceEnabled()) log.tracef("Flushing batch, update count is: %d", updateCount);
             ps.executeBatch();
          }
-         if (log.isTraceEnabled()) log.trace("Updated " + updateCount + " buckets.");
+         if (log.isTraceEnabled()) log.tracef("Updated %d buckets.", updateCount);
       } catch (SQLException ex) {
          //if something happens make sure buckets locks are being release
          releaseLocks(emptyBuckets);
          connectionFactory.releaseConnection(conn);
-         logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
+         log.failedClearingJdbcCacheStore(ex);
+         throw new CacheLoaderException("Failed clearing JdbcBinaryCacheStore", ex);
       } catch (InterruptedException ie) {
          if (log.isTraceEnabled()) log.trace("Interrupted while marshalling to purge expired entries");
          Thread.currentThread().interrupt();
@@ -360,7 +364,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
       }
 
 
-      if (log.isTraceEnabled()) log.trace("About to remove empty buckets " + emptyBuckets);
+      if (log.isTraceEnabled()) log.tracef("About to remove empty buckets %s", emptyBuckets);
 
       if (emptyBuckets.isEmpty()) return;
       //then remove the empty buckets
@@ -374,18 +378,19 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
             deletionCount++;
             if (deletionCount % batchSize == 0) {
                if (log.isTraceEnabled())
-                  log.trace("Flushing deletion batch, total deletion count so far is " + deletionCount);
+                  log.tracef("Flushing deletion batch, total deletion count so far is %d", deletionCount);
                ps.executeBatch();
             }
          }
          if (deletionCount % batchSize != 0) {
             int[] batchResult = ps.executeBatch();
             if (log.isTraceEnabled())
-               log.trace("Flushed the batch and received following results: " + Arrays.toString(batchResult));
+               log.tracef("Flushed the batch and received following results: %s", Arrays.toString(batchResult));
          }
       } catch (SQLException ex) {
          //if something happens make sure buckets locks are being release
-         logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
+         log.failedClearingJdbcCacheStore(ex);
+         throw new CacheLoaderException("Failed clearing JdbcBinaryCacheStore", ex);
       } finally {
          releaseLocks(emptyBuckets);
          JdbcUtil.safeClose(ps);

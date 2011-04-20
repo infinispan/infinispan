@@ -75,7 +75,7 @@ public class InvalidationNoReplicationTest extends MultipleCacheManagersTest {
       assert advancedCache(1).getDataContainer().containsKey(k0);
 
       log.info("Here is the put!");
-      log.info("Cache 0=%s cache 1=%s", address(0), address(1));
+      log.infof("Cache 0=%s cache 1=%s", address(0), address(1));
       cache(0).put(k0, "v1");
 
       log.info("before assertions!");

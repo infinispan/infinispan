@@ -128,7 +128,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
             BufferedInputStream bis = null;
             FileInputStream fileInStream = null;
             try {
-               if (trace) log.trace("Opening file in %s", file);
+               if (trace) log.tracef("Opening file in %s", file);
                fileInStream = new FileInputStream(file);
                int sz = fileInStream.available();
                bis = new BufferedInputStream(fileInStream);
@@ -158,7 +158,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       }
       for (File f : toDelete) {
          if (!deleteFile(f)) {
-            log.warn("Had problems removing file %s", f);
+            log.problemsRemovingFile(f);
          }
       }
    }
@@ -184,7 +184,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
                         } catch (InterruptedException ie) {
                            if (log.isDebugEnabled()) log.debug("Interrupted, so finish work.");
                         } catch (CacheLoaderException e) {
-                           log.warn("Problems purging file " + bucketFile, e);
+                           log.problemsPurgingFile(bucketFile, e);
                         }
                      }
                   });
@@ -201,7 +201,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
             if (trace) log.trace("Exit purgeInternal()");
          }
       } else {
-         log.warn("Unable to acquire global lock to purge cache store");
+         log.unableToAcquireLockToPurgeStore();
       }
    }
 
@@ -226,9 +226,8 @@ public class FileCacheStore extends BucketBasedCacheStore {
          } catch (InterruptedException ie) {
             throw ie;
          } catch (Exception e) {
-            String message = "Error while reading from file: " + bucketFile.getAbsoluteFile();
-            log.error(message, e);
-            throw new CacheLoaderException(message, e);
+            log.errorReadingFromFile(bucketFile.getAbsoluteFile(), e);
+            throw new CacheLoaderException("Error while reading from file", e);
          } finally {
             safeClose(is);
          }
@@ -242,9 +241,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
    public void updateBucket(Bucket b) throws CacheLoaderException {
       File f = new File(root, b.getBucketName());
       if (f.exists()) {
-         if (!deleteFile(f)) log.warn("Had problems removing file %s", f);
+         if (!deleteFile(f)) log.problemsRemovingFile(f);
       } else if (log.isTraceEnabled()) {
-         log.trace("Successfully deleted file: '" + f.getName() + "'");
+         log.tracef("Successfully deleted file: '%s'", f.getName());
       }
 
       if (!b.getEntries().isEmpty()) {
@@ -255,7 +254,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
             fos.write(bytes);
             fos.flush();
          } catch (IOException ex) {
-            log.error("Exception while saving bucket " + b, ex);
+            log.errorSavingBucket(b, ex);
             throw new CacheLoaderException(ex);
          } catch (InterruptedException ie) {
             if (trace) log.trace("Interrupted while marshalling a bucket");
@@ -280,7 +279,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       root = new File(location);
       if (!root.exists()) {
          if (!root.mkdirs()) {
-            log.warn("Problems creating the directory: " + root);
+            log.problemsCreatingDirectory(root);
          }
       }
       if (!root.exists()) {
@@ -294,7 +293,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    }
 
    private boolean deleteFile(File f) {
-      if (trace) log.trace("Really delete file %s", f);
+      if (trace) log.tracef("Really delete file %s", f);
       return f.delete();
    }
 

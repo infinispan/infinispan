@@ -129,13 +129,13 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       for (int i = 0; i < 10; i++) {
          Object key = "OLD" + i;
          Object value = joiner.get(key);
-         log.info(" TEST: Key %s is %s", key, value);
+         log.infof(" TEST: Key %s is %s", key, value);
          assert "value".equals(value) : "Couldn't see key " + key + " on joiner!";
       }
 
       for (Object key: Arrays.asList(ut.key(), pt.key(), ct.key())) {
          Object value = joiner.get(key);
-         log.info(" TEST: Key %s is %s", key, value);
+         log.infof(" TEST: Key %s is %s", key, value);
          assert "value".equals(value) : "Couldn't see key " + key + " on joiner!";
       }
    }

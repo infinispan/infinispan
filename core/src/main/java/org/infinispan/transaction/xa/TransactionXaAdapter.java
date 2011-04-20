@@ -104,7 +104,7 @@ public class TransactionXaAdapter implements XAResource {
       Xid xid = convertXid(externalXid);
       LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
 
-      if (trace) log.trace("Committing transaction %s", localTransaction.getGlobalTransaction());
+      if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
       txCoordinator.commit(localTransaction, isOnePhase);
       forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction);
    }
@@ -124,16 +124,16 @@ public class TransactionXaAdapter implements XAResource {
       //transform in our internal format in order to be able to serialize
       localTransaction.setXid(xid);
       txTable.addLocalTransactionMapping(localTransaction);
-      if (trace) log.trace("start called on tx " + this.localTransaction.getGlobalTransaction());
+      if (trace) log.tracef("start called on tx %s", this.localTransaction.getGlobalTransaction());
    }
 
    public void end(Xid externalXid, int i) throws XAException {
-      if (trace) log.trace("end called on tx " + this.localTransaction.getGlobalTransaction());
+      if (trace) log.tracef("end called on tx %s", this.localTransaction.getGlobalTransaction());
    }
 
    public void forget(Xid externalXid) throws XAException {
       Xid xid = convertXid(externalXid);
-      if (trace) log.trace("forget called for xid %s", xid);
+      if (trace) log.tracef("forget called for xid %s", xid);
       try {
          recoveryManager.removeRecoveryInformationFromCluster(null, xid, true);
       } catch (Exception e) {
@@ -157,14 +157,14 @@ public class TransactionXaAdapter implements XAResource {
 
    public Xid[] recover(int flag) throws XAException {
       if (!configuration.isTransactionRecoveryEnabled()) {
-         log.warn("Recovery call will be ignored as recovery is disabled. More on recovery: http://community.jboss.org/docs/DOC-16646");
+         log.recoveryIgnored();
          return RecoveryManager.RecoveryIterator.NOTHING;
       }
       if (trace) log.trace("recover called: " + flag);
 
       if (isFlag(flag, TMSTARTRSCAN)) {
          recoveryIterator = recoveryManager.getPreparedTransactionsFromCluster();
-         if (trace) log.trace("Fetched a new recovery iterator: %s" , recoveryIterator);
+         if (trace) log.tracef("Fetched a new recovery iterator: %s" , recoveryIterator);
       }
       if (isFlag(flag, TMENDRSCAN)) {
          if (log.isTraceEnabled()) log.trace("Flushing the iterator");
@@ -220,7 +220,7 @@ public class TransactionXaAdapter implements XAResource {
    private static LocalXaTransaction getLocalTransactionAndValidateImpl(Xid xid, XaTransactionTable txTable) throws XAException {
       LocalXaTransaction localTransaction = txTable.getLocalTransaction(xid);
       if  (localTransaction == null) {
-         if (trace) log.trace("no tx found for %s", xid);
+         if (trace) log.tracef("no tx found for %s", xid);
          throw new XAException(XAException.XAER_NOTA);
       }
       return localTransaction;

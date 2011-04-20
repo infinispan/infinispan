@@ -33,7 +33,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.remote.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -63,7 +63,7 @@ import java.util.concurrent.TimeUnit;
 @CacheLoaderMetadata(configurationClass = RemoteCacheStoreConfig.class)
 public class RemoteCacheStore extends AbstractCacheStore {
 
-   private static final Log log = LogFactory.getLog(RemoteCacheStore.class);
+   private static final Log log = LogFactory.getLog(RemoteCacheStore.class, Log.class);
 
    private volatile RemoteCacheStoreConfig config;
    private volatile RemoteCacheManager remoteCacheManager;
@@ -91,7 +91,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
    @Override
    public void store(InternalCacheEntry entry) throws CacheLoaderException {
       if (log.isTraceEnabled()) {
-         log.trace("Adding entry: " + entry);
+         log.tracef("Adding entry: %s", entry);
       }
       remoteCache.put(entry.getKey(), entry, toSeconds(entry.getLifespan(), entry, LIFESPAN), TimeUnit.SECONDS, toSeconds(entry.getMaxIdle(), entry, MAXIDLE), TimeUnit.SECONDS);
    }
@@ -141,9 +141,8 @@ public class RemoteCacheStore extends AbstractCacheStore {
 
    @Override
    public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
-      String message = "RemoteCacheStore can only run in shared mode! This method shouldn't be called in shared mode";
-      log.error(message);
-      throw new CacheLoaderException(message);
+      log.sharedModeOnlyAllowed();
+      throw new CacheLoaderException("RemoteCacheStore can only run in shared mode! This method shouldn't be called in shared mode");
    }
 
    @Override
@@ -178,8 +177,8 @@ public class RemoteCacheStore extends AbstractCacheStore {
    private long toSeconds(long millis, InternalCacheEntry entry, String desc) {
       if (millis > 0 && millis < 1000) {
          if (log.isTraceEnabled()) {
-            log.trace("Adjusting " + desc + " time for (k,v): (" + entry.getKey() + ", " + entry.getValue() + ") from "
-                  + millis + " millis to 1 sec, as milliseconds are not supported by HotRod");
+            log.tracef("Adjusting %s time for (k,v): (%s, %s) from %d millis to 1 sec, as milliseconds are not supported by HotRod",
+                       desc ,entry.getKey(), entry.getValue(), millis);
          }
          return 1;
       }

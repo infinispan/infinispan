@@ -52,7 +52,7 @@ public abstract class AbstractTransport implements Transport {
       byte[] strContent = readArray();
       String readString = new String(strContent, HotRodConstants.HOTROD_STRING_CHARSET);
       if (log.isTraceEnabled()) {
-         log.trace("Read string is: " + readString);
+         log.tracef("Read string is: %s", readString);
       }
       return readString;
    }

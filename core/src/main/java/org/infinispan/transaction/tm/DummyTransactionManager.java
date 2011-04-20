@@ -86,7 +86,7 @@ public class DummyTransactionManager extends DummyBaseTransactionManager {
          ctx.unbind("UserTransaction");
       }
       catch (NamingException e) {
-         log.error("unbinding of DummyTransactionManager failed", e);
+         log.unbindingDummyTmFailed(e);
       }
       instance.setTransaction(null);
       instance = null;

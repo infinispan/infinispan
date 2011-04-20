@@ -368,7 +368,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             if (mci != null) {
                mci.initializeReplicableCommand(c, isRemote);
             } else {
-               if (trace) log.trace("Nothing to initialize for command: " + c);
+               if (trace) log.tracef("Nothing to initialize for command: %s", c);
             }
       }
    }

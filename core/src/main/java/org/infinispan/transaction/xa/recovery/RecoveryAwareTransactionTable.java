@@ -123,7 +123,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
       RecoveryAwareLocalTransaction remove = (RecoveryAwareLocalTransaction) localTransactions.get(tx);
       remove.setCompletionFailed(true);
       if (log.isTraceEnabled())
-         log.trace("Marked as completion failed %s", remove);
+         log.tracef("Marked as completion failed %s", remove);
       //we should only keep it in the xid2LocalTx map
       localTransactions.remove(tx);
    }
@@ -148,11 +148,11 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
       for (RemoteTransaction rTx : remoteTransactions.values()) {
          RecoveryAwareGlobalTransaction gtx = (RecoveryAwareGlobalTransaction) rTx.getGlobalTransaction();
          if (gtx.getInternalId() == internalId) {
-            if (log.isTraceEnabled()) log.trace("Found xid %s matching internal id %s", gtx.getXid(), internalId);
+            if (log.isTraceEnabled()) log.tracef("Found xid %s matching internal id %s", gtx.getXid(), internalId);
             return gtx.getXid();
          }
       }
-      if (log.isTraceEnabled()) log.trace("Could not find remote transactions matching internal id %s", internalId);
+      if (log.isTraceEnabled()) log.tracef("Could not find remote transactions matching internal id %s", internalId);
       return null;
    }
 }

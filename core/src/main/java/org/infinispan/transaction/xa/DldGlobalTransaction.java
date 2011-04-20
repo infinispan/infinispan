@@ -131,13 +131,13 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
    public boolean isAcquiringRemoteLock(Object key, Address address) {
       boolean contains = remoteLockIntention.contains(key);
-      if (trace) log.trace("Intention check: does " + remoteLockIntention + " contain " + key + "? " + contains);
+      if (trace) log.tracef("Intention check: does %s contain %s? %b", remoteLockIntention, key, contains);
       return contains; //this works for replication
    }
 
    public void setRemoteLockIntention(Set<Object> remoteLockIntention) {
       if (trace) {
-         log.trace("Setting the remote lock intention: " + remoteLockIntention);
+         log.tracef("Setting the remote lock intention: %s", remoteLockIntention);
       }
       this.remoteLockIntention = remoteLockIntention;
    }
@@ -147,7 +147,9 @@ public class DldGlobalTransaction extends GlobalTransaction {
    }
 
    public boolean hasLockAtOrigin(Set<Object> remoteLockIntention) {
-      if (log.isTraceEnabled()) log.trace("Our(" + this + ") locks at origin are: " + locksAtOrigin + ". Others remote lock intention is: " + remoteLockIntention);
+      if (log.isTraceEnabled())
+         log.tracef("Our(%s) locks at origin are: %s. Others remote lock intention is: %s",
+                    this, locksAtOrigin, remoteLockIntention);
       for (Object key : remoteLockIntention) {
          if (this.locksAtOrigin.contains(key)) {
             return true;
@@ -157,7 +159,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
    }
 
    public void setLocksHeldAtOrigin(Set<Object> locksAtOrigin) {
-      if (trace) log.trace("Setting locks at origin for (" + this + ")  to " + locksAtOrigin);
+      if (trace) log.tracef("Setting locks at origin for (%s) to %s", this, locksAtOrigin);
       this.locksAtOrigin = locksAtOrigin;
    }
 

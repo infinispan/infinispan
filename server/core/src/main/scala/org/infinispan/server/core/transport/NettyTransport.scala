@@ -29,10 +29,11 @@ import org.jboss.netty.channel.ChannelDownstreamHandler
 import org.jboss.netty.bootstrap.ServerBootstrap
 import java.util.concurrent.Executors
 import scala.collection.JavaConversions._
-import org.infinispan.server.core.{ProtocolServer, Logging}
+import org.infinispan.server.core.ProtocolServer
 import org.jboss.netty.util.{ThreadNameDeterminer, ThreadRenamingRunnable}
 import org.infinispan.util.logging.LogFactory
 import org.jboss.netty.logging.{InternalLoggerFactory, Log4JLoggerFactory}
+import org.infinispan.server.core.logging.Log
 
 /**
  * A Netty based transport.
@@ -43,8 +44,7 @@ import org.jboss.netty.logging.{InternalLoggerFactory, Log4JLoggerFactory}
 class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
                      address: SocketAddress, masterThreads: Int, workerThreads: Int,
                      idleTimeout: Int, threadNamePrefix: String, tcpNoDelay: Boolean,
-                     sendBufSize: Int, recvBufSize: Int) extends Transport {
-   import NettyTransport._
+                     sendBufSize: Int, recvBufSize: Int) extends Transport with Log {
 
    private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
    val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted")
@@ -114,22 +114,22 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
       // We *pause* the acceptor so no new connections are made
       var future = serverChannels.unbind().awaitUninterruptibly();
       if (!future.isCompleteSuccess()) {
-         warn("Server channel group did not completely unbind");
-         for (ch <- asIterator(future.getGroup().iterator)) {
+         logServerDidNotUnbind
+         for (ch <- asScalaIterator(future.getGroup().iterator)) {
             if (ch.isBound()) {
-               warn("%s is still bound to %s", ch, ch.getRemoteAddress());
+               logChannelStillBound(ch, ch.getRemoteAddress())
             }
          }
       }
 
-      workerExecutor.shutdown();
-      serverChannels.close().awaitUninterruptibly();
-      future = acceptedChannels.close().awaitUninterruptibly();
+      workerExecutor.shutdown()
+      serverChannels.close().awaitUninterruptibly()
+      future = acceptedChannels.close().awaitUninterruptibly()
       if (!future.isCompleteSuccess()) {
-         warn("Channel group did not completely close");
-         for (ch <- asIterator(future.getGroup().iterator)) {
+         logServerDidNotClose
+         for (ch <- asScalaIterator(future.getGroup().iterator)) {
             if (ch.isBound()) {
-               warn(ch + " is still connected to " + ch.getRemoteAddress());
+               logChannelStillConnected(ch, ch.getRemoteAddress())
             }
          }
       }
@@ -139,5 +139,3 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
    }
 
 }
-
-object NettyTransport extends Logging

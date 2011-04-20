@@ -53,7 +53,7 @@ public class GetInDoubtTransactionsCommand extends RecoveryCommand {
    @Override
    public List<Xid> perform(InvocationContext ctx) throws Throwable {
       List<Xid> localInDoubtTransactions = recoveryManager.getInDoubtTransactions();
-      if (log.isTraceEnabled()) log.trace("Returning result %s", localInDoubtTransactions);
+      if (log.isTraceEnabled()) log.tracef("Returning result %s", localInDoubtTransactions);
       return localInDoubtTransactions;
    }
 

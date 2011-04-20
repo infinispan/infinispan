@@ -25,7 +25,7 @@ package org.infinispan.query.backend;
 import org.infinispan.CacheException;
 import org.infinispan.query.Transformable;
 import org.infinispan.query.Transformer;
-import org.infinispan.util.logging.Log;
+import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -45,7 +45,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 public class KeyTransformationHandler {
-   private static final Log log = LogFactory.getLog(KeyTransformationHandler.class);
+   private static final Log log = LogFactory.getLog(KeyTransformationHandler.class, Log.class);
 
    public static Object stringToKey(String s) {
       char type = s.charAt(0);
@@ -88,7 +88,7 @@ public class KeyTransformationHandler {
             try {
                keyClass = Thread.currentThread().getContextClassLoader().loadClass(keyClassName);
             } catch (ClassNotFoundException e) {
-               log.error("Could not locate class " + keyClass, e);
+               log.keyClassNotFound(keyClassName, e);
             }
             if (keyClass != null) {
                t = getTransformer(keyClass);
@@ -180,9 +180,10 @@ public class KeyTransformationHandler {
       Transformable t = keyClass.getAnnotation(Transformable.class);
       Transformer tf = null;
       if (t != null) try {
-         tf = t.transformer().newInstance();
+         // The cast should not be necessary but it's workaround for a compiler bug.
+         tf = (Transformer) t.transformer().newInstance();
       } catch (Exception e) {
-         log.error("Cannot instantiate an instance of Transformer class " + t.transformer() + "!", e);
+         log.couldNotInstantiaterTransformerClass(t.transformer(), e);
       }
       return tf;
    }

@@ -53,7 +53,7 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
       InetSocketAddress serverAddress = (InetSocketAddress) key;
       TcpTransport tcpTransport = new TcpTransport(serverAddress, tcpTransportFactory);
       if (log.isTraceEnabled()) {
-         log.trace("Created tcp transport: " + tcpTransport);
+         log.tracef("Created tcp transport: %s", tcpTransport);
       }
       if (pingOnStartup && !firstPingExecuted) {
          log.trace("Executing first ping!");
@@ -61,7 +61,7 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
          try {
             ping(tcpTransport, topologyId);
          } catch (Exception e) {
-            log.trace("Ignoring ping request failure during ping on startup: " + e.getMessage());
+            log.tracef("Ignoring ping request failure during ping on startup: %s", e.getMessage());
          }
       }
       return tcpTransport;
@@ -79,7 +79,7 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
    public boolean validateObject(Object key, Object obj) {
       TcpTransport transport = (TcpTransport) obj;
       if (log.isTraceEnabled()) {
-         log.trace("About to validate(ping) connection to server " + key + ". TcpTransport is " + transport);
+         log.tracef("About to validate(ping) connection to server %s. TcpTransport is %s", key, transport);
       }
       return ping(transport, topologyId) == PingOperation.PingResult.SUCCESS;
    }
@@ -87,7 +87,7 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
    @Override
    public void destroyObject(Object key, Object obj) throws Exception {
       if (log.isTraceEnabled()) {
-         log.trace("About to destroy tcp transport: "+ obj);
+         log.tracef("About to destroy tcp transport: %s", obj);
       }
       TcpTransport transport = (TcpTransport) obj;
       transport.destroy();
@@ -97,7 +97,7 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
    public void activateObject(Object key, Object obj) throws Exception {
       super.activateObject(key, obj);
       if (log.isTraceEnabled()) {
-         log.trace("Fetching from pool:" + obj);
+         log.tracef("Fetching from pool: %s", obj);
       }
    }
 
@@ -105,7 +105,7 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
    public void passivateObject(Object key, Object obj) throws Exception {
       super.passivateObject(key, obj);
       if (log.isTraceEnabled()) {
-         log.trace("Returning to pool:" + obj);
+         log.tracef("Returning to pool: %s", obj);
       }
    }
 }

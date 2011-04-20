@@ -59,7 +59,7 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
          this.servers = servers.toArray(new InetSocketAddress[servers.size()]);
          index.set(0);
          if (log.isTraceEnabled()) {
-            log.trace("New server list is: " + Arrays.toString(this.servers) + ". Resetting index to 0");
+            log.tracef("New server list is: %s. Resetting index to 0", Arrays.toString(this.servers));
          }
       } finally {
          writeLock.unlock();
@@ -91,7 +91,7 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
       int pos = val % servers.length;
       InetSocketAddress server = servers[pos];
       if (log.isTraceEnabled()) {
-         log.trace("Returning server: " + server);
+         log.tracef("Returning server: %s", server);
       }
       return server;
    }

@@ -54,7 +54,7 @@ public class SynchronizationAdapter implements Synchronization {
    @Override
    public void beforeCompletion() {
       if (log.isTraceEnabled()) {
-         log.trace("beforeCompletion called for %s", localTransaction);
+         log.tracef("beforeCompletion called for %s", localTransaction);
       }
       try {
          txCoordinator.prepare(localTransaction);
@@ -66,7 +66,7 @@ public class SynchronizationAdapter implements Synchronization {
    @Override
    public void afterCompletion(int status) {
       if (log.isTraceEnabled()) {
-         log.trace("afterCompletion(%s) called for %s.", status, localTransaction);
+         log.tracef("afterCompletion(%s) called for %s.", status, localTransaction);
       }
       if (status == Status.STATUS_COMMITTED) {
          try {

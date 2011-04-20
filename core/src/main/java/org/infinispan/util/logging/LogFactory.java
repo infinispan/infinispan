@@ -23,6 +23,7 @@
 package org.infinispan.util.logging;
 
 import org.infinispan.util.Util;
+import org.jboss.logging.Logger;
 
 /**
  * Factory that creates {@link Log} instances.
@@ -47,14 +48,11 @@ public class LogFactory {
    }
 
    public static Log getLog(Class clazz) {
-      return getLog(clazz.getName());
+      return Logger.getMessageLogger(Log.class, clazz.getName());
    }
 
-   public static Log getLog(String category) {
-      if (IS_LOG4J_AVAILABLE) {
-         return new Log4JLogImpl(category);
-      } else {
-         return new JDKLogImpl(category);
-      }
+   public static <T> T getLog(Class clazz, Class<T> logClass) {
+      return Logger.getMessageLogger(logClass, clazz.getName());
    }
+
 }

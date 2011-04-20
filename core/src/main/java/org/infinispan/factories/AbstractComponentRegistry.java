@@ -212,14 +212,14 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       if (old != null) {
          // if they are equal don't bother
          if (old.instance.equals(component)) {
-            getLog().trace("Attempting to register a component equal to one that already exists under the same name (%s).  Not doing anything.", name);
+            getLog().tracef("Attempting to register a component equal to one that already exists under the same name (%s).  Not doing anything.", name);
             return;
          }
       }
 
       Component c;
       if (old != null) {
-         getLog().trace("Replacing old component %s with new instance %s", old, component);
+         getLog().tracef("Replacing old component %s with new instance %s", old, component);
          old.instance = component;
          old.methodsScanned = false;
          c = old;
@@ -236,7 +236,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       // we inject dependencies only after the component is already in the map to support cyclical dependencies
       c.injectDependencies();
 
-      if (old == null) getLog().trace("Registering component %s under name %s", c, name);
+      if (old == null) getLog().tracef("Registering component %s under name %s", c, name);
       if (state == ComponentStatus.RUNNING) populateLifeCycleMethods(c);
    }
 
@@ -258,7 +258,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       Annotation[][] parameterAnnotations = m.getParameterAnnotations();
       Object[] params = new Object[dependencies.length];
       if (getLog().isTraceEnabled())
-         getLog().trace("Injecting dependencies for method [%s] on an instance of [%s].", m, o.getClass().getName());
+         getLog().tracef("Injecting dependencies for method [%s] on an instance of [%s].", m, o.getClass().getName());
       for (int i = 0; i < dependencies.length; i++) {
          params[i] = getOrCreateComponent(dependencies[i], getComponentName(dependencies[i], parameterAnnotations, i));
       }
@@ -334,7 +334,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          if (component != null) {
             registerComponent(component, name);
          } else {
-             getLog().trace("Registering a null for component %s", name);
+             getLog().tracef("Registering a null for component %s", name);
             registerNullComponent(name);
          }
       }
@@ -455,7 +455,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    @SuppressWarnings("unchecked")
    protected <T> T getFromConfiguration(Class<T> componentClass) {
-      getLog().debug("Looking in configuration for an instance of %s that may have been injected from an external source.", componentClass);
+      getLog().debugf("Looking in configuration for an instance of %s that may have been injected from an external source.", componentClass);
       Method getter = BeanUtils.getterMethod(Configuration.class, componentClass);
       T returnValue = null;
 
@@ -464,7 +464,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             returnValue = (T) getter.invoke(getConfiguration());
          }
          catch (Exception e) {
-            getLog().warn("Unable to invoke getter %s on Configuration.class!", e, getter);
+            getLog().unableToInvokeGetterOnConfiguration(getter, e);
          }
       }
       return returnValue;
@@ -581,7 +581,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
 
       if (getLog().isTraceEnabled())
-         getLog().trace("Reset volatile components.  Registry now contains %s", componentLookup.keySet());
+         getLog().tracef("Reset volatile components.  Registry now contains %s", componentLookup.keySet());
    }
 
    // ------------------------------ START: Publicly available lifecycle methods -----------------------------
@@ -630,7 +630,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
       catch (Throwable t) {
          if (failed) {
-            getLog().warn("Attempted to stop() from FAILED state, but caught exception; try calling destroy()", t);
+            getLog().failedToCallStopAfterFailure(t);
          }
          failed = true;
          handleLifecycleTransitionFailure(t);
@@ -652,7 +652,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          stop();
       }
       catch (CacheException e) {
-         getLog().warn("Needed to call stop() before destroying but stop() threw exception. Proceeding to destroy", e);
+         getLog().stopBeforeDestroyFailed(e);
       }
 
       try {
@@ -707,7 +707,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
       addShutdownHook();
 
-      getLog().info("Infinispan version: " + Version.printVersion());
+      getLog().version(Version.printVersion());
       state = ComponentStatus.RUNNING;
    }
 
@@ -770,7 +770,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             Thread.currentThread().interrupt();
          }
       } else {
-         getLog().warn("Received a remote call but the cache is not in STARTED state - ignoring call.");
+         getLog().cacheNotStarted();
       }
       return false;
    }

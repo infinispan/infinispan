@@ -174,7 +174,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    @Override
    public void start() throws CacheLoaderException {
       state = newStateMap();
-      log.info("Async cache loader starting %s", this);
+      log.debugf("Async cache loader starting %s", this);
       stopped.set(false);
       lastAsyncProcessorShutsDownExecutor = false;
       super.start();
@@ -211,7 +211,7 @@ public class AsyncStore extends AbstractDelegatingStore {
          changesDeque.put(QUIT_SIGNAL);
          executor.awaitTermination(asyncStoreConfig.getShutdownTimeout(), TimeUnit.SECONDS);
       } catch (InterruptedException e) {
-         log.error("Interrupted or timeout while waiting for AsyncStore worker threads to push all state to the decorated store", e);
+         log.interruptedWaitingAsyncStorePush(e);
          Thread.currentThread().interrupt();
       }
       super.stop();
@@ -239,7 +239,7 @@ public class AsyncStore extends AbstractDelegatingStore {
          super.clear();
          return true;
       } catch (CacheLoaderException e) {
-         log.error("Error performing clear in AsyncStore", e);
+         log.errorClearinAsyncStore(e);
          return false;
       }
    }
@@ -248,14 +248,14 @@ public class AsyncStore extends AbstractDelegatingStore {
       try {
          super.purgeExpired();
       } catch (CacheLoaderException e) {
-         log.error("Error performing PurgeExpired in AsyncStore", e);
+         log.errorPurgingAsyncStore(e);
       }
    }
 
    private void enqueue(Modification mod) {
       try {
          checkNotStopped();
-         if (trace) log.trace("Enqueuing modification %s", mod);
+         if (trace) log.tracef("Enqueuing modification %s", mod);
          changesDeque.add(mod);
       } catch (Exception e) {
          throw new CacheException("Unable to enqueue asynchronous task", e);
@@ -291,7 +291,7 @@ public class AsyncStore extends AbstractDelegatingStore {
             innerRun();
          } catch (Throwable t) {
             runAgainAfterWaiting = false;
-            log.error("Unexpected error", t);
+            log.unexpectedErrorInAsyncProcessor(t);
          } finally {
             clearAllReadLock.unlock();
          }
@@ -322,17 +322,17 @@ public class AsyncStore extends AbstractDelegatingStore {
                // AsyncStoreCoordinator doesn't need to acquired the same lock as values put by it
                // will never be overwritten (putIfAbsent below)
                for (Object key : swap.keySet()) {
-                  if (trace) log.trace("Going to process mod key: %s", key);
+                  if (trace) log.tracef("Going to process mod key: %s", key);
                   boolean acquired = false;
                   try {
                      acquired = lockContainer.acquireLock(key, 0, TimeUnit.NANOSECONDS) != null;
                   } catch (InterruptedException e) {
-                     log.error("interrupted on acquireLock %s, 0 nanoseconds!", e);
+                     log.interruptedAcquiringLock(0, e);
                      Thread.currentThread().interrupt();
                      return;
                   }
                   if (trace)
-                     log.trace("Lock for key %s was acquired=%s", key, acquired);
+                     log.tracef("Lock for key %s was acquired=%s", key, acquired);
                   if (!acquired) {
                      Modification prev = swap.remove(key);
                      Modification didPut = state.putIfAbsent(key, prev); // don't overwrite more recently put work
@@ -356,19 +356,19 @@ public class AsyncStore extends AbstractDelegatingStore {
                return;
             } else {
                if (trace)
-                  log.trace("Apply %s modifications", swap.size());
+                  log.tracef("Apply %s modifications", swap.size());
                int maxRetries = 3;
                int attemptNumber = 0;
                boolean successful;
                do {
                   if (attemptNumber > 0 && log.isDebugEnabled())
-                     log.debug("Retrying due to previous failure. %s attempts left.", maxRetries - attemptNumber);
+                     log.debugf("Retrying due to previous failure. %s attempts left.", maxRetries - attemptNumber);
                   successful = put(swap);
                   attemptNumber++;
                } while (!successful && attemptNumber <= maxRetries);
 
                if (!successful)
-                  log.warn("Unable to process some async modifications after " + maxRetries + " retries!");
+                  log.unableToProcessAsyncModifications(maxRetries);
 
             }
          } finally {
@@ -399,7 +399,7 @@ public class AsyncStore extends AbstractDelegatingStore {
 
       void releaseLocks(Set<Object> keys) {
          for (Object key : keys) {
-            if (trace) log.trace("Release lock for key %s", key);
+            if (trace) log.tracef("Release lock for key %s", key);
             releaseLock(key);
          }
       }
@@ -425,20 +425,20 @@ public class AsyncStore extends AbstractDelegatingStore {
                   handleSafely(take);
                }
             } catch (InterruptedException e) {
-               log.error("AsyncStoreCoordinator interrupted", e);
+               log.asyncStoreCoordinatorInterrupted(e);
                return;
             } catch (Throwable t) {
-               log.error("Unexpected error in AsyncStoreCoordinator thread. AsyncStore is dead!", t);
+               log.unexpectedErrorInAsyncStoreCoordinator(t);
             }
          }
       }
 
       private void handleSafely(Modification mod) {
          try {
-            if (trace) log.trace("taking from modification queue: %s", mod);
+            if (trace) log.tracef("taking from modification queue: %s", mod);
             handle(mod, false);
          } catch (Exception e) {
-            log.error("Error while handling Modification in AsyncStore", e);
+            log.errorModifyingAsyncStore(e);
          }
       }
 
@@ -499,12 +499,12 @@ public class AsyncStore extends AbstractDelegatingStore {
             boolean successful = false;
             do {
                if (attemptNumber > 0 && log.isDebugEnabled())
-                  log.debug("Retrying clear() due to previous failure. %s attempts left.", maxRetries - attemptNumber);
+                  log.debugf("Retrying clear() due to previous failure. %s attempts left.", maxRetries - attemptNumber);
                successful = applyClear();
                attemptNumber++;
             } while (!successful && attemptNumber <= maxRetries);
             if (!successful) {
-               log.error("Clear() operation in async store could not be performed");
+               log.unableToClearAsyncStore();
             }
          } finally {
             clearAllWriteLock.unlock();

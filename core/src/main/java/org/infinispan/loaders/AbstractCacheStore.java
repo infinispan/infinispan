@@ -105,7 +105,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
             try {
                purgeInternal();
             } catch (CacheLoaderException e) {
-               log.error("Problems encountered while purging expired", e);
+               log.problemPurgingExpired(e);
             }
          }
       });

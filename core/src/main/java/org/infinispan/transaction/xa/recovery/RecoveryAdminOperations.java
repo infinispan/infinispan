@@ -59,7 +59,7 @@ public class RecoveryAdminOperations {
    public String showInDoubtTransactions() {
       Set<RecoveryManager.InDoubtTxInfo> info = getRecoveryInfoFromCluster();
       if (log.isTraceEnabled()) {
-         log.trace("Found in doubt transactions: %s", info.size());
+         log.tracef("Found in doubt transactions: %s", info.size());
       }
       StringBuilder result = new StringBuilder();
       for (RecoveryManager.InDoubtTxInfo i : info) {
@@ -84,7 +84,7 @@ public class RecoveryAdminOperations {
    @ManagedOperation(description = "Forces the commit of an in-doubt transaction")
    public String forceCommit(long internalID) {
       if (log.isTraceEnabled())
-         log.trace("Forces the commit of an in-doubt transaction: %s", internalID);
+         log.tracef("Forces the commit of an in-doubt transaction: %s", internalID);
       return completeBasedOnInternalId(internalID, true);
    }
 
@@ -137,10 +137,10 @@ public class RecoveryAdminOperations {
    private String completeTransaction(Xid xid, RecoveryManager.InDoubtTxInfo i, boolean commit) {
       //try to run it locally at first
       if (i.isLocal()) {
-         if (log.isTraceEnabled()) log.trace("Forcing completion of local transaction: %s", i);
+         if (log.isTraceEnabled()) log.tracef("Forcing completion of local transaction: %s", i);
          return recoveryManager.forceTransactionCompletion(xid, commit);
       } else {
-         if (log.isTraceEnabled()) log.trace("Forcing completion of remote transaction: %s", i);
+         if (log.isTraceEnabled()) log.tracef("Forcing completion of remote transaction: %s", i);
          Set<Address> owners = i.getOwners();
          if (owners == null || owners.isEmpty()) throw new IllegalStateException("Owner list cannot be empty for " + i);
          return recoveryManager.forceTransactionCompletionFromCluster(xid, owners.iterator().next(), commit);
@@ -152,7 +152,7 @@ public class RecoveryAdminOperations {
       SerializableXid xid = new SerializableXid(branchQualifier, globalTxId, formatId);
       for (RecoveryManager.InDoubtTxInfo i : info) {
          if (i.getXid().equals(xid)) {
-            if (log.isTraceEnabled()) log.trace("Found matching recovery info: %s", i);
+            if (log.isTraceEnabled()) log.tracef("Found matching recovery info: %s", i);
             return i;
          }
       }
@@ -161,7 +161,7 @@ public class RecoveryAdminOperations {
 
    private Set<RecoveryManager.InDoubtTxInfo> getRecoveryInfoFromCluster() {
       Set<RecoveryManager.InDoubtTxInfo> info = recoveryManager.getInDoubtTransactionInfoFromCluster();
-      if (log.isTraceEnabled()) log.trace("Recovery info from cluster is: %s", info);
+      if (log.isTraceEnabled()) log.tracef("Recovery info from cluster is: %s", info);
       return info;
    }
 
@@ -169,7 +169,7 @@ public class RecoveryAdminOperations {
       Set<RecoveryManager.InDoubtTxInfo> info = getRecoveryInfoFromCluster();
       for (RecoveryManager.InDoubtTxInfo i : info) {
          if (i.getInternalId().equals(internalId)) {
-            if (log.isTraceEnabled()) log.trace("Found matching recovery info: %s", i);
+            if (log.isTraceEnabled()) log.tracef("Found matching recovery info: %s", i);
             return i;
          }
       }

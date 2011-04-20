@@ -24,7 +24,7 @@ package org.infinispan.loaders.jdbc.connectionfactory;
 
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.sql.Connection;
@@ -39,7 +39,7 @@ import java.sql.SQLException;
  */
 public class SimpleConnectionFactory extends ConnectionFactory {
 
-   private static final Log log = LogFactory.getLog(SimpleConnectionFactory.class);
+   private static final Log log = LogFactory.getLog(SimpleConnectionFactory.class, Log.class);
 
    private String connectionUrl;
    private String userName;
@@ -51,7 +51,7 @@ public class SimpleConnectionFactory extends ConnectionFactory {
       this.userName = config.getUserName();
       this.password = config.getPassword();
       if (log.isTraceEnabled()) {
-         log.trace("Starting connection " + this);
+         log.tracef("Starting connection %s", this);
       }
    }
 
@@ -74,12 +74,12 @@ public class SimpleConnectionFactory extends ConnectionFactory {
       try {
          conn.close();
       } catch (SQLException e) {
-         log.warn("Failure while closing the connection to the database ", e);
+         log.failureClosingConnection(e);
       }
    }
 
    private void loadDriver(String driverClass) throws CacheLoaderException {
-      if (log.isTraceEnabled()) log.trace("Attempting to load driver " + driverClass);
+      if (log.isTraceEnabled()) log.tracef("Attempting to load driver %s", driverClass);
       Util.getInstance(driverClass);
    }
 

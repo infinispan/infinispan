@@ -108,14 +108,14 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       markGtxAsRemote();
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
       if (transaction == null) {
-         if (trace) log.trace("Did not find a RemoteTransaction for %s", globalTx);
+         if (trace) log.tracef("Did not find a RemoteTransaction for %s", globalTx);
          return invalidRemoteTxReturnValue();
       }
       visitRemoteTransaction(transaction);
       RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext(getOrigin());
       ctxt.setRemoteTransaction(transaction);
 
-      if (trace) log.trace("About to execute tx command " + this);
+      if (trace) log.tracef("About to execute tx command %s", this);
       return invoker.invoke(ctxt, this);
    }
 
