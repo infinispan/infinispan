@@ -57,32 +57,34 @@ public class L1ManagerImpl implements L1Manager {
       
       int nodes = invalidationAddresses.size();
       
-      boolean multicast = isUseMulticast(nodes);
-      
-      if (trace) log.trace("There are %s nodes involved in invalidation. Threshold is: %s; using multicast: %s", nodes, threshold, multicast);
-      
-      if (multicast) {
-      	if (trace) log.trace("Invalidating keys %s via multicast", keys);
-      	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(false, keys);
-      	try {
-      		rpcManager.broadcastRpcCommandInFuture(ic, future);
-      	} finally {
-      		cleanupRequestors(keys);
-      	}
-      } else {
-         try {
-         	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(false, keys);
-         	
-            // Ask the caches who have requested from us to remove
-            if (trace) log.trace("Keys %s needs invalidation on %s", keys, invalidationAddresses);
-            rpcManager.invokeRemotelyInFuture(invalidationAddresses, ic, future);
-            return future;
-         } finally {
-         	cleanupRequestors(keys);
-         }
+      if (nodes > 0) {
+         // No need to invalidate at all if there is no one to invalidate!
+         boolean multicast = isUseMulticast(nodes);
          
-      }
-      
+         if (trace) log.trace("There are %s nodes involved in invalidation. Threshold is: %s; using multicast: %s", nodes, threshold, multicast);
+         
+         if (multicast) {
+         	if (trace) log.trace("Invalidating keys %s via multicast", keys);
+         	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(false, keys);
+         	try {
+         		rpcManager.broadcastRpcCommandInFuture(ic, future);
+         	} finally {
+         		cleanupRequestors(keys);
+         	}
+         } else {
+            try {
+            	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(false, keys);
+            	
+               // Ask the caches who have requested from us to remove
+               if (trace) log.trace("Keys %s needs invalidation on %s", keys, invalidationAddresses);
+               rpcManager.invokeRemotelyInFuture(invalidationAddresses, ic, future);
+               return future;
+            } finally {
+            	cleanupRequestors(keys);
+            }
+         }    
+      } else
+         if (trace) log.trace("No L1 caches to invalidate");
       return future;
    }
    
