@@ -38,7 +38,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.ReflectionCache;
-import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.util.BeanUtils;
 import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.ReflectionUtil;
@@ -205,7 +204,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       registerNonVolatileComponent(component, type.getName());
    }
 
-   protected void registerComponentInternal(Object component, String name, boolean nonVolatile) {
+   protected void registerComponentInternal(Object component, String name, boolean survivesRestarts) {
       if (component == null)
          throw new NullPointerException("Cannot register a null component under name [" + name + "]");
       Component old = componentLookup.get(name);
@@ -230,7 +229,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          c.instance = component;
          componentLookup.put(name, c);
       }
-      c.nonVolatile = nonVolatile;
+      c.survivesRestarts = survivesRestarts;
 
       addComponentDependencies(c);
       // inject dependencies for this component
@@ -518,7 +517,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    public void registerDefaultClassLoader(ClassLoader loader) {
       registerComponent(loader == null ? getClass().getClassLoader() : loader, ClassLoader.class);
       // make sure the class loader is non-volatile, so it survives restarts.
-      componentLookup.get(ClassLoader.class.getName()).nonVolatile = true;
+      componentLookup.get(ClassLoader.class.getName()).survivesRestarts = true;
    }
 
    /**
@@ -570,13 +569,13 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    }
 
    /**
-    * Removes any components not annotated as @NonVolatile.
+    * Removes any components not annotated as @SurvivesRestarts.
     */
-   public void resetNonVolatile() {
+   public void resetVolatileComponents() {
       // destroy all components to clean up resources
       for (Component c : new HashSet<Component>(componentLookup.values())) {
          // the component is volatile!!
-         if (!c.nonVolatile) {
+         if (!c.survivesRestarts) {
             componentLookup.remove(c.name);
          }
       }
@@ -657,7 +656,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
 
       try {
-         resetNonVolatile();
+         resetVolatileComponents();
       }
       finally {
          // We always progress to destroyed
@@ -842,14 +841,14 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       /**
        * If true, then this component is not flushed before starting the ComponentRegistry.
        */
-      boolean nonVolatile;
+      boolean survivesRestarts;
 
       @Override
       public String toString() {
          return "Component{" +
                  "instance=" + instance +
                  ", name=" + name +
-                 ", nonVolatile=" + nonVolatile +
+                 ", survivesRestarts=" + survivesRestarts +
                  '}';
       }
 

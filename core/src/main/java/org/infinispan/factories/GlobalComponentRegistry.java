@@ -32,6 +32,7 @@ import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.manager.ReflectionCache;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
@@ -45,9 +46,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.DEFAULT;
-import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.REGISTER;
 
 import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.DEFAULT;
 import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.REGISTER;
@@ -76,8 +74,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    private final GlobalConfiguration globalConfiguration;
 
    /**
-    * Tracking set of created caches in order to make it easy to
-    * remove a cache on remote nodes.
+    * Tracking set of created caches in order to make it easy to remove a cache on remote nodes.
     */
    private final Set<String> createdCaches;
 
@@ -94,11 +91,13 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          // this order is important ... 
          globalConfiguration = configuration;
          registerDefaultClassLoader(null);
+
          registerComponent(this, GlobalComponentRegistry.class);
          registerComponent(cacheManager, EmbeddedCacheManager.class);
          registerComponent(configuration, GlobalConfiguration.class);
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
+
          Map<Byte, ModuleCommandFactory> factories = ModuleProperties.moduleCommandFactories();
          if (factories != null && !factories.isEmpty())
             registerNonVolatileComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
@@ -134,8 +133,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
                try {
                   invokedFromShutdownHook = true;
                   GlobalComponentRegistry.this.stop();
-               }
-               finally {
+               } finally {
                   invokedFromShutdownHook = false;
                }
             }
@@ -168,20 +166,26 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    public void start() {
-      boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
-      if (needToNotify) {
-         for (ModuleLifecycle l : moduleLifecycles) {
-            l.cacheManagerStarting(this, globalConfiguration);
+      try {
+         boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
+         if (needToNotify) {
+            for (ModuleLifecycle l : moduleLifecycles) {
+               l.cacheManagerStarting(this, globalConfiguration);
+            }
          }
-      }
-      super.start();
-      if (needToNotify && state == ComponentStatus.RUNNING) {
-         for (ModuleLifecycle l : moduleLifecycles) {
-            l.cacheManagerStarted(this);
+         super.start();
+         if (needToNotify && state == ComponentStatus.RUNNING) {
+            for (ModuleLifecycle l : moduleLifecycles) {
+               l.cacheManagerStarted(this);
+            }
          }
+      } catch (RuntimeException rte) {
+         resetVolatileComponents();
+         rewire();
+         throw new EmbeddedCacheManagerStartupException(rte);
       }
    }
-   
+
    public void stop() {
       boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
       if (needToNotify) {
