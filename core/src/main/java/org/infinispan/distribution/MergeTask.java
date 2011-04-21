@@ -52,7 +52,7 @@ public class MergeTask extends JoinTask {
       if (!a1.contains(self)) chOld = createConsistentHash(configuration, a1, oldTopologyInfo);
       else if (!a2.contains(self)) chOld = createConsistentHash(configuration, a2, oldTopologyInfo);
       else throw new IllegalArgumentException("Neither of the merged partitions " +a1+ " and " + a2 + " contain " + self);
-      distributionManager.setTopologyInfo(ti);
+      if (ti != null) distributionManager.setTopologyInfo(ti);
    }
 
    @SuppressWarnings("unchecked")
