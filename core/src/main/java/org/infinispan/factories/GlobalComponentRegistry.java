@@ -31,6 +31,7 @@ import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.manager.ReflectionCache;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
@@ -81,6 +82,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          // this order is important ... 
          globalConfiguration = configuration;
          registerDefaultClassLoader(null);
+
          registerComponent(this, GlobalComponentRegistry.class);
          registerComponent(cacheManager, EmbeddedCacheManager.class);
          registerComponent(configuration, GlobalConfiguration.class);
@@ -116,8 +118,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
                try {
                   invokedFromShutdownHook = true;
                   GlobalComponentRegistry.this.stop();
-               }
-               finally {
+               } finally {
                   invokedFromShutdownHook = false;
                }
             }
@@ -150,20 +151,26 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    public void start() {
-      boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
-      if (needToNotify) {
-         for (ModuleLifecycle l : moduleLifecycles) {
-            l.cacheManagerStarting(this, globalConfiguration);
+      try {
+         boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
+         if (needToNotify) {
+            for (ModuleLifecycle l : moduleLifecycles) {
+               l.cacheManagerStarting(this, globalConfiguration);
+            }
          }
-      }
-      super.start();
-      if (needToNotify && state == ComponentStatus.RUNNING) {
-         for (ModuleLifecycle l : moduleLifecycles) {
-            l.cacheManagerStarted(this);
+         super.start();
+         if (needToNotify && state == ComponentStatus.RUNNING) {
+            for (ModuleLifecycle l : moduleLifecycles) {
+               l.cacheManagerStarted(this);
+            }
          }
+      } catch (RuntimeException rte) {
+         resetVolatileComponents();
+         rewire();
+         throw new EmbeddedCacheManagerStartupException(rte);
       }
    }
-   
+
    public void stop() {
       boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
       if (needToNotify) {
