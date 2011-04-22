@@ -116,7 +116,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, flags};
+      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis, flags, putIfAbsent};
    }
 
    public void setParameters(int commandId, Object[] parameters) {
@@ -126,6 +126,12 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       lifespanMillis = (Long) parameters[2];
       maxIdleTimeMillis = (Long) parameters[3];
       flags = (Set<Flag>) (parameters.length>4 ? parameters[4] : Collections.EMPTY_SET); //TODO remove conditional check in future - eases migration for now
+      if (parameters.length>5) {
+         Boolean wasPutIfAbsent = (Boolean) parameters[5];
+         if (wasPutIfAbsent!=null) {
+            this.putIfAbsent = wasPutIfAbsent.booleanValue();
+         }
+      }
    }
 
    public boolean isPutIfAbsent() {
