@@ -34,12 +34,17 @@ import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.hibernate.cache.RegionFactory;
 import org.hibernate.cache.infinispan.InfinispanRegionFactory;
+import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.transaction.internal.jta.CMTTransactionFactory;
 import org.hibernate.engine.transaction.spi.TransactionFactory;
 import org.hibernate.service.jdbc.connections.spi.ConnectionProvider;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import org.hibernate.service.jta.platform.spi.JtaPlatform;
+>>>>>>> HHH-6150 - JBoss AS7 integration work
 import org.hibernate.stat.SecondLevelCacheStatistics;
 
 import org.junit.Test;
@@ -119,7 +124,7 @@ public class BulkOperationsTestCase extends BaseCoreFunctionalTestCase {
 		cfg.setProperty( Environment.USE_QUERY_CACHE, "false" );
 		cfg.setProperty( Environment.CACHE_REGION_FACTORY, getCacheRegionFactory().getName() );
 		cfg.setProperty( Environment.TRANSACTION_STRATEGY, getTransactionFactoryClass().getName() );
-		cfg.getProperties().put( JtaPlatformInitiator.JTA_PLATFORM, getJtaPlatform() );
+		cfg.getProperties().put( AvailableSettings.JTA_PLATFORM, getJtaPlatform() );
 		cfg.setProperty( Environment.CONNECTION_PROVIDER, getConnectionProviderClass().getName() );
 	}
 
