@@ -99,10 +99,10 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    NotifyingFuture<Boolean> removeWithVersionAsync(K key, long version);
 
    /**
-    * Removes the given value only if its version matches the supplied version. See {@link #removeWithVersion(Object,
-    * long)} for a sample usage.
+    * Replaces the given value only if its version matches the supplied version. See {@link #removeWithVersion(Object,
+    * long)} for a sample usage of the version-based methods.
     *
-    * @return true if the method has been replaced
+    * @return true if the value has been replaced
     * @see #getVersioned(Object)
     * @see VersionedValue
     */
