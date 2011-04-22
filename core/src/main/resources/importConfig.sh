@@ -65,18 +65,21 @@ if [ "x$ISPN_HOME" = "x" ]; then
 fi
 export ISPN_HOME
 
-if [ -e ${ISPN_HOME}/lib ]
+if [ -e "${ISPN_HOME}/lib" ]
 then
+   OLD_IFS="$IFS"
+   IFS=$'\n'
    for JAR in ${ISPN_HOME}/lib/*
    do
       CLASSPATH=$CLASSPATH:$JAR
    done
+   IFS="$OLD_IFS"
 fi
 CLASSPATH=${ISPN_HOME}/infinispan-core.jar:$CLASSPATH
 
 if $cygwin; then
    # Turn paths into Windows style for Cygwin
-   CLASSPATH=`cygpath -wp ${CLASSPATH}`
+   CLASSPATH=`cygpath -wp "${CLASSPATH}"`
 fi
 
-${JAVACMD} -classpath $CLASSPATH org.infinispan.config.parsing.ConfigFilesConvertor ${*}
+${JAVACMD} -classpath "$CLASSPATH" org.infinispan.config.parsing.ConfigFilesConvertor ${*}
