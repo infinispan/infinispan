@@ -113,7 +113,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
    }
 
-   public static ConsistentHash createNewConsistentHash(List<Address> servers) {
+   public static ConsistentHash createNewConsistentHash(Collection<Address> servers) {
       try {
          Configuration c = new Configuration();
          c.setConsistentHashClass(DefaultConsistentHash.class.getName());

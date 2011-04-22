@@ -44,12 +44,13 @@ public class ConsistentHashV1 implements ConsistentHash {
    
    private final SortedMap<Integer, InetSocketAddress> positions = new TreeMap<Integer, InetSocketAddress>();
 
-   private volatile int hashSpace;
+   private int hashSpace;
+
    Hash mmh = new MurmurHash2();
 
    @Override
    public void init(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, int hashSpace) {
-      for (InetSocketAddress addr :servers2HashCode.keySet()) {
+      for (InetSocketAddress addr : servers2HashCode.keySet()) {
          positions.put(servers2HashCode.get(addr), addr);
       }
       if (log.isTraceEnabled())
