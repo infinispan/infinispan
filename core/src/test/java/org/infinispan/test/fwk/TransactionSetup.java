@@ -22,6 +22,7 @@
  */
 package org.infinispan.test.fwk;
 
+import com.arjuna.ats.arjuna.common.arjPropertyManager;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.LegacyKeySupportSystemProperties;
@@ -45,8 +46,9 @@ public class TransactionSetup {
       TransactionManager getManager();
    }
 
-   public static final String JTA = LegacyKeySupportSystemProperties.getProperty("infinispan.test.jta.tm", "infinispan.tm");
    public static final String JBOSS_TM = "jbosstm";
+   public static final String DUMMY_TM = "dummytm";
+   public static final String JTA = LegacyKeySupportSystemProperties.getProperty("infinispan.test.jta.tm", "infinispan.tm");
 
    private static Operations operations;
 
@@ -56,8 +58,14 @@ public class TransactionSetup {
 
    private static void init() {
       String property = JTA;
-      if (JBOSS_TM.equalsIgnoreCase(property)) {
+      if (!DUMMY_TM.equalsIgnoreCase(property)) {
          System.out.println("Transaction manager used: JBossTM");
+
+         //make the log in-memory to make tests run faster. Note that the config is frozen at system initialization time,
+         // so you need to set this before classloading the transaction system and can't change it within the same vm.
+         arjPropertyManager.getCoordinatorEnvironmentBean().setActionStore(com.arjuna.ats.internal.arjuna.objectstore.VolatileStore.class.getName());
+         arjPropertyManager.getObjectStoreEnvironmentBean().setObjectStoreType(com.arjuna.ats.internal.arjuna.objectstore.VolatileStore.class.getName());
+
          final String lookup = JBossStandaloneJTAManagerLookup.class.getName();
          final JBossStandaloneJTAManagerLookup instance = new JBossStandaloneJTAManagerLookup();
          operations = new Operations() {

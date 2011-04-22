@@ -118,11 +118,10 @@
       <version.jackson>1.6.1</version.jackson>
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
-      <version.jboss.common.core>2.2.14.GA</version.jboss.common.core>
+      <version.jboss.common.core>2.2.17.GA</version.jboss.common.core>
       <version.jboss.marshalling>1.2.3.GA</version.jboss.marshalling>
-      <version.jbossjta>4.9.0.GA</version.jbossjta>
-      <version.jbossjts>4.9.0.GA</version.jbossjts>
-      <version.jbossts-common>4.6.1.GA</version.jbossts-common>
+      <version.jbossjta>4.15.0-SNAPSHOT</version.jbossjta>
+      <version.org.jboss.logging>3.0.0.Beta5</version.org.jboss.logging>
       <version.jcipannotations>1.0</version.jcipannotations>
       <version.jclouds>1.0-beta-7</version.jclouds>
       <version.jetty>6.1.25</version.jetty>
@@ -179,27 +178,15 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>jboss.jbossts</groupId>
+         <groupId>org.jboss.jbossts</groupId>
          <artifactId>jbossjta</artifactId>
          <version>${version.jbossjta}</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>jboss.jbossts</groupId>
-         <artifactId>jbossjts</artifactId>
-         <version>${version.jbossjts}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>commons-logging</groupId>
          <artifactId>commons-logging</artifactId>
          <version>${version.commons.logging}</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>jboss.jbossts</groupId>
-         <artifactId>jbossts-common</artifactId>
-         <version>${version.jbossts-common}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
