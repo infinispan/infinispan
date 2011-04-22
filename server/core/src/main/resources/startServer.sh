@@ -2,12 +2,15 @@
 
 add_to_classpath()
 {
+  OLD_IFS=$IFS
+  IFS=$'\n'
   DIR=${1}
   if [ -e ${DIR} ] ; then
     for i in ${DIR}/*.jar ; do
       CP=${CP}:${i}
     done
   fi
+  IFS=$OLD_IFS
 }
 
 # OS specific support.
@@ -81,26 +84,26 @@ if [ "x$ISPN_HOME" = "x" ]; then
 fi
 export ISPN_HOME
 
-add_to_classpath ${ISPN_HOME}
-add_to_classpath ${ISPN_HOME}/lib
-add_to_classpath ${ISPN_HOME}/modules/memcached
-add_to_classpath ${ISPN_HOME}/modules/memcached/lib
-add_to_classpath ${ISPN_HOME}/modules/hotrod
-add_to_classpath ${ISPN_HOME}/modules/hotrod/lib
-add_to_classpath ${ISPN_HOME}/modules/websocket
-add_to_classpath ${ISPN_HOME}/modules/websocket/lib
+add_to_classpath "${ISPN_HOME}"
+add_to_classpath "${ISPN_HOME}/lib"
+add_to_classpath "${ISPN_HOME}/modules/memcached"
+add_to_classpath "${ISPN_HOME}/modules/memcached/lib"
+add_to_classpath "${ISPN_HOME}/modules/hotrod"
+add_to_classpath "${ISPN_HOME}/modules/hotrod/lib"
+add_to_classpath "${ISPN_HOME}/modules/websocket"
+add_to_classpath "${ISPN_HOME}/modules/websocket/lib"
 
 if $cygwin; then
    # Turn paths into Windows style for Cygwin
-   CP=`cygpath -wp ${CP}`
-   LOG4J_CONFIG=`cygpath -w ${ISPN_HOME}/etc/log4j.xml`
+   CP=`cygpath -wp "${CP}"`
+   LOG4J_CONFIG=`cygpath -w "${ISPN_HOME}/etc/log4j.xml"`
 else
    LOG4J_CONFIG=${ISPN_HOME}/etc/log4j.xml
 fi
 
-JVM_PARAMS="${JVM_PARAMS} -Djava.net.preferIPv4Stack=true  -Dlog4j.configuration=file:${LOG4J_CONFIG}"
+JVM_PARAMS="${JVM_PARAMS} -Djava.net.preferIPv4Stack=true  -Dlog4j.configuration=file://${LOG4J_CONFIG// /%20}"
 
 # Sample JPDA settings for remote socket debuging
 #JVM_PARAMS="$JVM_PARAMS -Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n"
 
-${JAVACMD} -cp $CP ${JVM_PARAMS} org.infinispan.server.core.Main ${*}
+${JAVACMD} -cp "$CP" ${JVM_PARAMS} org.infinispan.server.core.Main ${*}
