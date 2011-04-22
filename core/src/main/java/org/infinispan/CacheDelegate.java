@@ -125,8 +125,12 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    // as above for ResponseGenerator
    private ResponseGenerator responseGenerator;
    private DistributionManager distributionManager;
-   private final ThreadLocal<PreInvocationContext> flagHolder = new ThreadLocal<PreInvocationContext>();
    private ExecutorService asyncExecutor;
+   private final ThreadLocal<PreInvocationContext> flagHolder = new ThreadLocal<PreInvocationContext>() {
+      protected PreInvocationContext initialValue() {
+         return new PreInvocationContext();
+      }
+   };
 
    public CacheDelegate(String name) {
       this.name = name;
@@ -318,10 +322,10 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
 
    private InvocationContext setInvocationContextFlags(InvocationContext ctx) {
       PreInvocationContext pic = flagHolder.get();
-      if (pic != null && !pic.flags.isEmpty()) {
+      if (!pic.flags.isEmpty()) {
          ctx.setFlags(pic.flags);
       }
-      flagHolder.remove();
+      pic.flags.clear();
       return ctx;
    }
 
@@ -672,11 +676,8 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    public AdvancedCache<K, V> withFlags(Flag... flags) {
       if (flags != null && flags.length > 0) {
          PreInvocationContext pic = flagHolder.get();
-         if (pic == null) {
-            flagHolder.set(new PreInvocationContext(flags));
-         } else {
-            flagHolder.set(pic.add(flags));
-         }
+         // we will also have a valid PIC value because of initialValue()
+         pic.add(flags);
       }
       return this;
    }
@@ -690,17 +691,15 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    }
 
    private static final class PreInvocationContext {
-      EnumSet<Flag> flags;
+      private EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
 
-      private PreInvocationContext(Flag[] flags) {
-         this.flags = flags != null && flags.length > 0 ? EnumSet.copyOf(Arrays.asList(flags)) : EnumSet.noneOf(Flag.class);
+      private PreInvocationContext() {
       }
 
-      private PreInvocationContext add(Flag[] newFlags) {
-         if (newFlags != null && newFlags.length > 0) {
-            flags.addAll(Arrays.asList(newFlags));
+      private void add(Flag[] newFlags) {
+         for (Flag f : newFlags) {
+            flags.add(f);
          }
-         return this;
       }
    }
 }

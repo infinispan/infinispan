@@ -34,6 +34,7 @@ import collection.immutable
 import org.infinispan.util.concurrent.TimeoutException
 import java.io.IOException
 import org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP
+import org.infinispan.context.Flag.SKIP_CACHE_LOAD
 import org.infinispan.util.ByteArrayKey
 import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
@@ -226,8 +227,8 @@ object Decoder10 extends AbstractVersionedDecoder with Log {
    }
 
    override def getOptimizedCache(h: HotRodHeader, c: Cache[ByteArrayKey, CacheValue]): Cache[ByteArrayKey, CacheValue] = {
-      if (c.getConfiguration.getCacheMode.isDistributed && h.flag != ForceReturnPreviousValue) {
-         c.getAdvancedCache.withFlags(SKIP_REMOTE_LOOKUP)
+      if (h.flag != ForceReturnPreviousValue) {
+         c.getAdvancedCache.withFlags(SKIP_REMOTE_LOOKUP, SKIP_CACHE_LOAD)
       } else {
          c
       }

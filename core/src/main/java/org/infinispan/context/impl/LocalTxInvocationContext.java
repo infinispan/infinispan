@@ -46,7 +46,7 @@ import java.util.Map;
  */
 public class LocalTxInvocationContext extends AbstractTxInvocationContext {
 
-   private volatile LocalTransaction localTransaction;
+   private LocalTransaction localTransaction;
 
    public boolean isTransactionValid() {
       Transaction t = getTransaction();
