@@ -41,7 +41,7 @@ import java.util.Set;
  */
 public abstract class AbstractInvocationContext implements InvocationContext {
 
-   protected volatile EnumSet<Flag> flags;
+   protected EnumSet<Flag> flags;
 
    // since this is finite, small, and strictly an internal API, it is cheaper/quicker to use bitmasking rather than
    // an EnumSet.

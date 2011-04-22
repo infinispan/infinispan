@@ -46,7 +46,7 @@ import java.util.TreeSet;
  */
 public abstract class AbstractConsistentHash implements ConsistentHash {
 
-   protected volatile Set<Address> caches;
+   protected Set<Address> caches;
 
    @Override
    public void setCaches(Set<Address> caches) {
