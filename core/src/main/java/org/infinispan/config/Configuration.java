@@ -1770,7 +1770,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       protected Boolean writeSkewCheck = false;
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setUseLockStriping")
-      protected Boolean useLockStriping = true;
+      protected Boolean useLockStriping = false;
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setConcurrencyLevel")
       protected Integer concurrencyLevel = 32;
