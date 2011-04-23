@@ -22,17 +22,10 @@
  */
 package org.infinispan.util;
 
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.createNiceMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.classextension.EasyMock.replay;
-import static org.easymock.classextension.EasyMock.verify;
-import static org.testng.Assert.assertEquals;
-
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
+import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
@@ -45,6 +38,11 @@ import org.testng.annotations.Test;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
+import static org.easymock.EasyMock.*;
+import static org.easymock.classextension.EasyMock.replay;
+import static org.easymock.classextension.EasyMock.verify;
+import static org.testng.Assert.assertEquals;
+
 /**
  * Tests functionality in {@link org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager}.
  *
@@ -54,7 +52,6 @@ import java.util.concurrent.locks.Lock;
 public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
 
    DeadlockDetectingLockManagerMock lockManager;
-   TransactionFactory gtf = new TransactionFactory(true);
    Configuration config = new Configuration();
    private LockContainer lc;
    private static final int SPIN_DURATION = 1000;
@@ -64,7 +61,7 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
    public void setUp() {
       lc = createMock(LockContainer.class);
       lockManager = new DeadlockDetectingLockManagerMock(SPIN_DURATION, true, lc, config);
-      lockOwner = (DldGlobalTransaction) gtf.newGlobalTransaction();
+      lockOwner = (DldGlobalTransaction) TransactionFactory.TxFactoryEnum.DLD_NORECOVERY_XA.newGlobalTransaction();
    }
 
 
@@ -97,7 +94,7 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
    }
 
    public void testLocalDeadlock() throws Exception {
-      final DldGlobalTransaction ddgt = (DldGlobalTransaction) gtf.newGlobalTransaction();
+      final DldGlobalTransaction ddgt = (DldGlobalTransaction) TransactionFactory.TxFactoryEnum.DLD_NORECOVERY_XA.newGlobalTransaction();
 
       InvocationContext localTxContext = buildLocalTxIc(ddgt);
 
