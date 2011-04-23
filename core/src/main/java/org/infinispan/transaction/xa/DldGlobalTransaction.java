@@ -22,7 +22,6 @@
  */
 package org.infinispan.transaction.xa;
 
-import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
@@ -166,20 +165,16 @@ public class DldGlobalTransaction extends GlobalTransaction {
       return this.locksAtOrigin;
    }
 
-   public static class Externalizer extends AbstractExternalizer<DldGlobalTransaction> {
-      private final GlobalTransaction.Externalizer delegate;
+   public static class Externalizer extends GlobalTransaction.AbstractGlobalTxExternalizer<DldGlobalTransaction> {
 
-      public Externalizer() {
-         this(new TransactionFactory(true));
-      }
-
-      public Externalizer(TransactionFactory txFactory) {
-         delegate = new GlobalTransaction.Externalizer(txFactory);
+      @Override
+      protected DldGlobalTransaction createGlobalTransaction() {
+         return (DldGlobalTransaction) TransactionFactory.TxFactoryEnum.DLD_NORECOVERY_XA.newGlobalTransaction();
       }
 
       @Override
       public void writeObject(ObjectOutput output, DldGlobalTransaction ddGt) throws IOException {
-         delegate.writeObject(output, ddGt);
+         super.writeObject(output, ddGt);
          output.writeLong(ddGt.getCoinToss());
          if (ddGt.locksAtOrigin.isEmpty()) {
             output.writeObject(null);
@@ -191,7 +186,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
       @Override
       @SuppressWarnings("unchecked")
       public DldGlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         DldGlobalTransaction ddGt = (DldGlobalTransaction) delegate.readObject(input);
+         DldGlobalTransaction ddGt = super.readObject(input);
          ddGt.setCoinToss(input.readLong());
          Object locksAtOriginObj = input.readObject();
          if (locksAtOriginObj == null) {

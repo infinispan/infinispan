@@ -22,7 +22,6 @@
  */
 package org.infinispan.transaction.xa.recovery;
 
-import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -84,20 +83,23 @@ public class RecoveryAwareGlobalTransaction extends GlobalTransaction implements
             "} " + super.toString();
    }
 
-   public static class Externalizer extends AbstractExternalizer<RecoveryAwareGlobalTransaction> {
-      private final GlobalTransaction.Externalizer delegate = new GlobalTransaction.Externalizer(new TransactionFactory(false, true));
+   public static class Externalizer extends GlobalTransaction.AbstractGlobalTxExternalizer<RecoveryAwareGlobalTransaction> {
+
+      @Override
+      protected RecoveryAwareGlobalTransaction createGlobalTransaction() {
+         return (RecoveryAwareGlobalTransaction) TransactionFactory.TxFactoryEnum.NODLD_RECOVERY_XA.newGlobalTransaction();
+      }
 
       @Override
       public void writeObject(ObjectOutput output, RecoveryAwareGlobalTransaction xidGtx) throws IOException {
-         delegate.writeObject(output, xidGtx);
+         super.writeObject(output, xidGtx);
          output.writeObject(xidGtx.xid);
          output.writeLong(xidGtx.getInternalId());
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public RecoveryAwareGlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         RecoveryAwareGlobalTransaction xidGtx = (RecoveryAwareGlobalTransaction) delegate.readObject(input);
+         RecoveryAwareGlobalTransaction xidGtx = super.readObject(input);
          Xid xid = (Xid) input.readObject();
          xidGtx.setXid(xid);
          xidGtx.setInternalId(input.readLong());
