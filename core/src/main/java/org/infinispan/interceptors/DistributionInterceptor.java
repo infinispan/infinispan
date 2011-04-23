@@ -177,7 +177,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                invokeNextInterceptor(ctx, put);
             } else {
                CacheEntry ce = ctx.lookupEntry(key);
-               if (ce == null || ce.isNull() || ce.isLockPlaceholder()) {
+               if (ce == null || ce.isNull() || ce.isLockPlaceholder() || ce.getValue() == null) {
                   if (ce != null && ce.isChanged()) {
                      ce.setValue(ice.getValue());
                   } else {
