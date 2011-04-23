@@ -57,12 +57,11 @@ public class TransactionFactory {
 
    private EmbeddedCacheManager cm;
    private Configuration configuration;
-   private boolean recoveryEnabled;
    private ClusterIdGenerator clusterIdGenerator;
    private boolean isClustered;
    private RpcManager rpcManager;
 
-   private enum TxFactoryEnum {
+   public enum TxFactoryEnum {
 
       DLD_RECOVERY_XA {
          @Override
@@ -272,20 +271,6 @@ public class TransactionFactory {
       return txFactoryEnum.newRemoteTransaction(tx);
    }
 
-
-   public TransactionFactory() {
-      init(false, false, true);
-   }
-
-   public TransactionFactory(boolean dldEnabled) {
-      init(dldEnabled, false, true);
-   }
-
-   public TransactionFactory(boolean dldEnabled, boolean recoveryEnabled) {
-      init(dldEnabled, recoveryEnabled, true);
-   }
-
-
    @Inject
    public void init(Configuration configuration, EmbeddedCacheManager cm, RpcManager rpcManager) {
       this.cm = cm;
@@ -295,9 +280,9 @@ public class TransactionFactory {
 
    @Start
    public void start() {
-      boolean dldEnabled = configuration.isEnableDeadlockDetection();
+      boolean dldEnabled = configuration.isDeadlockDetectionEnabled();
       boolean xa = !configuration.isUseSynchronizationForTransactions();
-      recoveryEnabled = configuration.isTransactionRecoveryEnabled();
+      boolean recoveryEnabled = configuration.isTransactionRecoveryEnabled();
       init(dldEnabled, recoveryEnabled, xa);
       isClustered = configuration.getCacheMode().isClustered();
       if (recoveryEnabled) {

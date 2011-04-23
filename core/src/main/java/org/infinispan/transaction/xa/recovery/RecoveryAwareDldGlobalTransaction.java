@@ -22,10 +22,10 @@
  */
 package org.infinispan.transaction.xa.recovery;
 
-import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.Util;
 
@@ -76,20 +76,22 @@ public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction impl
       this.internalId = internalId;
    }
 
-   public static class Externalizer extends AbstractExternalizer<RecoveryAwareDldGlobalTransaction> {
-      private final DldGlobalTransaction.Externalizer delegate = new DldGlobalTransaction.Externalizer(new TransactionFactory(true, true));
-
+   public static class Externalizer extends GlobalTransaction.AbstractGlobalTxExternalizer<RecoveryAwareDldGlobalTransaction> {
       @Override
       public void writeObject(ObjectOutput output, RecoveryAwareDldGlobalTransaction xidGtx) throws IOException {
-         delegate.writeObject(output, xidGtx);
+         super.writeObject(output, xidGtx);
          output.writeObject(xidGtx.xid);
          output.writeLong(xidGtx.internalId);
       }
 
       @Override
-      @SuppressWarnings("unchecked")
+      protected RecoveryAwareDldGlobalTransaction createGlobalTransaction() {
+         return (RecoveryAwareDldGlobalTransaction) TransactionFactory.TxFactoryEnum.DLD_RECOVERY_XA.newGlobalTransaction();
+      }
+
+      @Override
       public RecoveryAwareDldGlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         RecoveryAwareDldGlobalTransaction xidGtx = (RecoveryAwareDldGlobalTransaction) delegate.readObject(input);
+         RecoveryAwareDldGlobalTransaction xidGtx = super.readObject(input);
          Xid xid = (Xid) input.readObject();
          xidGtx.setXid(xid);
          xidGtx.setInternalId(input.readLong());
