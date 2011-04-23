@@ -331,7 +331,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected Cache<Object, String>[] getNonOwnersExcludingSelf(Object key, Address self) {
-      Cache<Object, String>[] nonOwners = getNonOwners(key);
+      Cache<Object, String>[] nonOwners = getNonOwners(key, this.numOwners);
       boolean selfInArray = false;
       for (Cache<?, ?> c : nonOwners) {
          if (addressOf(c).equals(self)) {
