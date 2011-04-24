@@ -22,7 +22,6 @@
  */
 package org.infinispan.lucene;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.apache.lucene.store.IndexInput;
@@ -42,10 +41,10 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.apache.lucene.store.IndexInput
  */
 @SuppressWarnings("unchecked")
-public class InfinispanIndexInput extends IndexInput {
+final public class InfinispanIndexInput extends IndexInput {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexInput.class);
-   private final boolean trace = log.isTraceEnabled();
+   private static final boolean trace = log.isTraceEnabled();
 
    private final AdvancedCache chunksCache;
    private final FileCacheKey fileKey;
@@ -61,7 +60,7 @@ public class InfinispanIndexInput extends IndexInput {
 
    private boolean isClone;
 
-   public InfinispanIndexInput(AdvancedCache chunksCache, FileCacheKey fileKey, FileMetadata fileMetadata, SegmentReadLocker readLocks) throws FileNotFoundException {
+   public InfinispanIndexInput(final AdvancedCache chunksCache, final FileCacheKey fileKey, final FileMetadata fileMetadata, final SegmentReadLocker readLocks) {
       this.chunksCache = chunksCache;
       this.fileKey = fileKey;
       this.chunkSize = fileMetadata.getBufferSize();
@@ -101,7 +100,7 @@ public class InfinispanIndexInput extends IndexInput {
    }
 
    @Override
-   public void close() throws IOException {
+   public void close() {
       currentBufferSize = 0;
       bufferPosition = 0;
       currentLoadedChunk = -1;
@@ -118,9 +117,9 @@ public class InfinispanIndexInput extends IndexInput {
    }
 
    @Override
-   public void seek(long pos) throws IOException {
+   public void seek(final long pos) {
       bufferPosition = (int) (pos % chunkSize);
-      int targetChunk = (int) (pos / chunkSize);
+      final int targetChunk = (int) (pos / chunkSize);
       if (targetChunk != currentLoadedChunk) {
          currentLoadedChunk = targetChunk;
          setBufferToCurrentChunkIfPossible();
@@ -143,7 +142,7 @@ public class InfinispanIndexInput extends IndexInput {
    
    // Lucene might try seek(pos) using an illegal pos value
    // RAMDirectory teaches to position the cursor to the end of previous chunk in this case
-   private void setBufferToCurrentChunkIfPossible() throws IOException {
+   private void setBufferToCurrentChunkIfPossible() {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), filename, currentLoadedChunk);
       buffer = (byte[]) chunksCache.withFlags(Flag.SKIP_LOCKING).get(key);
       if (buffer == null) {

@@ -22,7 +22,6 @@
  */
 package org.infinispan.lucene;
 
-import java.io.FileNotFoundException;
 import java.util.Set;
 
 import org.infinispan.AdvancedCache;
@@ -92,7 +91,7 @@ class FileListOperations {
     * @param fileName
     * @return the FileMetadata associated with the fileName, or null if the file wasn't found.
     */
-   FileMetadata getFileMetadata(String fileName) throws FileNotFoundException {
+   FileMetadata getFileMetadata(String fileName) {
       FileCacheKey key = new FileCacheKey(indexName, fileName);
       FileMetadata metadata = (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).get(key);
       return metadata;

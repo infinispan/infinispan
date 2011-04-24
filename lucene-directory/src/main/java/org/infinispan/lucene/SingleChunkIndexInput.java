@@ -22,7 +22,6 @@
  */
 package org.infinispan.lucene;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.apache.lucene.store.IndexInput;
@@ -40,12 +39,12 @@ import org.infinispan.context.Flag;
  * @since 4.0
  */
 @SuppressWarnings("unchecked")
-public class SingleChunkIndexInput extends IndexInput {
+final public class SingleChunkIndexInput extends IndexInput {
 
    private final byte[] buffer;
    private int bufferPosition;
 
-   public SingleChunkIndexInput(AdvancedCache chunksCache, FileCacheKey fileKey, FileMetadata fileMetadata) throws FileNotFoundException {
+   public SingleChunkIndexInput(final AdvancedCache chunksCache, final FileCacheKey fileKey, final FileMetadata fileMetadata) {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), 0);
       byte[] b = (byte[]) chunksCache.withFlags(Flag.SKIP_LOCKING).get(key);
       if (b == null) {
@@ -58,7 +57,7 @@ public class SingleChunkIndexInput extends IndexInput {
    }
 
    @Override
-   public void close() throws IOException {
+   public void close() {
       //nothing to do
    }
 
@@ -81,7 +80,7 @@ public class SingleChunkIndexInput extends IndexInput {
    }
 
    @Override
-   public void readBytes(byte[] b, int offset, int len) throws IOException {
+   public void readBytes(final byte[] b, final int offset, final int len) throws IOException {
       if (buffer.length - bufferPosition < len) {
          throw new IOException("Read past EOF");
       }
@@ -90,7 +89,7 @@ public class SingleChunkIndexInput extends IndexInput {
    }
 
    @Override
-   public void seek(long pos) throws IOException {
+   public void seek(final long pos) {
       //Lucene might use positions larger than length(), in
       //this case you have to position the pointer to eof.
       bufferPosition = (int) Math.min(pos, buffer.length);

@@ -90,15 +90,15 @@ public final class FileListCacheKey implements Serializable {
       return "*|" + indexName;
    }
    
-   public static class Externalizer extends AbstractExternalizer<FileListCacheKey> {
+   public static final class Externalizer extends AbstractExternalizer<FileListCacheKey> {
 
       @Override
-      public void writeObject(ObjectOutput output, FileListCacheKey key) throws IOException {
+      public void writeObject(final ObjectOutput output, final FileListCacheKey key) throws IOException {
          output.writeUTF(key.indexName);
       }
 
       @Override
-      public FileListCacheKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public FileListCacheKey readObject(final ObjectInput input) throws IOException {
          String indexName = input.readUTF();
          return new FileListCacheKey(indexName);
       }

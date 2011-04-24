@@ -129,7 +129,7 @@ public final class FileMetadata implements Serializable {
       }
 
       @Override
-      public FileMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public FileMetadata readObject(ObjectInput input) throws IOException {
          long lastModified = UnsignedNumeric.readUnsignedLong(input);
          long size = UnsignedNumeric.readUnsignedLong(input);
          int bufferSize = UnsignedNumeric.readUnsignedInt(input);
