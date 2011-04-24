@@ -22,8 +22,6 @@
  */
 package org.infinispan.lucene.locking;
 
-import java.io.IOException;
-
 import org.apache.lucene.store.Lock;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -63,7 +61,7 @@ class BaseLuceneLock extends Lock {
     * {@inheritDoc}
     */
    @Override
-   public boolean obtain() throws IOException {
+   public boolean obtain() {
       Object previousValue = cache.withFlags(lockFlags).putIfAbsent(keyOfLock, keyOfLock);
       if (previousValue == null) {
          if (log.isTraceEnabled()) {
@@ -83,7 +81,7 @@ class BaseLuceneLock extends Lock {
     * {@inheritDoc}
     */
    @Override
-   public void release() throws IOException {
+   public void release() {
       clearLock();
    }
 

@@ -178,7 +178,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public String[] list() throws IOException {
+   public String[] list() {
       checkIsOpen();
       Set<String> filesList = fileOps.getFileList();
       String[] array = filesList.toArray(new String[0]);
@@ -188,7 +188,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public boolean fileExists(String name) throws IOException {
+   public boolean fileExists(String name) {
       checkIsOpen();
       return fileOps.getFileList().contains(name);
    }
@@ -196,7 +196,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public long fileModified(String name) throws IOException {
+   public long fileModified(String name) {
       checkIsOpen();
       FileMetadata fileMetadata = fileOps.getFileMetadata(name);
       if (fileMetadata == null) {
@@ -210,7 +210,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public void touchFile(String fileName) throws IOException {
+   public void touchFile(String fileName) {
       checkIsOpen();
       FileMetadata file = fileOps.getFileMetadata(fileName);
       if (file == null) {
@@ -226,7 +226,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public void deleteFile(String name) throws IOException {
+   public void deleteFile(String name) {
       checkIsOpen();
       fileOps.deleteFileName(name);
       readLocks.deleteOrReleaseReadLock(name);
@@ -238,7 +238,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public void renameFile(String from, String to) throws IOException {
+   public void renameFile(String from, String to) {
       checkIsOpen();
 
       // preparation: copy all chunks to new keys
@@ -272,7 +272,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public long fileLength(String name) throws IOException {
+   public long fileLength(String name) {
       checkIsOpen();
       FileMetadata fileMetadata = fileOps.getFileMetadata(name);
       if (fileMetadata == null) {
@@ -286,7 +286,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public IndexOutput createOutput(String name) throws IOException {
+   public IndexOutput createOutput(String name) {
       final FileCacheKey key = new FileCacheKey(indexName, name);
       // creating new file, metadata is added on flush() or close() of IndexOutPut
       return new InfinispanIndexOutput(metadataCache, chunksCache, key, chunkSize, fileOps);
@@ -318,7 +318,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public void close() throws IOException {
+   public void close() {
       isOpen = false;
    }
 
@@ -334,7 +334,7 @@ public class InfinispanDirectory extends Directory {
    }
 
    /** new name for list() in Lucene 3.0 **/
-   public String[] listAll() throws IOException {
+   public String[] listAll() {
       return list();
    }
 

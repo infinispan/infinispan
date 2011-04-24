@@ -31,7 +31,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.TransactionManager;
-import java.io.IOException;
 
 /**
  * <p>Factory for locks obtained in <code>InfinispanDirectory</code>,
@@ -105,7 +104,7 @@ public class TransactionalLockFactory extends LockFactory {
    /**
     * {@inheritDoc}
     */
-   public void clearLock(String lockName) throws IOException {
+   public void clearLock(String lockName) {
       //Same special care as above for locks named DEF_LOCK_NAME:
       if (DEF_LOCK_NAME.equals(lockName)) {
          defLock.clearLockSuspending();

@@ -22,8 +22,6 @@
  */
 package org.infinispan.lucene.locking;
 
-import java.io.IOException;
-
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
@@ -78,7 +76,7 @@ public class BaseLockFactory extends LockFactory {
    /**
     * {@inheritDoc}
     */
-   public void clearLock(String lockName) throws IOException {
+   public void clearLock(String lockName) {
       //Same special care as above for locks named DEF_LOCK_NAME:
       if (DEF_LOCK_NAME.equals(lockName)) {
          defLock.clearLock();

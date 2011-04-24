@@ -47,7 +47,7 @@ public final class FileCacheKey implements Serializable {
    private final String fileName;
    private final int hashCode;
 
-   public FileCacheKey(String indexName, String fileName) {
+   public FileCacheKey(final String indexName, final String fileName) {
       if (fileName == null)
          throw new IllegalArgumentException("filename must not be null");
       this.indexName = indexName;
@@ -107,16 +107,16 @@ public final class FileCacheKey implements Serializable {
       return fileName + "|M|"+ indexName;
    }
    
-   public static class Externalizer extends AbstractExternalizer<FileCacheKey> {
+   public static final class Externalizer extends AbstractExternalizer<FileCacheKey> {
 
       @Override
-      public void writeObject(ObjectOutput output, FileCacheKey key) throws IOException {
+      public void writeObject(final ObjectOutput output, final FileCacheKey key) throws IOException {
          output.writeUTF(key.indexName);
          output.writeUTF(key.fileName);
       }
 
       @Override
-      public FileCacheKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public FileCacheKey readObject(final ObjectInput input) throws IOException {
          String indexName = input.readUTF();
          String fileName = input.readUTF();
          return new FileCacheKey(indexName, fileName);

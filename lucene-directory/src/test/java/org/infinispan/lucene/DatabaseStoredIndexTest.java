@@ -23,7 +23,6 @@
 package org.infinispan.lucene;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -84,7 +83,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void testIndexUsage() throws IOException, ClassNotFoundException, SQLException {
+   public void testIndexUsage() throws IOException {
       cache = cacheManager.getCache();
       Directory dir = new InfinispanDirectory(cache, INDEX_NAME);
       writeTextToIndex(dir, 0, "hello database");

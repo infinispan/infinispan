@@ -27,7 +27,6 @@ import java.util.List;
 
 import org.infinispan.config.AdvancedExternalizerConfig;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.AdvancedExternalizerConfig;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
