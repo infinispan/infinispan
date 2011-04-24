@@ -79,7 +79,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
       configuration.setCreator(new SunReflectiveCreator());
       configuration.setExceptionListener(new DebuggingExceptionListener());
       // ContextClassResolver provides same functionality as MarshalledValueInputStream
-      configuration.setClassResolver(new ContextClassResolver());
+      configuration.setClassResolver(new DefaultContextClassResolver(defaultCl));
       configuration.setClassExternalizerFactory(new SerializeWithExtFactory());
       configuration.setVersion(2);
 
@@ -118,23 +118,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
    };
 
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
-      ClassLoader toUse = defaultCl;
-      Thread current = Thread.currentThread();
-      ClassLoader old = current.getContextClassLoader();
-
-      if (old == null) {
-         // need to have a context class loader set for the ContextClassResolver to work
-         try {
-            current.setContextClassLoader(toUse);
-            out.writeObject(obj);
-         }
-         finally {
-            current.setContextClassLoader(old);
-         }
-      }
-      else {
-         out.writeObject(obj);
-      }
+      out.writeObject(obj);
    }
 
    @Override
