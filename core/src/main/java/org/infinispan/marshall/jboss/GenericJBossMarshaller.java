@@ -47,7 +47,6 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -118,23 +117,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
    };
 
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
-      ClassLoader toUse = defaultCl;
-      Thread current = Thread.currentThread();
-      ClassLoader old = current.getContextClassLoader();
-
-      if (old == null) {
-         // need to have a context class loader set for the ContextClassResolver to work
-         try {
-            current.setContextClassLoader(toUse);
-            out.writeObject(obj);
-         }
-         finally {
-            current.setContextClassLoader(old);
-         }
-      }
-      else {
-         out.writeObject(obj);
-      }
+      out.writeObject(obj);
    }
 
    @Override
