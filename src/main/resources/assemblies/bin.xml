@@ -84,7 +84,7 @@
                      <include>**/*.py</include>
                      <include>**/*.rb</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0755</fileMode>
                </fileSet>
 
                <fileSet>
@@ -95,7 +95,7 @@
                      <include>**/*.cmd</include>
                      <include>**/*.bat</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0644</fileMode>
                </fileSet>
 
                <!-- Log4j XML -->
@@ -195,7 +195,7 @@
                      <include>**/*.py</include>
                      <include>**/*.rb</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0755</fileMode>
                </fileSet>
 
                <fileSet>
@@ -215,7 +215,7 @@
                      <include>**/*.bat</include>
                      <include>**/*.cmd</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0644</fileMode>
                </fileSet>
 
                <!-- EULAs and license files -->
@@ -299,7 +299,7 @@
                      <include>**/*.py</include>
                      <include>**/*.rb</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0755</fileMode>
                </fileSet>
 
                <fileSet>
@@ -310,7 +310,7 @@
                      <include>**/*.cmd</include>
                      <include>**/*.bat</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0644</fileMode>
                </fileSet>
 
                <!-- EULAs and license files -->
