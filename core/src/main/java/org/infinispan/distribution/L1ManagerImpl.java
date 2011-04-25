@@ -34,6 +34,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
+import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -47,7 +48,7 @@ public class L1ManagerImpl implements L1Manager {
 	private CommandsFactory commandsFactory;
 	private int threshold;
 
-	private final ConcurrentMap<Object, Collection<Address>> requestors;
+	private volatile ConcurrentMap<Object, Collection<Address>> requestors;
 	
 	public L1ManagerImpl() {
 	   requestors = new ConcurrentHashMap<Object, Collection<Address>>();
@@ -61,13 +62,37 @@ public class L1ManagerImpl implements L1Manager {
    }
    
    public void addRequestor(Object key, Address origin) {
-   	synchronized (key) {
-      	if (!requestors.containsKey(key)) {
-      		requestors.put(key, new HashSet<Address>());
-      	}
-      	if (trace) log.trace("Key %s will be L1 cached by requestor %s so storing requestor for later invalidation", key, origin);
-      	requestors.get(key).add(origin);
-   	}
+      
+      // Classic DCL - first check if we have HashSet in the map, if outside a lock we have it, we can use it
+      Collection<Address> as = requestors.get(key);
+   	
+      if (as == null) {
+        synchronized (requestors) {
+           as = requestors.get(key);
+           // Check again, if we now have it, skip to using it
+           if (as == null) {
+              // Otherwise add the hash set and key
+              as = new ConcurrentHashSet<Address>();
+              requestors.put(key, as);
+           }
+        }
+      }
+      // Finally, add the value to the hashset
+      as.add(origin);
+      
+      // If the collection of addresses got removed underneath us, then the correct thing to do is add a new collection with the address in
+      // This is an edge case, so synchronisation is fine
+      if (requestors.get(key) != as) {
+         synchronized (requestors) {
+            if (requestors.containsKey(key)) {
+               requestors.get(key).add(origin);
+            } else {
+               as = new ConcurrentHashSet<Address>();
+               as.add(origin);
+               requestors.put(key, as);
+            }
+         }
+      }
    }
    
    public NotifyingNotifiableFuture<Object> flushCache(Collection<Object> keys, Object retval, Address origin) {
@@ -118,16 +143,14 @@ public class L1ManagerImpl implements L1Manager {
    
    private Collection<Address> buildInvalidationAddressList(Collection<Object> keys, Address origin) {
    	Collection<Address> addresses = new HashSet<Address>();
+   	
    	for (Object key : keys) {
-   		synchronized (key) {
-      		if (requestors.containsKey(key)) {
-      			addresses.addAll(requestors.get(key));
-      		}
-   		}
+   	   Collection<Address> as = requestors.get(key);
+   	   if (as != null)
+   		   addresses.addAll(as);
    	}
-   	if (origin != null) {
+   	if (origin != null)
    		addresses.remove(origin);
-   	}
    	return addresses;
    }
    
