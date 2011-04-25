@@ -91,7 +91,7 @@
                      <include>**/*.py</include>
                      <include>**/*.rb</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0755</fileMode>
                </fileSet>
 
                <fileSet>
@@ -102,7 +102,7 @@
                      <include>**/*.cmd</include>
                      <include>**/*.bat</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0644</fileMode>
                </fileSet>
 
                <!-- schema (generated!) -->
@@ -218,7 +218,7 @@
                      <include>**/*.py</include>
                      <include>**/*.rb</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0755</fileMode>
                </fileSet>
 
                <fileSet>
@@ -238,7 +238,7 @@
                      <include>**/*.cmd</include>
                      <include>**/*.bat</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0644</fileMode>
                </fileSet>
 
 
@@ -349,7 +349,7 @@
                      <include>**/*.py</include>
                      <include>**/*.rb</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0755</fileMode>
                </fileSet>
 
                <fileSet>
@@ -360,7 +360,7 @@
                      <include>**/*.cmd</include>
                      <include>**/*.bat</include>
                   </includes>
-                  <fileMode>0777</fileMode>
+                  <fileMode>0644</fileMode>
                </fileSet>
 
                <!-- EULAs and license files -->
