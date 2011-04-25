@@ -73,7 +73,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
    private final ConcurrentMap<Class, Boolean> isMarshallableMap = new ConcurrentWeakKeyHashMap<Class, Boolean>();
 
    public GenericJBossMarshaller() {
-      factory = Marshalling.getMarshallerFactory("river");
+      factory = Marshalling.getMarshallerFactory("river", Marshalling.class.getClassLoader());
 
       configuration = new MarshallingConfiguration();
       configuration.setCreator(new SunReflectiveCreator());
