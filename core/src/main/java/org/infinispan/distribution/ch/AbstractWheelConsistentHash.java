@@ -67,7 +67,7 @@ import org.infinispan.util.logging.LogFactory;
  * 
  * <p>
  * In order to do this, the
- * implementation can use {@link #getRealAddress(Address)}, {@link #getRealAddresses(List)} and 
+ * implementation can use {@link #getRealAddress(Address)} and 
  * {@link #getRealAddresses(Set)} to convert the virtual addresses obtained from {@link #positions},
  * {@link #addressToHashIds} and {@link AbstractConsistentHash#caches} to real addresses. In particular an 
  * implementation should ensure that {@link #locate(Object, int)}, {@link #getStateProvidersOnLeave(Address, int)}
@@ -155,28 +155,6 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          return ((VirtualAddress) a).getRealAddress();
       else
          return a;
-   }
-   
-   protected List<Address> getRealAddresses(List<Address> virtualAddresses) {
-      if (virtualAddresses.isEmpty())
-         return emptyList();
-      else if (virtualAddresses.size() == 1) {
-         if (isVirtualNodesEnabled()) {
-            VirtualAddress a = (VirtualAddress) virtualAddresses.iterator().next();
-            return singletonList(a.getRealAddress());
-         } else
-            return virtualAddresses;
-      } else {
-         if (isVirtualNodesEnabled()) {
-            List<Address> addresses = new ArrayList<Address>();
-            for (Address a : virtualAddresses) {
-               VirtualAddress va = (VirtualAddress) a;
-               addresses.add(va.getRealAddress());
-            }
-            return addresses;
-         } else
-            return virtualAddresses;
-      }
    }
    
    protected Set<Address> getRealAddresses(Set<Address> virtualAddresses) {
