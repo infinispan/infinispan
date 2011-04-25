@@ -47,8 +47,9 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.Iterator;
 import java.util.Map;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.util.concurrent.locks.Lock;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Handles locks for the MVCC based LockingInterceptor
@@ -202,5 +203,9 @@ public class LockManagerImpl implements LockManager {
    @Metric(displayName = "Number of locks available")
    public int getNumberOfLocksAvailable() {
       return lockContainer.size() - lockContainer.getNumLocksHeld();
+   }
+
+   public int getLockId(Object key) {
+      return lockContainer.getLockId(key);
    }
 }

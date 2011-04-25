@@ -97,4 +97,8 @@ public abstract class AbstractPerEntryLockContainer implements LockContainer {
       Lock l = locks.remove(key);
       if (l != null) l.unlock();
    }
+
+   public int getLockId(Object key) {
+      return System.identityHashCode(getLock(key));
+   }
 }
