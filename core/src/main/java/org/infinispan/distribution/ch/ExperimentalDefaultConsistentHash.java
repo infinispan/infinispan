@@ -298,16 +298,6 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
       return hash;
    }
 
-   @Override
-   public int getHashId(Address a) {
-      throw new RuntimeException("Not yet implemented");
-   }
-
-   @Override
-   public int getHashSpace() {
-      return Integer.MAX_VALUE; // Entire positive integer range
-   }
-
    /**
     * @return A String representing the object pool.
     */
