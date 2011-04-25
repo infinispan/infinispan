@@ -48,7 +48,7 @@ public class L1ManagerImpl implements L1Manager {
 	private CommandsFactory commandsFactory;
 	private int threshold;
 
-	private volatile ConcurrentMap<Object, Collection<Address>> requestors;
+	private final ConcurrentMap<Object, Collection<Address>> requestors;
 	
 	public L1ManagerImpl() {
 	   requestors = new ConcurrentHashMap<Object, Collection<Address>>();
@@ -63,19 +63,17 @@ public class L1ManagerImpl implements L1Manager {
    
    public void addRequestor(Object key, Address origin) {
       
-      // Classic DCL - first check if we have HashSet in the map, if outside a lock we have it, we can use it
+      //we do a plain get first as that's likely to be enough
       Collection<Address> as = requestors.get(key);
-   	
+      
       if (as == null) {
-        synchronized (requestors) {
-           as = requestors.get(key);
-           // Check again, if we now have it, skip to using it
-           if (as == null) {
-              // Otherwise add the hash set and key
-              as = new ConcurrentHashSet<Address>();
-              requestors.put(key, as);
-           }
-        }
+         // only if needed we create a new HashSet, but make sure we don't replace another one being created
+         as = new ConcurrentHashSet<Address>();
+         Collection<Address> previousAs = requestors.putIfAbsent(key, as);
+         if (previousAs != null) {
+            //another thread added it already, so use his copy and discard our proposed instance
+            as = previousAs;
+         }
       }
       // Finally, add the value to the hashset
       as.add(origin);
