@@ -81,4 +81,18 @@ public interface LockContainer {
     * @param key Object on which lock is to be removed  
     */
    void releaseLock(Object key);
+
+   /**
+    * Returns the 'id' of the lock that will be used to guard access to a given key in the cache.  Particularly useful
+    * if Lock Striping is used and locks may guard more than one key.  This mechanism can be used to check whether
+    * keys may end up sharing the same lock.
+    * <p />
+    * If lock-striping is not used, the identity hash code of the lock created for this specific key is returned.  While
+    * this may not be of much value, it is done to maintain API compatibility of this method regardless of underlying
+    * locking scheme.
+    *
+    * @param key key to test for
+    * @return the ID of the lock.
+    */
+   int getLockId(Object key);
 }

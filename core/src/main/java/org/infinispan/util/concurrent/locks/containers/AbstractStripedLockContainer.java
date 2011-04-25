@@ -23,12 +23,11 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import net.jcip.annotations.ThreadSafe;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
-
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import static org.infinispan.util.Util.safeRelease;
 
@@ -109,5 +108,9 @@ public abstract class AbstractStripedLockContainer implements LockContainer {
          // it's possible that we attempt to unlock Locks which we didn't actually obtain.
          log.debug("Attempted to unlock a lock we didn't own - swallowing an IllegalMonitorStateException");
       }
+   }
+
+   public int getLockId(Object key) {
+      return hashToIndex(key);
    }
 }
