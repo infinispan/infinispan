@@ -101,10 +101,12 @@
 
       <!-- Versions for dependencies -->
       <version.apacheds.jdbm>1.5.4</version.apacheds.jdbm>
+      <version.arquillian>1.0.0.Alpha5</version.arquillian>
       <version.bdbje>4.0.92</version.bdbje>
       <version.c3p0>0.9.1.2</version.c3p0>
       <version.cassandra>0.8.0</version.cassandra>
       <version.cassandra.pool>0.8.1</version.cassandra.pool>
+      <version.cdi>1.0-SP4</version.cdi> 
       <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
       <version.commons.compress>1.0</version.commons.compress>
       <version.commons.pool>1.5.4</version.commons.pool>
@@ -149,9 +151,11 @@
       <version.rhq>3.0.0</version.rhq>
       <version.scala>2.8.1</version.scala>
       <version.slf4j>1.6.1</version.slf4j>
+      <version.solder>3.0.0.Final</version.solder>
       <version.spymemcached>2.5</version.spymemcached>
-      <version.testng>5.11</version.testng>
+      <version.testng>5.14.6</version.testng>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
+      <version.weld>1.1.1.Final</version.weld>
       <version.xsom>20081112</version.xsom>
       <version.xstream>1.3.1</version.xstream>
       <version.javassist>3.12.1.GA</version.javassist>
@@ -163,7 +167,6 @@
          <artifactId>testng</artifactId>
          <version>${version.testng}</version>
          <scope>test</scope>
-	 <classifier>jdk15</classifier>
       </dependency>
       <dependency>
          <groupId>net.jcip</groupId>
