@@ -92,6 +92,22 @@ public interface ConsistentHash {
    boolean isKeyLocalToAddress(Address a, Object key, int replCount);
 
    /**
+    * Returns the value between 0 and the hash space limit, or hash id, for a particular address. If there's no such
+    * value for an address, this method will return -1.
+    *
+    * @return An int between 0 and hash space if the address is present in the hash wheel, otherwise it returns -1.
+    */
+   int getHashId(Address a);
+
+   /**
+    * Returns the hash space constant for this consistent hash algorithm class. This integer is often used as modulus
+    * for arithmetic operations within the algorithm, for example, limiting the range of possible hash values.
+    * 
+    * @return A positive integer containing the hash space constant or 0 is not supported by implementation. 
+    */
+   int getHashSpace();
+
+   /**
     * Returns the nodes that need will replicate their state if the specified node crashes. The return collection
     * should contain all the nodes that backup-ed on leaver and one of the nodes which acted as a backup for the leaver .
     * <p>

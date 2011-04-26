@@ -73,6 +73,11 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       return Immutables.immutableListConvert(addresses);
    }
 
+   @Override
+   public int getHashId(Address a) {
+      throw new UnsupportedOperationException("Unsupported!");
+   }
+
    public List<Address> getStateProvidersOnLeave(Address leaver, int replCount) {
       throw new UnsupportedOperationException("Unsupported!");
    }
@@ -85,6 +90,14 @@ public class UnionConsistentHash extends AbstractConsistentHash {
    @Override
    public List<Address> getBackupsForNode(Address node, int replCount) {
       return oldCH.locate(node, replCount);
+   }
+
+   @Override
+   public int getHashSpace() {
+      int oldHashSpace = oldCH.getHashSpace();
+      int newHashSpace = newCH.getHashSpace();
+      // In a union, the hash space is the biggest of the hash spaces.
+      return oldHashSpace > newHashSpace ? oldHashSpace : newHashSpace;
    }
 
    public ConsistentHash getNewConsistentHash() {

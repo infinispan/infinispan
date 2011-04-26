@@ -22,10 +22,13 @@
  */
 package org.infinispan.distribution.ch;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -179,6 +182,21 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    @Override
    public List<Address> getBackupsForNode(Address node, int replCount) {
       return locate(node, replCount);
+   }
+
+   @Override
+   public int getHashSpace() {
+      return HASH_SPACE;
+   }
+
+
+   @Override
+   public int getHashId(Address a) {
+      Integer hashId = addressToHashIds.get(a);
+      if (hashId == null)
+         return -1;
+      else
+         return hashId;
    }
 
    public int getNormalizedHash(Object key) {
