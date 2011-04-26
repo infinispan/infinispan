@@ -54,6 +54,7 @@ public class TransactionXaAdapterTmIntegrationTest {
    public void setUp() {
       txTable = new XaTransactionTable();
       TransactionFactory gtf = new TransactionFactory();
+      gtf.init(false, false, true);
       globalTransaction = gtf.newGlobalTransaction(null, false);
       localTx = new LocalXaTransaction(new DummyTransaction(null), globalTransaction);
       xid = new DummyXid();
