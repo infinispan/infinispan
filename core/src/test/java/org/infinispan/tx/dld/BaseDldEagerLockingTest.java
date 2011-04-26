@@ -34,12 +34,6 @@ import javax.transaction.SystemException;
 
 import static org.testng.Assert.assertEquals;
 
-/**
- * // TODO: Document this
- *
- * @author Mircea.Markus@jboss.com
- * @since 4.2
- */
 public abstract class BaseDldEagerLockingTest extends BaseDldTest {
    protected PerCacheExecutorThread ex0;
    protected PerCacheExecutorThread ex1;

@@ -46,15 +46,15 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
    public static final boolean trace = log.isTraceEnabled();
 
-   private volatile long coinToss;
+   protected volatile long coinToss;
 
-   private volatile boolean isMarkedForRollback;
+   protected volatile boolean isMarkedForRollback;
 
-   private transient volatile Object localLockIntention;
+   protected transient volatile Object localLockIntention;
 
    protected volatile Set<Object> remoteLockIntention = emptySet();
 
-   private volatile Set<Object> locksAtOrigin = emptySet();
+   protected volatile Set<Object> locksAtOrigin = emptySet();
 
    public DldGlobalTransaction() {
    }

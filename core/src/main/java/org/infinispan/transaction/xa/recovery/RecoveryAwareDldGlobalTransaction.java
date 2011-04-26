@@ -35,6 +35,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
+import static java.util.Collections.emptySet;
+
 /**
  * DldGlobalTransaction that also holds xid information, required for recovery.
  * The purpose of this class is to avoid the serialization of Xid objects over the wire in the case recovery is not
@@ -78,10 +80,17 @@ public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction impl
 
    public static class Externalizer extends GlobalTransaction.AbstractGlobalTxExternalizer<RecoveryAwareDldGlobalTransaction> {
       @Override
-      public void writeObject(ObjectOutput output, RecoveryAwareDldGlobalTransaction xidGtx) throws IOException {
-         super.writeObject(output, xidGtx);
-         output.writeObject(xidGtx.xid);
-         output.writeLong(xidGtx.internalId);
+      public void writeObject(ObjectOutput output, RecoveryAwareDldGlobalTransaction globalTransaction) throws IOException {
+         super.writeObject(output, globalTransaction);
+         output.writeLong(globalTransaction.getCoinToss());
+         if (globalTransaction.locksAtOrigin.isEmpty()) {
+            output.writeObject(null);
+         } else {
+            output.writeObject(globalTransaction.locksAtOrigin);
+         }
+
+         output.writeObject(globalTransaction.xid);
+         output.writeLong(globalTransaction.internalId);
       }
 
       @Override
@@ -90,12 +99,21 @@ public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction impl
       }
 
       @Override
+      @SuppressWarnings("unchecked")
       public RecoveryAwareDldGlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         RecoveryAwareDldGlobalTransaction xidGtx = super.readObject(input);
+         RecoveryAwareDldGlobalTransaction globalTransaction = super.readObject(input);
+         globalTransaction.setCoinToss(input.readLong());
+         Object locksAtOriginObj = input.readObject();
+         if (locksAtOriginObj == null) {
+            globalTransaction.setLocksHeldAtOrigin(emptySet());
+         } else {
+            globalTransaction.setLocksHeldAtOrigin((Set<Object>) locksAtOriginObj);
+         }
+
          Xid xid = (Xid) input.readObject();
-         xidGtx.setXid(xid);
-         xidGtx.setInternalId(input.readLong());
-         return xidGtx;
+         globalTransaction.setXid(xid);
+         globalTransaction.setInternalId(input.readLong());
+         return globalTransaction;
       }
 
       @Override
