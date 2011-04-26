@@ -60,8 +60,7 @@ object Main extends Log {
    val PROP_KEY_TOPOLOGY_STATE_TRANSFER = "infinispan.server.topology.state_transfer"
    val PROP_KEY_CACHE_MANAGER_CLASS = "infinispan.server.cache_manager_class"
    val HOST_DEFAULT = "127.0.0.1"
-   val MASTER_THREADS_DEFAULT = 0
-   val WORKER_THREADS_DEFAULT = 0
+   val WORKER_THREADS_DEFAULT = 20 * Runtime.getRuntime.availableProcessors()
    val IDLE_TIMEOUT_DEFAULT = -1
    val TCP_NO_DELAY_DEFAULT = true
    val SEND_BUF_SIZE_DEFAULT = 0
@@ -271,9 +270,7 @@ object Main extends Log {
       println
       println("    -l, --host=<host or ip>            Interface to listen on (default: 127.0.0.1, localhost)")
       println
-      println("    -m, --master_threads=<num>         Number of threads accepting incoming connections (default: unlimited while resources are available)")
-      println
-      println("    -t, --work_threads=<num>           Number of threads processing incoming requests and sending responses (default: unlimited while resources are available)")
+      println("    -t, --worker_threads=<num>         Number of threads processing incoming requests and sending responses (default: 20 * number of processors)")
       println
       println("    -c, --cache_config=<filename>      Cache configuration file (default: creates cache with default values)")
       println

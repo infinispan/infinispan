@@ -77,4 +77,5 @@ trait Log {
    def logChannelStillConnected(ch: Channel, address: SocketAddress) =
       log.channelStillConnected(ch, address)
 
+   def logSettingMasterThreadsNotSupported = log.settingMasterThreadsNotSupported
 }

@@ -88,19 +88,10 @@ public class WebSocketServer extends AbstractProtocolServer {
    @Override
    public void startTransport(int idleTimeout, boolean tcpNoDelay, int sendBufSize, int recvBufSize, TypedProperties typedProps) {
       InetSocketAddress address = new InetSocketAddress(getHost(), getPort());
-      Executor masterExecutor =
-         masterThreads() == 0 ?
-            Executors.newCachedThreadPool() :
-            Executors.newFixedThreadPool(masterThreads());
-      Executor workerExecutor =
-         workerThreads() == 0 ?
-            Executors.newCachedThreadPool():
-            Executors.newFixedThreadPool(workerThreads());
+      Executor masterExecutor = Executors.newCachedThreadPool();
+      Executor workerExecutor = Executors.newCachedThreadPool();
 
-      NioServerSocketChannelFactory factory =
-         workerThreads() == 0 ?
-            new NioServerSocketChannelFactory(masterExecutor, workerExecutor) :
-            new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads());
+      NioServerSocketChannelFactory factory = new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads());
 
       // Configure the server.
       ServerBootstrap bootstrap = new ServerBootstrap(factory);
