@@ -32,7 +32,6 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.util.RuntimeExceptionWrapper;
-import static org.easymock.classextension.EasyMock.*;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
@@ -53,6 +52,8 @@ import java.io.ObjectInput;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Properties;
+
+import static org.easymock.classextension.EasyMock.*;
 
 /**
  * @author Adrian Cole
@@ -140,6 +141,7 @@ public class BdbjeCacheStoreTest {
       expiryMap = createMock(StoredSortedMap.class);
       currentTransaction = createMock(CurrentTransaction.class);
       gtf = new TransactionFactory();
+      gtf.init(false, false, true);
       WeakReference<Environment> envRef = new WeakReference<Environment>(env);
       ReflectionUtil.setValue(currentTransaction, "envRef", envRef);
       ThreadLocal localTrans = new ThreadLocal();
