@@ -66,6 +66,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -157,6 +158,7 @@ public class DistributionManagerImpl implements DistributionManager {
    final CountDownLatch finalJoinPhaseLatch = new CountDownLatch(1);
    volatile boolean enteredFinalJoinPhase = false;
    InboundInvocationHandler inboundInvocationHandler;
+   private TransactionTable txTable;
 
    /**
     * Default constructor
@@ -179,7 +181,7 @@ public class DistributionManagerImpl implements DistributionManager {
    @Inject
    public void init(Configuration configuration, RpcManager rpcManager, CacheManagerNotifier notifier, CommandsFactory cf,
                     DataContainer dataContainer, InterceptorChain interceptorChain, InvocationContextContainer icc,
-                    CacheLoaderManager cacheLoaderManager, InboundInvocationHandler inboundInvocationHandler) {
+                    CacheLoaderManager cacheLoaderManager, InboundInvocationHandler inboundInvocationHandler, TransactionTable tt) {
       this.cacheLoaderManager = cacheLoaderManager;
       this.configuration = configuration;
       this.rpcManager = rpcManager;
@@ -190,6 +192,7 @@ public class DistributionManagerImpl implements DistributionManager {
       this.interceptorChain = interceptorChain;
       this.icc = icc;
       this.inboundInvocationHandler = inboundInvocationHandler;
+      this.txTable = tt;
    }
 
    // needs to be AFTER the RpcManager
@@ -508,6 +511,7 @@ public class DistributionManagerImpl implements DistributionManager {
          oldConsistentHash = chOld;
          joiner.set(a);
          ConsistentHash chNew = ConsistentHashHelper.createConsistentHash(configuration, chOld.getCaches(), topologyInfo, a);
+         txTable.memberJoined(chNew, a);
          consistentHash = new UnionConsistentHash(chOld, chNew);
       }
       if (trace) log.tracef("New ConsistentHash is %s", consistentHash);
