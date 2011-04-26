@@ -49,6 +49,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
@@ -395,6 +396,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       Configuration configuration = defaultConfigIfNotPresent.clone();
       configuration.applyOverrides(configOverride.clone());
       configurationOverrides.put(cacheName, configuration);
+      //use reflection for this as we don't want to expose setName on Configuration.
+      ReflectionUtil.setValue(configuration, "name", cacheName);
       return configuration;
    }
 
