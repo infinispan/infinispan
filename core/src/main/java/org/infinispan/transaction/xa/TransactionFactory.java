@@ -20,6 +20,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.infinispan.transaction.xa;
 
 import org.infinispan.commands.write.WriteCommand;
@@ -296,7 +297,7 @@ public class TransactionFactory {
       }
    }
 
-   private void init(boolean dldEnabled, boolean recoveryEnabled, boolean xa) {
+   public void init(boolean dldEnabled, boolean recoveryEnabled, boolean xa) {
       if (dldEnabled && recoveryEnabled && xa) {
          txFactoryEnum = TxFactoryEnum.DLD_RECOVERY_XA;
       } else if (dldEnabled && !recoveryEnabled && xa) {
