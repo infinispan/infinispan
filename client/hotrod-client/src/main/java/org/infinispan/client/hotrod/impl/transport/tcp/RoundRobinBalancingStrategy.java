@@ -45,24 +45,19 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
 
    private static final Log log = LogFactory.getLog(RoundRobinBalancingStrategy.class);
 
-   private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-   private final Lock readLock = readWriteLock.readLock();
-   private final Lock writeLock = readWriteLock.writeLock();
-   private final AtomicInteger index = new AtomicInteger(0);
+   private int index = 0;
 
-   private volatile InetSocketAddress[] servers;
+   private InetSocketAddress[] servers;
 
    @Override
    public void setServers(Collection<InetSocketAddress> servers) {
-      writeLock.lock();
-      try {
-         this.servers = servers.toArray(new InetSocketAddress[servers.size()]);
-         index.set(0);
-         if (log.isTraceEnabled()) {
-            log.tracef("New server list is: %s. Resetting index to 0", Arrays.toString(this.servers));
-         }
-      } finally {
-         writeLock.unlock();
+      this.servers = servers.toArray(new InetSocketAddress[servers.size()]);
+      // keep the old index if possible so that we don't produce more requests for the first server
+      if (index >= this.servers.length) {
+         index = 0;
+      }
+      if (log.isTraceEnabled()) {
+         log.tracef("New server list is: " + Arrays.toString(this.servers));
       }
    }
 
@@ -71,24 +66,21 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
     */
    @Override
    public InetSocketAddress nextServer() {
-      readLock.lock();
-      try {
-         InetSocketAddress server = getServerByIndex(index.getAndIncrement());
-         return server;
-      } finally {
-         readLock.unlock();
-      }
+      InetSocketAddress server = getServerByIndex(index++);
+      // don't allow index to overflow and have a negative value
+      if (index >= servers.length)
+         index = 0;
+      return server;
    }
 
    /**
     * Returns same value as {@link #nextServer()} without modifying indexes/state.
     */
    public InetSocketAddress dryRunNextServer() {
-      return getServerByIndex(index.get());
+      return getServerByIndex(index);
    }
 
-   private InetSocketAddress getServerByIndex(int val) {
-      int pos = val % servers.length;
+   private InetSocketAddress getServerByIndex(int pos) {
       InetSocketAddress server = servers[pos];
       if (log.isTraceEnabled()) {
          log.tracef("Returning server: %s", server);
@@ -101,6 +93,6 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
    }
 
    public int getNextPosition() {
-      return  index.get() % servers.length;
+      return  index;
    }
 }
