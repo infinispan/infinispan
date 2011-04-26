@@ -39,7 +39,6 @@ import transport.NettyTransport
 abstract class AbstractProtocolServer(threadNamePrefix: String) extends ProtocolServer with Logging {
    protected var host: String = _
    protected var port: Int = _
-   protected var masterThreads: Int = _
    protected var workerThreads: Int = _
    protected var transport: NettyTransport = _
    protected var cacheManager: EmbeddedCacheManager = _
@@ -53,9 +52,9 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
          // By doing parameter validation here, both programmatic and command line clients benefit from it.
          this.host = typedProps.getProperty(PROP_KEY_HOST, HOST_DEFAULT, true)
          this.port = typedProps.getIntProperty(PROP_KEY_PORT, defaultPort, true)
-         this.masterThreads = typedProps.getIntProperty(PROP_KEY_MASTER_THREADS, MASTER_THREADS_DEFAULT, true)
-         if (masterThreads < 0)
-            throw new IllegalArgumentException("Master threads can't be lower than 0: " + masterThreads)
+         val masterThreads = typedProps.getIntProperty(PROP_KEY_MASTER_THREADS, -1, true)
+         if (masterThreads != -1)
+            warn("Setting the number of master threads is no longer supported")
 
          this.workerThreads = typedProps.getIntProperty(PROP_KEY_WORKER_THREADS, WORKER_THREADS_DEFAULT, true)
          if (workerThreads < 0)
@@ -94,7 +93,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
 
    def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {
       val address = new InetSocketAddress(host, port)
-      transport = new NettyTransport(this, getEncoder, address, masterThreads, workerThreads, idleTimeout,
+      transport = new NettyTransport(this, getEncoder, address, workerThreads, idleTimeout,
          threadNamePrefix, tcpNoDelay, sendBufSize, recvBufSize)
       transport.start
    }
