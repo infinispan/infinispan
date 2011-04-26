@@ -87,6 +87,10 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    private TransactionFactory gtf = new TransactionFactory();
 
+   public VersionAwareMarshallerTest() {
+      gtf.init(false, false, true);
+   }
+
    @BeforeTest
    public void setUp() {
       marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory(), new GlobalConfiguration());

@@ -51,15 +51,20 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
    private static final String JMX_DOMAIN = "MvccLockManagerMBeanTest";
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-      globalConfiguration.setExposeGlobalJmxStatistics(true);
-      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration.setJmxDomain(JMX_DOMAIN);
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault().fluent()
+            .globalJmxStatistics()
+               .mBeanServerLookupClass(PerThreadMBeanServerLookup.class)
+               .jmxDomain(JMX_DOMAIN)
+            .build();
+
       cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
 
-      Configuration configuration = getDefaultStandaloneConfig(true);
-      configuration.setExposeJmxStatistics(true);
-      configuration.setConcurrencyLevel(CONCURRENCY_LEVEL);
+      Configuration configuration = getDefaultStandaloneConfig(true).fluent()
+            .jmxStatistics()
+            .locking()
+               .concurrencyLevel(CONCURRENCY_LEVEL)
+               .useLockStriping(true)
+            .build();
 
       cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
