@@ -45,7 +45,7 @@ public class ConsistentHashV1 implements ConsistentHash {
 
    private int hashSpace;
 
-   MurmurHash2 mmh = new MurmurHash2();
+   private final MurmurHash2 mmh = new MurmurHash2();
 
    @Override
    public void init(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, int hashSpace) {

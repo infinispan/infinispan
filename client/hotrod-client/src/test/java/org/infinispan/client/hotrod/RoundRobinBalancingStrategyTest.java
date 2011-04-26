@@ -107,6 +107,7 @@ public class RoundRobinBalancingStrategyTest {
       List<InetSocketAddress> newServers = new ArrayList<InetSocketAddress>(defaultServers);
       newServers.remove(addr3);
       strategy.setServers(newServers);
+      // the next server index is reset to 0 because it would have been out of bounds
       assertEquals(addr1, strategy.nextServer());
       assertEquals(addr2, strategy.nextServer());
       assertEquals(addr1, strategy.nextServer());
@@ -124,8 +125,7 @@ public class RoundRobinBalancingStrategyTest {
       List<InetSocketAddress> newServers = new ArrayList<InetSocketAddress>(defaultServers);
       newServers.add(addr4);
       strategy.setServers(newServers);
-      assertEquals(addr1, strategy.nextServer());
-      assertEquals(addr2, strategy.nextServer());
+      // the next server index is still valid, so it is not reset
       assertEquals(addr3, strategy.nextServer());
       assertEquals(addr4, strategy.nextServer());
       assertEquals(addr1, strategy.nextServer());
@@ -135,5 +135,6 @@ public class RoundRobinBalancingStrategyTest {
       assertEquals(addr1, strategy.nextServer());
       assertEquals(addr2, strategy.nextServer());
       assertEquals(addr3, strategy.nextServer());
+      assertEquals(addr4, strategy.nextServer());
    }
 }
