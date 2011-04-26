@@ -301,7 +301,7 @@ public class DistributionManagerImpl implements DistributionManager {
                                                            stateProviders, receiversOfLeaverState, willReceiveLeaverState);
             leaveTaskFuture = rehashExecutor.submit(task);
          } else {
-            log.info("Not in same subspace, so ignoring leave event");
+            if (log.isDebugEnabled()) log.debug("Not in same subspace, so ignoring leave event");
             topologyInfo.removeNodeInfo(leaver);
             removeLeaver(leaver);
          }
