@@ -29,6 +29,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -175,6 +176,22 @@ public class TransactionTable {
       removeLocalTransaction(localTransactions.get(tx));
    }
 
+   public void memberJoined(ConsistentHash chNew, Address newMember) {
+      if (configuration.isEagerLockingSingleNodeInUse()) {
+         for (LocalTransaction localTx : localTransactions.values()) {
+            for (Object k : localTx.getAffectedKeys()) {
+               Address newMainOwner = chNew.locate(k, 1).get(0);
+               if (newMember.equals(newMainOwner)) {
+                  localTx.markForRollback(true);
+                  if (log.isTraceEnabled()) log.tracef("Marked local transaction for rollback, as the main data " +
+                                                            "owner has changed %s", localTx);
+                  break;
+               }
+            }
+         }
+      }
+   }
+
    @Listener
    public class StaleTransactionCleanup {
       @ViewChanged
@@ -183,7 +200,7 @@ public class TransactionTable {
          if (!leavers.isEmpty()) {
             if (trace) log.tracef("Saw %s leavers - kicking off a lock breaking task", leavers.size());
             cleanTxForWhichTheOwnerLeft(leavers);
-            if (configuration.isUseEagerLocking() && configuration.isEagerLockSingleNode() && configuration.getCacheMode().isDistributed()) {
+            if (configuration.isEagerLockingSingleNodeInUse()) {
                for (LocalTransaction localTx : localTransactions.values()) {
                   if (localTx.hasRemoteLocksAcquired(leavers)) {
                      localTx.markForRollback(true);

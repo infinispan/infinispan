@@ -103,8 +103,7 @@ public class TransactionXaAdapter implements XAResource {
    public void commit(Xid externalXid, boolean isOnePhase) throws XAException {
       Xid xid = convertXid(externalXid);
       LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
-
-      if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
+      if (trace) log.tracef("Committing transaction %s. One phase? %s", localTransaction.getGlobalTransaction(), isOnePhase);
       txCoordinator.commit(localTransaction, isOnePhase);
       forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction);
    }
