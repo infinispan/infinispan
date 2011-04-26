@@ -146,12 +146,17 @@ public class TransactionXaAdapter implements XAResource {
       return txTimeout;
    }
 
+   /**
+    * the only situation in which it returns true is when the other xa resource pertains to the same cache, on
+    * the same node.
+    */
    public boolean isSameRM(XAResource xaResource) throws XAException {
       if (!(xaResource instanceof TransactionXaAdapter)) {
          return false;
       }
       TransactionXaAdapter other = (TransactionXaAdapter) xaResource;
-      return other.equals(this);
+      //there is only one tx table per cache and this is more efficient that equals.
+      return this.txTable == other.txTable;
    }
 
    public Xid[] recover(int flag) throws XAException {
