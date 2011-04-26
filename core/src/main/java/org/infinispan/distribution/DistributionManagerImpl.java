@@ -463,6 +463,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public Set<Address> requestPermissionToJoin(Address a) {
+      // This only happens on the coordinator.
       try {
          if (!startLatch.await(5, TimeUnit.MINUTES)) {
             log.warn("DistributionManager not started after waiting up to 5 minutes!  Not rehashing!");
@@ -485,7 +486,13 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public NodeTopologyInfo informRehashOnJoin(Address a, boolean starting, NodeTopologyInfo nodeTopologyInfo) {
+      if (!joinComplete) {
+         log.info("DistributionManager not yet joined the cluster.  Cannot do anything about other concurrent joiners.");
+         return null;
+      }
+
       if (trace) log.trace("Informed of a JOIN by %s.  Starting? %s", a, starting);
+
       if (!starting) {
          if (consistentHash instanceof UnionConsistentHash) {
             UnionConsistentHash uch = (UnionConsistentHash) consistentHash;
@@ -510,6 +517,11 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public void informRehashOnLeave(Address sender) {
+      if (!joinComplete) {
+         log.info("DistributionManager not yet joined the cluster.  Cannot do anything about other concurrent leavers.");
+         return;
+      }
+
       leaveAcksLock.lock();
       try {
          leaveRehashAcks.add(sender);
