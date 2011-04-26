@@ -70,4 +70,8 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "%s is still connected to %s", id = 5007)
    void channelStillConnected(Channel ch, SocketAddress address);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Setting the number of master threads is no longer supported", id = 5008)
+   void settingMasterThreadsNotSupported();
+
 }

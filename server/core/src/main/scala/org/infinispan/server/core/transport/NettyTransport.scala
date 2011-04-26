@@ -42,40 +42,16 @@ import org.infinispan.server.core.logging.Log
  * @since 4.1
  */
 class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
-                     address: SocketAddress, masterThreads: Int, workerThreads: Int,
+                     address: SocketAddress, workerThreads: Int,
                      idleTimeout: Int, threadNamePrefix: String, tcpNoDelay: Boolean,
                      sendBufSize: Int, recvBufSize: Int) extends Transport with Log {
 
    private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
    val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted")
    private val pipeline = new NettyChannelPipelineFactory(server, encoder, this, idleTimeout)
-   private val factory = {
-      if (workerThreads == 0)
-         new NioServerSocketChannelFactory(masterExecutor, workerExecutor)
-      else
-         new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads)
-   }
-   
-   private lazy val masterExecutor = {
-      if (masterThreads == 0) {
-         if (isDebugEnabled) debug("Configured unlimited threads for master thread pool")
-         Executors.newCachedThreadPool
-      } else {
-         if (isDebugEnabled) debug("Configured %d threads for master thread pool", masterThreads)
-         Executors.newFixedThreadPool(masterThreads)
-      }
-   }
-
-   private lazy val workerExecutor = {
-      if (workerThreads == 0) {
-         if (isDebugEnabled) debug("Configured unlimited threads for worker thread pool")
-         Executors.newCachedThreadPool
-      }
-      else {
-         if (isDebugEnabled) debug("Configured %d threads for worker thread pool", workerThreads)
-         Executors.newFixedThreadPool(masterThreads)
-      }
-   }
+   private val masterExecutor = Executors.newCachedThreadPool
+   private val workerExecutor = Executors.newCachedThreadPool
+   private val factory = new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads)
 
    override def start {
       ThreadRenamingRunnable.setThreadNameDeterminer(new ThreadNameDeterminer {
