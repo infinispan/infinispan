@@ -73,6 +73,10 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
    protected TransactionFactory gtf = new TransactionFactory();
 
+   protected BaseCacheStoreTest() {
+      gtf.init(false, false, true);
+   }
+
    @BeforeMethod
    public void setUp() throws Exception {
       try {
