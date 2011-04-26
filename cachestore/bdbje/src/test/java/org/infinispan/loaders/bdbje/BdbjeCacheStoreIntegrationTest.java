@@ -53,6 +53,10 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
    private String tmpDirectory;
    private TransactionFactory gts = new TransactionFactory();
 
+   public BdbjeCacheStoreIntegrationTest() {
+      gts.init(false, false, true);
+   }
+
    @BeforeClass
    @Parameters({"basedir"})
    protected void setUpTempDir(@Optional("/tmp") String basedir) {
