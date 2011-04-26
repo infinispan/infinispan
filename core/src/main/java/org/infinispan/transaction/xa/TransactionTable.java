@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -28,6 +28,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -153,6 +154,22 @@ public class TransactionTable {
       this.xid2LocalTx.put(localTransaction.getXid(), localTransaction);
    }
 
+   public void memberJoined(ConsistentHash chNew, Address newMember) {
+      if (configuration.isEagerLockingSingleNodeInUse()) {
+         for (LocalTransaction localTx : localTransactions.values()) {
+            for (Object k : localTx.getAffectedKeys()) {
+               Address newMainOwner = chNew.locate(k, 1).get(0);
+               if (newMember.equals(newMainOwner)) {
+                  localTx.markForRollback();
+                  if (log.isTraceEnabled()) log.trace("Marked local transaction for rollback, as the main data " +
+                                                            "owner has changed %s", localTx);
+                  break;
+               }
+            }
+         }
+      }
+   }
+
    @Listener
    public class StaleTransactionCleanup {
       
@@ -162,7 +179,7 @@ public class TransactionTable {
          if (!leavers.isEmpty()) {
             if (trace) log.trace("Saw %s leavers - kicking off a lock breaking task", leavers.size());
             cleanTxForWhichTheOwnerLeft(leavers);
-            if (configuration.isUseEagerLocking() && configuration.isEagerLockSingleNode() && configuration.getCacheMode().isDistributed()) {
+            if (configuration.isEagerLockingSingleNodeInUse()) {
                for (LocalTransaction localTx : localTransactions.values()) {
                   if (localTx.hasRemoteLocksAcquired(leavers)) {
                      localTx.markForRollback();

@@ -882,6 +882,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return clustering.stateRetrieval.alwaysProvideInMemoryState;
    }
 
+   /**
+    * Returns true if and only if {@link #isUseEagerLocking()}, {@link isEagerLockSingleNode()} and the cache is
+    * distributed.
+    */
+   public boolean isEagerLockingSingleNodeInUse() {
+      return isUseEagerLocking() && isEagerLockSingleNode() && getCacheMode().isDistributed();
+   }
+
 
    public long getLockAcquisitionTimeout() {
       return locking.lockAcquisitionTimeout;
