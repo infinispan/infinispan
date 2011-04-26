@@ -68,27 +68,19 @@ public class L1ManagerImpl implements L1Manager {
       if (as == null) {
          // only if needed we create a new HashSet, but make sure we don't replace another one being created
          as = new ConcurrentHashSet<Address>();
+         as.add(origin);
          Collection<Address> previousAs = requestors.putIfAbsent(key, as);
          if (previousAs != null) {
             //another thread added it already, so use his copy and discard our proposed instance
-            as = previousAs;
-         }
-      }
-      // Finally, add the value to the hashset
-      as.add(origin);
-      
-      // If the collection of addresses got removed underneath us, then the correct thing to do is add a new collection with the address in
-      // This is an edge case, so synchronisation is fine
-      if (requestors.get(key) != as) {
-         synchronized (requestors) {
-            if (requestors.containsKey(key)) {
-               requestors.get(key).add(origin);
-            } else {
+            while (!previousAs.equals(as)) {
                as = new ConcurrentHashSet<Address>();
+               as.addAll(previousAs);
                as.add(origin);
-               requestors.put(key, as);
+               previousAs = requestors.replace(key, as);
             }
          }
+      } else {
+         as.add(origin);
       }
    }
    
@@ -110,39 +102,25 @@ public class L1ManagerImpl implements L1Manager {
          if (multicast) {
          	if (trace) log.tracef("Invalidating keys %s via multicast", keys);
          	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(false, keys);
-         	try {
-         		rpcManager.broadcastRpcCommandInFuture(ic, future);
-         	} finally {
-         		cleanupRequestors(keys);
-         	}
+      		rpcManager.broadcastRpcCommandInFuture(ic, future);
          } else {
-            try {
-            	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(false, keys);
-            	
-               // Ask the caches who have requested from us to remove
-               if (trace) log.tracef("Keys %s needs invalidation on %s", keys, invalidationAddresses);
-               rpcManager.invokeRemotelyInFuture(invalidationAddresses, ic, future);
-               return future;
-            } finally {
-            	cleanupRequestors(keys);
-            }
+         	InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(false, keys);
+         	
+            // Ask the caches who have requested from us to remove
+            if (trace) log.tracef("Keys %s needs invalidation on %s", keys, invalidationAddresses);
+            rpcManager.invokeRemotelyInFuture(invalidationAddresses, ic, future);
+            return future;
          }    
       } else
          if (trace) log.trace("No L1 caches to invalidate");
       return future;
    }
    
-   private void cleanupRequestors(Collection<Object> keys) {
-   	for (Object key : keys) {
-   		requestors.remove(key);
-   	}
-   }
-   
    private Collection<Address> buildInvalidationAddressList(Collection<Object> keys, Address origin) {
    	Collection<Address> addresses = new HashSet<Address>();
    	
    	for (Object key : keys) {
-   	   Collection<Address> as = requestors.get(key);
+   	   Collection<Address> as = requestors.remove(key);
    	   if (as != null)
    		   addresses.addAll(as);
    	}
