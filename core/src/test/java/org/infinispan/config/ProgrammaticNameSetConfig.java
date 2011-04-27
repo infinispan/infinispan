@@ -45,7 +45,7 @@ public class ProgrammaticNameSetConfig extends SingleCacheManagerTest {
 
    public void testGetSetName() {
       Configuration configurationOverride = new Configuration();
-      configurationOverride.fluent().mode(Configuration.CacheMode.LOCAL);
+      configurationOverride.setCacheMode(Configuration.CacheMode.LOCAL);
       String aName = "aName";
       Configuration configuration = cacheManager.defineConfiguration(aName, configurationOverride);
       Cache c = cacheManager.getCache(aName);
