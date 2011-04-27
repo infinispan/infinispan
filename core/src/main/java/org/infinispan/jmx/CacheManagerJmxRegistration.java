@@ -92,11 +92,8 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
          jmxDomain = getJmxDomain(globalConfig.getJmxDomain(), mBeanServer, groupName);
          String configJmxDomain = globalConfig.getJmxDomain();
          if (!jmxDomain.equals(configJmxDomain) && !globalConfig.isAllowDuplicateDomains()) {
-            String message = "There's already an cache manager instance registered under '" + configJmxDomain +
-                  "' JMX domain. If you want to allow multiple instances configured with same JMX domain enable " +
-                  "'allowDuplicateDomains' attribute in 'globalJmxStatistics' config element";
-            if (log.isErrorEnabled()) log.error(message);
-            throw new JmxDomainConflictException(message);
+            log.cacheManagerAlreadyRegistered(configJmxDomain);
+            throw new JmxDomainConflictException(String.format("Domain already registered %s", configJmxDomain));
          }
       }
       registrar.setJmxDomain(jmxDomain);

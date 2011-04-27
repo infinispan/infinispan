@@ -102,7 +102,7 @@ public class ClassFinder {
             files.add(new File(path));
          }
       }
-      log.debug("Looking for infinispan classes in " + files);     
+      log.debugf("Looking for infinispan classes in %s", files);
       if (files.isEmpty()) {
          return Collections.emptyList();
       } else {
@@ -128,8 +128,8 @@ public class ClassFinder {
                claz = Util.loadClassStrict(clazz);
                classes.add(claz);
             } catch (NoClassDefFoundError ncdfe) {
-               log.warn(cf.getAbsolutePath() + " has reference to a class "
-                        + ncdfe.getMessage() + " that could not be loaded from classpath");
+               log.warnf("%s has reference to a class %s that could not be loaded from classpath",
+                         cf.getAbsolutePath(), ncdfe.getMessage());
             } catch (Throwable e) {
                // Catch all since we do not want skip iteration
                log.warn("On path " + cf.getAbsolutePath() + " could not load class "+ clazz, e);
@@ -141,7 +141,7 @@ public class ClassFinder {
             try {
                jar = new JarFile(path);
             } catch (Exception ex) {
-               log.warn("Could not create jar file on path " + path);
+               log.warnf("Could not create jar file on path %s", path);
                return classes;
             }
             Enumeration<JarEntry> en = jar.entries();
@@ -154,8 +154,8 @@ public class ClassFinder {
                      claz = Util.loadClassStrict(clazz);
                      classes.add(claz);
                   } catch (NoClassDefFoundError ncdfe) {
-                     log.warn(entry.getName() + " has reference to a class " + ncdfe.getMessage()
-                              + " that could not be loaded from classpath");
+                     log.warnf("%s has reference to a class %s that could not be loaded from classpath",
+                               entry.getName(), ncdfe.getMessage());
                   } catch (Throwable e) {
                      // Catch all since we do not want skip iteration
                      log.warn("From jar path " + entry.getName() + " could not load class "+ clazz, e);

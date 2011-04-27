@@ -259,14 +259,14 @@ public class DistributionManagerImpl implements DistributionManager {
    public void rehash(List<Address> newMembers, List<Address> oldMembers) {
       boolean join = oldMembers.size() < newMembers.size();
       // on view change, we should update our view
-      log.info("Detected a view change.  Member list changed from %s to %s", oldMembers, newMembers);
+      log.viewChangeDetected(oldMembers, newMembers);
 
       if (join) {
          Address joiner = MembershipArithmetic.getMemberJoined(oldMembers, newMembers);
-         log.info("This is a JOIN event!  Wait for notification from new joiner " + joiner);
+         log.joinEvent(joiner);
       } else {
          Address leaver = MembershipArithmetic.getMemberLeft(oldMembers, newMembers);
-         log.info("This is a LEAVE event!  Node %s has just left", leaver);
+         log.leaveEvent(leaver);
 
 
          try {
@@ -277,7 +277,7 @@ public class DistributionManagerImpl implements DistributionManager {
             }
             addLeaverAndUpdatedConsistentHash(leaver);
          } catch (Exception e) {
-            log.fatal("Unable to process leaver!!", e);
+            log.unableToProcessLeaver(e);
             throw new CacheException(e);
          }
 
@@ -286,8 +286,7 @@ public class DistributionManagerImpl implements DistributionManager {
          boolean willReceiveLeaverState = receiversOfLeaverState.contains(self);
          boolean willProvideState = stateProviders.contains(self);
          if (willReceiveLeaverState || willProvideState) {
-            log.info("I %s am participating in rehash, state providers %s, state receivers %s",
-                     rpcManager.getTransport().getAddress(), stateProviders, receiversOfLeaverState);
+            log.participatingInRehash(rpcManager.getTransport().getAddress(), stateProviders, receiversOfLeaverState);
 
             transactionLogger.enable();
 
@@ -321,7 +320,7 @@ public class DistributionManagerImpl implements DistributionManager {
       chSwitchLock.writeLock().lock();
       try {
          leavers.add(leaver);
-         if (trace) log.trace("Added new leaver %s, leavers list is %s", leaver, leavers);
+         if (trace) log.tracef("Added new leaver %s, leavers list is %s", leaver, leavers);
          consistentHash = ConsistentHashHelper.removeAddress(consistentHash, leaver, configuration, topologyInfo);
       } finally {
          chSwitchLock.writeLock().unlock();
@@ -334,7 +333,7 @@ public class DistributionManagerImpl implements DistributionManager {
          //if we are affected by the rehash then levers are removed within the InvertedLeaveTask
          return leavers.remove(leaver);
       } finally {
-         if (trace) log.trace("After removing leaver[ %s ] leavers list is %s", leaver, leavers);
+         if (trace) log.tracef("After removing leaver[ %s ] leavers list is %s", leaver, leavers);
          chSwitchLock.writeLock().unlock();
       }
    }
@@ -348,14 +347,14 @@ public class DistributionManagerImpl implements DistributionManager {
                Address mainBackup = backups.get(1);
                result.add(mainBackup);
                if (trace)
-                  log.trace("Leaver %s main backup %s is looking for another backup as well.", leaver, mainBackup);
+                  log.tracef("Leaver %s main backup %s is looking for another backup as well.", leaver, mainBackup);
             }
          } else if (backups.contains(leaver)) {
-            if (trace) log.trace("%s is looking for a new backup to replace leaver %s", addr, leaver);
+            if (trace) log.tracef("%s is looking for a new backup to replace leaver %s", addr, leaver);
             result.add(addr);
          }
       }
-      if (trace) log.trace("Nodes that need new backups are: %s", result);
+      if (trace) log.tracef("Nodes that need new backups are: %s", result);
       return result;
    }
 
@@ -448,7 +447,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public void setConsistentHash(ConsistentHash consistentHash) {
-      if (trace) log.trace("Installing new consistent hash %s", consistentHash);
+      if (trace) log.tracef("Installing new consistent hash %s", consistentHash);
       this.consistentHash = consistentHash;
    }
 
@@ -466,7 +465,7 @@ public class DistributionManagerImpl implements DistributionManager {
       // This only happens on the coordinator.
       try {
          if (!startLatch.await(5, TimeUnit.MINUTES)) {
-            log.warn("DistributionManager not started after waiting up to 5 minutes!  Not rehashing!");
+            log.distributionManagerNotStarted();
             return null;
          }
       } catch (InterruptedException e) {
@@ -476,22 +475,22 @@ public class DistributionManagerImpl implements DistributionManager {
 
 
       if (joiner.compareAndSet(null, a)) {
-         if (trace) log.trace("Allowing %s to join", a);
+         if (trace) log.tracef("Allowing %s to join", a);
          return new HashSet<Address>(consistentHash.getCaches());
       } else {
          if (trace)
-            log.trace("Not alowing %s to join since there is a join already in progress for node %s", a, joiner.get());
+            log.tracef("Not alowing %s to join since there is a join already in progress for node %s", a, joiner.get());
          return null;
       }
    }
 
    public NodeTopologyInfo informRehashOnJoin(Address a, boolean starting, NodeTopologyInfo nodeTopologyInfo) {
       if (!joinComplete) {
-         log.info("DistributionManager not yet joined the cluster.  Cannot do anything about other concurrent joiners.");
+         log.distributionManagerNotJoined();
          return null;
       }
 
-      if (trace) log.trace("Informed of a JOIN by %s.  Starting? %s", a, starting);
+      if (trace) log.tracef("Informed of a JOIN by %s.  Starting? %s", a, starting);
 
       if (!starting) {
          if (consistentHash instanceof UnionConsistentHash) {
@@ -502,7 +501,7 @@ public class DistributionManagerImpl implements DistributionManager {
          joiner.set(null);
       } else {
          topologyInfo.addNodeTopologyInfo(a, nodeTopologyInfo);
-         if (trace) log.trace("Node topology info added(%s).  Topology info is %s", nodeTopologyInfo, topologyInfo);
+         if (trace) log.tracef("Node topology info added(%s).  Topology info is %s", nodeTopologyInfo, topologyInfo);
          ConsistentHash chOld = consistentHash;
          if (chOld instanceof UnionConsistentHash)
             throw new RuntimeException("Not expecting an instance of UnionConsistentHash!");
@@ -511,7 +510,7 @@ public class DistributionManagerImpl implements DistributionManager {
          ConsistentHash chNew = ConsistentHashHelper.createConsistentHash(configuration, chOld.getCaches(), topologyInfo, a);
          consistentHash = new UnionConsistentHash(chOld, chNew);
       }
-      if (trace) log.trace("New ConsistentHash is %s", consistentHash);
+      if (trace) log.tracef("New ConsistentHash is %s", consistentHash);
       return topologyInfo.getNodeTopologyInfo(rpcManager.getAddress());
    }
 
@@ -526,7 +525,7 @@ public class DistributionManagerImpl implements DistributionManager {
       try {
          leaveRehashAcks.add(sender);
          if (trace)
-            log.trace("%s has been informed that %s has completed applying state sent from %s as a part of a LEAVE_REHASH.", self, sender, self);
+            log.tracef("%s has been informed that %s has completed applying state sent from %s as a part of a LEAVE_REHASH.", self, sender, self);
          acksArrived.signalAll();
       } finally {
          leaveAcksLock.unlock();
@@ -547,10 +546,10 @@ public class DistributionManagerImpl implements DistributionManager {
             } catch (Exception ee) {
                if (withRetry) {
                   if (trace)
-                     log.trace("Problem %s encountered when applying state for key %s. Adding entry to retry queue.", ee.getMessage(), e.getKey());
+                     log.tracef("Problem %s encountered when applying state for key %s. Adding entry to retry queue.", ee.getMessage(), e.getKey());
                   retry.put(e.getKey(), e.getValue());
                } else {
-                  log.warn("Problem %s encountered when applying state for key %s!", ee.getMessage(), e.getKey());
+                  log.problemApplyingStateForKey(ee.getMessage(), e.getKey());
                }
             }
          }
@@ -559,7 +558,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public void applyState(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state, RemoteTransactionLogger tlog, boolean forLeave) {
-      if (trace) log.trace("Applying the following keys: %s", state.keySet());
+      if (trace) log.tracef("Applying the following keys: %s", state.keySet());
 
       int retryCount = 3; // in case we have issues applying state.
       Map<Object, InternalCacheValue> pendingApplications = state;
@@ -572,7 +571,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
       if (!forLeave) drainLocalTransactionLog(tlog);
 
-      if (trace) log.trace("%s has completed applying state", self);
+      if (trace) log.tracef("%s has completed applying state", self);
    }
 
    public void setRehashInProgress(boolean value) {
@@ -595,9 +594,9 @@ public class DistributionManagerImpl implements DistributionManager {
             try {
                started = startLatch.await(5, TimeUnit.MINUTES);
                if (started) rehash(e.getNewMembers(), e.getOldMembers());
-               else log.warn("DistributionManager not started after waiting up to 5 minutes!  Not rehashing!");
+               else log.distributionManagerNotStarted();
             } catch (InterruptedException ie) {
-               log.warn("View change interrupted; not rehashing!");
+               log.viewChangeInterrupted();
             }
          }
       }
@@ -668,7 +667,7 @@ public class DistributionManagerImpl implements DistributionManager {
       List<WriteCommand> c;
       while (tlog.shouldDrainWithoutLock()) {
          c = tlog.drain();
-         if (trace) log.trace("Draining %s entries from transaction log", c.size());
+         if (trace) log.tracef("Draining %s entries from transaction log", c.size());
          applyRemoteTxLog(c);
       }
 
@@ -676,18 +675,18 @@ public class DistributionManagerImpl implements DistributionManager {
       try {
          this.enteredFinalJoinPhase = true;
          c = tlog.drainAndLock(null);
-         if (trace) log.trace("Locked and draining %s entries from transaction log", c.size());
+         if (trace) log.tracef("Locked and draining %s entries from transaction log", c.size());
          applyRemoteTxLog(c);
 
          Collection<PrepareCommand> pendingPrepares = tlog.getPendingPrepares();
-         if (trace) log.trace("Applying %s pending prepares", pendingPrepares.size());
+         if (trace) log.tracef("Applying %s pending prepares", pendingPrepares.size());
          for (PrepareCommand pc : pendingPrepares) {
             // this is a remotely originating call.
             cf.initializeReplicableCommand(pc, true);
             try {
                pc.perform(null);
             } catch (Throwable throwable) {
-               log.warn("Unable to apply prepare " + pc, throwable);
+               log.unableToApplyPrepare(pc, throwable);
             }
          }
       } finally {
@@ -701,7 +700,7 @@ public class DistributionManagerImpl implements DistributionManager {
          rpcManager.getTransport().getDistributedSync().acquireProcessingLock(true, 100, TimeUnit.DAYS);
          return true;
       } catch (TimeoutException e) {
-         log.info("Couldn't acquire shared lock");
+         log.couldNotAcquireSharedLock();
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
       }
@@ -728,7 +727,7 @@ public class DistributionManagerImpl implements DistributionManager {
             ctx.setFlags(SKIP_REMOTE_LOOKUP, CACHE_MODE_LOCAL, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING);
             interceptorChain.invoke(ctx, cmd);
          } catch (Exception e) {
-            log.warn("Caught exception replaying %s", e, cmd);
+            log.exceptionWhenReplaying(cmd, e);
          }
       }
 

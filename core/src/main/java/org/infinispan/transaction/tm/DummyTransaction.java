@@ -126,7 +126,7 @@ public class DummyTransaction implements Transaction {
          status = Status.STATUS_ROLLEDBACK;
          notifyAfterCompletion(Status.STATUS_ROLLEDBACK);
       } catch (Throwable t) {
-         log.error(t);
+         log.errorRollingBack(t);
          throw new IllegalStateException(t);
       }
       // Disassociate tx from thread.
@@ -168,7 +168,7 @@ public class DummyTransaction implements Transaction {
       try {
          xaRes.start(xid, 0);
       } catch (XAException e) {
-         log.error(e);
+         log.errorEnlistingResource(e);
          throw new SystemException(e.getMessage());
       }
       return true;
@@ -226,7 +226,7 @@ public class DummyTransaction implements Transaction {
       }
 
       if (trace) {
-         log.trace("registering synchronization handler " + sync);
+         log.tracef("registering synchronization handler %s", sync);
       }
       syncs.add(sync);
 
@@ -236,12 +236,12 @@ public class DummyTransaction implements Transaction {
       boolean retval = true;
       if (syncs == null) return true;
       for (Synchronization s : syncs) {
-         if (trace) log.trace("processing beforeCompletion for " + s);
+         if (trace) log.tracef("processing beforeCompletion for %s", s);
          try {
             s.beforeCompletion();
          } catch (Throwable t) {
             retval = false;
-            log.error("beforeCompletion() failed for " + s, t);
+            log.beforeCompletionFailed(s, t);
          }
       }
       return retval;
@@ -258,7 +258,7 @@ public class DummyTransaction implements Transaction {
             log.trace("The resource wants to rollback!", e);
             return false;
          } catch (Throwable th) {
-            log.error("Unexpected error from resource manager!", th);
+            log.unexpectedErrorFromResourceManager(th);
             throw new SystemException(th.getMessage());
          }
       }
@@ -273,12 +273,12 @@ public class DummyTransaction implements Transaction {
       if (syncs == null) return;
       for (Synchronization s : syncs) {
          if (trace) {
-            log.trace("processing afterCompletion for " + s);
+            log.tracef("processing afterCompletion for %s", s);
          }
          try {
             s.afterCompletion(status);
          } catch (Throwable t) {
-            log.error("afterCompletion() failed for " + s, t);
+            log.afterCompletionFailed(s, t);
          }
       }
       syncs.clear();
@@ -295,7 +295,7 @@ public class DummyTransaction implements Transaction {
          try {
             res.rollback(xid);
          } catch (XAException e) {
-            log.warn("Error while rolling back", e);
+            log.errorRollingBack(e);
          }
       }
    }
@@ -311,7 +311,7 @@ public class DummyTransaction implements Transaction {
                //we only do 2-phase commits
                res.commit(xid, false);
             } catch (XAException e) {
-               log.warn("exception while committing", e);
+               log.errorCommittingTx(e);
                throw new HeuristicMixedException(e.getMessage());
             }
          }

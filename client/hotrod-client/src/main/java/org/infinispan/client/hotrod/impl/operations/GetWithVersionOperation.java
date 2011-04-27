@@ -58,7 +58,7 @@ public class GetWithVersionOperation extends AbstractKeyOperation {
       } else if (status == NO_ERROR_STATUS) {
          long version = transport.readLong();
          if (log.isTraceEnabled()) {
-            log.trace("Received version: " + version);
+            log.tracef("Received version: %d", version);
          }
          byte[] value = transport.readArray();
          result = new BinaryVersionedValue(version, value);

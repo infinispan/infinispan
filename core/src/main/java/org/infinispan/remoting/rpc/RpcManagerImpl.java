@@ -133,7 +133,7 @@ public class RpcManagerImpl implements RpcManager {
             if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
             throw e;
          } catch (Throwable th) {
-            log.error("unexpected error while replicating", th);
+            log.unexpectedErrorReplicating(th);
             if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
             throw new CacheException(th);
          } finally {
@@ -174,11 +174,11 @@ public class RpcManagerImpl implements RpcManager {
                for (Address member : members) {
                   if (!member.equals(t.getAddress())) {
                      try {
-                        if (log.isInfoEnabled()) log.info("Trying to fetch state from %s", member);
+                        if (log.isInfoEnabled()) log.tryingToFetchState(member);
                         currentStateTransferSource = member;
                         if (t.retrieveState(cacheName, member, timeout)) {
                            if (log.isInfoEnabled())
-                              log.info("Successfully retrieved and applied state from %s", member);
+                              log.successfullyAppliedState(member);
                            success = true;
                            break outer;
                         }
@@ -191,8 +191,7 @@ public class RpcManagerImpl implements RpcManager {
                }
 
                if (!success) {
-                  if (log.isWarnEnabled())
-                     log.warn("Could not find available peer for state, backing off and retrying");
+                  log.couldNotFindPeerForState();
 
                   try {
                      Thread.sleep(wait *= waitTimeIncreaseFactor);
@@ -242,7 +241,7 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue, long timeout) throws RpcException {
-      if (trace) log.trace("%s broadcasting call %s to recipient list %s", t.getAddress(), rpc, recipients);
+      if (trace) log.tracef("%s broadcasting call %s to recipient list %s", t.getAddress(), rpc, recipients);
 
       if (useReplicationQueue(sync)) {
          replicationQueue.add(rpc);
@@ -252,7 +251,7 @@ public class RpcManagerImpl implements RpcManager {
             rpc = cf.buildSingleRpcCommand(rpc);
          }
          Map<Address, Response> rsps = invokeRemotely(recipients, rpc, getResponseMode(sync), timeout, usePriorityQueue);
-         if (trace) log.trace("Response(s) to %s is %s", rpc, rsps);
+         if (trace) log.tracef("Response(s) to %s is %s", rpc, rsps);
          if (sync) checkResponses(rsps);
          return rsps;
       }
@@ -267,8 +266,7 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public final void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l, final long timeout) {
-      if (trace) log.trace("%s invoking in future call %s to recipient list %s", t.getAddress(), rpc, recipients);
-      if (trace) log.trace("%s invoking in future call %s to recipient list %s", t.getAddress(), rpc, recipients);
+      if (trace) log.tracef("%s invoking in future call %s to recipient list %s", t.getAddress(), rpc, recipients);
       final CountDownLatch futureSet = new CountDownLatch(1);
       Callable<Object> c = new Callable<Object>() {
          public Object call() throws Exception {
@@ -312,7 +310,7 @@ public class RpcManagerImpl implements RpcManager {
             if (rsp != null && rsp.getValue() instanceof Throwable) {
                Throwable throwable = (Throwable) rsp.getValue();
                if (trace)
-                  log.trace("Received Throwable from remote node %s", throwable, rsp.getKey());
+                  log.tracef("Received Throwable from remote node %s", throwable, rsp.getKey());
                throw new RpcException(throwable);
             }
          }

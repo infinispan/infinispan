@@ -55,7 +55,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
       String cacheName = configuration.getName() == null ? CacheContainer.DEFAULT_CACHE_NAME : configuration.getName();
       if (recoveryEnabled) {
          String recoveryCacheName = configuration.getTransactionRecoveryCacheName();
-         if (log.isTraceEnabled()) log.trace("Using recovery cache name %s", recoveryCacheName);
+         if (log.isTraceEnabled()) log.tracef("Using recovery cache name %s", recoveryCacheName);
          EmbeddedCacheManager cm = componentRegistry.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
          boolean useDefaultCache = recoveryCacheName.equals(Configuration.RecoveryType.DEFAULT_RECOVERY_INFO_CACHE);
 
@@ -101,7 +101,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
    }
 
    private RecoveryManager buildRecoveryManager(String cacheName, String recoveryCacheName, EmbeddedCacheManager cm, boolean isDefault) {
-      if (log.isTraceEnabled()) log.trace("About to obtain a reference to the recovery cache: %s", recoveryCacheName);
+      if (log.isTraceEnabled()) log.tracef("About to obtain a reference to the recovery cache: %s", recoveryCacheName);
       Cache recoveryCache = cm.getCache(recoveryCacheName);
       String txLookup = recoveryCache.getConfiguration().getTransactionManagerLookupClass();
       if (!isDefault && txLookup.equals(configuration.getTransactionManagerLookupClass())) {
@@ -109,7 +109,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
          throw new ConfigurationException("Same transaction manager lookup(" + txLookup +" used by both recovery cache ("
                                                 + recoveryCacheName +") and main cache(" + cacheName + "). This is not allowed!");
       }
-      if (log.isTraceEnabled()) log.trace("Obtained a reference to the recovery cache: %s", recoveryCacheName);
+      if (log.isTraceEnabled()) log.tracef("Obtained a reference to the recovery cache: %s", recoveryCacheName);
       return new RecoveryManagerImpl(recoveryCache,  cacheName);
    }
 }

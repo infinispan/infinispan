@@ -165,7 +165,7 @@ public class XmlConfigHelper {
          }
       }
 
-      if (log.isDebugEnabled()) log.debug("getSubElement(): Does not exist for %s", subElementName);
+      if (log.isDebugEnabled()) log.debugf("getSubElement(): Does not exist for %s", subElementName);
       return null;
    }
 
@@ -286,7 +286,7 @@ public class XmlConfigHelper {
          is.close();
       }
       catch (IOException e) {
-         log.warn("Unexpected", e);
+         log.errorReadingProperties(e);
          throw new ConfigurationException("Exception occured while reading properties from XML document", e);
       }
       return properties;
@@ -443,7 +443,7 @@ public class XmlConfigHelper {
                Class paramTypes[] = m.getParameterTypes();
                if (paramTypes.length != 1) {
                   if (log.isTraceEnabled())
-                     log.trace("Rejecting setter " + m + " on class " + objectClass + " due to incorrect number of parameters");
+                     log.tracef("Rejecting setter %s on class %s due to incorrect number of parameters", m, objectClass);
                   continue; // try another param with the same name.
                }
 

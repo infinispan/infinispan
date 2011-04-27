@@ -68,7 +68,7 @@ final public class InfinispanIndexInput extends IndexInput {
       this.readLocks = readLocks;
       this.filename = fileKey.getFileName();
       if (trace) {
-         log.trace("Opened new IndexInput for file:%s in index: %s", filename, fileKey.getIndexName());
+         log.tracef("Opened new IndexInput for file:%s in index: %s", filename, fileKey.getIndexName());
       }
    }
 
@@ -108,7 +108,7 @@ final public class InfinispanIndexInput extends IndexInput {
       if (isClone) return;
       readLocks.deleteOrReleaseReadLock(filename);
       if (trace) {
-         log.trace("Closed IndexInput for file:%s in index: %s", filename, fileKey.getIndexName());
+         log.tracef("Closed IndexInput for file:%s in index: %s", filename, fileKey.getIndexName());
       }
    }
 

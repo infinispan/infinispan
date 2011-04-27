@@ -38,7 +38,7 @@ import org.infinispan.loaders.keymappers.Key2StringMapper;
 import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -87,7 +87,7 @@ import java.util.Set;
 @CacheLoaderMetadata(configurationClass = JdbcStringBasedCacheStoreConfig.class)
 public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
 
-   private static final Log log = LogFactory.getLog(JdbcStringBasedCacheStore.class);
+   private static final Log log = LogFactory.getLog(JdbcStringBasedCacheStore.class, Log.class);
 
    /**
     * delimits the stream for stream transfer operations
@@ -112,13 +112,13 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       super.start();
       if (config.isManageConnectionFactory()) {
          String connectionFactoryClass = config.getConnectionFactoryConfig().getConnectionFactoryClass();
-         if (log.isTraceEnabled()) log.trace("Using managed connection factory: " + connectionFactoryClass);
+         if (log.isTraceEnabled()) log.tracef("Using managed connection factory: %s", connectionFactoryClass);
          ConnectionFactory connectionFactory = ConnectionFactory.getConnectionFactory(connectionFactoryClass);
          connectionFactory.start(config.getConnectionFactoryConfig());
          doConnectionFactoryInitialization(connectionFactory);
       }
       this.key2StringMapper = config.getKey2StringMapper();
-      if (log.isTraceEnabled()) log.trace("Using key2StringMapper: " + key2StringMapper.getClass().getName());
+      if (log.isTraceEnabled()) log.tracef("Using key2StringMapper: %s", key2StringMapper.getClass().getName());
       if (isUsingPreload()) {
          enforceTwoWayMapper("preload");
       } 
@@ -176,7 +176,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
    public void stop() throws CacheLoaderException {
       tableManipulation.stop();
       if (config.isManageConnectionFactory()) {
-         if (log.isTraceEnabled()) log.trace("Stopping mananged connection factory: " + connectionFactory);
+         if (log.isTraceEnabled()) log.tracef("Stopping mananged connection factory: %s", connectionFactory);
          connectionFactory.stop();
       }
    }
@@ -199,7 +199,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          sql = tableManipulation.getUpdateRowSql();
       }
       if (log.isTraceEnabled())
-         log.trace("Running sql '" + sql + "' on " + ed + ". Key string is '" + lockingKey + "'");
+         log.tracef("Running sql '%s' on %s. Key string is '%s'", sql, ed, lockingKey);
       Connection connection = null;
       PreparedStatement ps = null;
       ByteBuffer byteBuffer = null;
@@ -212,7 +212,10 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          ps.setString(3, lockingKey);
          ps.executeUpdate();
       } catch (SQLException ex) {
-         logAndThrow(ex, "Error while storing string key to database; key: '" + lockingKey + "', buffer size of value: " + byteBuffer.getLength() + " bytes");
+         log.sqlFailureStoringKey(lockingKey, byteBuffer.getLength(), ex);
+         throw new CacheLoaderException(String.format(
+               "Error while storing string key to database; key: '%s', buffer size of value: %d bytes",
+               lockingKey, byteBuffer.getLength()), ex);
       } catch (InterruptedException e) {
          if (log.isTraceEnabled()) log.trace("Interrupted while marshalling to store");
          Thread.currentThread().interrupt();
@@ -228,15 +231,14 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       PreparedStatement ps = null;
       try {
          String sql = tableManipulation.getDeleteRowSql();
-         if (log.isTraceEnabled()) log.trace("Running sql '" + sql + "' on " + keyStr);
+         if (log.isTraceEnabled()) log.tracef("Running sql '%s' on %s", sql, keyStr);
          connection = connectionFactory.getConnection();
          ps = connection.prepareStatement(sql);
          ps.setString(1, keyStr);
          return ps.executeUpdate() == 1;
       } catch (SQLException ex) {
-         String message = "Error while storing string keys to database";
-         log.error(message, ex);
-         throw new CacheLoaderException(message, ex);
+         log.sqlFailureRemovingKeys(ex);
+         throw new CacheLoaderException("Error while removing string keys from database", ex);
       } finally {
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(connection);
@@ -284,9 +286,10 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          ps.setLong(1, System.currentTimeMillis());
          int result = ps.executeUpdate();
          if (log.isTraceEnabled())
-            log.trace("Successfully purged " + result + " rows.");
+            log.tracef("Successfully purged %d rows.", result);
       } catch (SQLException ex) {
-         logAndThrow(ex, "Failed purging JdbcBinaryCacheStore");
+         log.failedClearingJdbcCacheStore(ex);
+         throw new CacheLoaderException("Failed clearing string based JDBC store", ex);
       } finally {
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(conn);
@@ -299,7 +302,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       storedEntry = readStoredEntry(key, lockingKey);
       if (storedEntry != null && storedEntry.isExpired()) {
          if (log.isTraceEnabled()) {
-            log.trace("Not returning '" + storedEntry + "' as it is expired. It will be removed from DB by purging thread!");
+            log.tracef("Not returning '%s' as it is expired. It will be removed from DB by purging thread!", storedEntry);
          }
          return null;
       }
@@ -308,11 +311,6 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
 
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return JdbcStringBasedCacheStoreConfig.class;
-   }
-
-   protected void logAndThrow(Exception e, String message) throws CacheLoaderException {
-      log.error(message, e);
-      throw new CacheLoaderException(message, e);
    }
 
    public boolean supportsKey(Class keyType) {
@@ -342,11 +340,8 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
 
    private void enforceTwoWayMapper(String where) throws CacheLoaderException {
       if (!(key2StringMapper instanceof TwoWayKey2StringMapper)) {
-         String message = "In order for JdbcStringBasedCacheStore to support " + where + ", the Key2StringMapper " +
-               "needs to implement TwoWayKey2StringMapper. You should either make " + key2StringMapper.getClass().getName() +
-               " implement TwoWayKey2StringMapper or disable " + where + ". See [https://jira.jboss.org/browse/ISPN-579] for more details.";
-         log.error(message);
-         throw new CacheLoaderException(message);
+         log.invalidKey2StringMapper(where, key2StringMapper.getClass().getName());
+         throw new CacheLoaderException(String.format("Invalid key to string mapper", key2StringMapper.getClass().getName()));
       }
    }
 
@@ -376,9 +371,10 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
             storedEntry = icv.toInternalCacheEntry(key);
          }
       } catch (SQLException e) {
-         String message = "SQL error while fetching stored entry with key:" + key + " lockingKey: " + lockingKey;
-         log.error(message, e);
-         throw new CacheLoaderException(message, e);
+         log.sqlFailureReadingKey(key, lockingKey, e);
+         throw new CacheLoaderException(String.format(
+               "SQL error while fetching stored entry with key: %s, lockingKey: %s",
+               key, lockingKey), e);
       } finally {
          JdbcUtil.safeClose(rs);
          JdbcUtil.safeClose(ps);

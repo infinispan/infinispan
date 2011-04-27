@@ -269,7 +269,7 @@ public class LockingInterceptor extends CommandInterceptor {
                try {
                   entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false, false);
                } catch (TimeoutException te){
-            	  log.warn("Could not lock key %s in order to invalidate from L1 at node %s, skipping....",key,transport.getAddress());
+            	   log.unableToLockToInvalidate(key,transport.getAddress());
                   keysCopy.remove(key);
                   if(keysCopy.isEmpty())
                      return null;
@@ -356,7 +356,7 @@ public class LockingInterceptor extends CommandInterceptor {
          Object owner = ctx.getLockOwner();
          ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
          Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
-         if (trace) log.trace("Number of entries in context: %s", entries.size());
+         if (trace) log.tracef("Number of entries in context: %s", entries.size());
          while (it.hasNext()) {
             Map.Entry<Object, CacheEntry> e = it.next();
             CacheEntry entry = e.getValue();
@@ -366,12 +366,12 @@ public class LockingInterceptor extends CommandInterceptor {
             if (entry != null && entry.isChanged()) {
                commitEntry(entry);
             } else {
-               if (trace) log.trace("Entry for key %s is null, not calling commitUpdate", key);
+               if (trace) log.tracef("Entry for key %s is null, not calling commitUpdate", key);
             }
 
             // and then unlock
             if (needToUnlock && !ctx.hasFlag(Flag.SKIP_LOCKING)) {
-               if (trace) log.trace("Releasing lock on [" + key + "] for owner " + owner);
+               if (trace) log.tracef("Releasing lock on [%s] for owner %s", key, owner);
                lockManager.unlock(key);
             }
          }

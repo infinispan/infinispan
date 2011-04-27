@@ -61,7 +61,7 @@ class MemcachedReplicationTest extends MultipleCacheManagersTest with MemcachedT
    @AfterClass(alwaysRun = true)
    override def destroy {
       super.destroy
-      log.debug("Test finished, close Hot Rod server", null)
+      log.debug("Test finished, close Hot Rod server")
       clients.foreach(_.shutdown)
       servers.foreach(_.stop)
    }

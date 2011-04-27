@@ -82,7 +82,7 @@ public class AtomicHashMapDelta implements Delta {
    public static class Externalizer extends AbstractExternalizer<AtomicHashMapDelta> {
       @Override
       public void writeObject(ObjectOutput output, AtomicHashMapDelta delta) throws IOException {
-         if (trace) log.trace("Serializing changeLog " + delta.changeLog);
+         if (trace) log.tracef("Serializing changeLog %s", delta.changeLog);
          output.writeObject(delta.changeLog);
       }
 
@@ -90,7 +90,7 @@ public class AtomicHashMapDelta implements Delta {
       public AtomicHashMapDelta readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          AtomicHashMapDelta delta = new AtomicHashMapDelta();
          delta.changeLog = (List<Operation>) input.readObject();
-         if (trace) log.trace("Deserialized changeLog " + delta.changeLog);
+         if (trace) log.tracef("Deserialized changeLog %s", delta.changeLog);
          return delta;
       }
 

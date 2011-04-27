@@ -276,7 +276,9 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
             }
          }
          catch (Exception e) {
-            log.debug("Had problems trying to resume a transaction after putForExternalRead()", e);
+            if (log.isDebugEnabled()) {
+               log.debug("Had problems trying to resume a transaction after putForExternalRead()", e);
+            }
          }
       }
    }

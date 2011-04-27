@@ -118,8 +118,8 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
       Set<InternalCacheEntry> fromBuckets = binaryCacheStore.loadAll();
       Set<InternalCacheEntry> fromStrings = stringBasedCacheStore.loadAll();
       if (log.isTraceEnabled()) {
-         log.trace("Loaded from bucket: " + fromBuckets);
-         log.trace("Loaded from string: " + fromStrings);
+         log.tracef("Loaded from bucket: %s", fromBuckets);
+         log.tracef("Loaded from string: %s", fromStrings);
       }
       fromBuckets.addAll(fromStrings);
       return fromBuckets;

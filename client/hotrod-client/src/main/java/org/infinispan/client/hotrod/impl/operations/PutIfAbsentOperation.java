@@ -56,7 +56,7 @@ public class PutIfAbsentOperation extends AbstractKeyValueOperation {
       if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
          previousValue = returnPossiblePrevValue(transport);
          if (log.isTraceEnabled()) {
-            log.trace("Returning from putIfAbsent: " + Util.printArray(previousValue, false));
+            log.tracef("Returning from putIfAbsent: %s", Util.printArray(previousValue, false));
          }
       }
       return previousValue;

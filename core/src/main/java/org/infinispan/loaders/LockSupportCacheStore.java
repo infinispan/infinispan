@@ -66,7 +66,7 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
       if (config == null)
          throw new CacheLoaderException("Null config. Possible reason is not calling super.init(...)");
       if (log.isTraceEnabled()) {
-         log.trace("Starting cache with config:" + config);
+         log.tracef("Starting cache with config: %s", config);
       }
 
       locks = new StripedLock(config.getLockConcurrencyLevel());
@@ -155,14 +155,14 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
 
 
    public final void store(InternalCacheEntry ed) throws CacheLoaderException {
-      if (trace) log.trace("store(" + ed + ")");
+      if (trace) log.tracef("store(%s)", ed);
       if (ed == null) return;
       if (ed.isExpired()) {
          if (containsKey(ed.getKey())) {
-            if (trace) log.trace("Entry " + ed + " is expired!  Removing!");
+            if (trace) log.tracef("Entry %s is expired!  Removing!", ed);
             remove(ed.getKey());
          } else {
-            if (trace) log.trace("Entry " + ed + " is expired!  Not doing anything.");
+            if (trace) log.tracef("Entry %s is expired!  Not doing anything.", ed);
          }
          return;
       }
@@ -174,18 +174,18 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
       } finally {
          unlock(keyHashCode);
       }
-      if (trace) log.trace("exit store(" + ed + ")");
+      if (trace) log.tracef("exit store(%s)", ed);
    }
 
    public final boolean remove(Object key) throws CacheLoaderException {
-      if (trace) log.trace("remove(" + key + ")");
+      if (trace) log.tracef("remove(%s)", key);
       String keyHashCodeStr = getLockFromKey(key);
       try {
          lockForWriting(keyHashCodeStr);
          return removeLockSafe(key, keyHashCodeStr);
       } finally {
          unlock(keyHashCodeStr);
-         if (trace) log.trace("Exit remove(" + key + ")");
+         if (trace) log.tracef("Exit remove(%s)", key);
       }
    }
 

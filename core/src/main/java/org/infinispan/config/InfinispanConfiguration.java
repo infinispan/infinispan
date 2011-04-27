@@ -324,7 +324,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
          if (dollar > 0 && line.indexOf('{', dollar) > 0 && line.indexOf('}', dollar) > 0) {
             String replacedLine = StringPropertyReplacer.replaceProperties(line);
             if (line.equals(replacedLine)) {
-               log.warn("Property " + line.substring(line.indexOf('{') + 1, line.indexOf('}')) + " could not be replaced as intended!");
+               log.propertyCouldNotBeReplaced(line.substring(line.indexOf('{') + 1, line.indexOf('}')));
             }
             w.append(replacedLine);
          } else {

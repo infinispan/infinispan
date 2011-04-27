@@ -81,7 +81,7 @@ public abstract class AbstractTransport implements Transport {
                   if (shouldThrowException(e)) {
                      throw e;
                   } else {
-                     if (log.isDebugEnabled()) log.debug("Received exception from sender %s", sender, e);
+                     if (log.isDebugEnabled()) log.debug("Received exception from sender" + sender, e);
                   }
                }
             }

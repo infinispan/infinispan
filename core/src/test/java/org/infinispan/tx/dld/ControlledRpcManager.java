@@ -45,7 +45,7 @@ import java.util.concurrent.CountDownLatch;
 * @author Mircea.Markus@jboss.com
 * @since 4.2
 */
-public class ControlledRpcManager implements RpcManager {
+   public class ControlledRpcManager implements RpcManager {
 
    private static final Log log = LogFactory.getLog(ControlledRpcManager.class);
 
@@ -83,7 +83,7 @@ public class ControlledRpcManager implements RpcManager {
       boolean isLockControlCommand = rpcCommand instanceof LockControlCommand;
       boolean isClusterGet = rpcCommand instanceof ClusteredGetCommand;
       if (!isClusterGet && !isLockControlCommand) {
-         log.info(Thread.currentThread().getName() + " -- replication trigger called!");
+         log.debugf("%s -- replication trigger called!", Thread.currentThread().getName());
          waitForLatchToOpen();
       }
    }

@@ -53,7 +53,7 @@ class HotRodConcurrentTest extends HotRodSingleNodeTest {
          barrier.await // wait for all threads to be ready
          barrier.await // wait for all threads to finish
 
-         log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported", null)
+         log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported")
          for (future <- futures) future.get
       }
       finally {
@@ -66,14 +66,14 @@ class HotRodConcurrentTest extends HotRodSingleNodeTest {
       private lazy val client = new HotRodClient("127.0.0.1", server.getPort, cacheName, 60)
 
       override def call {
-         log.debug("Wait for all executions paths to be ready to perform calls", null)
+         log.debug("Wait for all executions paths to be ready to perform calls")
          barrier.await
          try {
             for (i <- 0 until numOpsPerClient) {
                client.assertPut(m, "k" + clientId + "-" + i + "-", "v" + clientId + "-" + i + "-")
             }
          } finally {
-            log.debug("Wait for all execution paths to finish", null)
+            log.debug("Wait for all execution paths to finish")
             barrier.await
          }
       }

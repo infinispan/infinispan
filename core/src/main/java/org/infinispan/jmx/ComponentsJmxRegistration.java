@@ -88,14 +88,14 @@ public class ComponentsJmxRegistration {
             if (!mBeanServer.isRegistered(objectName)) {
                try {
                   mBeanServer.registerMBean(resource, objectName);
-                  if (trace) log.trace("Registered %s under %s", resource, objectName);
+                  if (trace) log.tracef("Registered %s under %s", resource, objectName);
                } catch (InstanceAlreadyExistsException e) {
                   //this might happen if multiple instances are trying to concurrently register same objectName
-                  log.info("Could not register object with name:" + objectName + "(" + e.getMessage() + ")");
+                  log.couldNotRegisterObjectName(objectName, e);
                }
             } else {
                if (log.isDebugEnabled())
-                  log.debug("Object name %s already registered", objectName);
+                  log.debugf("Object name %s already registered", objectName);
             }
          }
       }
@@ -116,7 +116,7 @@ public class ComponentsJmxRegistration {
             ObjectName objectName = getObjectName(resource);
             if (mBeanServer.isRegistered(objectName)) {
                mBeanServer.unregisterMBean(objectName);
-               if (trace) log.trace("Unregistered " + objectName);
+               if (trace) log.tracef("Unregistered %s", objectName);
             }
          }
       }

@@ -76,7 +76,7 @@ public class ProfileTest extends AbstractProfileTest {
    }
 
    protected void testWith(String cacheName) throws Exception {
-      log.warn("Starting profile test, cache name = %s", cacheName);
+      log.warnf("Starting profile test, cache name = %s", cacheName);
       initTest();
       cache = cacheManager.getCache(cacheName);
       runCompleteTest(cacheName);

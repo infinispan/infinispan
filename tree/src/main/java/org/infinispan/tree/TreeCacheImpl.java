@@ -147,7 +147,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       startAtomic();
       boolean result;
       try {
-         if (trace) log.trace("About to remove node " + fqn);
+         if (trace) log.tracef("About to remove node %s", fqn);
          Node<K, V> n = getNode(fqn.getParent());
          result = n != null && n.removeChild(fqn.getLastElement());
       }
@@ -265,7 +265,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public void move(Fqn nodeToMoveFqn, Fqn newParentFqn) throws NodeNotExistsException {
-      if (trace) log.trace("Moving node '" + nodeToMoveFqn + "' to '" + newParentFqn + "'");
+      if (trace) log.tracef("Moving node '%s' to '%s'", nodeToMoveFqn, newParentFqn);
       if (nodeToMoveFqn == null || newParentFqn == null)
          throw new NullPointerException("Cannot accept null parameters!");
 
@@ -286,7 +286,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
          if (!exists(newParentFqn)) {
             // then we need to silently create the new parent
             createNodeInCache(newParentFqn);
-            if (trace) log.trace("The new parent (" + newParentFqn + ") did not exists, was created");
+            if (trace) log.tracef("The new parent (%s) did not exists, was created", newParentFqn);
          }
 
          // create an empty node for this new parent
@@ -297,7 +297,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
          if (oldData != null && !oldData.isEmpty()) newNode.putAll(oldData);
          for (Object child : nodeToMove.getChildrenNames()) {
             // move kids
-            if (trace) log.trace("Moving child " + child);
+            if (trace) log.tracef("Moving child %s", child);
             Fqn oldChildFqn = Fqn.fromRelativeElements(nodeToMoveFqn, child);
             move(oldChildFqn, newFqn);
          }
@@ -306,7 +306,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       finally {
          endAtomic();
       }
-      log.trace("Successfully moved node '" + nodeToMoveFqn + "' to '" + newParentFqn + "'");
+      log.tracef("Successfully moved node '%s' to '%s'", nodeToMoveFqn, newParentFqn);
    }
 
    public void move(Fqn nodeToMove, Fqn newParent, Flag... flags) throws NodeNotExistsException {
@@ -415,7 +415,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public V put(Fqn fqn, K key, V value) {
-      if (trace) log.trace("Start: Putting value under key [" + key + "] for node [" + fqn + "]");
+      if (trace) log.tracef("Start: Putting value under key [%s] for node [%s]", key, fqn);
       startAtomic();
       try {
          createNodeInCache(fqn);
@@ -424,7 +424,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       }
       finally {
          endAtomic();
-         if (trace) log.trace("End: Putting value under key [" + key + "] for node [" + fqn + "]");
+         if (trace) log.tracef("End: Putting value under key [%s] for node [%s]", key, fqn);
       }
    }
 

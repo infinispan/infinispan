@@ -25,7 +25,7 @@ package org.infinispan.loaders.jdbc;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -42,7 +42,7 @@ import java.sql.Statement;
  */
 public class JdbcUtil {
 
-   private static final Log log = LogFactory.getLog(JdbcUtil.class);
+   private static final Log log = LogFactory.getLog(JdbcUtil.class, Log.class);
 
    public static void safeClose(Statement ps) {
       if (ps != null) {
@@ -78,9 +78,8 @@ public class JdbcUtil {
       try {
          return marshaller.objectToBuffer(bucket);
       } catch (IOException e) {
-         String message = "I/O failure while marshalling " + bucket;
-         log.error(message, e);
-         throw new CacheLoaderException(message, e);
+         log.errorMarshallingBucket(bucket, e);
+         throw new CacheLoaderException("I/O failure while marshalling bucket: " + bucket, e);
       }
    }
 
@@ -88,13 +87,11 @@ public class JdbcUtil {
       try {
          return marshaller.objectFromInputStream(inputStream);
       } catch (IOException e) {
-         String message = "I/O error while unmarshalling from stream";
-         log.error(message, e);
-         throw new CacheLoaderException(message, e);
+         log.ioErrorUnmarshalling(e);
+         throw new CacheLoaderException("I/O error while unmarshalling from stream", e);
       } catch (ClassNotFoundException e) {
-         String message = "*UNEXPECTED* ClassNotFoundException. This should not happen as Bucket class exists";
-         log.error(message, e);
-         throw new CacheLoaderException(message, e);
+         log.unexpectedClassNotFoundException(e);
+         throw new CacheLoaderException("*UNEXPECTED* ClassNotFoundException. This should not happen as Bucket class exists", e);
       }
    }
 }

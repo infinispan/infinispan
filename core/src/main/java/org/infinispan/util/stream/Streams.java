@@ -283,7 +283,7 @@ public class Streams {
 
       boolean trace = log.isTraceEnabled();
       if (trace) {
-         log.trace("copying " + input + " to " + output + " with buffer size: " + buffer.length);
+         log.tracef("copying %s to %s with buffer size: %d", input, output, buffer.length);
       }
 
       while ((read = input.read(buffer)) != -1) {
@@ -291,7 +291,7 @@ public class Streams {
          total += read;
 
          if (trace) {
-            log.trace("bytes read: " + read + "; total bytes read: " + total);
+            log.tracef("bytes read: %d; total bytes read: %d", read, total);
          }
       }
 
@@ -381,18 +381,18 @@ public class Streams {
       // size, then we only want to read that much
       readLength = Math.min((int) length, buffer.length);
       if (trace) {
-         log.trace("initial read length: " + readLength);
+         log.tracef("initial read length: %d", readLength);
       }
 
       while (readLength != 0 && (read = input.read(buffer, 0, readLength)) != -1) {
-         if (trace) log.trace("read bytes: " + read);
+         if (trace) log.tracef("read bytes: %d", read);
          output.write(buffer, 0, read);
          total += read;
-         if (trace) log.trace("total bytes read: " + total);
+         if (trace) log.tracef("total bytes read: %d", total);
 
          // update the readLength
          readLength = Math.min((int) (length - total), buffer.length);
-         if (trace) log.trace("next read length: " + readLength);
+         if (trace) log.tracef("next read length: %d", readLength);
       }
 
       return total;

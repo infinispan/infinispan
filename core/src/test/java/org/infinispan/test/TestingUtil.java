@@ -539,11 +539,11 @@ public class TestingUtil {
          str = "a non-clustered cache manager";
       else
          str = "a cache manager at address " + a;
-      log.debug("Cleaning data for cache '%s' on %s", cache.getName(), str);
+      log.debugf("Cleaning data for cache '%s' on %s", cache.getName(), str);
       DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
-      log.debug("removeInMemoryData(): dataContainerBefore == %s", dataContainer);
+      log.debugf("removeInMemoryData(): dataContainerBefore == %s", dataContainer);
       dataContainer.clear();
-      log.debug("removeInMemoryData(): dataContainerAfter == %s", dataContainer);
+      log.debugf("removeInMemoryData(): dataContainerAfter == %s", dataContainer);
    }
 
    /**

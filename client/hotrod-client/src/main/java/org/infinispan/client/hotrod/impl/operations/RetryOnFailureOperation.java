@@ -27,7 +27,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.util.logging.Log;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Immutable
 public abstract class RetryOnFailureOperation extends HotRodOperation {
 
-   private static final Log log = LogFactory.getLog(RetryOnFailureOperation.class);
+   private static final Log log = LogFactory.getLog(RetryOnFailureOperation.class, Log.class);
 
    protected final TransportFactory transportFactory;
 
@@ -74,12 +74,12 @@ public abstract class RetryOnFailureOperation extends HotRodOperation {
    }
 
    protected void logErrorAndThrowExceptionIfNeeded(int i, TransportException te) {
-      String message = "Transport exception. Retry " + i + " out of " + transportFactory.getTransportCount();
+      String message = "Transport exception. Retry %d out of %d";
       if (i >= transportFactory.getTransportCount() - 1 || transportFactory.getTransportCount() < 0) {
-         log.warn(message, te);
+         log.transportExceptionAndNoRetriesLeft(i,transportFactory.getTransportCount(), te);
          throw te;
       } else {
-         log.trace(message + ":" + te);
+         log.tracef(te, message, i, transportFactory.getTransportCount());
       }
    }
 

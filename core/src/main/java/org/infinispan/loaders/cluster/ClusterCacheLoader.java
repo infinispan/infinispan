@@ -97,9 +97,8 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
          return value.toInternalCacheEntry(key);
       }
 
-      String message = "Unknown responses from remote cache: " + responses;
-      log.error(message);
-      throw new CacheLoaderException(message);
+      log.unknownResponsesFromRemoteCache(responses);
+      throw new CacheLoaderException("Unknown responses");
    }
 
    @SuppressWarnings(value = "unchecked")
@@ -135,7 +134,7 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
       try {
          return rpcManager.invokeRemotely(null, clusteredGetCommand, ResponseMode.WAIT_FOR_VALID_RESPONSE, config.getRemoteCallTimeout(), false, filter).values();
       } catch (Exception e) {
-         log.error("error while doing remote call", e);
+         log.errorDoingRemoteCall(e);
          throw new CacheLoaderException(e);
       }
    }

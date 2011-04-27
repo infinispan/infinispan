@@ -121,7 +121,7 @@ public class TransactionLog {
       boolean success = false;
       while (!success) {
          try {
-            if (log.isTraceEnabled()) log.trace("Added commit entry to tx log %s", entry);
+            if (log.isTraceEnabled()) log.tracef("Added commit entry to tx log %s", entry);
 
             entries.put(entry);
             success = true;
@@ -158,7 +158,7 @@ public class TransactionLog {
    public final void deactivate() {
       active.set(false);
       if (!entries.isEmpty())
-         log.error("Unprocessed Transaction Log Entries! = %s", entries.size());
+         log.unprocessedTxLogEntries(entries.size());
       entries.clear();
    }
 
@@ -178,7 +178,7 @@ public class TransactionLog {
    }
 
    public void writePendingPrepares(StreamingMarshaller marshaller, ObjectOutput out) throws Exception {
-      if (log.isTraceEnabled()) log.trace("Writing %s pending prepares to the stream", pendingPrepares.size());
+      if (log.isTraceEnabled()) log.tracef("Writing %s pending prepares to the stream", pendingPrepares.size());
       for (PrepareCommand entry : pendingPrepares.values()) marshaller.objectToObjectStream(entry, out);
    }
 

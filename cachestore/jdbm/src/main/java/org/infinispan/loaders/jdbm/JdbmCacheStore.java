@@ -43,7 +43,7 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.util.logging.Log;
+import org.infinispan.loaders.jdbm.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
@@ -79,7 +79,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 @CacheLoaderMetadata(configurationClass = JdbmCacheStoreConfig.class)
 public class JdbmCacheStore extends AbstractCacheStore {
 
-   private static final Log log = LogFactory.getLog(JdbmCacheStore.class);
+   private static final Log log = LogFactory.getLog(JdbmCacheStore.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private static final String NAME = "CacheLoader";
@@ -198,7 +198,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       // props.put(RecordManagerOptions.PROFILE_SERIALIZATION, "false");
       recman = RecordManagerFactory.createRecordManager(f.toString(), props);
       long recid = recman.getNamedObject(NAME);
-      log.debug(NAME + " located as " + recid);
+      log.debugf("%s located as %d", NAME, recid);
       if (recid == 0) {
          createTree();
       } else {
@@ -208,7 +208,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
          setSerializer();
       }
 
-      log.info("JDBM database " + f + " opened");
+      log.jdbmDbOpened(f);
    }
 
    /**
@@ -275,7 +275,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
 
    public boolean remove0(Object key) throws CacheLoaderException {
       if (trace)
-         log.trace("remove() " + key);
+         log.tracef("remove() %s", key);
       try {
          tree.remove(key);
          // If the key does not exist, HTree ignores the operation, so always return true
@@ -306,7 +306,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    private void store0(InternalCacheEntry entry) throws CacheLoaderException {
       Object key = entry.getKey();
       if (trace)
-         log.trace("store() " + key);
+         log.tracef("store() %s", key);
       try {
          tree.put(key, marshall(entry));
          if (entry.canExpire())
@@ -328,7 +328,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       }
       Long at = expiry;
       Object key = entry.getKey();
-      if (trace) log.trace("at " + new SimpleDateFormat(DATE).format(new Date(at)) + " expire " + key);
+      if (trace) log.tracef("at %s expire %s", new SimpleDateFormat(DATE).format(new Date(at)), key);
 
       try {
          expiryEntryQueue.put(new ExpiryEntry(at, key));
@@ -350,7 +350,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
             count++;
          }
          getMarshaller().objectToObjectStream(null, out);
-         log.debug("wrote " + count + " entries");
+         log.debugf("wrote %d entries", count);
       } catch (IOException e) {
          throw new CacheLoaderException(e);
       }
@@ -370,7 +370,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
                break;
             store(entry);
          }
-         log.debug("read " + count + " entries");
+         log.debugf("read %d entries", count);
       } catch (IOException e) {
          throw new CacheLoaderException(e);
       } catch (ClassNotFoundException e) {
@@ -441,7 +441,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       }
 
       if (!keys.isEmpty())
-         log.debug("purge (up to) " + keys.size() + " entries");
+         log.debugf("purge (up to) %d entries", keys.size());
       int count = 0;
       for (Object key : keys) {
          byte[] b = (byte[]) tree.get(key);
@@ -455,7 +455,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
          }
       }
       if (count != 0)
-         log.debug("purged " + count + " entries");
+         log.debugf("purged %d entries", count);
       recman.commit();
    }
 

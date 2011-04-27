@@ -87,7 +87,7 @@ public class PassivationManagerImpl implements PassivationManager {
          final Object value = entry != null ? entry.getValue() : null;
          // notify listeners that this entry is about to be passivated
          notifier.notifyCacheEntryPassivated(key, value, true, ctx);
-         if (trace) log.trace("Passivating entry %s", key);
+         if (trace) log.tracef("Passivating entry %s", key);
          cacheStore.store(entry);
          notifier.notifyCacheEntryPassivated(key, value, false, ctx);
          if (statsEnabled && entry != null) {
@@ -100,12 +100,12 @@ public class PassivationManagerImpl implements PassivationManager {
    public void passivateAll() throws CacheLoaderException {
       if (enabled) {
          long start = System.currentTimeMillis();
-         log.info("Passivating all entries to disk");
+         log.passivatingAllEntries();
          for (InternalCacheEntry e : container) {
-            if (trace) log.trace("Passivating %s", e.getKey());
+            if (trace) log.tracef("Passivating %s", e.getKey());
             cacheStore.store(e);
          }
-         log.info("Passivated %s entries in %s", container.size(), Util.prettyPrintTime(System.currentTimeMillis() - start));
+         log.passivatedEntries(container.size(), Util.prettyPrintTime(System.currentTimeMillis() - start));
       }
    }
 

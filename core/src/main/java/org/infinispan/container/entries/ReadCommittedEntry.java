@@ -160,7 +160,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       // only do stuff if there are changes.
       if (isChanged()) {
          if (trace)
-            log.trace("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s value=%s]", getKey(),
+            log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s value=%s]", getKey(),
                       isRemoved(), isValid(), isChanged(), isCreated(), value);
 
          // Ugh!

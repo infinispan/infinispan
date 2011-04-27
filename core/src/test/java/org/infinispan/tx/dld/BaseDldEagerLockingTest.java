@@ -93,8 +93,8 @@ public abstract class BaseDldEagerLockingTest extends BaseDldTest {
 
       boolean b1 = ex0.lastResponse() instanceof Exception;
       boolean b2 = ex1.lastResponse() instanceof Exception;
-      log.info("b1:", b1);
-      log.info("b2:", b2);
+      log.infof("b1:", b1);
+      log.infof("b2:", b2);
       assert xor(b1, b2) : "Both are " + (b1 || b2);
 
       assert xor(ex0.getOngoingTransaction().getStatus() == Status.STATUS_MARKED_ROLLBACK,

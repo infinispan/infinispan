@@ -147,7 +147,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       props = TypedProperties.toTypedProperties(configuration.getTransportProperties());
       distributedSyncTimeout = configuration.getDistributedSyncTimeout();
 
-      if (log.isInfoEnabled()) log.info("Starting JGroups Channel");
+      if (log.isInfoEnabled()) log.startingJGroupsChannel();
 
       initChannelAndRPCDispatcher();
       startJGroupsChannelIfNeeded();
@@ -163,7 +163,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       }
       address = new JGroupsAddress(channel.getAddress());
       if (log.isInfoEnabled())
-         log.info("Cache local address is %s, physical addresses are %s", getAddress(), getPhysicalAddresses());
+         log.localAndPhysicalAddress(getAddress(), getPhysicalAddresses());
    }
 
    public int getViewId() {
@@ -173,17 +173,17 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    public void stop() {
       try {
          if (stopChannel && channel != null && channel.isOpen()) {
-            log.info("Disconnecting and closing JGroups Channel");
+            log.disconnectAndCloseJGroups();
             channel.disconnect();
             channel.close();
          }
       } catch (Exception toLog) {
-         log.error("Problem closing channel; setting it to null", toLog);
+         log.problemClosingChannel(toLog);
       }
 
       channel = null;
       if (dispatcher != null) {
-         log.info("Stopping the RpcDispatcher");
+         log.stoppingRpcDispatcher();
          dispatcher.stop();
       }
 
@@ -234,9 +234,9 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
                startChannel = lookup.shouldStartAndConnect();
                stopChannel = lookup.shouldStopAndDisconnect();
             } catch (ClassCastException e) {
-               log.error("Class [" + channelLookupClassName + "] cannot be cast to JGroupsChannelLookup!  Not using a channel lookup.");
+               log.wrongTypeForJGroupsChannelLookup(channelLookupClassName);
             } catch (Exception e) {
-               log.error("Errors instantiating [" + channelLookupClassName + "]!  Not using a channel lookup.");
+               log.errorInstantiatingJGroupsChannelLookup(channelLookupClassName);
             }
          }
 
@@ -245,7 +245,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
             try {
                channel = new JChannel(new FileLookup().lookupFileLocation(cfg));
             } catch (Exception e) {
-               log.error("Error while trying to create a channel using config files: " + cfg);
+               log.errorCreatingChannelFromConfigFile(cfg);
                throw new CacheException(e);
             }
          }
@@ -255,7 +255,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
             try {
                channel = new JChannel(XmlConfigHelper.stringToElement(cfg));
             } catch (Exception e) {
-               log.error("Error while trying to create a channel using config XML: " + cfg);
+               log.errorCreatingChannelFromXML(cfg);
                throw new CacheException(e);
             }
          }
@@ -265,14 +265,14 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
             try {
                channel = new JChannel(cfg);
             } catch (Exception e) {
-               log.error("Error while trying to create a channel using config string: " + cfg);
+               log.errorCreatingChannelFromConfigString(cfg);
                throw new CacheException(e);
             }
          }
       }
 
       if (channel == null) {
-         log.info("Unable to use any JGroups configuration mechanisms provided in properties %s.  Using default JGroups configuration!", props);
+         log.unableToUseJGroupsPropertiesProvided(props);
          try {
             channel = new JChannel(new FileLookup().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE));
          } catch (ChannelException e) {
@@ -297,7 +297,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
             try {
                membersListLock.wait();
             } catch (InterruptedException e) {
-               log.error("getCoordinator(): Interrupted while waiting for members to be set", e);
+               log.interruptedWaitingForCoordinator(e);
                break;
             }
          }
@@ -323,7 +323,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       } catch (StateTransferException ste) {
          throw ste;
       } catch (Exception e) {
-         if (log.isInfoEnabled()) log.info("Unable to retrieve state from member " + address, e);
+         if (log.isInfoEnabled()) log.unableToRetrieveState(address, e);
          return false;
       } finally {
          if (cleanup) stateTransfersInProgress.remove(cacheName);
@@ -340,11 +340,11 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       ProtocolStack stack;
       if (channel != null && (stack = channel.getProtocolStack()) != null) {
          if (stack.findProtocol(STREAMING_STATE_TRANSFER.class) == null) {
-            log.error("Channel does not contain STREAMING_STATE_TRANSFER.  Cannot support state transfers!");
+            log.streamingStateTransferNotPresent();
             return false;
          }
       } else {
-         log.warn("Channel not set up properly!");
+         log.channelNotSetUp();
          return false;
       }
 
@@ -386,7 +386,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          return Collections.emptyMap();
       }
 
-      if (trace) log.trace("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
+      if (trace) log.tracef("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
 
       // Acquire a "processing" lock so that any other code is made aware of a network call in progress
       // make sure this is non-exclusive since concurrent network calls are valid for most situations.
@@ -478,10 +478,10 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       List<Address> oldMembers = null;
       Notify notify = null;
       if (newView instanceof MergeView) {
-         if (log.isInfoEnabled()) log.info("Received new, MERGED cluster view: %s", newView);
+         if (log.isInfoEnabled()) log.receivedMergedView(newView);
          if (notifier != null) notify = new NotifyMerge();
       } else {
-         if (log.isInfoEnabled()) log.info("Received new cluster view: %s", newView);
+         if (log.isInfoEnabled()) log.receivedClusterView(newView);
          if (notifier != null) notify = new NotifyViewChange();
       }
 
@@ -559,11 +559,11 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
    public void getState(String cacheName, OutputStream ostream) {
       if (trace)
-         log.trace("Received request to generate state for cache named '%s'.  Attempting to generate state.", cacheName);
+         log.tracef("Received request to generate state for cache named '%s'.  Attempting to generate state.", cacheName);
       try {
          inboundInvocationHandler.generateState(cacheName, ostream);
       } catch (StateTransferException e) {
-         log.error("Caught while responding to state transfer request", e);
+         log.errorGeneratingState(e);
       } finally {
          Util.flushAndCloseStream(ostream);
       }
@@ -576,13 +576,13 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    public void setState(String cacheName, InputStream istream) {
       StateTransferMonitor mon = null;
       try {
-         if (trace) log.trace("Received state for cache named '%s'.  Attempting to apply state.", cacheName);
+         if (trace) log.tracef("Received state for cache named '%s'.  Attempting to apply state.", cacheName);
          mon = stateTransfersInProgress.get(cacheName);
          inboundInvocationHandler.applyState(cacheName, istream);
          mon.notifyStateReceiptSucceeded();
       } catch (Exception e) {
          mon.notifyStateReceiptFailed(e instanceof StateTransferException ? (StateTransferException) e : new StateTransferException(e));
-         log.error("Caught while requesting or applying state", e);
+         log.errorRequestingOrApplyingState(e);
       } finally {
          Util.close(istream);
       }

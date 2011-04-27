@@ -82,7 +82,7 @@ public class ClusterIdGenerator {
       @ViewChanged
       public void calculateRank(ViewChangedEvent e) {
          long rank = calculateRank(e.getLocalAddress(), e.getNewMembers(), e.getViewId());
-         if (log.isTraceEnabled()) log.trace("Calculated rank based on view %s and result was %d", e, rank);
+         if (log.isTraceEnabled()) log.tracef("Calculated rank based on view %s and result was %d", e, rank);
       }
 
       public long calculateRank(Address address, List<Address> members, long viewId) {

@@ -149,7 +149,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
             for (int k = 0; k < NUM_ITERATIONS; k++) {
                String key = keyFor(i, j, k);
                if (keysToIgnore.contains(key)) {
-                  log.info("Skipping test on failing key %s", key);
+                  log.infof("Skipping test on failing key %s", key);
                } else {
                   List<Address> owners = hash.locate(key, 2);
                   for (Map.Entry<Address, Cache<Object, Object>> e : cacheMap.entrySet()) {
@@ -157,7 +157,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
                         if (owners.contains(e.getKey())) DistributionTestHelper.assertIsInContainerImmortal(e.getValue(), key);
                         // Don't bother testing non-owners since invalidations caused by rehashing are async!
                      } catch (Throwable th) {
-                        log.fatal("Key %s (hash %s) should be on owners %s according to %s", key, hash.getNormalizedHash(key), owners, hash);
+                        log.fatalf("Key %s (hash %s) should be on owners %s according to %s", key, hash.getNormalizedHash(key), owners, hash);
                         throw th;
                      }
                   }
@@ -189,7 +189,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
       public Void call() {
          for (int iterationId = 0; iterationId < NUM_ITERATIONS; iterationId++) {
             if (iterationId % 500 == 0)
-               log.info("  >> Stressor %s Worker %s Iteration %s", cacheId, workerId, iterationId);
+               log.infof("  >> Stressor %s Worker %s Iteration %s", cacheId, workerId, iterationId);
             boolean txError = false;
             Exception exception = null;
             String key = keyFor(cacheId, workerId, iterationId);
@@ -229,7 +229,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
 
                if (IGNORE_TX_FAILURES) {
                   keysToIgnore.add(key);
-                  log.error("  >> Saw a %s when trying to process key %s", exception.getClass().getSimpleName(), key);
+                  log.errorf("  >> Saw a %s when trying to process key %s", exception.getClass().getSimpleName(), key);
                } else {
                   throw new RuntimeException(exception);
                }

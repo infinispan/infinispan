@@ -142,8 +142,8 @@ public abstract class AbstractListenerImpl {
          }
       }
 
-      if (!foundMethods && getLog().isWarnEnabled())
-         getLog().warn("Attempted to register listener of class " + listener.getClass() + ", but no valid, public methods annotated with method-level event annotations found! Ignoring listener.");
+      if (!foundMethods)
+         getLog().noAnnotateMethodsFoundInListener(listener.getClass());
    }
 
    private void addListenerInvocation(Class annotation, ListenerInvocation li) {
@@ -201,7 +201,7 @@ public abstract class AbstractListenerImpl {
                   throw new CacheException("Caught exception invoking method " + method + " on listener instance " + target, cause);
                }
                catch (IllegalAccessException exception) {
-                  getLog().warn("Unable to invoke method " + method + " on Object instance " + target + " - removing this target object from list of listeners!", exception);
+                  getLog().unableToInvokeListenerMethod(method, target, exception);
                   removeListener(target);
                }
             }
