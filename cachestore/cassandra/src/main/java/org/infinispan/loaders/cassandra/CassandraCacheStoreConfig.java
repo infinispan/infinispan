@@ -71,6 +71,7 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
 
 	public void setKeySpace(String keySpace) {
 		this.keySpace = keySpace;
+		poolProperties.setKeySpace(keySpace);
 	}
 
 	public String getEntryColumnFamily() {
