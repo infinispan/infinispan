@@ -22,6 +22,17 @@
  */
 package org.infinispan.loaders.file;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import org.infinispan.Cache;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.io.ExposedByteArrayOutputStream;
@@ -35,20 +46,19 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.*;
-
 /**
  * A filesystem-based implementation of a {@link org.infinispan.loaders.bucket.BucketBasedCacheStore}.  This file store
  * stores stuff in the following format: <tt>/{location}/cache name/bucket_number.bucket</tt>
  *
  * @author Manik Surtani
  * @author Mircea.Markus@jboss.com
+ * @author <a href="http://gleamynode.net/">Trustin Lee</a>
  * @since 4.0
  */
 @CacheLoaderMetadata(configurationClass = FileCacheStoreConfig.class)
 public class FileCacheStore extends BucketBasedCacheStore {
 
-   private static final Log log = LogFactory.getLog(FileCacheStore.class);
+   static final Log log = LogFactory.getLog(FileCacheStore.class);
    private static final boolean trace = log.isTraceEnabled();
    private int streamBufferSize;
 
@@ -63,26 +73,32 @@ public class FileCacheStore extends BucketBasedCacheStore {
    }
 
    @Override
-   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (FileCacheStoreConfig) config;
    }
-   
+
+   @Override
    protected void loopOverBuckets(BucketHandler handler) throws CacheLoaderException {
       try {
          File[] listFiles;
          if (root != null && (listFiles = root.listFiles()) != null) {
             for (File bucketFile : listFiles) {
                Bucket bucket = loadBucket(bucketFile);
-               if (handler.handle(bucket)) break;
+               if (handler.handle(bucket)) {
+                  break;
+               }
             }
          }
       } catch (InterruptedException ie) {
-         if (log.isDebugEnabled()) log.debug("Interrupted, so stop looping over buckets.");
+         if (log.isDebugEnabled()) {
+            log.debug("Interrupted, so stop looping over buckets.");
+        }
          Thread.currentThread().interrupt();
       }
    }
 
+   @Override
    protected void fromStreamLockSafe(ObjectInput objectInput) throws CacheLoaderException {
       try {
          int numFiles = objectInput.readInt();
@@ -95,13 +111,15 @@ public class FileCacheStore extends BucketBasedCacheStore {
             BufferedOutputStream bos = new BufferedOutputStream(fos, streamBufferSize);
 
             while (numBytes > totalBytesRead) {
-               if ((numBytes - totalBytesRead) > streamBufferSize) {
+               if (numBytes - totalBytesRead > streamBufferSize) {
                   bytesRead = objectInput.read(buffer, 0, streamBufferSize);
                } else {
                   bytesRead = objectInput.read(buffer, 0, numBytes - totalBytesRead);
                }
 
-               if (bytesRead == -1) break;
+               if (bytesRead == -1) {
+                  break;
+               }
                totalBytesRead += bytesRead;
                bos.write(buffer, 0, bytesRead);
             }
@@ -118,6 +136,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       }
    }
 
+   @Override
    protected void toStreamLockSafe(ObjectOutput objectOutput) throws CacheLoaderException {
       try {
          File[] files = root.listFiles();
@@ -128,7 +147,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
             BufferedInputStream bis = null;
             FileInputStream fileInStream = null;
             try {
-               if (trace) log.tracef("Opening file in %s", file);
+               if (trace) {
+                log.tracef("Opening file in %s", file);
+               }
                fileInStream = new FileInputStream(file);
                int sz = fileInStream.available();
                bis = new BufferedInputStream(fileInStream);
@@ -137,7 +158,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
 
                while (sz > totalBytesRead) {
                   bytesRead = bis.read(buffer, 0, streamBufferSize);
-                  if (bytesRead == -1) break;
+                  if (bytesRead == -1) {
+                     break;
+                  }
                   totalBytesRead += bytesRead;
                   objectOutput.write(buffer, 0, bytesRead);
                }
@@ -151,6 +174,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       }
    }
 
+   @Override
    protected void clearLockSafe() throws CacheLoaderException {
       File[] toDelete = root.listFiles();
       if (toDelete == null) {
@@ -168,8 +192,11 @@ public class FileCacheStore extends BucketBasedCacheStore {
       return true;
    }
 
+   @Override
    protected void purgeInternal() throws CacheLoaderException {
-      if (trace) log.trace("purgeInternal()");
+      if (trace) {
+         log.trace("purgeInternal()");
+      }
       if (acquireGlobalLock(false)) {
          try {
             for (final File bucketFile : root.listFiles()) {
@@ -179,10 +206,13 @@ public class FileCacheStore extends BucketBasedCacheStore {
                      public void run() {
                         Bucket bucket;
                         try {
-                           if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries())
+                           if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries()) {
                               updateBucket(bucket);
+                           }
                         } catch (InterruptedException ie) {
-                           if (log.isDebugEnabled()) log.debug("Interrupted, so finish work.");
+                           if (log.isDebugEnabled()) {
+                              log.debug("Interrupted, so finish work.");
+                           }
                         } catch (CacheLoaderException e) {
                            log.problemsPurgingFile(bucketFile, e);
                         }
@@ -190,26 +220,35 @@ public class FileCacheStore extends BucketBasedCacheStore {
                   });
                } else {
                   Bucket bucket;
-                  if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries()) updateBucket(bucket);
+                  if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries()) {
+                    updateBucket(bucket);
+                  }
                }
             }
          } catch (InterruptedException ie) {
-            if (log.isDebugEnabled()) log.debug("Interrupted, so stop loading and finish with purging.");
+            if (log.isDebugEnabled()) {
+                log.debug("Interrupted, so stop loading and finish with purging.");
+            }
             Thread.currentThread().interrupt();
          } finally {
             releaseGlobalLock(false);
-            if (trace) log.trace("Exit purgeInternal()");
+            if (trace) {
+                log.trace("Exit purgeInternal()");
+            }
          }
       } else {
          log.unableToAcquireLockToPurgeStore();
       }
    }
 
-   protected Bucket loadBucket(String bucketName) throws CacheLoaderException {
+   @Override
+   protected Bucket loadBucket(Integer hash) throws CacheLoaderException {
       try {
-         return loadBucket(new File(root, bucketName));
+         return loadBucket(new File(root, String.valueOf(hash)));
       } catch (InterruptedException ie) {
-         if (log.isDebugEnabled()) log.debug("Interrupted, so stop loading bucket and return null.");
+         if (log.isDebugEnabled()) {
+            log.debug("Interrupted, so stop loading bucket and return null.");
+         }
          Thread.currentThread().interrupt();
          return null;
       }
@@ -218,7 +257,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
    protected Bucket loadBucket(File bucketFile) throws CacheLoaderException, InterruptedException {
       Bucket bucket = null;
       if (bucketFile.exists()) {
-         if (log.isTraceEnabled()) log.trace("Found bucket file: '" + bucketFile + "'");
+         if (log.isTraceEnabled()) {
+            log.trace("Found bucket file: '" + bucketFile + "'");
+         }
          FileInputStream is = null;
          try {
             is = new FileInputStream(bucketFile);
@@ -233,15 +274,18 @@ public class FileCacheStore extends BucketBasedCacheStore {
          }
       }
       if (bucket != null) {
-         bucket.setBucketName(bucketFile.getName());
+         bucket.setBucketId(bucketFile.getName());
       }
       return bucket;
    }
 
+   @Override
    public void updateBucket(Bucket b) throws CacheLoaderException {
-      File f = new File(root, b.getBucketName());
+      File f = new File(root, b.getBucketIdAsString());
       if (f.exists()) {
-         if (!deleteFile(f)) log.problemsRemovingFile(f);
+         if (!deleteFile(f)) {
+            log.problemsRemovingFile(f);
+         }
       } else if (log.isTraceEnabled()) {
          log.tracef("Successfully deleted file: '%s'", f.getName());
       }
@@ -257,7 +301,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
             log.errorSavingBucket(b, ex);
             throw new CacheLoaderException(ex);
          } catch (InterruptedException ie) {
-            if (trace) log.trace("Interrupted while marshalling a bucket");
+            if (trace) {
+               log.trace("Interrupted while marshalling a bucket");
+            }
             Thread.currentThread().interrupt(); // Restore interrupted status
          }
          finally {
@@ -266,15 +312,18 @@ public class FileCacheStore extends BucketBasedCacheStore {
       }
    }
 
+   @Override
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return FileCacheStoreConfig.class;
    }
 
+   @Override
    public void start() throws CacheLoaderException {
       super.start();
       String location = config.getLocation();
-      if (location == null || location.trim().length() == 0)
+      if (location == null || location.trim().length() == 0) {
          location = "Infinispan-FileCacheStore"; // use relative path!
+      }
       location += File.separator + cache.getName();
       root = new File(location);
       if (!root.exists()) {
@@ -289,11 +338,13 @@ public class FileCacheStore extends BucketBasedCacheStore {
    }
 
    public Bucket loadBucketContainingKey(String key) throws CacheLoaderException {
-      return loadBucket(String.valueOf(key.hashCode()));
+      return loadBucket(key.hashCode());
    }
 
    private boolean deleteFile(File f) {
-      if (trace) log.tracef("Really delete file %s", f);
+      if (trace) {
+         log.tracef("Really delete file %s", f);
+      }
       return f.delete();
    }
 
@@ -302,7 +353,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
       ExposedByteArrayOutputStream bytes = new ExposedByteArrayOutputStream(len);
       byte[] buf = new byte[Math.min(len, 1024)];
       int bytesRead;
-      while ((bytesRead = is.read(buf, 0, buf.length)) != -1) bytes.write(buf, 0, bytesRead);
+      while ((bytesRead = is.read(buf, 0, buf.length)) != -1) {
+         bytes.write(buf, 0, bytesRead);
+      }
       is = new ByteArrayInputStream(bytes.getRawBuffer(), 0, bytes.size());
       ObjectInput unmarshaller = marshaller.startObjectInput(is, true);
       Object o = null;

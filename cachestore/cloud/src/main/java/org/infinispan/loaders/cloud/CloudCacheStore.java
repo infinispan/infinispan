@@ -22,36 +22,6 @@
  */
 package org.infinispan.loaders.cloud;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
-import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
-import org.infinispan.Cache;
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderConfig;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderMetadata;
-import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.loaders.bucket.Bucket;
-import org.infinispan.loaders.bucket.BucketBasedCacheStore;
-import org.infinispan.loaders.modifications.Modification;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.loaders.cloud.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.stream.Streams;
-import org.jclouds.blobstore.AsyncBlobStore;
-import org.jclouds.blobstore.BlobStore;
-import org.jclouds.blobstore.BlobStoreContext;
-import org.jclouds.blobstore.BlobStoreContextFactory;
-import org.jclouds.blobstore.domain.Blob;
-import org.jclouds.blobstore.domain.PageSet;
-import org.jclouds.blobstore.domain.StorageMetadata;
-import org.jclouds.domain.Location;
-import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
-import org.jclouds.logging.log4j.config.Log4JLoggingModule;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -69,6 +39,37 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
+import org.infinispan.Cache;
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderMetadata;
+import org.infinispan.loaders.CacheStoreConfig;
+import org.infinispan.loaders.bucket.Bucket;
+import org.infinispan.loaders.bucket.BucketBasedCacheStore;
+import org.infinispan.loaders.cloud.logging.Log;
+import org.infinispan.loaders.modifications.Modification;
+import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.stream.Streams;
+import org.jclouds.blobstore.AsyncBlobStore;
+import org.jclouds.blobstore.BlobStore;
+import org.jclouds.blobstore.BlobStoreContext;
+import org.jclouds.blobstore.BlobStoreContextFactory;
+import org.jclouds.blobstore.domain.Blob;
+import org.jclouds.blobstore.domain.PageSet;
+import org.jclouds.blobstore.domain.StorageMetadata;
+import org.jclouds.domain.Location;
+import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
+import org.jclouds.logging.log4j.config.Log4JLoggingModule;
+
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+
 /**
  * The CloudCacheStore implementation that utilizes <a href="http://code.google.com/p/jclouds">JClouds</a> to
  * communicate with cloud storage providers such as <a href="http://aws.amazon.com/s3/">Amazon's S3<a>, <a
@@ -84,7 +85,7 @@ import java.util.concurrent.Future;
  */
 @CacheLoaderMetadata(configurationClass = CloudCacheStoreConfig.class)
 public class CloudCacheStore extends BucketBasedCacheStore {
-   private static final Log log = LogFactory.getLog(CloudCacheStore.class, Log.class);
+   static final Log log = LogFactory.getLog(CloudCacheStore.class, Log.class);
    final ThreadLocal<List<Future<?>>> asyncCommandFutures = new ThreadLocal<List<Future<?>>>();
    CloudCacheStoreConfig cfg;
    String containerName;
@@ -132,7 +133,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       super.init(cfg, cache, m);
       this.cfg = (CloudCacheStoreConfig) cfg;
       this.cache = cache;
-      this.marshaller = m;
+      marshaller = m;
       this.ctx = ctx;
       this.blobStore = blobStore;
       this.asyncBlobStore = asyncBlobStore;
@@ -143,15 +144,19 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    public void start() throws CacheLoaderException {
       super.start();
       if (constructInternalBlobstores) {
-         if (cfg.getCloudService() == null)
+         if (cfg.getCloudService() == null) {
             throw new ConfigurationException("CloudService must be set!");
-         if (cfg.getIdentity() == null)
+        }
+         if (cfg.getIdentity() == null) {
             throw new ConfigurationException("Identity must be set");
-         if (cfg.getPassword() == null)
+        }
+         if (cfg.getPassword() == null) {
             throw new ConfigurationException("Password must be set");
+        }
       }
-      if (cfg.getBucketPrefix() == null)
-         throw new ConfigurationException("CloudBucket must be set");
+      if (cfg.getBucketPrefix() == null) {
+        throw new ConfigurationException("CloudBucket must be set");
+    }
       containerName = getThisContainerName();
       try {
          if (constructInternalBlobstores) {
@@ -194,10 +199,12 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    protected void loopOverBuckets(BucketHandler handler) throws CacheLoaderException {
       for (Map.Entry<String, Blob> entry : ctx.createBlobMap(containerName).entrySet()) {
          Bucket bucket = readFromBlob(entry.getValue(), entry.getKey());
-         if (bucket.removeExpiredEntries())
+         if (bucket.removeExpiredEntries()) {
             updateBucket(bucket);
-         if (handler.handle(bucket))
+        }
+         if (handler.handle(bucket)) {
             break;
+        }
       }
    }
 
@@ -248,19 +255,25 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    @Override
-   protected Bucket loadBucket(String hash) throws CacheLoaderException {
-      return readFromBlob(blobStore.getBlob(containerName, encodeBucketName(hash)), hash);
+   protected Bucket loadBucket(Integer hash) throws CacheLoaderException {
+      if (hash == null) {
+         throw new NullPointerException("hash");
+      }
+      String bucketName = hash.toString();
+      return readFromBlob(blobStore.getBlob(
+                  containerName, encodeBucketName(bucketName)), bucketName);
    }
 
-   private void purge() {
+   void purge() {
       long currentTime = System.currentTimeMillis();
       PageSet<? extends StorageMetadata> ps = blobStore.list(containerName);
 
       // TODO do we need to scroll through the PageSet?
       for (StorageMetadata sm : ps) {
          long lastExpirableEntry = readLastExpirableEntryFromMetadata(sm.getUserMetadata());
-         if (lastExpirableEntry < currentTime)
+         if (lastExpirableEntry < currentTime) {
             scanBlobForExpiredEntries(sm.getName());
+        }
       }
    }
 
@@ -268,8 +281,9 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       Blob blob = blobStore.getBlob(containerName, blobName);
       try {
          Bucket bucket = readFromBlob(blob, blobName);
-         if (bucket.removeExpiredEntries())
+         if (bucket.removeExpiredEntries()) {
             updateBucket(bucket);
+        }
       } catch (CacheLoaderException e) {
          log.unableToReadBlob(blobName, e);
       }
@@ -278,8 +292,9 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    private long readLastExpirableEntryFromMetadata(Map<String, String> metadata) {
       String eet = metadata.get(EARLIEST_EXPIRY_TIME);
       long eetLong = -1;
-      if (eet != null)
-         eetLong = Long.parseLong(eet);
+      if (eet != null) {
+        eetLong = Long.parseLong(eet);
+    }
       return eetLong;
    }
 
@@ -290,6 +305,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          try {
             if (multiThreadedPurge) {
                purgerService.execute(new Runnable() {
+                  @Override
                   public void run() {
                      try {
                         purge();
@@ -309,7 +325,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
 
    @Override
    protected void updateBucket(Bucket bucket) throws CacheLoaderException {
-      Blob blob = blobStore.newBlob(encodeBucketName(bucket.getBucketName()));
+      Blob blob = blobStore.newBlob(encodeBucketName(bucket.getBucketIdAsString()));
       writeToBlob(blob, bucket);
 
       List<Future<?>> futures = asyncCommandFutures.get();
@@ -336,12 +352,14 @@ public class CloudCacheStore extends BucketBasedCacheStore {
             CacheLoaderException exception = null;
             try {
                futures = asyncCommandFutures.get();
-               if (log.isTraceEnabled())
+               if (log.isTraceEnabled()) {
                   log.tracef("Futures, in order: %s", futures);
+               }
                for (Future<?> f : futures) {
                   Object o = f.get();
-                  if (log.isTraceEnabled())
+                  if (log.isTraceEnabled()) {
                      log.tracef("Future %s returned %s", f, o);
+                  }
                }
             } catch (InterruptedException ie) {
                Thread.currentThread().interrupt();
@@ -349,8 +367,9 @@ public class CloudCacheStore extends BucketBasedCacheStore {
                exception = convertToCacheLoaderException("Caught exception in async process", ee
                      .getCause());
             }
-            if (exception != null)
+            if (exception != null) {
                throw exception;
+            }
          }
       } finally {
          asyncCommandFutures.remove();
@@ -362,10 +381,11 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       for (InternalCacheEntry e : bucket.getEntries().values()) {
          long t = e.getExpiryTime();
          if (t != -1) {
-            if (earliestExpiryTime == -1)
+            if (earliestExpiryTime == -1) {
                earliestExpiryTime = t;
-            else
+            } else {
                earliestExpiryTime = Math.min(earliestExpiryTime, t);
+            }
          }
       }
 
@@ -374,8 +394,9 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          if (cfg.isCompress()) {
             final byte[] compress = compress(payloadBuffer, blob);
             blob.setPayload(compress);
-         } else
+         } else {
             blob.setPayload(payloadBuffer);
+        }
          if (earliestExpiryTime > -1) {
             Map<String, String> md = Collections.singletonMap(EARLIEST_EXPIRY_TIME, String
                   .valueOf(earliestExpiryTime));
@@ -384,24 +405,29 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       } catch (IOException e) {
          throw new CacheLoaderException(e);
       } catch (InterruptedException ie) {
-         if (log.isTraceEnabled()) log.trace("Interrupted while writing blob");
+         if (log.isTraceEnabled()) {
+            log.trace("Interrupted while writing blob");
+        }
          Thread.currentThread().interrupt();
       }
    }
 
    private Bucket readFromBlob(Blob blob, String bucketName) throws CacheLoaderException {
-      if (blob == null)
-         return null;
+      if (blob == null) {
+        return null;
+      }
       try {
          Bucket bucket;
          final InputStream content = blob.getPayload().getInput();
          if (cfg.isCompress()) {
             bucket = uncompress(blob, bucketName, content);
-         } else
+         } else {
             bucket = (Bucket) marshaller.objectFromInputStream(content);
+         }
 
-         if (bucket != null)
-            bucket.setBucketName(bucketName);
+         if (bucket != null) {
+            bucket.setBucketId(bucketName);
+         }
          return bucket;
       } catch (ClassNotFoundException e) {
          throw convertToCacheLoaderException("Unable to read blob", e);
@@ -427,12 +453,13 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       final byte[] uncompressedByteArray = bos2.toByteArray();
 
       byte[] md5FromStoredBlob = blob.getMetadata().getContentMetadata().getContentMD5();
-      
+
       // not all blobstores support md5 on GET request
       if (md5FromStoredBlob != null){
          byte[] hash = getMd5Digest(compressedByteArray);
-         if (!Arrays.equals(hash, md5FromStoredBlob))
+         if (!Arrays.equals(hash, md5FromStoredBlob)) {
             throw new CacheLoaderException("MD5 hash failed when reading (transfer error) for entry " + bucketName);
+         }
       }
 
       is.close();
@@ -466,11 +493,12 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       return compressedByteArray;
    }
 
-   private String encodeBucketName(String decodedName) {
-      final String name = (decodedName.startsWith("-")) ? decodedName.replace('-', 'A')
-            : decodedName;
-      if (cfg.isCompress())
+   private String encodeBucketName(String bucketId) {
+      final String name = bucketId.startsWith("-") ? bucketId.replace('-', 'A')
+                                                   : bucketId;
+      if (cfg.isCompress()) {
          return name + ".bz2";
+      }
       return name;
    }
 
