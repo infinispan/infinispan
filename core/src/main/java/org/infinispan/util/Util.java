@@ -87,10 +87,24 @@ public final class Util {
     * @throws ClassNotFoundException
     */
    public static Class loadClassStrict(String classname) throws ClassNotFoundException {
-      ClassLoader cl = Thread.currentThread().getContextClassLoader();
-      if (cl == null)
-         cl = ClassLoader.getSystemClassLoader();
-      return cl.loadClass(classname);
+      ClassLoader[] cls = new ClassLoader[] {
+         Thread.currentThread().getContextClassLoader(),  // User defined classes
+         Util.class.getClassLoader(),                     // Infinispan classes (not always on TCCL [modular env])
+         ClassLoader.getSystemClassLoader()};             // System loader, usually has app class path
+
+      ClassNotFoundException e = null;
+      for (ClassLoader cl : cls)  {
+         if (cl == null)
+            continue;
+
+         try {
+            return cl.loadClass(classname);
+         } catch (ClassNotFoundException ce) {
+            e = ce;
+         }
+      }
+
+      throw e != null ? e : new ClassNotFoundException(classname);
    }
 
    private static Method getFactoryMethod(Class c) {
