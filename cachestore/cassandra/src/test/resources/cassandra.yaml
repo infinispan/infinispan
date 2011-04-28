@@ -1,0 +1,81 @@
+authenticator: org.apache.cassandra.auth.AllowAllAuthenticator
+auto_bootstrap: false
+binary_memtable_throughput_in_mb: 256
+cluster_name: Infinispan
+column_index_size_in_kb: 64
+commitlog_directory: ${java.io.tmpdir}/infinispan-cassandra-cachestore/commitlog
+commitlog_rotation_threshold_in_mb: 128
+commitlog_sync: periodic
+commitlog_sync_period_in_ms: 10000
+compaction_preheat_key_cache: true
+compaction_thread_priority: 1
+concurrent_reads: 8
+concurrent_writes: 32
+data_file_directories:
+- ${java.io.tmpdir}/infinispan-cassandra-cachestore/data
+disk_access_mode: auto
+dynamic_snitch: false
+dynamic_snitch_badness_threshold: 0.0
+dynamic_snitch_reset_interval_in_ms: 600000
+dynamic_snitch_update_interval_in_ms: 100
+endpoint_snitch: org.apache.cassandra.locator.RackInferringSnitch
+flush_largest_memtables_at: 1.0
+hinted_handoff_enabled: true
+hinted_handoff_throttle_delay_in_ms: 0
+in_memory_compaction_limit_in_mb: 256
+incremental_backups: false
+index_interval: 128
+keyspaces:
+- column_families:
+  - column_metadata: []
+    column_type: Standard
+    compare_with: BytesType
+    gc_grace_seconds: 86400
+    key_cache_save_period_in_seconds: 14400
+    keys_cached: 0.1
+    max_compaction_threshold: 32
+    memtable_flush_after_mins: 60
+    memtable_operations_in_millions: 0.3
+    memtable_throughput_in_mb: 64
+    min_compaction_threshold: 4
+    name: InfinispanEntries
+    read_repair_chance: 1.0
+    row_cache_save_period_in_seconds: 0
+    rows_cached: 0.0
+  - column_metadata: []
+    column_type: Super
+    compare_subcolumns_with: BytesType
+    compare_with: LongType
+    gc_grace_seconds: 86400
+    key_cache_save_period_in_seconds: 14400
+    keys_cached: 0.1
+    max_compaction_threshold: 32
+    memtable_flush_after_mins: 60
+    memtable_operations_in_millions: 0.3
+    memtable_throughput_in_mb: 64
+    min_compaction_threshold: 4
+    name: InfinispanExpiration
+    read_repair_chance: 1.0
+    row_cache_save_period_in_seconds: 0
+    rows_cached: 0.0
+  name: Infinispan
+  replica_placement_strategy: org.apache.cassandra.locator.RackUnawareStrategy
+  replication_factor: 1
+max_hint_window_in_ms: 2147483647
+partitioner: org.apache.cassandra.dht.OrderPreservingPartitioner
+phi_convict_threshold: 8
+reduce_cache_capacity_to: 0.6
+reduce_cache_sizes_at: 1.0
+rpc_keepalive: true
+rpc_max_threads: 2147483647
+rpc_min_threads: 16
+rpc_port: 9160
+rpc_timeout_in_ms: 10000
+saved_caches_directory: ${java.io.tmpdir}/infinispan-cassandra-cachestore/savedcaches
+seeds:
+- 127.0.0.1
+sliced_buffer_size_in_kb: 64
+snapshot_before_compaction: false
+storage_port: 7000
+thrift_framed_transport_size_in_mb: 15
+thrift_max_message_length_in_mb: 16
