@@ -129,6 +129,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    @XmlElement
    StoreAsBinary storeAsBinary = new StoreAsBinary().setConfiguration(this);
 
+   @Deprecated
+   @XmlElement
+   LazyDeserialization lazyDeserialization = new LazyDeserialization().setConfiguration(this);
+
    @XmlElement
    InvocationBatching invocationBatching = new InvocationBatching().setConfiguration(this);
 
@@ -1210,10 +1214,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @Deprecated
    public boolean isUseLazyDeserialization() {
-      return storeAsBinary.enabled;
+      return isStoreAsBinary();
    }
 
    public boolean isStoreAsBinary() {
+      if (lazyDeserialization.enabled) {
+         storeAsBinary.enabled = true;
+      }
       return storeAsBinary.enabled;
    }
 
@@ -1297,6 +1304,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       invocationBatching.accept(v);
       jmxStatistics.accept(v);
       storeAsBinary.accept(v);
+      lazyDeserialization.accept(v);
       loaders.accept(v);
       locking.accept(v);
       transaction.accept(v);
@@ -1327,6 +1335,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       if (jmxStatistics != null ? !jmxStatistics.equals(that.jmxStatistics) : that.jmxStatistics != null) return false;
       if (storeAsBinary != null ? !storeAsBinary.equals(that.storeAsBinary) : that.storeAsBinary != null)
          return false;
+      if (lazyDeserialization != null ? !lazyDeserialization.equals(that.lazyDeserialization) : that.lazyDeserialization != null)
+         return false;
       if (loaders != null ? !loaders.equals(that.loaders) : that.loaders != null) return false;
       if (locking != null ? !locking.equals(that.locking) : that.locking != null) return false;
       if (name != null ? !name.equals(that.name) : that.name != null) return false;
@@ -1351,6 +1361,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       result = 31 * result + (clustering != null ? clustering.hashCode() : 0);
       result = 31 * result + (jmxStatistics != null ? jmxStatistics.hashCode() : 0);
       result = 31 * result + (storeAsBinary != null ? storeAsBinary.hashCode() : 0);
+      result = 31 * result + (lazyDeserialization != null ? lazyDeserialization.hashCode() : 0);
       result = 31 * result + (invocationBatching != null ? invocationBatching.hashCode() : 0);
       result = 31 * result + (deadlockDetection != null ? deadlockDetection.hashCode() : 0);
       return result;
@@ -1408,6 +1419,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (storeAsBinary != null) {
             dolly.storeAsBinary = (StoreAsBinary) storeAsBinary.clone();
             dolly.storeAsBinary.setConfiguration(dolly);
+         }
+         if (lazyDeserialization != null) {
+            dolly.lazyDeserialization = (LazyDeserialization) lazyDeserialization.clone();
+            dolly.lazyDeserialization.setConfiguration(dolly);
          }
          if (invocationBatching != null) {
             dolly.invocationBatching = (InvocationBatching) invocationBatching.clone();
@@ -3496,6 +3511,44 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public StoreAsBinary disable() {
          super.disable();
+         return this;
+      }
+   }
+
+   /**
+    * Deprecated configuration element. Use storeAsBinary instead.
+    */
+   @Deprecated
+   @ConfigurationDoc(name = "lazyDeserialization")
+   public static class LazyDeserialization extends BooleanAttributeType {
+
+      public LazyDeserialization() {
+         super("lazyDeserialization");
+      }
+
+      @Override
+      public LazyDeserialization enabled(Boolean enabled) {
+         log.lazyDeserializationDeprecated();
+         super.enabled(enabled);
+         return this;
+      }
+
+      @Override
+      public LazyDeserialization disable() {
+         log.lazyDeserializationDeprecated();
+         super.disable();
+         return this;
+      }
+
+      @Override
+      public void setEnabled(Boolean enabled) {
+         log.lazyDeserializationDeprecated();
+         super.setEnabled(enabled);
+      }
+
+      @Override
+      protected LazyDeserialization setConfiguration(Configuration config) {
+         super.setConfiguration(config);
          return this;
       }
    }
