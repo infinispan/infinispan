@@ -137,6 +137,19 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
       Configuration redefinedConfig = cm.defineConfiguration("c1", new Configuration());
       assert c1Config.equals(redefinedConfig);
    }
+
+   public void testDeprecatedElements() throws Exception {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.fromXml("configs/deprecated-elements.xml");
+      try {
+         Cache c = cm.getCache("storeAsBinary");
+         assert c.getConfiguration().isStoreAsBinary();
+         c = cm.getCache();
+         assert c.getConfiguration().isStoreAsBinary();
+      } finally {
+         cm.stop();
+      }
+
+   }
 }
 
 
