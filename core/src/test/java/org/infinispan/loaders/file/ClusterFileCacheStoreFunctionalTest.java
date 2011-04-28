@@ -22,6 +22,11 @@
  */
 package org.infinispan.loaders.file;
 
+import java.io.File;
+import java.lang.reflect.Method;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
@@ -36,10 +41,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
-import javax.transaction.TransactionManager;
-import java.io.File;
-import java.lang.reflect.Method;
-
 /**
  * // TODO: Document this
  *
@@ -50,10 +51,10 @@ import java.lang.reflect.Method;
 public class ClusterFileCacheStoreFunctionalTest extends MultipleCacheManagersTest {
 
    // createCacheManager executes before any @BeforeClass defined in the class, so simply use standard tmp folder.
-   private String tmpDirectory = TestingUtil.tmpDirectory("/tmp", this);
+   private final String tmpDirectory = TestingUtil.tmpDirectory("/tmp", this);
 
    private Cache cache1, cache2;
-   
+
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(tmpDirectory);
