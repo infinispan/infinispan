@@ -43,14 +43,12 @@
 		<dependency>
 			<groupId>net.dataforte.cassandra</groupId>
 			<artifactId>cassandra-connection-pool</artifactId>
-			<version>${version.cassandra.connection.pool}</version>
+			<version>${version.cassandra.pool}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.apache.cassandra</groupId>
-			<artifactId>apache-cassandra</artifactId>
+			<artifactId>cassandra-all</artifactId>
 			<version>${version.cassandra}</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -74,7 +72,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.4.3</version>
 				<configuration>
-					<forkMode>once</forkMode>
+					<forkMode>pertest</forkMode>
 					<parallel>false</parallel>
 				</configuration>
 			</plugin>
@@ -91,14 +89,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
-	<repositories>
-		<repository>
-			<id>dataforte</id>
-			<url>http://www.dataforte.net/listing/maven/releases</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
 </project>
