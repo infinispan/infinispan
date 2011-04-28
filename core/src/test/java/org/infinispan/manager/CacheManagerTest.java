@@ -133,10 +133,10 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
       
       Configuration c = cm.defineConfiguration("cache1", null, new Configuration());
-      assert c.equals(cm.getDefaultConfiguration());
+      assert c.equalsIgnoreName(cm.getDefaultConfiguration()) ;
       
       c = cm.defineConfiguration("cache1", "does-not-exist-cache", new Configuration());
-      assert c.equals(cm.getDefaultConfiguration());
+      assert c.equalsIgnoreName(cm.getDefaultConfiguration());
    }
 
    public void testDefiningConfigurationWithTemplateName() {
@@ -145,12 +145,12 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       Configuration c = new Configuration();
       c.setIsolationLevel(IsolationLevel.NONE);
       Configuration oneCacheConfiguration = cm.defineConfiguration("oneCache", c);
-      assert oneCacheConfiguration.equals(c);
+      assert oneCacheConfiguration.equalsIgnoreName(c) ;
       assert oneCacheConfiguration.getIsolationLevel().equals(IsolationLevel.NONE);
       
       c = new Configuration();
       Configuration secondCacheConfiguration = cm.defineConfiguration("secondCache", "oneCache", c);
-      assert oneCacheConfiguration.equals(secondCacheConfiguration);
+      assert oneCacheConfiguration.equalsIgnoreName(secondCacheConfiguration) ;
       assert secondCacheConfiguration.getIsolationLevel().equals(IsolationLevel.NONE);
       
       c = new Configuration();

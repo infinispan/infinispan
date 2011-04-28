@@ -1313,8 +1313,20 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       v.visitConfiguration(this);
    }
 
+   /**
+    * Also see {@link #equalsIgnoreName(Object)} for equality that does not consider the name of the configuration.
+    */
    @Override
    public boolean equals(Object o) {
+      if (!equalsIgnoreName(o)) return false;
+      Configuration that = (Configuration) o;
+      return !(name != null ? !name.equals(that.name) : that.name != null);
+   }
+
+   /**
+    * Same as {@link #equals(Object)} but it ignores the {@link #getName()} attribute in the comparison.
+    */
+   public boolean equalsIgnoreName(Object o) {
       if (this == o) return true;
       if (!(o instanceof Configuration)) return false;
 
@@ -1339,7 +1351,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return false;
       if (loaders != null ? !loaders.equals(that.loaders) : that.loaders != null) return false;
       if (locking != null ? !locking.equals(that.locking) : that.locking != null) return false;
-      if (name != null ? !name.equals(that.name) : that.name != null) return false;
       if (transaction != null ? !transaction.equals(that.transaction) : that.transaction != null) return false;
       if (unsafe != null ? !unsafe.equals(that.unsafe) : that.unsafe != null) return false;
 
