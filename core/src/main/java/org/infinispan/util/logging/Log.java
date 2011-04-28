@@ -675,4 +675,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Infinispan configuration schema could not be resolved locally nor fetched from URL. Local path=%s, schema path=%s, schema URL=%s", id = 139)
    void couldNotResolveConfigurationSchema(String localPath, String schemaPath, String schemaURL);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Lazy deserialization configuration is deprecated, please use storeAsBinary instead", id = 140)
+   void lazyDeserializationDeprecated();
+
 }

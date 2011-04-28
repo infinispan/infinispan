@@ -404,5 +404,4 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert csConf.getAsyncStoreConfig().isEnabled();
    }
 
-   // TODO: Add test for marshallables
 }
