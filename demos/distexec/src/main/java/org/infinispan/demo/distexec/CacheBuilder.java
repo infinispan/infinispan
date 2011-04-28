@@ -35,12 +35,12 @@ public class CacheBuilder {
       if (useDeclarativeConfig) {
          InfinispanConfiguration c = InfinispanConfiguration.newInfinispanConfiguration(configFile);
          GlobalConfiguration gc = c.parseGlobalConfiguration();
-         log.info("Using %s and %s configuration files to create CacheManager ", configFile, transportFile);
+         log.infof("Using %s and %s configuration files to create CacheManager ", configFile, transportFile);
          gc.fluent().transport().addProperty("configurationFile", transportFile);
          cacheManager = new DefaultCacheManager(gc, c.parseDefaultConfiguration());
       } else {
          GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
-         log.info("Using %s transport configuration file to create CacheManager ", transportFile);
+         log.infof("Using %s transport configuration file to create CacheManager ", transportFile);
 
          gc.fluent().transport().addProperty("configurationFile", transportFile);
          Configuration cfg = new Configuration();
