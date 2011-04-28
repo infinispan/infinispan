@@ -90,6 +90,7 @@
    </mailingLists>
 
    <properties>
+      <buildDirectory>target</buildDirectory>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <defaultTestGroup>functional,unit</defaultTestGroup>
       <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
@@ -215,6 +216,8 @@
    </dependencies>
 
    <build>
+      <directory>${buildDirectory}</directory>
+
       <plugins>
          <!-- enforce java 1.6 and maven 2.1.0 -->
          <plugin>
