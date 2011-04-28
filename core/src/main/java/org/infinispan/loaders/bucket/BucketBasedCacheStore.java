@@ -22,14 +22,14 @@
  */
 package org.infinispan.loaders.bucket;
 
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.LockSupportCacheStore;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.LockSupportCacheStore;
 
 /**
  * Base class for CacheStore implementations that combine entries into buckets when storing data.
@@ -43,9 +43,10 @@ import java.util.Set;
  *
  * @author Mircea.Markus@jboss.com
  * @author Manik Surtani
+ * @author <a href="http://gleamynode.net/">Trustin Lee</a>
  * @since 4.0
  */
-public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
+public abstract class BucketBasedCacheStore extends LockSupportCacheStore<Integer> {
 
    /**
     * Loads an entry from a Bucket, locating the relevant Bucket using the key's hash code.
@@ -54,9 +55,12 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
     * @param lockingKey the hash of the key, as returned by {@link LockSupportCacheStore#getLockFromKey(Object)}. This
     *                   is required in order to avoid hash re-computation.
     */
-   protected InternalCacheEntry loadLockSafe(Object key, String lockingKey) throws CacheLoaderException {
+   @Override
+   protected InternalCacheEntry loadLockSafe(Object key, Integer lockingKey) throws CacheLoaderException {
       Bucket bucket = loadBucket(lockingKey);
-      if (bucket == null) return null;
+      if (bucket == null) {
+         return null;
+      }
       InternalCacheEntry se = bucket.getEntry(key);
 
       if (se != null && se.isExpired()) {
@@ -77,14 +81,15 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
     * @param lockingKey the hash of the key, as returned by {@link LockSupportCacheStore#getLockFromKey(Object)}. This
     *                   is required in order to avoid hash re-computation.
     */
-   protected void storeLockSafe(InternalCacheEntry entry, String lockingKey) throws CacheLoaderException {
+   @Override
+   protected void storeLockSafe(InternalCacheEntry entry, Integer lockingKey) throws CacheLoaderException {
       Bucket bucket = loadBucket(lockingKey);
       if (bucket != null) {
          bucket.addEntry(entry);
          updateBucket(bucket);
       } else {
          bucket = new Bucket();
-         bucket.setBucketName(lockingKey);
+         bucket.setBucketId(lockingKey);
          bucket.addEntry(entry);
          insertBucket(bucket);
       }
@@ -96,13 +101,16 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
     * @param lockingKey the hash of the key, as returned by {@link LockSupportCacheStore#getLockFromKey(Object)}. This
     *                   is required in order to avoid hash re-computation.
     */
-   protected boolean removeLockSafe(Object key, String lockingKey) throws CacheLoaderException {
+   @Override
+   protected boolean removeLockSafe(Object key, Integer lockingKey) throws CacheLoaderException {
       Bucket bucket = loadBucket(lockingKey);
       if (bucket == null) {
          return false;
       } else {
          boolean success = bucket.removeEntry(key);
-         if (success) updateBucket(bucket);
+         if (success) {
+            updateBucket(bucket);
+         }
          return success;
       }
    }
@@ -111,8 +119,9 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
     * For {@link BucketBasedCacheStore}s the lock should be acquired at bucket level. So we're locking based on the
     * hash code of the key, as all keys having same hash code will be mapped to same bucket.
     */
-   protected String getLockFromKey(Object key) {
-      return String.valueOf(key.hashCode());
+   @Override
+   protected Integer getLockFromKey(Object key) {
+      return Integer.valueOf(key.hashCode());
    }
 
    /**
@@ -142,18 +151,26 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
       Set<T> generated = new HashSet<T>();
       public abstract boolean consider(Collection<? extends InternalCacheEntry> entries);
       public Set<T> generate() { return generated; }
+
+      @Override
       public boolean handle(Bucket bucket) throws CacheLoaderException {
          if (bucket != null) {
-            if (bucket.removeExpiredEntries()) updateBucket(bucket);
+            if (bucket.removeExpiredEntries()) {
+               updateBucket(bucket);
+            }
             boolean enoughLooping = consider(bucket.getStoredEntries());
-            if (enoughLooping) return true;
+            if (enoughLooping) {
+               return true;
+            }
          }
          return false;
       }
    }
 
+   @Override
    protected Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
       CollectionGeneratingBucketHandler<InternalCacheEntry> g = new CollectionGeneratingBucketHandler<InternalCacheEntry>() {
+         @Override
          public boolean consider(Collection<? extends InternalCacheEntry> entries) {
             generated.addAll(entries);
             return false;
@@ -164,10 +181,14 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
       return g.generate();
    }
 
+   @Override
    protected Set<InternalCacheEntry> loadLockSafe(final int max) throws CacheLoaderException {
       CollectionGeneratingBucketHandler<InternalCacheEntry> g = new CollectionGeneratingBucketHandler<InternalCacheEntry>() {
+         @Override
          public boolean consider(Collection<? extends InternalCacheEntry> entries) {
-            for (Iterator<? extends InternalCacheEntry> i = entries.iterator(); i.hasNext() && generated.size() < max;) generated.add(i.next());
+            for (Iterator<? extends InternalCacheEntry> i = entries.iterator(); i.hasNext() && generated.size() < max;) {
+               generated.add(i.next());
+            }
             return generated.size() >= max;
          }
       };
@@ -179,8 +200,13 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
    @Override
    protected Set<Object> loadAllKeysLockSafe(final Set<Object> keysToExclude) throws CacheLoaderException {
       CollectionGeneratingBucketHandler<Object> g = new CollectionGeneratingBucketHandler<Object>() {
+         @Override
          public boolean consider(Collection<? extends InternalCacheEntry> entries) {
-            for (InternalCacheEntry ice: entries) if (keysToExclude == null || !keysToExclude.contains(ice.getKey())) generated.add(ice.getKey());
+            for (InternalCacheEntry ice: entries) {
+               if (keysToExclude == null || !keysToExclude.contains(ice.getKey())) {
+                   generated.add(ice.getKey());
+               }
+            }
             return false;
          }
       };
@@ -217,9 +243,9 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
 
    /**
     * Loads a Bucket from the store, based on the hash code of the bucket.
-    * @param hash String representation of the Bucket's hash
+    * @param hash the Bucket's hash
     * @return a Bucket if one exists, null otherwise.
     * @throws CacheLoaderException in case of problems with the store.
     */
-   protected abstract Bucket loadBucket(String hash) throws CacheLoaderException;
+   protected abstract Bucket loadBucket(Integer hash) throws CacheLoaderException;
 }

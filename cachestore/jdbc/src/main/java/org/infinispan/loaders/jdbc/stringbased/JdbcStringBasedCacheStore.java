@@ -22,6 +22,16 @@
  */
 package org.infinispan.loaders.jdbc.stringbased;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -34,22 +44,12 @@ import org.infinispan.loaders.jdbc.DataManipulationHelper;
 import org.infinispan.loaders.jdbc.JdbcUtil;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.loaders.keymappers.Key2StringMapper;
 import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Set;
 
 /**
  * {@link org.infinispan.loaders.CacheStore} implementation that stores the entries in a database. In contrast to the
@@ -85,7 +85,7 @@ import java.util.Set;
  * @see org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper
  */
 @CacheLoaderMetadata(configurationClass = JdbcStringBasedCacheStoreConfig.class)
-public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
+public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
 
    private static final Log log = LogFactory.getLog(JdbcStringBasedCacheStore.class, Log.class);
 
@@ -101,10 +101,11 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
    private DataManipulationHelper dmHelper;
    private String cacheName;
 
+   @Override
    public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (JdbcStringBasedCacheStoreConfig) config;
-      this.cacheName = cache.getName();
+      cacheName = cache.getName();
    }
 
    @Override
@@ -112,16 +113,20 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       super.start();
       if (config.isManageConnectionFactory()) {
          String connectionFactoryClass = config.getConnectionFactoryConfig().getConnectionFactoryClass();
-         if (log.isTraceEnabled()) log.tracef("Using managed connection factory: %s", connectionFactoryClass);
+         if (log.isTraceEnabled()) {
+            log.tracef("Using managed connection factory: %s", connectionFactoryClass);
+         }
          ConnectionFactory connectionFactory = ConnectionFactory.getConnectionFactory(connectionFactoryClass);
          connectionFactory.start(config.getConnectionFactoryConfig());
          doConnectionFactoryInitialization(connectionFactory);
       }
-      this.key2StringMapper = config.getKey2StringMapper();
-      if (log.isTraceEnabled()) log.tracef("Using key2StringMapper: %s", key2StringMapper.getClass().getName());
+      key2StringMapper = config.getKey2StringMapper();
+      if (log.isTraceEnabled()) {
+         log.tracef("Using key2StringMapper: %s", key2StringMapper.getClass().getName());
+      }
       if (isUsingPreload()) {
          enforceTwoWayMapper("preload");
-      } 
+      }
       if (isDistributed()) {
          enforceTwoWayMapper("distribution/rehashing");
       }
@@ -157,6 +162,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
             marshaller.objectToObjectStream(icv.toInternalCacheEntry(key), objectOutput);
          }
 
+         @Override
          public boolean fromStreamProcess(Object objFromStream, PreparedStatement ps, ObjectInput objectInput) throws SQLException, CacheLoaderException, InterruptedException {
             if (objFromStream instanceof InternalCacheEntry) {
                InternalCacheEntry se = (InternalCacheEntry) objFromStream;
@@ -176,7 +182,9 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
    public void stop() throws CacheLoaderException {
       tableManipulation.stop();
       if (config.isManageConnectionFactory()) {
-         if (log.isTraceEnabled()) log.tracef("Stopping mananged connection factory: %s", connectionFactory);
+         if (log.isTraceEnabled()) {
+            log.tracef("Stopping mananged connection factory: %s", connectionFactory);
+         }
          connectionFactory.stop();
       }
    }
@@ -198,8 +206,9 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       } else {
          sql = tableManipulation.getUpdateRowSql();
       }
-      if (log.isTraceEnabled())
+      if (log.isTraceEnabled()) {
          log.tracef("Running sql '%s' on %s. Key string is '%s'", sql, ed, lockingKey);
+      }
       Connection connection = null;
       PreparedStatement ps = null;
       ByteBuffer byteBuffer = null;
@@ -217,7 +226,9 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
                "Error while storing string key to database; key: '%s', buffer size of value: %d bytes",
                lockingKey, byteBuffer.getLength()), ex);
       } catch (InterruptedException e) {
-         if (log.isTraceEnabled()) log.trace("Interrupted while marshalling to store");
+         if (log.isTraceEnabled()) {
+            log.trace("Interrupted while marshalling to store");
+         }
          Thread.currentThread().interrupt();
       } finally {
          JdbcUtil.safeClose(ps);
@@ -231,7 +242,9 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       PreparedStatement ps = null;
       try {
          String sql = tableManipulation.getDeleteRowSql();
-         if (log.isTraceEnabled()) log.tracef("Running sql '%s' on %s", sql, keyStr);
+         if (log.isTraceEnabled()) {
+            log.tracef("Running sql '%s' on %s", sql, keyStr);
+         }
          connection = connectionFactory.getConnection();
          ps = connection.prepareStatement(sql);
          ps.setString(1, keyStr);
@@ -285,8 +298,9 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          ps = conn.prepareStatement(sql);
          ps.setLong(1, System.currentTimeMillis());
          int result = ps.executeUpdate();
-         if (log.isTraceEnabled())
+         if (log.isTraceEnabled()) {
             log.tracef("Successfully purged %d rows.", result);
+         }
       } catch (SQLException ex) {
          log.failedClearingJdbcCacheStore(ex);
          throw new CacheLoaderException("Failed clearing string based JDBC store", ex);
@@ -381,5 +395,5 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          connectionFactory.releaseConnection(conn);
       }
       return storedEntry;
-   }   
+   }
 }

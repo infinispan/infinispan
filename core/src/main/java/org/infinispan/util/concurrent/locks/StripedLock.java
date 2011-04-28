@@ -22,14 +22,15 @@
  */
 package org.infinispan.util.concurrent.locks;
 
-import net.jcip.annotations.ThreadSafe;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import net.jcip.annotations.ThreadSafe;
+
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A simple implementation of lock striping, using cache entry keys to lock on, primarily used to help make {@link
@@ -81,7 +82,9 @@ public class StripedLock {
 
       sharedLocks = new ReentrantReadWriteLock[numLocks];
 
-      for (int i = 0; i < numLocks; i++) sharedLocks[i] = new ReentrantReadWriteLock();
+      for (int i = 0; i < numLocks; i++) {
+        sharedLocks[i] = new ReentrantReadWriteLock();
+    }
    }
 
    /**
@@ -93,14 +96,18 @@ public class StripedLock {
       ReentrantReadWriteLock lock = getLock(key);
       if (exclusive) {
          lock.writeLock().lock();
-         if (log.isTraceEnabled()) log.tracef("WL acquired for '%s'", key);
+         if (log.isTraceEnabled()) {
+            log.tracef("WL acquired for '%s'", key);
+        }
       } else {
          lock.readLock().lock();
-         if (log.isTraceEnabled()) log.tracef("RL acquired for '%s'", key);
+         if (log.isTraceEnabled()) {
+            log.tracef("RL acquired for '%s'", key);
+        }
       }
    }
 
-   public boolean acquireLock(String key, boolean exclusive, long millis) {
+   public boolean acquireLock(Object key, boolean exclusive, long millis) {
       ReentrantReadWriteLock lock = getLock(key);
       try {
          if (exclusive) {
@@ -121,10 +128,14 @@ public class StripedLock {
       ReentrantReadWriteLock lock = getLock(key);
       if (lock.isWriteLockedByCurrentThread()) {
          lock.writeLock().unlock();
-         if (log.isTraceEnabled()) log.tracef("WL released for '%s'", key);
+         if (log.isTraceEnabled()) {
+            log.tracef("WL released for '%s'", key);
+        }
       } else {
          lock.readLock().unlock();
-         if (log.isTraceEnabled()) log.tracef("RL released for '%s'", key);
+         if (log.isTraceEnabled()) {
+            log.tracef("RL released for '%s'", key);
+        }
       }
    }
 
@@ -133,7 +144,7 @@ public class StripedLock {
    }
 
    final int hashToIndex(Object o) {
-      return (hash(o) >>> lockSegmentShift) & lockSegmentMask;
+      return hash(o) >>> lockSegmentShift & lockSegmentMask;
    }
 
    /**
@@ -145,8 +156,8 @@ public class StripedLock {
     */
    final int hash(Object x) {
       int h = x.hashCode();
-      h ^= (h >>> 20) ^ (h >>> 12);
-      return h ^ (h >>> 7) ^ (h >>> 4);
+      h ^= h >>> 20 ^ h >>> 12;
+      return h ^ h >>> 7 ^ h >>> 4;
    }
 
    /**
@@ -156,7 +167,9 @@ public class StripedLock {
     * @param keys keys to unlock
     */
    public void releaseAllLocks(List<Object> keys) {
-      for (Object k : keys) releaseLock(k);
+      for (Object k : keys) {
+        releaseLock(k);
+    }
    }
 
    /**
@@ -166,7 +179,9 @@ public class StripedLock {
     * @param exclusive whether locks are exclusive.
     */
    public void acquireAllLocks(List<Object> keys, boolean exclusive) {
-      for (Object k : keys) acquireLock(k, exclusive);
+      for (Object k : keys) {
+        acquireLock(k, exclusive);
+    }
    }
 
    /**
@@ -191,12 +206,15 @@ public class StripedLock {
          try {
             success = toAcquire.tryLock(timeout, TimeUnit.MILLISECONDS);
             if (!success) {
-               if (log.isTraceEnabled())
-                  log.tracef("Could not aquire lock on %s. Exclusive? %b", toAcquire, exclusive);
+               if (log.isTraceEnabled()) {
+                log.tracef("Could not aquire lock on %s. Exclusive? %b", toAcquire, exclusive);
+            }
                break;
             }
          } catch (InterruptedException e) {
-            if (log.isTraceEnabled()) log.trace("Cought InterruptedException while trying to aquire global lock", e);
+            if (log.isTraceEnabled()) {
+                log.trace("Cought InterruptedException while trying to aquire global lock", e);
+            }
             success = false;
             Thread.currentThread().interrupt(); // Restore interrupted status
          } finally {

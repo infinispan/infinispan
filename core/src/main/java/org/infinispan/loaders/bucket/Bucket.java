@@ -22,12 +22,6 @@
  */
 package org.infinispan.loaders.bucket;
 
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -37,12 +31,19 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.AbstractExternalizer;
+import org.infinispan.marshall.Ids;
+import org.infinispan.util.Util;
+
 /**
  * A bucket is where entries are stored.
  */
 public final class Bucket {
-   private Map<Object, InternalCacheEntry> entries = new HashMap<Object, InternalCacheEntry>();
-   private transient String bucketName;
+   final Map<Object, InternalCacheEntry> entries = new HashMap<Object, InternalCacheEntry>();
+   private transient Integer bucketId;
+   private transient String bucketIdStr;
 
    public final void addEntry(InternalCacheEntry se) {
       entries.put(se.getKey(), se);
@@ -60,12 +61,26 @@ public final class Bucket {
       return entries;
    }
 
-   public String getBucketName() {
-      return bucketName;
+   public Integer getBucketId() {
+      return bucketId;
    }
 
-   public void setBucketName(String bucketName) {
-      this.bucketName = bucketName;
+   public void setBucketId(Integer bucketId) {
+      this.bucketId = bucketId;
+      bucketIdStr = bucketId.toString();
+   }
+
+   public void setBucketId(String bucketId) {
+      try {
+         setBucketId(Integer.parseInt(bucketId));
+      } catch (NumberFormatException e) {
+         throw new IllegalArgumentException(
+               "bucketId: " + bucketId + " (expected: integer)");
+      }
+   }
+
+   public String getBucketIdAsString() {
+      return bucketIdStr;
    }
 
    public boolean removeExpiredEntries() {
@@ -99,7 +114,7 @@ public final class Bucket {
    public String toString() {
       return "Bucket{" +
             "entries=" + entries +
-            ", bucketName='" + bucketName + '\'' +
+            ", bucketId='" + bucketId + '\'' +
             '}';
    }
 
@@ -116,18 +131,25 @@ public final class Bucket {
    }
 
    public static class Externalizer extends AbstractExternalizer<Bucket> {
+
+      private static final long serialVersionUID = -5291318076267612501L;
+
       @Override
       public void writeObject(ObjectOutput output, Bucket b) throws IOException {
          Map<Object, InternalCacheEntry> entries = b.entries;
          UnsignedNumeric.writeUnsignedInt(output, entries.size());
-         for (InternalCacheEntry se : entries.values()) output.writeObject(se);
+         for (InternalCacheEntry se : entries.values()) {
+            output.writeObject(se);
+         }
       }
 
       @Override
       public Bucket readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Bucket b = new Bucket();
          int numEntries = UnsignedNumeric.readUnsignedInt(input);
-         for (int i = 0; i < numEntries; i++) b.addEntry((InternalCacheEntry) input.readObject());
+         for (int i = 0; i < numEntries; i++) {
+            b.addEntry((InternalCacheEntry) input.readObject());
+         }
          return b;
       }
 
@@ -137,6 +159,7 @@ public final class Bucket {
       }
 
       @Override
+      @SuppressWarnings("unchecked")
       public Set<Class<? extends Bucket>> getTypeClasses() {
          return Util.<Class<? extends Bucket>>asSet(Bucket.class);
       }

@@ -22,6 +22,26 @@
  */
 package org.infinispan.marshall;
 
+import static org.infinispan.test.TestingUtil.*;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.control.StateTransferControlCommand;
@@ -39,7 +59,15 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.container.entries.*;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.ImmortalCacheValue;
+import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.container.entries.MortalCacheValue;
+import org.infinispan.container.entries.TransientCacheEntry;
+import org.infinispan.container.entries.TransientCacheValue;
+import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.jboss.JBossMarshallingTest.CustomReadObjectMethod;
@@ -63,21 +91,11 @@ import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.marshalling.*;
+import org.jboss.marshalling.TraceInformation;
 import org.jgroups.stack.IpAddress;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.util.*;
-
-import static org.infinispan.test.TestingUtil.k;
 
 @Test(groups = "functional", testName = "marshall.VersionAwareMarshallerTest")
 public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
@@ -85,7 +103,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(VersionAwareMarshallerTest.class);
    private final VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
 
-   private TransactionFactory gtf = new TransactionFactory();
+   private final TransactionFactory gtf = new TransactionFactory();
 
    public VersionAwareMarshallerTest() {
       gtf.init(false, false, true);
@@ -324,7 +342,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       TransientCacheEntry entry3 = (TransientCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), 4000000);
       TransientMortalCacheEntry entry4 = (TransientMortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
       Bucket b = new Bucket();
-      b.setBucketName("mybucket");
+      b.setBucketId(0);
       b.addEntry(entry1);
       b.addEntry(entry2);
       b.addEntry(entry3);
@@ -360,13 +378,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          assert m.get(entry.getKey()).equals(entry.getValue());
       }
       assert m.size() == 1;
-      
+
       m = new AtomicHashMap<String, String>();
       assert m.isEmpty();
       bytes = marshaller.objectToByteBuffer(m);
       m = (AtomicHashMap<String, String>) marshaller.objectFromByteBuffer(bytes);
       assert m.isEmpty();
-      
+
       m = new AtomicHashMap<String, String>();
       m.initForWriting();
       m.put("k1", "v1");
@@ -380,7 +398,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          assert m.get(entry.getKey()).equals(entry.getValue());
       }
       assert m.size() == 2;
-      
+
       m = new AtomicHashMap<String, String>();
       m.initForWriting();
       m.put("k5", "v1");
@@ -395,7 +413,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
       assert m.isEmpty();
    }
-   
+
    public void testMarshallObjectThatContainsACustomReadObjectMethod() throws Exception {
       ObjectThatContainsACustomReadObjectMethod obj = new ObjectThatContainsACustomReadObjectMethod();
       obj.anObjectWithCustomReadObjectMethod = new CustomReadObjectMethod();
@@ -445,9 +463,9 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
          throw new IOException("Injected failue!");
       }
-      
+
    };
-   
+
    public void testErrorUnmarshalling() throws Exception {
       Pojo pojo = new PojoWhichFailsOnUnmarshalling();
       byte[] bytes = marshaller.objectToByteBuffer(pojo);
@@ -458,7 +476,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          TraceInformation inf = (TraceInformation) e.getCause();
          assert inf.toString().contains("in object of type org.infinispan.marshall.VersionAwareMarshallerTest$PojoWhichFailsOnUnmarshalling");
       }
-      
+
    }
 
    public void testMarshallingSerializableSubclass() throws Exception {
@@ -478,7 +496,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(27, k(m));
       marshallAndAssertEquality(pojo);
    }
-   
+
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {
       byte[] bytes = marshaller.objectToByteBuffer(writeObj);
       Object readObj = marshaller.objectFromByteBuffer(bytes);
@@ -492,13 +510,21 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       private static final long serialVersionUID = 9032309454840083326L;
 
       public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
+         if (this == o) {
+            return true;
+         }
+         if (o == null || getClass() != o.getClass()) {
+            return false;
+         }
 
          Pojo pojo = (Pojo) o;
 
-         if (b != pojo.b) return false;
-         if (i != pojo.i) return false;
+         if (b != pojo.b) {
+            return false;
+         }
+         if (i != pojo.i) {
+            return false;
+         }
 
          return true;
       }
@@ -524,8 +550,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    static class Parent implements Serializable {
-       private String id;
-       private Child1 child1Obj;
+       private final String id;
+       private final Child1 child1Obj;
 
        public Parent(String id, Child1 child1Obj) {
            this.id = id;
@@ -541,7 +567,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    static class Child1 extends Parent {
-       private int someInt;
+       private final int someInt;
 
        public Child1(int someInt, String parentStr) {
            super(parentStr, null);
@@ -551,7 +577,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    static class Child2 extends Parent {
-       private int someInt;
+       private final int someInt;
 
        public Child2(int someInt, String parentStr, Child1 child1Obj) {
            super(parentStr, child1Obj);
