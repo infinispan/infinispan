@@ -41,7 +41,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
       Configuration c = new Configuration();
       c.setConsistentHashClass("org.infinispan.distribution.DefaultConsistentHash");
       Configuration oneCacheConfiguration = cm.defineConfiguration("oneCache", c);
-      assert oneCacheConfiguration.equals(c);
+      assert oneCacheConfiguration.equalsIgnoreName(c);
    }
 
 }
