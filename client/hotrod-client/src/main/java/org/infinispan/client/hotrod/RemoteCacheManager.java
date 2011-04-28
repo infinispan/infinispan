@@ -345,6 +345,7 @@ public class RemoteCacheManager implements CacheContainer {
       if (isStarted()) {
          transportFactory.destroy();
       }
+      asyncExecutorService.shutdownNow();
       started = false;
    }
 

@@ -78,6 +78,7 @@ public abstract class AbstractListenerImpl {
       for (List<ListenerInvocation> list : listenersMap.values()) {
          if (list != null) list.clear();
       }
+      asyncProcessor.shutdownNow();
    }
 
    protected abstract Log getLog();

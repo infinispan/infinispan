@@ -109,6 +109,8 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
 
       // and check that the key actually has been evicted
       assert !TestingUtil.extractComponent(cache, DataContainer.class).containsKey("a");
+
+      e.shutdownNow();
    }
 
    public static class SlowDownInterceptor extends CommandInterceptor implements CloneableConfigurationComponent{

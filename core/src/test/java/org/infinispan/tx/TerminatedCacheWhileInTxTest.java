@@ -124,5 +124,7 @@ public class TerminatedCacheWhileInTxTest extends SingleCacheManagerTest {
             throw e.getCause();
          }
       }
+
+      executorService.shutdownNow();
    }
 }

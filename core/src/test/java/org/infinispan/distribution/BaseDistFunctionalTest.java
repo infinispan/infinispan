@@ -179,8 +179,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    // so this function orders things such that the test can predict where keys get mapped to.
    private void reorderBasedOnCHPositions() {
       // wait for all joiners to join
-      List<Cache> clist = new ArrayList<Cache>(cacheManagers.size());
-      for (CacheContainer cm : cacheManagers) clist.add(cm.getCache(cacheName));
+      List<Cache> clist = new ArrayList<Cache>(caches);
       assert clist.size() == INIT_CLUSTER_SIZE;
       waitForJoinTasksToComplete(SECONDS.toMillis(480), clist.toArray(new Cache[clist.size()]));
 

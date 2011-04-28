@@ -33,6 +33,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.CacheContainer;
@@ -110,6 +111,13 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    public void start() {
       distributedSync = transport.getDistributedSync();
       distributedSyncTimeout = globalConfiguration.getDistributedSyncTimeout();
+   }
+
+   @Stop
+   public void stop() {
+      for (Map.Entry<String, RetryQueue> retryThread : retryThreadMap.entrySet()) {
+         retryThread.getValue().interrupt();
+      }
    }
 
    private boolean isDefined(String cacheName) {
@@ -372,8 +380,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
 
       @Override
       public void run() {
-         boolean running = true;
-         while (running) {
+         while (!interrupted()) {
             CacheRpcCommand c = null;
             boolean unlock = false;
             try {
@@ -392,7 +399,8 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
             } catch (InterruptedException e) {
                enqueueing = false;
                enqueuedBlocker.open();
-               running = false;
+               // set the interrupted flag
+               interrupt();
             } catch (Throwable throwable) {
                log.warn("Caught exception when handling command %s", throwable, c);
             } finally {

@@ -208,6 +208,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    public void stop() throws CacheLoaderException {
       stopped.set(true);
       try {
+         executor.shutdown();
          changesDeque.put(QUIT_SIGNAL);
          executor.awaitTermination(asyncStoreConfig.getShutdownTimeout(), TimeUnit.SECONDS);
       } catch (InterruptedException e) {

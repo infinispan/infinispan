@@ -43,6 +43,7 @@ import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Base class for tests that operates on clusters of caches. The way tests extending this class operates is:
@@ -72,7 +73,7 @@ import java.util.List;
 @Test
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
-   protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<EmbeddedCacheManager>();
+   protected List<EmbeddedCacheManager> cacheManagers = new CopyOnWriteArrayList<EmbeddedCacheManager>();
    private IdentityHashMap<Cache, ReplListener> listeners = new IdentityHashMap<Cache, ReplListener>();
 
    @BeforeClass (alwaysRun = true)

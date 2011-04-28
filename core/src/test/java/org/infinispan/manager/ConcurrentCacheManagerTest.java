@@ -92,5 +92,6 @@ public class ConcurrentCacheManagerTest extends AbstractCacheTest {
 
       log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported");
       for (Future<Void> future : futures) future.get();
+      executorService.shutdownNow();
    }
 }

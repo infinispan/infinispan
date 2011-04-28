@@ -165,6 +165,8 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
             }
          }
       }
+
+      executorService.shutdownNow();
    }
 
    private static String keyFor(int nodeId, int workerId, int iterationId) {
