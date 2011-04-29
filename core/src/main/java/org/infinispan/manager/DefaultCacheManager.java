@@ -396,8 +396,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       Configuration configuration = defaultConfigIfNotPresent.clone();
       configuration.applyOverrides(configOverride.clone());
       configurationOverrides.put(cacheName, configuration);
-      //use reflection for this as we don't want to expose setName on Configuration.
-      ReflectionUtil.setValue(configuration, "name", cacheName);
+      setConfigurationName(cacheName, configuration);
       return configuration;
    }
 
@@ -533,6 +532,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          return existingCache.getCache();
 
       Configuration c = getConfiguration(cacheName);
+      setConfigurationName(cacheName, c);
 
       c.setGlobalConfiguration(globalConfiguration);
       c.assertValid();
@@ -765,6 +765,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    @Override
    public String toString() {
       return super.toString() + "@Address:" + getAddress();
+   }
+
+   /**
+    * Use reflection for this as we don't want to expose setName on Configuration.
+    */
+   private void setConfigurationName(String cacheName, Configuration configuration) {
+      ReflectionUtil.setValue(configuration, "name", cacheName);
    }
 }
 
