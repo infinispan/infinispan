@@ -33,6 +33,9 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.Arrays;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+
 @Test(groups = "functional", sequential = true, testName = "tx.TransactionsSpanningReplicatedCaches")
 public class TransactionsSpanningReplicatedCaches extends MultipleCacheManagersTest {
 
@@ -43,13 +46,29 @@ public class TransactionsSpanningReplicatedCaches extends MultipleCacheManagersT
    }
 
    protected void createCacheManagers() throws Exception {
-      cm1 = addClusterEnabledCacheManager();
+      Configuration c = getConfiguration();
+      cm1 = addClusterEnabledCacheManager(c);
       cm2 = addClusterEnabledCacheManager();
 
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
 
       defineConfigurationOnAllManagers("c1", c);
       defineConfigurationOnAllManagers("c2", c);
+
+      cache(0, "c1");
+      cache(0, "c2");
+      cache(1, "c1");
+      cache(1, "c2");
+      cache(0, "cache1");
+      cache(0, "cache2");
+      cache(1, "cache1");
+      cache(1, "cache2");
+      cache(0);
+      cache(1);
+
+   }
+
+   protected Configuration getConfiguration() {
+      return getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
    }
 
    public void testCommitSpanningCaches() throws Exception {
@@ -212,4 +231,43 @@ public class TransactionsSpanningReplicatedCaches extends MultipleCacheManagersT
       assert c1.get("c1key").equals("c1value");
       assert c1Replica.get("c1key").equals("c1value");
    }
+
+   public void testTwoNamedCachesSameNode() throws Exception {
+      runTest(cache(0, "cache1"), cache(0, "cache2"));
+   }
+
+   public void testDefaultCacheAndNamedCacheSameNode() throws Exception {
+      runTest(cache(0), cache(0, "cache1"));
+   }
+
+   public void testTwoNamedCachesDifferentNodes() throws Exception {
+      runTest(cache(0, "cache1"), cache(1, "cache2"));
+   }
+
+   public void testDefaultCacheAndNamedCacheDifferentNodes() throws Exception {
+      runTest(cache(0), cache(1, "cache1"));
+   }
+
+   private void runTest(Cache cache1, Cache cache2) throws Exception {
+      assertFalse(cache1.containsKey("a"));
+      assertFalse(cache2.containsKey("b"));
+
+      TransactionManager tm = TestingUtil.getTransactionManager(cache1);
+      tm.begin();
+      cache1.put("a", "value1");
+      cache2.put("b", "value2");
+      tm.commit();
+
+      assertEquals("value1", cache1.get("a"));
+      assertEquals("value2", cache2.get("b"));
+
+      tm.begin();
+      cache1.remove("a");
+      cache2.remove("b");
+      tm.commit();
+
+      assertFalse(cache1.containsKey("a"));
+      assertFalse(cache2.containsKey("b"));
+   }
+
 }
