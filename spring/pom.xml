@@ -1,0 +1,216 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.infinispan</groupId>
+		<artifactId>infinispan-parent</artifactId>
+		<version>5.0.0-SNAPSHOT</version>
+		<relativePath>../parent/pom.xml</relativePath>
+	</parent>
+
+	<artifactId>infinispan-spring</artifactId>
+	<packaging>bundle</packaging>
+
+	<name>INFINISPAN Spring Integration</name>
+	<description>
+        <![CDATA[
+                 The Infinispan Spring Integration project provides Spring 
+                 integration for INFNISPAN, a high performance distributed cache.
+                 Its primary features are
+                 
+                  * An implementation of org.springframework.cache.CacheManager,
+                    Spring's central caching abstraction, backed by INFINISPAN's
+                    EmbeddedCacheManager. To be used if your Spring-powered
+                    application and INFINISPAN are colocated, i.e. running within
+                    the same VM.
+                  * An implementation of org.springframework.cache.CacheManager
+                    backed by INFINISPAN's RemoteCacheManager. To bes used if your
+                    Spring-powered application accesses INFINISPAN remotely, i.e.
+                    over the network.
+                    
+                 In addition, Infinispan Spring Integration offers various FactoryBeans
+                 for facilitating creation of INFINISPAN core classes - Cache, CacheManager,
+                 ... - within a Spring context.
+        ]]>
+    </description>
+
+	<!-- =================================================== -->
+	<!-- Developers section -->
+	<!-- =================================================== -->
+
+	<developers>
+		<developer>
+			<id>obergner</id>
+			<name>Olaf Bergner</name>
+			<email>olaf.bergner AT gmx.de</email>
+			<roles>
+				<role>Project Admin</role>
+				<role>Developer</role>
+			</roles>
+			<timezone>0</timezone>
+		</developer>
+	</developers>
+
+	<!-- =================================================== -->
+	<!-- Global properties -->
+	<!-- =================================================== -->
+
+	<properties>
+		<!-- Make the build platform independent: http://maven.apache.org/general.html#encoding-warning -->
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<!-- ######################################################### -->
+		<!-- Dependency versions -->
+		<!-- ######################################################### -->
+		<!-- Spring -->
+		<deps.spring.version>3.1.0.M1</deps.spring.version>
+		<deps.commons-logging.version>1.1.1</deps.commons-logging.version>
+		<!-- Testing -->
+		<deps.junit.version>4.8.1</deps.junit.version>
+		<!-- ######################################################### -->
+		<!-- Build plugin versions -->
+		<!-- ######################################################### -->
+		<plugins.license.version>1.8.0</plugins.license.version>
+	</properties>
+
+	<!-- =================================================== -->
+	<!-- Project Dependencies -->
+	<!-- =================================================== -->
+
+	<dependencies>
+		<!--Compile time dependencies -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>${deps.spring.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<version>${deps.commons-logging.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>infinispan-core</artifactId>
+			<version>${project.version}</version>
+			<scope>compile</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.rhq.helpers</groupId>
+					<artifactId>rhq-pluginAnnotations</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>infinispan-client-hotrod</artifactId>
+			<version>${project.version}</version>
+			<scope>compile</scope>
+			<optional>true</optional>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>avro</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<!--Runtime dependencies -->
+
+		<!--Test Dependencies -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<version>${deps.spring.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>infinispan-core</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>infinispan-client-hotrod</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>infinispan-server-hotrod</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>infinispan-server-hotrod</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<!-- =================================================== -->
+	<!-- Project Plugins -->
+	<!-- =================================================== -->
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Export-Package>
+							${project.groupId}.query.*;version=${project.version};-split-package:=error
+                                    </Export-Package>
+					</instructions>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.mycila.maven-license-plugin</groupId>
+				<artifactId>maven-license-plugin</artifactId>
+				<version>${plugins.license.version}</version>
+				<configuration>
+					<header>src/main/build/lgpl-license-2.1.txt</header>
+					<quiet>false</quiet>
+					<strictCheck>true</strictCheck>
+					<failIfMissing>true</failIfMissing>
+					<aggregate>true</aggregate>
+					<includes>
+						<include>src/main/**</include>
+						<include>src/test/**</include>
+					</includes>
+					<excludes>
+						<exclude>target/**</exclude>
+					</excludes>
+					<useDefaultExcludes>true</useDefaultExcludes>
+					<useDefaultMapping>true</useDefaultMapping>
+					<encoding>UTF-8</encoding>
+				</configuration>
+				<executions>
+					<execution>
+						<id>format-license-headers</id>
+						<phase>process-sources</phase>
+						<goals>
+							<goal>format</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>check-license-headers</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
