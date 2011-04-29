@@ -167,6 +167,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.globalConfiguration = gc;
    }
 
+   /**
+     * Returns the name of the cache associated with this configuration.
+   */
    public String getName() {
       return name;
    }
