@@ -84,7 +84,7 @@
    </default>
 
    <namedCache name="noRecovery">
-      <transaction useEagerLocking="true" eagerLockSingleNode="true">
+      <transaction useEagerLocking="true" eagerLockSingleNode="true" transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup">
          <recovery enabled="false" recoveryInfoCacheName="someName"/>
       </transaction>
    </namedCache>
