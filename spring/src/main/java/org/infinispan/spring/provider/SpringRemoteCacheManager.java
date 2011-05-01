@@ -33,10 +33,10 @@ import org.springframework.util.Assert;
  * <p>
  * A {@link org.springframework.cache.CacheManager <code>CacheManager</code>} implementation that is
  * backed by an {@link org.infinispan.client.hotrod.RemoteCacheManager
- * <code>INFINISPAN RemoteCacheManager</code>} instance.
+ * <code>Infinispan RemoteCacheManager</code>} instance.
  * </p>
  * 
- * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+ * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  */
 public class SpringRemoteCacheManager implements org.springframework.cache.CacheManager {
@@ -62,7 +62,7 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
 
    /**
     * <p>
-    * As of INFINISPAN 4.2.0.FINAL <code>org.infinispan.client.hotrod.RemoteCache</code> does
+    * As of Infinispan 4.2.0.FINAL <code>org.infinispan.client.hotrod.RemoteCache</code> does
     * <strong>not</strong> support retrieving the set of all cache names from the hotrod server.
     * This restriction may be lifted in the future. Currently, this operation will always throw an
     * <code>UnsupportedOperationException</code>.

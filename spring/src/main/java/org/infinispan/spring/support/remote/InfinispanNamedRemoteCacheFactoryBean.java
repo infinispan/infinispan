@@ -35,7 +35,7 @@ import org.springframework.util.StringUtils;
 /**
  * <p>
  * A {@link org.springframework.beans.factory.FactoryBean <code>FactoryBean</code>} for creating a
- * native {@link #setCacheName(String) named} INFINISPAN {@link org.infinispan.Cache
+ * native {@link #setCacheName(String) named} Infinispan {@link org.infinispan.Cache
  * <code>org.infinispan.Cache</code>}, delegating to a
  * {@link #setInfinispanRemoteCacheManager(RemoteCacheManager) <code>configurable</code>}
  * {@link org.infinispan.client.hotrod.RemoteCacheManager
@@ -44,7 +44,7 @@ import org.springframework.util.StringUtils;
  * used instead.
  * </p>
  * 
- * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+ * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  */
 public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>,
@@ -70,12 +70,12 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
    @Override
    public void afterPropertiesSet() throws Exception {
       if (this.infinispanRemoteCacheManager == null) {
-         throw new IllegalStateException("No INFINISPAN RemoteCacheManager has been set");
+         throw new IllegalStateException("No Infinispan RemoteCacheManager has been set");
       }
-      this.logger.info("Initializing named INFINISPAN remote cache ...");
+      this.logger.info("Initializing named Infinispan remote cache ...");
       final String effectiveCacheName = obtainEffectiveCacheName();
       this.infinispanCache = this.infinispanRemoteCacheManager.getCache(effectiveCacheName);
-      this.logger.info("New INFINISPAN remote cache [" + this.infinispanCache + "] initialized");
+      this.logger.info("New Infinispan remote cache [" + this.infinispanCache + "] initialized");
    }
 
    private String obtainEffectiveCacheName() {

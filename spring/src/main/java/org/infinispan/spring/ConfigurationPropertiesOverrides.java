@@ -45,7 +45,7 @@ import java.util.Properties;
  * each configuration setting.
  * </p>
  * 
- * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+ * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  */
 public class ConfigurationPropertiesOverrides {

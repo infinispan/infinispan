@@ -24,7 +24,7 @@
 package org.infinispan.spring.support.embedded;
 
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.spring.AbstractInfinispanEmbeddedCacheManagerBackedCacheManagerFactory;
+import org.infinispan.spring.AbstractNativeEmbeddedCacheManagerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -32,23 +32,23 @@ import org.springframework.beans.factory.InitializingBean;
 /**
  * <p>
  * A {@link org.springframework.beans.factory.FactoryBean <code>FactoryBean</code>} for creating an
- * {@link org.infinispan.manager.EmbeddedCacheManager <code>INFINISPAN EmbeddedCacheManager</code>}
- * instance. The location of the INFINISPAN configuration file used to provide the default
+ * {@link org.infinispan.manager.EmbeddedCacheManager <code>Infinispan EmbeddedCacheManager</code>}
+ * instance. The location of the Infinispan configuration file used to provide the default
  * {@link org.infinispan.config.Configuration configuration} for the
  * <code>EmbeddedCacheManager</code> instance created by this <code>FactoryBean</code> is
  * {@link #setConfigurationFileLocation(org.springframework.core.io.Resource) configurable}.
  * </p>
  * <p>
  * If no configuration file location is set the <code>EmbeddedCacheManager</code> instance created
- * by this <code>FactoryBean</code> will use INFINISPAN's default settings. See INFINISPAN's <a
+ * by this <code>FactoryBean</code> will use Infinispan's default settings. See Infinispan's <a
  * href="http://www.jboss.org/infinispan/docs">documentation</a> for what those default settings
  * are.
  * </p>
  * <p>
  * A user may further customize the <code>EmbeddedCacheManager</code>'s configuration using explicit
  * setters on this <code>FactoryBean</code>. The properties thus defined will be applied either to
- * the configuration loaded from INFINISPAN's configuration file in case one has been specified, or
- * to a configuration initialized with INFINISPAN's default settings. Either way, the net effect is
+ * the configuration loaded from Infinispan's configuration file in case one has been specified, or
+ * to a configuration initialized with Infinispan's default settings. Either way, the net effect is
  * that explicitly set configuration properties take precedence over both those loaded from a
  * configuration file as well as INFNISPAN's default settings.
  * </p>
@@ -60,7 +60,7 @@ import org.springframework.beans.factory.InitializingBean;
  * <code>EmbeddedCacheManager</code>.
  * </p>
  * 
- * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+ * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  * @see #setConfigurationFileLocation(org.springframework.core.io.Resource)
  * @see #destroy()
@@ -69,8 +69,8 @@ import org.springframework.beans.factory.InitializingBean;
  * 
  */
 public class InfinispanEmbeddedCacheManagerFactoryBean extends
-         AbstractInfinispanEmbeddedCacheManagerBackedCacheManagerFactory implements
-         FactoryBean<EmbeddedCacheManager>, InitializingBean, DisposableBean {
+         AbstractNativeEmbeddedCacheManagerFactory implements FactoryBean<EmbeddedCacheManager>,
+         InitializingBean, DisposableBean {
 
    private EmbeddedCacheManager cacheManager;
 
@@ -83,11 +83,11 @@ public class InfinispanEmbeddedCacheManagerFactoryBean extends
     */
    @Override
    public void afterPropertiesSet() throws Exception {
-      this.logger.info("Initializing INFINISPAN EmbeddedCacheManager instance ...");
+      this.logger.info("Initializing Infinispan EmbeddedCacheManager instance ...");
 
       this.cacheManager = createBackingEmbeddedCacheManager();
 
-      this.logger.info("Successfully initialized INFINISPAN EmbeddedCacheManager instance ["
+      this.logger.info("Successfully initialized Infinispan EmbeddedCacheManager instance ["
                + this.cacheManager + "]");
    }
 

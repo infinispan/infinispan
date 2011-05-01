@@ -36,15 +36,15 @@ import org.springframework.core.io.Resource;
 
 /**
  * <p>
- * An abstract base class for factories creating cache manager that are backed by an INFINISPAN
+ * An abstract base class for factories creating cache manager that are backed by an Infinispan
  * RemoteCacheManager.
  * </p>
  * 
- * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+ * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  * @see org.infinispan.client.hotrod.RemoteCacheManager
  */
-public abstract class AbstractInfinispanRemoteCacheManagerBackedCacheManagerFactory {
+public abstract class AbstractNativeRemoteCacheManagerFactory {
 
    protected final Log logger = LogFactory.getLog(getClass());
 

@@ -38,7 +38,7 @@ import org.testng.annotations.Test;
  * Test {@link InfinispanDefaultCacheFactoryBean} deployed in a Spring application context.
  * </p>
  * 
- * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+ * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  */
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
@@ -54,7 +54,7 @@ public class InfinispanDefaultCacheFactoryBeanContextTest extends AbstractTestNG
                DEFAULT_CACHE_NAME, Cache.class);
 
       assertNotNull(
-               "Spring application context should contain an INFINISPAN cache under the bean name \""
+               "Spring application context should contain an Infinispan cache under the bean name \""
                         + DEFAULT_CACHE_NAME + "\". However, it doesn't.", testDefaultCache);
    }
 

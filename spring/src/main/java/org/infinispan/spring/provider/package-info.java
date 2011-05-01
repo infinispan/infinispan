@@ -22,7 +22,7 @@
  */
 
 /**
- * <h1>Spring Infinispan - An implementation of Spring 3.1's Cache SPI based on JBoss INFINISPAN.</h1>
+ * <h1>Spring Infinispan - An implementation of Spring 3.1's Cache SPI based on JBoss Infinispan.</h1>
  * <p>
  * Spring 3.1 introduces caching capabilities a user may comfortably utilize via a set of custom annotations, thus telling
  * the Spring runtime which objects to cache under which circumstances.</br>
@@ -38,7 +38,7 @@
  *     instances
  *   </li>
  * </ul>
- * <em>Spring Infinispan</em> implements this SPI for JBoss INFINISPAN.
+ * <em>Spring Infinispan</em> implements this SPI for JBoss Infinispan.
  * </p>
  * <p>
  * While <em>Spring Infinispan</em> offers only one implementation of <code>org.springframework.cache.Cache</code>, namely
@@ -56,15 +56,15 @@
  * These two implementations cover two distinct use cases:
  * <ol>
  *   <li>
- *     <strong>Embedded</strong>: Embed your Spring-powered application into the same JVM running an INFINISPAN node, i.e. every
- *     communication between application code and INFINISPAN is in-process. INFINISPAN supports this use case via the interface
+ *     <strong>Embedded</strong>: Embed your Spring-powered application into the same JVM running an Infinispan node, i.e. every
+ *     communication between application code and Infinispan is in-process. Infinispan supports this use case via the interface
  *     {@link org.infinispan.manager.EmbeddedCacheManager <code>org.infinispan.manager.EmbeddedCacheManager</code>} and its default
  *     implementation {@link org.infinispan.manager.DefaultCacheManager <code>org.infinispan.manager.DefaultCacheManager</code>}. The
  *     latter backs {@link org.infinispan.spring.provider.SpringEmbeddedCacheManager <code>SpringEmbeddedCacheManager</code>}.
  *   </li>
  *   <li>
- *     <strong>Remote</strong>: Application code accesses INFINISPAN nodes remotely using INFINISPAN's own <em>hotrod</em>
- *     protocol. INFINISPAN supports this use case via {@link org.infinispan.client.hotrod.RemoteCacheManager 
+ *     <strong>Remote</strong>: Application code accesses Infinispan nodes remotely using Infinispan's own <em>hotrod</em>
+ *     protocol. Infinispan supports this use case via {@link org.infinispan.client.hotrod.RemoteCacheManager 
  *     <code>org.infinispan.client.hotrod.RemoteCacheManager</code>}. {@link org.infinispan.spring.provider.SpringRemoteCacheManager 
  *     <code>SpringRemoteCacheManager</code>} delegates to it.
  *   </li>
@@ -75,7 +75,7 @@
  * Using <em>Spring Infinispan</em> as a Spring Cache provider may be divided into two broad areas:
  * <ol>
  *   <li>
- *     Telling the Spring runtime to use <em>Spring Infinispan</em> and therefore INFINISPAN as its caching provider.
+ *     Telling the Spring runtime to use <em>Spring Infinispan</em> and therefore Infinispan as its caching provider.
  *   </li>
  *   <li>
  *     Using Spring's caching annotations in you application code.
@@ -102,20 +102,20 @@
  * &lt;/beans&gt;
  * </pre>
  * in our Spring application context. It is important to note that <code>classpath:/org/infinispan/spring/embedded/example/infinispan-sample-config.xml</code>
- * points to a configuration file in the standard INFINISPAN configuration format that includes sections for two named caches
+ * points to a configuration file in the standard Infinispan configuration format that includes sections for two named caches
  * &quot;cars&quot; and &quot;planes&quot;. If those sections are missing the above application context will still work, yet the
  * two caches &quot;cars&quot; and &quot;planes&quot; will be configured using the default settings definded in
  * <code>classpath:/org/infinispan/spring/embedded/example/infinispan-sample-config.xml</code>.<br/>
- * To further simplify our setup we may omit the reference to an INFINISPAN configuration file in which case the underlying
- * {@link org.infinispan.manager.EmbeddedCacheManager <code>org.infinispan.manager.EmbeddedCacheManager</code>} will use INFINISPAN's
+ * To further simplify our setup we may omit the reference to an Infinispan configuration file in which case the underlying
+ * {@link org.infinispan.manager.EmbeddedCacheManager <code>org.infinispan.manager.EmbeddedCacheManager</code>} will use Infinispan's
  * default settings. 
  * </p>
  * <p>
- * For more advanced ways to configure the underlying INFINISPAN <code>EmbeddedCacheManager</code> see 
+ * For more advanced ways to configure the underlying Infinispan <code>EmbeddedCacheManager</code> see 
  * {@link org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean <code>org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean</code>}.
  * </p>
  * <p>
- * If running INFINISPAN in remote mode the above configuration changes to
+ * If running Infinispan in remote mode the above configuration changes to
  * <pre>
  * &lt;beans xmlns="http://www.springframework.org/schema/beans"
  *        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -132,7 +132,7 @@
  * </pre>
  * </p>
  * <p>
- * For more advanced ways to configure the underlying INFINISPAN <code>RemoteCacheManager</code> see 
+ * For more advanced ways to configure the underlying Infinispan <code>RemoteCacheManager</code> see 
  * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean <code>org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean</code>}.
  * </p>
  * <em>Using Spring's caching annotations in application code</em>
