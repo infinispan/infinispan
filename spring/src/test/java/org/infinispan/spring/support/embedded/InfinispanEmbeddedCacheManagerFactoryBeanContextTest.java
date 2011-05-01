@@ -46,21 +46,21 @@ import org.testng.annotations.Test;
 public class InfinispanEmbeddedCacheManagerFactoryBeanContextTest extends
          AbstractTestNGSpringContextTests {
 
-   private static final String Infinispan_EMBEDDED_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME = "infinispanEmbeddedCacheManagerWithDefaultConfiguration";
+   private static final String INFINISPAN_EMBEDDED_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME = "infinispanEmbeddedCacheManagerWithDefaultConfiguration";
 
-   private static final String Infinispan_EMBEDDED_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_FILE_BEAN_NAME = "infinispanEmbeddedCacheManagerConfiguredFromConfigurationFile";
+   private static final String INFINISPAN_EMBEDDED_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_FILE_BEAN_NAME = "infinispanEmbeddedCacheManagerConfiguredFromConfigurationFile";
 
-   private static final String Infinispan_EMBEDDED_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME = "infinispanEmbeddedCacheManagerConfiguredUsingSetters";
+   private static final String INFINISPAN_EMBEDDED_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME = "infinispanEmbeddedCacheManagerConfiguredUsingSetters";
 
    @Test
    public final void shouldCreateAnEmbeddedCacheManagerWithDefaultSettingsIfNoFurtherConfigurationGiven() {
       final EmbeddedCacheManager infinispanEmbeddedCacheManagerWithDefaultConfiguration = this.applicationContext
-               .getBean(Infinispan_EMBEDDED_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME,
+               .getBean(INFINISPAN_EMBEDDED_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME,
                         EmbeddedCacheManager.class);
 
       assertNotNull(
                "Spring application context should contain a EmbeddedCacheManager with default settings having bean name = \""
-                        + Infinispan_EMBEDDED_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME
+                        + INFINISPAN_EMBEDDED_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME
                         + "\". However, it doesn't.",
                infinispanEmbeddedCacheManagerWithDefaultConfiguration);
    }
@@ -68,12 +68,12 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanContextTest extends
    @Test
    public final void shouldCreateAnEmbeddedCacheManagerConfiguredFromConfigurationFileIfConfigurationFileLocationGiven() {
       final EmbeddedCacheManager infinispanEmbeddedCacheManagerConfiguredFromConfigurationFile = this.applicationContext
-               .getBean(Infinispan_EMBEDDED_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_FILE_BEAN_NAME,
+               .getBean(INFINISPAN_EMBEDDED_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_FILE_BEAN_NAME,
                         EmbeddedCacheManager.class);
 
       assertNotNull(
                "Spring application context should contain a EmbeddedCacheManager configured from configuration file having bean name = \""
-                        + Infinispan_EMBEDDED_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_FILE_BEAN_NAME
+                        + INFINISPAN_EMBEDDED_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_FILE_BEAN_NAME
                         + "\". However, it doesn't.",
                infinispanEmbeddedCacheManagerConfiguredFromConfigurationFile);
    }
@@ -81,12 +81,12 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanContextTest extends
    @Test
    public final void shouldCreateAnEmbeddedCacheManagerConfiguredUsingSettersIfPropertiesAreDefined() {
       final EmbeddedCacheManager infinispanEmbeddedCacheManagerConfiguredUsingSetters = this.applicationContext
-               .getBean(Infinispan_EMBEDDED_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME,
+               .getBean(INFINISPAN_EMBEDDED_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME,
                         EmbeddedCacheManager.class);
 
       assertNotNull(
                "Spring application context should contain a EmbeddedCacheManager configured using properties having bean name = \""
-                        + Infinispan_EMBEDDED_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME
+                        + INFINISPAN_EMBEDDED_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME
                         + "\". However, it doesn't.",
                infinispanEmbeddedCacheManagerConfiguredUsingSetters);
    }
