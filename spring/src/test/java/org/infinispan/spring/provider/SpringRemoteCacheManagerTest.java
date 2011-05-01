@@ -47,7 +47,7 @@ import org.testng.annotations.Test;
  * Test {@link SpringRemoteCacheManager}.
  * </p>
  * 
- * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+ * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  */
 @Test(testName = "spring.provider.SpringRemoteCacheManagerTest", groups = "functional")
@@ -135,7 +135,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
       objectUnderTest.start();
 
       assertTrue("Calling start() on SpringRemoteCacheManager should start the enclosed "
-               + "INFINISPAN RemoteCacheManager. However, it is still not running.",
+               + "Infinispan RemoteCacheManager. However, it is still not running.",
                nativeCacheManager.isStarted());
    }
 
@@ -153,7 +153,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
       objectUnderTest.stop();
 
       assertFalse("Calling stop() on SpringRemoteCacheManager should stop the enclosed "
-               + "INFINISPAN RemoteCacheManager. However, it is still running.",
+               + "Infinispan RemoteCacheManager. However, it is still running.",
                nativeCacheManager.isStarted());
    }
 

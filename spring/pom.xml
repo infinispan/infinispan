@@ -12,25 +12,25 @@
 	<artifactId>infinispan-spring</artifactId>
 	<packaging>bundle</packaging>
 
-	<name>INFINISPAN Spring Integration</name>
+	<name>Infinispan Spring Integration</name>
 	<description>
         <![CDATA[
                  The Infinispan Spring Integration project provides Spring 
-                 integration for INFNISPAN, a high performance distributed cache.
+                 integration for Infinispna, a high performance distributed cache.
                  Its primary features are
                  
                   * An implementation of org.springframework.cache.CacheManager,
-                    Spring's central caching abstraction, backed by INFINISPAN's
+                    Spring's central caching abstraction, backed by Infinispan's
                     EmbeddedCacheManager. To be used if your Spring-powered
-                    application and INFINISPAN are colocated, i.e. running within
+                    application and Infinispan are colocated, i.e. running within
                     the same VM.
                   * An implementation of org.springframework.cache.CacheManager
-                    backed by INFINISPAN's RemoteCacheManager. To bes used if your
-                    Spring-powered application accesses INFINISPAN remotely, i.e.
+                    backed by Infinispan's RemoteCacheManager. To bes used if your
+                    Spring-powered application accesses Infinispan remotely, i.e.
                     over the network.
                     
                  In addition, Infinispan Spring Integration offers various FactoryBeans
-                 for facilitating creation of INFINISPAN core classes - Cache, CacheManager,
+                 for facilitating creation of Infinispan core classes - Cache, CacheManager,
                  ... - within a Spring context.
         ]]>
     </description>
@@ -43,7 +43,7 @@
 		<developer>
 			<id>obergner</id>
 			<name>Olaf Bergner</name>
-			<email>olaf.bergner AT gmx.de</email>
+			<email>olaf DOT bergner AT gmx DOT de</email>
 			<roles>
 				<role>Project Admin</role>
 				<role>Developer</role>
@@ -64,13 +64,6 @@
 		<!-- ######################################################### -->
 		<!-- Spring -->
 		<deps.spring.version>3.1.0.M1</deps.spring.version>
-		<deps.commons-logging.version>1.1.1</deps.commons-logging.version>
-		<!-- Testing -->
-		<deps.junit.version>4.8.1</deps.junit.version>
-		<!-- ######################################################### -->
-		<!-- Build plugin versions -->
-		<!-- ######################################################### -->
-		<plugins.license.version>1.8.0</plugins.license.version>
 	</properties>
 
 	<!-- =================================================== -->
@@ -85,12 +78,12 @@
 			<version>${deps.spring.version}</version>
 			<scope>compile</scope>
 		</dependency>
-		<dependency>
-			<groupId>commons-logging</groupId>
-			<artifactId>commons-logging</artifactId>
-			<version>${deps.commons-logging.version}</version>
-			<scope>compile</scope>
-		</dependency>
+            <dependency>
+                  <groupId>commons-logging</groupId>
+                  <artifactId>commons-logging</artifactId>
+                  <version>${version.commons.logging}</version>
+                  <scope>compile</scope>
+            </dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>infinispan-core</artifactId>
@@ -171,44 +164,6 @@
                                     </Export-Package>
 					</instructions>
 				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>com.mycila.maven-license-plugin</groupId>
-				<artifactId>maven-license-plugin</artifactId>
-				<version>${plugins.license.version}</version>
-				<configuration>
-					<header>src/main/build/lgpl-license-2.1.txt</header>
-					<quiet>false</quiet>
-					<strictCheck>true</strictCheck>
-					<failIfMissing>true</failIfMissing>
-					<aggregate>true</aggregate>
-					<includes>
-						<include>src/main/**</include>
-						<include>src/test/**</include>
-					</includes>
-					<excludes>
-						<exclude>target/**</exclude>
-					</excludes>
-					<useDefaultExcludes>true</useDefaultExcludes>
-					<useDefaultMapping>true</useDefaultMapping>
-					<encoding>UTF-8</encoding>
-				</configuration>
-				<executions>
-					<execution>
-						<id>format-license-headers</id>
-						<phase>process-sources</phase>
-						<goals>
-							<goal>format</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>check-license-headers</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 	</build>

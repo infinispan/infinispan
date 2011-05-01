@@ -45,7 +45,7 @@ import java.util.Collection;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.spring.AbstractInfinispanRemoteCacheManagerBackedCacheManagerFactory;
+import org.infinispan.spring.AbstractNativeRemoteCacheManagerFactory;
 import org.infinispan.spring.mock.MockExecutorFatory;
 import org.infinispan.spring.mock.MockMarshaller;
 import org.infinispan.spring.mock.MockRequestBalancingStrategy;
@@ -56,10 +56,10 @@ import org.testng.annotations.Test;
 
 /**
  * <p>
- * Test {@link AbstractInfinispanRemoteCacheManagerBackedCacheManagerFactory}.
+ * Test {@link AbstractNativeRemoteCacheManagerFactory}.
  * </p>
  * 
- * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+ * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  */
 @Test(testName = "spring.support.remote.InfinispanRemoteCacheManagerFactoryBeanTest", groups = "unit")
@@ -156,7 +156,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
 
       assertTrue(
-               "isSingleton() should always return true since each AbstractInfinispanRemoteCacheManagerBackedCacheManagerFactory will always produce "
+               "isSingleton() should always return true since each AbstractNativeRemoteCacheManagerFactory will always produce "
                         + "the same RemoteCacheManager instance. However,it returned false.",
                objectUnderTest.isSingleton());
    }
@@ -178,7 +178,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
 
       assertFalse(
                "destroy() should have stopped the RemoteCacheManager instance previously produced by "
-                        + "AbstractInfinispanRemoteCacheManagerBackedCacheManagerFactory. However, the produced RemoteCacheManager is still running. ",
+                        + "AbstractNativeRemoteCacheManagerFactory. However, the produced RemoteCacheManager is still running. ",
                remoteCacheManager.isStarted());
    }
 
@@ -261,7 +261,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
                .getObject();
 
       assertFalse(
-               "AbstractInfinispanRemoteCacheManagerBackedCacheManagerFactory should have produced a RemoteCacheManager that is initially in state stopped "
+               "AbstractNativeRemoteCacheManagerFactory should have produced a RemoteCacheManager that is initially in state stopped "
                         + "since property 'startAutomatically' has been set to false. However, the produced RemoteCacheManager is already started.",
                remoteCacheManagerExpectedToBeInStateStopped.isStarted());
       objectUnderTest.destroy();

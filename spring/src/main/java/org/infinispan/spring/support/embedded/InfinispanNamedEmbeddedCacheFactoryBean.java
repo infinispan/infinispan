@@ -46,7 +46,7 @@ import org.springframework.util.StringUtils;
 /**
  * <p>
  * A {@link org.springframework.beans.factory.FactoryBean <code>FactoryBean</code>} for creating a
- * native {@link #setCacheName(String) named} INFINISPAN {@link org.infinispan.Cache
+ * native {@link #setCacheName(String) named} Infinispan {@link org.infinispan.Cache
  * <code>org.infinispan.Cache</code>}, delegating to a
  * {@link #setInfinispanEmbeddedCacheManager(EmbeddedCacheManager) <code>configurable</code>}
  * {@link org.infinispan.manager.EmbeddedCacheManager
@@ -101,7 +101,7 @@ import org.springframework.util.StringUtils;
  * <em>always</em> use this <code>FactoryBean</code> when creating a named <code>Cache</code>.
  * </p>
  * 
- * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+ * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  */
 public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>,
@@ -142,7 +142,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
     * </ul>
     * </p>
     * 
-    * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+    * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
     * 
     */
    enum ConfigurationTemplateMode {
@@ -178,12 +178,12 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
    @Override
    public void afterPropertiesSet() throws Exception {
       if (this.infinispanEmbeddedCacheManager == null) {
-         throw new IllegalStateException("No INFINISPAN EmbeddedCacheManager has been set");
+         throw new IllegalStateException("No Infinispan EmbeddedCacheManager has been set");
       }
-      this.logger.info("Initializing named INFINISPAN embedded cache ...");
+      this.logger.info("Initializing named Infinispan embedded cache ...");
       final String effectiveCacheName = obtainEffectiveCacheName();
       this.infinispanCache = configureAndCreateNamedCache(effectiveCacheName);
-      this.logger.info("New INFINISPAN embedded cache [" + this.infinispanCache + "] initialized");
+      this.logger.info("New Infinispan embedded cache [" + this.infinispanCache + "] initialized");
    }
 
    private Cache<K, V> configureAndCreateNamedCache(final String cacheName) {

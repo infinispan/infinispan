@@ -28,12 +28,12 @@
  * <ol>
  *   <li>
  *     Implement a provider for <a href="http://www.springsource.com">Spring</a> 3.1's Cache abstraction backed by the open-source 
- *     high-performance distributed cache <a href="http://www.jboss.org/infinispan">JBoss INFINISPAN</a>.<br/><br/>
+ *     high-performance distributed cache <a href="http://www.jboss.org/infinispan">JBoss Infinispan</a>.<br/><br/>
  *     See package {@link org.infinispan.spring.spi <code>org.infinispan.spring.spi</code>}.<br/><br/>
  *   </li>
  *   <li>
  *     Provide implementations of Spring's {@link org.springframework.beans.factory.FactoryBean <code>FactoryBean</code>}
- *     interface for easing usage of JBoss INFINISPAN within the Spring programming model.<br/><br/>
+ *     interface for easing usage of JBoss Infinispan within the Spring programming model.<br/><br/>
  *     See package {@link org.infinispan.spring.support <code>org.infinispan.spring.support</code>}.
  *   </li>
  * </ol>

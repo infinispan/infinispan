@@ -41,7 +41,7 @@ import org.testng.annotations.Test;
  * Test {@link SpringEmbeddedCacheManager}.
  * </p>
  * 
- * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+ * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  */
 @Test(testName = "spring.provider.SpringEmbeddedCacheManagerTest", groups = "unit")
@@ -112,7 +112,7 @@ public class SpringEmbeddedCacheManagerTest {
       assertEquals(
                "getCache("
                         + nameOfInfinispanCacheAddedLater
-                        + ") should have returned the Spring cache having the INFINISPAN cache added after creating "
+                        + ") should have returned the Spring cache having the Infinispan cache added after creating "
                         + "SpringEmbeddedCacheManager as its underlying native cache. However, the underlying native cache is different.",
                infinispanCacheAddedLater, springCacheAddedLater.getNativeCache());
       nativeCacheManager.stop();
@@ -159,7 +159,7 @@ public class SpringEmbeddedCacheManagerTest {
       objectUnderTest.stop();
 
       assertEquals("Calling stop() on SpringEmbeddedCacheManager should stop the enclosed "
-               + "INFINISPAN EmbeddedCacheManager. However, it is still running.",
+               + "Infinispan EmbeddedCacheManager. However, it is still running.",
                ComponentStatus.TERMINATED, nativeCacheManager.getStatus());
    }
 

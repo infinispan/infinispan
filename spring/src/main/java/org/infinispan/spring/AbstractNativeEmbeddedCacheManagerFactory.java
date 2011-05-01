@@ -54,10 +54,10 @@ import org.springframework.core.io.Resource;
  * EmbeddedCacheManager.
  * </p>
  * 
- * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+ * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  */
-public class AbstractInfinispanEmbeddedCacheManagerBackedCacheManagerFactory {
+public class AbstractNativeEmbeddedCacheManagerFactory {
 
    protected final Log logger = LogFactory.getLog(getClass());
 
@@ -99,13 +99,13 @@ public class AbstractInfinispanEmbeddedCacheManagerBackedCacheManagerFactory {
       final ConfigurationContainer templateConfiguration;
       if (this.configurationFileLocation == null) {
          this.logger
-                  .info("No configuration file has been given. Using INFINISPAN's default settings.");
+                  .info("No configuration file has been given. Using Infinispan's default settings.");
          final GlobalConfiguration standardGlobalConfiguration = new GlobalConfiguration();
          final Configuration standardDefaultConfiguration = new Configuration();
          templateConfiguration = new ConfigurationContainer(standardGlobalConfiguration,
                   standardDefaultConfiguration, new HashMap<String, Configuration>());
       } else {
-         this.logger.info("Using INFINISPAN configuration file located at ["
+         this.logger.info("Using Infinispan configuration file located at ["
                   + this.configurationFileLocation + "]");
          templateConfiguration = loadConfigurationFromFile(this.configurationFileLocation);
       }
@@ -136,7 +136,7 @@ public class AbstractInfinispanEmbeddedCacheManagerBackedCacheManagerFactory {
     * {@link org.infinispan.manager.EmbeddedCacheManager <code>EmbeddedCacheManager</code>} the
     * {@link org.infinispan.spring.spi.SpringEmbeddedCacheManager
     * <code>SpringEmbeddedCacheManager</code>} created by this <code>FactoryBean</code> delegates
-    * to. If no location is supplied, <tt>INFINISPAN</tt>'s default configuration will be used.
+    * to. If no location is supplied, <tt>Infinispan</tt>'s default configuration will be used.
     * </p>
     * <p>
     * Note that configuration settings defined via using explicit setters exposed by this

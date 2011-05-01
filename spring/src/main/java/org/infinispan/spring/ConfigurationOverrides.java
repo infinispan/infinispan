@@ -37,11 +37,11 @@ import org.infinispan.util.concurrent.IsolationLevel;
 
 /**
  * <p>
- * Helper class to override select values in an INFINISPAN
+ * Helper class to override select values in an Infinispan
  * {@link org.infinispan.config.Configuration <code>Configuration</code>}.
  * </p>
  * 
- * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+ * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  */
 public final class ConfigurationOverrides {

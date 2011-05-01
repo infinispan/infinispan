@@ -37,7 +37,7 @@ import org.testng.annotations.Test;
  * Test {@link InfinispanDefaultCacheFactoryBean}.
  * </p>
  * 
- * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+ * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  */
 @Test(testName = "spring.support.InfinispanDefaultCacheFactoryBeanTest", groups = "unit")
@@ -91,7 +91,7 @@ public class InfinispanDefaultCacheFactoryBeanTest {
       objectUnderTest.afterPropertiesSet();
 
       assertEquals(
-               "getObjectType() should have returned the produced INFINISPAN cache's most derived type. "
+               "getObjectType() should have returned the produced Infinispan cache's most derived type. "
                         + "However, it returned a more generic type.", objectUnderTest.getObject()
                         .getClass(), objectUnderTest.getObjectType());
       objectUnderTest.destroy();

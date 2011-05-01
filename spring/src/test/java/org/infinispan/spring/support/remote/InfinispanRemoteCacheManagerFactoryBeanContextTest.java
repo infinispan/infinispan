@@ -37,7 +37,7 @@ import org.testng.annotations.Test;
  * Test {@link InfinispanRemoteCacheManagerFactoryBean} deployed in a Spring application context.
  * </p>
  * 
- * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
+ * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  */
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
@@ -46,23 +46,23 @@ import org.testng.annotations.Test;
 public class InfinispanRemoteCacheManagerFactoryBeanContextTest extends
          AbstractTestNGSpringContextTests {
 
-   private static final String INFINISPAN_REMOTE_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME = "infinispanRemoteCacheManagerWithDefaultConfiguration";
+   private static final String Infinispan_REMOTE_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME = "infinispanRemoteCacheManagerWithDefaultConfiguration";
 
-   private static final String INFINISPAN_REMOTE_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_PROPERTIES_FILE_BEAN_NAME = "infinispanRemoteCacheManagerConfiguredFromConfigurationPropertiesFile";
+   private static final String Infinispan_REMOTE_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_PROPERTIES_FILE_BEAN_NAME = "infinispanRemoteCacheManagerConfiguredFromConfigurationPropertiesFile";
 
-   private static final String INFINISPAN_REMOTE_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_PROPERTIES_BEAN_NAME = "infinispanRemoteCacheManagerConfiguredFromConfigurationProperties";
+   private static final String Infinispan_REMOTE_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_PROPERTIES_BEAN_NAME = "infinispanRemoteCacheManagerConfiguredFromConfigurationProperties";
 
-   private static final String INFINISPAN_REMOTE_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME = "infinispanRemoteCacheManagerConfiguredUsingSetters";
+   private static final String Infinispan_REMOTE_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME = "infinispanRemoteCacheManagerConfiguredUsingSetters";
 
    @Test
    public final void shouldCreateARemoteCacheManagerWithDefaultSettingsIfNoFurtherConfigurationGiven() {
       final RemoteCacheManager infinispanRemoteCacheManagerWithDefaultConfiguration = this.applicationContext
-               .getBean(INFINISPAN_REMOTE_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME,
+               .getBean(Infinispan_REMOTE_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME,
                         RemoteCacheManager.class);
 
       assertNotNull(
                "Spring application context should contain a RemoteCacheManager with default settings having bean name = \""
-                        + INFINISPAN_REMOTE_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME
+                        + Infinispan_REMOTE_CACHE_MANAGER_WITH_DEFAULT_CONFIGURATION_BEAN_NAME
                         + "\". However, it doesn't.",
                infinispanRemoteCacheManagerWithDefaultConfiguration);
    }
@@ -70,12 +70,12 @@ public class InfinispanRemoteCacheManagerFactoryBeanContextTest extends
    @Test
    public final void shouldCreateARemoteCacheManagerConfiguredFromConfigurationPropertiesFileIfConfigurationPropertiesFileLocationGiven() {
       final RemoteCacheManager infinispanRemoteCacheManagerConfiguredFromConfigurationFile = this.applicationContext
-               .getBean(INFINISPAN_REMOTE_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_PROPERTIES_FILE_BEAN_NAME,
+               .getBean(Infinispan_REMOTE_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_PROPERTIES_FILE_BEAN_NAME,
                         RemoteCacheManager.class);
 
       assertNotNull(
                "Spring application context should contain a RemoteCacheManager configured from configuration properties file having bean name = \""
-                        + INFINISPAN_REMOTE_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_PROPERTIES_FILE_BEAN_NAME
+                        + Infinispan_REMOTE_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_PROPERTIES_FILE_BEAN_NAME
                         + "\". However, it doesn't.",
                infinispanRemoteCacheManagerConfiguredFromConfigurationFile);
    }
@@ -83,12 +83,12 @@ public class InfinispanRemoteCacheManagerFactoryBeanContextTest extends
    @Test
    public final void shouldCreateARemoteCacheManagerConfiguredFromConfigurationPropertiesIfConfigurationPropertiesGiven() {
       final RemoteCacheManager infinispanRemoteCacheManagerConfiguredFromConfigurationProperties = this.applicationContext
-               .getBean(INFINISPAN_REMOTE_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_PROPERTIES_BEAN_NAME,
+               .getBean(Infinispan_REMOTE_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_PROPERTIES_BEAN_NAME,
                         RemoteCacheManager.class);
 
       assertNotNull(
                "Spring application context should contain a RemoteCacheManager configured from configuration properties having bean name = \""
-                        + INFINISPAN_REMOTE_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_PROPERTIES_BEAN_NAME
+                        + Infinispan_REMOTE_CACHE_MANAGER_CONFIGURED_FROM_CONFIGURATION_PROPERTIES_BEAN_NAME
                         + "\". However, it doesn't.",
                infinispanRemoteCacheManagerConfiguredFromConfigurationProperties);
    }
@@ -96,12 +96,12 @@ public class InfinispanRemoteCacheManagerFactoryBeanContextTest extends
    @Test
    public final void shouldCreateARemoteCacheManagerConfiguredUsingSettersIfPropertiesAreDefined() {
       final RemoteCacheManager infinispanRemoteCacheManagerConfiguredUsingSetters = this.applicationContext
-               .getBean(INFINISPAN_REMOTE_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME,
+               .getBean(Infinispan_REMOTE_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME,
                         RemoteCacheManager.class);
 
       assertNotNull(
                "Spring application context should contain a SpringRemoteCacheManager configured using properties having bean name = \""
-                        + INFINISPAN_REMOTE_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME
+                        + Infinispan_REMOTE_CACHE_MANAGER_CONFIGURED_USING_SETTERS_BEAN_NAME
                         + "\". However, it doesn't.",
                infinispanRemoteCacheManagerConfiguredUsingSetters);
    }
