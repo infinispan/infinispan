@@ -46,17 +46,17 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 public class InfinispanNamedRemoteCacheFactoryBeanContextTest extends
          AbstractTestNGSpringContextTests {
 
-   private static final String Infinispan_NAMED_REMOTE_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME = "infinispanNamedRemoteCacheWithoutFurtherConfiguration";
+   private static final String INFINISPAN_NAMED_REMOTE_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME = "infinispanNamedRemoteCacheWithoutFurtherConfiguration";
 
    // @Test
    public final void shouldCreateARemoteCacheWithDefaultSettingsIfNoFurtherConfigurationGiven() {
       final Cache<Object, Object> infinispanNamedRemoteCacheWithoutFurtherConfiguration = this.applicationContext
-               .getBean(Infinispan_NAMED_REMOTE_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME,
+               .getBean(INFINISPAN_NAMED_REMOTE_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME,
                         Cache.class);
 
       assertNotNull(
                "Spring application context should contain a named Infinispan cache having bean name = \""
-                        + Infinispan_NAMED_REMOTE_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME
+                        + INFINISPAN_NAMED_REMOTE_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME
                         + "\". However, it doesn't.",
                infinispanNamedRemoteCacheWithoutFurtherConfiguration);
    }

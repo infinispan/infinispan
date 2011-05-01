@@ -46,23 +46,23 @@ import org.testng.annotations.Test;
 public class InfinispanNamedEmbeddedCacheFactoryBeanContextTest extends
          AbstractTestNGSpringContextTests {
 
-   private static final String Infinispan_NAMED_EMBEDDED_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME = "infinispanNamedEmbeddedCacheWithoutFurtherConfiguration";
+   private static final String INFINISPAN_NAMED_EMBEDDED_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME = "infinispanNamedEmbeddedCacheWithoutFurtherConfiguration";
 
-   private static final String Infinispan_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_NONE_BEAN_NAME = "infinispanNamedEmbeddedCacheConfiguredUsingModeNONE";
+   private static final String INFINISPAN_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_NONE_BEAN_NAME = "infinispanNamedEmbeddedCacheConfiguredUsingModeNONE";
 
-   private static final String Infinispan_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_DEFAULT_BEAN_NAME = "infinispanNamedEmbeddedCacheConfiguredUsingModeDEFAULT";
+   private static final String INFINISPAN_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_DEFAULT_BEAN_NAME = "infinispanNamedEmbeddedCacheConfiguredUsingModeDEFAULT";
 
-   private static final String Infinispan_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_NAMED_BEAN_NAME = "infinispanNamedEmbeddedCacheConfiguredUsingModeNAMED";
+   private static final String INFINISPAN_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_NAMED_BEAN_NAME = "infinispanNamedEmbeddedCacheConfiguredUsingModeNAMED";
 
    @Test
    public final void shouldCreateAnEmbeddedCacheWithDefaultSettingsIfNoFurtherConfigurationGiven() {
       final Cache<Object, Object> infinispanNamedEmbeddedCacheWithoutFurtherConfiguration = this.applicationContext
-               .getBean(Infinispan_NAMED_EMBEDDED_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME,
+               .getBean(INFINISPAN_NAMED_EMBEDDED_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME,
                         Cache.class);
 
       assertNotNull(
                "Spring application context should contain a named Infinispan cache having bean name = \""
-                        + Infinispan_NAMED_EMBEDDED_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME
+                        + INFINISPAN_NAMED_EMBEDDED_CACHE_WITHOUT_FURTHER_CONFIGURATION_BEAN_NAME
                         + "\". However, it doesn't.",
                infinispanNamedEmbeddedCacheWithoutFurtherConfiguration);
    }
@@ -70,12 +70,12 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanContextTest extends
    @Test
    public final void shouldCreateAnEmbeddedCacheConfiguredUsingConfigurationModeNONE() {
       final Cache<Object, Object> infinispanNamedEmbeddedCacheConfiguredUsingConfigurationModeNone = this.applicationContext
-               .getBean(Infinispan_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_NONE_BEAN_NAME,
+               .getBean(INFINISPAN_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_NONE_BEAN_NAME,
                         Cache.class);
 
       assertNotNull(
                "Spring application context should contain a named Infinispan cache having bean name = \""
-                        + Infinispan_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_NONE_BEAN_NAME
+                        + INFINISPAN_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_NONE_BEAN_NAME
                         + "\" that has been configured using configuration mode NONE. However, it doesn't.",
                infinispanNamedEmbeddedCacheConfiguredUsingConfigurationModeNone);
    }
@@ -83,12 +83,12 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanContextTest extends
    @Test
    public final void shouldCreateAnEmbeddedCacheConfiguredUsingConfigurationModeDEFAULT() {
       final Cache<Object, Object> infinispanNamedEmbeddedCacheConfiguredUsingConfigurationModeDefault = this.applicationContext
-               .getBean(Infinispan_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_DEFAULT_BEAN_NAME,
+               .getBean(INFINISPAN_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_DEFAULT_BEAN_NAME,
                         Cache.class);
 
       assertNotNull(
                "Spring application context should contain a named Infinispan cache having bean name = \""
-                        + Infinispan_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_DEFAULT_BEAN_NAME
+                        + INFINISPAN_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_DEFAULT_BEAN_NAME
                         + "\" that has been configured using configuration mode DEFAULT. However, it doesn't.",
                infinispanNamedEmbeddedCacheConfiguredUsingConfigurationModeDefault);
    }
@@ -96,12 +96,12 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanContextTest extends
    @Test
    public final void shouldCreateAnEmbeddedCacheConfiguredUsingConfigurationModeNAMED() {
       final Cache<Object, Object> infinispanNamedEmbeddedCacheConfiguredUsingConfigurationModeNamed = this.applicationContext
-               .getBean(Infinispan_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_NAMED_BEAN_NAME,
+               .getBean(INFINISPAN_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_NAMED_BEAN_NAME,
                         Cache.class);
 
       assertNotNull(
                "Spring application context should contain a named Infinispan cache having bean name = \""
-                        + Infinispan_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_NAMED_BEAN_NAME
+                        + INFINISPAN_NAMED_EMBEDDED_CACHE_CONFIGURED_USING_MODE_NAMED_BEAN_NAME
                         + "\" that has been configured using configuration mode NAMED. However, it doesn't.",
                infinispanNamedEmbeddedCacheConfiguredUsingConfigurationModeNamed);
    }
