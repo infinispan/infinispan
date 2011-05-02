@@ -260,6 +260,7 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
             val ret = new StringBuilder().append("VERSION ").append(Version.VERSION).append(CRLF)
             writeResponse(ch, ret)
          }
+         case QuitRequest => closeChannel(ch)
       }
    }
 
@@ -270,7 +271,6 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
             checkpointTo(DECODE_PARAMETERS)
          }
          case FlushAllRequest => flushAll(buffer, ch, true) // With params
-         case QuitRequest => closeChannel(ch)
       }
    }
 
