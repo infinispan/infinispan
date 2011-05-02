@@ -29,9 +29,9 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Properties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.springframework.core.io.Resource;
 
 /**
@@ -44,7 +44,7 @@ import org.springframework.core.io.Resource;
  * 
  * @see org.infinispan.client.hotrod.RemoteCacheManager
  */
-public abstract class AbstractNativeRemoteCacheManagerFactory {
+public abstract class AbstractRemoteCacheManagerFactory {
 
    protected final Log logger = LogFactory.getLog(getClass());
 

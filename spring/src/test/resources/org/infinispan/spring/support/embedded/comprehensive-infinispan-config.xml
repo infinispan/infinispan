@@ -55,7 +55,6 @@
             <property name="threadNamePrefix" value="ReplicationQueueThread"/>
          </properties>
       </replicationQueueScheduledExecutor>
-      <globalJmxStatistics enabled="true" jmxDomain="infinispan"/>
 
       <transport clusterName="infinispan-cluster"
                  distributedSyncTimeout="50000"

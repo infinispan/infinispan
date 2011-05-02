@@ -63,7 +63,7 @@
 		<!-- Dependency versions -->
 		<!-- ######################################################### -->
 		<!-- Spring -->
-		<deps.spring.version>3.1.0.M1</deps.spring.version>
+		<version.spring>3.1.0.M1</version.spring>
 	</properties>
 
 	<!-- =================================================== -->
@@ -75,15 +75,9 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
-			<version>${deps.spring.version}</version>
+			<version>${version.spring}</version>
 			<scope>compile</scope>
 		</dependency>
-            <dependency>
-                  <groupId>commons-logging</groupId>
-                  <artifactId>commons-logging</artifactId>
-                  <version>${version.commons.logging}</version>
-                  <scope>compile</scope>
-            </dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>infinispan-core</artifactId>
@@ -111,12 +105,67 @@
 		</dependency>
 
 		<!--Runtime dependencies -->
+            <dependency>
+                  <groupId>commons-pool</groupId>
+                  <artifactId>commons-pool</artifactId>
+                  <version>${version.commons.pool}</version>
+                  <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                  <groupId>commons-logging</groupId>
+                  <artifactId>commons-logging</artifactId>
+                  <version>${version.commons.logging}</version>
+                  <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                  <groupId>org.springframework</groupId>
+                  <artifactId>spring-aop</artifactId>
+                  <version>${version.spring}</version>
+                  <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                  <groupId>org.springframework</groupId>
+                  <artifactId>spring-asm</artifactId>
+                  <version>${version.spring}</version>
+                  <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                  <groupId>org.springframework</groupId>
+                  <artifactId>spring-expression</artifactId>
+                  <version>${version.spring}</version>
+                  <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                  <groupId>log4j</groupId>
+                  <artifactId>log4j</artifactId>
+                  <version>${version.log4j}</version>
+                  <scope>runtime</scope>
+                  <optional>true</optional>
+            </dependency>
+            <dependency>
+                  <groupId>org.jgroups</groupId>
+                  <artifactId>jgroups</artifactId>
+                  <version>${version.jgroups}</version>
+                  <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                  <groupId>org.jboss.marshalling</groupId>
+                  <artifactId>marshalling-api</artifactId>
+                  <version>${version.jboss.marshalling}</version>
+                  <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                  <groupId>org.jboss.marshalling</groupId>
+                  <artifactId>river</artifactId>
+                  <version>${version.jboss.marshalling}</version>
+                  <scope>runtime</scope>
+            </dependency>
 
 		<!--Test Dependencies -->
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-test</artifactId>
-			<version>${deps.spring.version}</version>
+			<version>${version.spring}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
