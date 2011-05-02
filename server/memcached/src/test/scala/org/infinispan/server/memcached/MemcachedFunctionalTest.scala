@@ -23,12 +23,16 @@
 package org.infinispan.server.memcached
 
 import java.lang.reflect.Method
-import java.util.concurrent.TimeUnit
+import logging.Log
 import org.testng.Assert._
 import org.testng.annotations.Test
 import net.spy.memcached.CASResponse
 import org.infinispan.test.TestingUtil._
-import org.infinispan.Version
+import org.infinispan.notifications.Listener
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
+import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent
+import java.util.concurrent.{CountDownLatch, TimeUnit}
+import org.infinispan.{Cache, Version}
 
 /**
  * Tests Memcached protocol functionality against Infinispan Memcached server.
@@ -250,6 +254,51 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertFalse(f.get(timeout, TimeUnit.SECONDS).booleanValue)
    }
 
+   def testDeleteNoReply(m: Method) {
+      withNoReply(m, "delete %s noreply\r\n".format(k(m)))
+   }
+
+   def testSetAndMultiDelete(m: Method) {
+      val key = k(m)
+      val responses = sendMulti(
+         "set %s 0 0 1\r\na\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\n"
+                 .format(key, key, key, key, key), 5, true)
+      assertEquals(responses.length, 5)
+      assertEquals(responses.head, "STORED")
+      assertEquals(responses.tail.head, "DELETED")
+      assertEquals(responses.tail.tail.head, "NOT_FOUND")
+      assertEquals(responses.tail.tail.tail.head, "NOT_FOUND")
+      assertEquals(responses.tail.tail.tail.tail.head, "NOT_FOUND")
+   }
+
+   def testSetNoReplyMultiDelete(m: Method) {
+      val key = k(m)
+      val responses = sendMulti(
+         "set %s 0 0 1 noreply\r\na\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\n"
+                 .format(key, key, key, key, key), 4, true)
+      assertEquals(responses.length, 4)
+      assertEquals(responses.head, "DELETED")
+      assertEquals(responses.tail.head, "NOT_FOUND")
+      assertEquals(responses.tail.tail.head, "NOT_FOUND")
+      assertEquals(responses.tail.tail.tail.head, "NOT_FOUND")
+   }
+
+   private def withNoReply(m: Method, op: String) {
+      val f = client.set(k(m), 0, "blah")
+      assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
+      val latch = new CountDownLatch(1)
+      val listener = new NoReplyListener(latch)
+      cache.addListener(listener)
+      try {
+         sendNoWait(op)
+         log.debug("No reply delete sent, wait...")
+         val completed = latch.await(10, TimeUnit.SECONDS)
+         assertTrue(completed, "Timed out waiting for remove to be executed")
+      } finally {
+         cache.removeListener(listener)
+      }
+   }
+
    def testPipelinedDelete {
       val responses = sendMulti("delete a\r\ndelete a\r\n", 2, true)
       assertEquals(responses.length, 2)
@@ -386,7 +435,9 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       }
    }
 
-   def testFlushAllNoReply = sendNoWait("flush_all noreply\r\n")
+   def testFlushAllNoReply(m: Method) {
+     withNoReply(m, "flush_all noreply\r\n")
+   }
 
    def testFlushAllPipeline {
       val responses = sendMulti("flush_all\r\nget a\r\n", 2, true)
@@ -514,5 +565,16 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    private def incr(m: Method, by: Int): String = incr(k(m), by)
 
    private def incr(k: String, by: Int): String = send("incr " + k + " " + by + "\r\n")
+
+}
+
+@Listener
+class NoReplyListener(latch: CountDownLatch) extends Log {
+
+   @CacheEntryRemoved
+   def removed(event: CacheEntryRemovedEvent[AnyRef, AnyRef]) {
+      debug("Entry removed, open latch")
+      latch.countDown
+   }
 
 }
