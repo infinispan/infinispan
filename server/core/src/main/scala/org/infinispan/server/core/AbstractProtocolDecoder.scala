@@ -135,16 +135,16 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
 
    private def decodeValue(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
       val ret = header.op match {
-         case PutRequest | PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest | RemoveRequest => {
+         case PutRequest | PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest  => {
             readValue(buffer)
             header.op match {
                case PutRequest => put
                case PutIfAbsentRequest => putIfAbsent
                case ReplaceRequest => replace
                case ReplaceIfUnmodifiedRequest => replaceIfUmodified
-               case RemoveRequest => remove
             }
          }
+         case RemoveRequest => remove
          case _ => customDecodeValue(ch, buffer)
       }
       writeResponse(ch, ret)
@@ -153,18 +153,30 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    override def decodeLast(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = null // no-op
 
    protected def writeResponse(ch: Channel, response: AnyRef): AnyRef = {
-      if (response != null) {
-         if (isTrace) trace("Write response %s", response)
-         response match {
-            // We only expect Lists of ChannelBuffer instances, so don't worry about type erasure 
-            case l: List[ChannelBuffer] => l.foreach(ch.write(_))
-            case a: Array[Byte] => ch.write(wrappedBuffer(a))
-            case sb: StringBuilder => ch.write(wrappedBuffer(sb.toString.getBytes))
-            case s: String => ch.write(wrappedBuffer(s.getBytes))
-            case _ => ch.write(response)
+      try {
+         if (response != null) {
+            if (isTrace) trace("Write response %s", response)
+            response match {
+               // We only expect Lists of ChannelBuffer instances, so don't worry about type erasure
+               case l: List[ChannelBuffer] => l.foreach(ch.write(_))
+               case a: Array[Byte] => ch.write(wrappedBuffer(a))
+               case sb: StringBuilder => ch.write(wrappedBuffer(sb.toString.getBytes))
+               case s: String => ch.write(wrappedBuffer(s.getBytes))
+               case _ => ch.write(response)
+            }
          }
+         null
+      } finally {
+         checkpointTo(DECODE_HEADER)
+         // Reset parameters to avoid leaking previous params
+         // into a request that has no params
+         resetParams
       }
-      checkpointTo(DECODE_HEADER)
+   }
+
+   private def resetParams: AnyRef = {
+      params = null.asInstanceOf[SuitableParameters]
+      null
    }
 
    private def put: AnyRef = {
