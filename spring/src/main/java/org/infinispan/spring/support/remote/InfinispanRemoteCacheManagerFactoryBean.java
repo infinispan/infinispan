@@ -26,7 +26,7 @@ package org.infinispan.spring.support.remote;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.spring.AbstractNativeRemoteCacheManagerFactory;
+import org.infinispan.spring.AbstractRemoteCacheManagerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -73,9 +73,8 @@ import org.springframework.beans.factory.InitializingBean;
  * @see org.infinispan.client.hotrod.RemoteCacheManager
  * @see #destroy()
  */
-public class InfinispanRemoteCacheManagerFactoryBean extends
-         AbstractNativeRemoteCacheManagerFactory implements FactoryBean<RemoteCacheManager>,
-         InitializingBean, DisposableBean {
+public class InfinispanRemoteCacheManagerFactoryBean extends AbstractRemoteCacheManagerFactory
+         implements FactoryBean<RemoteCacheManager>, InitializingBean, DisposableBean {
 
    private RemoteCacheManager nativeRemoteCacheManager;
 

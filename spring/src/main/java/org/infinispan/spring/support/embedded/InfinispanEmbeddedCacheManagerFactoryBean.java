@@ -24,7 +24,7 @@
 package org.infinispan.spring.support.embedded;
 
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.spring.AbstractNativeEmbeddedCacheManagerFactory;
+import org.infinispan.spring.AbstractEmbeddedCacheManagerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -68,9 +68,8 @@ import org.springframework.beans.factory.InitializingBean;
  * @see org.infinispan.config.Configuration
  * 
  */
-public class InfinispanEmbeddedCacheManagerFactoryBean extends
-         AbstractNativeEmbeddedCacheManagerFactory implements FactoryBean<EmbeddedCacheManager>,
-         InitializingBean, DisposableBean {
+public class InfinispanEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedCacheManagerFactory
+         implements FactoryBean<EmbeddedCacheManager>, InitializingBean, DisposableBean {
 
    private EmbeddedCacheManager cacheManager;
 

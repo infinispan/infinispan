@@ -115,8 +115,8 @@
       <!--
          Enables collection of global JMX statistics, and allows you to customize the JMX domain name under which
          MBeans are registered.
+         <globalJmxStatistics enabled="true" jmxDomain="org.infinispan" cacheManagerName="SampleCacheManager" />
       -->
-        <globalJmxStatistics enabled="true" jmxDomain="org.infinispan" cacheManagerName="SampleCacheManager" />
 
       <!--
          If the transport is omitted, there is no way to create distributed or clustered caches.
@@ -202,8 +202,8 @@
 
       <!--
          Used to register JMX statistics in any available MBean server
+         <jmxStatistics enabled="true" />
       -->
-        <jmxStatistics enabled="true" />
 
       <!--
          Used to control whether objects stored in Infinispan nodes are primarily stored as rehydrated Objects or as
