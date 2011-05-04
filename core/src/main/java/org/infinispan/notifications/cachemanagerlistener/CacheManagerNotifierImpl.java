@@ -135,12 +135,6 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       }
    }
 
-   @Stop
-   void stop() {
-      if (syncProcessor != null) syncProcessor.shutdownNow();
-      if (asyncProcessor != null) asyncProcessor.shutdownNow();
-   }
-
    protected Log getLog() {
       return log;
    }

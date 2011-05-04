@@ -31,6 +31,7 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -106,6 +107,11 @@ public class RpcManagerImpl implements RpcManager {
    private void start() {
       stateTransferEnabled = configuration.isStateTransferEnabled();
       statisticsEnabled = configuration.isExposeJmxStatistics();
+   }
+
+   @Stop(priority = 9)
+   private void stop() {
+      asyncExecutor.shutdown();
    }
 
    private boolean useReplicationQueue(boolean sync) {

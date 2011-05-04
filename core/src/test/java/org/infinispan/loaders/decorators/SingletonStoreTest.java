@@ -249,6 +249,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       f2.get();
 
       assertEquals(1, mscl.getNumberCreatedTasks());
+      executor.shutdownNow();
    }
 
    public void testPushStateTimedOut() throws Throwable {

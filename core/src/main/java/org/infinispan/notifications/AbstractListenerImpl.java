@@ -74,10 +74,13 @@ public abstract class AbstractListenerImpl {
     * Removes all listeners from the notifier
     */
    @Stop(priority = 99)
-   public void removeAllCacheListeners() {
+   void stop() {
       for (List<ListenerInvocation> list : listenersMap.values()) {
          if (list != null) list.clear();
       }
+
+      if (syncProcessor != null) syncProcessor.shutdownNow();
+      if (asyncProcessor != null) asyncProcessor.shutdownNow();
    }
 
    protected abstract Log getLog();
