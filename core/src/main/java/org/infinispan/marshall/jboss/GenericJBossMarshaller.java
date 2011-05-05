@@ -81,8 +81,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
       // ContextClassResolver provides same functionality as MarshalledValueInputStream
       configuration.setClassResolver(new DefaultContextClassResolver(defaultCl));
       configuration.setClassExternalizerFactory(new SerializeWithExtFactory());
-      configuration.setVersion(2);
-
+      configuration.setVersion(3);
    }
 
    /**

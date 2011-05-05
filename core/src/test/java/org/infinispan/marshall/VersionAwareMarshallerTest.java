@@ -456,7 +456,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshallAndAssertEquality(o);
    }
 
-   static class PojoWhichFailsOnUnmarshalling extends Pojo {
+   public static class PojoWhichFailsOnUnmarshalling extends Pojo {
       private static final long serialVersionUID = -5109779096242560884L;
 
       @Override
@@ -503,7 +503,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assert readObj.equals(writeObj) : "Writen[" + writeObj + "] and read[" + readObj + "] objects should be the same";
    }
 
-   static class Pojo implements Externalizable {
+   public static class Pojo implements Externalizable {
       int i;
       boolean b;
       static int serializationCount, deserializationCount;
