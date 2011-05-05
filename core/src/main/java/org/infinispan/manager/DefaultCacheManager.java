@@ -58,6 +58,7 @@ import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -122,6 +123,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    private final GlobalComponentRegistry globalComponentRegistry;
    private final ReentrantLock cacheCreateLock;
    private final ReflectionCache reflectionCache = new ReflectionCache();
+   private volatile boolean stopping;
 
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults.  See {@link
@@ -527,29 +529,44 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    }
 
    public void stop() {
-      // make sure we stop the default cache LAST!
-      Cache defaultCache = null;
-      for (Map.Entry<String, CacheWrapper> entry : caches.entrySet()) {
-         if (entry.getKey().equals(DEFAULT_CACHE_NAME)) {
-            defaultCache = entry.getValue().cache;
-         } else {
-            Cache c = entry.getValue().cache;
-            if (c != null) {
-               unregisterCacheMBean(c);
-               c.stop();
+      if (!stopping) {
+         synchronized (this) {
+            // DCL to make sure that only one thread calls stop at one time,
+            // and any other calls by other threads are ignored.
+            if (!stopping) {
+               stopping = true;
+               // make sure we stop the default cache LAST!
+               Cache defaultCache = null;
+               for (Map.Entry<String, CacheWrapper> entry : caches.entrySet()) {
+                  if (entry.getKey().equals(DEFAULT_CACHE_NAME)) {
+                     defaultCache = entry.getValue().cache;
+                  } else {
+                     Cache c = entry.getValue().cache;
+                     if (c != null) {
+                        unregisterCacheMBean(c);
+                        c.stop();
+                     }
+                  }
+               }
+
+               if (defaultCache != null) {
+                  unregisterCacheMBean(defaultCache);
+                  defaultCache.stop();
+               }
+               globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
+               globalComponentRegistry.stop();
+
+               // Clear the reflection cache to avoid leaks
+               reflectionCache.stop();
+            } else {
+               if (log.isTraceEnabled())
+                  log.trace("Ignore call to stop as the cache manager is stopping");
             }
          }
+      } else {
+         if (log.isTraceEnabled())
+            log.trace("Ignore call to stop as the cache manager is stopping");
       }
-
-      if (defaultCache != null) {
-         unregisterCacheMBean(defaultCache);
-         defaultCache.stop();
-      }
-      globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
-      globalComponentRegistry.stop();
-
-      // Clear the reflection cache to avoid leaks
-      reflectionCache.stop();
    }
 
    private void unregisterCacheMBean(Cache cache) {
