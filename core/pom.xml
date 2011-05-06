@@ -116,6 +116,13 @@
          <version>${version.commons.math}</version>
       </dependency>
 
+      <dependency>
+         <groupId>javassist</groupId>
+         <artifactId>javassist</artifactId>
+         <scope>test</scope>
+         <version>${version.javassist}</version>
+      </dependency>
+
    </dependencies>
    <build>
       <plugins>
