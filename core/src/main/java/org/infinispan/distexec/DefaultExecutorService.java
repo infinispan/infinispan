@@ -275,7 +275,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          } else {
             throw new IllegalArgumentException("Runnable command is not Serializable  " + command);
          }         
-         executeFuture(randomClusterMemberOtherThanSelf(), cmd);
+         executeFuture(selectExecutionNode(), cmd);
       } else {
          throw new RejectedExecutionException();
       }
@@ -311,12 +311,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          DistributedExecuteCommand<T> c = factory.buildDistributedExecuteCommand(task, me, Arrays.asList(input));
          DistributedRunnableFuture<T> f = new DistributedRunnableFuture<T>(c);
          ArrayList<Address> nodes = new ArrayList<Address>(nodesKeysMap.keySet());
-         boolean invokeOnSelf = (nodes.size() == 1 && nodes.get(0).equals(me));
-         if (invokeOnSelf) {
-            executeFuture(me, f);
-         } else {
-            executeFuture(randomClusterMemberExcludingSelf(nodes), f);
-         }
+         executeFuture(selectExecutionNode(nodes), f);         
          return f;
       } else {
          return submit(task);
@@ -435,33 +430,30 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
       return addressToKey;
    }
-
-   protected List<Address> randomClusterMembers(int numNeeded) {
-      List<Address> members = new ArrayList<Address>(rpc.getTransport().getMembers());
-      return randomClusterMembers(members, numNeeded);
-   }
    
-   protected Address randomClusterMemberExcludingSelf(List<Address> members) {
-      List<Address> list = randomClusterMembers(members,1);
+   protected Address selectExecutionNode(List<Address> candidates) {           
+      List<Address> list = randomClusterMembers(candidates,1);
       return list.get(0);
    }
    
-   protected Address randomClusterMemberOtherThanSelf() {
-     List<Address> l = randomClusterMembers(1);
-     return l.get(0);
+   protected Address selectExecutionNode() {
+     return selectExecutionNode(rpc.getTransport().getMembers());     
    }
 
-   protected List<Address> randomClusterMembers(List<Address> members, int numNeeded) {
-      List<Address> chosen = new ArrayList<Address>();
-      members.remove(rpc.getAddress());
+   protected List<Address> randomClusterMembers(final List<Address> members, int numNeeded) {
+      if(members == null || members.isEmpty())
+         throw new IllegalArgumentException("Invalid member list " + members);
+      
       if (members.size() < numNeeded) {
          log.cannotSelectRandomMembers(numNeeded, members);
          numNeeded = members.size();
       }
+      List<Address> membersCopy = new ArrayList<Address>(members);
+      List<Address> chosen = new ArrayList<Address>();      
       Random r = new Random();
-      while (members != null && !members.isEmpty() && numNeeded >= chosen.size()) {
-         int count = members.size();
-         Address address = members.remove(r.nextInt(count));
+      while (!membersCopy.isEmpty() && numNeeded >= chosen.size()) {
+         int count = membersCopy.size();
+         Address address = membersCopy.remove(r.nextInt(count));
          chosen.add(address);
       }
       return chosen;
