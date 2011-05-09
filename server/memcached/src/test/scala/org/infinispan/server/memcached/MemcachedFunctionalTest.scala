@@ -23,7 +23,6 @@
 package org.infinispan.server.memcached
 
 import java.lang.reflect.Method
-import logging.Log
 import org.testng.Assert._
 import org.testng.annotations.Test
 import net.spy.memcached.CASResponse
@@ -33,6 +32,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import org.infinispan.{Cache, Version}
+import org.infinispan.server.core.Logging
 
 /**
  * Tests Memcached protocol functionality against Infinispan Memcached server.
@@ -291,7 +291,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       cache.addListener(listener)
       try {
          sendNoWait(op)
-         log.debug("No reply delete sent, wait...")
+         log.debug("No reply delete sent, wait...", null)
          val completed = latch.await(10, TimeUnit.SECONDS)
          assertTrue(completed, "Timed out waiting for remove to be executed")
       } finally {
@@ -569,7 +569,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 }
 
 @Listener
-class NoReplyListener(latch: CountDownLatch) extends Log {
+class NoReplyListener(latch: CountDownLatch) extends Logging {
 
    @CacheEntryRemoved
    def removed(event: CacheEntryRemovedEvent[AnyRef, AnyRef]) {
