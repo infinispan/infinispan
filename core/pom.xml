@@ -57,13 +57,13 @@
 
       <dependency>
          <groupId>org.jboss.marshalling</groupId>
-         <artifactId>river</artifactId>
+         <artifactId>jboss-marshalling-river</artifactId>
          <version>${version.jboss.marshalling}</version>
       </dependency>
 
       <dependency>
          <groupId>org.jboss.marshalling</groupId>
-         <artifactId>marshalling-api</artifactId>
+         <artifactId>jboss-marshalling</artifactId>
          <version>${version.jboss.marshalling}</version>
       </dependency>
 
