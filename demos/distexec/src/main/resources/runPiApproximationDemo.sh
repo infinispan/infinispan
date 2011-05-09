@@ -95,4 +95,4 @@ JVM_PARAMS="${JVM_PARAMS} -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=
 #JVM_PARAMS="$JVM_PARAMS -Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n"
 #echo Classpath is $CP
 
-${JAVACMD} -cp ${CP} ${JVM_PARAMS} org.infinispan.demo.distexec.InfinispanPiAppxDemo "$@"
+${JAVACMD} -cp ${CP} ${JVM_PARAMS} org.infinispan.demo.distexec.PiApproximationDemo "$@"

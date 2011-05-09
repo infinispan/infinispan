@@ -10,8 +10,8 @@
 	</parent>
 	
 	<artifactId>infinispan-distexec-demo</artifactId>
-	<name>Infinispan EC2 Distributed Executors</name>
-	<description>Infinispan EC2 Distributed Executors Demo</description>
+	<name>Infinispan Distributed Executors and Map/Reduce Demo</name>
+	<description>Infinispan Distributed Executors and Map/Reduce Demo</description>
 	<packaging>jar</packaging>
 
 	<dependencies>
@@ -37,7 +37,7 @@
 						<manifest>
 							<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
 							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-							<mainClass>org.infinispan.demo.distexec.InfinispanPiAppxDemo</mainClass>
+							<mainClass>org.infinispan.demo.distexec.PiApproximationDemo</mainClass>
 						</manifest>
 					</archive>				
 				</configuration>
