@@ -1,0 +1,79 @@
+
+<!--
+  Fast configuration for local mode, ie. all members reside on the same host. Setting ip_ttl to 0 means that
+  no multicast packet will make it outside the local host.
+  Therefore, this configuration will NOT work to cluster members residing on different hosts !
+
+  Author: Bela Ban
+  Version: $Id: fast-local.xml,v 1.9 2009/12/18 14:50:00 belaban Exp $
+-->
+
+<config xmlns="urn:org:jgroups"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-2.8.xsd">
+    <UDP mcast_addr="239.1.1.1"
+         mcast_port="${jgroups.udp.mcast_port:45111}"
+         tos="8"
+         ucast_recv_buf_size="20000000"
+         ucast_send_buf_size="640000"
+         mcast_recv_buf_size="25000000"
+         mcast_send_buf_size="640000"
+         loopback="true"
+         discard_incompatible_packets="true"
+         max_bundle_size="64000"
+         max_bundle_timeout="30"
+         ip_ttl="${jgroups.udp.ip_ttl:0}"
+         enable_bundling="true"
+         enable_unicast_bundling="true"
+         enable_diagnostics="true"
+         thread_naming_pattern="cl"
+
+         timer_type="new"
+         timer.min_threads="2"
+         timer.max_threads="4"
+         timer.keep_alive_time="3000"
+         timer.queue_max_size="1000"
+         timer.wheel_size="200"
+         timer.tick_time="50"
+
+         thread_pool.enabled="true"
+         thread_pool.min_threads="2"
+         thread_pool.max_threads="8"
+         thread_pool.keep_alive_time="5000"
+         thread_pool.queue_enabled="true"
+         thread_pool.queue_max_size="100000"
+         thread_pool.rejection_policy="discard"
+
+         oob_thread_pool.enabled="true"
+         oob_thread_pool.min_threads="1"
+         oob_thread_pool.max_threads="8"
+         oob_thread_pool.keep_alive_time="5000"
+         oob_thread_pool.queue_enabled="false"
+         oob_thread_pool.queue_max_size="100"
+         oob_thread_pool.rejection_policy="discard"/>
+
+    <PING timeout="2000"
+            num_initial_members="3"/>
+    <MERGE2 max_interval="30000"
+            min_interval="10000"/>
+    <FD_SOCK />
+    <FD_ALL />
+    <VERIFY_SUSPECT timeout="1500"  />
+    <BARRIER />
+    <pbcast.NAKACK use_stats_for_retransmission="false"
+                   use_mcast_xmit="true" gc_lag="0"
+                   retransmit_timeout="100,300,600,1200"
+                   discard_delivered_msgs="true"/>
+    <UNICAST timeout="300,600,1200"/>
+    <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
+                   max_bytes="1000000"/>
+    <pbcast.GMS print_local_addr="true" join_timeout="5000"
+                max_bundling_time="200"
+                view_bundling="true"/>
+    <FC max_credits="2M"
+        min_threshold="0.40"/>
+    <FRAG2 frag_size="60000"  />
+    <pbcast.FLUSH />
+    <RELAY site="nyc" bridge_props="config-samples/jgroups-tcp.xml" />
+
+</config>

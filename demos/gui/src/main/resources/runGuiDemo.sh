@@ -13,5 +13,6 @@ add_jvm_args '-Djava.net.preferIPv4Stack=true'
 # Sample JPDA settings for remote socket debugging
 #add_jvm_args "-Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n"
 
-start org.infinispan.demo.InfinispanDemo &
+add_program_args $@
 
+start org.infinispan.demo.InfinispanDemo &
