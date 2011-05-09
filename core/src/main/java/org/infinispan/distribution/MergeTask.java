@@ -28,8 +28,6 @@ import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
-import org.infinispan.distribution.ch.NodeTopologyInfo;
-import org.infinispan.distribution.ch.TopologyInfo;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -60,9 +58,7 @@ public class MergeTask extends JoinTask {
 
       super(rpcManager, commandsFactory, conf, dataContainer, dmi, inboundInvocationHandler);
 
-      TopologyInfo ti = buildTopologyInfo(newView);
-
-      chNew = ConsistentHashHelper.createConsistentHash(configuration, newView, ti);
+      chNew = ConsistentHashHelper.createConsistentHash(configuration, newView);
 
       if (mergedGroups.size() < 2) throw new IllegalArgumentException("Don't know how to handle a merge of " + mergedGroups.size() + " partitions!");
       if (mergedGroups.size() > 2) log.warn("Attempting to merge more than 2 partitions!  Inconsistencies may occur!  See https://issues.jboss.org/browse/ISPN-1001");
@@ -70,43 +66,9 @@ public class MergeTask extends JoinTask {
       List<Address> a1 = mergedGroups.get(0);
       List<Address> a2 = mergedGroups.get(1);
 
-      TopologyInfo oldTopologyInfo = distributionManager.getTopologyInfo();
-      if (!a1.contains(self)) chOld = createConsistentHash(configuration, a1, oldTopologyInfo);
-      else if (!a2.contains(self)) chOld = createConsistentHash(configuration, a2, oldTopologyInfo);
+      if (!a1.contains(self)) chOld = createConsistentHash(configuration, a1);
+      else if (!a2.contains(self)) chOld = createConsistentHash(configuration, a2);
       else throw new IllegalArgumentException("Both of the merged partitions " +a1+ " and " + a2 + " contains " + self);
-      if (ti != null) distributionManager.setTopologyInfo(ti);
-   }
-
-   @SuppressWarnings("unchecked")
-   private TopologyInfo buildTopologyInfo(List<Address> newView) {
-      if (configuration.getGlobalConfiguration().hasTopologyInfo()) {
-         TopologyInfo oldTI = distributionManager.getTopologyInfo();
-         // we are using topologies
-         Set<Address> unknownAddresses = new HashSet<Address>();
-         for (Address a: newView) {
-            if (!oldTI.containsInfoForNode(a)) unknownAddresses.add(a);
-         }
-
-         if (!unknownAddresses.isEmpty()) {
-            Collection<NodeTopologyInfo> moreTopologies = null;
-            for (Address topologyProvider : unknownAddresses) {
-               Map<Address, Response> r = rpcManager.invokeRemotely(Collections.singleton(topologyProvider), cf.buildRehashControlCommand(RehashControlCommand.Type.FETCH_TOPOLOGY_INFO, self), true, true);
-               Response resp = r.get(topologyProvider);
-               if (resp.isSuccessful() && resp.isValid()) {
-                  // we have the response we need!
-                  moreTopologies = (Collection<NodeTopologyInfo>) ((SuccessfulResponse) resp).getResponseValue();
-                  break;
-               }
-            }
-
-            if (moreTopologies == null) throw new CacheException("Unable to retrieve topology information for addresses " + unknownAddresses);
-            return new TopologyInfo(oldTI, moreTopologies);
-         }
-         return oldTI;
-      } else {
-         // no topologies are used in this config
-         return null;
-      }
    }
 
    @Override

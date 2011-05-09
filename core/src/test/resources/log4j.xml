@@ -52,7 +52,7 @@
    </appender>
 
    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
-      <param name="Threshold" value="TRACE"/>
+      <param name="Threshold" value="WARN"/>
       <param name="Target" value="System.out"/>
 
       <layout class="org.apache.log4j.PatternLayout">
@@ -67,7 +67,11 @@
    <!-- ================ -->
 
    <category name="org.infinispan">
-      <priority value="INFO"/>
+      <priority value="TRACE"/>
+   </category>
+
+   <category name="org.infinispan.distribution">
+      <priority value="TRACE"/>
    </category>
 
    <category name="org.infinispan.profiling">
@@ -104,7 +108,7 @@
 
    <root>
       <priority value="INFO"/>
-      <!--<appender-ref ref="CONSOLE"/>-->
+      <appender-ref ref="CONSOLE"/>
       <appender-ref ref="FILE"/>
    </root>
 

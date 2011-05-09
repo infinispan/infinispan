@@ -37,7 +37,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.RemoteTransactionLogDetails;
 import org.infinispan.distribution.TransactionLogger;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.transport.Address;
@@ -81,7 +80,6 @@ public class RehashControlCommand extends BaseRpcCommand {
       JOIN_TX_LOG_REQ,
       JOIN_TX_FINAL_LOG_REQ,
       JOIN_TX_LOG_CLOSE,
-      FETCH_TOPOLOGY_INFO,
       JOIN_ABORT
    }
 
@@ -100,7 +98,6 @@ public class RehashControlCommand extends BaseRpcCommand {
    List<WriteCommand> txLogCommands;
    List<PrepareCommand> pendingPrepares;
    CommandsFactory commandsFactory;
-   NodeTopologyInfo nodeTopologyInfo;
    private static final Log log = LogFactory.getLog(RehashControlCommand.class);
 
    public RehashControlCommand() {
@@ -153,9 +150,9 @@ public class RehashControlCommand extends BaseRpcCommand {
          case JOIN_REQ:
             return distributionManager.requestPermissionToJoin(sender);
          case JOIN_REHASH_START:
-            return distributionManager.informRehashOnJoin(sender, true, nodeTopologyInfo);
+            return distributionManager.informRehashOnJoin(sender, true);
          case JOIN_REHASH_END:
-            distributionManager.informRehashOnJoin(sender, false, nodeTopologyInfo);
+            distributionManager.informRehashOnJoin(sender, false);
             return null;
          case LEAVE_REHASH_END: // Signalled when a node 'applies' changes it has requested.
             distributionManager.informRehashOnLeave(sender);   
@@ -180,8 +177,6 @@ public class RehashControlCommand extends BaseRpcCommand {
          case JOIN_ABORT:
             distributionManager.abortJoin(sender);
             return null;
-         case FETCH_TOPOLOGY_INFO:
-            return distributionManager.getTopologyInfo().getAllTopologyInfo();
       }
       throw new CacheException("Unknown rehash control command type " + type);
    }
@@ -295,11 +290,7 @@ public class RehashControlCommand extends BaseRpcCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{cacheName, (byte) type.ordinal(), sender, state, oldCH, nodesLeft, newCH, txLogCommands, pendingPrepares, nodeTopologyInfo};
-   }
-
-   public void setNodeTopologyInfo(NodeTopologyInfo nodeTopologyInfo) {
-      this.nodeTopologyInfo = nodeTopologyInfo;
+      return new Object[]{cacheName, (byte) type.ordinal(), sender, state, oldCH, nodesLeft, newCH, txLogCommands, pendingPrepares};
    }
 
    @SuppressWarnings("unchecked")
@@ -314,7 +305,6 @@ public class RehashControlCommand extends BaseRpcCommand {
       newCH = (ConsistentHash) parameters[i++];
       txLogCommands = (List<WriteCommand>) parameters[i++];
       pendingPrepares = (List<PrepareCommand>) parameters[i++];
-      nodeTopologyInfo = (NodeTopologyInfo) parameters[i++];
    }
 
    @Override
@@ -328,7 +318,6 @@ public class RehashControlCommand extends BaseRpcCommand {
             ", consistentHash=" + newCH +
             ", txLogCommands=" + (txLogCommands == null ? "N/A" : txLogCommands.size()) +
             ", pendingPrepares=" + (pendingPrepares == null ? "N/A" : pendingPrepares.size()) +
-            ", nodeTopologyInfo=" + nodeTopologyInfo +
             '}';
    }
 }

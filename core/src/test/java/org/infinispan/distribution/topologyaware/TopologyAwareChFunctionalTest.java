@@ -25,7 +25,7 @@ package org.infinispan.distribution.topologyaware;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.distribution.DistSyncFuncTest;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
-import org.infinispan.distribution.ch.TopologyInfo;
+import org.infinispan.distribution.ch.VirtualAddress;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -88,10 +88,9 @@ public class TopologyAwareChFunctionalTest extends DistSyncFuncTest {
       assert ch.getCaches().contains(address(1));
       assert ch.getCaches().contains(address(2));
       assert ch.getCaches().contains(address(3));
-      TopologyInfo topologyInfo = ch.getTopologyInfo();
-      assert topologyInfo.containsInfoForNode(address(0)) : topologyInfo;
-      assert topologyInfo.containsInfoForNode(address(1)) : topologyInfo;
-      assert topologyInfo.containsInfoForNode(address(2)) : topologyInfo;
-      assert topologyInfo.containsInfoForNode(address(3)) : topologyInfo;
+      assert ch.getHashId(address(0)) != -1 : ch;
+      assert ch.getHashId(address(1)) != -1 : ch;
+      assert ch.getHashId(address(2)) != -1 : ch;
+      assert ch.getHashId(address(3)) != -1 : ch;
    }
 }

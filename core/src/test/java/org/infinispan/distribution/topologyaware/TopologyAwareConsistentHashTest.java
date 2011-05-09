@@ -23,9 +23,8 @@
 package org.infinispan.distribution.topologyaware;
 
 import org.infinispan.distribution.TestAddress;
-import org.infinispan.distribution.ch.NodeTopologyInfo;
+import org.infinispan.distribution.TestTopologyAwareAddress;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
-import org.infinispan.distribution.ch.TopologyInfo;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.hash.MurmurHash3;
 import org.infinispan.util.logging.Log;
@@ -50,27 +49,24 @@ public class TopologyAwareConsistentHashTest {
    
    private static final Log log = LogFactory.getLog(TopologyAwareConsistentHashTest.class);
 
-   TopologyInfo ti;
    TopologyAwareConsistentHash ch;
    HashSet<Address> addresses;
-   Address[] testAddresses;
+   TestTopologyAwareAddress[] testAddresses;
 
    @BeforeMethod
    public void setUp() {
-      ti = new TopologyInfo();
       ch = new TopologyAwareConsistentHash(new MurmurHash3());
       addresses = new HashSet<Address>();
       for (int i = 0; i < 10; i++) {
-          addresses.add(new TestAddress(i * 100));
+          addresses.add(new TestTopologyAwareAddress(i * 100));
       }
       ch.setCaches(addresses);
       Set<Address> tmp = ch.getCaches();
       int i = 0;
-      testAddresses = new Address[tmp.size()];
-      for (Address a: tmp) testAddresses[i++] = a;
+      testAddresses = new TestTopologyAwareAddress[tmp.size()];
+      for (Address a: tmp) testAddresses[i++] = (TestTopologyAwareAddress) a;
 
       ch = new TopologyAwareConsistentHash(new MurmurHash3());
-      ch.setTopologyInfo(ti);
       addresses.clear();
    }
 
@@ -95,12 +91,12 @@ public class TopologyAwareConsistentHashTest {
       assertLocation(ch.locate(testAddresses[1], 2), true, testAddresses[1], testAddresses[2]);
       assertLocation(ch.locate(testAddresses[2], 2), true, testAddresses[2], testAddresses[3]);
       assertLocation(ch.locate(testAddresses[3], 2), true, testAddresses[3], testAddresses[0]);
-      
+
       assertLocation(ch.getStateProvidersOnLeave(testAddresses[0], 2), false, testAddresses[1], testAddresses[3]);
       assertLocation(ch.getStateProvidersOnLeave(testAddresses[1], 2), false, testAddresses[0], testAddresses[2]);
       assertLocation(ch.getStateProvidersOnLeave(testAddresses[2], 2), false, testAddresses[3], testAddresses[1]);
       assertLocation(ch.getStateProvidersOnLeave(testAddresses[3], 2), false, testAddresses[0], testAddresses[2]);
-      
+
 
 
       assertLocation(ch.locate(testAddresses[0], 3), true, testAddresses[0], testAddresses[1], testAddresses[3]);
@@ -113,7 +109,7 @@ public class TopologyAwareConsistentHashTest {
       assertLocation(ch.getStateProvidersOnLeave(testAddresses[2], 3), false, testAddresses[3], testAddresses[1]);
       assertLocation(ch.getStateProvidersOnLeave(testAddresses[3], 3), false, testAddresses[0], testAddresses[2]);
    }
-   
+
    public void testDifferentMachines2() {
       addNode(testAddresses[0], "m0", null, null);
       addNode(testAddresses[1], "m0", null, null);
@@ -222,7 +218,7 @@ public class TopologyAwareConsistentHashTest {
       assertLocation(ch.locate(testAddresses[1], 2), true, testAddresses[1], testAddresses[2]);
       assertLocation(ch.locate(testAddresses[2], 2), true, testAddresses[2], testAddresses[0]);
       assertLocation(ch.locate(testAddresses[3], 2), true, testAddresses[3], testAddresses[0]);
-      
+
       assertLocation(ch.locate(testAddresses[0], 3), true, testAddresses[0], testAddresses[2], testAddresses[3]);
       assertLocation(ch.locate(testAddresses[1], 3), true, testAddresses[1], testAddresses[2], testAddresses[3]);
       assertLocation(ch.locate(testAddresses[2], 3), true, testAddresses[2], testAddresses[0], testAddresses[1]);
@@ -387,7 +383,7 @@ public class TopologyAwareConsistentHashTest {
       addNode(testAddresses[8], "m0", "r0", "s2");
       addNode(testAddresses[9], "m0", "r0", "s0");
       setAddresses();
-      
+
       assertLocation(ch.locate(testAddresses[0], 1), true, testAddresses[0]);
       assertLocation(ch.locate(testAddresses[1], 1), true, testAddresses[1]);
       assertLocation(ch.locate(testAddresses[2], 1), true, testAddresses[2]);
@@ -433,7 +429,7 @@ public class TopologyAwareConsistentHashTest {
       assertLocation(ch.getStateProvidersOnJoin(testAddresses[8], 2), false, testAddresses[9], testAddresses[7]);
       assertLocation(ch.getStateProvidersOnJoin(testAddresses[9], 2), false, testAddresses[0], testAddresses[8]);
 
-      
+
       assertLocation(ch.locate(testAddresses[0], 3), true, testAddresses[0], testAddresses[1], testAddresses[3]);
       assertLocation(ch.locate(testAddresses[1], 3), true, testAddresses[1], testAddresses[2], testAddresses[4]);
       assertLocation(ch.locate(testAddresses[2], 3), true, testAddresses[2], testAddresses[3], testAddresses[6]);
@@ -510,10 +506,11 @@ public class TopologyAwareConsistentHashTest {
       }
    }
 
-   private void addNode(Address address, String machineId, String rackId, String siteId) {
+   private void addNode(TestTopologyAwareAddress address, String machineId, String rackId, String siteId) {
       addresses.add(address);
-      NodeTopologyInfo nti = new NodeTopologyInfo(machineId, rackId, siteId, null);
-      ti.addNodeTopologyInfo(address, nti);
+      address.setSiteId(siteId);
+      address.setRackId(rackId);
+      address.setMachineId(machineId);
    }
 
    private void setAddresses() {

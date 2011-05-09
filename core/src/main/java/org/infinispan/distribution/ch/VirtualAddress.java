@@ -81,7 +81,7 @@ public class VirtualAddress implements Address {
    
    @Override
    public String toString() {
-      return formatString("Virtual node %s residing on real node %s", id, realAddress);
+      return formatString("%s-%d", realAddress, id);
    }
    
    public static class Externalizer extends AbstractExternalizer<VirtualAddress> {

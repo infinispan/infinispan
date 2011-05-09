@@ -89,7 +89,7 @@ public class InvertedLeaveTask extends RehashTask {
 
       int replCount = configuration.getNumOwners();
       ConsistentHash newCH = this.distributionManager.getConsistentHash();
-      ConsistentHash oldCH = ConsistentHashHelper.createConsistentHash(configuration, newCH.getCaches(), leaversHandled, this.distributionManager.topologyInfo);
+      ConsistentHash oldCH = ConsistentHashHelper.createConsistentHash(configuration, newCH.getCaches(), leaversHandled);
 
       try {
          log.debugf("Starting leave rehash[enabled=%s,isReceiver=%s,isSender=%s] on node %s", configuration.isRehashEnabled(), isReceiver, isSender, self);

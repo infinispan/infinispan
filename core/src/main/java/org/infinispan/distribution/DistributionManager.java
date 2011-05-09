@@ -28,12 +28,11 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.NodeTopologyInfo;
-import org.infinispan.distribution.ch.TopologyInfo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.TopologyAwareAddress;
 
 import java.util.Collection;
 import java.util.List;
@@ -160,9 +159,8 @@ public interface DistributionManager {
     *
     * @param joiner address of joiner
     * @param starting if true, the joiner is reporting that it is starting the join process.  If false, the joiner is
-    * @param nodeTopologyInfo
     */
-   NodeTopologyInfo informRehashOnJoin(Address joiner, boolean starting, NodeTopologyInfo nodeTopologyInfo);
+   Address informRehashOnJoin(Address joiner, boolean starting);
 
    /**
     * Retrieves a cache store if one is available and set up for use in rehashing.  May return null!
@@ -208,12 +206,8 @@ public interface DistributionManager {
 
    void setRehashInProgress(boolean value);
 
-   TopologyInfo getTopologyInfo();
-
    void setJoinComplete(boolean value);
 
    void abortJoin(Address sender);
-
-   void setTopologyInfo(TopologyInfo ti);
 }
 
