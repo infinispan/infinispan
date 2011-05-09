@@ -54,7 +54,7 @@ public class JGroupsResponseFilterAdapter implements RspFilter {
       else if (response instanceof Throwable)
          response = new ExceptionResponse(new RuntimeException((Throwable)response));
 
-      return r.isAcceptable((Response) response, new JGroupsAddress(sender));
+      return r.isAcceptable((Response) response, JGroupsTransport.fromJGroupsAddress(sender));
    }
 
    public boolean needMoreResponses() {

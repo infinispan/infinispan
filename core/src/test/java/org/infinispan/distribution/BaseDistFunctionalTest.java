@@ -32,7 +32,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
-import org.infinispan.distribution.ch.TopologyInfo;
 import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -117,7 +116,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       try {
          Configuration c = new Configuration();
          c.setConsistentHashClass(DefaultConsistentHash.class.getName());
-         return ConsistentHashHelper.createConsistentHash(c, servers, new TopologyInfo());
+         return ConsistentHashHelper.createConsistentHash(c, servers);
       } catch (RuntimeException re) {
          throw re;
       } catch (Exception e) {
@@ -137,13 +136,13 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
             DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
             while (!dmi.isJoinComplete()) {
                if (System.currentTimeMillis() > giveup) {
-                  String message = "Timed out waiting for initial join sequence to complete on node " + dmi.rpcManager.getAddress() + " !";
+                  String message = "Timed out waiting for initial join sequence to complete on node " + dmi.getRpcManager().getAddress() + " !";
                   log.error(message);
                   throw new RuntimeException(message);
                }
                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
             }
-            log.trace("Node " + dmi.rpcManager.getAddress() + " finished rehash task.");
+            log.trace("Node " + dmi.getRpcManager().getAddress() + " finished rehash task.");
          }
       }
 
@@ -154,13 +153,13 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
             DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
             while (dmi.isRehashInProgress()) {
                if (System.currentTimeMillis() > giveup) {
-                  String message = "Timed out waiting for rehash to complete on node " + dmi.rpcManager.getAddress() + " !";
+                  String message = "Timed out waiting for rehash to complete on node " + dmi.getRpcManager().getAddress() + " !";
                   log.error(message);
                   throw new RuntimeException(message);
                }
                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
             }
-            log.trace("Node " + dmi.rpcManager.getAddress() + " finished rehash task.");
+            log.trace("Node " + dmi.getRpcManager().getAddress() + " finished rehash task.");
          }
       }
 

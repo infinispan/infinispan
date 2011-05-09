@@ -76,7 +76,7 @@ public interface Ids {
    // 55 - 56 no longer in use since server modules can now register their own externalizers
    int BYTE_ARRAY_KEY = 57;
    // 58 - 59 no longer in use since server modules can now register their own externalizers
-   int NODE_TOPOLOGY_INFO = 60;
+   int JGROUPS_TOPOLOGY_AWARE_ADDRESS = 60;
    int TOPOLOGY_AWARE_CH = 61;
    // commands (ids between 21 and 37 both inclusive and 50 and 53, are no longer in use, might get reused at a later stage)
    int REPLICABLE_COMMAND = 62;

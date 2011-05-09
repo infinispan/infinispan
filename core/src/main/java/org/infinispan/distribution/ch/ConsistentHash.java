@@ -48,12 +48,6 @@ public interface ConsistentHash {
    void setCaches(Set<Address> caches);
 
    /**
-    * Sets cluster topology information that can be used by CH to improve fault tolerance by smart choosing of backups.
-    * More about it <a href="http://community.jboss.org/wiki/DesigningServerHinting">here<a/>
-    */
-   void setTopologyInfo(TopologyInfo topologyInfo);
-
-   /**
     * Should return a collection of cache addresses in the cluster.
     *
     * @return set of unique of cache addresses
@@ -96,6 +90,7 @@ public interface ConsistentHash {
     * value for an address, this method will return -1.
     *
     * @return An int between 0 and hash space if the address is present in the hash wheel, otherwise it returns -1.
+    * @deprecated This method doesn't work with virtual nodes enabled (it will always return -1)
     */
    int getHashId(Address a);
 

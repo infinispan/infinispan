@@ -44,7 +44,6 @@ import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.distribution.RemoteTransactionLogDetails;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
-import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.distribution.ch.VirtualAddress;
@@ -67,6 +66,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -166,7 +166,7 @@ class ExternalizerTable implements ObjectTable {
       internalExternalizers.add(new ClearOperation.Externalizer());
       internalExternalizers.add(new DefaultConsistentHash.Externalizer());
       internalExternalizers.add(new UnionConsistentHash.Externalizer());
-      internalExternalizers.add(new NodeTopologyInfo.Externalizer());
+      internalExternalizers.add(new JGroupsTopologyAwareAddress.Externalizer());
       internalExternalizers.add(new TopologyAwareConsistentHash.Externalizer());
       internalExternalizers.add(new ByteArrayKey.Externalizer());
 

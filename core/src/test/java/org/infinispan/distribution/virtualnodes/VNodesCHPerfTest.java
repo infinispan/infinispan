@@ -22,11 +22,9 @@ package org.infinispan.distribution.virtualnodes;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
-import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
-import org.infinispan.distribution.ch.TopologyInfo;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
@@ -47,29 +45,17 @@ import static org.testng.Assert.*;
 public class VNodesCHPerfTest extends AbstractInfinispanTest {
 
    private Set<Address> createAddresses(int numNodes) {
-      Random r = new Random();
       Set<Address> addresses = new HashSet<Address>(numNodes);
-      while (addresses.size() < numNodes)
-         addresses.add(new JGroupsAddress(new org.jgroups.util.UUID(r.nextLong(), r.nextLong())));
-      return addresses;
-   }
-
-   private TopologyInfo createTopologyInfo(Set<Address> nodes) {
-      Random r = new Random();
-      TopologyInfo topology = new TopologyInfo();
-      int i = 0;
-      for (Address address : nodes) {
+      for (int i = 0; i < numNodes; i++) {
          String machineId = "m" + i;
-         NodeTopologyInfo nti = new NodeTopologyInfo(machineId, null, null, address);
-         topology.addNodeTopologyInfo(address, nti);
-         i++;
+         addresses.add(new JGroupsTopologyAwareAddress(org.jgroups.util.TopologyUUID.randomUUID(machineId, null, null)));
       }
-      return topology;
+      return addresses;
    }
 
    public void testSpeed() {
       int[] numNodes = {1, 2, 3, 4, 10, 100};
-      int iterations = 1000000;
+      int iterations = 10000;
       // warmup
       doPerfTest(10, 2, iterations);
 
@@ -101,11 +87,11 @@ public class VNodesCHPerfTest extends AbstractInfinispanTest {
             .consistentHashClass(TopologyAwareConsistentHash.class)
             .numVirtualNodes(10);
       Set<Address> addresses = createAddresses(numNodes);
-      return ConsistentHashHelper.createConsistentHash(c, addresses, createTopologyInfo(addresses));
+      return ConsistentHashHelper.createConsistentHash(c, addresses);
    }
 
    public void testDistribution() {
-      final int numKeys = 100000;
+      final int numKeys = 10000;
       final int[] numNodes = {1, 2, 3, 4, 10, 100};
 
       List<Object> keys = new ArrayList<Object>(numKeys);

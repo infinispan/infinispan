@@ -41,32 +41,20 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jgroups.Channel;
-import org.jgroups.ChannelException;
-import org.jgroups.Event;
-import org.jgroups.ExtendedMembershipListener;
-import org.jgroups.ExtendedMessageListener;
-import org.jgroups.JChannel;
-import org.jgroups.MergeView;
-import org.jgroups.Message;
-import org.jgroups.View;
-import org.jgroups.blocks.GroupRequest;
+import org.jgroups.*;
+import org.jgroups.blocks.Request;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.protocols.UDP;
 import org.jgroups.protocols.pbcast.STREAMING_STATE_TRANSFER;
+import org.jgroups.stack.AddressGenerator;
 import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
+import org.jgroups.util.TopologyUUID;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -161,7 +149,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
             throw new CacheException("Unable to start JGroups Channel", e);
          }
       }
-      address = new JGroupsAddress(channel.getAddress());
+      address = fromJGroupsAddress(channel.getAddress());
       if (log.isInfoEnabled())
          log.localAndPhysicalAddress(getAddress(), getPhysicalAddresses());
    }
@@ -211,6 +199,18 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       }
 
       channel.setOpt(Channel.LOCAL, false);
+
+      // if we have a TopologyAwareConsistentHash, we need to set our own address generator in JGroups:
+      if(configuration.hasTopologyInfo()) {
+         ((JChannel)channel).setAddressGenerator(new AddressGenerator() {
+
+            public org.jgroups.Address generateAddress() {
+               return TopologyUUID.randomUUID(channel.getName(),
+                     configuration.getSiteId(), configuration.getRackId(), configuration.getMachineId());
+
+            }
+         });
+      }
    }
 
    private void initChannelAndRPCDispatcher() throws CacheException {
@@ -360,8 +360,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
    public Address getAddress() {
       if (address == null && channel != null) {
-         address = new JGroupsAddress(channel.getAddress());
-//         address = new JGroupsAddress(channel.getLocalAddress());
+         address = fromJGroupsAddress(channel.getAddress());
       }
       return address;
    }
@@ -411,7 +410,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
          boolean noValidResponses = true;
          for (Rsp rsp : rsps.values()) {
-            noValidResponses = parseResponseAndAddToResponseList(rsp.getValue(), retval, rsp.wasSuspected(), rsp.wasReceived(), new JGroupsAddress(rsp.getSender()), responseFilter != null) && noValidResponses;
+            noValidResponses = parseResponseAndAddToResponseList(rsp.getValue(), retval, rsp.wasSuspected(), rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()), responseFilter != null) && noValidResponses;
          }
 
          if (noValidResponses) throw new TimeoutException("Timed out waiting for valid responses!");
@@ -422,15 +421,15 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       }
    }
 
-   private int toJGroupsMode(ResponseMode mode) {
+   private static int toJGroupsMode(ResponseMode mode) {
       switch (mode) {
          case ASYNCHRONOUS:
          case ASYNCHRONOUS_WITH_SYNC_MARSHALLING:
-            return GroupRequest.GET_NONE;
+            return Request.GET_NONE;
          case SYNCHRONOUS:
-            return GroupRequest.GET_ALL;
+            return Request.GET_ALL;
          case WAIT_FOR_VALID_RESPONSE:
-            return GroupRequest.GET_MAJORITY;
+            return Request.GET_MAJORITY;
       }
       throw new CacheException("Unknown response mode " + mode);
    }
@@ -462,10 +461,8 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
          final Address address = getAddress();
          final int viewId = (int) newView.getVid().getId();
-         final boolean needsRejoin = needsToRejoin(newView);
-         
+         boolean needsRejoin = true;
          notifier.notifyMerge(members, oldMembers, address, viewId, needsRejoin, getSubgroups(mv.getSubgroups()));
-         notifier.notifyViewChange(members, oldMembers, address, viewId, needsRejoin, true);
       }
 
       private List<List<Address>> getSubgroups(Vector<View> subviews) {
@@ -478,13 +475,19 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    public void viewAccepted(View newView) {
       Vector<org.jgroups.Address> newMembers = newView.getMembers();
       List<Address> oldMembers = null;
-      Notify notify = null;
-      if (newView instanceof MergeView) {
-         if (log.isInfoEnabled()) log.receivedMergedView(newView);
-         if (notifier != null) notify = new NotifyMerge();
-      } else {
-         if (log.isInfoEnabled()) log.receivedClusterView(newView);
-         if (notifier != null) notify = new NotifyViewChange();
+      boolean hasNotifier = notifier != null;
+      Notify n = null;
+
+      if (hasNotifier) {
+         if (newView instanceof MergeView) {
+            if (log.isInfoEnabled())
+               if (log.isInfoEnabled()) log.receivedMergedView(newView);
+            n = new NotifyMerge();
+         } else {
+            if (log.isInfoEnabled())
+               if (log.isInfoEnabled()) log.receivedClusterView(newView);
+            n = new NotifyViewChange();
+         }
       }
 
       synchronized (membersListLock) {
@@ -499,7 +502,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          coordinator = (members != null && !members.isEmpty() && members.get(0).equals(getAddress()));
 
          // now notify listeners - *after* updating the coordinator. - JBCACHE-662
-         if (needNotification && notify != null) notify.emitNotification(oldMembers, newView);
+         if (needNotification && n != null) n.emitNotification(oldMembers, newView);
 
          // Wake up any threads that are waiting to know about who the coordinator is
          membersListLock.notifyAll();
@@ -595,7 +598,19 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    // Helpers to convert between Address types
    // ------------------------------------------------------------------------------------------------------------------
 
-   private Vector<org.jgroups.Address> toJGroupsAddressVector(Collection<Address> list) {
+   protected static org.jgroups.Address toJGroupsAddress(Address a) {
+      return ((JGroupsAddress) a).address;
+   }
+
+   static Address fromJGroupsAddress(org.jgroups.Address addr) {
+      if(addr instanceof TopologyUUID)
+         return new JGroupsTopologyAwareAddress(addr);
+      else
+         return new JGroupsAddress(addr);
+   }
+
+
+   private static Vector<org.jgroups.Address> toJGroupsAddressVector(Collection<Address> list) {
       if (list == null) return null;
       if (list.isEmpty()) return new Vector<org.jgroups.Address>();
 
@@ -606,19 +621,16 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       return retval;
    }
 
-   private org.jgroups.Address toJGroupsAddress(Address a) {
-      return ((JGroupsAddress) a).address;
-   }
 
-   private List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
+   private static List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
       if (list == null || list.isEmpty()) return Collections.emptyList();
       // optimize for the single node case
       int sz = list.size();
       List<Address> retval = new ArrayList<Address>(sz);
       if (sz == 1) {
-         retval.add(new JGroupsAddress(list.get(0)));
+         retval.add(fromJGroupsAddress(list.get(0)));
       } else {
-         for (org.jgroups.Address a : list) retval.add(new JGroupsAddress(a));
+         for (org.jgroups.Address a : list) retval.add(fromJGroupsAddress(a));
       }
       return retval;
    }

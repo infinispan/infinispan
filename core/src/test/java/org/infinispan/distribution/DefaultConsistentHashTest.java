@@ -24,7 +24,6 @@ package org.infinispan.distribution;
 
 import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
-import org.infinispan.distribution.ch.TopologyInfo;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterTest;
@@ -154,7 +153,7 @@ public class DefaultConsistentHashTest extends AbstractInfinispanTest {
       Address a3 = new TestAddress(3000);
       Address a4 = new TestAddress(4000);
 
-      ch = (DefaultConsistentHash) ConsistentHashHelper.createConsistentHash(new DefaultConsistentHash(new org.infinispan.util.hash.MurmurHash3()), Arrays.asList(a1, a2, a3, a4), new TopologyInfo(), a1);
+      ch = (DefaultConsistentHash) ConsistentHashHelper.createConsistentHash(new DefaultConsistentHash(new org.infinispan.util.hash.MurmurHash3()), Arrays.asList(a1, a2, a3, a4), a1);
       assert ch.getCaches().size() == 4: "Expected 4 entries; found " + ch.getCaches();
    }
 }

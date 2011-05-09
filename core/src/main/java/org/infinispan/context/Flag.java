@@ -147,15 +147,19 @@ public enum Flag {
     * If this flag is enabled, if a cache store is shared, then storage to the store is skipped.
     */
    SKIP_SHARED_CACHE_STORE,
-
    /**
     * This flag has only effect when it's used before calling {@link
     * org.infinispan.Cache#stop()} and its effect is that apart from stopping
     * the cache, it removes all of its content from both memory and any backing
     * cache store.
     */
-   REMOVE_DATA_ON_STOP;
-   
+   REMOVE_DATA_ON_STOP,
+   /**
+    * Used by the DistLockingInterceptor to commit the change no matter what (if the flag is set). This is used when
+    * a node A pushes state to another node B and A doesn't want B to check if the state really belongs to it
+    */
+   SKIP_OWNERSHIP_CHECK;
+
    /**
     * Creates a copy of a Flag Set removing instances of FAIL_SILENTLY.
     * The copy might be the same instance if no change is required,

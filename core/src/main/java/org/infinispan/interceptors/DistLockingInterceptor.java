@@ -41,10 +41,9 @@ public class DistLockingInterceptor extends LockingInterceptor {
       this.dm = dm;
    }
 
-   @Override
-   protected void commitEntry(CacheEntry entry) {
+   protected void commitEntry(CacheEntry entry, boolean force_commit) {
       boolean doCommit = true;
-      if (!dm.getLocality(entry.getKey()).isLocal()) {
+      if (!force_commit && !dm.getLocality(entry.getKey()).isLocal()) {
          if (configuration.isL1CacheEnabled()) {
             dm.transformForL1(entry);
          } else {

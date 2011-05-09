@@ -51,7 +51,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration defaultConfig = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-      System.out.println("defaultConfig = " + defaultConfig.getNumOwners());
+      log.debug("defaultConfig = " + defaultConfig.getNumOwners());
       defaultConfig.setL1CacheEnabled(false);
       createClusteredCaches(5, defaultConfig);
       BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0), cache(1), cache(2), cache(3), cache(4));
@@ -76,10 +76,10 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
 
    public void testInitialState() {
       cache(0).put(addresses[0],"v0");
-      cache(0).put(addresses[1],"v0");
-      cache(0).put(addresses[2],"v0");
-      cache(0).put(addresses[3],"v0");
-      cache(0).put(addresses[4],"v0");
+      cache(0).put(addresses[1],"v1");
+      cache(0).put(addresses[2],"v2");
+      cache(0).put(addresses[3],"v3");
+      cache(0).put(addresses[4],"v4");
       assertExistence(addresses[0]);
       assertExistence(addresses[1]);
       assertExistence(addresses[2]);
@@ -96,13 +96,13 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(addresses[0]), cache(addresses[1]), cache(addresses[2]), cache(addresses[3]));
       log.info("Here is where ST ends");
       Set<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getCaches();
-      System.out.println("After shutting down " + addresses[4] + " caches are " +  addressList);
+      log.debug("After shutting down " + addresses[4] + " caches are " +  addressList);
 
 
-      System.out.println(TestingUtil.printCache(cache(addresses[0])));
-      System.out.println(TestingUtil.printCache(cache(addresses[1])));
-      System.out.println(TestingUtil.printCache(cache(addresses[2])));
-      System.out.println(TestingUtil.printCache(cache(addresses[3])));
+      log.debug(TestingUtil.printCache(cache(addresses[0])));
+      log.debug(TestingUtil.printCache(cache(addresses[1])));
+      log.debug(TestingUtil.printCache(cache(addresses[2])));
+      log.debug(TestingUtil.printCache(cache(addresses[3])));
 
       assertExistence(addresses[0]);
       assertExistence(addresses[1]);
@@ -141,8 +141,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
    private void assertExistence(final Object key) {
       ConsistentHash hash = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash();
       final List<Address> addresses = hash.locate(key, 2);
-      System.out.println(key + " should be present on = " + addresses);
-      log.info(key + " should be present on = " + addresses);
+      log.debug(key + " should be present on = " + addresses);
 
       eventually(new Condition() {
          @Override
@@ -150,11 +149,11 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
             int count = 0;
             for (Cache c : caches()) {
                if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
-                  System.out.println("It is here = " + address(c));
+                  log.debug("It is here = " + address(c));
                   count++;
                }
             }
-            System.out.println("count = " + count);
+            log.debug("count = " + count);
             return count == 2;
          }         
       });
@@ -165,12 +164,12 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
             for (Cache c : caches()) {
                if (addresses.contains(address(c))) {
                   if (!c.getAdvancedCache().getDataContainer().containsKey(key)) {
-                     System.out.println(key + " not present on " + c.getAdvancedCache().getRpcManager().getAddress());
+                     log.debug(key + " not present on " + c.getAdvancedCache().getRpcManager().getAddress());
                      return false;
                   }
                } else {
                   if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
-                     System.out.println(key + " present on " + c.getAdvancedCache().getRpcManager().getAddress());
+                     log.debug(key + " present on " + c.getAdvancedCache().getRpcManager().getAddress());
                      return false;
                   }
                }

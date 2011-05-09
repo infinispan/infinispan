@@ -24,6 +24,7 @@ package org.infinispan.distribution.ch;
 
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.util.Util;
 import org.infinispan.util.hash.Hash;
 
@@ -60,8 +61,6 @@ import static java.lang.Math.min;
  * @since 4.2
  */
 public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
-   private TopologyInfo topologyInfo;
-
    public TopologyAwareConsistentHash() {
    }
 
@@ -119,14 +118,14 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       List<Address> result = new ArrayList<Address>();
       result.add(getRealAddress(processSequence.remove(0)));
       int level = 0;
-      while (result.size() < numOwners) {
+      while (result.size() < numOwners && level <= 3) {
          Iterator<Address> addrIt = processSequence.iterator();
          while (addrIt.hasNext()) {
             Address a = addrIt.next();
             Address ra = getRealAddress(a);
             switch (level) {
                case 0: { //site level
-                  if (!topologyInfo.isSameSite(realAddress, ra)) {
+                  if (!isSameSite(realAddress, ra)) {
                      if (trace) log.tracef("Owner (different site) identified as %s", a);
                      result.add(ra);
                      addrIt.remove();
@@ -134,7 +133,7 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
                   break;
                }
                case 1: { //rack level
-                  if (!topologyInfo.isSameRack(realAddress, ra)) {
+                  if (!isSameRack(realAddress, ra)) {
                      if (trace) log.tracef("Owner (different rack) identified as %s", a);
                      result.add(ra);
                      addrIt.remove();
@@ -142,14 +141,14 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
                   break;
                }
                case 2: { //machine level
-                  if (!topologyInfo.isSameMachine(realAddress, ra)) {
+                  if (!isSameMachine(realAddress, ra)) {
                      if (trace) log.tracef("Owner (different machine) identified as %s", a);
                      result.add(ra);
                      addrIt.remove();
                   }
                   break;
                }
-               case 3: { //just add them in sequence
+               case 3: { //virtual nodes level
                   if (trace) log.tracef("Owner (same machine) identified as %s", a);
                   result.add(ra);
                   addrIt.remove();
@@ -161,8 +160,20 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
          level++;
       }
       //assertion
-      if (result.size() != numOwners) throw new AssertionError("This should not happen!");
+      //if (result.size() != numOwners) throw new AssertionError("This should not happen!");
       return result;
+   }
+
+   private boolean isSameSite(Address a, Address b) {
+      return (a instanceof TopologyAwareAddress) && (b instanceof TopologyAwareAddress) && ((TopologyAwareAddress) a).isSameSite((TopologyAwareAddress) b);
+   }
+
+   private boolean isSameRack(Address a, Address b) {
+      return (a instanceof TopologyAwareAddress) && (b instanceof TopologyAwareAddress) && ((TopologyAwareAddress) a).isSameRack((TopologyAwareAddress) b);
+   }
+
+   private boolean isSameMachine(Address a, Address b) {
+      return (a instanceof TopologyAwareAddress) && (b instanceof TopologyAwareAddress) && ((TopologyAwareAddress) a).isSameMachine((TopologyAwareAddress) b);
    }
 
    private Address getOwner(Object key) {
@@ -184,20 +195,11 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       @Override
       public void writeObject(ObjectOutput output, TopologyAwareConsistentHash topologyAwareConsistentHash) throws IOException {
          super.writeObject(output, topologyAwareConsistentHash);
-         Collection<NodeTopologyInfo> infoCollection = topologyAwareConsistentHash.topologyInfo.getAllTopologyInfo();
-         output.writeInt(infoCollection.size());
-         for (NodeTopologyInfo nti : infoCollection) output.writeObject(nti);
       }
 
       @Override
       public TopologyAwareConsistentHash readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          TopologyAwareConsistentHash ch = super.readObject(unmarshaller);
-         ch.topologyInfo = new TopologyInfo();
-         int ntiCount = unmarshaller.readInt();
-         for (int i = 0; i < ntiCount; i++) {
-            NodeTopologyInfo nti = (NodeTopologyInfo) unmarshaller.readObject();
-            ch.topologyInfo.addNodeTopologyInfo(nti.getAddress(), nti);
-         }
          return ch;
       }
 
@@ -213,21 +215,9 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
    }
 
    @Override
-   public void setTopologyInfo(TopologyInfo topologyInfo) {
-      this.topologyInfo = topologyInfo;
-   }
-
-   public TopologyInfo getTopologyInfo() {
-      return topologyInfo;
-   }
-
-   @Override
    public String toString() {
       return "TopologyAwareConsistentHash {" +
-            "addresses=" + caches +
-            ", positions=" + positions +
-            ", topologyInfo=" + topologyInfo +
-            ", addressToHashIds=" + addressToHashIds +
+            "positions=" + positions +
             "}";
    }
    

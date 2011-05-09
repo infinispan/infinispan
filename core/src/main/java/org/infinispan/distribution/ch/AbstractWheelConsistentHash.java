@@ -118,7 +118,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          if (isVirtualNodesEnabled()) {
             if (trace) log.tracef("Adding %s virtual nodes for real node %s", numVirtualNodes, a);
             for (int i = 0; i < numVirtualNodes; i++) {
-               Address va = new VirtualAddress(a, i);
+               Address va = createVirtualAddress(a, i);
                if (trace) log.tracef("Adding virtual node %s", va);
                addNode(va);
             }
@@ -131,7 +131,14 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       // reorder addresses as per the positions.
       caches.addAll(positions.values());
    }
-   
+
+   /**
+    * Default implementation that creates a <code>VirtualAddress</code> from an <code>Address</code>.
+    */
+   protected Address createVirtualAddress(Address realAddress, int id) {
+      return new VirtualAddress(realAddress, id);
+   }
+
    @Override
    public Set<Address> getCaches() {
       return getRealAddresses(caches);

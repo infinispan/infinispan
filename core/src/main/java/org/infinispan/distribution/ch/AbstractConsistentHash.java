@@ -79,10 +79,6 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
    }
 
    @Override
-   public void setTopologyInfo(TopologyInfo topologyInfo) {
-   }
-
-   @Override
    public String toString() {
       return getClass().getSimpleName() + " {" +
             "caches=" + caches +

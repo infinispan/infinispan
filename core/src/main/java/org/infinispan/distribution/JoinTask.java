@@ -29,7 +29,6 @@ import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.NodeTopologyInfo;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -91,7 +90,7 @@ public class JoinTask extends RehashTask {
       if (chOld.getCaches().contains(self))
          chNew = chOld;
       else
-         chNew = createConsistentHash(configuration, chOld.getCaches(), distributionManager.getTopologyInfo(), self);
+         chNew = createConsistentHash(configuration, chOld.getCaches(), self);
    }
 
    protected void signalJoinRehashEnd() {
@@ -165,26 +164,7 @@ public class JoinTask extends RehashTask {
 
    protected void broadcastNewConsistentHash() {
       RehashControlCommand rehashControlCommand = cf.buildRehashControlCommand(JOIN_REHASH_START, self);
-      rehashControlCommand.setNodeTopologyInfo(distributionManager.getTopologyInfo().getNodeTopologyInfo(rpcManager.getAddress()));
       Map<Address, Response> responses = rpcManager.invokeRemotely(null, rehashControlCommand, true, true);
-      updateTopologyInfo(responses.values());
-   }
-
-   private void updateTopologyInfo(Collection<Response> responses) {
-      for (Response r : responses) {
-         if (r instanceof SuccessfulResponse) {
-            SuccessfulResponse sr = (SuccessfulResponse) r;
-            NodeTopologyInfo nti = (NodeTopologyInfo) sr.getResponseValue();
-            if (nti != null) {
-               distributionManager.getTopologyInfo().addNodeTopologyInfo(nti.getAddress(), nti);
-            }
-         } else {
-            // will ignore unsuccessful response
-            if (trace)
-               log.tracef("updateTopologyInfo will ignore unsuccessful response (another node may not be ready), got response with success=%s, is a %s", r.isSuccessful(), r.getClass().getSimpleName());
-         }
-      }
-      if (trace) log.tracef("Topology after after getting cluster info: %s", distributionManager.getTopologyInfo());
    }
 
    private ConsistentHash retrieveOldConsistentHash() throws InterruptedException, IllegalAccessException, InstantiationException, ClassNotFoundException {
@@ -223,7 +203,7 @@ public class JoinTask extends RehashTask {
                log.tracef("Sleeping for %s", Util.prettyPrintTime(time));
             Thread.sleep(time); // sleep for a while and retry
          } else {
-            result = createConsistentHash(configuration, addresses, distributionManager.getTopologyInfo());
+            result = createConsistentHash(configuration, addresses);
          }
       } while (result == null && System.currentTimeMillis() < giveupTime);
 
