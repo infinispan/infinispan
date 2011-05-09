@@ -1,19 +1,18 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+   <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>org.infinispan</groupId>
-		<artifactId>infinispan-parent</artifactId>
-		<version>5.0.0-SNAPSHOT</version>
-		<relativePath>../parent/pom.xml</relativePath>
-	</parent>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-parent</artifactId>
+      <version>5.0.0-SNAPSHOT</version>
+      <relativePath>../parent/pom.xml</relativePath>
+   </parent>
 
-	<artifactId>infinispan-spring</artifactId>
-	<packaging>bundle</packaging>
+   <artifactId>infinispan-spring</artifactId>
+   <packaging>bundle</packaging>
 
-	<name>Infinispan Spring Integration</name>
-	<description>
+   <name>Infinispan Spring Integration</name>
+   <description>
         <![CDATA[
                  The Infinispan Spring Integration project provides Spring 
                  integration for Infinispna, a high performance distributed cache.
@@ -39,182 +38,201 @@
 	<!-- Developers section -->
 	<!-- =================================================== -->
 
-	<developers>
-		<developer>
-			<id>obergner</id>
-			<name>Olaf Bergner</name>
-			<email>olaf DOT bergner AT gmx DOT de</email>
-			<roles>
-				<role>Project Admin</role>
-				<role>Developer</role>
-			</roles>
-			<timezone>0</timezone>
-		</developer>
-	</developers>
+   <developers>
+      <developer>
+         <id>obergner</id>
+         <name>Olaf Bergner</name>
+         <email>olaf DOT bergner AT gmx DOT de</email>
+         <roles>
+            <role>Project Admin</role>
+            <role>Developer</role>
+         </roles>
+         <timezone>0</timezone>
+      </developer>
+   </developers>
 
 	<!-- =================================================== -->
 	<!-- Global properties -->
 	<!-- =================================================== -->
 
-	<properties>
+   <properties>
 		<!-- Make the build platform independent: http://maven.apache.org/general.html#encoding-warning -->
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- ######################################################### -->
 		<!-- Dependency versions -->
 		<!-- ######################################################### -->
 		<!-- Spring -->
-		<version.spring>3.1.0.M1</version.spring>
-	</properties>
+      <version.spring>3.1.0.M1</version.spring>
+      <version.commons.dbcp>1.4</version.commons.dbcp>
+   </properties>
 
 	<!-- =================================================== -->
 	<!-- Project Dependencies -->
 	<!-- =================================================== -->
 
-	<dependencies>
+   <dependencies>
 		<!--Compile time dependencies -->
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-context</artifactId>
-			<version>${version.spring}</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>infinispan-core</artifactId>
-			<version>${project.version}</version>
-			<scope>compile</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.rhq.helpers</groupId>
-					<artifactId>rhq-pluginAnnotations</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>infinispan-client-hotrod</artifactId>
-			<version>${project.version}</version>
-			<scope>compile</scope>
-			<optional>true</optional>
-			<exclusions>
-				<exclusion>
-					<groupId>org.apache.hadoop</groupId>
-					<artifactId>avro</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-context</artifactId>
+         <version>${version.spring}</version>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <version>${project.version}</version>
+         <scope>compile</scope>
+         <exclusions>
+            <exclusion>
+               <groupId>org.rhq.helpers</groupId>
+               <artifactId>rhq-pluginAnnotations</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-client-hotrod</artifactId>
+         <version>${project.version}</version>
+         <scope>compile</scope>
+         <optional>true</optional>
+         <exclusions>
+            <exclusion>
+               <groupId>org.apache.hadoop</groupId>
+               <artifactId>avro</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
 
 		<!--Runtime dependencies -->
-            <dependency>
-                  <groupId>commons-pool</groupId>
-                  <artifactId>commons-pool</artifactId>
-                  <version>${version.commons.pool}</version>
-                  <scope>runtime</scope>
-            </dependency>
-            <dependency>
-                  <groupId>commons-logging</groupId>
-                  <artifactId>commons-logging</artifactId>
-                  <version>${version.commons.logging}</version>
-                  <scope>runtime</scope>
-            </dependency>
-            <dependency>
-                  <groupId>org.springframework</groupId>
-                  <artifactId>spring-aop</artifactId>
-                  <version>${version.spring}</version>
-                  <scope>runtime</scope>
-            </dependency>
-            <dependency>
-                  <groupId>org.springframework</groupId>
-                  <artifactId>spring-asm</artifactId>
-                  <version>${version.spring}</version>
-                  <scope>runtime</scope>
-            </dependency>
-            <dependency>
-                  <groupId>org.springframework</groupId>
-                  <artifactId>spring-expression</artifactId>
-                  <version>${version.spring}</version>
-                  <scope>runtime</scope>
-            </dependency>
-            <dependency>
-                  <groupId>log4j</groupId>
-                  <artifactId>log4j</artifactId>
-                  <version>${version.log4j}</version>
-                  <scope>runtime</scope>
-                  <optional>true</optional>
-            </dependency>
-            <dependency>
-                  <groupId>org.jgroups</groupId>
-                  <artifactId>jgroups</artifactId>
-                  <version>${version.jgroups}</version>
-                  <scope>runtime</scope>
-            </dependency>
-            <dependency>
-                  <groupId>org.jboss.marshalling</groupId>
-                  <artifactId>marshalling-api</artifactId>
-                  <version>${version.jboss.marshalling}</version>
-                  <scope>runtime</scope>
-            </dependency>
-            <dependency>
-                  <groupId>org.jboss.marshalling</groupId>
-                  <artifactId>river</artifactId>
-                  <version>${version.jboss.marshalling}</version>
-                  <scope>runtime</scope>
-            </dependency>
+      <dependency>
+         <groupId>commons-pool</groupId>
+         <artifactId>commons-pool</artifactId>
+         <version>${version.commons.pool}</version>
+         <scope>runtime</scope>
+      </dependency>
+      <dependency>
+         <groupId>commons-logging</groupId>
+         <artifactId>commons-logging</artifactId>
+         <version>${version.commons.logging}</version>
+         <scope>runtime</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-aop</artifactId>
+         <version>${version.spring}</version>
+         <scope>runtime</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-asm</artifactId>
+         <version>${version.spring}</version>
+         <scope>runtime</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-expression</artifactId>
+         <version>${version.spring}</version>
+         <scope>runtime</scope>
+      </dependency>
+      <dependency>
+         <groupId>log4j</groupId>
+         <artifactId>log4j</artifactId>
+         <version>${version.log4j}</version>
+         <scope>runtime</scope>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.jgroups</groupId>
+         <artifactId>jgroups</artifactId>
+         <version>${version.jgroups}</version>
+         <scope>runtime</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.marshalling</groupId>
+         <artifactId>marshalling-api</artifactId>
+         <version>${version.jboss.marshalling}</version>
+         <scope>runtime</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.marshalling</groupId>
+         <artifactId>river</artifactId>
+         <version>${version.jboss.marshalling}</version>
+         <scope>runtime</scope>
+      </dependency>
 
 		<!--Test Dependencies -->
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-test</artifactId>
-			<version>${version.spring}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>infinispan-core</artifactId>
-			<version>${project.version}</version>
-			<type>test-jar</type>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>infinispan-client-hotrod</artifactId>
-			<version>${project.version}</version>
-			<type>test-jar</type>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>infinispan-server-hotrod</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>infinispan-server-hotrod</artifactId>
-			<version>${project.version}</version>
-			<type>test-jar</type>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-test</artifactId>
+         <version>${version.spring}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-client-hotrod</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-server-hotrod</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-server-hotrod</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-jdbc</artifactId>
+         <version>${version.spring}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>com.h2database</groupId>
+         <artifactId>h2</artifactId>
+         <version>${version.h2.driver}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>commons-dbcp</groupId>
+         <artifactId>commons-dbcp</artifactId>
+         <version>${version.commons.dbcp}</version>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
 
 	<!-- =================================================== -->
 	<!-- Project Plugins -->
 	<!-- =================================================== -->
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
-				<configuration>
-					<instructions>
-						<Export-Package>
-							${project.groupId}.query.*;version=${project.version};-split-package:=error
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     ${project.groupId}.query.*;version=${project.version};-split-package:=error
                                     </Export-Package>
-					</instructions>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+               </instructions>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 
 </project>
