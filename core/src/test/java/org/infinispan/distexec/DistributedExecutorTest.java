@@ -31,10 +31,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.manager.DefaultCacheManager;
 import org.testng.annotations.Test;
 
 /**
@@ -61,15 +58,6 @@ public class DistributedExecutorTest extends BaseDistFunctionalTest {
       assert r == 1;
    } 
    
-   @Test(expectedExceptions = { IllegalStateException.class })
-   public void testImproperCacheStateForDistribtuedExecutor() {
-      GlobalConfiguration gc = GlobalConfiguration.getNonClusteredDefault();
-      Configuration c = new Configuration();
-      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc, c, true);
-      Cache<Object, Object> cache = defaultCacheManager.getCache();
-      DistributedExecutorService des = new DefaultExecutorService(cache);
-   }
-
    public void testExceptionInvocation() throws Exception {
 
       DistributedExecutorService des = new DefaultExecutorService(c1);
