@@ -24,6 +24,9 @@ package org.infinispan.test;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.affinity.KeyAffinityService;
+import org.infinispan.affinity.KeyAffinityServiceFactory;
+import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.manager.CacheContainer;
@@ -43,6 +46,8 @@ import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Base class for tests that operates on clusters of caches. The way tests extending this class operates is:
@@ -375,7 +380,22 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected void killMember(int cacheIndex) {
       List<Cache<Object, Object>> caches = caches();
       caches.remove(cacheIndex);
-      TestingUtil.killCacheManagers(manager(cacheIndex));
+      manager(cacheIndex).stop();
       TestingUtil.blockUntilViewsReceived(60000, caches);
+   }
+
+   /**
+    * Creates a {@link org.infinispan.affinity.KeyAffinityService} and uses it for generating a key that maps to the given address.
+    * @param nodeIndex the index of tha cache where to be the main data owner of the returned key
+    */
+   protected Object getKeyForNode(int nodeIndex) {
+      ExecutorService ex = Executors.newSingleThreadExecutor();
+      KeyAffinityService<Object> kas = KeyAffinityServiceFactory.newKeyAffinityService(cache(nodeIndex), ex,
+                                                                                       new RndKeyGenerator(), 5, true);
+      try {
+         return kas.getKeyForAddress(address(nodeIndex));
+      } finally {
+         ex.shutdown();
+      }
    }
 }
