@@ -265,6 +265,10 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
 
       private void tryAddKey(Address address, Object key) {
          BlockingQueue queue = address2key.get(address);
+         // on node stop the distribution manager might still return the dead server for a while after we have already removed its queue
+         if (queue == null)
+            return;
+
          boolean added = queue.offer(key);
          if (added) {
             exitingNumberOfKeys.incrementAndGet();
@@ -298,7 +302,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       maxNumberOfKeys.set(address2key.keySet().size() * bufferSize);
       exitingNumberOfKeys.set(0);
       if (log.isTraceEnabled()) {
-         log.tracef("resetNumberOfKeys ends with: maxNumberOfKeys=%d, exitingNumberOfKeys=%s",
+         log.tracef("resetNumberOfKeys ends with: maxNumberOfKeys=%s, exitingNumberOfKeys=%s",
                     maxNumberOfKeys.get(), exitingNumberOfKeys.get());
       }
    }
