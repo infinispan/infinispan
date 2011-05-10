@@ -83,7 +83,7 @@ public class TransactionXaAdapter implements XAResource {
    public int prepare(Xid xid) throws XAException {
       LocalTransaction localTransaction = getLocalTransactionAndValidate(xid);
       
-      validateNotMarkedForRollback(localTransaction);
+      validateNotMarkedForRollback(localTransaction, false);
 
       if (configuration.isOnePhaseCommit()) {
          if (trace) log.trace("Received prepare for tx: %s. Skipping call as 1PC will be used.", xid);
@@ -122,7 +122,7 @@ public class TransactionXaAdapter implements XAResource {
          LocalTxInvocationContext ctx = icc.createTxInvocationContext();
          ctx.setLocalTransaction(localTransaction);
          if (configuration.isOnePhaseCommit() || isOnePhase) {
-            validateNotMarkedForRollback(localTransaction);
+            validateNotMarkedForRollback(localTransaction, true);
 
             if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
             PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
@@ -239,9 +239,13 @@ public class TransactionXaAdapter implements XAResource {
             '}';
    }
 
-   private void validateNotMarkedForRollback(LocalTransaction localTransaction) throws XAException {
+   private void validateNotMarkedForRollback(LocalTransaction localTransaction, boolean runRollback) throws XAException {
       if (localTransaction.isMarkedForRollback()) {
          if (trace) log.trace("Transaction already marked for rollback: %s", localTransaction);
+         if (runRollback) {
+            if (log.isTraceEnabled()) log.trace("Forcing rollback!");
+            rollback(localTransaction.getXid());
+         }
          throw new XAException(XAException.XA_RBROLLBACK);
       }
    }
