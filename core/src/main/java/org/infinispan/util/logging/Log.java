@@ -517,7 +517,7 @@ public interface Log extends BasicLogger {
    void failedSynchronizationRegistration(@Cause Exception e);
 
    @LogMessage(level = WARN)
-   @Message(value = "Unable to roll back global transaction %", id = 102)
+   @Message(value = "Unable to roll back global transaction %s", id = 102)
    void unableToRollbackGlobalTx(GlobalTransaction gtx, @Cause Throwable e);
 
    @LogMessage(level = ERROR)
