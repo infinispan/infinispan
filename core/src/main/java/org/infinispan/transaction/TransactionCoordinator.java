@@ -70,7 +70,7 @@ public class TransactionCoordinator {
    }
 
    public int prepare(LocalTransaction localTransaction) throws XAException {
-      validateNotMarkedForRollback(localTransaction);
+      validateNotMarkedForRollback(localTransaction, false);
 
       if (configuration.isOnePhaseCommit()) {
          if (trace) log.tracef("Received prepare for tx: %s. Skipping call as 1PC will be used.", localTransaction);
@@ -99,20 +99,14 @@ public class TransactionCoordinator {
       }
    }
 
-   private void validateNotMarkedForRollback(LocalTransaction localTransaction) throws XAException {
-      if (localTransaction.isMarkedForRollback()) {
-         if (trace) log.tracef("Transaction already marked for rollback: %s", localTransaction);
-         throw new XAException(XAException.XA_RBROLLBACK);
-      }
-   }
-
    public void commit(LocalTransaction localTransaction, boolean isOnePhase) throws XAException {
       if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
       try {
          LocalTxInvocationContext ctx = icc.createTxInvocationContext();
          ctx.setLocalTransaction(localTransaction);
          if (configuration.isOnePhaseCommit() || isOnePhase) {
-            validateNotMarkedForRollback(localTransaction);
+
+            validateNotMarkedForRollback(localTransaction, true);
 
             if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
             PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
@@ -157,4 +151,18 @@ public class TransactionCoordinator {
       }
    }
 
+   /**
+    * @param runRollback if true and localTransaction is marked for rollback then runs {@link #rollback(LocalTransaction)}
+    * before returning.
+    */
+   private void validateNotMarkedForRollback(LocalTransaction localTransaction, boolean runRollback) throws XAException {
+      if (localTransaction.isMarkedForRollback()) {
+         if (trace) log.tracef("Transaction already marked for rollback: %s", localTransaction);
+         if (runRollback) {
+            if (log.isTraceEnabled()) log.trace("Forcing rollback.");
+            rollback(localTransaction);
+         }
+         throw new XAException(XAException.XA_RBROLLBACK);
+      }
+   }
 }
