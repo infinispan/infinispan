@@ -204,8 +204,8 @@ class AbstractProtocolServerTest {
 
       override def getDecoder = null
 
-      override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int,
-                                  typedProps: TypedProperties) {
+      override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean,
+            sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {
          this.tcpNoDelay = tcpNoDelay
       }
    }

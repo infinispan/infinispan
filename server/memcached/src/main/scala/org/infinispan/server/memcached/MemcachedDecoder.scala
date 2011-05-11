@@ -484,8 +484,8 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
          buildStat("auth_errors", 0, sb), // Unsupported
          //TODO: Evictions are measure by evict calls, but not by nodes are that are expired after the entry's lifespan has expired.
          buildStat("evictions", stats.getEvictions, sb),
-         buildStat("bytes_read", 0, sb), // TODO: Through netty?
-         buildStat("bytes_written", 0, sb), // TODO: Through netty?
+         buildStat("bytes_read", transport.getTotalBytesRead, sb),
+         buildStat("bytes_written", transport.getTotalBytesWritten, sb),
          buildStat("limit_maxbytes", 0, sb), // Unsupported
          buildStat("threads", 0, sb), // TODO: Through netty?
          buildStat("conn_yields", 0, sb), // Unsupported

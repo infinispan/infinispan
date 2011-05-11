@@ -89,7 +89,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
 
    protected void updateDomain(ComponentsJmxRegistration registrar, MBeanServer mBeanServer, String groupName) {
       if (jmxDomain == null) {
-         jmxDomain = getJmxDomain(globalConfig.getJmxDomain(), mBeanServer, groupName);
+         jmxDomain = JmxUtil.buildJmxDomain(globalConfig, mBeanServer, groupName);
          String configJmxDomain = globalConfig.getJmxDomain();
          if (!jmxDomain.equals(configJmxDomain) && !globalConfig.isAllowDuplicateDomains()) {
             log.cacheManagerAlreadyRegistered(configJmxDomain);

@@ -29,6 +29,9 @@ import java.util.Properties
 import transport.NettyTransport
 import org.infinispan.util.{ClusterIdGenerator, TypedProperties, Util}
 import logging.Log
+import org.infinispan.jmx.{JmxUtil, ResourceDMBean}
+import org.infinispan.config.GlobalConfiguration
+import javax.management.{ObjectName, MBeanServer}
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -43,6 +46,9 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
    protected var transport: NettyTransport = _
    protected var cacheManager: EmbeddedCacheManager = _
    protected var versionGenerator: ClusterIdGenerator = _
+   private var transportObjName: ObjectName = _
+   private var mbeanServer: MBeanServer = _
+   private var isGlobalStatsEnabled: Boolean = _
 
    def start(properties: Properties, cacheManager: EmbeddedCacheManager, defaultPort: Int) {
       val typedProps = TypedProperties.toTypedProperties(properties)
@@ -62,6 +68,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
             throw new IllegalArgumentException("Worker threads can't be lower than 0: " + masterThreads)
 
          this.cacheManager = cacheManager
+         this.isGlobalStatsEnabled = cacheManager.getGlobalConfiguration.isExposeGlobalJmxStatistics
          val idleTimeout = typedProps.getIntProperty(PROP_KEY_IDLE_TIMEOUT, IDLE_TIMEOUT_DEFAULT, true)
          if (idleTimeout < -1)
             throw new IllegalArgumentException("Idle timeout can't be lower than -1: " + idleTimeout)
@@ -93,10 +100,24 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
       }
    }
 
-   def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {
+   def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int,
+         recvBufSize: Int, typedProps: TypedProperties) {
       val address = new InetSocketAddress(host, port)
-      transport = new NettyTransport(this, getEncoder, address, workerThreads, idleTimeout,
-         threadNamePrefix, tcpNoDelay, sendBufSize, recvBufSize)
+      transport = new NettyTransport(this, getEncoder, address, workerThreads,
+         idleTimeout, threadNamePrefix, tcpNoDelay, sendBufSize, recvBufSize,
+         isGlobalStatsEnabled)
+
+      if (isGlobalStatsEnabled) {
+         val globalCfg = cacheManager.getGlobalConfiguration
+         mbeanServer = JmxUtil.lookupMBeanServer(globalCfg)
+         val groupName = "type=Server,name=%s".format(threadNamePrefix)
+         val jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, groupName)
+         val dynamicMBean = new ResourceDMBean(transport)
+         transportObjName = new ObjectName(
+            "%s:%s,component=Transport".format(jmxDomain, groupName))
+         JmxUtil.registerMBean(dynamicMBean, transportObjName, mbeanServer)
+      }
+
       transport.start
    }
 
@@ -114,6 +135,11 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
 
       if (transport != null)
          transport.stop
+
+      if (isGlobalStatsEnabled) {
+         // Unregister mbean(s)
+         JmxUtil.unregisterMBean(transportObjName, mbeanServer)
+      }
 
       if (isDebug)
          debug("Server stopped")

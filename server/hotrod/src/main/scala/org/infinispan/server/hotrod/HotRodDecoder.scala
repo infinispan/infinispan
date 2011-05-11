@@ -154,7 +154,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
       writeResponse(ch, header.decoder.customReadValue(header, buffer, cache))
 
    override def createStatsResponse: AnyRef =
-      header.decoder.createStatsResponse(header, cache.getAdvancedCache.getStats)
+      header.decoder.createStatsResponse(header, cache.getAdvancedCache.getStats, transport)
 
    override def createErrorResponse(t: Throwable): AnyRef = {
       t match {

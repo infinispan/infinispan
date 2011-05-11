@@ -82,22 +82,8 @@ public class ComponentsJmxRegistration {
    public void registerMBeans() throws CacheException {
       try {
          List<ResourceDMBean> resourceDMBeans = getResourceDMBeansFromComponents();
-         boolean trace = log.isTraceEnabled();
-         for (ResourceDMBean resource : resourceDMBeans) {
-            ObjectName objectName = getObjectName(resource);
-            if (!mBeanServer.isRegistered(objectName)) {
-               try {
-                  mBeanServer.registerMBean(resource, objectName);
-                  if (trace) log.tracef("Registered %s under %s", resource, objectName);
-               } catch (InstanceAlreadyExistsException e) {
-                  //this might happen if multiple instances are trying to concurrently register same objectName
-                  log.couldNotRegisterObjectName(objectName, e);
-               }
-            } else {
-               if (log.isDebugEnabled())
-                  log.debugf("Object name %s already registered", objectName);
-            }
-         }
+         for (ResourceDMBean resource : resourceDMBeans)
+            JmxUtil.registerMBean(resource, getObjectName(resource), mBeanServer);
       }
       catch (Exception e) {
          throw new CacheException("Failure while registering mbeans", e);
@@ -113,11 +99,7 @@ public class ComponentsJmxRegistration {
          List<ResourceDMBean> resourceDMBeans = getResourceDMBeansFromComponents();
          boolean trace = log.isTraceEnabled();
          for (ResourceDMBean resource : resourceDMBeans) {
-            ObjectName objectName = getObjectName(resource);
-            if (mBeanServer.isRegistered(objectName)) {
-               mBeanServer.unregisterMBean(objectName);
-               if (trace) log.tracef("Unregistered %s", objectName);
-            }
+            JmxUtil.unregisterMBean(getObjectName(resource), mBeanServer);
          }
       }
       catch (Exception e) {
