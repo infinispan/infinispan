@@ -36,6 +36,7 @@ import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
 import org.infinispan.util.TypedProperties;
@@ -679,4 +680,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Lazy deserialization configuration is deprecated, please use storeAsBinary instead", id = 140)
    void lazyDeserializationDeprecated();
 
+   @LogMessage(level = WARN)
+   @Message(value = "Could not rollback prepared 1PC transaction. This transaction will be rolled back by the recovery process, if enabled. Transaction: %s", id = 141)
+   void couldNotRollbackPrepared1PcTransaction(LocalXaTransaction localTransaction, @Cause XAException e1);
 }

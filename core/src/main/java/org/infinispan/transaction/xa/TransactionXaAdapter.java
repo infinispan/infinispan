@@ -94,7 +94,12 @@ public class TransactionXaAdapter implements XAResource {
    public int prepare(Xid externalXid) throws XAException {
       Xid xid = convertXid(externalXid);
       LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
-      return txCoordinator.prepare(localTransaction);
+      if (!configuration.isOnePhaseCommit()) {
+         return txCoordinator.prepare(localTransaction);
+      } else {
+         if (trace)log.tracef("Skipping prepare as we're configured to run 1PC. Xid=%s", externalXid);
+         return XA_OK;
+      }
    }
 
    /**
@@ -104,7 +109,27 @@ public class TransactionXaAdapter implements XAResource {
       Xid xid = convertXid(externalXid);
       LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
       if (trace) log.tracef("Committing transaction %s. One phase? %s", localTransaction.getGlobalTransaction(), isOnePhase);
-      txCoordinator.commit(localTransaction, isOnePhase);
+      if (isOnePhase && !configuration.isOnePhaseCommit()) {
+         //isOnePhase being true means that we're the only participant in the distributed transaction and TM does the
+         //1PC optimization. We run a 2PC though, as running only 1PC has a high chance of leaving the cluster in
+         //inconsistent state.
+         try {
+            txCoordinator.prepare(localTransaction);
+            txCoordinator.commit(localTransaction, false);
+         } catch (XAException e) {
+            if (trace) log.tracef("Couldn't commit 1PC transaction %s, trying to rollback.", localTransaction);
+            try {
+               rollback(xid);
+               throw new XAException(XAException.XA_HEURRB); //this is a heuristic rollback
+            } catch (XAException e1) {
+               log.couldNotRollbackPrepared1PcTransaction(localTransaction, e1);
+               // inform the TM that a resource manager error has occurred in the transaction branch (XAER_RMERR).
+               throw new XAException(XAException.XAER_RMERR);
+            }
+         }
+      } else {
+         txCoordinator.commit(localTransaction, configuration.isOnePhaseCommit());
+      }
       forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction);
    }
 
@@ -171,7 +196,7 @@ public class TransactionXaAdapter implements XAResource {
          if (trace) log.tracef("Fetched a new recovery iterator: %s" , recoveryIterator);
       }
       if (isFlag(flag, TMENDRSCAN)) {
-         if (log.isTraceEnabled()) log.trace("Flushing the iterator");
+         if (trace) log.trace("Flushing the iterator");
          return recoveryIterator.all();
       } else {
          //as per the spec: "TMNOFLAGS this flag must be used when no other flags are specified."
