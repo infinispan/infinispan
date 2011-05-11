@@ -156,7 +156,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       keyGenWorker = new KeyGeneratorWorker();
       executor.execute(keyGenWorker);
       listenerRegistration = new ListenerRegistration(this);
-      ((EmbeddedCacheManager)cache.getCacheManager()).addListener(listenerRegistration);
+      cache.getCacheManager().addListener(listenerRegistration);
       cache.addListener(listenerRegistration);
       keyProducerStartLatch.open();
       started = true;
