@@ -76,7 +76,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       super.start(properties, cacheManager, 11222)
    }
 
-   override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {
+   override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean,
+         sendBufSize: Int, recvBufSize: Int, typedProps: TypedProperties) {
       // Start rest of the caches and self to view once we know for sure that we need to start
       // and we know that the rank calculator listener is registered
 

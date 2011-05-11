@@ -38,6 +38,7 @@ import org.infinispan.context.Flag.SKIP_CACHE_LOAD
 import org.infinispan.util.ByteArrayKey
 import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
+import transport.NettyTransport
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -201,7 +202,7 @@ object Decoder10 extends AbstractVersionedDecoder with Log {
 
    override def customReadValue(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef = null
 
-   override def createStatsResponse(h: HotRodHeader, cacheStats: Stats): AnyRef = {
+   override def createStatsResponse(h: HotRodHeader, cacheStats: Stats, t: NettyTransport): AnyRef = {
       val stats = mutable.Map.empty[String, String]
       stats += ("timeSinceStart" -> cacheStats.getTimeSinceStart.toString)
       stats += ("currentNumberOfEntries" -> cacheStats.getCurrentNumberOfEntries.toString)
@@ -212,6 +213,8 @@ object Decoder10 extends AbstractVersionedDecoder with Log {
       stats += ("misses" -> cacheStats.getMisses.toString)
       stats += ("removeHits" -> cacheStats.getRemoveHits.toString)
       stats += ("removeMisses" -> cacheStats.getRemoveMisses.toString)
+      stats += ("totalBytesRead" -> t.getTotalBytesRead)
+      stats += ("totalBytesWritten" -> t.getTotalBytesWritten)
       new StatsResponse(h.messageId, h.cacheName, h.clientIntel, immutable.Map[String, String]() ++ stats, h.topologyId)
    }
 

@@ -336,6 +336,15 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
       }
    }
 
+   override def writeComplete(ctx: ChannelHandlerContext, e: WriteCompletionEvent) {
+      transport.updateTotalBytesWritten(e)
+      ctx.sendUpstream(e)
+   }
+
+   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) = {
+      transport.updateTotalBytesRead(e)
+      super.messageReceived(ctx, e)
+   }
 }
 
 object AbstractProtocolDecoder extends Log {

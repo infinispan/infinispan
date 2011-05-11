@@ -27,6 +27,7 @@ import org.infinispan.stats.Stats
 import org.infinispan.util.ByteArrayKey
 import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.server.core.{RequestParameters, CacheValue}
+import org.infinispan.server.core.transport.NettyTransport
 
 /**
  * This class represents the work to be done by a decoder of a particular Hot Rod protocol version.
@@ -94,7 +95,7 @@ abstract class AbstractVersionedDecoder {
    /**
     * Create a response for the stats command.
     */
-   def createStatsResponse(header: HotRodHeader, stats: Stats): AnyRef
+   def createStatsResponse(header: HotRodHeader, stats: Stats, t: NettyTransport): AnyRef
 
    /**
     * Create an error response based on the Throwable instance received.

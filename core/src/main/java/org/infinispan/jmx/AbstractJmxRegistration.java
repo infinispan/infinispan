@@ -47,7 +47,7 @@ public abstract class AbstractJmxRegistration {
    protected abstract ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components);
 
    protected void registerMBeans(Set<AbstractComponentRegistry.Component> components, GlobalConfiguration globalConfig) {
-      mBeanServer = getMBeanServer(globalConfig);
+      mBeanServer = JmxUtil.lookupMBeanServer(globalConfig);
       ComponentsJmxRegistration registrar = buildRegistrar(components);
       registrar.registerMBeans();
    }
@@ -59,28 +59,4 @@ public abstract class AbstractJmxRegistration {
       }
    }
 
-   protected MBeanServer getMBeanServer(GlobalConfiguration configuration) {
-      MBeanServerLookup lookup = configuration.getMBeanServerLookupInstance();
-      return lookup.getMBeanServer(configuration.getMBeanServerProperties());
-   }
-
-   protected String getJmxDomain(String jmxDomain, MBeanServer mBeanServer, String groupName) {
-      int index = 2;
-      String finalName = jmxDomain;
-      boolean done = false;
-      while (!done) {
-         done = true;
-         try {
-            ObjectName targetName = new ObjectName(finalName + ':' + groupName + ",*");
-            if (mBeanServer.queryNames(targetName, null).size() > 0) {
-               finalName = jmxDomain + index++;
-               done = false;
-            }
-         } catch (MalformedObjectNameException e) {
-            throw new CacheException("Unable to check for duplicate names", e);
-         }
-      }
-
-      return finalName;
-   }
 }

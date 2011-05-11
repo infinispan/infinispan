@@ -142,7 +142,7 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
       GlobalConfiguration gc = componentRegistry.getComponent(GlobalConfiguration.class);
       CacheManagerJmxRegistration managerJmxReg = componentRegistry.getComponent(CacheManagerJmxRegistration.class);
       if (!gc.isExposeGlobalJmxStatistics() && jmxDomain == null) {
-         String tmpJmxDomain = getJmxDomain(gc.getJmxDomain(), mBeanServer, groupName);
+         String tmpJmxDomain = JmxUtil.buildJmxDomain(gc, mBeanServer, groupName);
          synchronized (managerJmxReg) {
             if (managerJmxReg.jmxDomain == null) {
                if (!tmpJmxDomain.equals(gc.getJmxDomain()) && !gc.isAllowDuplicateDomains()) {

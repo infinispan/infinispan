@@ -22,10 +22,8 @@
  */
 package org.infinispan.server.core.transport
 
-import java.net.SocketAddress
 import org.jboss.netty.channel.group.DefaultChannelGroup
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory
-import org.jboss.netty.channel.ChannelDownstreamHandler
 import org.jboss.netty.bootstrap.ServerBootstrap
 import java.util.concurrent.Executors
 import scala.collection.JavaConversions._
@@ -34,6 +32,12 @@ import org.jboss.netty.util.{ThreadNameDeterminer, ThreadRenamingRunnable}
 import org.infinispan.util.logging.LogFactory
 import org.jboss.netty.logging.{InternalLoggerFactory, Log4JLoggerFactory}
 import org.infinispan.server.core.logging.Log
+import java.util.concurrent.atomic.AtomicLong
+import org.infinispan.jmx.annotations.{ManagedAttribute, MBean}
+import org.jboss.netty.channel.{WriteCompletionEvent, MessageEvent, ChannelDownstreamHandler}
+import org.jboss.netty.buffer.ChannelBuffer
+import java.net.{InetSocketAddress, SocketAddress}
+import org.rhq.helpers.pluginAnnotations.agent.{DataType, DisplayType, MeasurementType, Metric}
 
 /**
  * A Netty based transport.
@@ -41,10 +45,12 @@ import org.infinispan.server.core.logging.Log
  * @author Galder Zamarreño
  * @since 4.1
  */
+@MBean(objectName = "Transport", description = "Transport component manages read and write operations to/from server.")
 class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
-                     address: SocketAddress, workerThreads: Int,
+                     address: InetSocketAddress, workerThreads: Int,
                      idleTimeout: Int, threadNamePrefix: String, tcpNoDelay: Boolean,
-                     sendBufSize: Int, recvBufSize: Int) extends Transport with Log {
+                     sendBufSize: Int, recvBufSize: Int, isGlobalStatsEnabled: Boolean)
+        extends Transport with Log {
 
    private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
    val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted")
@@ -52,6 +58,9 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
    private val masterExecutor = Executors.newCachedThreadPool
    private val workerExecutor = Executors.newCachedThreadPool
    private val factory = new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads)
+
+   private val totalBytesWritten, totalBytesRead = new AtomicLong
+   private val userBytesWritten, userBytesRead = new AtomicLong
 
    override def start {
       ThreadRenamingRunnable.setThreadNameDeterminer(new ThreadNameDeterminer {
@@ -113,5 +122,57 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
       if (isDebugEnabled) debug("Channel group completely closed, release external resources");
       factory.releaseExternalResources();
    }
+
+   @ManagedAttribute(description = "Returns the total number of bytes written " +
+      "by the server back to clients which includes both protocol and user information.")
+   @Metric(displayName = "Number of total number of bytes written", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   def getTotalBytesWritten: String = totalBytesWritten.toString
+
+   @ManagedAttribute(description = "Returns the total number of bytes read " +
+      "by the server from clients which includes both protocol and user information.")
+   @Metric(displayName = "Number of total number of bytes read", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   def getTotalBytesRead: String = totalBytesRead.toString
+
+   @ManagedAttribute(description = "Returns the host to which the transport binds.")
+   @Metric(displayName = "Host name", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   def getHostName = address.getHostName.toString
+
+   @ManagedAttribute(description = "Returns the port to which the transport binds.")
+   @Metric(displayName = "Port", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   def getPort = address.getPort.toString
+
+   @ManagedAttribute(description = "Returns the number of worker threads.")
+   @Metric(displayName = "Number of worker threads", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   def getNumberWorkerThreads = workerThreads.toString
+
+   @ManagedAttribute(description = "Returns the idle timeout.")
+   @Metric(displayName = "Idle timeout", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   def getIdleTimeout = idleTimeout.toString
+
+   @ManagedAttribute(description = "Returns whether TCP no delay was configured or not.")
+   @Metric(displayName = "TCP no delay", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   def getTpcNoDelay = tcpNoDelay.toString
+
+   @ManagedAttribute(description = "Returns the send buffer size.")
+   @Metric(displayName = "Send buffer size", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   def getSendBufferSize = sendBufSize.toString
+
+   @ManagedAttribute(description = "Returns the receive buffer size.")
+   @Metric(displayName = "Receive buffer size", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   def getReceiveBufferSize = recvBufSize.toString
+
+   private[core] def updateTotalBytesWritten(e: WriteCompletionEvent) =
+      incrementTotalBytesWritten(totalBytesWritten, e)
+
+   private def incrementTotalBytesWritten(base: AtomicLong, e: WriteCompletionEvent) =
+      if (isGlobalStatsEnabled)
+         base.addAndGet(e.getWrittenAmount)
+
+   private[core] def updateTotalBytesRead(e: MessageEvent) =
+      incrementTotalBytesRead(totalBytesRead, e)
+
+   private def incrementTotalBytesRead(base: AtomicLong, e: MessageEvent) =
+      if (isGlobalStatsEnabled)
+         base.addAndGet(e.getMessage.asInstanceOf[ChannelBuffer].readableBytes)
 
 }
