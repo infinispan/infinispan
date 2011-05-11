@@ -93,6 +93,7 @@ public final class Util {
          ClassLoader.getSystemClassLoader()};             // System loader, usually has app class path
 
       ClassNotFoundException e = null;
+      NoClassDefFoundError ne = null;
       for (ClassLoader cl : cls)  {
          if (cl == null)
             continue;
@@ -101,10 +102,17 @@ public final class Util {
             return cl.loadClass(classname);
          } catch (ClassNotFoundException ce) {
             e = ce;
+         } catch (NoClassDefFoundError ce) {
+            ne = ce;
          }
       }
 
-      throw e != null ? e : new ClassNotFoundException(classname);
+      if (e != null)
+         throw e;
+      else if (ne != null)
+         throw new ClassNotFoundException(classname, ne);
+      else
+         throw new ClassNotFoundException(classname);
    }
 
    private static Method getFactoryMethod(Class c) {
