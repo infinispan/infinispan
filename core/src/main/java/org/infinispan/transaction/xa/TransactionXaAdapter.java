@@ -121,7 +121,7 @@ public class TransactionXaAdapter implements XAResource {
       try {
          LocalTxInvocationContext ctx = icc.createTxInvocationContext();
          ctx.setLocalTransaction(localTransaction);
-         if (configuration.isOnePhaseCommit() || isOnePhase) {
+         if (configuration.isOnePhaseCommit()) {
             validateNotMarkedForRollback(localTransaction, true);
 
             if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
@@ -132,14 +132,23 @@ public class TransactionXaAdapter implements XAResource {
                log.error("Error while processing 1PC PrepareCommand", e);
                throw new XAException(XAException.XAER_RMERR);
             }
-         } else {
-            CommitCommand commitCommand = commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
+            return;
+         }
+         if(isOnePhase) {
+            if (trace) log.trace("Running prepare as isOnePhase is true");
             try {
-               invoker.invoke(ctx, commitCommand);
-            } catch (Throwable e) {
-               log.error("Error while processing 1PC PrepareCommand", e);
-               throw new XAException(XAException.XAER_RMERR);
+               prepare(xid);
+            } catch (XAException e) {
+               rollback(xid);
+               throw new XAException(XAException.XA_RBROLLBACK);
             }
+         }
+         CommitCommand commitCommand = commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
+         try {
+            invoker.invoke(ctx, commitCommand);
+         } catch (Throwable e) {
+            log.error("Error while processing 1PC PrepareCommand", e);
+            throw new XAException(XAException.XAER_RMERR);
          }
       } finally {
          cleanup(localTransaction);
