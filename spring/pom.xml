@@ -27,7 +27,13 @@
                     backed by Infinispan's RemoteCacheManager. To bes used if your
                     Spring-powered application accesses Infinispan remotely, i.e.
                     over the network.
-                    
+                  * An implementation of org.springframework.cache.CacheManager
+                    backed by a CacheContainer reference. To be used if your Spring-
+                    powered application needs access to a CacheContainer defined
+                    outside the application (e.g. retrieved from JNDI)
+                  * Spring namespace support allowing shortcut definitions for all the
+                    components above
+
                  In addition, Infinispan Spring Integration offers various FactoryBeans
                  for facilitating creation of Infinispan core classes - Cache, CacheManager,
                  ... - within a Spring context.
@@ -49,6 +55,15 @@
          </roles>
          <timezone>0</timezone>
       </developer>
+      <developer>
+         <id>marius.bogoevici</id>
+         <name>Marius Bogoevici</name>
+         <email>marius.bogoevici AT gmail.com</email>
+         <roles>
+             <role>Developer</role>
+         </roles>
+         <timezone>-5</timezone>
+       </developer>
    </developers>
 
 	<!-- =================================================== -->
