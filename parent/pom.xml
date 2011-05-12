@@ -472,6 +472,10 @@
             <updatePolicy>never</updatePolicy>
          </snapshots>
       </repository>
+      <repository>
+         <id>spring-milestone</id>
+         <url>http://maven.springsource.org/milestone</url>
+      </repository>
    </repositories>
 
    <pluginRepositories>

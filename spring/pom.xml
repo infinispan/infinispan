@@ -49,6 +49,15 @@
          </roles>
          <timezone>0</timezone>
       </developer>
+      <developer>
+         <id>marius.bogoevici</id>
+         <name>Marius Bogoevici</name>
+         <email>marius.bogoevici AT gmail.com</email>
+         <roles>
+             <role>Developer</role>
+         </roles>
+         <timezone>-5</timezone>
+       </developer>
    </developers>
 
 	<!-- =================================================== -->

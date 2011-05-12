@@ -1,0 +1,2 @@
+http\://www.jboss.org/schema/infinispan/spring/infinispan-spring.xsd=org/infinispan/spring/config/infinispan-spring.xsd
+http\://www.jboss.org/schema/infinispan/spring/infinispan-spring-5.0.xsd=org/infinispan/spring/config/infinispan-spring.xsd
