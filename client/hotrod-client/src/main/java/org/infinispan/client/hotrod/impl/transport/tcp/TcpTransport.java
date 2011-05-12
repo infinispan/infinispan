@@ -116,7 +116,7 @@ public class TcpTransport extends AbstractTransport {
       try {
          socketOutputStream.write(toAppend);
          if (trace)
-            log.tracef("Wrote %f bytes", toAppend.length);
+            log.tracef("Wrote %d bytes", toAppend.length);
       } catch (IOException e) {
          throw new TransportException("Problems writing data to stream", e);
       }

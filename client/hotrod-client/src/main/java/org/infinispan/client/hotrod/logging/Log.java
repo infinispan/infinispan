@@ -59,7 +59,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @LogMessage(level = ERROR)
    @Message(value = "Invalid message id. Expected %d and received %d", id = 4004)
-   void invalidMessageId(String message, long expectedMsgId, long receivedMsgId);
+   void invalidMessageId(long expectedMsgId, long receivedMsgId);
 
    @LogMessage(level = WARN)
    @Message(value = "Error received from the server: %s", id = 4005)

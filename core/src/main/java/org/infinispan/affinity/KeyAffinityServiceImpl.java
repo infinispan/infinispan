@@ -272,7 +272,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
          if (log.isTraceEnabled()) {
             if (added)
                log.tracef("Successfully added key(%s) to the address(%s), maxNumberOfKeys=%d, exitingNumberOfKeys=%d",
-                          key, address, maxNumberOfKeys, exitingNumberOfKeys);
+                          key, address, maxNumberOfKeys.get(), exitingNumberOfKeys.get());
             else
                log.tracef("Not added key(%s) to the address(%s)", key, address);
          }
@@ -299,7 +299,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       exitingNumberOfKeys.set(0);
       if (log.isTraceEnabled()) {
          log.tracef("resetNumberOfKeys ends with: maxNumberOfKeys=%d, exitingNumberOfKeys=%s",
-                    maxNumberOfKeys, exitingNumberOfKeys);
+                    maxNumberOfKeys.get(), exitingNumberOfKeys.get());
       }
    }
 
