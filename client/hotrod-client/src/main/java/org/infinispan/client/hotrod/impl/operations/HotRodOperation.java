@@ -108,7 +108,7 @@ public abstract class HotRodOperation implements HotRodConstants {
       long receivedMessageId = transport.readVLong();
       if (receivedMessageId != messageId) {
          String message = "Invalid message id. Expected %d and received %d";
-         log.invalidMessageId(message, messageId, receivedMessageId);
+         log.invalidMessageId(messageId, receivedMessageId);
          throw new InvalidResponseException(String.format(message, messageId, receivedMessageId));
       }
       if (log.isTraceEnabled()) {
