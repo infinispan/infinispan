@@ -33,6 +33,6 @@ import org.infinispan.util.hash.MurmurHash3;
  */
 public class ConsistentHashV2 extends ConsistentHashV1 {
    public ConsistentHashV2() {
-      mmh = new MurmurHash3();
+      hash = new MurmurHash3();
    }
 }

@@ -28,7 +28,10 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.net.InetSocketAddress;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Random;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -46,7 +49,11 @@ public class ConsistentHashV1 implements ConsistentHash {
 
    private int hashSpace;
 
-   protected Hash mmh = new MurmurHash2();
+   protected Hash hash = new MurmurHash2();
+
+   private int numKeyOwners;
+
+   private Random rnd = new Random();
 
    @Override
    public void init(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, int hashSpace) {
@@ -56,11 +63,12 @@ public class ConsistentHashV1 implements ConsistentHash {
       if (log.isTraceEnabled())
          log.tracef("Positions are: %s", positions);
       this.hashSpace = hashSpace;
+      this.numKeyOwners = numKeyOwners;
    }
 
    @Override
    public InetSocketAddress getServer(byte[] key) {
-      int keyHashCode = mmh.hash(key);
+      int keyHashCode = hash.hash(key);
       if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
       int hash = Math.abs(keyHashCode);
 
@@ -68,18 +76,36 @@ public class ConsistentHashV1 implements ConsistentHash {
       if (log.isTraceEnabled()) {
          log.tracef("Found possible candidates: %s", candidates);
       }
-      if (candidates.isEmpty()) {
-         InetSocketAddress socketAddress = positions.get(positions.firstKey());
+      int index = getIndex();
+      if (candidates.size() <= index) {
+         int newIndex = index - candidates.size();
+         InetSocketAddress socketAddress = getItemAtPosition(newIndex, positions);
          if (log.isTraceEnabled()) {
-            log.tracef("Over the wheel, returning first member: %s", socketAddress);
+            log.tracef("Over the wheel, returning member: %s", socketAddress);
          }
          return socketAddress;
       } else {
-         InetSocketAddress socketAddress = candidates.get(candidates.firstKey());
+         InetSocketAddress socketAddress = getItemAtPosition(index, candidates);
          if (log.isTraceEnabled()) {
             log.tracef("Found candidate: %s", socketAddress);
          }
          return socketAddress;
       }
+   }
+
+   private int getIndex() {
+      return rnd.nextInt(Math.min(numKeyOwners, positions.size()));
+   }
+
+   private InetSocketAddress getItemAtPosition(int position, SortedMap<Integer, InetSocketAddress> map) {
+      Iterator<Map.Entry<Integer,InetSocketAddress>> iterator = map.entrySet().iterator();
+      for (int i = 0; i < position; i++) {
+         iterator.next();
+      }
+      return iterator.next().getValue();
+   }
+
+   public void setHash(Hash hash) {
+      this.hash = hash;
    }
 }
