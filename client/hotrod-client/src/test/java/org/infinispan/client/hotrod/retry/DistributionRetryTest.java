@@ -154,7 +154,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
       return key;
    }
 
-   static class ByteKeyGenerator implements KeyGenerator {
+   public static class ByteKeyGenerator implements KeyGenerator {
       Random r = new Random();
       @Override
       public Object getKey() {
@@ -169,9 +169,13 @@ public class DistributionRetryTest extends AbstractRetryTest {
          }
       }
 
-      static String getStringObject(byte[] bytes) throws ClassNotFoundException, IOException {
-         Marshaller sm = new JBossMarshaller();
-         return (String) sm.objectFromByteBuffer(bytes);
+      public static String getStringObject(byte[] bytes) {
+         try {
+            Marshaller sm = new JBossMarshaller();
+            return (String) sm.objectFromByteBuffer(bytes);
+         } catch (Exception e) {
+            throw new RuntimeException(e);
+         }
       }
    }
 
