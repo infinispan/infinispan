@@ -121,26 +121,21 @@ public class TransactionXaAdapter implements XAResource {
       try {
          LocalTxInvocationContext ctx = icc.createTxInvocationContext();
          ctx.setLocalTransaction(localTransaction);
-         if (configuration.isOnePhaseCommit() || isOnePhase) {
+         if (configuration.isOnePhaseCommit()) {
             validateNotMarkedForRollback(localTransaction, true);
-
             if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
-            PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
-            try {
-               invoker.invoke(ctx, command);
-            } catch (Throwable e) {
-               log.error("Error while processing 1PC PrepareCommand", e);
-               throw new XAException(XAException.XAER_RMERR);
-            }
-         } else {
-            CommitCommand commitCommand = commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
-            try {
-               invoker.invoke(ctx, commitCommand);
-            } catch (Throwable e) {
-               log.error("Error while processing 1PC PrepareCommand", e);
-               throw new XAException(XAException.XAER_RMERR);
-            }
+            invokePrepare(localTransaction, ctx);
+            return;
          }
+         if (isOnePhase) {//this means prepare hasn't been called
+            //isOnePhase being true means that we're the only participant in the distributed transaction and TM does the
+            //1PC optimization. We run a 2PC though, as running only 1PC has a high chance of leaving the cluster in
+            //inconsistent state.
+            validateNotMarkedForRollback(localTransaction, true);
+            invokePrepare(localTransaction, ctx);
+         }
+         invokeCommit(localTransaction, ctx);
+
       } finally {
          cleanup(localTransaction);
       }
@@ -243,7 +238,7 @@ public class TransactionXaAdapter implements XAResource {
       if (localTransaction.isMarkedForRollback()) {
          if (trace) log.trace("Transaction already marked for rollback: %s", localTransaction);
          if (runRollback) {
-            if (log.isTraceEnabled()) log.trace("Forcing rollback!");
+            if (trace) log.trace("Forcing rollback!");
             rollback(localTransaction.getXid());
          }
          throw new XAException(XAException.XA_RBROLLBACK);
@@ -257,5 +252,26 @@ public class TransactionXaAdapter implements XAResource {
    private static void cleanupImpl(LocalTransaction localTransaction, TransactionTable txTable, InvocationContextContainer icc) {
       txTable.removeLocalTransaction(localTransaction);
       icc.suspend();
-   }   
+   }
+
+   private void invokeCommit(LocalTransaction localTransaction, LocalTxInvocationContext ctx) throws XAException {
+      CommitCommand commitCommand = commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
+      try {
+         invoker.invoke(ctx, commitCommand);
+      } catch (Throwable e) {
+         log.error("Error while processing 1PC PrepareCommand", e);
+         throw new XAException(XAException.XAER_RMERR);
+      }
+   }
+
+   private void invokePrepare(LocalTransaction localTransaction, LocalTxInvocationContext ctx) throws XAException {
+      PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), configuration.isOnePhaseCommit());
+      try {
+         invoker.invoke(ctx, command);
+      } catch (Throwable e) {
+         log.error("Error while processing 1PC PrepareCommand", e);
+         rollback(localTransaction.getXid());
+         throw new XAException(XAException.XAER_RMERR);
+      }
+   }
 }
