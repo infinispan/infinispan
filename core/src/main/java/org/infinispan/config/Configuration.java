@@ -1106,7 +1106,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
-    * Returns true if and only if {@link #isUseEagerLocking()}, {@link isEagerLockSingleNode()} and the cache is
+    * Returns true if and only if {@link #isUseEagerLocking()}, {@link #isEagerLockSingleNode()} and the cache is
     * distributed.
     */
    public boolean isEagerLockingSingleNodeInUse() {
@@ -1485,6 +1485,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return customInterceptors.customInterceptors == null ? Collections.<CustomInterceptorConfig>emptyList() : customInterceptors.customInterceptors;
    }
 
+   public boolean isStoreKeysAsBinary() {
+      return storeAsBinary.isStoreKeysAsBinary();
+   }
+
+   public boolean isStoreValuesAsBinary() {
+      return storeAsBinary.isStoreValuesAsBinary();
+   }
    /**
     * @deprecated Use {@link FluentConfiguration.CustomInterceptorsConfig#add(org.infinispan.interceptors.base.CommandInterceptor)}
     */
@@ -1506,6 +1513,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public boolean isOnePhaseCommit() {
       return !getCacheMode().isSynchronous();
    }
+
+
+
 
    /**
     * Defines transactional (JTA) characteristics of the cache.
@@ -3501,6 +3511,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @ConfigurationDoc(name = "storeAsBinary")
    public static class StoreAsBinary extends BooleanAttributeType implements StoreAsBinaryConfig {
+
+      @ConfigurationDoc(desc = "If enabled, keys are stored as binary, in their serialized form.  If false, keys are stored as object references.")
+      private Boolean storeKeysAsBinary = true;
+      @ConfigurationDoc(desc = "If enabled, values are stored as binary, in their serialized form.  If false, values are stored as object references.")
+      private Boolean storeValuesAsBinary = true;
       /**
        * The serialVersionUID
        */
@@ -3526,6 +3541,46 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public StoreAsBinary disable() {
          super.disable();
          return this;
+      }
+
+      @Override
+      public StoreAsBinaryConfig storeKeysAsBinary(Boolean storeKeysAsBinary) {
+         testImmutability("storeKeysAsBinary");
+         this.storeKeysAsBinary = storeKeysAsBinary;
+         return this;
+      }
+
+      @Override
+      public StoreAsBinaryConfig storeValuesAsBinary(Boolean storeValuesAsBinary) {
+         testImmutability("storeValuesAsBinary");
+         this.storeValuesAsBinary = storeValuesAsBinary;
+         return this;
+      }
+
+      @XmlAttribute
+      public Boolean isStoreKeysAsBinary() {
+         return this.storeKeysAsBinary;
+      }
+
+      @XmlAttribute
+      public Boolean isStoreValuesAsBinary() {
+         return this.storeValuesAsBinary;
+      }
+
+      @Override
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitStoreAsBinaryType(this);
+      }
+
+      public StoreAsBinary clone() {
+         try {
+            StoreAsBinary dolly = (StoreAsBinary) super.clone();
+            dolly.storeKeysAsBinary = storeKeysAsBinary;
+            dolly.storeValuesAsBinary = storeValuesAsBinary;
+            return dolly;
+         } catch (CloneNotSupportedException e) {
+            throw new IllegalArgumentException("Should never get here");
+         }
       }
    }
 

@@ -34,6 +34,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.NotSerializableException;
 import org.infinispan.marshall.StreamingMarshaller;
@@ -58,11 +59,17 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
 
    private StreamingMarshaller marshaller;
    private DistributionManager distManager;
+   private boolean storeAsBinary;
 
    @Inject
    protected void injectMarshaller(StreamingMarshaller marshaller, DistributionManager distManager) {
       this.marshaller = marshaller;
       this.distManager = distManager;
+   }
+
+   @Start
+   protected void start() {
+      storeAsBinary = configuration.isStoreAsBinary() && (configuration.isStoreKeysAsBinary() || configuration.isStoreValuesAsBinary());
    }
 
    @Override
@@ -127,7 +134,7 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
    }
 
    private boolean isStoreAsBinary() {
-      return configuration.isStoreAsBinary();
+      return storeAsBinary;
    }
 
    private boolean getMightGoRemote(InvocationContext ctx, Object key) {

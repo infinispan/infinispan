@@ -63,6 +63,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       return chainedInterceptor;
    }
 
+   private boolean isUsingMarshalledValues(Configuration c) {
+      return c.isStoreAsBinary() && (c.isStoreKeysAsBinary() || c.isStoreValuesAsBinary());
+   }
+
    public InterceptorChain buildInterceptorChain() throws IllegalAccessException, InstantiationException, ClassNotFoundException {
       boolean invocationBatching = configuration.isInvocationBatchingEnabled();
       // load the icInterceptor first
@@ -75,7 +79,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       componentRegistry.registerComponent(interceptorChain, InterceptorChain.class);
 
       // add marshallable check interceptor for situations where we want to figure out before marshalling
-      if (configuration.isStoreAsBinary() || configuration.isUseAsyncMarshalling()
+      if (isUsingMarshalledValues(configuration) || configuration.isUseAsyncMarshalling()
             || configuration.isUseReplQueue() || hasAsyncStore())
          interceptorChain.appendInterceptor(createInterceptor(IsMarshallableInterceptor.class));
 
@@ -96,7 +100,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       if(configuration.isUseEagerLocking())
          interceptorChain.appendInterceptor(createInterceptor(ImplicitEagerLockingInterceptor.class));
 
-      if (configuration.isStoreAsBinary())
+      if (isUsingMarshalledValues(configuration))
          interceptorChain.appendInterceptor(createInterceptor(MarshalledValueInterceptor.class));
 
       interceptorChain.appendInterceptor(createInterceptor(NotificationInterceptor.class));

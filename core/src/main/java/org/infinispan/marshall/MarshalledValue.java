@@ -43,6 +43,16 @@ import java.util.Set;
  * The {@link org.infinispan.interceptors.MarshalledValueInterceptor} handles transparent wrapping/unwrapping of cached
  * data.
  * <p/>
+ * <b>NOTE:</b> the <t>equals()</tt> method of this class will either compare binary representations (byte arrays) or
+ * delegate to the wrapped instance's <tt>equals()</tt> method, depending on whether both instances being compared are
+ * in serialized or deserialized form.  If one of the instances being compared is in one form and the other in another
+ * form, then one instance is either serialized or deserialized, the preference will be to compare object representations,
+ * unless the instance is {@link #compact(boolean, boolean)}ed and a preference is set accordingly.
+ * <p/>
+ * Note also that this will affect the way keys stored in the cache will work, if <tt>storeAsBinary</tt> is used, since
+ * comparisons happen on the key which will be wrapped by a {@link MarshalledValue}.  Implementers of <tt>equals()</tt>
+ * methods of their keys need to be aware of this.
+ * <p />
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Mircea.Markus@jboss.com

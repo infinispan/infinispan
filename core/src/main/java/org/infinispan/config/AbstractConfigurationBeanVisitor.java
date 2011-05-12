@@ -232,7 +232,11 @@ public abstract class AbstractConfigurationBeanVisitor implements ConfigurationB
       defaultVisit(config);
    }
 
-   public void defaultVisit(AbstractConfigurationBean c) {
+   @Override
+   public void visitStoreAsBinaryType(Configuration.StoreAsBinary config) {
+      defaultVisit(config);
    }
 
+   public void defaultVisit(AbstractConfigurationBean c) {
+   }
 }

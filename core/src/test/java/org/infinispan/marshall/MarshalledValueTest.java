@@ -64,7 +64,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Tests implicit marshalled values
@@ -82,8 +81,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       Cache cache1, cache2;
-      Configuration replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      replSync.setUseLazyDeserialization(true);
+      Configuration replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC).fluent().storeAsBinary().build();
 
       createClusteredCaches(2, "replSync", replSync);
 

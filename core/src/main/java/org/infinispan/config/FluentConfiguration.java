@@ -706,7 +706,10 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
 
    }
 
-   public static interface StoreAsBinaryConfig extends FluentTypes {}
+   public static interface StoreAsBinaryConfig extends FluentTypes {
+      StoreAsBinaryConfig storeKeysAsBinary(Boolean storeKeysAsBinary);
+      StoreAsBinaryConfig storeValuesAsBinary(Boolean storeValuesAsBinary);
+   }
 
    public static interface JmxStatisticsConfig extends FluentTypes {}
 
