@@ -84,22 +84,21 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       this.cacheManager = cacheManager;
    }
 
-   public void notifyViewChange(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, boolean needsToRejoin, boolean isMerge) {
+   public void notifyViewChange(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId) {
       if (!viewChangedListeners.isEmpty()) {
          EventImpl e = new EventImpl();
          e.setLocalAddress(myAddress);
-         e.setMergeView(isMerge);
+         e.setMergeView(false);
          e.setViewId(viewId);
          e.setNewMembers(members);
          e.setOldMembers(oldMembers);
          e.setCacheManager(cacheManager);
-         e.setNeedsToRejoin(needsToRejoin);
          e.setType(Event.Type.VIEW_CHANGED);
          for (ListenerInvocation listener : viewChangedListeners) listener.invoke(e);
       }
    }
 
-   public void notifyMerge(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, boolean needsToRejoin, List<List<Address>> subgroupsMerged) {
+   public void notifyMerge(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, List<List<Address>> subgroupsMerged) {
       if (!mergeListeners.isEmpty()) {
          EventImpl e = new EventImpl();
          e.setLocalAddress(myAddress);
@@ -108,7 +107,6 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
          e.setNewMembers(members);
          e.setOldMembers(oldMembers);
          e.setCacheManager(cacheManager);
-         e.setNeedsToRejoin(needsToRejoin);
          e.setSubgroupsMerged(subgroupsMerged);
          e.setType(Event.Type.MERGED);
          for (ListenerInvocation listener : mergeListeners) listener.invoke(e);

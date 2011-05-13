@@ -262,34 +262,10 @@ public interface CommandsFactory {
     * control command with just a command type and sender.
     * @param subtype type of RehashControlCommand
     * @param sender sender's Address
+    * @param viewId the last view id on the sender
     * @return a RehashControlCommand
     */
-   RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender);
-
-   /**
-    * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a
-    * control command with a sender and a payload - a transaction log of writes that occured during the generation and
-    * delivery of state.  The {@link org.infinispan.commands.control.RehashControlCommand.Type}
-    * of this command is {@link org.infinispan.commands.control.RehashControlCommand.Type#LEAVE_DRAIN_TX}.
-    *
-    * @param sender sender's Address
-    * @param state list of writes
-    * @return a RehashControlCommand
-    */
-   RehashControlCommand buildRehashControlCommandTxLog(Address sender, List<WriteCommand> state);
-
-   /**
-    * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a
-    * control command with a sender and a payload - a transaction log of pending prepares that occured during the generation
-    * and delivery of state.  The {@link org.infinispan.commands.control.RehashControlCommand.Type}
-    * of this command is {@link org.infinispan.commands.control.RehashControlCommand.Type#LEAVE_DRAIN_TX_PREPARES}.
-    *
-    * @param sender sender's Address
-    * @param state list of pending prepares
-    * @return a RehashControlCommand
-    */
-   RehashControlCommand buildRehashControlCommandTxLogPendingPrepares(Address sender, List<PrepareCommand> state);
-
+   RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender, int viewId);
 
    /**
     * Builds a RehashControlCommand for coordinating a rehash event. This particular variation of RehashControlCommand
@@ -297,7 +273,7 @@ public interface CommandsFactory {
     */
    RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype,
             Address sender, Map<Object, InternalCacheValue> state, ConsistentHash oldCH,
-            ConsistentHash newCH, List<Address> leaversHandled);
+            ConsistentHash newCH);
 
    /**
     * Retrieves the cache name this CommandFactory is set up to construct commands for.

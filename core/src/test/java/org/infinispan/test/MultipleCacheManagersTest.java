@@ -74,7 +74,6 @@ import java.util.concurrent.Executors;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<EmbeddedCacheManager>();
@@ -87,14 +86,15 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    private void callCreateCacheManagers() throws Throwable {
       try {
+         log.debug("Creating cache managers");
          createCacheManagers();
       } catch (Throwable th) {
-         th.printStackTrace();
          log.error("Error in test setup: ", th);
+         throw th;
       }
    }
 
-   @BeforeMethod
+   @BeforeMethod(alwaysRun = true)
    public void createBeforeMethod() throws Throwable {
       if (cleanupAfterMethod()) callCreateCacheManagers();
    }

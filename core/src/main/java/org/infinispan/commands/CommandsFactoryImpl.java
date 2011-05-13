@@ -85,9 +85,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import static org.infinispan.commands.control.RehashControlCommand.Type.LEAVE_DRAIN_TX;
-import static org.infinispan.commands.control.RehashControlCommand.Type.LEAVE_DRAIN_TX_PREPARES;
-
 /**
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
@@ -377,22 +374,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new LockControlCommand(keys, cacheName, flags, implicit);
    }
 
-   public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type, Address sender) {
-      return buildRehashControlCommand(type, sender, null, null, null, null);
-   }
-
-   public RehashControlCommand buildRehashControlCommandTxLog(Address sender, List<WriteCommand> commands) {
-      return new RehashControlCommand(cacheName, LEAVE_DRAIN_TX, sender, commands, null, this);
-   }
-
-   public RehashControlCommand buildRehashControlCommandTxLogPendingPrepares(Address sender, List<PrepareCommand> commands) {
-      return new RehashControlCommand(cacheName, LEAVE_DRAIN_TX_PREPARES, sender, null, commands, this);
+   public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type, Address sender, int viewId) {
+      return new RehashControlCommand(cacheName, type, sender, viewId);
    }
 
    public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type,
             Address sender, Map<Object, InternalCacheValue> state, ConsistentHash oldCH,
-            ConsistentHash newCH, List<Address> leavers) {
-      return new RehashControlCommand(cacheName, type, sender, state, oldCH, newCH, leavers, this);
+            ConsistentHash newCH) {
+      return new RehashControlCommand(cacheName, type, sender, state, oldCH, newCH);
    }
 
    public String getCacheName() {

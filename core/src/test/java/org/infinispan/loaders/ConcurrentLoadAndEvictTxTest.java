@@ -60,7 +60,7 @@ public class ConcurrentLoadAndEvictTxTest extends SingleCacheManagerTest {
    }
 
    public void testEvictAndTx() throws SystemException, NotSupportedException, RollbackException, HeuristicRollbackException, HeuristicMixedException {
-      for (int i=0; i<10000; i++) {
+      for (int i=0; i<10; i++) {
          tm.begin();
          for (int j=0; j<10; j++) cache.put(String.format("key-%s-%s", i, j), "value");
          tm.commit();

@@ -116,7 +116,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    }
 
    public boolean logIfNeeded(WriteCommand command) {
-      if (enabled) {
+      if (isEnabled()) {
          waitForModsLatch();
          if (enabled) {
             try {
@@ -131,7 +131,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    }
 
    public void logIfNeeded(PrepareCommand command) {
-      if (enabled) {
+      if (isEnabled()) {
          waitForModsLatch();
          if (enabled) {
             if (command.isOnePhaseCommit())
@@ -157,7 +157,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    }
 
    public void logModificationsIfNeeded(CommitCommand commit, TxInvocationContext context) {
-      if (enabled) {
+      if (isEnabled()) {
          waitForModsLatch();
          if (enabled) {
             GlobalTransaction gtx;
@@ -168,7 +168,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    }
 
    public void logIfNeeded(CommitCommand command, TxInvocationContext context) {
-      if (enabled) {
+      if (isEnabled()) {
          waitForModsLatch();
          if (enabled) {
             PrepareCommand pc = uncommittedPrepares.remove(command.getGlobalTransaction());
@@ -181,7 +181,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    }
 
    public void logIfNeeded(RollbackCommand command) {
-      if (enabled) {
+      if (isEnabled()) {
          waitForModsLatch();
          if (enabled) uncommittedPrepares.remove(command.getGlobalTransaction());
       }

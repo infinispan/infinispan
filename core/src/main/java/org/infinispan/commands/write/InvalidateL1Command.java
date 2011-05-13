@@ -95,9 +95,11 @@ public class InvalidateL1Command extends InvalidateCommand {
          if (ice != null) {
             DataLocality locality = dm.getLocality(k);
 
-            while (locality.isUncertain() && dm.isRehashInProgress()) {
-               LockSupport.parkNanos(MILLISECONDS.toNanos(50));
-               locality = dm.getLocality(k);
+            if (!forRehash) {
+               while (locality.isUncertain() && dm.isRehashInProgress()) {
+                  LockSupport.parkNanos(MILLISECONDS.toNanos(50));
+                  locality = dm.getLocality(k);
+               }
             }
 
             if (!locality.isLocal()) {

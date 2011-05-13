@@ -44,11 +44,9 @@ public class StateTransferFetchOnlyPersistentStateTest extends MultipleCacheMana
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      for (int i = 0; i < 2; i++) {
-         Configuration cfg = createConfiguration(i + 1);
-         EmbeddedCacheManager cm = addClusterEnabledCacheManager();
-         cm.defineConfiguration("onlyFetchPersistent", cfg);
-      }
+      Configuration cfg = createConfiguration(1);
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager();
+      cm.defineConfiguration("onlyFetchPersistent", cfg);
    }
 
    private Configuration createConfiguration(int id) {
@@ -66,6 +64,10 @@ public class StateTransferFetchOnlyPersistentStateTest extends MultipleCacheMana
       Cache cache1 = cache(0, "onlyFetchPersistent");
       assert !cache1.getConfiguration().isFetchInMemoryState();
       cache1.put("k-" + m.getName(), "v-" + m.getName());
+
+      Configuration cfg2 = createConfiguration(2);
+      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager();
+      cm2.defineConfiguration("onlyFetchPersistent", cfg2);
 
       Cache cache2 = cache(1, "onlyFetchPersistent");
       assert !cache2.getConfiguration().isFetchInMemoryState();

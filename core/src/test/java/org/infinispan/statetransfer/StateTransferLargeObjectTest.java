@@ -37,6 +37,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import static org.testng.Assert.assertEquals;
+
 /**
  * Tester for https://jira.jboss.org/browse/ISPN-654.
  *
@@ -136,7 +138,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
    private void assertValue(int i, Object o) {
       String msg = " expected some value for " + i + " but got " + o;
       if (!(o instanceof BigObject)) log. error(msg);
-      assert o.equals(cache.get(i));
+      assertEquals(o, cache.get(i));
    }
 
    private BigObject createBigObject(int num, String prefix) {

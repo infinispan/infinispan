@@ -52,6 +52,7 @@ public class RehashWithSharedCacheStore extends BaseDistCacheStoreTest {
       tx = false;
       testRetVals = true;
       shared = true;
+      performRehashing = true;
    }
 
    private CacheStore getCacheStore(Cache<?,?> cache) {
