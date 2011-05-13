@@ -126,9 +126,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    }
 
    public void waitForStart(CacheRpcCommand cmd) {
-      if (cmd.getConfiguration().getCacheMode().isDistributed()) {
-         cmd.getComponentRegistry().getComponent(DistributionManager.class).waitForFinalJoin();
-      }
+      // the cache should not be accessible from user code until the join is finished
    }
 
    @Override
@@ -209,7 +207,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
             return JoinHandle.OK;
          else {
             // no point in enqueueing clustered GET commands - just ignore these and hope someone else in the cluster responds.
-            if (dm.isInFinalJoinPhase() && !(cmd instanceof ClusteredGetCommand))
+            if (!(cmd instanceof ClusteredGetCommand))
                return JoinHandle.QUEUE;
             else
                return JoinHandle.IGNORE;

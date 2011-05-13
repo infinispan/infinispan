@@ -146,23 +146,6 @@ public interface DistributionManager {
    TransactionLogger getTransactionLogger();
 
    /**
-    * "Asks" a coordinator if a joiner may join.  Used to serialize joins such that only a single joiner comes in at any
-    * given time.
-    *
-    * @param joiner joiner who wants to join
-    * @return a consistent hash prior to the joiner joining (if the joiner is allowed to join), otherwise null.
-    */
-   Set<Address> requestPermissionToJoin(Address joiner);
-
-   /**
-    * This will cause all nodes to add the joiner to their consistent hash instance (usually by creating a {@link org.infinispan.distribution.ch.UnionConsistentHash}
-    *
-    * @param joiner address of joiner
-    * @param starting if true, the joiner is reporting that it is starting the join process.  If false, the joiner is
-    */
-   Address informRehashOnJoin(Address joiner, boolean starting);
-
-   /**
     * Retrieves a cache store if one is available and set up for use in rehashing.  May return null!
     *
     * @return a cache store is one is available and configured for use in rehashing, or null otherwise.
@@ -181,10 +164,6 @@ public interface DistributionManager {
     */
    boolean isJoinComplete();
 
-   boolean isInFinalJoinPhase();
-
-   void waitForFinalJoin();
-
    /**
     * A helper method that retrieves a list of nodes affected by operations on a set of keys.  This helper will in turn
     * call {@link #locateAll(java.util.Collection)} and then combine the result addresses.
@@ -200,14 +179,10 @@ public interface DistributionManager {
     */
    void applyRemoteTxLog(List<WriteCommand> modifications);
 
-   void informRehashOnLeave(Address sender);
+   void applyState(ConsistentHash newConsistentHash, Map<Object,InternalCacheValue> state, Address sender);
 
-   void applyState(ConsistentHash newConsistentHash, Map<Object,InternalCacheValue> state, RemoteTransactionLogger transactionLogger, boolean forLeave);
+   void markRehashCompleted(int viewId);
 
-   void setRehashInProgress(boolean value);
-
-   void setJoinComplete(boolean value);
-
-   void abortJoin(Address sender);
+   void markNodePushCompleted(int viewId, Address node);
 }
 

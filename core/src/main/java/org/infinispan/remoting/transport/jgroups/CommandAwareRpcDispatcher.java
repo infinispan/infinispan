@@ -402,8 +402,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                      if (!filter.needMoreResponses())
                         retval = new RspList(Collections.singleton(new Rsp(sender, response)));
                   } else {
-                     if (log.isDebugEnabled())
-                        log.debugf("Skipping response from %s since a valid response for this request has already been received", sender);
+                     if (log.isTraceEnabled())
+                        log.tracef("Skipping response from %s since a valid response for this request has already been received", sender);
                   }
                } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();

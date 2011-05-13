@@ -58,9 +58,9 @@ public class InvalidationNoReplicationTest extends MultipleCacheManagersTest {
    }
 
    public void testInvalidationWithTx() throws Exception {
-      advancedCache(1).withFlags(Flag.CACHE_MODE_LOCAL).put(k0, "k1");
+      advancedCache(1).put(k0, "k1");
       assert advancedCache(1).getDataContainer().containsKey(k0);
-      assert !advancedCache(0).getDataContainer().containsKey(k0);
+      assert advancedCache(0).getDataContainer().containsKey(k0);
 
       tm(0).begin();
       cache(0).put(k0, "v2");

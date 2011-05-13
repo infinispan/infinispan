@@ -42,7 +42,6 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    List<Address> newMembers, oldMembers;
    Address localAddress;
    int viewId;
-   private boolean needsToRejoin;
    private List<List<Address>> subgroupsMerged;
    private boolean mergeView;
 
@@ -122,7 +121,6 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
 
       EventImpl event = (EventImpl) o;
 
-      if (needsToRejoin != event.needsToRejoin) return false;
       if (viewId != event.viewId) return false;
       if (cacheName != null ? !cacheName.equals(event.cacheName) : event.cacheName != null) return false;
       if (localAddress != null ? !localAddress.equals(event.localAddress) : event.localAddress != null) return false;
@@ -142,7 +140,6 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       result = 31 * result + (oldMembers != null ? oldMembers.hashCode() : 0);
       result = 31 * result + (localAddress != null ? localAddress.hashCode() : 0);
       result = 31 * result + viewId;
-      result = 31 * result + (needsToRejoin ? 1 : 0);
       result = 31 * result + (subgroupsMerged == null ? 0 : subgroupsMerged.hashCode());
       result = 31 * result + (mergeView ? 1 : 0);
       return result;
@@ -156,18 +153,9 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
               ", oldMembers=" + oldMembers +
               ", localAddress=" + localAddress +
               ", viewId=" + viewId +
-              ", needsToRejoin=" + needsToRejoin +
               ", subgroupsMerged=" + subgroupsMerged +
               ", mergeView=" + mergeView +
               '}';
-   }
-
-   public void setNeedsToRejoin(boolean needsToRejoin) {
-      this.needsToRejoin = needsToRejoin;
-   }
-
-   public boolean isNeedsToRejoin() {
-      return needsToRejoin;
    }
 
    public void setSubgroupsMerged(List<List<Address>> subgroupsMerged) {

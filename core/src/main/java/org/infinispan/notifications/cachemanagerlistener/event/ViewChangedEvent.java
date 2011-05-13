@@ -42,8 +42,6 @@ public interface ViewChangedEvent extends Event {
 
    Address getLocalAddress();
 
-   boolean isNeedsToRejoin();
-
    int getViewId();
 
    boolean isMergeView();

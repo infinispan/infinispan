@@ -99,7 +99,7 @@
    </category>
 
    <category name="org.jgroups">
-      <priority value="WARN"/>
+      <priority value="DEBUG"/>
    </category>
 
    <!-- ======================= -->

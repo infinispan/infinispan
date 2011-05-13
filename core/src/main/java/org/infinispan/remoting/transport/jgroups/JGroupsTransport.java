@@ -449,7 +449,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    private class NotifyViewChange implements Notify {
       @Override
       public void emitNotification(List<Address> oldMembers, View newView) {
-         notifier.notifyViewChange(members, oldMembers, getAddress(), (int) newView.getVid().getId(), needsToRejoin(newView), false);
+         notifier.notifyViewChange(members, oldMembers, getAddress(), (int) newView.getVid().getId());
       }
    }
 
@@ -461,8 +461,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
          final Address address = getAddress();
          final int viewId = (int) newView.getVid().getId();
-         boolean needsRejoin = true;
-         notifier.notifyMerge(members, oldMembers, address, viewId, needsRejoin, getSubgroups(mv.getSubgroups()));
+         notifier.notifyMerge(members, oldMembers, address, viewId, getSubgroups(mv.getSubgroups()));
       }
 
       private List<List<Address>> getSubgroups(Vector<View> subviews) {
@@ -507,23 +506,6 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          // Wake up any threads that are waiting to know about who the coordinator is
          membersListLock.notifyAll();
       }
-   }
-
-   private boolean needsToRejoin(View v) {
-      if (v instanceof MergeView) {
-         MergeView mv = (MergeView) v;
-         org.jgroups.Address coord = v.getMembers().get(0);
-         View winningPartition = null;
-         for (View p : mv.getSubgroups()) {
-            if (p.getMembers().get(0).equals(coord)) {
-               winningPartition = p;
-               break;
-            }
-         }
-
-         return winningPartition == null || !winningPartition.containsMember(channel.getAddress());
-      }
-      return false;
    }
 
    public void suspect(org.jgroups.Address suspected_mbr) {

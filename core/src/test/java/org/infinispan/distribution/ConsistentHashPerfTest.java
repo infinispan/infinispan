@@ -53,7 +53,7 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
 
    public void testSpeed() {
       int[] numNodes = {1, 2, 3, 4, 10, 100, 1000};
-      int iterations = 1000000;
+      int iterations = 100000;
       // warmup
       doPerfTest(10000, 2, iterations);
 
