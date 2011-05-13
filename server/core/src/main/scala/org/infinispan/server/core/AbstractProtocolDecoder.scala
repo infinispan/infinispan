@@ -63,6 +63,8 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
    override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
       val ch = ctx.getChannel
       try {
+         if (isTraceEnabled) // To aid debugging
+            trace("Decode using instance @%x", System.identityHashCode(this))
          state match {
             case DECODE_HEADER => decodeHeader(ch, buffer, state)
             case DECODE_KEY => decodeKey(ch, buffer, state)
@@ -77,7 +79,6 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
             // carry on being processed on same connection after a client error
             if (isClientError) {
                Channels.fireExceptionCaught(ch, serverException)
-               checkpointTo(DECODE_HEADER)
                null
             } else {
                throw serverException
@@ -167,14 +168,14 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
          }
          null
       } finally {
-         checkpointTo(DECODE_HEADER)
-         // Reset parameters to avoid leaking previous params
-         // into a request that has no params
          resetParams
       }
    }
 
    private def resetParams: AnyRef = {
+      checkpointTo(DECODE_HEADER)
+      // Reset parameters to avoid leaking previous params
+      // into a request that has no params
       params = null.asInstanceOf[SuitableParameters]
       null
    }
@@ -258,6 +259,8 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
             case _ => ch.write(errorResponse)
          }
       }
+      // After writing back an error, reset params and revert to initial state
+      resetParams
    }
 
    override def channelOpen(ctx: ChannelHandlerContext, e: ChannelStateEvent) {
