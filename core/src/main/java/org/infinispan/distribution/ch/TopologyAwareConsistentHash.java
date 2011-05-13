@@ -73,8 +73,7 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
    @Override
    public List<Address> locate(Object key, int replCount) {
       Address owner = getOwner(key);
-      int ownerCount = min(replCount, caches.size());
-      return getOwners(owner, ownerCount);
+      return getOwners(owner, replCount);
    }
 
    @Override
@@ -106,6 +105,10 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       return getStateProvidersOnLeave(joiner, replCount);
    }
 
+   /**
+    * @param numOwners if this param is greater than the number of caches then the min(caches.size(), numOwners)
+    * is used.
+    */
    private List<Address> getOwners(Address address, int numOwners) {
       int ownerHash = getNormalizedHash(address);
       Collection<Address> beforeOnWheel = positions.headMap(ownerHash).values();
@@ -115,7 +118,8 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       List<Address> result = new ArrayList<Address>();
       result.add(processSequence.remove(0));
       int level = 0;
-      while (result.size() < numOwners) {
+      int numNodesToReturn = Math.min(numOwners, caches.size());
+      while (result.size() < numNodesToReturn) {
          Iterator<Address> addrIt = processSequence.iterator();
          while (addrIt.hasNext()) {
             Address a = addrIt.next();
@@ -152,7 +156,7 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
          level++;
       }
       //assertion
-      if (result.size() != numOwners) throw new AssertionError("This should not happen!");
+      if (result.size() != numNodesToReturn) throw new AssertionError("This should not happen!");
       return result;
    }
 

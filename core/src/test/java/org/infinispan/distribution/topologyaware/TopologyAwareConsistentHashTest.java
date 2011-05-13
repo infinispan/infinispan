@@ -114,6 +114,21 @@ public class TopologyAwareConsistentHashTest {
       assertLocation(ch.getStateProvidersOnLeave(testAddresses[2], 3), false, testAddresses[3], testAddresses[1]);
       assertLocation(ch.getStateProvidersOnLeave(testAddresses[3], 3), false, testAddresses[0], testAddresses[2]);
    }
+
+   public void testNumOwnerBiggerThanAvailableNodes() {
+         addNode(testAddresses[0], "m0", null, null);
+         addNode(testAddresses[1], "m0", null, null);
+         addNode(testAddresses[2], "m0", null, null);
+         setAddresses();
+
+         assertLocation(ch.locate(testAddresses[0], 4), true, testAddresses[0], testAddresses[1], testAddresses[2]);
+         assertLocation(ch.locate(testAddresses[1], 5), true, testAddresses[1], testAddresses[2], testAddresses[0]);
+         assertLocation(ch.locate(testAddresses[2], 6), true, testAddresses[2], testAddresses[0], testAddresses[1]);
+
+         assertLocation(ch.getStateProvidersOnLeave(testAddresses[0], 9), false, testAddresses[2], testAddresses[1]);
+         assertLocation(ch.getStateProvidersOnLeave(testAddresses[1], 8), false, testAddresses[0], testAddresses[2]);
+         assertLocation(ch.getStateProvidersOnLeave(testAddresses[2], 6), false, testAddresses[1], testAddresses[0]);
+   }
    
    public void testDifferentMachines2() {
       addNode(testAddresses[0], "m0", null, null);
