@@ -35,7 +35,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 
 /**
- * Virtual addresses are used internall by the consistent hashses in order provide virtual nodes.
+ * Virtual addresses are used internally by the consistent hashes in order to provide virtual nodes.
  * 
  * A virtual addresses contains the "real address" of the node and a synthetic identifier which
  * is used to differentiate different virtual nodes on a real node from one another.
