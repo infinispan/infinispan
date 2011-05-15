@@ -24,6 +24,8 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspecException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
@@ -60,6 +62,8 @@ public abstract class RetryOnFailureOperation extends HotRodOperation {
             return executeOperation(transport);
          } catch (TransportException te) {
             logErrorAndThrowExceptionIfNeeded(retryCount, te);
+         } catch (RemoteNodeSuspecException e) {
+            logErrorAndThrowExceptionIfNeeded(retryCount, e);
          } finally {
             releaseTransport(transport);
          }
@@ -73,13 +77,13 @@ public abstract class RetryOnFailureOperation extends HotRodOperation {
       return retryCount < transportFactory.getTransportCount();
    }
 
-   protected void logErrorAndThrowExceptionIfNeeded(int i, TransportException te) {
-      String message = "Transport exception. Retry %d out of %d";
+   protected void logErrorAndThrowExceptionIfNeeded(int i, HotRodClientException e) {
+      String message = "Exception encountered. Retry %d out of %d";
       if (i >= transportFactory.getTransportCount() - 1 || transportFactory.getTransportCount() < 0) {
-         log.transportExceptionAndNoRetriesLeft(i,transportFactory.getTransportCount(), te);
-         throw te;
+         log.exceptionAndNoRetriesLeft(i,transportFactory.getTransportCount(), e);
+         throw e;
       } else {
-         log.tracef(te, message, i, transportFactory.getTransportCount());
+         log.tracef(e, message, i, transportFactory.getTransportCount());
       }
    }
 

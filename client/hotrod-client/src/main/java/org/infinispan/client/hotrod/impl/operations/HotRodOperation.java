@@ -26,6 +26,7 @@ import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
+import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspecException;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
@@ -148,6 +149,12 @@ public abstract class HotRodOperation implements HotRodConstants {
             String msgFromServer = transport.readString();
             if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
                log.tracef("Server-side timeout performing operation: %s", msgFromServer);
+            } if (msgFromServer.contains("SuspectException")) {
+               if (isTrace)
+                  log.tracef("A remote node was suspected while executing messageId=%d. " +
+                     "Check if retry possible. Message from server: %s", messageId, msgFromServer);
+               // TODO: This will be better handled with its own status id in version 2 of protocol
+               throw new RemoteNodeSuspecException(msgFromServer, messageId, status);
             } else {
                log.errorFromServer(msgFromServer);
             }
