@@ -199,7 +199,10 @@ public abstract class AbstractListenerImpl {
                }
                catch (InvocationTargetException exception) {
                   Throwable cause = getRealException(exception);
-                  throw new CacheException("Caught exception invoking method " + method + " on listener instance " + target, cause);
+                  throw new CacheException(String.format(
+                     "Caught exception [%s] while invoking method [%s] on listener instance: %s"
+                     , cause.getClass().getName(), method, target
+                  ), cause);
                }
                catch (IllegalAccessException exception) {
                   getLog().warn("Unable to invoke method " + method + " on Object instance " + target + " - removing this target object from list of listeners!", exception);
