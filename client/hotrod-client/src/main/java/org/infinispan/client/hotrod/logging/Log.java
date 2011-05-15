@@ -22,6 +22,7 @@
 
 package org.infinispan.client.hotrod.logging;
 
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.jboss.logging.Cause;
@@ -70,8 +71,8 @@ public interface Log extends org.infinispan.util.logging.Log {
    void newTopology(LinkedHashMap<InetSocketAddress, Integer> servers2HashCode);
 
    @LogMessage(level = WARN)
-   @Message(value = "Transport exception. Retry %d out of %d", id = 4007)
-   void transportExceptionAndNoRetriesLeft(int retry, int maxRetries, @Cause TransportException te);
+   @Message(value = "Exception encountered. Retry %d out of %d", id = 4007)
+   void exceptionAndNoRetriesLeft(int retry, int maxRetries, @Cause HotRodClientException te);
 
    @LogMessage(level = ERROR)
    @Message(value = "Could not connect to server: %s", id = 4008)
