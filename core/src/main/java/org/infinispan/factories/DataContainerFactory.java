@@ -46,7 +46,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
    public <T> T construct(Class<T> componentType) {
       if (configuration.getDataContainer() != null) {
          return (T) configuration.getDataContainer();
-      } else if (configuration.getDataContainerClass() == DefaultDataContainer.class.getName()) {
+      } else if (DefaultDataContainer.class.getName().equals(configuration.getDataContainerClass())) {
          EvictionStrategy st = configuration.getEvictionStrategy();
          int level = configuration.getConcurrencyLevel();
         
