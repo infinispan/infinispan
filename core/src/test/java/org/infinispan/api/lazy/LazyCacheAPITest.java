@@ -90,12 +90,11 @@ public class LazyCacheAPITest extends SingleCacheManagerTest {
 
       @Override
       public boolean equals(Object obj) {
-         log.debug(obj.getClass());
          if (obj == null) {
             log.debug("null -> false");
             return false;
-
          }
+         log.debug(obj.getClass());
          if (getClass() != obj.getClass()) {
             log.debug("class not same -> false");
             return false;
