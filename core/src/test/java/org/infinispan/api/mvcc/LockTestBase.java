@@ -59,7 +59,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       public InvocationContextContainer icc;
    }
 
-   protected ThreadLocal<LockTestBaseTL> threadLocal = new ThreadLocal<LockTestBaseTL>();
+   protected final ThreadLocal<LockTestBaseTL> threadLocal = new ThreadLocal<LockTestBaseTL>();
 
 
    @BeforeMethod
