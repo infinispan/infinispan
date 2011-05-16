@@ -72,11 +72,13 @@ public class RecoveryTestUtil {
    }
 
    public static DummyTransaction beginAndSuspendTx(Cache cache) {
+      return beginAndSuspendTx(cache, "k" + count++);
+   }
+
+   public static DummyTransaction beginAndSuspendTx(Cache cache, Object key) {
       DummyTransactionManager dummyTm = (DummyTransactionManager) TestingUtil.getTransactionManager(cache);
       try {
          dummyTm.begin();
-         String key = "k" + count++;
-         System.out.println("key = " + key);
          cache.put(key, "v");
          return (DummyTransaction) dummyTm.suspend();
       } catch (Exception e) {

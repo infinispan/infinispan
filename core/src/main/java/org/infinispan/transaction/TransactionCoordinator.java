@@ -31,10 +31,16 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.xa.XAException;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static javax.transaction.xa.XAResource.XA_OK;
 import static javax.transaction.xa.XAResource.XA_RDONLY;
@@ -54,19 +60,21 @@ public class TransactionCoordinator {
    private InvocationContextContainer icc;
    private InterceptorChain invoker;
    private TransactionTable txTable;
-   Configuration configuration;
+   private Configuration configuration;
+   private RpcManager rpcManager;
 
    boolean trace;
 
    @Inject
    public void init(CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker,
-                    TransactionTable txTable, Configuration configuration) {
+                    TransactionTable txTable, Configuration configuration, RpcManager rpcManager) {
       this.commandsFactory = commandsFactory;
       this.icc = icc;
       this.invoker = invoker;
       this.txTable = txTable;
       this.configuration = configuration;
       trace = log.isTraceEnabled();
+      this.rpcManager = rpcManager;
    }
 
    public int prepare(LocalTransaction localTransaction) throws XAException {
@@ -119,6 +127,7 @@ public class TransactionCoordinator {
                throw new XAException(XAException.XAER_RMERR);
             }
          } else {
+            handleTopologyChanges(localTransaction);
             CommitCommand commitCommand = commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
             try {
                invoker.invoke(ctx, commitCommand);
@@ -164,5 +173,30 @@ public class TransactionCoordinator {
          }
          throw new XAException(XAException.XA_RBROLLBACK);
       }
+   }
+
+   /**
+    * This method looks to see if some of the nodes present when transaction prepared are no longer in the cluster.
+    * If this was the case it re-runs prepare.
+    */
+   private void handleTopologyChanges(LocalTransaction localTransaction) throws XAException {
+      Collection<Address> preparedNodes = localTransaction.getRemoteLocksAcquired();
+      List<Address> members = getClusterMembers();
+      if (!members.containsAll(preparedNodes)) {
+         if (trace) log.tracef("Member(s) left, so re-applying prepare for %s", localTransaction);
+         localTransaction.filterRemoteLocksAcquire(members);
+         try {
+            prepare(localTransaction); //re-run prepare
+         } catch (XAException e) {
+            if (!configuration.isTransactionRecoveryEnabled()) {
+               rollback(localTransaction);
+               throw new XAException(XAException.XA_RBROLLBACK);
+            }
+         }
+      } else if (trace) log.trace("All prepared nodes are okay.");
+   }
+
+   private List<Address> getClusterMembers() {
+      return rpcManager != null ? rpcManager.getTransport().getMembers() : Collections.<Address>emptyList();
    }
 }
