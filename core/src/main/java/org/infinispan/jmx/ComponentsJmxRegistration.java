@@ -97,7 +97,6 @@ public class ComponentsJmxRegistration {
       log.trace("Unregistering jmx resources..");
       try {
          List<ResourceDMBean> resourceDMBeans = getResourceDMBeansFromComponents();
-         boolean trace = log.isTraceEnabled();
          for (ResourceDMBean resource : resourceDMBeans) {
             JmxUtil.unregisterMBean(getObjectName(resource), mBeanServer);
          }
