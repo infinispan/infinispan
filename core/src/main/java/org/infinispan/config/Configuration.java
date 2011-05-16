@@ -1440,7 +1440,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             dolly.jmxStatistics.setConfiguration(dolly);
          }
          if (storeAsBinary != null) {
-            dolly.storeAsBinary = (StoreAsBinary) storeAsBinary.clone();
+            dolly.storeAsBinary = storeAsBinary.clone();
             dolly.storeAsBinary.setConfiguration(dolly);
          }
          if (lazyDeserialization != null) {
@@ -1571,7 +1571,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       protected Integer cacheStopTimeout = 30000;
 
       @XmlElement
-      protected RecoveryType recovery = (RecoveryType) new RecoveryType();
+      protected RecoveryType recovery = new RecoveryType();
 
       public TransactionType(String transactionManagerLookupClass) {
          this.transactionManagerLookupClass = transactionManagerLookupClass;

@@ -204,7 +204,7 @@ public class ModuleProperties extends Properties {
             if (factClass != null && initClass != null) {
                try {
                   ModuleCommandFactory fact = (ModuleCommandFactory) Util.getInstance(factClass);
-                  Class<? extends ModuleCommandInitializer> initClazz = (Class<? extends ModuleCommandInitializer>) Util.loadClass(initClass);
+                  Class<? extends ModuleCommandInitializer> initClazz = Util.loadClass(initClass);
                   for (Map.Entry<Byte, Class<? extends ReplicableCommand>> entry: fact.getModuleCommands().entrySet()) {
                      byte id = entry.getKey();
                      if (commandFactories.containsKey(id))

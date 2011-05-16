@@ -239,7 +239,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       public Integer reduce(String key, Iterator<Integer> iter) {
          int sum = 0;
          while (iter.hasNext()) {
-            Integer i = (Integer) iter.next();
+            Integer i = iter.next();
             sum += i;
          }
          return sum;

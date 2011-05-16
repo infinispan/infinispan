@@ -67,7 +67,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
 
       cacheAddresses = new ArrayList<Address>(2);
       for (Cache cache : caches) {
-         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+         EmbeddedCacheManager cacheManager = cache.getCacheManager();
          cacheAddresses.add(cacheManager.getAddress());
       }
 
