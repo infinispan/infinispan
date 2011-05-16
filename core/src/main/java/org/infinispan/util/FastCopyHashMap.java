@@ -121,7 +121,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       int c = 1;
       for (; c < initialCapacity; c <<= 1) ;
 
-      this.table = (Entry<K, V>[]) new Entry[c];
+      this.table = new Entry[c];
 
       threshold = (int) (c * loadFactor);
    }
@@ -504,7 +504,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
                // to relocate an entry that was already seen by this iterator
                if (i < current && current <= delete && table == FastCopyHashMap.this.table) {
                   int remaining = length - current;
-                  Entry<K, V>[] newTable = (Entry<K, V>[]) new Entry[remaining];
+                  Entry<K, V>[] newTable = new Entry[remaining];
                   System.arraycopy(table, current, newTable, 0, remaining);
 
                   // Replace iterator's table.

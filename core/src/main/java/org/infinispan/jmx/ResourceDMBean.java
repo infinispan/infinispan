@@ -226,7 +226,7 @@ public class ResourceDMBean implements DynamicMBean {
 
    public static Class<?> getClassForName(String name) throws ClassNotFoundException {
       try {
-         return (Class<?>) Util.loadClassStrict(name);
+         return Util.loadClassStrict(name);
       } catch (ClassNotFoundException cnfe) {
          // Could be a primitive - let's check
          for (Class<?> primitive : primitives) if (name.equals(primitive.getName())) return primitive;

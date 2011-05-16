@@ -69,7 +69,7 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
 
       cacheManagers.get(0).stop();
 
-      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) c2.getCacheManager();
+      EmbeddedCacheManager cacheManager = c2.getCacheManager();
       assert cacheManager.getMembers().size() == 1;
 
       // may take a while from when the view change is seen through to when the lock is cleared

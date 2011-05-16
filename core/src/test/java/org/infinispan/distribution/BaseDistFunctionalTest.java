@@ -202,7 +202,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       
       for (Address a : ch.getCaches()) {
          for (Cache<Object, String> c : caches) {
-            EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) c.getCacheManager();
+            EmbeddedCacheManager cacheManager = c.getCacheManager();
             if (a.equals(cacheManager.getAddress())) {
                reordered.add(c);
                break;
