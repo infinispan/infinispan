@@ -36,6 +36,7 @@ import javax.transaction.Transaction;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -86,6 +87,15 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    public Collection<Address> getRemoteLocksAcquired(){
 	   if (remoteLockedNodes == null) return Collections.emptySet();
 	   return remoteLockedNodes;
+   }
+
+   public void filterRemoteLocksAcquire(Collection<Address> existingMembers) {
+      Iterator<Address> it = getRemoteLocksAcquired().iterator();
+      while (it.hasNext()) {
+         Address next = it.next();
+         if (!existingMembers.contains(next))
+            it.remove();
+      }
    }
 
    public void clearRemoteLocksAcquired() {
