@@ -59,9 +59,10 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
    @ConfigurationDocRef(bean=AsyncStoreConfig.class,targetElement="setFlushLockTimeout")
    protected Long flushLockTimeout = 5000L;
 
+   // By default a bit under the default cache stop timeout
    @Dynamic
    @ConfigurationDocRef(bean=AsyncStoreConfig.class,targetElement="setShutdownTimeout")
-   protected Long shutdownTimeout = 7200L;
+   protected Long shutdownTimeout = 25000L;
 
    @XmlAttribute
    public Boolean isEnabled() {
