@@ -371,7 +371,8 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache2 = createCacheManager().getCache(cacheName);
 
       // Pause to give caches time to see each other
-      TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
+      // Make sure any interruption for test timing out is propagated
+      TestingUtil.blockUntilViewsReceivedInt(60000, cache1, cache2);
 
       writerThread.stopThread();
       writerThread.join();

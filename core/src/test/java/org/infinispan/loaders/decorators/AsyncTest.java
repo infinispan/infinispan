@@ -390,7 +390,7 @@ public class AsyncTest extends AbstractInfinispanTest {
                if (entry != null) {
                   assert entry.getValue().equals(value + i);
                } else {
-                  TestingUtil.sleepThread(20, "still waiting for key to appear: " + key + i);
+                  TestingUtil.sleepThreadInt(20, "still waiting for key to appear: " + key + i);
                }
             }
          }
@@ -407,7 +407,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       InternalCacheEntry entry;
       boolean success = false;
       for (int i = 0; i < 120; i++) {
-         TestingUtil.sleepThread(20);
+         TestingUtil.sleepThreadInt(20, null);
          entry = store.load(key);
          success = entry.getValue().equals(value + (number - 1));
          if (success) break;
@@ -429,7 +429,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       for (int i = 0; i < number; i++) {
          InternalCacheEntry entry = entries[i];
          while (entry != null) {
-            TestingUtil.sleepThread(20, "still waiting for key to be removed: " + key + i);
+            TestingUtil.sleepThreadInt(20, "still waiting for key to be removed: " + key + i);
             entry = store.load(key + i);
          }
       }
@@ -439,7 +439,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       store.remove(key);
       InternalCacheEntry entry;
       do {
-         TestingUtil.sleepThread(20, "still waiting for key to be removed: " + key);
+         TestingUtil.sleepThreadInt(20, "still waiting for key to be removed: " + key);
          entry = store.load(key);
       } while (entry != null);
    }
@@ -457,7 +457,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       for (int i = 0; i < number; i++) {
          InternalCacheEntry entry = entries[i];
          while (entry != null) {
-            TestingUtil.sleepThread(20, "still waiting for key to be removed: " + key + i);
+            TestingUtil.sleepThreadInt(20, "still waiting for key to be removed: " + key + i);
             entry = store.load(key + i);
          }
       }
