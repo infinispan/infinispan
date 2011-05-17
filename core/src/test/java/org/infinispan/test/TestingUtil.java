@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -164,11 +164,32 @@ public class TestingUtil {
       throw new RuntimeException("timed out before caches had complete views");
    }
 
+   public static void blockUntilViewsReceivedInt(Cache[] caches, long timeout) throws InterruptedException {
+      long failTime = System.currentTimeMillis() + timeout;
+
+      while (System.currentTimeMillis() < failTime) {
+         sleepThreadInt(100, null);
+         if (areCacheViewsComplete(caches)) {
+            return;
+         }
+      }
+
+      throw new RuntimeException("timed out before caches had complete views");
+   }
+
+
    /**
     * Version of blockUntilViewsReceived that uses varargs
     */
    public static void blockUntilViewsReceived(long timeout, Cache... caches) {
       blockUntilViewsReceived(caches, timeout);
+   }
+
+   /**
+    * Version of blockUntilViewsReceived that throws back any interruption
+    */
+   public static void blockUntilViewsReceivedInt(long timeout, Cache... caches) throws InterruptedException {
+      blockUntilViewsReceivedInt(caches, timeout);
    }
 
    /**
@@ -403,6 +424,17 @@ public class TestingUtil {
       catch (InterruptedException ie) {
          if (messageOnInterrupt != null)
             log.error(messageOnInterrupt);
+      }
+   }
+
+   public static void sleepThreadInt(long sleeptime, String messageOnInterrupt) throws InterruptedException {
+      try {
+         Thread.sleep(sleeptime);
+      }
+      catch (InterruptedException ie) {
+         if (messageOnInterrupt != null)
+            log.error(messageOnInterrupt);
+         throw ie;
       }
    }
 
