@@ -683,4 +683,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Could not rollback prepared 1PC transaction. This transaction will be rolled back by the recovery process, if enabled. Transaction: %s", id = 141)
    void couldNotRollbackPrepared1PcTransaction(LocalXaTransaction localTransaction, @Cause XAException e1);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The async store shutdown timeout (%d ms) is too high compared" +
+         " to cache stop timeout (%d ms), so instead using %d ms for async store stop wait", id = 142)
+   void asyncStoreShutdownTimeoutTooHigh(long configuredAsyncStopTimeout,
+      long cacheStopTimeout, long asyncStopTimeout);
 }
