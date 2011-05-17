@@ -208,6 +208,8 @@ import java.lang.annotation.Target;
  * @see org.infinispan.notifications.cachelistener.annotation.TransactionCompleted
  * @see org.infinispan.notifications.cachelistener.annotation.TransactionRegistered
  * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated
+ * @see org.infinispan.notifications.cachelistener.annotation.DataRehashed
+ * @see org.infinispan.notifications.cachelistener.annotation.TopologyChanged
  * @since 4.0
  */
 @Retention(RetentionPolicy.RUNTIME)

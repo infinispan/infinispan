@@ -23,7 +23,6 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -33,18 +32,23 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.remoting.InboundInvocationHandler;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.Immutables;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
 
@@ -68,18 +72,20 @@ import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsiste
  * @since 4.2
  */
 public class RebalanceTask extends RehashTask {
-   private final InboundInvocationHandler inboundInvocationHandler;
    private final InvocationContextContainer icc;
-   private int viewId;
+   private int newViewId;
+   private final CacheNotifier notifier;
+
 
 
    public RebalanceTask(RpcManager rpcManager, CommandsFactory commandsFactory, Configuration conf,
                         DataContainer dataContainer, DistributionManagerImpl dmi,
-                        InboundInvocationHandler inboundInvocationHandler, InvocationContextContainer icc, int viewId) {
+                        InvocationContextContainer icc, int newViewId,
+                        CacheNotifier notifier) {
       super(dmi, rpcManager, conf, commandsFactory, dataContainer);
-      this.inboundInvocationHandler = inboundInvocationHandler;
       this.icc = icc;
-      this.viewId = viewId;
+      this.newViewId = newViewId;
+      this.notifier = notifier;
    }
 
 
@@ -95,13 +101,22 @@ public class RebalanceTask extends RehashTask {
          // 2. Create the new CH:
          List<Address> newMembers = rpcManager.getTransport().getMembers();
          chNew = createConsistentHash(configuration, newMembers);
+         notifier.notifyTopologyChanged(chOld, chNew, true);
          distributionManager.setConsistentHash(chNew);
+         notifier.notifyTopologyChanged(chOld, chNew, false);
 
          if (log.isTraceEnabled()) {
             log.tracef("Rebalancing\nchOld = %s\nchNew = %s", chOld, chNew);
          }
 
          if (configuration.isRehashEnabled()) {
+            // Cache sets for notification
+            Collection<Address> oldCacheSet = Immutables.immutableCollectionWrap(chOld.getCaches());
+            Collection<Address> newCacheSet = Immutables.immutableCollectionWrap(chNew.getCaches());
+
+            // notify listeners that a rehash is about to start
+            notifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, true);
+
             List<Object> removedKeys = new ArrayList<Object>();
             NotifyingNotifiableFuture<Object> stateTransferFuture = new AggregatingNotifyingFutureImpl(null, newMembers.size());
 
@@ -154,6 +169,9 @@ public class RebalanceTask extends RehashTask {
                log.error("Error transferring state to node after rehash:", e);
             }
 
+            // Notify listeners of completion of rehashing
+            notifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, false);
+
             // now we can invalidate the keys
             try {
                InvalidateCommand invalidateCmd = cf.buildInvalidateFromL1Command(true, removedKeys);
@@ -177,7 +195,7 @@ public class RebalanceTask extends RehashTask {
          if (t.isCoordinator()) {
             distributionManager.markNodePushCompleted(t.getViewId(), t.getAddress());
          } else {
-            final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED, self, viewId);
+            final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED, self, newViewId);
 
             // doesn't matter when the coordinator receives the command, the transport will ensure that it eventually gets there
             rpcManager.invokeRemotely(Collections.singleton(t.getCoordinator()), cmd, false);

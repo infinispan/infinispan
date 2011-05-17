@@ -22,46 +22,28 @@
  */
 package org.infinispan.notifications.cachelistener;
 
-import static org.infinispan.notifications.cachelistener.event.Event.Type.*;
+import org.infinispan.Cache;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.notifications.AbstractListenerImpl;
+import org.infinispan.notifications.cachelistener.annotation.*;
+import org.infinispan.notifications.cachelistener.event.*;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.infinispan.Cache;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.notifications.AbstractListenerImpl;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryEvicted;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
-import org.infinispan.notifications.cachelistener.annotation.TransactionCompleted;
-import org.infinispan.notifications.cachelistener.annotation.TransactionRegistered;
-import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvictedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
-import org.infinispan.notifications.cachelistener.event.EventImpl;
-import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
-import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.notifications.cachelistener.event.Event.Type.*;
 
 /**
  * Helper class that handles all notifications to registered listeners.
@@ -87,7 +69,8 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       allowedListeners.put(TransactionRegistered.class, TransactionRegisteredEvent.class);
       allowedListeners.put(TransactionCompleted.class, TransactionCompletedEvent.class);
       allowedListeners.put(CacheEntryInvalidated.class, CacheEntryInvalidatedEvent.class);
-
+      allowedListeners.put(DataRehashed.class, DataRehashedEvent.class);
+      allowedListeners.put(TopologyChanged.class, TopologyChangedEvent.class);
    }
 
    final List<ListenerInvocation> cacheEntryCreatedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
@@ -101,6 +84,8 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    final List<ListenerInvocation> cacheEntryEvictedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
    final List<ListenerInvocation> transactionRegisteredListeners = new CopyOnWriteArrayList<ListenerInvocation>();
    final List<ListenerInvocation> transactionCompletedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
+   final List<ListenerInvocation> dataRehashedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
+   final List<ListenerInvocation> topologyChangedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
 
    private InvocationContextContainer icc;
    private Cache<Object, Object> cache;
@@ -118,6 +103,8 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       listenersMap.put(TransactionRegistered.class, transactionRegisteredListeners);
       listenersMap.put(TransactionCompleted.class, transactionCompletedListeners);
       listenersMap.put(CacheEntryInvalidated.class, cacheEntryInvalidatedListeners);
+      listenersMap.put(DataRehashed.class, dataRehashedListeners);
+      listenersMap.put(TopologyChanged.class, topologyChangedListeners);
    }
 
    @Inject
@@ -340,6 +327,29 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
          } finally {
             icc.resume(contexts);
          }
+      }
+   }
+
+   @Override
+   public void notifyDataRehashed(Collection<Address> oldView, Collection<Address> newView, long newViewId, boolean pre) {
+      if (!dataRehashedListeners.isEmpty()) {
+         EventImpl<Object, Object> e = EventImpl.createEvent(cache, DATA_REHASHED);
+         e.setPre(pre);
+         e.setMembersAtStart(oldView);
+         e.setMembersAtEnd(newView);
+         e.setNewViewId(newViewId);
+         for (ListenerInvocation listener : dataRehashedListeners) listener.invoke(e);
+      }
+   }
+
+   @Override
+   public void notifyTopologyChanged(ConsistentHash oldConsistentHash, ConsistentHash newConsistentHash, boolean pre) {
+      if (!topologyChangedListeners.isEmpty()) {
+         EventImpl<Object, Object> e = EventImpl.createEvent(cache, TOPOLOGY_CHANGED);
+         e.setPre(pre);
+         e.setConsistentHashAtStart(oldConsistentHash);
+         e.setConsistentHashAtEnd(newConsistentHash);
+         for (ListenerInvocation listener : topologyChangedListeners) listener.invoke(e);
       }
    }
 }
