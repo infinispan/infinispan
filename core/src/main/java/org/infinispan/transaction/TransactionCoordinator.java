@@ -103,6 +103,9 @@ public class TransactionCoordinator {
          }
       } catch (Throwable e) {
          log.error("Error while processing PrepareCommand", e);
+         //rollback transaction before throwing the exception as there's no guarantee the TM calls XAResource.rollback
+         //after prepare failed.
+         rollback(localTransaction);
          throw new XAException(XAException.XAER_RMERR);
       }
    }
