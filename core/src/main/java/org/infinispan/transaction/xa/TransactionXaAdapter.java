@@ -47,9 +47,14 @@ public class TransactionXaAdapter implements XAResource {
    private static final Log log = LogFactory.getLog(TransactionXaAdapter.class);
    private static boolean trace = log.isTraceEnabled();
 
+   /**
+    * It is really useful only if TM and client are in separate processes and TM fails. This is because a client might
+    * call tm.begin and then the TM (running separate process) crashes. In this scenario the TM won't ever call
+    * XAResource.rollback, so these resources would be held there forever. By knowing the timeout the RM can proceed
+    * releasing the resources associated with given tx.
+    */
    private int txTimeout;
 
-   private final InvocationContextContainer icc;
    private final Configuration configuration;
 
    private final XaTransactionTable txTable;
@@ -73,7 +78,6 @@ public class TransactionXaAdapter implements XAResource {
       this.localTransaction = localTransaction;
       this.txTable = (XaTransactionTable) txTable;
       this.configuration = configuration;
-      this.icc = icc;
       this.recoveryManager = rm;
       this.txCoordinator = txCoordinator;
    }
@@ -82,7 +86,6 @@ public class TransactionXaAdapter implements XAResource {
                                RecoveryManager rm, TransactionCoordinator txCoordinator) {
       this.txTable = (XaTransactionTable) txTable;
       this.configuration = configuration;
-      this.icc = icc;
       this.recoveryManager = rm;
       this.txCoordinator = txCoordinator;
       localTransaction = null;
