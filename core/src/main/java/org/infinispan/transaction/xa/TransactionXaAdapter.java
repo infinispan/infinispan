@@ -55,7 +55,6 @@ public class TransactionXaAdapter implements XAResource {
     */
    private int txTimeout;
 
-   private final InvocationContextContainer icc;
    private final Configuration configuration;
 
    private final XaTransactionTable txTable;
@@ -79,7 +78,6 @@ public class TransactionXaAdapter implements XAResource {
       this.localTransaction = localTransaction;
       this.txTable = (XaTransactionTable) txTable;
       this.configuration = configuration;
-      this.icc = icc;
       this.recoveryManager = rm;
       this.txCoordinator = txCoordinator;
    }
@@ -88,7 +86,6 @@ public class TransactionXaAdapter implements XAResource {
                                RecoveryManager rm, TransactionCoordinator txCoordinator) {
       this.txTable = (XaTransactionTable) txTable;
       this.configuration = configuration;
-      this.icc = icc;
       this.recoveryManager = rm;
       this.txCoordinator = txCoordinator;
       localTransaction = null;
