@@ -23,10 +23,15 @@
 package org.infinispan.notifications.cachelistener.event;
 
 import net.jcip.annotations.NotThreadSafe;
-
 import org.infinispan.Cache;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.Util;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Basic implementation of an event that covers all event types.
@@ -37,7 +42,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 @NotThreadSafe
 public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCreatedEvent, CacheEntryEvictedEvent, CacheEntryLoadedEvent, CacheEntryModifiedEvent,
                                   CacheEntryPassivatedEvent, CacheEntryRemovedEvent, CacheEntryVisitedEvent, TransactionCompletedEvent, TransactionRegisteredEvent,
-                                  CacheEntryInvalidatedEvent {
+                                  CacheEntryInvalidatedEvent, DataRehashedEvent, TopologyChangedEvent {
    private boolean pre = false; // by default events are after the fact
    private Cache<K, V> cache;
    private K key;
@@ -46,6 +51,9 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    private boolean transactionSuccessful;
    private Type type;
    private V value;
+   private Collection<Address> membersAtStart, membersAtEnd;
+   private ConsistentHash consistentHashAtStart, consistentHashAtEnd;
+   private long newViewId;
 
    public EventImpl() {
    }
@@ -118,6 +126,26 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       this.type = type;
    }
 
+   public void setMembersAtStart(Collection<Address> membersAtStart) {
+      this.membersAtStart = membersAtStart;
+   }
+
+   public void setMembersAtEnd(Collection<Address> membersAtEnd) {
+      this.membersAtEnd = membersAtEnd;
+   }
+
+   public void setConsistentHashAtStart(ConsistentHash consistentHashAtStart) {
+      this.consistentHashAtStart = consistentHashAtStart;
+   }
+
+   public void setConsistentHashAtEnd(ConsistentHash consistentHashAtEnd) {
+      this.consistentHashAtEnd = consistentHashAtEnd;
+   }
+
+   public void setNewViewId(long newViewId) {
+      this.newViewId = newViewId;
+   }
+
    @SuppressWarnings("unchecked")
    public V getValue() {
       if (value instanceof MarshalledValue)
@@ -144,6 +172,11 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       if (transaction != null ? !transaction.equals(event.transaction) : event.transaction != null) return false;
       if (type != event.type) return false;
       if (value != null ? !value.equals(event.value) : event.value != null) return false;
+      if (!Util.safeEquals(consistentHashAtStart, event.consistentHashAtStart)) return false;
+      if (!Util.safeEquals(consistentHashAtEnd, event.consistentHashAtEnd)) return false;
+      if (!Util.safeEquals(membersAtStart, event.membersAtStart)) return false;
+      if (!Util.safeEquals(membersAtEnd, event.membersAtEnd)) return false;
+      if (newViewId != event.newViewId) return false;
 
       return true;
    }
@@ -158,6 +191,11 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       result = 31 * result + (transactionSuccessful ? 1 : 0);
       result = 31 * result + (type != null ? type.hashCode() : 0);
       result = 31 * result + (value != null ? value.hashCode() : 0);
+      result = 31 * result + (membersAtStart != null ? membersAtStart.hashCode() : 0);
+      result = 31 * result + (membersAtEnd != null ? membersAtEnd.hashCode() : 0);
+      result = 31 * result + (consistentHashAtStart != null ? consistentHashAtStart.hashCode() : 0);
+      result = 31 * result + (consistentHashAtEnd != null ? consistentHashAtEnd.hashCode() : 0);
+      result = 31 * result + ((int) newViewId);
       return result;
    }
 
@@ -172,5 +210,30 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
             ", type=" + type +
             ", value=" + value +
             '}';
+   }
+
+   @Override
+   public Collection<Address> getMembersAtStart() {
+      return membersAtStart;
+   }
+
+   @Override
+   public Collection<Address> getMembersAtEnd() {
+      return membersAtEnd;
+   }
+
+   @Override
+   public long getNewViewId() {
+      return newViewId;
+   }
+
+   @Override
+   public ConsistentHash getConsistentHashAtStart() {
+      return consistentHashAtStart;
+   }
+
+   @Override
+   public ConsistentHash getConsistentHashAtEnd() {
+      return consistentHashAtEnd;
    }
 }

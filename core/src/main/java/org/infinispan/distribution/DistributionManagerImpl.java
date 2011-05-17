@@ -25,11 +25,9 @@ package org.infinispan.distribution;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -47,12 +45,12 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.InboundInvocationHandler;
-import org.infinispan.remoting.MembershipArithmetic;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -60,29 +58,31 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.transaction.TransactionTable;
-import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
-import org.infinispan.util.concurrent.ConcurrentHashSet;
-import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 import org.rhq.helpers.pluginAnnotations.agent.Parameter;
-import sun.misc.Unsafe;
 
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.context.Flag.*;
 import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
-import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
 
 /**
  * The default distribution manager implementation
@@ -132,7 +132,7 @@ public class DistributionManagerImpl implements DistributionManager {
    private volatile boolean joinComplete = false;
 
    InboundInvocationHandler inboundInvocationHandler;
-   private TransactionTable txTable;
+   private CacheNotifier cacheNotifier;
 
    /**
     * Default constructor
@@ -156,7 +156,8 @@ public class DistributionManagerImpl implements DistributionManager {
    @Inject
    public void init(Configuration configuration, RpcManager rpcManager, CacheManagerNotifier notifier, CommandsFactory cf,
                     DataContainer dataContainer, InterceptorChain interceptorChain, InvocationContextContainer icc,
-                    CacheLoaderManager cacheLoaderManager, InboundInvocationHandler inboundInvocationHandler, TransactionTable tt) {
+                    CacheLoaderManager cacheLoaderManager, InboundInvocationHandler inboundInvocationHandler,
+                    CacheNotifier cacheNotifier) {
       this.cacheLoaderManager = cacheLoaderManager;
       this.configuration = configuration;
       this.rpcManager = rpcManager;
@@ -167,7 +168,7 @@ public class DistributionManagerImpl implements DistributionManager {
       this.interceptorChain = interceptorChain;
       this.icc = icc;
       this.inboundInvocationHandler = inboundInvocationHandler;
-      this.txTable = tt;
+      this.cacheNotifier = cacheNotifier;
    }
 
    // needs to be AFTER the RpcManager
@@ -463,7 +464,7 @@ public class DistributionManagerImpl implements DistributionManager {
          }
          
          RebalanceTask rebalanceTask = new RebalanceTask(rpcManager, cf, configuration, dataContainer,
-                                                         DistributionManagerImpl.this, inboundInvocationHandler, icc, e.getViewId());
+                                                         DistributionManagerImpl.this, icc, e.getViewId(), cacheNotifier);
          rehashExecutor.submit(rebalanceTask);
       }
    }

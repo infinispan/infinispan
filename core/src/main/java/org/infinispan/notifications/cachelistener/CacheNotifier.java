@@ -23,10 +23,14 @@
 package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listenable;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
+
+import java.util.Collection;
 
 /**
  * Public interface with all allowed notifications.
@@ -95,4 +99,8 @@ public interface CacheNotifier extends Listenable {
     * @param globalTransaction
     */
    void notifyTransactionRegistered(GlobalTransaction globalTransaction, InvocationContext ctx);
+
+   void notifyDataRehashed(Collection<Address> oldView, Collection<Address> newView, long newViewId, boolean pre);
+
+   void notifyTopologyChanged(ConsistentHash oldConsistentHash, ConsistentHash newConsistentHash, boolean pre);
 }
