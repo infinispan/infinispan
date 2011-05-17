@@ -78,7 +78,7 @@ public class TransactionCoordinator {
    }
 
    public int prepare(LocalTransaction localTransaction) throws XAException {
-      validateNotMarkedForRollback(localTransaction, false);
+      validateNotMarkedForRollback(localTransaction);
 
       if (configuration.isOnePhaseCommit()) {
          if (trace) log.tracef("Received prepare for tx: %s. Skipping call as 1PC will be used.", localTransaction);
@@ -117,7 +117,7 @@ public class TransactionCoordinator {
          ctx.setLocalTransaction(localTransaction);
          if (configuration.isOnePhaseCommit() || isOnePhase) {
 
-            validateNotMarkedForRollback(localTransaction, true);
+            validateNotMarkedForRollback(localTransaction);
 
             if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
             PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
@@ -164,16 +164,11 @@ public class TransactionCoordinator {
    }
 
    /**
-    * @param runRollback if true and localTransaction is marked for rollback then runs {@link #rollback(LocalTransaction)}
-    * before returning.
     */
-   private void validateNotMarkedForRollback(LocalTransaction localTransaction, boolean runRollback) throws XAException {
+   private void validateNotMarkedForRollback(LocalTransaction localTransaction) throws XAException {
       if (localTransaction.isMarkedForRollback()) {
-         if (trace) log.tracef("Transaction already marked for rollback: %s", localTransaction);
-         if (runRollback) {
-            if (log.isTraceEnabled()) log.trace("Forcing rollback.");
-            rollback(localTransaction);
-         }
+         if (trace) log.tracef("Transaction already marked for rollback. Forcing rollback for %s", localTransaction);
+         rollback(localTransaction);
          throw new XAException(XAException.XA_RBROLLBACK);
       }
    }
