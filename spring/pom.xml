@@ -105,6 +105,13 @@
             </exclusion>
          </exclusions>
       </dependency>
+      <!-- Made the RHQ dependency non-transitive in case we only need the remote cache -->
+      <dependency>
+         <groupId>org.rhq.helpers</groupId>
+         <artifactId>rhq-pluginAnnotations</artifactId>
+         <version>${version.rhq.pluginAnnotations}</version>
+         <scope>provided</scope>
+      </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
