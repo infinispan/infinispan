@@ -25,6 +25,7 @@ package org.infinispan.loaders.decorators;
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
+import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
@@ -112,6 +113,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    private ReleaseAllLockContainer lockContainer;
    private final LinkedBlockingQueue<Modification> changesDeque = new LinkedBlockingQueue<Modification>();
    public volatile boolean lastAsyncProcessorShutsDownExecutor = false;
+   private long shutdownTimeout;
 
    public AsyncStore(CacheStore delegate, AsyncStoreConfig asyncStoreConfig) {
       super(delegate);
@@ -121,7 +123,20 @@ public class AsyncStore extends AbstractDelegatingStore {
    @Override
    public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
-      concurrencyLevel = cache == null || cache.getConfiguration() == null ? 16 : cache.getConfiguration().getConcurrencyLevel();
+      Configuration cacheCfg = cache.getConfiguration();
+      concurrencyLevel = cache == null || cacheCfg == null ? 16 : cacheCfg.getConcurrencyLevel();
+      int cacheStopTimeout = cacheCfg.getCacheStopTimeout();
+      Long configuredAsyncStopTimeout = asyncStoreConfig.getShutdownTimeout();
+
+      // Async store shutdown timeout cannot be bigger than
+      // the overall cache stop timeout, so limit it accordingly.
+      if (configuredAsyncStopTimeout >= cacheStopTimeout) {
+         shutdownTimeout = Math.round(cacheStopTimeout * 0.90);
+         log.asyncStoreShutdownTimeoutTooHigh(configuredAsyncStopTimeout, cacheStopTimeout, shutdownTimeout);
+      } else {
+         shutdownTimeout = configuredAsyncStopTimeout;
+      }
+
       lockContainer = new ReleaseAllLockContainer(concurrencyLevel);
       transactions = new ConcurrentHashMap<GlobalTransaction, List<? extends Modification>>(64, 0.75f, concurrencyLevel);
    }
@@ -209,7 +224,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       stopped.set(true);
       try {
          changesDeque.put(QUIT_SIGNAL);
-         executor.awaitTermination(asyncStoreConfig.getShutdownTimeout(), TimeUnit.SECONDS);
+         executor.awaitTermination(shutdownTimeout, TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
          log.interruptedWaitingAsyncStorePush(e);
          Thread.currentThread().interrupt();
