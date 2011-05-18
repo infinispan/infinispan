@@ -23,8 +23,12 @@
 
 package org.infinispan.config;
 
+import java.util.List;
+
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.group.Group;
+import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -641,6 +645,25 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * 
        */
       HashConfig numVirtualNodes(Integer numVirtualNodes);
+      
+      /**
+       * Enable grouping support, such that {@link Group} annotations are honoured and any configured
+       * groupers will be invoked
+       */
+      HashConfig groupsEnabled(Boolean groupsEnabled);
+      
+      /**
+       * Controls the groupers used in distribution
+       * 
+       * @param groupers the groupers to use
+       * @see #getGroupers()
+       */
+      HashConfig groupers(List<Grouper<?>> groupers);
+      
+      /**
+       * Get's the current groupers in use
+       */
+      List<Grouper<?>> getGroupers();
    }
 
    /**

@@ -50,7 +50,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
    }
 
    public List<Address> locate(Object key, int replCount) {
-      int hash = getNormalizedHash(key);
+      int hash = getNormalizedHash(getGrouping(key));
       int numCopiesToFind = getNumCopiesToFind(replCount);
 
       List<Address> owners = new ArrayList<Address>(numCopiesToFind);
@@ -84,7 +84,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
    @Override
    public boolean isKeyLocalToAddress(Address target, Object key, int replCount) {
-      int hash = getNormalizedHash(key);
+      int hash = getNormalizedHash(getGrouping(key));
       int numCopiesToFind = getNumCopiesToFind(replCount);
 
       SortedMap<Integer, Address> candidates = positions.tailMap(hash);

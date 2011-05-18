@@ -112,7 +112,7 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
     */
    private List<Address> getOwners(Address address, int numOwners) {
       Address realAddress = getRealAddress(address);
-      int ownerHash = getNormalizedHash(address);
+      int ownerHash = getNormalizedHash(getGrouping(address));
       Collection<Address> beforeOnWheel = positions.headMap(ownerHash).values();
       Collection<Address> afterOnWheel = positions.tailMap(ownerHash).values();
       ArrayList<Address> processSequence = new ArrayList<Address>(afterOnWheel);
@@ -180,7 +180,7 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
    }
 
    private Address getOwner(Object key) {
-      int hash = getNormalizedHash(key);
+      int hash = getNormalizedHash(getGrouping(key));
       SortedMap<Integer, Address> map = positions.tailMap(hash);
       if (map.size() == 0) {
          return positions.get(positions.firstKey());

@@ -33,6 +33,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.UnionConsistentHash;
+import org.infinispan.distribution.group.Grouper;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -47,6 +48,7 @@ import org.testng.annotations.Test;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -73,6 +75,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected int numOwners = 2;
    protected int lockTimeout = 45;
    protected int numVirtualNodes = 1;
+   protected boolean groupsEnabled = false;
+   protected List<Grouper<?>> groupers;
 
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
@@ -90,6 +94,10 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       configuration.setLockAcquisitionTimeout(lockTimeout, TimeUnit.SECONDS);
       configuration.setL1CacheEnabled(l1CacheEnabled);
       configuration.fluent().clustering().hash().numVirtualNodes(numVirtualNodes);
+      if (groupsEnabled) {
+          configuration.fluent().hash().groupsEnabled(true); 
+          configuration.fluent().hash().groupers(groupers);
+      }
       if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);
       if (l1CacheEnabled) configuration.setL1InvalidationThreshold(l1Threshold);
       caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration);
