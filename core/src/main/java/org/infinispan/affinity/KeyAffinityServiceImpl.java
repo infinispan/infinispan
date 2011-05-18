@@ -28,6 +28,7 @@ import org.infinispan.Cache;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
@@ -156,7 +157,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       keyGenWorker = new KeyGeneratorWorker();
       executor.execute(keyGenWorker);
       listenerRegistration = new ListenerRegistration(this);
-      ((EmbeddedCacheManager)cache.getCacheManager()).addListener(listenerRegistration);
+      cache.getCacheManager().addListener(listenerRegistration);
       cache.addListener(listenerRegistration);
       keyProducerStartLatch.open();
       started = true;
@@ -169,7 +170,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
          return;
       }
       started = false;
-      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+      EmbeddedCacheManager cacheManager = cache.getCacheManager();
       if (cacheManager.getListeners().contains(listenerRegistration)) {
          cacheManager.removeListener(listenerRegistration);
       } else {
@@ -182,14 +183,14 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       keyGenWorker.stop();
    }
 
-   public void handleViewChange(ViewChangedEvent vce) {
+   public void handleViewChange(TopologyChangedEvent vce) {
       if (log.isTraceEnabled()) {
-         log.tracef("ViewChange received: %s", vce);
+         log.tracef("TopologyChangedEvent received: %s", vce);
       }
       maxNumberInvariant.writeLock().lock();
       try {
          address2key.clear(); //wee need to drop everything as key-mapping data is stale due to view change
-         addQueuesForAddresses(vce.getNewMembers());
+         addQueuesForAddresses(vce.getConsistentHashAtEnd().getCaches());
          resetNumberOfKeys();
          keyProducerStartLatch.open();
       } finally {

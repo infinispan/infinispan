@@ -23,6 +23,8 @@
 package org.infinispan.affinity;
 
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
+import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
@@ -42,9 +44,9 @@ public class ListenerRegistration {
       this.keyAffinityService = keyAffinityService;
    }
 
-   @ViewChanged
-   public void handleViewChange(ViewChangedEvent vce) {
-      keyAffinityService.handleViewChange(vce);
+   @TopologyChanged
+   public void handleViewChange(TopologyChangedEvent tce) {
+      if (!tce.isPre()) keyAffinityService.handleViewChange(tce);
    }
 
    @CacheStopped
