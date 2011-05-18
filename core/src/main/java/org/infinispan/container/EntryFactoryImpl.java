@@ -22,6 +22,7 @@
  */
 package org.infinispan.container;
 
+import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -169,7 +170,15 @@ public class EntryFactoryImpl implements EntryFactory {
                // this is the *only* point where new entries can be created!!
                if (trace) log.trace("Creating new entry.");
                // now to lock and create the entry.  Lock first to prevent concurrent creation!
-               notifier.notifyCacheEntryCreated(key, true, ctx);
+               try {
+                  notifier.notifyCacheEntryCreated(key, true, ctx);
+               } catch (CacheException e) {
+                  // If any exception, release the lock cos the locking
+                  // interceptor cannot do it due to the key not being in the
+                  // ctx looked up entries yet
+                  releaseLock(key);
+                  throw e;
+               }
                mvccEntry = createWrappedEntry(key, null, true, false, -1);
                mvccEntry.setCreated(true);
                ctx.putLookedUpEntry(key, mvccEntry);
