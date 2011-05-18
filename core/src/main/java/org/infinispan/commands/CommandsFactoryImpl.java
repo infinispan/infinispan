@@ -340,7 +340,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             GetInDoubtTransactionsCommand gptx = (GetInDoubtTransactionsCommand) c;
             gptx.init(recoveryManager);
             break;
-         case Ids.REMOVE_RECOVERY_INFO_TX_COMMAND:
+         case RemoveRecoveryInfoCommand.COMMAND_ID:
             RemoveRecoveryInfoCommand ftx = (RemoveRecoveryInfoCommand) c;
             ftx.init(recoveryManager);
             break;

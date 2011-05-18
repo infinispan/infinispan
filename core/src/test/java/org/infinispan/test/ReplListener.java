@@ -197,7 +197,9 @@ public class ReplListener {
          throw new IllegalStateException("unexpected", e);
       }
       finally {
+         expectationSetupLock.lock();
          expectedCommands = null;
+         expectationSetupLock.unlock();
          expectAny = false;
          sawAtLeastOneInvocation = false;
          latch = new CountDownLatch(1);
@@ -244,7 +246,10 @@ public class ReplListener {
             if (expectedCommands != null) {
                if (expectedCommands.remove(cmd.getClass())) {
                   info("Successfully removed command: " + cmd.getClass());
-               }                                      
+               }
+               else {
+                  if (recordCommandsEagerly) eagerCommands.add(cmd.getClass());
+               }
                sawAtLeastOneInvocation = true;
                if (expectedCommands.isEmpty()) {
                   info("Nothing to wait for, releasing latch");

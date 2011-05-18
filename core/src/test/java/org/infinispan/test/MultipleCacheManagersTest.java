@@ -287,7 +287,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return caches;
    }
 
-   public ReplListener replListener(Cache cache) {
+   protected ReplListener replListener(Cache cache) {
       ReplListener listener = listeners.get(cache);
       if (listener == null) {
          listener = new ReplListener(cache);
@@ -296,7 +296,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return listener;
    }
 
-   public EmbeddedCacheManager manager(int i) {
+   protected EmbeddedCacheManager manager(int i) {
       return cacheManagers.get(i);
    }
 
@@ -329,19 +329,19 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     */
    protected abstract void createCacheManagers() throws Throwable;
 
-   public Address address(int cacheIndex) {
+   protected Address address(int cacheIndex) {
       return cache(cacheIndex).getAdvancedCache().getRpcManager().getAddress();
    }
 
-   public AdvancedCache advancedCache(int i) {
+   protected AdvancedCache advancedCache(int i) {
       return cache(i).getAdvancedCache();
    }
 
-   public AdvancedCache advancedCache(int i, String cacheName) {
+   protected AdvancedCache advancedCache(int i, String cacheName) {
       return cache(i, cacheName).getAdvancedCache();
    }
 
-   public <K, V> List<Cache<K, V>> caches(String name) {
+   protected <K, V> List<Cache<K, V>> caches(String name) {
       List<Cache<K, V>> result = new ArrayList<Cache<K, V>>();
       for (EmbeddedCacheManager ecm : cacheManagers) {
          Cache<K, V> c;
@@ -354,7 +354,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return result;
    }
 
-   public <K, V> List<Cache<K, V>> caches() {
+   protected <K, V> List<Cache<K, V>> caches() {
       return caches(null);
    }
 
@@ -370,7 +370,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return TestingUtil.extractLockManager(cache(i, cacheName));
    }
 
-   public List<EmbeddedCacheManager> getCacheManagers() {
+   protected List<EmbeddedCacheManager> getCacheManagers() {
       return cacheManagers;
    }
 
