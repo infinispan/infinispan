@@ -24,10 +24,8 @@ package org.infinispan.atomic;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import static org.infinispan.context.Flag.SKIP_LOCKING;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -38,8 +36,15 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+
+import static org.infinispan.context.Flag.SKIP_LOCKING;
 
 @Test(groups = "functional", testName = "atomic.AtomicMapFunctionalTest")
 public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
@@ -142,5 +147,20 @@ public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
       // now re-retrieve the map and make sure we see the diffs
       assert AtomicMapLookup.getAtomicMap(cache, "key").get("x").equals("y");
       assert AtomicMapLookup.getAtomicMap(cache, "key").get("a").equals("b");
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testRemovalOfAtomicMap() throws SystemException, NotSupportedException, RollbackException, HeuristicRollbackException, HeuristicMixedException {
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "key");
+      map.put("hello", "world");
+      TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
+      tm.begin();
+      map = AtomicMapLookup.getAtomicMap(cache, "key");
+      map.put("hello2", "world2");
+      assert map.size() == 2;
+      AtomicMapLookup.removeAtomicMap(cache, "key");
+      map.size();
+      tm.commit();
+
    }
 }
