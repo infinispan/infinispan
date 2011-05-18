@@ -64,6 +64,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
    private AtomicHashMapDelta delta = null;
    private volatile AtomicHashMapProxy<K, V> proxy;
    volatile boolean copied = false;
+   volatile boolean removed = false;
 
    /**
     * Construction only allowed through this factory method.  This factory is intended for use internally by the
@@ -172,6 +173,10 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       return proxy;
    }
 
+   public void markRemoved() {
+      removed = true;
+   }
+
    public Delta delta() {
       Delta toReturn = delta == null ? NullDelta.INSTANCE : delta;
       delta = null; // reset
@@ -211,6 +216,8 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       if (delta == null) delta = new AtomicHashMapDelta();
       return delta;
    }
+
+
 
    public static class Externalizer extends AbstractExternalizer<AtomicHashMap> {
       @Override
