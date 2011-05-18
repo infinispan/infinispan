@@ -34,7 +34,7 @@ import org.infinispan.marshall.Ids;
  */
 public class GetInDoubtTxInfoCommand extends RecoveryCommand {
 
-   public static final int COMMAND_ID = Ids.GET_IN_DOUBT_TX_INFO_COMMAND;
+   public static final int COMMAND_ID = 23;
 
    public GetInDoubtTxInfoCommand(String cacheName) {
       super();

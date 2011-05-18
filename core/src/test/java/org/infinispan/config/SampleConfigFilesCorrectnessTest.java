@@ -29,6 +29,8 @@ import org.apache.log4j.spi.LoggingEvent;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -45,6 +47,7 @@ import java.util.Arrays;
 @Test(groups = "functional", testName = "config.SampleConfigFilesCorrectnessTest")
 public class SampleConfigFilesCorrectnessTest {
    public static final String CONFIG_ROOT = "src/main/resources/config-samples";
+   private static final Log log = LogFactory.getLog(SampleConfigFilesCorrectnessTest.class);
 
    private InMemoryAppender appender;
    private Level oldLevel;
@@ -69,7 +72,7 @@ public class SampleConfigFilesCorrectnessTest {
 
    public void testConfigWarnings() throws Exception {
       for (String aConfFile : getConfigFileNames()) {
-         System.out.println("Analysing " + aConfFile);
+         log.tracef("Analysing %s", aConfFile);
          EmbeddedCacheManager dcm = TestCacheManagerFactory.fromXml(getRootFolder() + "/" + aConfFile, true);
          try {
             dcm.getCache();
@@ -89,7 +92,7 @@ public class SampleConfigFilesCorrectnessTest {
    private String[] getConfigFileNames() {
       File file = getRootFolder();
       if (!file.isDirectory()) {
-         System.out.println("file.getAbsolutePath() = " + file.getAbsolutePath());
+         log.tracef("file.getAbsolutePath() = %s");
       }
       return file.list(new FilenameFilter() {
          public boolean accept(File dir, String name) {
@@ -140,8 +143,8 @@ public class SampleConfigFilesCorrectnessTest {
 
             if (!skipPrinting) {
                unknownWarning = event.getMessage().toString();
-               System.out.println("InMemoryAppender ****** " + event.getMessage().toString());
-               System.out.println("TOLERABLE_WARNINGS: " + Arrays.toString(TOLERABLE_WARNINGS));
+               log.tracef("InMemoryAppender: %s", event.getMessage().toString());
+               log.tracef("TOLERABLE_WARNINGS: %s", Arrays.toString(TOLERABLE_WARNINGS));
             }
          }
       }

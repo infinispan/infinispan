@@ -36,7 +36,7 @@ import javax.transaction.xa.Xid;
  */
 public class CompleteTransactionCommand extends RecoveryCommand {
 
-   public static final int COMMAND_ID = Ids.COMPLETE_TX_COMMAND;
+   public static final byte COMMAND_ID = 24;
 
    /**
     * The tx which we want to complete.

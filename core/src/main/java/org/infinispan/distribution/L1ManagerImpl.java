@@ -72,12 +72,7 @@ public class L1ManagerImpl implements L1Manager {
          Collection<Address> previousAs = requestors.putIfAbsent(key, as);
          if (previousAs != null) {
             //another thread added it already, so use his copy and discard our proposed instance
-            while (!previousAs.equals(as)) {
-               as = new ConcurrentHashSet<Address>();
-               as.addAll(previousAs);
-               as.add(origin);
-               previousAs = requestors.replace(key, as);
-            }
+            previousAs.add(origin);
          }
       } else {
          as.add(origin);

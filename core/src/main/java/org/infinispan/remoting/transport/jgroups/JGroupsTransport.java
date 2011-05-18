@@ -155,7 +155,10 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    }
 
    public int getViewId() {
-      return (int) channel.getView().getVid().getId();
+      View view = channel.getView();
+      if (view == null)
+         return -1;
+      return (int) view.getVid().getId();
    }
 
    public void stop() {

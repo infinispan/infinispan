@@ -41,7 +41,7 @@ public class GetInDoubtTransactionsCommand extends RecoveryCommand {
 
    private static final Log log = LogFactory.getLog(GetInDoubtTransactionsCommand.class);
 
-   public static final int COMMAND_ID = Ids.GET_IN_DOUBT_TX_COMMAND;
+   public static final int COMMAND_ID = 21;
 
    public GetInDoubtTransactionsCommand() {
    }

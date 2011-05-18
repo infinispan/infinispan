@@ -35,7 +35,7 @@ import javax.transaction.xa.Xid;
  */
 public class RemoveRecoveryInfoCommand extends RecoveryCommand {
 
-   public static final int COMMAND_ID = Ids.REMOVE_RECOVERY_INFO_TX_COMMAND;
+   public static final int COMMAND_ID = 22;
 
    private Xid xid;
    private long internalId;
@@ -83,7 +83,7 @@ public class RemoveRecoveryInfoCommand extends RecoveryCommand {
    @Override
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) {
-         throw new IllegalArgumentException("Wrong command id. Received " + commandId + " and expected " + Ids.REMOVE_RECOVERY_INFO_TX_COMMAND);
+         throw new IllegalArgumentException("Wrong command id. Received " + commandId + " and expected " + RemoveRecoveryInfoCommand.COMMAND_ID);
       }
       if (parameters[0] instanceof Xid) {
          xid = (Xid) parameters[0];

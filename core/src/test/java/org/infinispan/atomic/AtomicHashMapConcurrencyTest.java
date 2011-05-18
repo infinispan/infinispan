@@ -27,15 +27,20 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.ValueFuture;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.testng.Assert.assertEquals;
 
 /**
  * Tester class for AtomicMapCache.
@@ -45,20 +50,16 @@ import java.util.concurrent.BlockingQueue;
 @Test(groups = "functional", testName = "atomic.AtomicHashMapConcurrencyTest")
 public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
 
+   private static final Log log = LogFactory.getLog(AtomicHashMapConcurrencyTest.class);
+
    public static final String KEY = "key";
    Cache<String, Object> cache;
    TransactionManager tm;
    private CacheContainer cm;
 
-   enum Operation {
-      PUT,
-      COMMIT,
-      READ
-   }
-
    @BeforeMethod
    @SuppressWarnings("unchecked")
-   public void setUp() {
+   protected void setUp() {
       Configuration c = new Configuration();
       c.setLockAcquisitionTimeout(500);
       // these 2 need to be set to use the AtomicMapCache
@@ -69,7 +70,7 @@ public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
    }
 
    @AfterMethod
-   public void tearDown() {
+   protected void tearDown() {
       try {
          tm.rollback();
       } catch (Exception e) {
@@ -80,89 +81,101 @@ public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
    public void testConcurrentCreate() throws Exception {
       tm.begin();
       AtomicMapLookup.getAtomicMap(cache, KEY);
-      OtherThread ot = new OtherThread();
-      ot.start();
-      Object response = ot.response.take();
-      assert response instanceof TimeoutException;
+      
+      final AtomicBoolean gotTimeoutException = new AtomicBoolean();
+      fork(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               tm.begin();
+
+               try {
+                  AtomicMapLookup.getAtomicMap(cache, KEY);
+               } catch (TimeoutException e) {
+                  // this is the exception we were expecting
+                  gotTimeoutException.set(true);
+               } finally {
+                  tm.rollback();
+               }
+            } catch (Exception e) {
+               log.error("Unexpected error performing transaction", e);
+            }
+         }
+      }, true);
+
+      assert gotTimeoutException.get();
    }
 
    public void testConcurrentModifications() throws Exception {
       AtomicMap<Integer, String> atomicMap = AtomicMapLookup.getAtomicMap(cache, KEY);
       tm.begin();
       atomicMap.put(1, "");
-      OtherThread ot = new OtherThread();
-      ot.start();
-      ot.toExecute.put(Operation.PUT);
-      Object response = ot.response.take();
-      assert response instanceof TimeoutException;
+
+      final AtomicBoolean gotTimeoutException = new AtomicBoolean();
+      fork(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               tm.begin();
+
+               try {
+                  AtomicMap<Integer, String> otMap = AtomicMapLookup.getAtomicMap(cache, KEY);
+                  otMap.put(1, "val");
+               } catch (TimeoutException e) {
+                  // this is the exception we were expecting
+                  gotTimeoutException.set(true);
+               } finally {
+                  tm.rollback();
+               }
+            } catch (Exception e) {
+               log.error("Unexpected error performing transaction", e);
+            }
+         }
+      }, true);
+
+      assert gotTimeoutException.get();
    }
 
    public void testReadAfterTxStarted() throws Exception {
-      OtherThread ot = new OtherThread();
-      try {
-         AtomicMap<Integer, String> atomicMap = AtomicMapLookup.getAtomicMap(cache, KEY);
-         atomicMap.put(1, "existing");
-         tm.begin();
-         atomicMap.put(1, "newVal");
-         ot.start();
-         ot.toExecute.put(Operation.READ);
-         Object response = ot.response.take();
-         assert response.equals("existing");
-         tm.commit();
-         assert atomicMap.get(1).equals("newVal");
-         ot.toExecute.put(Operation.READ);
-         response = ot.response.take();
-         assert response.equals("newVal");
-      } finally {
-         ot.interrupt();
-      }
-   }
+      AtomicMap<Integer, String> atomicMap = AtomicMapLookup.getAtomicMap(cache, KEY);
+      atomicMap.put(1, "existing");
+      tm.begin();
+      atomicMap.put(1, "newVal");
 
-   public class OtherThread extends Thread {
+      final ValueFuture responseBeforeCommit = new ValueFuture();
+      final ValueFuture responseAfterCommit = new ValueFuture();
+      final CountDownLatch commitLatch = new CountDownLatch(1);
 
-      public OtherThread() {
-         super("OtherThread");
-      }
-
-      BlockingQueue<Object> response = new ArrayBlockingQueue<Object>(1);
-
-      BlockingQueue<Operation> toExecute = new ArrayBlockingQueue<Operation>(1);
-
-      @Override
-      public void run() {
-         try {
-            tm.begin();
-            AtomicMap<Integer, String> atomicMap = AtomicMapLookup.getAtomicMap(cache, KEY);
-            boolean notCommited = true;
-            while (notCommited) {
-               Operation op = toExecute.take();
-               switch (op) {
-                  case PUT: {
-                     atomicMap.put(1, "val");
-                     response.put(new Object());
-                     break;
-                  }
-                  case READ: {
-                     String val = atomicMap.get(1);
-                     response.put(String.valueOf(val));
-                     break;
-                  }
-                  case COMMIT: {
-                     tm.commit();
-                     response.put(new Object());
-                     notCommited = false;
-                     break;
-                  }
-               }
-            }
-         } catch (Exception e) {
+      Thread ot = fork(new Runnable() {
+         @Override
+         public void run() {
             try {
-               response.put(e);
-            } catch (InterruptedException e1) {
-               e1.printStackTrace();
+               tm.begin();
+
+               try {
+                  AtomicMap<Integer, String> otMap = AtomicMapLookup.getAtomicMap(cache, KEY);
+
+                  responseBeforeCommit.set(otMap.get(1));
+
+                  // wait until the main thread commits the transaction
+                  commitLatch.await();
+
+                  responseAfterCommit.set(otMap.get(1));
+               } finally {
+                  tm.rollback();
+               }
+            } catch (Exception e) {
+               log.error("Unexpected error performing transaction", e);
             }
-            e.printStackTrace();
          }
-      }
+      }, false);
+
+      assertEquals(responseBeforeCommit.get(), "existing");
+
+      tm.commit();
+      commitLatch.countDown();
+
+      assertEquals(atomicMap.get(1), "newVal");
+      assertEquals(responseAfterCommit.get(), "newVal");
    }
 }
