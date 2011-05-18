@@ -169,13 +169,20 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
 
    override protected def createServerException(e: Exception, b: ChannelBuffer): (HotRodException, Boolean) = {
       e match {
-         case i: InvalidMagicIdException =>
+         case i: InvalidMagicIdException => {
+            logExceptionReported(i)
             (new HotRodException(new ErrorResponse(0, "", 1, InvalidMagicOrMsgId, 0, i.toString), e), true)
-         case e: HotRodUnknownOperationException =>
+         }
+         case e: HotRodUnknownOperationException => {
+            logExceptionReported(e)
             (new HotRodException(new ErrorResponse(e.messageId, "", 1, UnknownOperation, 0, e.toString), e), true)
-         case u: UnknownVersionException =>
+         }
+         case u: UnknownVersionException => {
+            logExceptionReported(u)
             (new HotRodException(new ErrorResponse(u.messageId, "", 1, UnknownVersion, 0, u.toString), e), true)
+         }
          case r: RequestParsingException => {
+            logExceptionReported(r)
             val msg =
                if (r.getCause == null)
                   r.toString
