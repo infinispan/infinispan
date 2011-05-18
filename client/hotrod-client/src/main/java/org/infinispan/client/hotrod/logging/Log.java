@@ -56,7 +56,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @LogMessage(level = ERROR)
    @Message(value = "Invalid magic number. Expected %#x and received %#x", id = 4003)
-   void invalidMagicNumber(String message, short expectedMagicNumber, short receivedMagic);
+   void invalidMagicNumber(short expectedMagicNumber, short receivedMagic);
 
    @LogMessage(level = ERROR)
    @Message(value = "Invalid message id. Expected %d and received %d", id = 4004)
@@ -70,11 +70,11 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "New topology: %s", id = 4006)
    void newTopology(LinkedHashMap<InetSocketAddress, Integer> servers2HashCode);
 
-   @LogMessage(level = WARN)
+   @LogMessage(level = ERROR)
    @Message(value = "Exception encountered. Retry %d out of %d", id = 4007)
    void exceptionAndNoRetriesLeft(int retry, int maxRetries, @Cause HotRodClientException te);
 
-   @LogMessage(level = ERROR)
+   @LogMessage(level = WARN)
    @Message(value = "Could not connect to server: %s", id = 4008)
    void couldNotConnectToServer(InetSocketAddress serverAddress, @Cause IOException e);
 

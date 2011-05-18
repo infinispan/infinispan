@@ -53,7 +53,11 @@ public class ServerFailureRetryTest extends AbstractRetryTest {
    public void testRetryWithSuspectException(Method m) {
       ErrorInducingListener listener = new ErrorInducingListener();
       manager(0).getCache().addListener(listener);
-      remoteCache.put(k(m), v(m));
+      try {
+         remoteCache.put(k(m), v(m));
+      } finally {
+         manager(0).getCache().removeListener(listener);
+      }
    }
 
    @Listener
