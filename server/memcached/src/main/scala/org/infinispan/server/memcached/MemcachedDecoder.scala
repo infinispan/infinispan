@@ -423,14 +423,29 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
       t match {
          case m: MemcachedException => {
             m.getCause match {
-               case u: UnknownOperationException => ERROR
-               case c: ClosedChannelException => null // no-op, only log
-               case i: IOException => sb.append(m.getMessage).append(CRLF)
-               case n: NumberFormatException => sb.append(m.getMessage).append(CRLF)
+               case u: UnknownOperationException => {
+                  error("Exception reported", u)
+                  ERROR
+               }
+               case c: ClosedChannelException => {
+                  error("Exception reported", c)
+                  null // no-op, only log
+               }
+               case i: IOException => {
+                  error("Exception reported", i)
+                  sb.append(m.getMessage).append(CRLF)
+               }
+               case n: NumberFormatException => {
+                  error("Exception reported", n)
+                  sb.append(m.getMessage).append(CRLF)
+               }
                case _ => sb.append(m.getMessage).append(CRLF)
             }
          }
-         case c: ClosedChannelException => null // no-op, only log
+         case c: ClosedChannelException => {
+            error("Exception reported", c)
+            null // no-op, only log
+         }
          case _ => sb.append(SERVER_ERROR).append(t.getMessage).append(CRLF)
       }
    }

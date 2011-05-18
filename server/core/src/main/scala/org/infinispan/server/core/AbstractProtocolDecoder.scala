@@ -245,7 +245,6 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
       createGetResponse(key, cache.get(readKey(buffer)._1))
 
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
-      error("Exception reported", e.getCause)
       val ch = ctx.getChannel
       val errorResponse = createErrorResponse(e.getCause)
       if (errorResponse != null) {
