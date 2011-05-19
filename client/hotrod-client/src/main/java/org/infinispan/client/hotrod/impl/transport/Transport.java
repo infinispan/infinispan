@@ -68,4 +68,6 @@ public interface Transport {
    int read4ByteInt();
 
    void writeString(String string);
+
+   byte[] dumpStream();
 }
