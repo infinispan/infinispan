@@ -65,7 +65,7 @@ public abstract class AbstractTransport implements Transport {
       boolean invalidResponse = true;
       if (wasSuspected || !wasReceived) {
          if (wasSuspected) {
-            throw new SuspectException("Suspected member: " + sender);
+            throw new SuspectException("Suspected member: " + sender, sender);
          } else {
             // if we have a response filter then we may not have waited for some nodes!
             if (!usedResponseFilter) throw new TimeoutException("Replication timeout for " + sender);
