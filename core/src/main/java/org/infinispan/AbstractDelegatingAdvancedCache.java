@@ -33,6 +33,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 
 import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
 import java.util.Collection;
 import java.util.List;
 
@@ -105,6 +106,11 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
 
    public TransactionManager getTransactionManager() {
       return cache.getTransactionManager();
+   }
+
+   @Override
+   public XAResource getXAResource() {
+      return cache.getXAResource();
    }
 
    public AdvancedCache<K, V> withFlags(Flag... flags) {

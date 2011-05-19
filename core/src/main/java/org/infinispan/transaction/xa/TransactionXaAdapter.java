@@ -23,7 +23,6 @@
 package org.infinispan.transaction.xa;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
@@ -74,21 +73,12 @@ public class TransactionXaAdapter implements XAResource {
 
 
    public TransactionXaAdapter(LocalXaTransaction localTransaction, TransactionTable txTable,
-                               Configuration configuration, InvocationContextContainer icc, RecoveryManager rm, TransactionCoordinator txCoordinator) {
+                               Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator) {
       this.localTransaction = localTransaction;
       this.txTable = (XaTransactionTable) txTable;
       this.configuration = configuration;
       this.recoveryManager = rm;
       this.txCoordinator = txCoordinator;
-   }
-
-   public TransactionXaAdapter(TransactionTable txTable, Configuration configuration, InvocationContextContainer icc,
-                               RecoveryManager rm, TransactionCoordinator txCoordinator) {
-      this.txTable = (XaTransactionTable) txTable;
-      this.configuration = configuration;
-      this.recoveryManager = rm;
-      this.txCoordinator = txCoordinator;
-      localTransaction = null;
    }
 
    /**
@@ -217,19 +207,6 @@ public class TransactionXaAdapter implements XAResource {
    public boolean setTransactionTimeout(int i) throws XAException {
       this.txTimeout = i;
       return true;
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof TransactionXaAdapter)) return false;
-      TransactionXaAdapter that = (TransactionXaAdapter) o;
-      return this.localTransaction.equals(that.localTransaction);
-   }
-
-   @Override
-   public int hashCode() {
-      return localTransaction.getGlobalTransaction().hashCode();
    }
 
    @Override
