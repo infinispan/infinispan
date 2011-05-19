@@ -64,7 +64,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       configuration = new Configuration();
       TransactionCoordinator txCoordinator = new TransactionCoordinator();
       txCoordinator.init(null, null, null, null, configuration, null);
-      xaAdapter = new TransactionXaAdapter(localTx, txTable, configuration, null, null, txCoordinator);
+      xaAdapter = new TransactionXaAdapter(localTx, txTable, configuration, null, txCoordinator);
    }
 
    public void testPrepareOnNonexistentXid() {

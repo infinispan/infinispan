@@ -74,7 +74,7 @@ public class TransactionXaAdapter implements XAResource {
 
 
    public TransactionXaAdapter(LocalXaTransaction localTransaction, TransactionTable txTable,
-                               Configuration configuration, InvocationContextContainer icc, RecoveryManager rm, TransactionCoordinator txCoordinator) {
+                               Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator) {
       this.localTransaction = localTransaction;
       this.txTable = (XaTransactionTable) txTable;
       this.configuration = configuration;
