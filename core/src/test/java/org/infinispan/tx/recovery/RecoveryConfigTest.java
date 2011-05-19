@@ -41,7 +41,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-@Test (groups = "functional", testName = "tx.recovery.RecoveryConfigTest")
+@Test (groups = "functional", testName = "tx.recovery.RecoveryConfigTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
 public class RecoveryConfigTest extends SingleCacheManagerTest {
 
    @Override

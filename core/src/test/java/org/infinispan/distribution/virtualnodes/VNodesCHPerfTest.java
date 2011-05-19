@@ -41,7 +41,7 @@ import static org.testng.Assert.*;
  * @author Dan Berindei <dberinde@redhat.com>
  * @since 5.0
  */
-@Test(testName = "distribution.VNodesCHPerfTest", groups = "manual")
+@Test(testName = "distribution.VNodesCHPerfTest", groups = "manual", enabled = false, description = "Manual tests should never be enabled since these get run by Hudson")
 public class VNodesCHPerfTest extends AbstractInfinispanTest {
 
    private Set<Address> createAddresses(int numNodes) {

@@ -23,7 +23,6 @@
 package org.infinispan.jmx;
 
 import org.easymock.EasyMock;
-import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.Configuration;
@@ -38,9 +37,6 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-
-import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.testng.Assert.assertEquals;
 import org.testng.annotations.Test;
 
 import javax.management.Attribute;
@@ -53,6 +49,10 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static org.easymock.EasyMock.*;
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.testng.Assert.assertEquals;
 
 /**
  * TODO: For some reason, if you add to any of the methods below 'assert false;'
@@ -71,7 +71,7 @@ import java.util.List;
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  */
-@Test(groups = "functional", testName = "jmx.RpcManagerMBeanTest")
+@Test(groups = "functional", testName = "jmx.RpcManagerMBeanTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
 public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
    private final String cachename = "repl_sync_cache";
    public static final String JMX_DOMAIN = RpcManagerMBeanTest.class.getSimpleName();
