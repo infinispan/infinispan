@@ -94,7 +94,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
       final Object removedValue = e.getValue();
       // If this is an AtomicMap, mark it as removed
-      if (removedValue != null && removedValue instanceof AtomicHashMap) ((AtomicHashMap) removedValue).markRemoved();
+      if (removedValue != null && removedValue instanceof AtomicHashMap) markAtomicMapRemoved((AtomicHashMap) removedValue);
       notify(ctx, removedValue, true);
       e.setRemoved(true);
       e.setValid(false);
@@ -109,6 +109,10 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          notify(ctx, null, false);
       }
       return value == null ? removedValue : true;
+   }
+
+   protected void markAtomicMapRemoved(AtomicHashMap atomicMap) {
+      atomicMap.markRemoved();
    }
 
    protected void notify(InvocationContext ctx, Object value, boolean isPre) {
