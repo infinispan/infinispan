@@ -118,6 +118,7 @@ public class SampleConfigFilesCorrectnessTest {
                   "Property ec2.access_key could not be replaced as intended",
                   "Property ec2.access_secret could not be replaced as intended",
                   "Property ec2.bucket could not be replaced as intended",
+                  "S3_PING could not be substituted",
                   "This might lead to performance problems. Please set your" // TCP and UDP send/recv buffer warnings
             };
       String unknownWarning;
