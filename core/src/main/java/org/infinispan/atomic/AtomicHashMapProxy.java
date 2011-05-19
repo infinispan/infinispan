@@ -78,7 +78,9 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
 
    // internal helper, reduces lots of casts.
    private AtomicHashMap<K, V> getDeltaMapForRead() {
-      return toMap(cache.get(deltaMapKey));
+      AtomicHashMap<K, V> ahm = toMap(cache.get(deltaMapKey));
+      assertValid(ahm);
+      return ahm;
    }
 
    @SuppressWarnings("unchecked")
@@ -113,6 +115,10 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    }
 
    // readers
+
+   private void assertValid(AtomicHashMap<?, ?> map) {
+      if (map == null || map.removed) throw new IllegalStateException("AtomicMap stored under key " + deltaMapKey + " has been concurrently removed!");
+   }
 
    public Set<K> keySet() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();

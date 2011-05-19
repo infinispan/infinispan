@@ -23,6 +23,7 @@
 package org.infinispan.atomic;
 
 import org.infinispan.Cache;
+import org.infinispan.context.Flag;
 
 import java.util.Collections;
 import java.util.Map;
@@ -106,7 +107,6 @@ public class AtomicMapLookup {
     * @param <MK> key param of the cache
     */
    public static <MK> void removeAtomicMap(Cache<MK, ?> cache, MK key) {
-      cache.remove(key);
+      cache.getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD).remove(key);
    }
-
 }

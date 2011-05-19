@@ -22,9 +22,7 @@
  */
 package org.infinispan.commands.write;
 
-import java.util.Collections;
-import java.util.Set;
-
+import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -33,6 +31,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Collections;
+import java.util.Set;
 
 
 /**
@@ -92,6 +93,8 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       }
 
       final Object removedValue = e.getValue();
+      // If this is an AtomicMap, mark it as removed
+      if (removedValue != null && removedValue instanceof AtomicHashMap) ((AtomicHashMap) removedValue).markRemoved();
       notify(ctx, removedValue, true);
       e.setRemoved(true);
       e.setValid(false);
