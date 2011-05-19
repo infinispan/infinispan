@@ -35,18 +35,19 @@ import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import org.infinispan.util.concurrent.locks.LockManager;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 
 /**
  * Tests deadlock detection for async caches.
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "tx.AsyncDeadlockDetectionTest")
+@Test(groups = "functional", testName = "tx.AsyncDeadlockDetectionTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
 public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {   
    private PerCacheExecutorThread t0;
    private PerCacheExecutorThread t1;

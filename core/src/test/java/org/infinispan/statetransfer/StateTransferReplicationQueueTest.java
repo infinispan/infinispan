@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Galder Zamarre�o
  * @since 4.1
  */
-@Test(groups = "functional", testName = "statetransfer.StateTransferReplicationQueueTest", enabled = true)
+@Test(groups = "functional", testName = "statetransfer.StateTransferReplicationQueueTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
 public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest {
 
    public static final String A_B_NAME = "a_b_name";

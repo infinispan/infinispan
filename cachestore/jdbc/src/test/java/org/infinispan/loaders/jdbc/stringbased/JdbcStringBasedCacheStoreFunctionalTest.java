@@ -29,7 +29,7 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreFunctionalTest")
+@Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreFunctionalTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
 public class JdbcStringBasedCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
 
    @Override

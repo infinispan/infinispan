@@ -56,7 +56,7 @@ import java.util.concurrent.TimeoutException;
  *
  * @author Manik Surtani
  */
-@Test(groups = "functional", testName = "loaders.ConcurrentLoadAndEvictTest")
+@Test(groups = "functional", testName = "loaders.ConcurrentLoadAndEvictTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
 public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
    SlowDownInterceptor sdi;
 

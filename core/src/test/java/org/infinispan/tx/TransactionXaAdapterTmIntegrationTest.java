@@ -41,7 +41,7 @@ import javax.transaction.xa.XAResource;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(testName = "tx.TransactionXaAdapterTmIntegrationTest", groups = "unit")
+@Test(testName = "tx.TransactionXaAdapterTmIntegrationTest", groups = "unit", enabled = false, description = "Disabled due to instability - see ISPN-1123")
 public class TransactionXaAdapterTmIntegrationTest {
    private Configuration configuration;
    private XaTransactionTable txTable;

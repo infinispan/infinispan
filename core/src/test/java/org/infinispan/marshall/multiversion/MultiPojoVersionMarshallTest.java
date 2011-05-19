@@ -34,8 +34,6 @@ import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CherryPickClassLoader;
 import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -58,10 +56,8 @@ import static org.testng.AssertJUnit.assertNull;
  * @author Galder Zamarreño
  * @since 5.0
  */
-@Test(groups = "functional", testName = "marshall.MultiPojoVersionMarshallTest")
+@Test(groups = "functional", testName = "marshall.MultiPojoVersionMarshallTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
 public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
-
-   private static final Log log = LogFactory.getLog(MultiPojoVersionMarshallTest.class);
 
    private static final String BASE = "org.infinispan.marshall.multiversion.MultiPojoVersionMarshallTest$";
    private static final String CAR = BASE + "Car";

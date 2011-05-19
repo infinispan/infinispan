@@ -47,7 +47,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-@Test(groups = "unit", testName = "config.parsing.Jbc2InfinispanTransformerTest")
+@Test(groups = "unit", testName = "config.parsing.Jbc2InfinispanTransformerTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
 public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
    public static final String XSLT_FILE = "xslt/jbc3x2infinispan4x.xslt";
    private static final String BASE_DIR = "configs/jbosscache3x";
