@@ -206,14 +206,14 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
       } else {
          sql = tableManipulation.getUpdateRowSql();
       }
-      if (log.isTraceEnabled()) {
-         log.tracef("Running sql '%s' on %s. Key string is '%s'", sql, ed, lockingKey);
-      }
       Connection connection = null;
       PreparedStatement ps = null;
       ByteBuffer byteBuffer = null;
       try {
          byteBuffer = JdbcUtil.marshall(getMarshaller(), ed.toInternalCacheValue());
+         if (log.isTraceEnabled()) {
+             log.tracef("Running sql '%s' on %s. Key string is '%s', value size is %d bytes", sql, ed, lockingKey, byteBuffer.getLength());
+         }
          connection = connectionFactory.getConnection();
          ps = connection.prepareStatement(sql);
          ps.setBinaryStream(1, byteBuffer.getStream(), byteBuffer.getLength());
