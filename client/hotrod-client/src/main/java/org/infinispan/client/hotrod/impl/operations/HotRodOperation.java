@@ -37,6 +37,8 @@ import java.util.LinkedHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.infinispan.util.Util.hexDump;
+
 /**
  * Generic Hot Rod operation. It is aware of {@link org.infinispan.client.hotrod.Flag}s and it is targeted against a
  * cache name. This base class encapsulates the knowledge of writing and reading a header, as described in the
@@ -100,18 +102,23 @@ public abstract class HotRodOperation implements HotRodConstants {
     */
    protected short readHeaderAndValidate(Transport transport, long messageId, short opRespCode) {
       short magic = transport.readByte();
+      boolean isTrace = log.isTraceEnabled();
       if (magic != HotRodConstants.RESPONSE_MAGIC) {
          String message = "Invalid magic number. Expected %#x and received %#x";
          log.error(message, HotRodConstants.RESPONSE_MAGIC, magic);
+         if (isTrace)
+            log.trace("Socket dump: %s", hexDump(transport.dumpStream()));
          throw new InvalidResponseException(String.format(message, HotRodConstants.RESPONSE_MAGIC, magic));
       }
       long receivedMessageId = transport.readVLong();
       if (receivedMessageId != messageId) {
          String message = "Invalid message id. Expected %d and received %d";
          log.error(message, messageId, receivedMessageId);
+         if (isTrace)
+            log.trace("Socket dump: %s", hexDump(transport.dumpStream()));
          throw new InvalidResponseException(String.format(message, messageId, receivedMessageId));
       }
-      if (log.isTraceEnabled()) {
+      if (isTrace) {
          log.trace("Received response for message id: %d", receivedMessageId);
       }
       short receivedOpCode = transport.readByte();
@@ -123,7 +130,7 @@ public abstract class HotRodOperation implements HotRodConstants {
                "Invalid response operation. Expected %#x and received %#x",
                opRespCode, receivedOpCode));
       }
-      if (log.isTraceEnabled()) {
+      if (isTrace) {
          log.trace("Received operation code is: %#04x", receivedOpCode);
       }
       short status = transport.readByte();
@@ -151,7 +158,7 @@ public abstract class HotRodOperation implements HotRodConstants {
             } if (msgFromServer.contains("SuspectException")) {
                if (isTrace)
                   log.trace("A remote node was suspected while executing messageId=%d. " +
-                     "Check if retry possible. Message from server: %s", messageId, msgFromServer);
+                                  "Check if retry possible. Message from server: %s", messageId, msgFromServer);
                // TODO: This will be better handled with its own status id in version 2 of protocol
                throw new RemoteNodeSuspecException(msgFromServer, messageId, status);
             } else {
@@ -180,9 +187,15 @@ public abstract class HotRodOperation implements HotRodConstants {
       int clusterSize = transport.readVInt();
 
       if (log.isTraceEnabled()) {
+<<<<<<< HEAD
          log.trace("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
                    "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
              newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
+=======
+         log.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
+                          "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
+                    newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
+>>>>>>> 7331a25... ISPN-1122 To help debug this issue dump socket contents upon failure
       }
 
       LinkedHashMap<InetSocketAddress, Integer> servers2HashCode = new LinkedHashMap<InetSocketAddress, Integer>();

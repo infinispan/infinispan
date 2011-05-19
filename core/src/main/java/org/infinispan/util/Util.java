@@ -477,4 +477,14 @@ public final class Util {
       return Integer.toHexString(System.identityHashCode(o));
    }
 
+   static final String HEX_VALUES = "0123456789ABCDEF";
+
+   public static String hexDump(byte[] buffer) {
+      StringBuilder buf = new StringBuilder(buffer.length << 1);
+      for (byte b : buffer)
+         buf.append(HEX_VALUES.charAt((b & 0xF0) >> 4))
+            .append(HEX_VALUES.charAt((b & 0x0F)));
+
+      return buf.toString();
+   }
 }
