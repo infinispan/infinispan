@@ -168,12 +168,12 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
       PreparedStatement ps = null;
       try {
          String sql = tableManipulation.getInsertRowSql();
+         ByteBuffer byteBuffer = JdbcUtil.marshall(getMarshaller(), bucket);
          if (log.isTraceEnabled()) {
-            log.tracef("Running insertBucket. Sql: '%s', on bucket: %s", sql, bucket);
+             log.tracef("Running insertBucket. Sql: '%s', on bucket: %s stored value size is %d bytes", sql, bucket, byteBuffer.getLength());
          }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
-         ByteBuffer byteBuffer = JdbcUtil.marshall(getMarshaller(), bucket);
          ps.setBinaryStream(1, byteBuffer.getStream(), byteBuffer.getLength());
          ps.setLong(2, bucket.timestampOfFirstEntryToExpire());
          ps.setString(3, bucket.getBucketIdAsString());
