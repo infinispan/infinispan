@@ -82,15 +82,6 @@ public class TransactionXaAdapter implements XAResource {
       this.txCoordinator = txCoordinator;
    }
 
-   public TransactionXaAdapter(TransactionTable txTable, Configuration configuration, InvocationContextContainer icc,
-                               RecoveryManager rm, TransactionCoordinator txCoordinator) {
-      this.txTable = (XaTransactionTable) txTable;
-      this.configuration = configuration;
-      this.recoveryManager = rm;
-      this.txCoordinator = txCoordinator;
-      localTransaction = null;
-   }
-
    /**
     * This can be call for any transaction object. See Section 3.4.6 (Resource Sharing) from JTA spec v1.1.
     */
