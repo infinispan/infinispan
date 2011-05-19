@@ -66,6 +66,10 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.stats.StatsImpl;
+import org.infinispan.transaction.TransactionCoordinator;
+import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.xa.TransactionXaAdapter;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.AbstractInProcessNotifyingFuture;
 import org.infinispan.util.concurrent.DeferredReturnFuture;
@@ -81,6 +85,7 @@ import org.rhq.helpers.pluginAnnotations.agent.Operation;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -126,6 +131,10 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    private ResponseGenerator responseGenerator;
    private DistributionManager distributionManager;
    private ExecutorService asyncExecutor;
+   private TransactionTable txTable;
+   private RecoveryManager recoveryManager;
+   private TransactionCoordinator txCoordinator;
+
    private final ThreadLocal<PreInvocationContext> flagHolder = new ThreadLocal<PreInvocationContext>() {
       protected PreInvocationContext initialValue() {
          return new PreInvocationContext();
@@ -150,7 +159,8 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
                                   StreamingMarshaller marshaller, ResponseGenerator responseGenerator,
                                   DistributionManager distributionManager,
                                   EmbeddedCacheManager cacheManager, StateTransferManager stateTransferManager,
-                                  @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor) {
+                                  @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
+                                  TransactionTable txTable, RecoveryManager recoveryManager, TransactionCoordinator txCoordinator) {
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.config = configuration;
@@ -168,6 +178,9 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       this.icc = icc;
       this.distributionManager = distributionManager;
       this.asyncExecutor = asyncExecutor;
+      this.txTable = txTable;
+      this.recoveryManager = recoveryManager;
+      this.txCoordinator = txCoordinator;
    }
 
    private void assertKeyNotNull(Object key) {
@@ -477,6 +490,11 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
 
    public Stats getStats() {
       return new StatsImpl(invoker);
+   }
+
+   @Override
+   public XAResource getXAResource() {
+      return new TransactionXaAdapter(null, txTable, config, recoveryManager, txCoordinator);
    }
 
    @SuppressWarnings("unchecked")

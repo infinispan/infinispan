@@ -34,6 +34,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.stats.Stats;
 
 import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
 import java.util.Collection;
 import java.util.List;
 
@@ -155,4 +156,10 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    TransactionManager getTransactionManager();
 
    Stats getStats();
+
+   /**
+    * Returns an Infinispan XAResource implementation. Useful e.g. for recovery, when the recovery process needs a
+    * reference to Infinispan's XAResource implementation.
+    */
+   XAResource getXAResource();
 }
