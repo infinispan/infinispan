@@ -103,7 +103,7 @@ public abstract class HotRodOperation implements HotRodConstants {
       short magic = transport.readByte();
       if (magic != HotRodConstants.RESPONSE_MAGIC) {
          String message = "Invalid magic number. Expected %#x and received %#x";
-         log.invalidMagicNumber(message, HotRodConstants.RESPONSE_MAGIC, magic);
+         log.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC, magic);
          throw new InvalidResponseException(String.format(message, HotRodConstants.RESPONSE_MAGIC, magic));
       }
       long receivedMessageId = transport.readVLong();
