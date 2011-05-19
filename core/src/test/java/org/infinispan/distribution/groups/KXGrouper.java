@@ -7,7 +7,7 @@ import org.infinispan.distribution.group.Grouper;
 
 /**
  * A simple grouper which groups String based keys using a pattern for kX keys
- * @author pmuir
+ * @author Pete Muir
  *
  */
 public class KXGrouper implements Grouper<String> {
