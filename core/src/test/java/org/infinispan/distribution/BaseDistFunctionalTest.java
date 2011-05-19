@@ -55,7 +55,6 @@ import java.util.concurrent.locks.LockSupport;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-@Test(groups = "functional", testName = "distribution.BaseDistFunctionalTest")
 public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected String cacheName;
    protected int INIT_CLUSTER_SIZE = 4;
@@ -112,7 +111,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
    }
 
-   public static ConsistentHash createNewConsistentHash(Collection<Address> servers) {
+   protected static ConsistentHash createNewConsistentHash(Collection<Address> servers) {
       try {
          Configuration c = new Configuration();
          c.setConsistentHashClass(DefaultConsistentHash.class.getName());
@@ -319,11 +318,11 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       return DistributionTestHelper.isFirstOwner(c, key);
    }
 
-   public Cache<Object, String>[] getOwners(Object key) {
+   protected Cache<Object, String>[] getOwners(Object key) {
       return getOwners(key, 2);
    }
 
-   public Cache<Object, String>[] getOwners(Object key, int expectedNumberOwners) {
+   protected Cache<Object, String>[] getOwners(Object key, int expectedNumberOwners) {
       Cache<Object, String>[] owners = new Cache[expectedNumberOwners];
       int i = 0;
       for (Cache<Object, String> c : caches) {

@@ -123,9 +123,9 @@ public class AsyncStore extends AbstractDelegatingStore {
    @Override
    public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
-      Configuration cacheCfg = cache.getConfiguration();
-      concurrencyLevel = cache == null || cacheCfg == null ? 16 : cacheCfg.getConcurrencyLevel();
-      int cacheStopTimeout = cacheCfg.getCacheStopTimeout();
+      Configuration cacheCfg = cache != null ? cache.getConfiguration() : null;
+      concurrencyLevel = cacheCfg != null ? cacheCfg.getConcurrencyLevel() : 16;
+      int cacheStopTimeout = cacheCfg != null ? cacheCfg.getCacheStopTimeout() : 30000;
       Long configuredAsyncStopTimeout = asyncStoreConfig.getShutdownTimeout();
 
       // Async store shutdown timeout cannot be bigger than

@@ -185,7 +185,9 @@ public class EntryFactoryImpl implements EntryFactory {
                mvccEntry.copyForUpdate(container, writeSkewCheck);
                notifier.notifyCacheEntryCreated(key, false, ctx);
             } else {
-               releaseLock(key);
+               if (lockAcquired) {
+                  releaseLock(key);
+               }
             }
          }
 

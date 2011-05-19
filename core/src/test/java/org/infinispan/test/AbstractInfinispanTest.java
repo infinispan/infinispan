@@ -26,6 +26,8 @@ import org.testng.annotations.AfterTest;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.testng.Assert.assertEquals;
 
@@ -38,22 +40,17 @@ import static org.testng.Assert.assertEquals;
  */
 public class AbstractInfinispanTest {
 
+   private Set<Thread> spawnedThreads = new HashSet<Thread>();
+
    @AfterTest(alwaysRun = true)
-   protected void nullifyInstanceFields() {
-      for (Class<?> current = this.getClass(); current.getSuperclass() != null; current = current.getSuperclass()) {
-         Field[] fields = current.getDeclaredFields();
-         for (Field f : fields) {
-            try {
-               if (!Modifier.isStatic(f.getModifiers()) && !f.getDeclaringClass().isPrimitive()) {
-                  f.setAccessible(true);
-                  f.set(this, null);
-               }
-            } catch (Exception e) {}
-         }
+   protected void killSpawnedThreads() {
+      for (Thread t : spawnedThreads) {
+         if (t.isAlive())
+            t.interrupt();
       }
    }
 
-   public void eventually(Condition ec, long timeout) {
+   protected void eventually(Condition ec, long timeout) {
       int loops = 10;
       long sleepDuration = timeout / loops;
       try {
@@ -68,45 +65,27 @@ public class AbstractInfinispanTest {
       }
    }
 
-   public void fork(Runnable r, boolean sync) {
-      final SyncForkSupport syncForkSupport = new SyncForkSupport(r);
-      Thread t = new Thread(syncForkSupport);
+   protected Thread fork(Runnable r, boolean sync) {
+      final Thread t = new Thread(r, "TestThread-" + r.hashCode());
+      spawnedThreads.add(t);
       t.start();
       if (sync) {
          eventually(new Condition() {
             @Override
             public boolean isSatisfied() throws Exception {
-               return syncForkSupport.done;
+               return t.getState().equals(Thread.State.TERMINATED);
             }
          });
       }
+      return t;
    }
 
 
-   public void eventually(Condition ec) {
+   protected void eventually(Condition ec) {
       eventually(ec, 10000);
    }
 
-   public interface Condition {
+   protected interface Condition {
       public boolean isSatisfied() throws Exception;
-   }
-
-   private class SyncForkSupport implements Runnable {
-
-      volatile Runnable realOne;
-      volatile boolean done = false;
-
-      private SyncForkSupport(Runnable realOne) {
-         this.realOne = realOne;
-      }
-
-      @Override
-      public void run() {
-         try {
-            realOne.run();
-         } finally {
-            done = true;
-         }
-      }
    }
 }
