@@ -537,6 +537,10 @@ public class Immutables {
          return entry.isRemoved();
       }
 
+      public boolean isEvicted() {
+         return entry.isEvicted();
+      }
+
       public boolean isValid() {
          return entry.isValid();
       }
@@ -551,6 +555,10 @@ public class Immutables {
 
       public void setRemoved(boolean removed) {
          throw new UnsupportedOperationException();
+      }
+
+      public void setEvicted(boolean evicted) {
+         entry.setEvicted(evicted);
       }
 
       public void setValid(boolean valid) {

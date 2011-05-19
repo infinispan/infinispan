@@ -22,7 +22,6 @@
  */
 package org.infinispan.commands.write;
 
-import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -93,26 +92,22 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       }
 
       final Object removedValue = e.getValue();
-      // If this is an AtomicMap, mark it as removed
-      if (removedValue != null && removedValue instanceof AtomicHashMap) markAtomicMapRemoved((AtomicHashMap) removedValue);
       notify(ctx, removedValue, true);
       e.setRemoved(true);
       e.setValid(false);
+
 
       // Eviction has no notion of pre/post event since 4.2.0.ALPHA4.
       // EvictionManagerImpl.onEntryEviction() triggers both pre and post events
       // with non-null values, so we should do the same here as an ugly workaround.
       if (this instanceof EvictCommand) {
+         e.setEvicted(true);
          notify(ctx, removedValue, false);
       } else {
          // FIXME: Do we really need to notify with null when a user can be given with more information?
          notify(ctx, null, false);
       }
       return value == null ? removedValue : true;
-   }
-
-   protected void markAtomicMapRemoved(AtomicHashMap atomicMap) {
-      atomicMap.markRemoved();
    }
 
    protected void notify(InvocationContext ctx, Object value, boolean isPre) {

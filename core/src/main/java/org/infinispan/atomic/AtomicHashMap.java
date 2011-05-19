@@ -173,8 +173,8 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       return proxy;
    }
 
-   public void markRemoved() {
-      removed = true;
+   public void markRemoved(boolean b) {
+      removed = b;
    }
 
    public Delta delta() {

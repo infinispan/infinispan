@@ -22,7 +22,6 @@
  */
 package org.infinispan.commands.write;
 
-import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
@@ -55,11 +54,6 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
       }
       super.perform(ctx);
       return null;
-   }
-
-   @Override
-   protected void markAtomicMapRemoved(AtomicHashMap atomicHashMap) {
-      // no-op
    }
 
    @Override

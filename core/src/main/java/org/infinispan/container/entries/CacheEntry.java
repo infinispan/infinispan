@@ -57,6 +57,12 @@ public interface CacheEntry extends Map.Entry<Object, Object> {
     */
    boolean isRemoved();
 
+
+   /**
+    * @return true if this entry has been evicted since being read from the container, false otherwise.
+    */
+   boolean isEvicted();
+
    /**
     * @return true if this entry is still valid, false otherwise.
     */
@@ -123,6 +129,8 @@ public interface CacheEntry extends Map.Entry<Object, Object> {
    void setCreated(boolean created);
 
    void setRemoved(boolean removed);
+
+   void setEvicted(boolean evicted);
 
    void setValid(boolean valid);
 

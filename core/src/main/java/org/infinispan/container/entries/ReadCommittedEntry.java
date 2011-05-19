@@ -66,7 +66,8 @@ public class ReadCommittedEntry implements MVCCEntry {
       CREATED(1 << 1),
       REMOVED(1 << 2),
       VALID(1 << 3),
-      LOCK_PLACEHOLDER(1 << 4);      
+      LOCK_PLACEHOLDER(1 << 4),
+      EVICTED(1 << 5);
 
       final byte mask;
 
@@ -164,7 +165,11 @@ public class ReadCommittedEntry implements MVCCEntry {
                       isRemoved(), isValid(), isChanged(), isCreated(), value);
 
          // Ugh!
-         if (value instanceof AtomicHashMap) ((AtomicHashMap) value).commit();
+         if (value instanceof AtomicHashMap) {
+            AtomicHashMap ahm = (AtomicHashMap) value;
+            ahm.commit();
+            if (isRemoved() && !isEvicted()) ahm.markRemoved(true);
+         }
 
          if (isRemoved()) {
             container.remove(key);
@@ -227,11 +232,22 @@ public class ReadCommittedEntry implements MVCCEntry {
       return isFlagSet(REMOVED);
    }
 
+   public boolean isEvicted() {
+      return isFlagSet(EVICTED);
+   }
+
    public final void setRemoved(boolean removed) {
       if (removed)
          setFlag(REMOVED);
       else
          unsetFlag(REMOVED);
+   }
+
+   public void setEvicted(boolean evicted) {
+      if (evicted)
+         setFlag(EVICTED);
+      else
+         unsetFlag(EVICTED);
    }
 
    @Override

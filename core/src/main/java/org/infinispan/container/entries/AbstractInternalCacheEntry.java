@@ -57,6 +57,10 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
       // no-op
    }
 
+   public final void setEvicted(boolean evicted) {
+      // no-op
+   }
+
    public final void setValid(boolean valid) {
       // no-op
    }
@@ -75,6 +79,10 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    public final boolean isRemoved() {
       return false;
+   }
+
+   public final boolean isEvicted() {
+      return true;
    }
 
    public final boolean isValid() {

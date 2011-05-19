@@ -229,11 +229,12 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
       assertEquals(nodeB, nodeA.getChildren().iterator().next());
 
       tm.begin();
+      System.out.println("Before: " + TreeStructureSupport.printTree(treeCache, true));
       // move node B up to hang off the root
       treeCache.move(nodeB.getFqn(), Fqn.ROOT);
-
+      System.out.println("After: " + TreeStructureSupport.printTree(treeCache, true));
       tm.commit();
-
+      System.out.println("Committed: " + TreeStructureSupport.printTree(treeCache, true));
       nodeB = rootNode.getChild(B);
 
       assertEquals(rootNode, nodeA.getParent());
