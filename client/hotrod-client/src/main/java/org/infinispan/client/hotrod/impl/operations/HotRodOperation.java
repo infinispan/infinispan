@@ -37,6 +37,8 @@ import java.util.LinkedHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.infinispan.util.Util.hexDump;
+
 /**
  * Generic Hot Rod operation. It is aware of {@link org.infinispan.client.hotrod.Flag}s and it is targeted against a
  * cache name. This base class encapsulates the knowledge of writing and reading a header, as described in the
@@ -101,18 +103,23 @@ public abstract class HotRodOperation implements HotRodConstants {
     */
    protected short readHeaderAndValidate(Transport transport, long messageId, short opRespCode) {
       short magic = transport.readByte();
+      boolean isTrace = log.isTraceEnabled();
       if (magic != HotRodConstants.RESPONSE_MAGIC) {
          String message = "Invalid magic number. Expected %#x and received %#x";
          log.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC, magic);
+         if (isTrace)
+            log.tracef("Socket dump: %s", hexDump(transport.dumpStream()));
          throw new InvalidResponseException(String.format(message, HotRodConstants.RESPONSE_MAGIC, magic));
       }
       long receivedMessageId = transport.readVLong();
       if (receivedMessageId != messageId) {
          String message = "Invalid message id. Expected %d and received %d";
          log.invalidMessageId(messageId, receivedMessageId);
+         if (isTrace)
+            log.tracef("Socket dump: %s", hexDump(transport.dumpStream()));
          throw new InvalidResponseException(String.format(message, messageId, receivedMessageId));
       }
-      if (log.isTraceEnabled()) {
+      if (isTrace) {
          log.tracef("Received response for message id: %d", receivedMessageId);
       }
       short receivedOpCode = transport.readByte();
@@ -124,7 +131,7 @@ public abstract class HotRodOperation implements HotRodConstants {
                "Invalid response operation. Expected %#x and received %#x",
                opRespCode, receivedOpCode));
       }
-      if (log.isTraceEnabled()) {
+      if (isTrace) {
          log.tracef("Received operation code is: %#04x", receivedOpCode);
       }
       short status = transport.readByte();
@@ -182,8 +189,8 @@ public abstract class HotRodOperation implements HotRodConstants {
 
       if (log.isTraceEnabled()) {
          log.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
-                   "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
-             newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
+                          "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
+                    newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
       }
 
       LinkedHashMap<InetSocketAddress, Integer> servers2HashCode = new LinkedHashMap<InetSocketAddress, Integer>();

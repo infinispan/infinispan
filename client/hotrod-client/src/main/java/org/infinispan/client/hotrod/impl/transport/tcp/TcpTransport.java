@@ -28,14 +28,17 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jgroups.util.Buffer;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -247,5 +250,25 @@ public class TcpTransport extends AbstractTransport {
 
    public long getId() {
       return id;
+   }
+
+   @Override
+   public byte[] dumpStream() {
+      ByteArrayOutputStream os = new ByteArrayOutputStream();
+      try {
+         socket.setSoTimeout(5000);
+         // Read 32kb at most
+         for (int i = 0; i < 32768; i++) {
+            int b = socketInputStream.read();
+            if (b < 0) {
+               break;
+            }
+            os.write(b);
+         }
+
+      } catch (IOException e) {
+         // Ignore
+      }
+      return os.toByteArray();
    }
 }
