@@ -187,9 +187,12 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       }
    }
 
-   private static class SlowToSerialize implements Externalizable {
+   public static class SlowToSerialize implements Externalizable {
       String val;
       transient long delay;
+
+      public SlowToSerialize() {
+      }
 
       private SlowToSerialize(String val, long delay) {
          this.val = val;
