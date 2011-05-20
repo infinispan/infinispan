@@ -82,10 +82,10 @@ public abstract class RetryOnFailureOperation extends HotRodOperation {
    protected void logErrorAndThrowExceptionIfNeeded(int i, HotRodClientException te) {
       String message = "Exception encountered. Retry %d out of %d";
       if (i == transportFactory.getTransportCount() - 1 || transportFactory.getTransportCount() < 0) {
-         log.warn(message, te);
+         log.error(message, te);
          throw te;
       } else {
-         log.trace(message, i, transportFactory.getTransportCount(), te);
+         log.trace(message, te, i, transportFactory.getTransportCount());
       }
    }
 
