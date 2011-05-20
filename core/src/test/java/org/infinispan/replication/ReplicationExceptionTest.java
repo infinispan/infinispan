@@ -40,8 +40,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.TimeoutException;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.fail;
 import org.testng.annotations.Test;
 
 import javax.transaction.NotSupportedException;
@@ -50,24 +48,38 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 import java.io.Serializable;
 
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.fail;
+
 @Test(groups = "functional", testName = "replication.ReplicationExceptionTest")
 public class ReplicationExceptionTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,true);
-      configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-      configuration.setLockAcquisitionTimeout(5000);
+      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,true)
+            .fluent()
+               .locking()
+                  .isolationLevel(IsolationLevel.REPEATABLE_READ)
+                  .lockAcquisitionTimeout(60000l)
+            .build();
       createClusteredCaches(2, "syncReplCache", configuration);
 
       Configuration replAsync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
       defineConfigurationOnAllManagers("asyncReplCache", replAsync);
 
-      Configuration replQueue = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
-      replQueue.setUseReplQueue(true);
+      Configuration replQueue = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true)
+            .fluent()
+               .clustering()
+                  .async()
+                     .useReplQueue(true)
+            .build();
       defineConfigurationOnAllManagers("replQueueCache", replQueue);
 
-      Configuration asyncMarshall = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
-      asyncMarshall.setUseAsyncMarshalling(true);
+      Configuration asyncMarshall = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true)
+            .fluent()
+               .clustering()
+                  .async()
+                     .asyncMarshalling(true)
+            .build();
       defineConfigurationOnAllManagers("asyncMarshallCache", asyncMarshall);
    }
 
@@ -148,8 +160,8 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
          }
       }, 0);
 
-      cache1.getConfiguration().setSyncReplTimeout(1);
-      cache2.getConfiguration().setSyncReplTimeout(1);
+      cache1.getConfiguration().setSyncReplTimeout(10);
+      cache2.getConfiguration().setSyncReplTimeout(10);
       TestingUtil.blockUntilViewsReceived(10000, cache1, cache2);
 
       cache1.put("k", "v");
@@ -159,7 +171,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
    public void testLockAcquisitionTimeout() throws Exception {
       AdvancedCache cache1 = cache(0, "syncReplCache").getAdvancedCache();
       AdvancedCache cache2 = cache(1, "syncReplCache").getAdvancedCache();
-      cache2.getConfiguration().setLockAcquisitionTimeout(1);
+      cache2.getConfiguration().setLockAcquisitionTimeout(10);
       TestingUtil.blockUntilViewsReceived(10000, cache1, cache2);
 
       // get a lock on cache 2 and hold on to it.

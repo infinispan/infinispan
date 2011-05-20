@@ -24,7 +24,6 @@ package org.infinispan.loaders;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import static org.infinispan.api.mvcc.LockAssert.assertNoLocks;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
@@ -46,7 +45,9 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.lang.reflect.Method;
 import java.util.Collections;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.api.mvcc.LockAssert.assertNoLocks;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
@@ -62,7 +63,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    TransactionManager tm;
    Configuration cfg;
    EmbeddedCacheManager cm;
-   long lifespan = 6000000; // very large lifespan so nothing actually expires
+   long lifespan = 60000000; // very large lifespan so nothing actually expires
 
    @BeforeTest
    public void setUp() {
