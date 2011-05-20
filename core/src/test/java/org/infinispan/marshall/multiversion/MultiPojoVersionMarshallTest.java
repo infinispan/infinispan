@@ -22,10 +22,12 @@
 
 package org.infinispan.marshall.multiversion;
 
+import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.CtMethod;
+import javassist.NotFoundException;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.marshall.Externalizer;
@@ -56,7 +58,7 @@ import static org.testng.AssertJUnit.assertNull;
  * @author Galder Zamarreño
  * @since 5.0
  */
-@Test(groups = "functional", testName = "marshall.MultiPojoVersionMarshallTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
+@Test(groups = "functional", testName = "marshall.MultiPojoVersionMarshallTest")
 public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
 
    private static final String BASE = "org.infinispan.marshall.multiversion.MultiPojoVersionMarshallTest$";
@@ -120,6 +122,8 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
       ClassLoader cherryPickCl = new CherryPickClassLoader(included, null, tccl);
       Thread.currentThread().setContextClassLoader(cherryPickCl);
       ClassPool pool = ClassPool.getDefault();
+      // Insert a classpath so that Maven does not complain about not finding the class
+      pool.insertClassPath(new ClassClassPath(Car.class));
       CtClass carCt = pool.get(CAR);
       try {
          carCt.addField(CtField.make("public int year;", carCt));
