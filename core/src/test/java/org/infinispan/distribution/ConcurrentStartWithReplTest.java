@@ -61,7 +61,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
       distCfg.setRehashEnabled(true);
    }
 
-   @Test(timeOut = 30000)
+   @Test(timeOut = 60000)
    public void testSequence1() throws ExecutionException, InterruptedException {
       /*
 
@@ -98,7 +98,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 //      doTest(false, false);
 //   }
 
-   @Test(timeOut = 30000)
+   @Test(timeOut = 60000)
    public void testSequence3() throws ExecutionException, InterruptedException {
       /*
 
@@ -115,7 +115,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
       doTest(true, true);
    }
 
-   @Test(timeOut = 30000)
+   @Test(timeOut = 60000)
    public void testSequence4() throws ExecutionException, InterruptedException {
       /*
 

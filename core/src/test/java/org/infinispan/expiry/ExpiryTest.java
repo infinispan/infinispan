@@ -32,11 +32,12 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import static org.testng.Assert.assertEquals;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.testng.Assert.assertEquals;
 
 @Test(groups = "functional", testName = "expiry.ExpiryTest")
 public class ExpiryTest extends AbstractInfinispanTest {
@@ -55,8 +56,8 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testLifespanExpiryInPut() throws InterruptedException {
-      Cache cache = cm.getCache();
-      long lifespan = 1000;
+      Cache<String, String> cache = cm.getCache();
+      long lifespan = 30000;
       cache.put("k", "v", lifespan, MILLISECONDS);
 
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
@@ -67,14 +68,14 @@ public class ExpiryTest extends AbstractInfinispanTest {
       assert se.getMaxIdle() == -1;
       assert !se.isExpired();
       assert cache.get("k").equals("v");
-      Thread.sleep(1100);
+      Thread.sleep(lifespan + 100);
       assert se.isExpired();
       assert cache.get("k") == null;
    }
 
    public void testIdleExpiryInPut() throws InterruptedException {
-      Cache cache = cm.getCache();
-      long idleTime = 1000;
+      Cache<String, String> cache = cm.getCache();
+      long idleTime = 30000;
       cache.put("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS);
 
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
@@ -85,16 +86,16 @@ public class ExpiryTest extends AbstractInfinispanTest {
       assert se.getMaxIdle() == idleTime;
       assert !se.isExpired();
       assert cache.get("k").equals("v");
-      Thread.sleep(1100);
+      Thread.sleep(idleTime + 100);
       assert se.isExpired();
       assert cache.get("k") == null;
    }
 
    public void testLifespanExpiryInPutAll() throws InterruptedException {
-      Cache cache = cm.getCache();
+      Cache<String, String> cache = cm.getCache();
       long startTime = System.currentTimeMillis();
-      long lifespan = 1000;
-      Map m = new HashMap();
+      long lifespan = 30000;
+      Map<String, String> m = new HashMap();
       m.put("k1", "v");
       m.put("k2", "v");
       cache.putAll(m, lifespan, MILLISECONDS);
@@ -104,8 +105,8 @@ public class ExpiryTest extends AbstractInfinispanTest {
          Thread.sleep(50);
       }
 
-      //make sure that in the next 2 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 2000) {
+      //make sure that in the next 30 secs data is removed
+      while (System.currentTimeMillis() < startTime + lifespan + 30000) {
          if (cache.get("k1") == null && cache.get("k2") == null) return;
       }
       assert cache.get("k1") == null;
@@ -113,9 +114,9 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testIdleExpiryInPutAll() throws InterruptedException {
-      Cache cache = cm.getCache();
-      long idleTime = 10000;
-      Map m = new HashMap();
+      Cache<String, String> cache = cm.getCache();
+      long idleTime = 30000;
+      Map<String, String> m = new HashMap();
       m.put("k1", "v");
       m.put("k2", "v");
       cache.putAll(m, -1, MILLISECONDS, idleTime, MILLISECONDS);
@@ -129,9 +130,9 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testLifespanExpiryInPutIfAbsent() throws InterruptedException {
-      Cache cache = cm.getCache();
+      Cache<String, String> cache = cm.getCache();
       long startTime = System.currentTimeMillis();
-      long lifespan = 1000;
+      long lifespan = 30000;
       assert cache.putIfAbsent("k", "v", lifespan, MILLISECONDS) == null;
       while (System.currentTimeMillis() < startTime + lifespan) {
          assert cache.get("k").equals("v");
@@ -139,7 +140,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       }
 
       //make sure that in the next 2 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 2000) {
+      while (System.currentTimeMillis() < startTime + lifespan + 30000) {
          if (cache.get("k") == null) break;
          Thread.sleep(50);
       }
@@ -150,8 +151,8 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testIdleExpiryInPutIfAbsent() throws InterruptedException {
-      Cache cache = cm.getCache();
-      long idleTime = 10000;
+      Cache<String, String> cache = cm.getCache();
+      long idleTime = 30000;
       assert cache.putIfAbsent("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS) == null;
       assert cache.get("k").equals("v");
 
@@ -164,8 +165,8 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testLifespanExpiryInReplace() throws InterruptedException {
-      Cache cache = cm.getCache();
-      long lifespan = 10000;
+      Cache<String, String> cache = cm.getCache();
+      long lifespan = 30000;
       assert cache.get("k") == null;
       assert cache.replace("k", "v", lifespan, MILLISECONDS) == null;
       assert cache.get("k") == null;
@@ -180,7 +181,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       }
 
       //make sure that in the next 2 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 2000) {
+      while (System.currentTimeMillis() < startTime + lifespan + 30000) {
          if (cache.get("k") == null) break;
          Thread.sleep(50);
       }
@@ -200,7 +201,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       }
 
       //make sure that in the next 2 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 2000) {
+      while (System.currentTimeMillis() < startTime + lifespan + 30000) {
          if (cache.get("k") == null) break;
          Thread.sleep(50);
       }
@@ -208,8 +209,8 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testIdleExpiryInReplace() throws InterruptedException {
-      Cache cache = cm.getCache();
-      long idleTime = 10000;
+      Cache<String, String> cache = cm.getCache();
+      long idleTime = 30000;
       assert cache.get("k") == null;
       assert cache.replace("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS) == null;
       assert cache.get("k") == null;
