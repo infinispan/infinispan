@@ -50,30 +50,29 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
+
 /**
  * Tests a thread going past the cache loader interceptor and the interceptor deciding that loading is not necessary,
  * then another thread rushing ahead and evicting the entry from memory.
  *
  * @author Manik Surtani
  */
-@Test(groups = "functional", testName = "loaders.ConcurrentLoadAndEvictTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
+@Test(groups = "functional", testName = "loaders.ConcurrentLoadAndEvictTest")
 public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
    SlowDownInterceptor sdi;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration config = new Configuration();
-      // we need a loader:
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      config.setCacheLoaderManagerConfig(clmc);
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
-
-      // we also need a custom interceptor to intercept get() calls after the CLI, to slow it down so an evict goes
-      // through first
-
       sdi = new SlowDownInterceptor();
-      CustomInterceptorConfig cic = new CustomInterceptorConfig(sdi);
-      cic.setAfterInterceptor(CacheLoaderInterceptor.class);
-      config.setCustomInterceptors(Collections.singletonList(cic));
+      // we need a loader and a custom interceptor to intercept get() calls
+      // after the CLI, to slow it down so an evict goes through first
+      Configuration config = new Configuration().fluent()
+         .loaders()
+            .addCacheLoader(new DummyInMemoryCacheStore.Cfg())
+         .customInterceptors()
+            .add(sdi).after(CacheLoaderInterceptor.class)
+         .build();
+
       return TestCacheManagerFactory.createCacheManager(config);
    }
  
@@ -86,6 +85,9 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       InternalCacheEntry se = cl.load("a");
       assert se != null;
       assert se.getValue().equals("b");
+
+      // clear the cache
+      cache.getAdvancedCache().withFlags(SKIP_CACHE_STORE).clear();
 
       // now attempt a concurrent get and evict.
       ExecutorService e = Executors.newFixedThreadPool(1);
@@ -124,24 +126,27 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       @Override
       public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
          if (enabled) {
-            getLatch.countDown();
+            log.trace("Wait for evict to give go ahead...");
             if (!evictLatch.await(60000, TimeUnit.MILLISECONDS))
-               throw new TimeoutException("Didn't see evict after 60 seconds!");
-         }
-         return invokeNextInterceptor(ctx, command);
-      }
-
-      @Override
-      public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-         if (enabled) {
-            if (!getLatch.await(60000, TimeUnit.MILLISECONDS))
                throw new TimeoutException("Didn't see get after 60 seconds!");
          }
          try {
             return invokeNextInterceptor(ctx, command);
          } finally {
-            if (enabled) evictLatch.countDown();
+            log.trace("After get, now let evict go through");
+            if (enabled) getLatch.countDown();
          }
+      }
+
+      @Override
+      public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+         if (enabled) {
+            evictLatch.countDown();
+            log.trace("Wait for get to finish...");
+            if (!getLatch.await(60000, TimeUnit.MILLISECONDS))
+               throw new TimeoutException("Didn't see evict after 60 seconds!");
+         }
+         return invokeNextInterceptor(ctx, command);
       }
       public SlowDownInterceptor clone(){
          try {
