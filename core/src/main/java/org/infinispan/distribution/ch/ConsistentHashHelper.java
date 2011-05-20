@@ -22,15 +22,22 @@
  */
 package org.infinispan.distribution.ch;
 
+import static java.util.Collections.emptyList;
+
 import org.infinispan.config.Configuration;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 import org.infinispan.util.hash.Hash;
-
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.distribution.group.GroupManagerImpl;
+import org.infinispan.distribution.group.Grouper;
 
 /**
  * A helper class that handles the construction of consistent hash instances based on configuration.
@@ -69,15 +76,25 @@ public class ConsistentHashHelper {
          wch.setHashFunction(h);
          wch.setNumVirtualNodes(c.getNumVirtualNodes());
       }
+      if (ch instanceof AbstractConsistentHash) {
+          AbstractConsistentHash ach = (AbstractConsistentHash) ch;
+          if (c.isGroupsEnabled())
+              ach.setGroupManager(new GroupManagerImpl(c.getGroupers()));
+      }
       return ch;
    }
 
-   private static ConsistentHash constructConsistentHashInstance(Class<? extends ConsistentHash> clazz, Hash hash, int numVirtualNodes) {
+   private static ConsistentHash constructConsistentHashInstance(Class<? extends ConsistentHash> clazz, Hash hash, int numVirtualNodes, GroupManager groupManager) {
       ConsistentHash ch = Util.getInstance(clazz);
       if (ch instanceof AbstractWheelConsistentHash) {
          AbstractWheelConsistentHash wch = (AbstractWheelConsistentHash) ch;
          wch.setHashFunction(hash);
          wch.setNumVirtualNodes(numVirtualNodes);
+      }
+      if (ch instanceof AbstractConsistentHash) {
+          AbstractConsistentHash ach = (AbstractConsistentHash) ch;
+          if (groupManager != null)
+              ach.setGroupManager(groupManager);
       }
       return ch;
    }
@@ -151,12 +168,14 @@ public class ConsistentHashHelper {
    public static ConsistentHash createConsistentHash(ConsistentHash template, Collection<Address> addresses) {
       Hash hf = null;
       int numVirtualNodes = 1;
+      GroupManager groupManager = null;
       if (template instanceof AbstractWheelConsistentHash) {
          AbstractWheelConsistentHash wTemplate = (AbstractWheelConsistentHash) template;
          hf = wTemplate.hashFunction;
          numVirtualNodes = wTemplate.numVirtualNodes;
+         groupManager = wTemplate.groupManager;
       }
-      ConsistentHash ch = constructConsistentHashInstance(template.getClass(), hf, numVirtualNodes);
+      ConsistentHash ch = constructConsistentHashInstance(template.getClass(), hf, numVirtualNodes, groupManager);
       if (addresses != null && !addresses.isEmpty())  ch.setCaches(toSet(addresses));
       return ch;
    }

@@ -28,6 +28,7 @@ import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
+import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.ComponentRegistry;
@@ -1256,6 +1257,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    
    public int getNumVirtualNodes() {
       return clustering.hash.numVirtualNodes;
+   }
+   
+   public boolean isGroupsEnabled() {
+      return clustering.hash.groupsEnabled;
+   }
+   
+   public List<Grouper<?>> getGroupers() {
+      return clustering.hash.groupers; 
    }
 
    public boolean isRehashEnabled() {
@@ -3107,6 +3116,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       
       @ConfigurationDocRef(bean = HashConfig.class, targetElement = "numVirtualNodes")
       protected Integer numVirtualNodes = 1;
+      
+      @XmlTransient
+      protected Boolean groupsEnabled = false;
+      
+      @XmlTransient
+      protected List<Grouper<?>> groupers = new ArrayList<Grouper<?>>();
 
       public void accept(ConfigurationBeanVisitor v) {
          v.visitHashType(this);
@@ -3256,6 +3271,25 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          setRehashEnabled(rehashEnabled);
          return this;
       }
+      
+      @Override
+      public HashConfig groupers(List<Grouper<?>> groupers) {
+         testImmutability("groupers");
+         this.groupers = groupers;
+         return this;
+      }
+      
+      @Override
+      public HashConfig groupsEnabled(Boolean groupsEnabled) {
+         testImmutability("groupsEnabled");
+         this.groupsEnabled = groupsEnabled;
+         return this;
+      }
+      
+      @Override
+      public List<Grouper<?>> getGroupers() {
+         return groupers;
+      }
 
       @Override
       public boolean equals(Object o) {
@@ -3270,6 +3304,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             return false;
          if (numOwners != null ? !numOwners.equals(hashType.numOwners) : hashType.numOwners != null) return false;
          if (numVirtualNodes != null ? !numVirtualNodes.equals(hashType.numVirtualNodes) : hashType.numVirtualNodes != null) return false;
+         if (groupsEnabled != null ? !groupsEnabled.equals(hashType.groupsEnabled) : hashType.groupsEnabled != null) return false;
+         if (groupers != null ? !groupers.equals(hashType.groupers) : hashType.groupers != null) return false;
          if (rehashRpcTimeout != null ? !rehashRpcTimeout.equals(hashType.rehashRpcTimeout) : hashType.rehashRpcTimeout != null)
             return false;
          if (rehashWait != null ? !rehashWait.equals(hashType.rehashWait) : hashType.rehashWait != null) return false;
@@ -3284,6 +3320,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          result = 31 * result + (hashFunctionClass != null ? hashFunctionClass.hashCode() : 0);
          result = 31 * result + (numOwners != null ? numOwners.hashCode() : 0);
          result = 31 * result + (numVirtualNodes != null ? numVirtualNodes.hashCode() : 0);
+         result = 31 * result + (groupsEnabled != null ? groupsEnabled.hashCode() : 0);
+         result = 31 * result + (groupers != null ? groupers.hashCode() : 0);
          result = 31 * result + (rehashWait != null ? rehashWait.hashCode() : 0);
          result = 31 * result + (rehashRpcTimeout != null ? rehashRpcTimeout.hashCode() : 0);
          result = 31 * result + (rehashEnabled ? 0 : 1);

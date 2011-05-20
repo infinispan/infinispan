@@ -166,10 +166,10 @@ public class ReflectionUtil {
     * @param method     method to execute
     * @param parameters parameters
     */
-   public static void invokeAccessibly(Object instance, Method method, Object[] parameters) {
+   public static Object invokeAccessibly(Object instance, Method method, Object[] parameters) {
       try {
          method.setAccessible(true);
-         method.invoke(instance, parameters);
+         return method.invoke(instance, parameters);
       }
       catch (Exception e) {
          throw new CacheException("Unable to invoke method " + method + " on object " + //instance +

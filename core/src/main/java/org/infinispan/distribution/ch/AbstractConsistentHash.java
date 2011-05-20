@@ -22,6 +22,7 @@
  */
 package org.infinispan.distribution.ch;
 
+import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;
@@ -47,6 +48,8 @@ import java.util.TreeSet;
 public abstract class AbstractConsistentHash implements ConsistentHash {
 
    protected Set<Address> caches;
+   
+   protected GroupManager groupManager;
 
    @Override
    public void setCaches(Set<Address> caches) {
@@ -78,10 +81,26 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       return locate(key, replCount).contains(a);
    }
 
+   public void setGroupManager(GroupManager groupManager) {
+      this.groupManager = groupManager;
+   }
+
    @Override
    public String toString() {
       return getClass().getSimpleName() + " {" +
             "caches=" + caches +
             '}';
    }
+   
+   /**
+    * Get the grouping, if any, for this key.
+    * 
+    * @param key the key to get the grouping for
+    * @return the group, or if no group is applicable, the key
+    */
+   protected Object getGrouping(Object key) {
+       String group = groupManager != null ? groupManager.getGroup(key) : null;
+       return group != null ? group : key;
+   }
+   
 }
