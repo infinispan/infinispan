@@ -80,7 +80,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    protected String className;
 
    @XmlElement
-   private TypedProperties properties = EMPTY_PROPERTIES;
+   private TypedProperties properties = new TypedProperties();
 
    public CustomInterceptorConfig() {
       super();

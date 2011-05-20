@@ -47,8 +47,7 @@ import java.util.Set;
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractConfigurationBean implements CloneableConfigurationComponent, JAXBUnmarshallable {
    private static final long serialVersionUID = 4879873994727821938L;
-   protected static final TypedProperties EMPTY_PROPERTIES = new TypedProperties();
-   protected transient Log log = LogFactory.getLog(getClass());  
+   protected transient Log log = LogFactory.getLog(getClass());
    private boolean accessible;
    protected Set<String> overriddenConfigurationElements = new HashSet<String>();
 
