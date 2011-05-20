@@ -187,15 +187,9 @@ public abstract class HotRodOperation implements HotRodConstants {
       int clusterSize = transport.readVInt();
 
       if (log.isTraceEnabled()) {
-<<<<<<< HEAD
          log.trace("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
                    "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
              newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
-=======
-         log.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
-                          "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
-                    newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
->>>>>>> 7331a25... ISPN-1122 To help debug this issue dump socket contents upon failure
       }
 
       LinkedHashMap<InetSocketAddress, Integer> servers2HashCode = new LinkedHashMap<InetSocketAddress, Integer>();
