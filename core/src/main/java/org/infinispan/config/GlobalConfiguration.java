@@ -1047,7 +1047,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       protected String nodeName = null;
 
       @XmlElement(name = "properties")
-      protected TypedProperties properties = EMPTY_PROPERTIES;
+      protected TypedProperties properties = new TypedProperties();
 
       public TransportType() {
          super();

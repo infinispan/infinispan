@@ -2689,7 +2689,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       protected String dataContainerClass = DefaultDataContainer.class.getName();
 
       @XmlElement(name = "properties")
-      protected TypedProperties properties = EMPTY_PROPERTIES;
+      protected TypedProperties properties = new TypedProperties();
 
       protected DataContainer dataContainer;
 
@@ -2724,7 +2724,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @Override
       public DataContainerConfig addProperty(String key, String value) {
-         if (this.properties == EMPTY_PROPERTIES) {
+         if (this.properties == null) {
             this.properties= new TypedProperties();
          }
          this.properties.setProperty(key, value);
@@ -4076,7 +4076,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
       
       @XmlElement(name = "properties")
-      protected TypedProperties properties = EMPTY_PROPERTIES;
+      protected TypedProperties properties = new TypedProperties();
       
       @Override
       public IndexingConfig withProperties(Properties properties) {
@@ -4087,7 +4087,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @Override
       public IndexingConfig addProperty(String key, String value) {
-         if (properties == EMPTY_PROPERTIES) {
+         if (properties == null) {
             properties = new TypedProperties();
          }
          this.properties.setProperty(key, value);
