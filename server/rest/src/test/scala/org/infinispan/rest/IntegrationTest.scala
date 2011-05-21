@@ -27,7 +27,7 @@ import org.apache.commons.httpclient.methods._
 import javax.servlet.http.{HttpServletResponse}
 import org.infinispan.remoting.MIMECacheEntry
 import java.io._
-import org.testng.annotations.Test
+import org.testng.annotations.{Test, BeforeClass, AfterClass}
 import org.testng.Assert._
 import java.lang.reflect.Method
 import org.infinispan.manager.CacheContainer
@@ -36,6 +36,7 @@ import org.infinispan.test.TestingUtil
 import java.text.SimpleDateFormat
 import org.apache.commons.httpclient.{HttpMethodBase, Header, HttpClient}
 import java.util.{Arrays, Calendar, Locale}
+import org.apache.commons.httpclient.HttpMethod
 
 /**
  * This tests using the Apache HTTP commons client library - but you could use anything
@@ -54,6 +55,16 @@ class IntegrationTest {
    val DATE_PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz";
 
    //val HOST = "http://localhost:8080/infinispan/"
+   
+   @BeforeClass
+   def setUp() = {
+      ServerInstance.start()
+   }
+   
+   @AfterClass
+   def tearDown() = {
+      ServerInstance.stop()
+   }
 
    def testBasicOperation(m: Method) = {
       // Now invoke...via HTTP
@@ -232,6 +243,54 @@ class IntegrationTest {
       TestingUtil.sleepThread((maxWaitTime + 1) * 1000)
       Client.call(get)
       assertEquals(HttpServletResponse.SC_NOT_FOUND, get.getStatusCode)
+   }
+
+   def testPutPreconditionUnimplemented(m: Method): Unit = {
+      testPutPreconditionUnimplemented(m, "If-Match")
+      testPutPreconditionUnimplemented(m, "If-None-Match")
+      testPutPreconditionUnimplemented(m, "If-Modified-Since")
+      testPutPreconditionUnimplemented(m, "If-Unmodified-Since")
+   }
+
+   private def testPutPreconditionUnimplemented(m: Method, preconditionalHeaderName: String) = {
+      val fullPathKey = fullPath + "/" + m.getName
+      val post = new PostMethod(fullPathKey)
+      post.setRequestHeader("Content-Type", "application/text")
+      post.setRequestHeader(preconditionalHeaderName, "*");
+      post.setRequestEntity(new StringRequestEntity("data", "text/plain", "UTF-8"))
+      Client.call(post)
+      
+      assertNotImplemented(post)
+   }
+
+   def testDeleteEntryPreconditionUnimplemented(m: Method) = {
+      testDeletePreconditionalUnimplemented(m, fullPath + "/" + m.getName)
+   }
+   
+   def testDeleteCachePreconditionUnimplemented(m: Method) = {
+      testDeletePreconditionalUnimplemented(m, fullPath)
+   }
+   
+   private def testDeletePreconditionalUnimplemented(m: Method, fullPathKey: String): Unit = {
+     testDeletePreconditionalUnimplemented(m, fullPathKey, "If-Match")
+     testDeletePreconditionalUnimplemented(m, fullPathKey, "If-None-Match")
+     testDeletePreconditionalUnimplemented(m, fullPathKey, "If-Modified-Since")
+     testDeletePreconditionalUnimplemented(m, fullPathKey, "If-Unmodified-Since")
+   }
+   
+   private def testDeletePreconditionalUnimplemented(
+         m: Method, fullPathKey: String, preconditionalHeaderName: String) = {
+      val delete = new DeleteMethod(fullPathKey)
+      delete.setRequestHeader(preconditionalHeaderName, "*");
+      Client.call(delete)
+      
+      assertNotImplemented(delete)
+   }
+   
+   private def assertNotImplemented(method: HttpMethod) = {
+      assertEquals(method.getStatusCode, 501)
+      assertEquals(method.getStatusText, "Not Implemented")
+      assert(method.getResponseBodyAsString.toLowerCase().contains("precondition"))
    }
 
    def testRemoveEntry(m: Method) = {
