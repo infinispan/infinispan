@@ -113,12 +113,16 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
    def putEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String,
                 @HeaderParam("Content-Type") mediaType: String, data: Array[Byte],
                 @DefaultValue("-1") @HeaderParam("timeToLiveSeconds") ttl: Long,
-                @DefaultValue("-1") @HeaderParam("maxIdleTimeSeconds") idleTime: Long): Response = {
+                @DefaultValue("-1") @HeaderParam("maxIdleTimeSeconds") idleTime: Long,
+                @DefaultValue("") @HeaderParam("If-Match") ifMatch: String,
+                @DefaultValue("") @HeaderParam("If-None-Match") ifNoneMatch: String,
+                @DefaultValue("") @HeaderParam("If-Modified-Since") ifModifiedSince: String,
+                @DefaultValue("") @HeaderParam("If-Unmodified-Since") ifUnmodifiedSince: String): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) =>
          val cache = ManagerInstance.getCache(cacheName)
          if (request.getMethod == "POST" && cache.containsKey(key)) {
             Response.status(Status.CONFLICT).build()
-         } else {
+         } else if (ifMatch.isEmpty && ifNoneMatch.isEmpty && ifModifiedSince.isEmpty && ifUnmodifiedSince.isEmpty) {
             val obj = if (isBinaryType(mediaType)) data else new MIMECacheEntry(mediaType, data)
             (ttl, idleTime, useAsync) match {
                case (0, 0, false) => cache.put(key, obj)
@@ -129,24 +133,49 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
                case (x, y, true) => cache.putAsync(key, obj, ttl, TimeUnit.SECONDS, idleTime, TimeUnit.SECONDS)
             }
             Response.ok.build
+         } else {
+            preconditionNotImplementedResponse()
          }
       }
    }
 
    @DELETE
    @Path("/{cacheName}/{cacheKey}")
-   def removeEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String) = {
-      if (useAsync) {
-         ManagerInstance.getCache(cacheName).removeAsync(key)
+   def removeEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String,
+                   @DefaultValue("") @HeaderParam("If-Match") ifMatch: String,
+                   @DefaultValue("") @HeaderParam("If-None-Match") ifNoneMatch: String,
+                   @DefaultValue("") @HeaderParam("If-Modified-Since") ifModifiedSince: String,
+                   @DefaultValue("") @HeaderParam("If-Unmodified-Since") ifUnmodifiedSince: String): Response = {
+      if (ifMatch.isEmpty && ifNoneMatch.isEmpty && ifModifiedSince.isEmpty && ifUnmodifiedSince.isEmpty) {
+         if (useAsync) {
+            ManagerInstance.getCache(cacheName).removeAsync(key)
+         } else {
+            ManagerInstance.getCache(cacheName).remove(key)
+         }
+         Response.ok.build
       } else {
-         ManagerInstance.getCache(cacheName).remove(key)
+         preconditionNotImplementedResponse
       }
    }
 
    @DELETE
    @Path("/{cacheName}")
-   def killCache(@PathParam("cacheName") cacheName: String) = {
-      ManagerInstance.getCache(cacheName).clear
+   def killCache(@PathParam("cacheName") cacheName: String,
+                 @DefaultValue("") @HeaderParam("If-Match") ifMatch: String,
+                 @DefaultValue("") @HeaderParam("If-None-Match") ifNoneMatch: String,
+                 @DefaultValue("") @HeaderParam("If-Modified-Since") ifModifiedSince: String,
+                 @DefaultValue("") @HeaderParam("If-Unmodified-Since") ifUnmodifiedSince: String): Response = {
+      if (ifMatch.isEmpty && ifNoneMatch.isEmpty && ifModifiedSince.isEmpty && ifUnmodifiedSince.isEmpty) {
+         ManagerInstance.getCache(cacheName).clear
+         Response.ok.build
+      } else {
+         preconditionNotImplementedResponse
+      }
+   }
+   
+   private def preconditionNotImplementedResponse() = {
+      Response.status(501).entity(
+         "Preconditions were not implemented yet for PUT, POST, and DELETE methods.").build()
    }
 
    val hashFunc = new MurmurHash3()
