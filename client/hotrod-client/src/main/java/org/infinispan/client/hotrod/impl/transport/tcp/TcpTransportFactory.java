@@ -80,6 +80,11 @@ public class TcpTransportFactory implements TransportFactory {
          balancer = (RequestBalancingStrategy) Util.getInstance(balancerClass);
          tcpNoDelay = cfg.getTcpNoDelay();
          soTimeout = cfg.getSoTimeout();
+         if (log.isDebugEnabled()) {
+            log.debugf("Statically configured servers: %s", staticConfiguredServers);
+            log.debugf("Load balancer class: %s", balancerClass);
+            log.debugf("Tcp no delay = %b; client socket timeout = %d ms", tcpNoDelay, soTimeout);
+         }
          PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TransportObjectFactory(this, topologyId, pingOnStartup), cfg.getProperties());
          createAndPreparePool(staticConfiguredServers, poolFactory);
          balancer.setServers(servers);
