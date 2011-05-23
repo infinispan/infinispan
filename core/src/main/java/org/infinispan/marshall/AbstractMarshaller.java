@@ -38,6 +38,14 @@ public abstract class AbstractMarshaller implements Marshaller {
 
    protected static final int DEFAULT_BUF_SIZE = 512;
 
+   private ThreadLocal<BufferSizePredictor> bufferSizePredictorTL =
+      new ThreadLocal<BufferSizePredictor>() {
+         @Override
+         protected BufferSizePredictor initialValue() {
+            return new AdaptiveBufferSizePredictor();
+         }
+      };
+
    /**
     * This is a convenience method for converting an object into a {@link org.infinispan.io.ByteBuffer} which takes
     * an estimated size as parameter. A {@link org.infinispan.io.ByteBuffer} allows direct access to the byte
@@ -52,17 +60,34 @@ public abstract class AbstractMarshaller implements Marshaller {
 
    @Override
    public ByteBuffer objectToBuffer(Object obj) throws IOException, InterruptedException {
-      return objectToBuffer(obj, DEFAULT_BUF_SIZE);
+      BufferSizePredictor sizePredictor = bufferSizePredictorTL.get();
+      int estimatedSize = sizePredictor.nextSize(obj);
+      ByteBuffer byteBuffer = objectToBuffer(obj, estimatedSize);
+      int length = byteBuffer.getLength();
+      // If the prediction is way off, then trim it
+      if (estimatedSize > (length * 4)) {
+         byte[] buffer = trimBuffer(byteBuffer);
+         byteBuffer = new ByteBuffer(buffer, 0, buffer.length);
+      }
+      sizePredictor.recordSize(length);
+      return byteBuffer;
    }
 
    @Override
    public byte[] objectToByteBuffer(Object o) throws IOException, InterruptedException {
-      return objectToByteBuffer(o, DEFAULT_BUF_SIZE);
+      BufferSizePredictor sizePredictor = bufferSizePredictorTL.get();
+      byte[] bytes = objectToByteBuffer(o, sizePredictor.nextSize(o));
+      sizePredictor.recordSize(bytes.length);
+      return bytes;
    }
 
    @Override
    public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
       ByteBuffer b = objectToBuffer(obj, estimatedSize);
+      return trimBuffer(b);
+   }
+
+   private byte[] trimBuffer(ByteBuffer b) {
       byte[] bytes = new byte[b.getLength()];
       System.arraycopy(b.getBuf(), b.getOffset(), bytes, 0, b.getLength());
       return bytes;
