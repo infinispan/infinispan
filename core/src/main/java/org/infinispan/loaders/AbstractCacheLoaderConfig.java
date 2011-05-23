@@ -58,7 +58,7 @@ public class AbstractCacheLoaderConfig extends AbstractNamedCacheConfigurationBe
    protected String cacheLoaderClassName;
      
    @XmlTransient
-   protected TypedProperties properties = EMPTY_PROPERTIES;
+   protected TypedProperties properties = new TypedProperties();
 
    public Properties getProperties() {
       return properties;
