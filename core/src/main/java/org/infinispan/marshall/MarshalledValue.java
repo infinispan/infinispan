@@ -31,7 +31,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
-import java.io.NotSerializableException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
@@ -69,7 +68,7 @@ public class MarshalledValue {
    private transient volatile boolean equalityPreferenceForInstance = true;
    private final StreamingMarshaller marshaller;
 
-   public MarshalledValue(Object instance, boolean equalityPreferenceForInstance, StreamingMarshaller marshaller) throws NotSerializableException {
+   public MarshalledValue(Object instance, boolean equalityPreferenceForInstance, StreamingMarshaller marshaller) {
       if (instance == null) throw new NullPointerException("Null values cannot be wrapped as MarshalledValues!");
 
       this.instance = instance;
@@ -77,12 +76,12 @@ public class MarshalledValue {
       this.marshaller = marshaller;
    }
 
-   public MarshalledValue(byte[] raw, int cachedHashCode, StreamingMarshaller marshaller) {
+   private MarshalledValue(byte[] raw, int cachedHashCode, StreamingMarshaller marshaller) {
       init(raw, cachedHashCode);
       this.marshaller = marshaller;
    }
 
-   public void init(byte[] raw, int cachedHashCode) {
+   private void init(byte[] raw, int cachedHashCode) {
       // for unmarshalling
       this.raw = raw;
       this.cachedHashCode = cachedHashCode;
