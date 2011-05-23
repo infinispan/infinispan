@@ -22,27 +22,25 @@
  */
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import net.jcip.annotations.ThreadSafe;
-import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
-import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.jgroups.util.Buffer;
+import static org.infinispan.io.UnsignedNumeric.*;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.infinispan.io.UnsignedNumeric.*;
+import net.jcip.annotations.ThreadSafe;
+
+import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Transport implementation based on TCP.
@@ -64,6 +62,8 @@ public class TcpTransport extends AbstractTransport {
    private final BufferedOutputStream socketOutputStream;
    private final InetSocketAddress serverAddress;
    private final long id = ID_COUNTER.incrementAndGet();
+
+   private volatile boolean invalid;
 
    public TcpTransport(InetSocketAddress serverAddress, TransportFactory transportFactory) {
       super(transportFactory);
@@ -87,6 +87,7 @@ public class TcpTransport extends AbstractTransport {
       try {
          writeUnsignedInt(socketOutputStream, vInt);
       } catch (IOException e) {
+         invalid = true;
          throw new TransportException(e);
       }
    }
@@ -95,6 +96,7 @@ public class TcpTransport extends AbstractTransport {
       try {
          writeUnsignedLong(socketOutputStream, l);
       } catch (IOException e) {
+         invalid = true;
          throw new TransportException(e);
       }
    }
@@ -103,6 +105,7 @@ public class TcpTransport extends AbstractTransport {
       try {
          return readUnsignedLong(socketInputStream);
       } catch (IOException e) {
+         invalid = true;
          throw new TransportException(e);
       }
    }
@@ -111,16 +114,20 @@ public class TcpTransport extends AbstractTransport {
       try {
          return readUnsignedInt(socketInputStream);
       } catch (IOException e) {
+         invalid = true;
          throw new TransportException(e);
       }
    }
 
+   @Override
    protected void writeBytes(byte[] toAppend) {
       try {
          socketOutputStream.write(toAppend);
-         if (trace)
+         if (trace) {
             log.tracef("Wrote %d bytes", toAppend.length);
+         }
       } catch (IOException e) {
+         invalid = true;
          throw new TransportException("Problems writing data to stream", e);
       }
    }
@@ -129,10 +136,12 @@ public class TcpTransport extends AbstractTransport {
    public void writeByte(short toWrite) {
       try {
          socketOutputStream.write(toWrite);
-         if (trace)
+         if (trace) {
             log.tracef("Wrote byte %d", toWrite);
+         }
 
       } catch (IOException e) {
+         invalid = true;
          throw new TransportException("Problems writing data to stream", e);
       }
    }
@@ -140,10 +149,12 @@ public class TcpTransport extends AbstractTransport {
    public void flush() {
       try {
          socketOutputStream.flush();
-         if (trace)
+         if (trace) {
             log.tracef("Flushed socket: %s", socket);
+         }
 
       } catch (IOException e) {
+         invalid = true;
          throw new TransportException(e);
       }
    }
@@ -153,6 +164,7 @@ public class TcpTransport extends AbstractTransport {
       try {
          resultInt = socketInputStream.read();
       } catch (IOException e) {
+         invalid = true;
          throw new TransportException(e);
       }
       if (resultInt == -1) {
@@ -165,6 +177,7 @@ public class TcpTransport extends AbstractTransport {
       try {
          socket.close();
       } catch (IOException e) {
+         invalid = true;
          log.errorClosingSocket(this, e);
       }
    }
@@ -182,6 +195,7 @@ public class TcpTransport extends AbstractTransport {
             }
             read = socketInputStream.read(result, offset, len);
          } catch (IOException e) {
+            invalid = true;
             throw new TransportException(e);
          }
          if (read == -1) {
@@ -191,7 +205,9 @@ public class TcpTransport extends AbstractTransport {
             done = true;
          } else {
             offset += read;
-            if (offset > result.length) throw new IllegalStateException("Assertion!");
+            if (offset > result.length) {
+               throw new IllegalStateException("Assertion!");
+            }
          }
       } while (!done);
       if (trace) {
@@ -215,13 +231,21 @@ public class TcpTransport extends AbstractTransport {
 
    @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o) {
+         return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+         return false;
+      }
 
       TcpTransport that = (TcpTransport) o;
 
-      if (serverAddress != null ? !serverAddress.equals(that.serverAddress) : that.serverAddress != null) return false;
-      if (socket != null ? !socket.equals(that.socket) : that.socket != null) return false;
+      if (serverAddress != null ? !serverAddress.equals(that.serverAddress) : that.serverAddress != null) {
+         return false;
+      }
+      if (socket != null ? !socket.equals(that.socket) : that.socket != null) {
+         return false;
+      }
 
       return true;
    }
@@ -240,12 +264,13 @@ public class TcpTransport extends AbstractTransport {
             log.tracef("Successfully closed socket: %s", socket);
          }
       } catch (IOException e) {
+         invalid = true;
          log.errorClosingSocket(this, e);
       }
    }
 
    public boolean isValid() {
-      return !socket.isClosed();
+      return !socket.isClosed() && !invalid;
    }
 
    public long getId() {
@@ -265,9 +290,14 @@ public class TcpTransport extends AbstractTransport {
             }
             os.write(b);
          }
-
       } catch (IOException e) {
          // Ignore
+      } finally {
+         try {
+            socket.close();
+         } catch (IOException e) {
+            // Ignore
+         }
       }
       return os.toByteArray();
    }
