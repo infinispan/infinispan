@@ -116,7 +116,7 @@ public final class FileMetadata implements Serializable {
       return "FileMetadata{" + "lastModified=" + lastModified + ", size=" + size + '}';
    }
    
-   public static class Externalizer extends AbstractExternalizer<FileMetadata> {
+   public static final class Externalizer extends AbstractExternalizer<FileMetadata> {
 
       @Override
       public void writeObject(ObjectOutput output, FileMetadata metadata) throws IOException {
