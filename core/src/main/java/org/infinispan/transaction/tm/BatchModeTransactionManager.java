@@ -33,9 +33,10 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 public class BatchModeTransactionManager extends DummyBaseTransactionManager {
-   static BatchModeTransactionManager instance = null;
-   static Log log = LogFactory.getLog(BatchModeTransactionManager.class);
+	
    private static final long serialVersionUID = 5656602677430350961L;
+
+   static BatchModeTransactionManager instance = null;
 
    public static BatchModeTransactionManager getInstance() {
       if (instance == null) {

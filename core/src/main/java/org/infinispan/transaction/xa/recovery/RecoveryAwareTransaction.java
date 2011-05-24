@@ -25,7 +25,7 @@ package org.infinispan.transaction.xa.recovery;
 import org.infinispan.transaction.xa.CacheTransaction;
 
 /**
- * Base interface fro transactions that are holders of recovery information.
+ * Base interface for transactions that are holders of recovery information.
  *
  * @author Mircea.Markus@jboss.com
  * @since 5.0

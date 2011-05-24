@@ -34,6 +34,9 @@ import java.io.InputStream;
  * @author Bela Ban
  */
 public class GridInputStream extends InputStream {
+
+   private static final Log log = LogFactory.getLog(GridInputStream.class);
+   
    final Cache<String, byte[]> cache;
    final int chunk_size;
    final String name;
@@ -42,7 +45,6 @@ public class GridInputStream extends InputStream {
    int local_index = 0;
    byte[] current_buffer = null;
    boolean end_reached = false;
-   final static Log log = LogFactory.getLog(GridInputStream.class);
 
    GridInputStream(GridFile file, Cache<String, byte[]> cache, int chunk_size) throws FileNotFoundException {
       this.file = file;

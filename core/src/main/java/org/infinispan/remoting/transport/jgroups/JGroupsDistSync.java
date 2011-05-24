@@ -53,7 +53,7 @@ public class JGroupsDistSync implements DistributedSync {
    private final AtomicInteger flushWaitGateCount = new AtomicInteger(0);
    private final ReclosableLatch flushWaitGate = new ReclosableLatch(false);   
    private static final Log log = LogFactory.getLog(JGroupsDistSync.class);
-   public static final boolean trace = log.isTraceEnabled();
+   private static final boolean trace = log.isTraceEnabled();
 
    public SyncResponse blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException {
       int initState = flushWaitGateCount.get();
