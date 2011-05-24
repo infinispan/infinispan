@@ -72,8 +72,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
       this.fileOps = fileList;
       this.buffer = new byte[this.bufferSize];
       this.firstChunkBuffer = buffer;
-      this.file = new FileMetadata();
-      this.file.setBufferSize(bufferSize);
+      this.file = new FileMetadata(bufferSize);
       if (trace) {
          log.tracef("Opened new IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
       }

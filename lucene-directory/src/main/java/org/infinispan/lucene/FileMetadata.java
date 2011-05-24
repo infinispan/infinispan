@@ -47,9 +47,10 @@ public final class FileMetadata implements Serializable {
    
    private long lastModified = 0;
    private long size = 0;
-   private int bufferSize;
+   private final int bufferSize;
 
-   public FileMetadata() {
+   public FileMetadata(int bufferSize) {
+      this.bufferSize = bufferSize;
    }
 
    private FileMetadata(long lastModified, long size, int bufferSize) {
@@ -76,10 +77,6 @@ public final class FileMetadata implements Serializable {
 
    public void setSize(long size) {
       this.size = size;
-   }
-
-   public void setBufferSize(int bufferSize) {
-      this.bufferSize = bufferSize;
    }
 
    public int getBufferSize() {
