@@ -25,6 +25,7 @@ package org.infinispan.remoting.transport.jgroups;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.parsing.XmlConfigHelper;
+import org.infinispan.jmx.JmxUtil;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.InboundInvocationHandler;
@@ -36,6 +37,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.util.FileLookup;
+import org.infinispan.util.StringPropertyReplacer;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -44,6 +46,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.jgroups.*;
 import org.jgroups.blocks.Request;
 import org.jgroups.blocks.RspFilter;
+import org.jgroups.jmx.JmxConfigurator;
 import org.jgroups.protocols.UDP;
 import org.jgroups.protocols.pbcast.STREAMING_STATE_TRANSFER;
 import org.jgroups.stack.AddressGenerator;
@@ -52,6 +55,9 @@ import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 import org.jgroups.util.TopologyUUID;
 
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
@@ -100,6 +106,9 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    final ConcurrentMap<String, StateTransferMonitor> stateTransfersInProgress = new ConcurrentHashMap<String, StateTransferMonitor>();
    private final JGroupsDistSync flushTracker = new JGroupsDistSync();
    long distributedSyncTimeout;
+   private boolean globalStatsEnabled;
+   private MBeanServer mbeanServer;
+   private String domain;
 
    /**
     * This form is used when the transport is created by an external source and passed in to the GlobalConfiguration.
@@ -144,9 +153,23 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    protected void startJGroupsChannelIfNeeded() {
       if (startChannel) {
          try {
-            channel.connect(configuration.getClusterName());
+            String clusterName = configuration.getClusterName();
+            channel.connect(clusterName);
+
+            // Normally this would be done by CacheManagerJmxRegistration but
+            // the channel is not started when the cache manager starts but
+            // when first cache starts, so it's safer to do it here.
+            globalStatsEnabled = configuration.isExposeGlobalJmxStatistics();
+            if (globalStatsEnabled) {
+               String groupName = String.format("type=channel,cluster=%s", clusterName);
+               mbeanServer = JmxUtil.lookupMBeanServer(configuration);
+               domain = JmxUtil.buildJmxDomain(configuration, mbeanServer, groupName);
+               JmxConfigurator.registerChannel((JChannel) channel, mbeanServer, domain, clusterName, true);
+            }
          } catch (ChannelException e) {
             throw new CacheException("Unable to start JGroups Channel", e);
+         } catch (Exception e) {
+            throw new CacheException("Channel connected, but unable to register MBeans", e);
          }
       }
       address = fromJGroupsAddress(channel.getAddress());
@@ -165,6 +188,14 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       try {
          if (stopChannel && channel != null && channel.isOpen()) {
             log.disconnectAndCloseJGroups();
+
+            // Unregistering before disconnecting/closing because
+            // after that the cluster name is null
+            if (globalStatsEnabled) {
+               JmxConfigurator.unregisterChannel((JChannel) channel,
+                  mbeanServer, domain, channel.getClusterName());
+            }
+
             channel.disconnect();
             channel.close();
          }

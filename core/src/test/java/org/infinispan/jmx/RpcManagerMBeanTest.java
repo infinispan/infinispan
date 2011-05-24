@@ -71,7 +71,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  */
-@Test(groups = "functional", testName = "jmx.RpcManagerMBeanTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
+@Test(groups = "functional", testName = "jmx.RpcManagerMBeanTest")
 public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
    private final String cachename = "repl_sync_cache";
    public static final String JMX_DOMAIN = RpcManagerMBeanTest.class.getSimpleName();
