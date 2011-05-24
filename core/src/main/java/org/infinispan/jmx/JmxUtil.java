@@ -43,11 +43,28 @@ public class JmxUtil {
 
    private static final Log log = LogFactory.getLog(JmxUtil.class);
 
+   /**
+    * Looks up the {@link javax.management.MBeanServer} instance based on the
+    * configuration parameters.
+    *
+    * @param cfg configuration instance indicating how to lookup
+    *            the {@link javax.management.MBeanServer}
+    * @return an instance of {@link javax.management.MBeanServer}
+    */
    public static MBeanServer lookupMBeanServer(GlobalConfiguration cfg) {
       MBeanServerLookup lookup = cfg.getMBeanServerLookupInstance();
       return lookup.getMBeanServer(cfg.getMBeanServerProperties());
    }
 
+   /**
+    * Build the JMX domain name.
+    *
+    * @param cfg configuration instance containig rules on JMX domains allowed
+    * @param mBeanServer the {@link javax.management.MBeanServer} where to
+    *                    check whether the JMX domain is allowed or not.
+    * @param groupName String containing the group name for the JMX MBean
+    * @return A string that combines the allowed JMX domain and the group name
+    */
    public static String buildJmxDomain(GlobalConfiguration cfg, MBeanServer mBeanServer, String groupName) {
       String jmxDomain = findJmxDomain(cfg.getJmxDomain(), mBeanServer, groupName);
       String configJmxDomain = cfg.getJmxDomain();
@@ -58,6 +75,14 @@ public class JmxUtil {
       return jmxDomain;
    }
 
+   /**
+    * Register the given dynamic JMX MBean.
+    *
+    * @param dynamicMBean Dynamic MBean to register
+    * @param objectName {@link javax.management.ObjectName} under which to register the MBean.
+    * @param mBeanServer {@link javax.management.MBeanServer} where to store the MBean.
+    * @throws Exception If registration could not be completed.
+    */
    public static void registerMBean(ResourceDMBean dynamicMBean, ObjectName objectName, MBeanServer mBeanServer) throws Exception {
       if (!mBeanServer.isRegistered(objectName)) {
          try {
@@ -73,6 +98,13 @@ public class JmxUtil {
       }
    }
 
+   /**
+    * Unregister the MBean located under the given {@link javax.management.ObjectName}
+    *
+    * @param objectName {@link javax.management.ObjectName} where the MBean is registered
+    * @param mBeanServer {@link javax.management.MBeanServer} from which to unregister the MBean.
+    * @throws Exception If unregistration could not be completed.
+    */
    public static void unregisterMBean(ObjectName objectName, MBeanServer mBeanServer) throws Exception {
       if (mBeanServer.isRegistered(objectName)) {
          mBeanServer.unregisterMBean(objectName);

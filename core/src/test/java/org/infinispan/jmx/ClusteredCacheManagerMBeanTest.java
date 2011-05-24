@@ -31,11 +31,12 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import javax.management.MBeanInfo;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
-import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.infinispan.test.TestingUtil.*;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Clustered cache manager MBean test
@@ -93,4 +94,12 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
       assert server.getAttribute(name2, "ClusterSize").equals(2);
    }
 
+   public void testJGroupsInformation() throws Exception {
+      ObjectName jchannelName1 = getJGroupsChannelObjectName(JMX_DOMAIN, manager(0).getClusterName());
+      ObjectName jchannelName2 = getJGroupsChannelObjectName(JMX_DOMAIN2, manager(1).getClusterName());
+      assertEquals(server.getAttribute(name1, "NodeAddress"), server.getAttribute(jchannelName1, "Address"));
+      assertEquals(server.getAttribute(name2, "NodeAddress"), server.getAttribute(jchannelName2, "Address"));
+      assert (Boolean) server.getAttribute(jchannelName1, "Connected");
+      assert (Boolean) server.getAttribute(jchannelName2, "Connected");
+   }
 }
