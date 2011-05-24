@@ -36,7 +36,7 @@ import org.infinispan.util.concurrent.ConcurrentHashSet;
  * @since 4.1
  */
 @SuppressWarnings("unchecked")
-class FileListOperations {
+final class FileListOperations {
    
    private final FileListCacheKey fileListCacheKey;
    private final AdvancedCache cache;
