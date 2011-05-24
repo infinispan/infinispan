@@ -56,19 +56,20 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
    
    @Test
    public void roundingTest() {
-      FileMetadata m = new FileMetadata();
-      m.setBufferSize(10);
+      FileMetadata m = new FileMetadata(10);
       Assert.assertEquals(0, m.getNumberOfChunks());
       m.setSize(10);
       Assert.assertEquals(1, m.getNumberOfChunks());
       m.setSize(11);
       Assert.assertEquals(2, m.getNumberOfChunks());
-      m.setBufferSize(11);
+      m = new FileMetadata(11);
+      m.setSize(11);
       Assert.assertEquals(1, m.getNumberOfChunks());
       m.setSize(22);
       Assert.assertEquals(2, m.getNumberOfChunks());
       m.setSize(31);
-      m.setBufferSize(10);
+      m = new FileMetadata(10);
+      m.setSize(31);
       Assert.assertEquals(4, m.getNumberOfChunks());
    }
    
