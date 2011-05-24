@@ -44,7 +44,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
    private static final Log log = LogFactory.getLog(DldGlobalTransaction.class);
 
-   public static final boolean trace = log.isTraceEnabled();
+   private static final boolean trace = log.isTraceEnabled();
 
    protected volatile long coinToss;
 

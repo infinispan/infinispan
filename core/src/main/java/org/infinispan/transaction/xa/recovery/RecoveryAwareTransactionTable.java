@@ -49,7 +49,7 @@ import java.util.Set;
  */
 public class RecoveryAwareTransactionTable extends XaTransactionTable {
 
-   private static Log log = LogFactory.getLog(RecoveryAwareTransactionTable.class);
+   private static final Log log = LogFactory.getLog(RecoveryAwareTransactionTable.class);
 
    private RecoveryManagerImpl recoveryManager;
 

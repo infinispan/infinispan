@@ -58,8 +58,10 @@ import java.util.Map;
  */
 @Test(groups = "functional", testName = "replication.SyncCacheListenerTest")
 public class SyncCacheListenerTest extends MultipleCacheManagersTest {
+
+   private static final Log log = LogFactory.getLog(SyncCacheListenerTest.class);
+
    private Cache<Object, Object> cache1, cache2;
-   private final static Log log = LogFactory.getLog(SyncCacheListenerTest.class);
 
    protected void createCacheManagers() throws Throwable {
       Configuration conf = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
