@@ -22,14 +22,20 @@
  */
 package org.infinispan.loaders.jdbc.stringbased;
 
+import org.infinispan.Cache;
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.infinispan.util.ByteArrayKey;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreFunctionalTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
+import java.lang.reflect.Method;
+
+@Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreFunctionalTest")
 public class JdbcStringBasedCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
 
    @Override
@@ -40,4 +46,7 @@ public class JdbcStringBasedCacheStoreFunctionalTest extends BaseCacheStoreFunct
       return config;
    }
 
+   @Test(enabled = false, description = "JdbcStringBasedCacheStore does not support ByteArrayKey yet")
+   public void testByteArrayKey(Method m) {
+   }
 }
