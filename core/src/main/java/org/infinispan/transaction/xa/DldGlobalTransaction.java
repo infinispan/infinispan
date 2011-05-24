@@ -106,11 +106,11 @@ public class DldGlobalTransaction extends GlobalTransaction {
             "} " + super.toString();
    }
 
-   public synchronized boolean isMarkedForRollback() {
+   public boolean isMarkedForRollback() {
       return isMarkedForRollback;
    }
 
-   public synchronized void setMarkedForRollback(boolean markedForRollback) {
+   public void setMarkedForRollback(boolean markedForRollback) {
       isMarkedForRollback = markedForRollback;
    }
 
