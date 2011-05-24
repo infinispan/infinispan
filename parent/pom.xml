@@ -307,6 +307,7 @@
                <parallel>tests</parallel>
                <threadCount>${infinispan.test.parallel.threads}</threadCount>
                <forkMode>none</forkMode>
+               <groups>${defaultTestGroup}</groups>
                <systemProperties>
                   <property>
                      <name>infinispan.test.jgroups.protocol</name>
