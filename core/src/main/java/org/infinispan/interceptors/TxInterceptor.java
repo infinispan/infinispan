@@ -102,7 +102,18 @@ public class TxInterceptor extends CommandInterceptor {
          for (VisitableCommand modification : command.getModifications()) {
             VisitableCommand toReplay = getCommandToReplay(modification);
             if (toReplay != null) {
-               invokeNextInterceptor(ctx, toReplay);
+               try {
+                  invokeNextInterceptor(ctx, toReplay);
+               } catch (Exception e) {
+                  // If exception encountered, i.e. DeadlockDetectedException
+                  // in an async env (i.e. isOnePhaseCommit()), clear the
+                  // remote transaction, otherwise it leaks
+                  if (command.isOnePhaseCommit())
+                     markCompleted(ctx, command.getGlobalTransaction(), false);
+
+                  // Now rethrow the original exception
+                  throw e;
+               }
             }
          }
       }
