@@ -114,7 +114,8 @@ public interface Marshaller {
     * 
     * @param o object to verify whether it's marshallable or not
     * @return true if the object is marshallable, otherwise false
+    * @throws Exception if while checking whether the object was serializable or not, an exception arose
     */
-   boolean isMarshallable(Object o);
+   boolean isMarshallable(Object o) throws Exception;
 }
 

@@ -146,11 +146,25 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
 
    private void checkMarshallable(Object... objs) throws NotSerializableException {
       for (Object o : objs) {
-         if (!marshaller.isMarshallable(o))
-            throw new NotSerializableException(String.format(
-               "Object of type %s expected to be marshallable", o.getClass()
-            ));
+         boolean marshallable = false;
+         try {
+            marshallable = marshaller.isMarshallable(o);
+         } catch (Exception e) {
+            throwNotSerializable(o, e);
+         }
+
+         if (!marshallable)
+            throwNotSerializable(o, null);
       }
+   }
+
+   private void throwNotSerializable(Object o, Throwable t) {
+      String msg = String.format(
+            "Object of type %s expected to be marshallable", o.getClass());
+      if (t == null)
+         throw new NotSerializableException(msg);
+      else
+         throw new NotSerializableException(msg, t);
    }
 
    private void checkMarshallable(Map<Object, Object> objs) throws NotSerializableException {
