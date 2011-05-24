@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Galder Zamarre�o
  * @since 4.1
  */
-@Test(groups = "functional", testName = "statetransfer.StateTransferReplicationQueueTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
+@Test(groups = "functional", testName = "statetransfer.StateTransferReplicationQueueTest")
 public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest {
 
    public static final String A_B_NAME = "a_b_name";
@@ -190,10 +190,13 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
       }
    }
 
-   private static class PojoValue implements Externalizable {
+   public static class PojoValue implements Externalizable {
       Log log = LogFactory.getLog(PojoValue.class);
       static AtomicBoolean holdUp = new AtomicBoolean();
       volatile int value;
+
+      public PojoValue() {
+      }
 
       public PojoValue(int value) {
          this.value = value;
