@@ -47,8 +47,8 @@ import static org.testng.Assert.assertFalse;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "tx.AsyncDeadlockDetectionTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
-public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {   
+@Test(groups = "functional", testName = "tx.AsyncDeadlockDetectionTest")
+public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {
    private PerCacheExecutorThread t0;
    private PerCacheExecutorThread t1;
    private RemoteReplicationInterceptor remoteReplicationInterceptor;
@@ -142,7 +142,7 @@ public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {
          replListener(cache0).expectWithTx(PutKeyValueCommand.class, PutKeyValueCommand.class);
          assertEquals(t1.execute(PerCacheExecutorThread.Operations.COMMIT_TX), PerCacheExecutorThread.OperationsResult.COMMIT_TX_OK);
          replListener(cache0).waitForRpc();
-         assertEquals(transactionTable1.getLocalTxCount(), 0);         
+         assertEquals(transactionTable1.getLocalTxCount(), 0);
       }
 
       DeadlockDetectingLockManager ddLm0 = (DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache0);
