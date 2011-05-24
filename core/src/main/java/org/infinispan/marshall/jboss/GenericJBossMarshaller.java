@@ -203,7 +203,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
    }
 
    @Override
-   public boolean isMarshallable(Object o) {
+   public boolean isMarshallable(Object o) throws Exception {
       Class clazz = o.getClass();
       Object isClassMarshallable = isMarshallableMap.get(clazz);
       if (isClassMarshallable != null) {
@@ -214,7 +214,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
             try {
                objectToBuffer(o);
             } catch (Exception e) {
-               isMarshallable = false;
+               throw e;
             } finally {
                isMarshallableMap.putIfAbsent(clazz, isMarshallable);
             }
