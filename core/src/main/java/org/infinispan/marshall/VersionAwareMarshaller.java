@@ -198,7 +198,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
    }
 
    @Override
-   public boolean isMarshallable(Object o) {
+   public boolean isMarshallable(Object o) throws Exception {
       return defaultMarshaller.isMarshallable(o);
    }
 }
