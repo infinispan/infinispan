@@ -131,7 +131,8 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
      */
     public Future<V> submit(Callable<V> task) {
         if (task == null) throw new NullPointerException();
-        Future<V> f = executor.submit(task);
+        NotifyingFuture<V> f = (NotifyingFuture<V>) executor.submit(task);
+        f.attachListener(listener);
         return f;
     }
 
@@ -143,7 +144,8 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
      */
     public Future<V> submit(Runnable task, V result) {
         if (task == null) throw new NullPointerException();
-        Future<V> f = executor.submit(task, result);
+        NotifyingFuture<V> f = (NotifyingFuture<V>) executor.submit(task, result);
+        f.attachListener(listener);
         return f;
     }
 

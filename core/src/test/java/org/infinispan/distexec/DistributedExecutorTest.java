@@ -23,6 +23,7 @@
 package org.infinispan.distexec;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -107,6 +108,45 @@ public class DistributedExecutorTest extends BaseDistFunctionalTest {
       }
 
       assert exceptionCount == 1;
+   }
+   
+   public void testInvokeAny() throws Exception {
+
+      DistributedExecutorService des = new DefaultExecutorService(c1);
+
+      List<SimpleCallable> tasks = new ArrayList<SimpleCallable>();
+      tasks.add(new SimpleCallable());
+      Integer result = des.invokeAny(tasks);
+      assert result == 1;
+      
+      tasks = new ArrayList<SimpleCallable>();
+      tasks.add(new SimpleCallable());
+      tasks.add(new SimpleCallable());
+      result = des.invokeAny(tasks);
+      assert result == 1;
+   }
+   
+   public void testInvokeAll() throws Exception {
+
+      DistributedExecutorService des = new DefaultExecutorService(c1);
+
+      List<SimpleCallable> tasks = new ArrayList<SimpleCallable>();
+      tasks.add(new SimpleCallable());
+      List<Future<Integer>> list = des.invokeAll(tasks);
+      assert list.size() == 1;
+      Future<Integer> future = list.get(0);
+      assert future.get() == 1;
+      
+      tasks = new ArrayList<SimpleCallable>();
+      tasks.add(new SimpleCallable());
+      tasks.add(new SimpleCallable());
+      tasks.add(new SimpleCallable());
+      
+      list = des.invokeAll(tasks);
+      assert list.size() == 3;
+      for (Future<Integer> f : list) {
+         assert f.get() == 1;
+      }            
    }
    
    /**
@@ -251,7 +291,7 @@ public class DistributedExecutorTest extends BaseDistFunctionalTest {
 
       @Override
       public Integer call() throws Exception {
-         throw new Exception("Intenttional Exception from ExceptionThrowingCallable");
+         throw new Exception("Intentional Exception from ExceptionThrowingCallable");
       }
    }
 
