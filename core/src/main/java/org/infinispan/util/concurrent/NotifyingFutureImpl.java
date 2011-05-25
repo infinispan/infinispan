@@ -45,6 +45,7 @@ public class NotifyingFutureImpl implements NotifyingNotifiableFuture<Object> {
 
    final Object actualReturnValue;
    volatile Future<Object> ioFuture;
+   //TODO revisit if volatile needed
    volatile boolean callCompleted = false;
    final Set<FutureListener<Object>> listeners = new CopyOnWriteArraySet<FutureListener<Object>>();
    final ReadWriteLock listenerLock = new ReentrantReadWriteLock();

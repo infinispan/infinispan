@@ -33,11 +33,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -48,6 +50,8 @@ import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -478,8 +482,12 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     */
    private static class DistributedRunnableFuture<V> implements RunnableFuture<V>, NotifyingNotifiableFuture<V> {
 
-      protected final DistributedExecuteCommand<V> distCommand;
-      protected volatile Future<V> f;
+      private final DistributedExecuteCommand<V> distCommand;
+      private volatile Future<V> f;
+      //TODO revisit if volatile needed
+      private volatile boolean callCompleted = false;
+      private final Set<FutureListener<V>> listeners = new CopyOnWriteArraySet<FutureListener<V>>();
+      private final ReadWriteLock listenerLock = new ReentrantReadWriteLock();
 
       /**
        * Creates a <tt>DistributedRunnableFuture</tt> that will upon running, execute the given
@@ -534,13 +542,25 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       public void run() {
       }
 
-      @Override
       public void notifyDone() {
+         listenerLock.writeLock().lock();
+         try {
+            callCompleted = true;
+            for (FutureListener<V> l : listeners) l.futureDone(this);
+         } finally {
+            listenerLock.writeLock().unlock();
+         }
       }
 
-      @Override
       public NotifyingFuture<V> attachListener(FutureListener<V> listener) {
-         return this;
+         listenerLock.readLock().lock();
+         try {
+            if (!callCompleted) listeners.add(listener);
+            if (callCompleted) listener.futureDone(this);
+            return this;
+         } finally {
+            listenerLock.readLock().unlock();
+         }
       }
 
       @Override
