@@ -183,6 +183,22 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       assert lazyLru.getEvictionStrategy() == EvictionStrategy.LRU;
    }
 
+   public void testDefineConfigurationTwice() {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      try {
+         Configuration override = new Configuration();
+         override.fluent().invocationBatching();
+         assert override.isInvocationBatchingEnabled();
+         assert cm.defineConfiguration("test1", override).isInvocationBatchingEnabled();
+         Configuration config = new Configuration();
+         config.applyOverrides(override);
+         assert config.isInvocationBatchingEnabled();
+         assert cm.defineConfiguration("test2", config).isInvocationBatchingEnabled();
+      } finally {
+         cm.stop();
+      }
+   }
+
    public void testGetCacheNames() {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       try {
