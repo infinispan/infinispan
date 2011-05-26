@@ -39,7 +39,7 @@ import java.util.Set;
  * @author Galder Zamarreño
  * @since 5.0
  */
-@Test(groups = "functional", testName = "client.hotrod.VersionAwareMarshallerTest")
+@Test(groups = "functional", testName = "client.hotrod.ApacheAvroMarshallerTest")
 public class ApacheAvroMarshallerTest {
 
    private final ApacheAvroMarshaller marshaller = new ApacheAvroMarshaller();

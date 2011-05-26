@@ -37,7 +37,7 @@ import java.util.Properties;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test
+@Test(testName = "client.hotrod.ServerRestartTest", groups = "functional")
 public class ServerRestartTest extends SingleCacheManagerTest {
 
    private static final Log log = LogFactory.getLog(HotRodIntegrationTest.class);

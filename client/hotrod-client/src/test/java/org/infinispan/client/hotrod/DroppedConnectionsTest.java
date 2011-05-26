@@ -65,13 +65,15 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   @AfterClass
-   public void shutDownHotrod() {
+   @AfterClass(alwaysRun=true)
+   @Override
+   protected void teardown() {
+      super.teardown();
       remoteCacheManager.stop();
       hotRodServer.stop();
    }
 
-   public void closedConnectionTest() throws Exception {
+   public void testClosedConnection() throws Exception {
       rc.put("k","v"); //make sure a connection is created
 
       GenericKeyedObjectPool keyedObjectPool = transportFactory.getConnectionPool();
