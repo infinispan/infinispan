@@ -464,7 +464,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          throw new IOException("Injected failue!");
       }
 
-   };
+   }
 
    public void testErrorUnmarshalling() throws Exception {
       Pojo pojo = new PojoWhichFailsOnUnmarshalling();

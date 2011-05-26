@@ -289,7 +289,7 @@ public class TestingUtil {
 
       while (System.currentTimeMillis() < failTime) {
          sleepThread(100);
-         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+         EmbeddedCacheManager cacheManager = cache.getCacheManager();
          if (isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), groupSize, barfIfTooManyMembersInView)) {
             return;
          }
@@ -316,7 +316,7 @@ public class TestingUtil {
       int memberCount = caches.length;
 
       for (int i = 0; i < memberCount; i++) {
-         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) caches[i].getCacheManager();
+         EmbeddedCacheManager cacheManager = caches[i].getCacheManager();
          if (!isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), memberCount, barfIfTooManyMembers)) {
             return false;
          }
@@ -375,7 +375,7 @@ public class TestingUtil {
     * @param memberCount
     */
    public static boolean isCacheViewComplete(Cache c, int memberCount) {
-      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) c.getCacheManager();
+      EmbeddedCacheManager cacheManager = c.getCacheManager();
       return isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), memberCount, true);
    }
 
@@ -557,7 +557,7 @@ public class TestingUtil {
    }
 
    private static void removeInMemoryData(Cache cache) {
-      EmbeddedCacheManager mgr = (EmbeddedCacheManager) cache.getCacheManager();
+      EmbeddedCacheManager mgr = cache.getCacheManager();
       Address a = mgr.getAddress();
       String str;
       if (a == null)
@@ -757,7 +757,7 @@ public class TestingUtil {
          if (c == null) {
             System.out.println("  ** Cache " + count + " is null!");
          } else {
-            EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) c.getCacheManager();
+            EmbeddedCacheManager cacheManager = c.getCacheManager();
             System.out.println("  ** Cache " + count + " is " + cacheManager.getAddress());
          }
          count++;

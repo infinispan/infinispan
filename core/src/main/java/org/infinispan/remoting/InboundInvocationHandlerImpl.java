@@ -345,7 +345,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          super("RetryQueueProcessor-" + (cacheName.equals(CacheContainer.DEFAULT_CACHE_NAME) ? "DEFAULT" : cacheName) + "@" + cacheAddress);
          setDaemon(true);
          setPriority(Thread.MAX_PRIORITY);
-         start();
+         this.start();
       }
 
       public Response enqueue(CacheRpcCommand command) throws Throwable {

@@ -22,7 +22,6 @@
  */
 package org.infinispan.affinity;
 
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
 
@@ -49,7 +48,7 @@ public class LocalKeyAffinityServiceTest extends BaseFilterKeyAffinityServiceTes
                return new Thread(r, "KeyGeneratorThread");
             }
          };
-         cacheManager = (EmbeddedCacheManager) caches.get(0).getCacheManager();
+         cacheManager = caches.get(0).getCacheManager();
          keyAffinityService = (KeyAffinityServiceImpl) KeyAffinityServiceFactory.
                newLocalKeyAffinityService(cacheManager.getCache(cacheName), new RndKeyGenerator(),
                                           Executors.newSingleThreadExecutor(tf), 100);

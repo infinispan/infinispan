@@ -329,11 +329,11 @@ public class InfinispanDirectoryIOTest {
       InfinispanDirectory dir = new InfinispanDirectory(cache, cache, cache, INDEXNAME, BUFFER_SIZE);
 
       // create file headers
-      FileMetadata file1 = new FileMetadata();
+      FileMetadata file1 = new FileMetadata(5);
       FileCacheKey key1 = new FileCacheKey(INDEXNAME, "Hello.txt");
       cache.put(key1, file1);
 
-      FileMetadata file2 = new FileMetadata();
+      FileMetadata file2 = new FileMetadata(5);
       FileCacheKey key2 = new FileCacheKey(INDEXNAME, "World.txt");
       cache.put(key2, file2);
 

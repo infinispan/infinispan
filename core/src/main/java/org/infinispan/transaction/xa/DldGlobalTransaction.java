@@ -44,7 +44,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
    private static final Log log = LogFactory.getLog(DldGlobalTransaction.class);
 
-   public static final boolean trace = log.isTraceEnabled();
+   private static final boolean trace = log.isTraceEnabled();
 
    protected volatile long coinToss;
 
@@ -106,11 +106,11 @@ public class DldGlobalTransaction extends GlobalTransaction {
             "} " + super.toString();
    }
 
-   public synchronized boolean isMarkedForRollback() {
+   public boolean isMarkedForRollback() {
       return isMarkedForRollback;
    }
 
-   public synchronized void setMarkedForRollback(boolean markedForRollback) {
+   public void setMarkedForRollback(boolean markedForRollback) {
       isMarkedForRollback = markedForRollback;
    }
 

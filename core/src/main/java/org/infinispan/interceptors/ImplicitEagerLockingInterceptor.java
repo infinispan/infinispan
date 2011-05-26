@@ -114,6 +114,6 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
    }
 
    private boolean shouldAcquireRemoteLock(InvocationContext ctx) {
-      return ctx.isInTxScope() & ctx.isOriginLocal() && !ctx.hasFlag(Flag.CACHE_MODE_LOCAL);
+      return ctx.isInTxScope() && ctx.isOriginLocal() && !ctx.hasFlag(Flag.CACHE_MODE_LOCAL);
    }
 }

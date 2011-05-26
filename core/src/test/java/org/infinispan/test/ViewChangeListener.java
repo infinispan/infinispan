@@ -42,7 +42,7 @@ public class ViewChangeListener {
    final CountDownLatch latch = new CountDownLatch(1);
 
    public ViewChangeListener(Cache c) {
-      this((EmbeddedCacheManager) c.getCacheManager());
+      this(c.getCacheManager());
    }
 
    public ViewChangeListener(EmbeddedCacheManager cm) {

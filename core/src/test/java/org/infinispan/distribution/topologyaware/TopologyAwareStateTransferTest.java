@@ -89,7 +89,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
 
    @Test (dependsOnMethods = "testInitialState")
    public void testNodeDown() {
-      EmbeddedCacheManager cm = (EmbeddedCacheManager) cache(addresses[4]).getCacheManager();
+      EmbeddedCacheManager cm = cache(addresses[4]).getCacheManager();
       log.info("Here is where ST starts");
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
@@ -113,7 +113,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
 
    @Test (dependsOnMethods = "testNodeDown")
    public void testNodeDown2() {
-      EmbeddedCacheManager cm = (EmbeddedCacheManager) cache(addresses[2]).getCacheManager();
+      EmbeddedCacheManager cm = cache(addresses[2]).getCacheManager();
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
       BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(addresses[0]), cache(addresses[1]), cache(addresses[3]));
@@ -126,7 +126,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
 
    @Test (dependsOnMethods = "testNodeDown2")
    public void testNodeDown3() {
-      EmbeddedCacheManager cm = (EmbeddedCacheManager) cache(addresses[1]).getCacheManager();
+      EmbeddedCacheManager cm = cache(addresses[1]).getCacheManager();
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
       BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(addresses[0]), cache(addresses[3]));

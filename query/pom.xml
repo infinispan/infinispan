@@ -74,13 +74,6 @@
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
-      
-      <dependency>
-         <groupId>org.slf4j</groupId>
-         <artifactId>slf4j-log4j12</artifactId>
-         <version>${version.slf4j}</version>
-         <scope>test</scope>
-     </dependency>
 
    </dependencies>
 

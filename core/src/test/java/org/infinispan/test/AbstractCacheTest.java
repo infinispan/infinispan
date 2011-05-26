@@ -114,6 +114,6 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
    }
 
    public EmbeddedCacheManager manager(Cache c) {
-      return (EmbeddedCacheManager) c.getCacheManager();
+      return c.getCacheManager();
    }
 }
