@@ -134,10 +134,13 @@ public class ExpiryTest extends AbstractInfinispanTest {
       long startTime = System.currentTimeMillis();
       long lifespan = 30000;
       assert cache.putIfAbsent("k", "v", lifespan, MILLISECONDS) == null;
-      while (System.currentTimeMillis() < startTime + lifespan) {
-         assert cache.get("k").equals("v");
-         Thread.sleep(50);
-      }
+      long partial = lifespan / 10;
+       // Sleep some time within the lifespan boundaries
+      Thread.sleep(lifespan - partial);
+      assert cache.get("k").equals("v");
+      // Sleep some time that guarantees that it'll be over the lifespan
+      Thread.sleep(partial * 2);
+      assert cache.get("k") == null;
 
       //make sure that in the next 2 secs data is removed
       while (System.currentTimeMillis() < startTime + lifespan + 30000) {
