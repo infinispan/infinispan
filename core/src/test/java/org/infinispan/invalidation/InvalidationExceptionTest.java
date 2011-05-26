@@ -43,14 +43,17 @@ public class InvalidationExceptionTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration invalidAsync = getDefaultClusteredConfig(Configuration.CacheMode.INVALIDATION_ASYNC,true);
+      Configuration invalidAsync = getDefaultClusteredConfig(
+            Configuration.CacheMode.INVALIDATION_ASYNC, true);
       createClusteredCaches(2, "invalidAsync", invalidAsync);
 
-      Configuration replQueue = getDefaultClusteredConfig(Configuration.CacheMode.INVALIDATION_ASYNC,true);
+      Configuration replQueue = getDefaultClusteredConfig(
+            Configuration.CacheMode.INVALIDATION_ASYNC, true);
       replQueue.setUseReplQueue(true);
       defineConfigurationOnAllManagers("invalidReplQueueCache", replQueue);
 
-      Configuration asyncMarshall = getDefaultClusteredConfig(Configuration.CacheMode.INVALIDATION_ASYNC,true);
+      Configuration asyncMarshall = getDefaultClusteredConfig(
+            Configuration.CacheMode.INVALIDATION_ASYNC, true);
       asyncMarshall.setUseAsyncMarshalling(true);
       defineConfigurationOnAllManagers("invalidAsyncMarshallCache", asyncMarshall);
    }
@@ -71,7 +74,7 @@ public class InvalidationExceptionTest extends MultipleCacheManagersTest {
       AdvancedCache cache1 = cache(0, cacheName).getAdvancedCache();
       AdvancedCache cache2 = cache(1, cacheName).getAdvancedCache();
       try {
-         cache1.put(new ReplicationExceptionTest.ContainerData(), "test");
+         cache1.put(new ReplicationExceptionTest.ContainerData(), "test-" + cacheName);
          // We should not come here.
          assertNotNull("NonSerializableData should not be null on cache2", cache2.get("test"));
       } catch (RuntimeException runtime) {

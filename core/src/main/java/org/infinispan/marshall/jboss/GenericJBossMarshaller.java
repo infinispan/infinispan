@@ -214,6 +214,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
             try {
                objectToBuffer(o);
             } catch (Exception e) {
+               isMarshallable = false;
                throw e;
             } finally {
                isMarshallableMap.putIfAbsent(clazz, isMarshallable);
