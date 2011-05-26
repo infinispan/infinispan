@@ -107,6 +107,9 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
 
    @Override
    public void setCaches(Set<Address> newCaches) {
+      if (newCaches.size() == 0 || newCaches.contains(null))
+         throw new IllegalArgumentException("Invalid cache list for consistent hash: " + newCaches);
+
       caches = new LinkedHashSet<Address>(newCaches.size());
 
       positions = new TreeMap<Integer, Address>();
