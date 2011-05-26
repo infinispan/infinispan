@@ -60,7 +60,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
       cacheManager = null;
    }
 
-   @BeforeClass()
+   @BeforeClass(alwaysRun = true)
    protected void createBeforeClass() throws Exception {
       try {
          if (cleanupAfterTest()) setup();

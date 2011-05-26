@@ -47,7 +47,7 @@ import java.util.concurrent.Executors;
 /**
  * @author Mircea Markus
  */
-@Test (groups = "functional", testName = "client.hotrod.ConsistentHashV1Test")
+@Test (groups = "functional", testName = "client.hotrod.ConsistentHashV1IntegrationTest")
 public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
 
    private HotRodServer hotRodServer1;
