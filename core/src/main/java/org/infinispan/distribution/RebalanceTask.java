@@ -193,7 +193,7 @@ public class RebalanceTask extends RehashTask {
          // now we can inform the coordinator that we have finished our push
          Transport t = rpcManager.getTransport();
          if (t.isCoordinator()) {
-            distributionManager.markNodePushCompleted(t.getViewId(), t.getAddress());
+            distributionManager.markNodePushCompleted(newViewId, t.getAddress());
          } else {
             final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED, self, newViewId);
 
