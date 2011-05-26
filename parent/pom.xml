@@ -461,7 +461,7 @@
       </repository>
       <repository>
          <id>jboss</id>
-         <url>http://repository.jboss.org/maven2</url>
+         <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
       </repository>
       <repository>
          <id>scala-tools.org</id>
@@ -472,12 +472,17 @@
             <updatePolicy>never</updatePolicy>
          </snapshots>
       </repository>
+      <!-- needed for the scala-tools build plugins -->
+      <repository>
+         <id>glassfish.java.net</id>
+         <url>http://download.java.net/maven/glassfish</url>
+      </repository>
    </repositories>
 
    <pluginRepositories>
       <pluginRepository>
          <id>jboss</id>
-         <url>http://repository.jboss.org/maven2</url>
+         <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
       </pluginRepository>
 
       <pluginRepository>
