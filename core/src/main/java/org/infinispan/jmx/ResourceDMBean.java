@@ -142,7 +142,6 @@ public class ResourceDMBean implements DynamicMBean {
    }
 
    public synchronized MBeanInfo getMBeanInfo() {
-
       return new MBeanInfo(getObject().getClass().getCanonicalName(), description, attrInfo, null,
               opInfos, null);
    }
@@ -262,17 +261,16 @@ public class ResourceDMBean implements DynamicMBean {
                } else { // getter
                   if (method.getParameterTypes().length == 0
                           && method.getReturnType() != java.lang.Void.TYPE) {
-                     boolean hasSetter = atts.containsKey(attributeName);
                      // we found is method
                      if (methodName.startsWith("is")) {
                         attributeName = methodName.substring(2);
-                        info = new MBeanAttributeInfo(attributeName, method.getReturnType()
-                                .getCanonicalName(), attr.description(), true, hasSetter, true);
+                        info = new MBeanAttributeInfo(attributeName, method.getReturnType().getCanonicalName(),
+                              attr.description(), true, atts.containsKey(attributeName), true);
                      } else {
                         // this has to be get
                         attributeName = methodName.substring(3);
-                        info = new MBeanAttributeInfo(attributeName, method.getReturnType()
-                                .getCanonicalName(), attr.description(), true, hasSetter, false);
+                        info = new MBeanAttributeInfo(attributeName, method.getReturnType().getCanonicalName(),
+                              attr.description(), true, atts.containsKey(attributeName), false);
                      }
                   } else {
                      log.invalidManagedAttributeMethod(method.getName());
@@ -380,7 +378,7 @@ public class ResourceDMBean implements DynamicMBean {
       }
    }
 
-   private Attribute getNamedAttribute(String name) {
+   private synchronized Attribute getNamedAttribute(String name) {
       Attribute result = null;
       if (name.equals(MBEAN_DESCRITION)) {
          result = new Attribute(MBEAN_DESCRITION, this.description);

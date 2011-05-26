@@ -34,6 +34,7 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.*;
 import org.infinispan.notifications.cachemanagerlistener.event.*;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.LegacyKeySupportSystemProperties;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -344,7 +345,12 @@ public class InfinispanDemo {
 
                if (cacheManager == null) {
                   // update config file display
-                  cacheManager = new DefaultCacheManager(resource.openStream());                                    
+                  InputStream stream = resource.openStream();
+                  try {
+                     cacheManager = new DefaultCacheManager(stream);
+                  } finally {
+                     Util.close(stream);
+                  }
                } 
                cache = cacheManager.getCache();    
                cache.start();
@@ -353,19 +359,23 @@ public class InfinispanDemo {
                configFileName.setText(resource.toString());
                configFileName.repaint();
 
+               InputStream is = null;
                try {
-                  configFileContents.setText(readContents(resource.openStream()));
+                  is = resource.openStream();
+                  configFileContents.setText(readContents(is));
                   configFileContents.setEditable(false);
                }
                catch (Exception e) {
                   log.warn("Unable to open config file [" + cacheConfigFile + "] for display", e);
+               } finally {
+                  Util.close(is);
                }
                configFileContents.repaint();
 
 
                CacheListener cl = new CacheListener();
                cache.addListener(cl);
-               EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+               EmbeddedCacheManager cacheManager = cache.getCacheManager();
                cacheManager.addListener(cl);
                updateClusterTable(cacheManager.getMembers());
 

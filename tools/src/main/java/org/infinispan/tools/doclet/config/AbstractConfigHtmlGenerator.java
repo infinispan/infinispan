@@ -201,7 +201,11 @@ public abstract class AbstractConfigHtmlGenerator extends HtmlGenerator {
                      + " not found on classpath. Documentation creation aborted");
 
          XSOMParser reader = new XSOMParser();
-         reader.parse(file);
+         try {
+            reader.parse(file);
+         } finally {
+            file.close();
+         }
          XSSchemaSet xss = reader.getResult();
          XSOMSchemaTreeWalker w = new XSOMSchemaTreeWalker(xss.getSchema(1), getRootElementName());
          TreeNode root = w.getRoot();

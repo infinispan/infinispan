@@ -32,6 +32,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -91,7 +92,12 @@ public class ModuleProperties extends Properties {
         while (resources.hasMoreElements()) {
             URL url = resources.nextElement();
             ModuleProperties props = new ModuleProperties();
-            props.load(url.openStream());
+            InputStream inStream = url.openStream();
+            try {
+               props.load(inStream);
+            } finally {
+               Util.close(inStream);
+            }
             props.verify();
 
             if (props.getName().equalsIgnoreCase(moduleName)) {
@@ -110,7 +116,12 @@ public class ModuleProperties extends Properties {
             try {
                url = resources.nextElement();
                ModuleProperties props = new ModuleProperties();
-               props.load(url.openStream());
+               InputStream inStream = url.openStream();
+               try {
+                  props.load(inStream);
+               } finally {
+                  Util.close(inStream);
+               }
                props.verify();
                map.put(props.getName(), props);
             } catch (Exception e) {

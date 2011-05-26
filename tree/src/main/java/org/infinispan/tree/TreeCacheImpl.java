@@ -334,7 +334,11 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    public Map<K, V> getData(Fqn fqn) {
       startAtomic();
       try {
-         return getNode(fqn).getData();
+         Node<K, V> node = getNode(fqn);
+         if (node != null)
+            return null;
+         else
+            return node.getData();
       }
       finally {
          endAtomic();
@@ -366,7 +370,11 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    public Set<K> getKeys(Fqn fqn) {
       startAtomic();
       try {
-         return getNode(fqn).getKeys();
+         Node<K, V> node = getNode(fqn);
+         if (node != null)
+            return null;
+         else
+            return node.getKeys();
       }
       finally {
          endAtomic();
@@ -398,7 +406,9 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    public void clearData(Fqn fqn) {
       startAtomic();
       try {
-         getNode(fqn).clearData();
+         Node<K, V> node = getNode(fqn);
+         if (node != null)
+            node.clearData();
       }
       finally {
          endAtomic();

@@ -22,6 +22,8 @@
  */
 package org.infinispan.transaction.lookup;
 
+import org.infinispan.util.Util;
+
 import javax.naming.InitialContext;
 import javax.transaction.TransactionManager;
 
@@ -35,7 +37,12 @@ import javax.transaction.TransactionManager;
 public class JBossTransactionManagerLookup implements TransactionManagerLookup {
 
    public TransactionManager getTransactionManager() throws Exception {
-      return (TransactionManager) new InitialContext().lookup("java:/TransactionManager");
+      InitialContext initialContext = new InitialContext();
+      try {
+         return (TransactionManager) initialContext.lookup("java:/TransactionManager");
+      } finally {
+         Util.close(initialContext);
+      }
    }
 
 }

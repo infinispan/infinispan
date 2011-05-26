@@ -26,6 +26,7 @@ import org.infinispan.CacheException;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.FileLookup;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -89,6 +90,8 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
       } catch (IOException e) {
          log.error("Issues while loading properties from file", e);
          throw new CacheException(e);
+      } finally {
+         Util.close(inputStream);
       }
    }
 }

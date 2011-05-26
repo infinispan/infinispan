@@ -164,6 +164,8 @@ public class GridStore implements IWebdavStore {
       String[] childrenNames = null;
       if (file.isDirectory()) {
          File[] children = file.listFiles();
+         if (children != null)
+            throw new WebdavException("IO error while listing files for " + file);
          List<String> childList = new ArrayList<String>();
          String name = null;
          for (int i = 0; i < children.length; i++) {

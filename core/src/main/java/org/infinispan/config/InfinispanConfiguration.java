@@ -27,6 +27,7 @@ import org.infinispan.config.parsing.NamespaceFilter;
 import org.infinispan.config.parsing.XmlConfigurationParser;
 import org.infinispan.util.FileLookup;
 import org.infinispan.util.StringPropertyReplacer;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.xml.sax.InputSource;
@@ -127,7 +128,11 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
 
       InputStream inputStream = configFileName != null ? findInputStream(configFileName) : null;
       InputStream schemaIS = schemaFileName != null ? findSchemaInputStream(schemaFileName) : null;
-      return newInfinispanConfiguration(inputStream, schemaIS, cbv);
+      try {
+         return newInfinispanConfiguration(inputStream, schemaIS, cbv);
+      } finally {
+         Util.close(inputStream, schemaIS);
+      }
    }
 
    /**

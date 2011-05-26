@@ -324,7 +324,8 @@ public class TransactionTable {
     * if such an tx exists.
     */
    public boolean removeLocalTransaction(LocalTransaction localTransaction) {
-      return localTransactions.remove(localTransaction.getTransaction()) != null;
+      return localTransaction != null &&
+            localTransactions.remove(localTransaction.getTransaction()) != null;
    }
 
    /**

@@ -22,8 +22,10 @@ package org.infinispan.demo;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.FileLookup;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Builds CacheManager given Infinispan configuration and transport file.
@@ -41,10 +43,17 @@ public class CacheBuilder {
    }
 
    private String findConfigFile(String configFile) {
-      String selectedConfigFile = null;
       FileLookup fl = new FileLookup();
-      if (configFile != null && fl.lookupFile(configFile) != null) selectedConfigFile = configFile;
+      if (configFile != null) {
+         InputStream inputStream = fl.lookupFile(configFile);
+         try {
+            if (inputStream != null)
+               return configFile;
+         } finally {
+            Util.close(inputStream);
+         }
+      }
 
-      return selectedConfigFile;
+      return null;
    }
 }

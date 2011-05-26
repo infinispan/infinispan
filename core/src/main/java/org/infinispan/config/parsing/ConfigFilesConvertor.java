@@ -77,37 +77,44 @@ public class ConfigFilesConvertor {
          throw new IllegalStateException("Cold not find xslt file! : " + xsltFile);
       }
 
-      Document document = getInputDocument(is);
+      try {
+         Document document = getInputDocument(is);
 
-      // Use a Transformer for output
-      Transformer transformer = getTransformer(xsltInStream);
+         // Use a Transformer for output
+         Transformer transformer = getTransformer(xsltInStream);
 
-      DOMSource source = new DOMSource(document);
-      ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-      StreamResult result = new StreamResult(byteArrayOutputStream);
-      transformer.transform(source, result);
+         DOMSource source = new DOMSource(document);
+         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+         StreamResult result = new StreamResult(byteArrayOutputStream);
+         transformer.transform(source, result);
 
-      InputStream indentation = new FileLookup().lookupFile("xslt/indent.xslt");
-      // Use a Transformer for output
-      transformer = getTransformer(indentation);
-      StreamResult finalResult = new StreamResult(os);
-      StreamSource rawResult = new StreamSource(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
-      transformer.transform(rawResult, finalResult);
-      xsltInStream.close();
+         InputStream indentation = new FileLookup().lookupFile("xslt/indent.xslt");
+         try {
+            // Use a Transformer for output
+            transformer = getTransformer(indentation);
+            StreamResult finalResult = new StreamResult(os);
+            StreamSource rawResult = new StreamSource(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+            transformer.transform(rawResult, finalResult);
+         } finally {
+            Util.close(indentation);
+         }
+      } finally {
+         Util.close(xsltInStream);
+      }
    }
 
    /**
     * Writes to the <b>os</b> the infinispan 4.x configuration file resulted by transforming configuration file passed
     * in as <b>inputFile</b>. Transformation is performed according to the <b>xsltFile</b>. Both <b>inputFile</b> and he
-    * xslt file are looked up using a {@link org.jboss.cache.util.FileLookup}
+    * xslt file are looked up using a {@link org.infinispan.util.FileLookup}
     */
    public void parse(String inputFile, OutputStream os, String xsltFile) throws Exception {
-      InputStream stream = new FileLookup().lookupFile(inputFile);
+      InputStream stream = new FileLookup().lookupFileStrict(inputFile);
       try {
          parse(stream, os, xsltFile);
       }
       finally {
-         stream.close();
+         Util.close(stream);
       }
    }
 

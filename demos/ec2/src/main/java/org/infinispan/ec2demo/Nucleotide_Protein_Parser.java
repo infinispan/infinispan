@@ -22,6 +22,7 @@
  */
 package org.infinispan.ec2demo;
 
+import org.infinispan.util.Util;
 import org.milyn.Smooks;
 import org.milyn.payload.JavaResult;
 import org.xml.sax.SAXException;
@@ -41,12 +42,15 @@ public class Nucleotide_Protein_Parser {
       System.out.println("Parsing [" + fileName + "]");
       Smooks smooks = new Smooks("config-samples/ec2-demo/smooks-config.xml");
 
+      FileInputStream inputStream = null;
       try {
          JavaResult result = new JavaResult();
-         smooks.filterSource(new StreamSource(new FileInputStream(fileName.trim())), result);
+         inputStream = new FileInputStream(fileName.trim());
+         smooks.filterSource(new StreamSource(inputStream), result);
          return (List<Nucleotide_Protein_Element>) result.getBean("customerList");
       } finally {
          smooks.close();
+         Util.close(inputStream);
       }
    }
 

@@ -50,6 +50,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.ReflectionUtil;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
@@ -289,9 +290,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @throws java.io.IOException if there is a problem reading the configuration stream
     */
    public DefaultCacheManager(InputStream configurationStream, boolean start) throws IOException {
+      InputStream schemaInputStream = InfinispanConfiguration.findSchemaInputStream();
       try {
          InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration(
-                 configurationStream, InfinispanConfiguration.findSchemaInputStream(),
+                 configurationStream, schemaInputStream,
                  new ConfigurationValidatingVisitor());
          globalConfiguration = configuration.parseGlobalConfiguration();
          defaultConfiguration = configuration.parseDefaultConfiguration();
@@ -306,6 +308,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          throw ce;
       } catch (RuntimeException re) {
          throw new ConfigurationException(re);
+      } finally {
+         Util.close(schemaInputStream);
       }
       if (start)
          start();

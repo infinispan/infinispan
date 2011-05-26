@@ -120,6 +120,9 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       if (address == null)
          throw new NullPointerException("Null address not supported!");
       BlockingQueue queue = address2key.get(address);
+      if (queue == null)
+         return null; // No address for key, unlikely
+
       try {
          maxNumberInvariant.readLock().lock();
          Object result;

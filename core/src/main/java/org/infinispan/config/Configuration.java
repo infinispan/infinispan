@@ -496,7 +496,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    public String getCacheModeString() {
-      return clustering.mode == null ? null : clustering.mode.toString();
+      return clustering.mode == null ? "none" : clustering.mode.toString();
    }
 
    /**

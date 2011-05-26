@@ -1398,11 +1398,14 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          for (int i = 0; i < segments.length; ++ i) {
             segments[i].lock();
          }
-         for (int i = 0; i < segments.length; ++ i) {
-            sum += segments[i].count;
-         }
-         for (int i = 0; i < segments.length; ++ i) {
-            segments[i].unlock();
+         try {
+            for (int i = 0; i < segments.length; ++ i) {
+               sum += segments[i].count;
+            }
+         } finally {
+            for (int i = 0; i < segments.length; ++ i) {
+               segments[i].unlock();
+            }
          }
       }
       if (sum > Integer.MAX_VALUE) {

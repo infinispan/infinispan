@@ -25,6 +25,7 @@ package org.infinispan.loaders.bdbje;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.util.FileLookup;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -161,6 +162,8 @@ public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
             p.load(i);
          } catch (IOException ioe) {
             throw new CacheLoaderException("Unable to read environment properties file " + environmentPropertiesFile, ioe);
+         } finally {
+            Util.close(i);
          }
          return p;
       } else {

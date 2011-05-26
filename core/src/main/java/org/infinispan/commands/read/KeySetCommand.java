@@ -98,7 +98,7 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
       @Override
       public boolean contains(Object o) {
          CacheEntry e = lookedUpEntries.get(o);
-         if (e.isRemoved()) {
+         if (e == null || e.isRemoved()) {
             return false;
          } else if (e.isChanged() || e.isCreated()) {
             return true;

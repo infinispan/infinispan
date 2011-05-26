@@ -40,6 +40,7 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -58,6 +59,7 @@ public class TcpTransport extends AbstractTransport {
    private static final boolean trace = log.isTraceEnabled();
 
    private final Socket socket;
+   private final SocketChannel socketChannel;
    private final InputStream socketInputStream;
    private final BufferedOutputStream socketOutputStream;
    private final InetSocketAddress serverAddress;
@@ -69,7 +71,7 @@ public class TcpTransport extends AbstractTransport {
       super(transportFactory);
       this.serverAddress = serverAddress;
       try {
-         SocketChannel socketChannel = SocketChannel.open(serverAddress);
+         socketChannel = SocketChannel.open(serverAddress);
          socket = socketChannel.socket();
          socket.setTcpNoDelay(transportFactory.isTcpNoDelay());
          socket.setSoTimeout(transportFactory.getSoTimeout());
@@ -259,13 +261,19 @@ public class TcpTransport extends AbstractTransport {
 
    public void destroy() {
       try {
-         socket.close();
+         if (socketInputStream != null) socketInputStream.close();
+         if (socketOutputStream != null) socketOutputStream.close();
+         if (socketChannel != null) socketChannel.close();
+         if (socket != null) socket.close();
          if (trace) {
             log.tracef("Successfully closed socket: %s", socket);
          }
       } catch (IOException e) {
          invalid = true;
          log.errorClosingSocket(this, e);
+         // Just in case an exception is thrown, make sure they're fully closed
+         Util.close(socketInputStream, socketOutputStream, socketChannel);
+         Util.close(socket);
       }
    }
 
