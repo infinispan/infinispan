@@ -199,12 +199,16 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    protected void loopOverBuckets(BucketHandler handler) throws CacheLoaderException {
       for (Map.Entry<String, Blob> entry : ctx.createBlobMap(containerName).entrySet()) {
          Bucket bucket = readFromBlob(entry.getValue(), entry.getKey());
-         if (bucket.removeExpiredEntries()) {
-            updateBucket(bucket);
-        }
-         if (handler.handle(bucket)) {
-            break;
-        }
+         if (bucket != null) {
+            if (bucket.removeExpiredEntries()) {
+               updateBucket(bucket);
+            }
+            if (handler.handle(bucket)) {
+               break;
+            }
+         } else {
+            throw new CacheLoaderException("Blob not found: " + entry.getKey());
+         }
       }
    }
 
@@ -281,9 +285,13 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       Blob blob = blobStore.getBlob(containerName, blobName);
       try {
          Bucket bucket = readFromBlob(blob, blobName);
-         if (bucket.removeExpiredEntries()) {
-            updateBucket(bucket);
-        }
+         if (bucket != null) {
+            if (bucket.removeExpiredEntries()) {
+               updateBucket(bucket);
+           }
+         } else {
+            throw new CacheLoaderException("Blob not found: " + blobName);
+         }
       } catch (CacheLoaderException e) {
          log.unableToReadBlob(blobName, e);
       }
@@ -414,7 +422,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
 
    private Bucket readFromBlob(Blob blob, String bucketName) throws CacheLoaderException {
       if (blob == null) {
-        throw new CacheLoaderException("Blob not found");
+        return null;
       }
       try {
          Bucket bucket;
