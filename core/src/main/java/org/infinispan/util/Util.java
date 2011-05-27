@@ -25,7 +25,9 @@ package org.infinispan.util;
 import org.infinispan.CacheException;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.marshall.Marshaller;
+import org.omg.CORBA._PolicyStub;
 
+import javax.naming.Context;
 import java.io.Closeable;
 import java.io.InputStream;
 import java.io.ObjectOutput;
@@ -37,6 +39,7 @@ import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.Socket;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -327,6 +330,28 @@ public final class Util {
       if (cl == null) return;
       try {
          cl.close();
+      } catch (Exception e) {
+      }
+   }
+
+   public static void close(Socket s) {
+      if (s == null) return;
+      try {
+         s.close();
+      } catch (Exception e) {
+      }
+   }
+
+   public static void close(Closeable... cls) {
+      for (Closeable cl : cls) {
+         close(cl);
+      }
+   }
+
+   public static void close(Context ctx) {
+      if (ctx == null) return;
+      try {
+         ctx.close();
       } catch (Exception e) {
       }
    }

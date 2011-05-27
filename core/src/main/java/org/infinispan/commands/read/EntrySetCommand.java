@@ -106,7 +106,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
          @SuppressWarnings("rawtypes")
          Map.Entry e = (Map.Entry) o;
          CacheEntry ce = lookedUpEntries.get(e.getKey());
-         if (ce.isRemoved()) {
+         if (ce == null || ce.isRemoved()) {
             return false;
          }
          if (ce.isChanged() || ce.isCreated()) {

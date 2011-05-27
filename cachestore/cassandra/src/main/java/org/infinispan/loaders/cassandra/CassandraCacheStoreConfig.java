@@ -32,6 +32,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
 import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.util.FileLookup;
+import org.infinispan.util.Util;
 
 /**
  * Configures {@link CassandraCacheStore}.
@@ -208,7 +209,10 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
 				p.load(i);
 			} catch (IOException ioe) {
 				throw new CacheLoaderException("Unable to read environment properties file " + configurationPropertiesFile, ioe);
-			}
+         } finally {
+            Util.close(i);
+         }
+
 			// Apply all properties to the PoolProperties object
 			for(String propertyName : p.stringPropertyNames()) {
 				poolProperties.set(propertyName, p.getProperty(propertyName));

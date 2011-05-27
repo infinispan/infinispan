@@ -22,6 +22,7 @@
  */
 package org.infinispan.transaction.tm;
 
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -54,16 +55,18 @@ public class DummyTransactionManager extends DummyBaseTransactionManager {
             if (instance == null) {
                instance = new DummyTransactionManager();
                utx = new DummyUserTransaction(instance);
+               Properties p = new Properties();
+               Context ctx = null;
                try {
-                  Properties p = new Properties();
-                  Context ctx = new InitialContext(p);
+                  ctx = new InitialContext(p);
                   ctx.bind("java:/TransactionManager", instance);
                   ctx.bind("UserTransaction", utx);
                } catch (NoInitialContextException nie) {
                   log.debug(nie.getMessage());
-
                } catch (NamingException e) {
                   log.debug("binding of DummyTransactionManager failed", e);
+               } finally {
+                  Util.close(ctx);
                }
             }
          }
@@ -79,14 +82,17 @@ public class DummyTransactionManager extends DummyBaseTransactionManager {
    public static void destroy() {
       if (instance == null)
          return;
+      Properties p = new Properties();
+      Context ctx = null;
       try {
-         Properties p = new Properties();
-         Context ctx = new InitialContext(p);
+         ctx = new InitialContext(p);
          ctx.unbind("java:/TransactionManager");
          ctx.unbind("UserTransaction");
       }
       catch (NamingException e) {
          log.unbindingDummyTmFailed(e);
+      } finally {
+         Util.close(ctx);
       }
       instance.setTransaction(null);
       instance = null;

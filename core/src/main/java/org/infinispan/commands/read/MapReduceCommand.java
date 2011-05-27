@@ -125,6 +125,9 @@ public class MapReduceCommand extends BaseRpcCommand {
                selectedKeys.add(key);               
             }
          }
+         if (keys == null)
+            keys = new HashSet<Object>();
+
          keys.addAll(selectedKeys);
       }
       log.tracef("For %s at %s invoking mapper on keys %s", this, localAddress, keys);

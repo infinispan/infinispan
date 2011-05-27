@@ -169,11 +169,13 @@ public class ClassFinder {
 
    private static void dir(List<File> files, File dir) {
       File[] entries = dir.listFiles();
-      for (File entry : entries) {
-         if (entry.isDirectory()) {
-            dir(files, entry);
-         } else if (entry.getName().endsWith("class")) {
-            files.add(entry);
+      if (entries != null) {
+         for (File entry : entries) {
+            if (entry.isDirectory()) {
+               dir(files, entry);
+            } else if (entry.getName().endsWith("class")) {
+               files.add(entry);
+            }
          }
       }
    }

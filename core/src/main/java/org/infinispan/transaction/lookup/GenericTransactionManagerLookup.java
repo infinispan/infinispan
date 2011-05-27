@@ -112,33 +112,40 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
    private static void doLookups() {
       if (lookupFailed)
          return;
-      InitialContext ctx;
+      InitialContext ctx = null;
       try {
          ctx = new InitialContext();
       }
       catch (NamingException e) {
          log.failedToCreateInitialCtx(e);
          lookupFailed = true;
+         Util.close(ctx);
          return;
       }
-      //probe jndi lookups first
-      for (String[] knownJNDIManager : knownJNDIManagers) {
-         Object jndiObject;
-         try {
-            log.debugf("Trying to lookup TransactionManager for %s", knownJNDIManager[1]);
-            jndiObject = ctx.lookup(knownJNDIManager[0]);
+
+      try {
+         //probe jndi lookups first
+         for (String[] knownJNDIManager : knownJNDIManagers) {
+            Object jndiObject;
+            try {
+               log.debugf("Trying to lookup TransactionManager for %s", knownJNDIManager[1]);
+               jndiObject = ctx.lookup(knownJNDIManager[0]);
+            }
+            catch (NamingException e) {
+               log.debugf("Failed to perform a lookup for [%s (%s)]",
+                         knownJNDIManager[0], knownJNDIManager[1]);
+               continue;
+            }
+            if (jndiObject instanceof TransactionManager) {
+               tm = (TransactionManager) jndiObject;
+               log.debugf("Found TransactionManager for %s", knownJNDIManager[1]);
+               return;
+            }
          }
-         catch (NamingException e) {
-            log.debugf("Failed to perform a lookup for [%s (%s)]",
-                      knownJNDIManager[0], knownJNDIManager[1]);
-            continue;
-         }
-         if (jndiObject instanceof TransactionManager) {
-            tm = (TransactionManager) jndiObject;
-            log.debugf("Found TransactionManager for %s", knownJNDIManager[1]);
-            return;
-         }
+      } finally {
+         Util.close(ctx);
       }
+
       //try to find websphere lookups since we came here
       Class clazz;
       try {

@@ -22,6 +22,7 @@
  */
 package org.infinispan.transaction.xa.recovery;
 
+import org.infinispan.CacheException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LocalTransaction;
@@ -61,7 +62,10 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    @Override
    public void remoteTransactionPrepared(GlobalTransaction gtx) {
       RecoveryAwareRemoteTransaction remoteTransaction = (RecoveryAwareRemoteTransaction) remoteTransactions.get(gtx);
-         remoteTransaction.setPrepared(true);
+      if (remoteTransaction == null)
+         throw new CacheException(String.format(
+               "Remote transaction for global transaction (%s) not found", gtx));
+      remoteTransaction.setPrepared(true);
    }
 
    @Override
@@ -94,7 +98,11 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
 
    @Override
    public void remoteTransactionCompleted(GlobalTransaction gtx, boolean committed) {
-      ((RecoveryAwareRemoteTransaction)getRemoteTransaction(gtx)).markCompleted(committed);
+      RecoveryAwareRemoteTransaction remoteTransaction = (RecoveryAwareRemoteTransaction) getRemoteTransaction(gtx);
+      if (remoteTransaction == null)
+         throw new CacheException(String.format(
+               "Remote transaction for global transaction (%s) not found", gtx));
+      remoteTransaction.markCompleted(committed);
    }
 
    public List<Xid> getLocalPreparedXids() {
@@ -121,6 +129,10 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
 
    public void failureCompletingTransaction(Transaction tx) {
       RecoveryAwareLocalTransaction remove = (RecoveryAwareLocalTransaction) localTransactions.get(tx);
+      if (remove == null)
+         throw new CacheException(String.format(
+               "Local transaction for transaction (%s) not found", tx));
+
       remove.setCompletionFailed(true);
       if (log.isTraceEnabled())
          log.tracef("Marked as completion failed %s", remove);

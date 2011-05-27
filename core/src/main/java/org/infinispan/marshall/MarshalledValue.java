@@ -88,6 +88,13 @@ public class MarshalledValue {
    }
 
    public synchronized byte[] serialize() {
+      return serialize0();
+   }
+
+   /**
+    * Should only be called from a synchronized method
+    */
+   private byte[] serialize0() {
       byte[] rawValue = raw;
       if (rawValue == null) {
          try {
@@ -119,6 +126,13 @@ public class MarshalledValue {
    }
 
    public synchronized Object deserialize() {
+      return deserialize0();
+   }
+
+   /**
+    * Should only be called from a synchronized method
+    */
+   private Object deserialize0() {
       Object instanceValue = instance;
       if (instanceValue == null) {
          try {
@@ -154,10 +168,14 @@ public class MarshalledValue {
       byte[] thisRaw = this.raw;
       if (force) {
          if (preferSerializedRepresentation && thisRaw == null) {
-            thisRaw = serialize();
+            // Accessing a synchronized method from an already synchronized
+            // method is expensive, so delegate to a private not synched method.
+            thisRaw = serialize0();
          }
          else if (!preferSerializedRepresentation && thisInstance == null){
-            thisInstance = deserialize();
+            // Accessing a synchronized method from an already synchronized
+            // method is expensive, so delegate to a private not synched method.
+            thisInstance = deserialize0();
          }
       }
 

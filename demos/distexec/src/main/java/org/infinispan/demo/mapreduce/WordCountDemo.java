@@ -93,19 +93,24 @@ public class WordCountDemo extends Demo {
    }
 
    private void loadData(Cache<String, String> cache) throws IOException {
-      BufferedReader bufferedReader = new BufferedReader(new FileReader(textFile));
+      FileReader in = new FileReader(textFile);
+      try {
+         BufferedReader bufferedReader = new BufferedReader(in);
 
-      //chunk and insert into cache
-      int chunkSize = 10; // 10K
-      int chunkId = 0;
+         //chunk and insert into cache
+         int chunkSize = 10; // 10K
+         int chunkId = 0;
 
-      CharBuffer cbuf = CharBuffer.allocate(1024 * chunkSize);
-      while (bufferedReader.read(cbuf) >= 0) {
-         Buffer buffer = cbuf.flip();
-         String textChunk = buffer.toString();
-         cache.put(textFile + (chunkId++), textChunk);
-         cbuf.clear();
-         if (chunkId % 100 == 0) System.out.printf("  Inserted %s chunks from %s into grid%n", chunkId, textFile);
+         CharBuffer cbuf = CharBuffer.allocate(1024 * chunkSize);
+         while (bufferedReader.read(cbuf) >= 0) {
+            Buffer buffer = cbuf.flip();
+            String textChunk = buffer.toString();
+            cache.put(textFile + (chunkId++), textChunk);
+            cbuf.clear();
+            if (chunkId % 100 == 0) System.out.printf("  Inserted %s chunks from %s into grid%n", chunkId, textFile);
+         }
+      } finally {
+         Util.close(in);
       }
    }
 

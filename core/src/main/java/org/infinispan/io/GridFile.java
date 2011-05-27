@@ -34,7 +34,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
 
@@ -230,13 +232,13 @@ public class GridFile extends File {
    @Override
    public boolean isDirectory() {
       Metadata val = metadataCache.get(getPath());
-      return val.isDirectory();
+      return val == null || val.isDirectory();
    }
 
    @Override
    public boolean isFile() {
       Metadata val = metadataCache.get(getPath());
-      return val.isFile();
+      return val == null || val.isFile();
    }
 
    protected void initMetadata() {
@@ -247,6 +249,8 @@ public class GridFile extends File {
 
    protected File[] _listFiles(Object filter) {
       String[] files = _list(filter);
+      if (files == null)
+         return new File[0];
       File[] retval = new File[files.length];
       for (int i = 0; i < files.length; i++)
          retval[i] = new GridFile(files[i], metadataCache, chunk_size, fs);
@@ -330,15 +334,14 @@ public class GridFile extends File {
          }
          sb.append(tmp);
          String comp = sb.toString();
-         if (exists(comp)) {
-            if (isFile(comp))
-               throw new IOException("cannot create " + path + " as component " + comp + " is a file");
-         } else {
-            if (create_if_absent)
-               metadataCache.put(comp, new Metadata(0, System.currentTimeMillis(), chunk_size, Metadata.DIR));
-            else
-               return false;
-         }
+         Metadata val = exists(comp);
+         if (val != null && val.isFile())
+            throw new IOException(String.format(
+                  "cannot create %s as component %s is a file", path, comp));
+         else if (create_if_absent)
+            metadataCache.put(comp, new Metadata(0, System.currentTimeMillis(), chunk_size, Metadata.DIR));
+         else
+            return false;
       }
       return true;
    }
@@ -353,15 +356,9 @@ public class GridFile extends File {
       return comps != null && comps.length > 0 ? comps[comps.length - 1] : null;
    }
 
-   private boolean exists(String key) {
-      return metadataCache.get(key) != null;
+   private Metadata exists(String key) {
+      return metadataCache.get(key);
    }
-
-   private boolean isFile(String key) {
-      Metadata val = metadataCache.get(key);
-      return val.isFile();
-   }
-
 
    public static class Metadata implements Externalizable {
       public static final byte FILE = 1 << 0;

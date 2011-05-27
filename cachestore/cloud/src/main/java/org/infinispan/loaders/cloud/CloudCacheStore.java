@@ -414,7 +414,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
 
    private Bucket readFromBlob(Blob blob, String bucketName) throws CacheLoaderException {
       if (blob == null) {
-        return null;
+        throw new CacheLoaderException("Blob not found");
       }
       try {
          Bucket bucket;

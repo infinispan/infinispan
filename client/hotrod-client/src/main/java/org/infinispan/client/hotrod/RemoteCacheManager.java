@@ -33,6 +33,7 @@ import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -229,7 +230,11 @@ public class RemoteCacheManager implements CacheContainer {
          log.couldNotFindPropertiesFile(HOTROD_CLIENT_PROPERTIES);
          config = new ConfigurationProperties();
       } else {
-         loadFromStream(stream);
+         try {
+            loadFromStream(stream);
+         } finally {
+            Util.close(stream);
+         }
       }
       if (start) start();
    }
@@ -282,10 +287,19 @@ public class RemoteCacheManager implements CacheContainer {
     * @throws HotRodClientException if properties could not be loaded
     */
    public RemoteCacheManager(URL config, boolean start) {
+      InputStream stream = null;
       try {
-         loadFromStream(config.openStream());
+         stream = config.openStream();
+         loadFromStream(stream);
       } catch (IOException e) {
          throw new HotRodClientException("Could not read URL:" + config, e);
+      } finally {
+         try {
+            if (stream != null)
+               stream.close();
+         } catch (IOException e) {
+            // ignore
+         }
       }
       if (start)
          start();

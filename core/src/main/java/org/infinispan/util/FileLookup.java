@@ -64,6 +64,24 @@ public class FileLookup {
       return is;
    }
 
+   /**
+    * Looks up the file, see : {@link FileLookup}.
+    *
+    * @param filename might be the name of the file (too look it up in the class path) or an url to a file.
+    * @return an input stream to the file or null if nothing found through all lookup steps.
+    * @throws FileNotFoundException if file cannot be found
+    */
+   public InputStream lookupFileStrict(String filename) throws FileNotFoundException {
+      InputStream is = filename == null || filename.length() == 0 ? null : getAsInputStreamFromClassLoader(filename);
+      if (is == null) {
+         if (log.isDebugEnabled())
+            log.debugf("Unable to find file %s in classpath; searching for this file on the filesystem instead.", filename);
+         return new FileInputStream(filename);
+      }
+      return is;
+   }
+
+
    protected InputStream getAsInputStreamFromClassLoader(String filename) {
       ClassLoader cl = Thread.currentThread().getContextClassLoader();
       InputStream is;

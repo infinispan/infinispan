@@ -110,24 +110,27 @@ public class FileCacheStore extends BucketBasedCacheStore {
             FileOutputStream fos = new FileOutputStream(root.getAbsolutePath() + File.separator + fName);
             BufferedOutputStream bos = new BufferedOutputStream(fos, streamBufferSize);
 
-            while (numBytes > totalBytesRead) {
-               if (numBytes - totalBytesRead > streamBufferSize) {
-                  bytesRead = objectInput.read(buffer, 0, streamBufferSize);
-               } else {
-                  bytesRead = objectInput.read(buffer, 0, numBytes - totalBytesRead);
-               }
+            try {
+               while (numBytes > totalBytesRead) {
+                  if (numBytes - totalBytesRead > streamBufferSize) {
+                     bytesRead = objectInput.read(buffer, 0, streamBufferSize);
+                  } else {
+                     bytesRead = objectInput.read(buffer, 0, numBytes - totalBytesRead);
+                  }
 
-               if (bytesRead == -1) {
-                  break;
+                  if (bytesRead == -1) {
+                     break;
+                  }
+                  totalBytesRead += bytesRead;
+                  bos.write(buffer, 0, bytesRead);
                }
-               totalBytesRead += bytesRead;
-               bos.write(buffer, 0, bytesRead);
+               bos.flush();
+               fos.flush();
+               totalBytesRead = 0;
+            } finally {
+               safeClose(bos);
+               safeClose(fos);
             }
-            bos.flush();
-            safeClose(bos);
-            fos.flush();
-            safeClose(fos);
-            totalBytesRead = 0;
          }
       } catch (IOException e) {
          throw new CacheLoaderException("I/O error", e);
@@ -140,6 +143,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
    protected void toStreamLockSafe(ObjectOutput objectOutput) throws CacheLoaderException {
       try {
          File[] files = root.listFiles();
+         if (files == null)
+            throw new CacheLoaderException("Root not directory or IO error occurred");
+
          objectOutput.writeInt(files.length);
          byte[] buffer = new byte[streamBufferSize];
          for (File file : files) {
@@ -199,7 +205,11 @@ public class FileCacheStore extends BucketBasedCacheStore {
       }
       if (acquireGlobalLock(false)) {
          try {
-            for (final File bucketFile : root.listFiles()) {
+            File[] files = root.listFiles();
+            if (files == null)
+               throw new CacheLoaderException("Root not directory or IO error occurred");
+
+            for (final File bucketFile : files) {
                if (multiThreadedPurge) {
                   purgerService.execute(new Runnable() {
                      @Override

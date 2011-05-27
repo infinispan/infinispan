@@ -168,10 +168,13 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(description = "Percentage hit/(hit+miss) ratio for the cache")
    @Metric(displayName = "Hit ratio", units = Units.PERCENTAGE, displayType = DisplayType.SUMMARY)
    public double getHitRatio() {
-      double total = hits.get() + misses.get();
-      if (total == 0)
+      long hitsL = hits.get();
+      double total = hitsL + misses.get();
+      // The reason for <= is that equality checks
+      // should be avoided for floating point numbers.
+      if (total <= 0)
          return 0;
-      return (hits.get() / total);
+      return (hitsL / total);
    }
 
    @ManagedAttribute(description = "read/writes ratio for the cache")

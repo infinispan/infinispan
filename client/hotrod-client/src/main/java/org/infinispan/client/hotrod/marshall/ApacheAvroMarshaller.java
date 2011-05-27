@@ -328,9 +328,8 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
             marshaller.objectToBuffer(element, encoder);
       }
 
-      Collection createCollection(int size) {
-         return null;
-      }
+      abstract Collection createCollection(int size);
+
    }
 
    private static class ListMarshallableType extends CollectionMarshallableType {
@@ -368,6 +367,11 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
             marshaller.objectToBuffer(entry.getValue(), encoder);
          }
 
+      }
+
+      @Override
+      Collection createCollection(int size) {
+         return null; // Ignored for this class
       }
    }
 

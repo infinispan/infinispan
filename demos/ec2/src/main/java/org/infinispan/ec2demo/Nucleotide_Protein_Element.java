@@ -174,7 +174,7 @@ public class Nucleotide_Protein_Element implements Serializable {
 				return false;
 		} else if (!GenbankAccessionNumber.equals(other.GenbankAccessionNumber))
 			return false;
-		if (GenomeSequenceNumber != other.GenomeSequenceNumber)
+		if (!GenomeSequenceNumber.equals(other.GenomeSequenceNumber))
 			return false;
 		if (Host == null) {
 			if (other.Host != null)

@@ -83,8 +83,8 @@ public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
       return owners;
    }
 
-   public void addStatus(Set<Integer> status) {
-      status.addAll(status);
+   public void addStatus(Set<Integer> statusSet) {
+      status.addAll(statusSet);
    }
 
    public void addOwner(Address owner) {

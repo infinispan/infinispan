@@ -316,22 +316,7 @@ public class Base64 {
          return null;
       } // end catch
       finally {
-         try {
-            oos.close();
-         } catch (Exception e) {
-         }
-         try {
-            gzos.close();
-         } catch (Exception e) {
-         }
-         try {
-            b64os.close();
-         } catch (Exception e) {
-         }
-         try {
-            baos.close();
-         } catch (Exception e) {
-         }
+         Util.close(oos, gzos, b64os, baos);
       } // end finally
 
       // Return value according to relevant encoding.
@@ -733,14 +718,8 @@ public class Base64 {
          e.printStackTrace();
       } // end catch
       finally {
-         try {
-            bais.close();
-         } catch (Exception e) {
-         }
-         try {
-            ois.close();
-         } catch (Exception e) {
-         }
+         Util.close(bais);
+         Util.close(ois);
       } // end finally
 
       return obj;
@@ -768,10 +747,7 @@ public class Base64 {
          success = false;
       } // end catch: IOException
       finally {
-         try {
-            bos.close();
-         } catch (Exception e) {
-         }
+         Util.close(bos);
       } // end finally
 
       return success;
@@ -798,10 +774,7 @@ public class Base64 {
          success = false;
       } // end catch: IOException
       finally {
-         try {
-            bos.close();
-         } catch (Exception e) {
-         }
+         Util.close(bos);
       } // end finally
 
       return success;
@@ -848,10 +821,7 @@ public class Base64 {
          throw new IllegalStateException("Error decoding from file " + filename);
       } // end catch: IOException
       finally {
-         try {
-            bis.close();
-         } catch (Exception e) {
-         }
+         Util.close(bis);
       } // end finally
 
       return decodedData;
@@ -891,10 +861,7 @@ public class Base64 {
          throw new IllegalStateException("Error encoding from file " + filename);
       } // end catch: IOException
       finally {
-         try {
-            bis.close();
-         } catch (Exception e) {
-         }
+         Util.close(bis);
       } // end finally
 
       return encodedData;
