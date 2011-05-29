@@ -53,15 +53,13 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration config = getDefaultStandaloneConfig(false);
-      CacheStoreConfig slowCacheStoreConfig = new SlowCacheStoreConfig();
-      AsyncStoreConfig storeConfig = new AsyncStoreConfig();
-      storeConfig.setEnabled(true);
-      storeConfig.setThreadPoolSize(1);
-      slowCacheStoreConfig.setAsyncStoreConfig(storeConfig);
-      CacheLoaderManagerConfig clmConfig = new CacheLoaderManagerConfig();
-      clmConfig.getCacheLoaderConfigs().add(slowCacheStoreConfig);
-      config.setCacheLoaderManagerConfig(clmConfig);
+      Configuration config = getDefaultStandaloneConfig(false).fluent()
+         .loaders()
+            .addCacheLoader(new SlowCacheStoreConfig()
+               .storeName(this.getClass().getName())
+               .asyncStore().threadPoolSize(1)
+               .build())
+         .build();
       return TestCacheManagerFactory.createCacheManager(config);
    }
 

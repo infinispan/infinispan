@@ -418,7 +418,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       cacheCofig.setUseLazyDeserialization(true);
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       DummyInMemoryCacheStore.Cfg clc = new DummyInMemoryCacheStore.Cfg();
-      clc.setStore(getClass().getSimpleName());
+      clc.setStoreName(getClass().getSimpleName());
       clmc.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig) clc));
       cacheCofig.setCacheLoaderManagerConfig(clmc);
 

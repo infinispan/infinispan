@@ -24,12 +24,7 @@ package org.infinispan.loaders.dummy;
 
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.AbstractCacheStore;
-import org.infinispan.loaders.AbstractCacheStoreConfig;
-import org.infinispan.loaders.CacheLoaderConfig;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.CacheStoreConfig;
+import org.infinispan.loaders.*;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.util.Util;
@@ -39,30 +34,26 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class DummyInMemoryCacheStore extends AbstractCacheStore {
    private static final Log log = LogFactory.getLog(DummyInMemoryCacheStore.class);
-   private static final boolean trace = log.isTraceEnabled(); 
+   private static final boolean trace = log.isTraceEnabled();
    static final ConcurrentMap<String, Map<Object, InternalCacheEntry>> stores = new ConcurrentHashMap<String, Map<Object, InternalCacheEntry>>();
    static final ConcurrentMap<String, Map<String, Integer>> storeStats = new ConcurrentHashMap<String, Map<String, Integer>>();
-   String storeName = "__DEFAULT_STORES__";
+   String storeName;
    Map<Object, InternalCacheEntry> store;
    Map<String, Integer> stats;
    Cfg config;
-
 
    private void record(String method) {
       int i = stats.get(method);
       stats.put(method, i + 1);
    }
 
+   @Override
    public void store(InternalCacheEntry ed) {
       record("store");
       if (ed != null) {
@@ -72,6 +63,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       }
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public void fromStream(ObjectInput ois) throws CacheLoaderException {
       record("fromStream");
@@ -87,6 +79,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       }
    }
 
+   @Override
    public void toStream(ObjectOutput oos) throws CacheLoaderException {
       record("toStream");
       try {
@@ -97,12 +90,14 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       }
    }
 
+   @Override
    public void clear() {
       record("clear");
       if (trace) log.trace("Clear store");
       store.clear();
    }
 
+   @Override
    public boolean remove(Object key) {
       record("remove");
       if (store.remove(key) != null) {
@@ -114,6 +109,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       return false;
    }
 
+   @Override
    protected void purgeInternal() throws CacheLoaderException {
       for (Iterator<InternalCacheEntry> i = store.values().iterator(); i.hasNext();) {
          InternalCacheEntry se = i.next();
@@ -121,12 +117,15 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       }
    }
 
+   @Override
    public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (Cfg) config;
+      storeName = this.config.getStoreName();
       if (marshaller == null) marshaller = new TestObjectStreamMarshaller();
    }
 
+   @Override
    public InternalCacheEntry load(Object key) {
       record("load");
       if (key == null) return null;
@@ -141,6 +140,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       return se;
    }
 
+   @Override
    public Set<InternalCacheEntry> loadAll() {
       record("loadAll");
       Set<InternalCacheEntry> s = new HashSet<InternalCacheEntry>();
@@ -155,6 +155,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       return s;
    }
 
+   @Override
    public Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException {
       record("load");
       if (numEntries < 0) return loadAll();
@@ -181,23 +182,39 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       return set;
    }
 
+   @Override
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       record("getConfigurationClass");
       return Cfg.class;
    }
 
+   @Override
    public void start() throws CacheLoaderException {
       super.start();
-      storeName = config.getStore();
-      if (cache != null) storeName += "_" + cache.getName();
 
-      Map<Object, InternalCacheEntry> m = new ConcurrentHashMap<Object, InternalCacheEntry>();
-      Map<Object, InternalCacheEntry> existing = stores.putIfAbsent(storeName, m);
-      store = existing == null ? m : existing;
 
-      Map<String, Integer> s = newStatsMap();
-      Map<String, Integer> existingStats = storeStats.putIfAbsent(storeName, s);
-      stats = existingStats == null ? s : existingStats;
+      if (store != null)
+         return;
+
+      store = new ConcurrentHashMap<Object, InternalCacheEntry>();
+      stats = newStatsMap();
+
+      if (storeName != null) {
+         if (cache != null) storeName += "_" + cache.getName();
+
+         Map<Object, InternalCacheEntry> existing = stores.putIfAbsent(storeName, store);
+         if (existing != null) {
+            store = existing;
+            log.debugf("Reusing in-memory cache store %s", storeName);
+         } else {
+            log.debugf("Creating new in-memory cache store %s", storeName);
+         }
+
+         Map<String, Integer> existingStats = storeStats.putIfAbsent(storeName, stats);
+         if (existing != null) {
+            stats = existingStats;
+         }
+      }
 
       // record at the end!
       record("start");
@@ -211,10 +228,11 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       return m;
    }
 
+   @Override
    public void stop() {
       record("stop");
-      if (config.isCleanBetweenRestarts()) {
-         stores.remove(config.getStore());
+      if (config.isPurgeOnStartup()) {
+         stores.remove(config.getStoreName());
       }
    }
 
@@ -233,29 +251,18 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    public static class Cfg extends AbstractCacheStoreConfig {
 
       private static final long serialVersionUID = 4258914047690999424L;
-      
+
       boolean debug;
-      String store = "__DEFAULT_STORE__";
-      boolean cleanBetweenRestarts = true;
+      String storeName = null;
       private Object failKey;
 
       public Cfg() {
-         setCacheLoaderClassName(DummyInMemoryCacheStore.class.getName());
+         this(null);
       }
 
       public Cfg(String name) {
-         this();
-         setStore(name);
-      }
-
-      public Cfg(String name, boolean cleanBetweenRestarts) {
-         this(name);
-         this.cleanBetweenRestarts = cleanBetweenRestarts;
-      }
-
-      public Cfg(boolean cleanBetweenRestarts) {
          setCacheLoaderClassName(DummyInMemoryCacheStore.class.getName());
-         this.cleanBetweenRestarts = cleanBetweenRestarts;
+         storeName(name);
       }
 
       public boolean isDebug() {
@@ -275,35 +282,26 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
          return this;
       }
 
-      public String getStore() {
-         return store;
+      public String getStoreName() {
+         return storeName;
       }
 
       /**
-       * @deprecated use {@link #store(String)}
+       * @deprecated use {@link #storeName(String)}
        */
       @Deprecated
-      public void setStore(String store) {
-         this.store = store;
+      public void setStoreName(String store) {
+         this.storeName = store;
       }
 
-      public Cfg store(String store) {
-         setStore(store);
+      public Cfg storeName(String store) {
+         setStoreName(store);
          return this;
       }
 
       @Override
       public Cfg clone() {
          return (Cfg) super.clone();
-      }
-
-      public boolean isCleanBetweenRestarts() {
-         return cleanBetweenRestarts;
-      }
-
-      public Cfg cleanBetweenRestarts(boolean cleanBetweenRestarts) {
-         this.cleanBetweenRestarts = cleanBetweenRestarts;
-         return this;
       }
 
       /**

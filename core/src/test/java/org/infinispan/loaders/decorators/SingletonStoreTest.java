@@ -69,7 +69,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
 
       Configuration conf = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       DummyInMemoryCacheStore.Cfg cfg = new DummyInMemoryCacheStore.Cfg();
-      cfg.setStore("Store-" + storeCounter.getAndIncrement());
+      cfg.setStoreName("Store-" + storeCounter.getAndIncrement());
       CacheLoaderManagerConfig pushingCfg = new CacheLoaderManagerConfig();
       pushingCfg.addCacheLoaderConfig(cfg);
       SingletonStoreConfig ssc = new SingletonStoreConfig();
@@ -80,14 +80,14 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
 
       // cannot define on ALL cache managers since the same dummy in memory CL bin will be used!
       cm0.defineConfiguration("pushing", conf);
-      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
+      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("Store-" + storeCounter.getAndIncrement());
       cm1.defineConfiguration("pushing", conf);
-      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
+      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("Store-" + storeCounter.getAndIncrement());
       cm2.defineConfiguration("pushing", conf);
 
       conf = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       cfg = new DummyInMemoryCacheStore.Cfg();
-      cfg.setStore("Store-" + storeCounter.getAndIncrement());
+      cfg.setStoreName("Store-" + storeCounter.getAndIncrement());
       CacheLoaderManagerConfig nonPushingCfg = new CacheLoaderManagerConfig();
       nonPushingCfg.addCacheLoaderConfig(cfg);
       ssc = new SingletonStoreConfig();
@@ -98,9 +98,9 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
 
       // cannot define on ALL cache managers since the same dummy in memory CL bin will be used!
       cm0.defineConfiguration("nonPushing", conf);
-      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
+      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("Store-" + storeCounter.getAndIncrement());
       cm1.defineConfiguration("nonPushing", conf);
-      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
+      ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("Store-" + storeCounter.getAndIncrement());
       cm2.defineConfiguration("nonPushing", conf);
    }
 
