@@ -68,9 +68,10 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
    protected CacheStore createCacheStore() throws CacheLoaderException {
       clearTempDir();
       fcs = new FileCacheStore();
-      FileCacheStoreConfig cfg = new FileCacheStoreConfig();
-      cfg.location(tmpDirectory);
-      cfg.setPurgeSynchronously(true); // for more accurate unit testing
+      FileCacheStoreConfig cfg = new FileCacheStoreConfig()
+         .fetchPersistentState(true)
+         .location(tmpDirectory)
+         .purgeSynchronously(true); // for more accurate unit testing
       fcs.init(cfg, getCache(), getMarshaller());
       fcs.start();
       return fcs;

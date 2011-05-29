@@ -23,7 +23,6 @@
 package org.infinispan.loaders;
 
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -38,12 +37,15 @@ public class SharedCacheStoreTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration cfg = new Configuration();
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      clmc.setShared(true);
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg(SharedCacheStoreTest.class.getName(), false));
-      cfg.setCacheLoaderManagerConfig(clmc);
-      cfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+      Configuration cfg = new Configuration().fluent()
+         .loaders()
+         .shared(true)
+         .addCacheLoader(new DummyInMemoryCacheStore.Cfg()
+            .storeName(SharedCacheStoreTest.class.getName())
+            .purgeOnStartup(false))
+         .clustering()
+         .mode(Configuration.CacheMode.REPL_SYNC)
+         .build();
       createCluster(cfg, true, 3);
    }
 

@@ -70,11 +70,9 @@ public class AsyncTest extends AbstractInfinispanTest {
    @BeforeMethod
    public void setUp() throws CacheLoaderException {
       underlying = new DummyInMemoryCacheStore();
-      asyncConfig = new AsyncStoreConfig();
-      asyncConfig.setThreadPoolSize(10);
+      asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
       store = new AsyncStore(underlying, asyncConfig);
-      dummyCfg = new DummyInMemoryCacheStore.Cfg("AsyncStoreTests",false);
-      dummyCfg.setStore(AsyncTest.class.getName());
+      dummyCfg = new DummyInMemoryCacheStore.Cfg().storeName(AsyncTest.class.getName());
       store.init(dummyCfg, null, null);
       store.start();
       asyncExecutor = (ExecutorService) TestingUtil.extractField(store, "executor");
@@ -147,7 +145,7 @@ public class AsyncTest extends AbstractInfinispanTest {
          DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore();
          store = new MockAsyncStore(key, v1Latch, v2Latch, endLatch, underlying, asyncConfig);
          dummyCfg = new DummyInMemoryCacheStore.Cfg();
-         dummyCfg.setStore(m.getName());
+         dummyCfg.setStoreName(m.getName());
          store.init(dummyCfg, null, null);
          store.start();
 
@@ -189,7 +187,7 @@ public class AsyncTest extends AbstractInfinispanTest {
             }
          };
          dummyCfg = new DummyInMemoryCacheStore.Cfg();
-         dummyCfg.setStore(m.getName());
+         dummyCfg.setStoreName(m.getName());
          store.init(dummyCfg, null, null);
          store.start();
 
@@ -260,7 +258,7 @@ public class AsyncTest extends AbstractInfinispanTest {
             }
          };
          dummyCfg = new DummyInMemoryCacheStore.Cfg();
-         dummyCfg.setStore(m.getName());
+         dummyCfg.setStoreName(m.getName());
          store.init(dummyCfg, null, null);
          store.start();
 

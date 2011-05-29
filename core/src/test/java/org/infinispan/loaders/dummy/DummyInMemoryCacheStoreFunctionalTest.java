@@ -37,8 +37,10 @@ public class DummyInMemoryCacheStoreFunctionalTest extends BaseCacheStoreFunctio
 
    @Override
    protected CacheStoreConfig createCacheStoreConfig() throws Exception {
-      DummyInMemoryCacheStore.Cfg cfg = new DummyInMemoryCacheStore.Cfg(getClass().getName(), false);
-      cfg.setPurgeSynchronously(true); // for more accurate unit testing
+      DummyInMemoryCacheStore.Cfg cfg = new DummyInMemoryCacheStore.Cfg()
+         .storeName(getClass().getName())
+         .purgeOnStartup(false)
+         .purgeSynchronously(true); // for more accurate unit testing
       return cfg;
    }
 

@@ -48,11 +48,13 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      cfg = new Configuration();
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      clmc.setPassivation(true);
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg(false));
-      cfg.setCacheLoaderManagerConfig(clmc);
+      cfg = new Configuration().fluent()
+         .loaders()
+            .passivation(true)
+            .addCacheLoader(new DummyInMemoryCacheStore.Cfg()
+               .storeName(this.getClass().getName())
+               .purgeOnStartup(false))
+         .build();
       cm = TestCacheManagerFactory.createCacheManager(cfg, true);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();

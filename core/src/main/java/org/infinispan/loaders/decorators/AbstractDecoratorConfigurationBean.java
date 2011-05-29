@@ -163,6 +163,13 @@ public abstract class AbstractDecoratorConfigurationBean
       return cacheStoreConfig.singletonStore();
    }
 
+   /**
+    * Get back up to the <code>CacheStoreConfig</code> level.
+    */
+   public AbstractCacheStoreConfig build() {
+      return cacheStoreConfig;
+   }
+
    @Override
    public AbstractDecoratorConfigurationBean clone() {
       try {

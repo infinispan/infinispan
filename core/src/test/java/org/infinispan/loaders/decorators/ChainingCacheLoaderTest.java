@@ -37,19 +37,16 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import static org.testng.Assert.assertEquals;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+
+import static org.testng.Assert.assertEquals;
 
 @Test(groups = "unit", testName = "loaders.decorators.ChainingCacheLoaderTest")
 public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
@@ -60,16 +57,22 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
 
    protected CacheStore createCacheStore() throws CacheLoaderException {
       ChainingCacheStore store = new ChainingCacheStore();
-      CacheStoreConfig cfg;
+      CacheStoreConfig cfg = new DummyInMemoryCacheStore.Cfg()
+         .storeName("ChainingCacheLoaderTest_instance1")
+         .purgeOnStartup(false)
+         .fetchPersistentState(false);
       store1 = new DummyInMemoryCacheStore();
-      store1.init((cfg = new DummyInMemoryCacheStore.Cfg("ChainingCacheLoaderTest_instance1", false)), null, new TestObjectStreamMarshaller());
+      store1.init(cfg, null, new TestObjectStreamMarshaller());
 
       store.addCacheLoader(store1, cfg);
 
       store2 = new DummyInMemoryCacheStore();
-      store2.init((cfg = new DummyInMemoryCacheStore.Cfg("ChainingCacheLoaderTest_instance2", false)), null, new TestObjectStreamMarshaller());
       // set store2 up for streaming
-      cfg.setFetchPersistentState(true);
+      cfg = new DummyInMemoryCacheStore.Cfg()
+         .storeName("ChainingCacheLoaderTest_instance2")
+         .purgeOnStartup(false)
+         .fetchPersistentState(true);
+      store2.init(cfg, null, new TestObjectStreamMarshaller());
       store.addCacheLoader(store2, cfg);
 
       stores = new DummyInMemoryCacheStore[]{store1, store2};

@@ -63,20 +63,20 @@ public interface CacheStoreConfig extends CacheLoaderConfig, Cloneable {
    
    CacheStoreConfig purgeOnStartup(Boolean purgeOnStartup);
 
-   /**
-    * @deprecated use {@link #asyncStore()} instead
-    */
-   @Deprecated
    SingletonStoreConfig getSingletonStoreConfig();
 
+   /**
+    * @deprecated use {@link #singletonStore()} instead
+    */
+   @Deprecated
    void setSingletonStoreConfig(SingletonStoreConfig singletonStoreConfig);
    
+   AsyncStoreConfig getAsyncStoreConfig();
+
    /**
     * @deprecated use {@link #asyncStore()} instead
     */
    @Deprecated
-   AsyncStoreConfig getAsyncStoreConfig();
-
    void setAsyncStoreConfig(AsyncStoreConfig asyncStoreConfig);
    
    public Boolean isPurgeSynchronously();
