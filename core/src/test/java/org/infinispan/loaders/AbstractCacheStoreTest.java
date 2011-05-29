@@ -22,7 +22,7 @@
  */
 package org.infinispan.loaders;
 
-import static org.easymock.classextension.EasyMock.createMock;
+import java.util.concurrent.ExecutorService;
 
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.ReflectionUtil;
@@ -31,7 +31,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.ExecutorService;
+import static org.easymock.classextension.EasyMock.createMock;
 
 /**
  * Unit tests that cover {@link  AbstractCacheStoreTest }
@@ -44,14 +44,14 @@ public class AbstractCacheStoreTest extends AbstractInfinispanTest {
    private AbstractCacheStore cs;
    private AbstractCacheStoreConfig cfg;
 
-   @BeforeMethod
+   @BeforeMethod(alwaysRun = true)
    public void setUp() throws NoSuchMethodException, CacheLoaderException {
       cs = createMock(AbstractCacheStore.class, AbstractCacheStore.class.getMethod("clear"));
       cfg = new AbstractCacheStoreConfig();
       cs.init(cfg, null, null);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() throws CacheLoaderException {
       cs.stop();
       cs = null;

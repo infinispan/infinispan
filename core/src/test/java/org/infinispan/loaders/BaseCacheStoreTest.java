@@ -42,18 +42,8 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 import static java.util.Collections.emptySet;
 
@@ -77,7 +67,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       gtf.init(false, false, true);
    }
 
-   @BeforeMethod
+   @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
       try {
          cs = createCacheStore();
@@ -88,7 +78,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       }
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() throws CacheLoaderException {
       try {
          if (cs != null) {
