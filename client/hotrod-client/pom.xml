@@ -58,6 +58,7 @@
          <groupId>org.apache.hadoop</groupId>
          <artifactId>avro</artifactId>
          <version>${version.avro}</version>
+         <scope>provided</scope>
       </dependency>
 
       <dependency>
