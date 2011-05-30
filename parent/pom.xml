@@ -231,30 +231,6 @@
       <directory>${buildDirectory}</directory>
 
       <plugins>
-         <!-- enforce java 1.6 and maven 2.1.0 -->
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-enforcer-plugin</artifactId>
-            <version>1.0-beta-1</version>
-            <executions>
-               <execution>
-                  <id>enforce-java</id>
-                  <goals>
-                     <goal>enforce</goal>
-                  </goals>
-                  <configuration>
-                     <rules>
-                        <requireJavaVersion>
-                           <version>[1.6,)</version>
-                        </requireJavaVersion>
-                        <requireMavenVersion>
-                           <version>[2.1.0,)</version>
-                        </requireMavenVersion>
-                     </rules>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
          <!-- by default, compile to JDK 1.6 compatibility (individual modules and/or user can override) -->
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -279,21 +255,6 @@
             <version>2.4.3</version>
             <configuration>
                <encoding>UTF-8</encoding>
-            </configuration>
-         </plugin>
-
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <version>2.0.1</version>
-            <extensions>true</extensions>
-            <configuration>
-               <instructions>
-                  <Bundle-DocURL>http://www.infinispan.org/</Bundle-DocURL>
-                  <Export-Package>
-                     ${project.groupId}.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-               </instructions>
             </configuration>
          </plugin>
 
@@ -353,21 +314,6 @@
             <configuration>
                <downloadSources>true</downloadSources>
             </configuration>
-         </plugin>
-         <!-- Make sure we generate src jars too -->
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-source-plugin</artifactId>
-            <version>2.1.1</version>
-            <inherited>true</inherited>
-            <executions>
-               <execution>
-                  <id>attach-sources</id>
-                  <goals>
-                     <goal>jar</goal>
-                  </goals>
-               </execution>
-            </executions>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -493,6 +439,74 @@
    </pluginRepositories>
 
    <profiles>
+      <profile>
+         <id>extras</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+         </activation>
+         <properties>
+            <!-- By default create OSGI bundles -->
+            <packaging>bundle</packaging>
+         </properties>
+         <build>
+            <plugins>
+               <!-- enforce java 1.6 and maven 2.1.0 -->
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-enforcer-plugin</artifactId>
+                  <version>1.0-beta-1</version>
+                  <executions>
+                     <execution>
+                        <id>enforce-java</id>
+                        <goals>
+                           <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                           <rules>
+                              <requireJavaVersion>
+                                 <version>[1.6,)</version>
+                              </requireJavaVersion>
+                              <requireMavenVersion>
+                                 <version>[2.1.0,)</version>
+                              </requireMavenVersion>
+                           </rules>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+               <!-- Make sure we generate src jars too -->
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-source-plugin</artifactId>
+                  <version>2.1.1</version>
+                  <inherited>true</inherited>
+                  <executions>
+                     <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                           <goal>jar</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.felix</groupId>
+                  <artifactId>maven-bundle-plugin</artifactId>
+                  <version>2.0.1</version>
+                  <extensions>true</extensions>
+                  <configuration>
+                     <instructions>
+                        <Bundle-DocURL>http://www.infinispan.org/</Bundle-DocURL>
+                        <Export-Package>
+                           ${project.groupId}.*;version=${project.version};-split-package:=error
+                        </Export-Package>
+                     </instructions>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
       <profile>
          <id>test-hudson</id>
          <activation>
