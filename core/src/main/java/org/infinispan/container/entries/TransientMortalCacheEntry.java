@@ -118,7 +118,7 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    public Object setValue(Object value) {
-      return cacheValue.maxIdle;
+      return cacheValue.setValue(value);
    }
 
    @Override
