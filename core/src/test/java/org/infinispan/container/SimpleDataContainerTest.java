@@ -37,6 +37,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 @Test(groups = "unit", testName = "container.SimpleDataContainerTest")
 public class SimpleDataContainerTest extends AbstractInfinispanTest {
    DataContainer dc;
@@ -132,26 +134,43 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       return TransientCacheEntry.class;
    }
 
+   protected Class<? extends InternalCacheEntry> transientmortaltype() {
+      return TransientMortalCacheEntry.class;
+   }
+
+
    public void testExpirableToImmortalAndBack() {
-      dc.put("k", "v", 6000000, -1);
-      assert dc.containsKey("k");
-      assert dc.get("k").getClass().equals(mortaltype());
+      String value = "v";
+      dc.put("k", value, 6000000, -1);
+      assertContainerEntry(mortaltype(), value);
 
-      dc.put("k", "v2", -1, -1);
-      assert dc.containsKey("k");
-      assert dc.get("k").getClass().equals(immortaltype());
+      value = "v2";
+      dc.put("k", value, -1, -1);
+      assertContainerEntry(immortaltype(), value);
 
-      dc.put("k", "v3", -1, 6000000);
-      assert dc.containsKey("k");
-      assert dc.get("k").getClass().equals(transienttype());
+      value = "v3";
+      dc.put("k", value, -1, 6000000);
+      assertContainerEntry(transienttype(), value);
 
-      dc.put("k", "v3", 6000000, 6000000);
-      assert dc.containsKey("k");
-      assert dc.get("k") instanceof TransientMortalCacheEntry;
+      value = "v4";
+      dc.put("k", value, 6000000, 6000000);
+      assertContainerEntry(transientmortaltype(), value);
 
-      dc.put("k", "v", 6000000, -1);
+      value = "v41";
+      dc.put("k", value, 6000000, 6000000);
+      assertContainerEntry(transientmortaltype(), value);
+
+      value = "v5";
+      dc.put("k", value, 6000000, -1);
+      assertContainerEntry(mortaltype(), value);
+   }
+
+   private void assertContainerEntry(Class<? extends InternalCacheEntry> type,
+                                     String expectedValue) {
       assert dc.containsKey("k");
-      assert dc.get("k").getClass().equals(mortaltype());
+      InternalCacheEntry entry = dc.get("k");
+      assertEquals(type, entry.getClass());
+      assertEquals(expectedValue, entry.getValue());
    }
 
    public void testKeySet() {
