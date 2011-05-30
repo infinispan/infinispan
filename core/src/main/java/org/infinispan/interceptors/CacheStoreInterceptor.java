@@ -133,8 +133,10 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
             try {
                store.commit(tx);
             } catch (Throwable t) {
-               preparingTxs.remove(tx);
                throw t;
+            } finally {
+               // Regardless of outcome, remove from preparing txs
+               preparingTxs.remove(tx);
             }
             if (getStatisticsEnabled()) {
                Integer puts = txStores.get(tx);
