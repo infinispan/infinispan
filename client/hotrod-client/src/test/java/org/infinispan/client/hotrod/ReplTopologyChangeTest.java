@@ -35,6 +35,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
+import java.util.Collection;
 
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -166,7 +167,8 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
          remoteCache.put("k" + i, "v" + i);         
          if (added == tcpConnectionFactory.getServers().contains(server1Address)) break;
       }
-      assertEquals(server1Address + " not found", added, tcpConnectionFactory.getServers().contains(server1Address));
+      Collection<InetSocketAddress> addresses = tcpConnectionFactory.getServers();
+      assertEquals(server1Address + " not found in " + addresses, added, addresses.contains(server1Address));
    }
    
    protected void waitForClusterToForm(int memberCount) {
