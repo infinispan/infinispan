@@ -90,7 +90,7 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
    @Test(dependsOnMethods = "testIsReplicated")
    public void testNodeLeaves() {
       TestingUtil.killCacheManagers(manager(1));
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0), cache(2));
+      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(0), cache(2));
 
       DistributionManagerImpl dmi = (DistributionManagerImpl) advancedCache(0).getDistributionManager();
       assertTopologyInfo2Nodes(dmi.getConsistentHash().getCaches());

@@ -26,6 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -36,7 +37,7 @@ import org.testng.annotations.Test;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Test(groups = "functional", testName =  "distribution.rehash.RehashAfterPartitionMergeTest", enabled = false, description = "Need to revisit after https://jira.jboss.org/browse/ISPN-493")
+@Test(groups = "functional", testName =  "distribution.rehash.RehashAfterPartitionMergeTest")
 public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
 
    Cache<Object, Object> c1, c2;
@@ -93,7 +94,7 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
       // wait till we see the view change
       while (ai.get() < 2) TestingUtil.sleepThread(500);
 
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(c1, c2);
+      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(c1, c2);
 
       c1.put("5", "value");
       c2.put("6", "value");
@@ -112,7 +113,7 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
          this.ai = ai;
       }
 
-      @ViewChanged
+      @ViewChanged @Merged
       public void handle(ViewChangedEvent e) {
          ai.getAndIncrement();
       }
