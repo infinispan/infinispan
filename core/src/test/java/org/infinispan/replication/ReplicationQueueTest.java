@@ -159,7 +159,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       Cache cache1 = cache(0, "replQueue");
       Cache cache2 = cache(1, "replQueue");
       
-      //only place one element, queue size is 10.
+      //place 10 elements, queue size is 10.
       for (int i = 0; i < REPL_QUEUE_MAX_ELEMENTS; i++) {
          cache1.put("key" + i, "value" + i);
       }
@@ -207,19 +207,16 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
    public void testReplicationQueueMultipleThreads() throws Exception {
       final Cache cache1 = cache(0, "replQueue");
       Cache cache2 = cache(1, "replQueue");
-      int numThreads = 4;
-      final int numLoopsPerThread = 3;
+      // put 10 elements in the queue from 5 different threads
+      int numThreads = 5;
+      final int numLoopsPerThread = 2;
       Thread[] threads = new Thread[numThreads];
       final CountDownLatch latch = new CountDownLatch(1);
 
       for (int i = 0; i < numThreads; i++) {
          final int i1 = i;
          threads[i] = new Thread() {
-            int index;
-
-            {
-               index = i1;
-            }
+            int index = i1;
 
             public void run() {
                try {
