@@ -93,7 +93,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       log.info("Here is where ST starts");
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(addresses[0]), cache(addresses[1]), cache(addresses[2]), cache(addresses[3]));
+      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(addresses[0]), cache(addresses[1]), cache(addresses[2]), cache(addresses[3]));
       log.info("Here is where ST ends");
       Set<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getCaches();
       log.debug("After shutting down " + addresses[4] + " caches are " +  addressList);
@@ -116,7 +116,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm = cache(addresses[2]).getCacheManager();
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(addresses[0]), cache(addresses[1]), cache(addresses[3]));
+      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(addresses[0]), cache(addresses[1]), cache(addresses[3]));
       assertExistence(addresses[0]);
       assertExistence(addresses[1]);
       assertExistence(addresses[2]);
@@ -129,7 +129,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm = cache(addresses[1]).getCacheManager();
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(addresses[0]), cache(addresses[3]));
+      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(addresses[0]), cache(addresses[3]));
       assertExistence(addresses[0]);
       assertExistence(addresses[1]);
       assertExistence(addresses[2]);
@@ -143,40 +143,23 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       final List<Address> addresses = hash.locate(key, 2);
       log.debug(key + " should be present on = " + addresses);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            int count = 0;
-            for (Cache c : caches()) {
-               if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
-                  log.debug("It is here = " + address(c));
-                  count++;
-               }
-            }
-            log.debug("count = " + count);
-            return count == 2;
-         }         
-      });
-
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (Cache c : caches()) {
-               if (addresses.contains(address(c))) {
-                  if (!c.getAdvancedCache().getDataContainer().containsKey(key)) {
-                     log.debug(key + " not present on " + c.getAdvancedCache().getRpcManager().getAddress());
-                     return false;
-                  }
-               } else {
-                  if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
-                     log.debug(key + " present on " + c.getAdvancedCache().getRpcManager().getAddress());
-                     return false;
-                  }
-               }
-            }
-            return true;
+      int count = 0;
+      for (Cache c : caches()) {
+         if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
+            log.debug("It is here = " + address(c));
+            count++;
          }
-      });
+      }
+      log.debug("count = " + count);
+      assert count == 2;
+
+      for (Cache c : caches()) {
+         if (addresses.contains(address(c))) {
+            assert c.getAdvancedCache().getDataContainer().containsKey(key);
+         } else {
+            assert !c.getAdvancedCache().getDataContainer().containsKey(key);
+         }
+      }
    }
 
    @Override

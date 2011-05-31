@@ -45,7 +45,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * A base test for all rehashing tests
  */
-@Test(groups = "functional", testName = "distribution.rehash.RehashTestBase")
+@Test
 public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
    protected RehashTestBase() {
@@ -170,7 +170,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
          //ownership can only be verified after the rehashing has completed
          if (!mergedViewListener.merged) {
-            RehashWaiter.waitForInitRehashToComplete(new ArrayList<Cache>(caches));
+            RehashWaiter.waitForRehashToComplete(new ArrayList<Cache>(caches));
             assertOwnershipAndNonOwnership(keys.get(0));
             assertOwnershipAndNonOwnership(keys.get(1));
             assertOwnershipAndNonOwnership(keys.get(3));
