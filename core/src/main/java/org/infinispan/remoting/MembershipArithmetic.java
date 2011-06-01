@@ -48,15 +48,15 @@ public class MembershipArithmetic {
       return new ArrayList<Address>(tmp);
    }
 
-   public static Address getMemberJoined(List<Address> oldList, List<Address> newList) {
-      Set<Address> tmp = new HashSet<Address>(newList);
-      tmp.removeAll(oldList);
-      return tmp.isEmpty() ? null : tmp.iterator().next();
+   public static Set<Address> getMembersJoined(Set<Address> oldSet, Set<Address> newSet) {
+      Set<Address> result = new HashSet<Address>(newSet);
+      result.removeAll(oldSet);
+      return result;
    }
 
-   public static Address getMemberLeft(List<Address> oldList, List<Address> newList) {
-      Set<Address> tmp = new HashSet<Address>(oldList);
-      tmp.removeAll(newList);
-      return tmp.isEmpty() ? null : tmp.iterator().next();
-   }   
+   public static Set<Address> getMembersLeft(Set<Address> oldSet, Set<Address> newSet) {
+      Set<Address> result = new HashSet<Address>(oldSet);
+      result.removeAll(newSet);
+      return result;
+   }
 }

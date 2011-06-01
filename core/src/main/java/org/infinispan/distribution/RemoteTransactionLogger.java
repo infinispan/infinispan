@@ -49,7 +49,7 @@ public interface RemoteTransactionLogger {
     *
     * @return list of drained commands
     */
-   List<WriteCommand> drainAndLock(Address lockFor);
+   List<WriteCommand> drainAndLock() throws InterruptedException;
 
    /**
     * Tests whether the drain() method can be called without a lock.  This is usually true if there is a lot of stuff to
@@ -71,5 +71,5 @@ public interface RemoteTransactionLogger {
    /**
     * Unlocks and disables the transaction logger.  Should <i>only</i> be called after {@link #drainAndLock()}.
     */
-   void unlockAndDisable(Address lockedFor);
+   void unlockAndDisable();
 }

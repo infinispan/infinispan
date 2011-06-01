@@ -95,35 +95,36 @@ public class RebalanceTask extends RehashTask {
          log.debugf("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s", getMyAddress(), distributionManager.isJoinComplete());
       ConsistentHash chOld, chNew;
       try {
-         // 1.  Get the old CH
-         chOld = distributionManager.getConsistentHash();
+         // Don't need to log anything, all transactions will be blocked
+         //distributionManager.getTransactionLogger().enable();
+         distributionManager.getTransactionLogger().blockNewTransactions();
 
-         // 2. Create the new CH:
-         List<Address> newMembers = rpcManager.getTransport().getMembers();
-         chNew = createConsistentHash(configuration, newMembers);
-         notifier.notifyTopologyChanged(chOld, chNew, true);
-         distributionManager.setConsistentHash(chNew);
-         notifier.notifyTopologyChanged(chOld, chNew, false);
+         boolean needToUnblockTransactions = true;
+         try {
+            // 1.  Get the old CH
+            chOld = distributionManager.getConsistentHash();
 
-         if (log.isTraceEnabled()) {
-            log.tracef("Rebalancing\nchOld = %s\nchNew = %s", chOld, chNew);
-         }
+            // 2. Create the new CH:
+            List<Address> newMembers = rpcManager.getTransport().getMembers();
+            chNew = createConsistentHash(configuration, newMembers);
+            notifier.notifyTopologyChanged(chOld, chNew, true);
+            distributionManager.setConsistentHash(chNew);
+            notifier.notifyTopologyChanged(chOld, chNew, false);
 
-         if (configuration.isRehashEnabled()) {
-            // Cache sets for notification
-            Collection<Address> oldCacheSet = Immutables.immutableCollectionWrap(chOld.getCaches());
-            Collection<Address> newCacheSet = Immutables.immutableCollectionWrap(chNew.getCaches());
+            if (log.isTraceEnabled()) {
+               log.tracef("Rebalancing\nchOld = %s\nchNew = %s", chOld, chNew);
+            }
 
-            // notify listeners that a rehash is about to start
-            notifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, true);
+            if (configuration.isRehashEnabled()) {
+               // Cache sets for notification
+               Collection<Address> oldCacheSet = Immutables.immutableCollectionWrap(chOld.getCaches());
+               Collection<Address> newCacheSet = Immutables.immutableCollectionWrap(chNew.getCaches());
 
-            List<Object> removedKeys = new ArrayList<Object>();
-            NotifyingNotifiableFuture<Object> stateTransferFuture = new AggregatingNotifyingFutureImpl(null, newMembers.size());
+               // notify listeners that a rehash is about to start
+               notifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, true);
 
-            try {
-               // Don't need to log anything, all transactions will be blocked
-               //distributionManager.getTransactionLogger().enable();
-               distributionManager.getTransactionLogger().blockNewTransactions();
+               List<Object> removedKeys = new ArrayList<Object>();
+               NotifyingNotifiableFuture<Object> stateTransferFuture = new AggregatingNotifyingFutureImpl(null, newMembers.size());
 
                int numOwners = configuration.getNumOwners();
 
@@ -157,54 +158,60 @@ public class RebalanceTask extends RehashTask {
                   rpcManager.invokeRemotelyInFuture(Collections.singleton(target), cmd,
                                                     false, stateTransferFuture, configuration.getRehashRpcTimeout());
                }
-            } finally {
+
+               // TODO Allow APPLY_STATE RehashControlCommand to skip transaction blocking, so we can unblock new transactions
+               // only after we have invalidated the keys removed from this cache
+               // For transactions TransactionTable should have already rolled back the transactions touching those keys,
+               // but it still might be a problem for non-transactional writes.
+               needToUnblockTransactions = false;
+               distributionManager.getTransactionLogger().unblockNewTransactions();
+
+               // wait to see if all servers received the new state
+               // TODO should we retry the state transfer operation if it failed on some of the nodes?
+               try {
+                  stateTransferFuture.get();
+               } catch (ExecutionException e) {
+                  log.errorTransferringState(e);
+               }
+
+               // Notify listeners of completion of rehashing
+               notifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, false);
+
+               // now we can invalidate the keys
+               try {
+                  InvalidateCommand invalidateCmd = cf.buildInvalidateFromL1Command(true, removedKeys);
+                  InvocationContext ctx = icc.createNonTxInvocationContext();
+                  invalidateCmd.perform(ctx);
+               } catch (Throwable t) {
+                  log.failedToInvalidateKeys(t);
+               }
+
+               if (trace) {
+                  if (removedKeys.size() > 0)
+                     log.tracef("removed %d keys", removedKeys.size());
+                  log.tracef("data container has now %d keys", dataContainer.size());
+               }
+            } else {
+               if (trace) log.trace("Rehash not enabled, so not pushing state");
+            }
+         } finally {
+            if (needToUnblockTransactions) {
                distributionManager.getTransactionLogger().unblockNewTransactions();
             }
-
-            // wait to see if all servers received the new state
-            // TODO should we retry the state transfer operation if it failed on some of the nodes?
-            try {
-               stateTransferFuture.get();
-            } catch (ExecutionException e) {
-               log.error("Error transferring state to node after rehash:", e);
-            }
-
-            // Notify listeners of completion of rehashing
-            notifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, false);
-
-            // now we can invalidate the keys
-            try {
-               InvalidateCommand invalidateCmd = cf.buildInvalidateFromL1Command(true, removedKeys);
-               InvocationContext ctx = icc.createNonTxInvocationContext();
-               invalidateCmd.perform(ctx);
-            } catch (Throwable t) {
-               log.error("Error invalidating from L1", t);
-            }
-
-            if (trace) {
-               if (removedKeys.size() > 0)
-                  log.tracef("removed %d keys", removedKeys.size());
-               log.tracef("data container has now %d keys", dataContainer.size());
-            }
-         } else {
-            if (trace) log.trace("Rehash not enabled, so not pushing state");
          }
 
          // now we can inform the coordinator that we have finished our push
          Transport t = rpcManager.getTransport();
          if (t.isCoordinator()) {
-            distributionManager.markNodePushCompleted(t.getViewId(), t.getAddress());
+            distributionManager.markNodePushCompleted(newViewId, t.getAddress());
          } else {
             final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED, self, newViewId);
 
             // doesn't matter when the coordinator receives the command, the transport will ensure that it eventually gets there
             rpcManager.invokeRemotely(Collections.singleton(t.getCoordinator()), cmd, false);
          }
-      } catch (Exception e) {
-         log.error("failure in rebalancing", e);
-         throw new CacheException("Unexpected exception", e);
       } finally {
-         log.debugf("%s completed join rehash in %s!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
+         log.debugf("Node %s completed join rehash in %s!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
       }
    }
 
@@ -250,7 +257,7 @@ public class RebalanceTask extends RehashTask {
             try {
                value = cacheStore.load(key);
             } catch (CacheLoaderException e) {
-               log.warnf("failed loading value for key %s from cache store", key);
+               log.failedLoadingValueFromCacheStore(key);
             }
          }
 

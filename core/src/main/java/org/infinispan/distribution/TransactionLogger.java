@@ -27,16 +27,19 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * Typically adding a command, the following pattern would be used:
  * <p/>
  * <code>
  *
- * if (txLogger.logIfNeeded(cmd)) {
- *     // do NOT proceed with executing this command!
- * } else {
- *     // proceed with executing this command as per normal!
+ * txLogger.beforeCommand();
+ * try {
+ *    // execute this command!
+ * } finally {
+ *    txLogger.afterCommand(cmd);
  * }
  *
  * </code>
@@ -58,6 +61,7 @@ import org.infinispan.context.impl.TxInvocationContext;
  * </code>
  *
  * @author Manik Surtani
+ * @author Dan Berindei <dberinde@redhat.com>
  * @since 4.0
  */
 public interface TransactionLogger extends RemoteTransactionLogger {
@@ -67,30 +71,29 @@ public interface TransactionLogger extends RemoteTransactionLogger {
    void enable();
 
    /**
-    * If logging is enabled, will log the command and return true.  Otherwise, will just return false.
+    * Logs a write command (if needed).
     *
     * @param command command to log
-    * @return true if logged, false otherwise
     */
-   boolean logIfNeeded(WriteCommand command);
+   void afterCommand(WriteCommand command) throws InterruptedException;
 
    /**
     * Logs a PrepareCommand if needed.
     * @param command PrepoareCommand to log
     */
-   void logIfNeeded(PrepareCommand command);
+   void afterCommand(PrepareCommand command) throws InterruptedException;
 
    /**
     * Logs a CommitCommand if needed.
     * @param command CommitCommand to log
     */
-   void logIfNeeded(CommitCommand command, TxInvocationContext context);
+   void afterCommand(CommitCommand command, TxInvocationContext context) throws InterruptedException;
 
    /**
     * Logs a RollbackCommand if needed.
     * @param command RollbackCommand to log
     */
-   void logIfNeeded(RollbackCommand command);
+   void afterCommand(RollbackCommand command) throws InterruptedException;
 
    /**
     * Checks whether transaction logging is enabled
@@ -99,20 +102,34 @@ public interface TransactionLogger extends RemoteTransactionLogger {
    boolean isEnabled();
 
    /**
-    * A mechanism for commit commands to register modifications instead of a prepare.  Used for when transaction logging
-    * was disabled during prepare, but was enabled before commit.
-    * @param commit commit command
-    * @param context context from which to extract modification list
+    * Notify the transaction logger before a write command, potentially blocking.
     */
-   void logModificationsIfNeeded(CommitCommand commit, TxInvocationContext context);
+   void beforeCommand(WriteCommand command) throws InterruptedException;
 
    /**
-    * Causes new transactions to block when testing isEnabled().
+    * Notify the transaction logger before a prepare command, potentially blocking.
     */
-   void blockNewTransactions();
+   void beforeCommand(PrepareCommand command) throws InterruptedException;
 
    /**
-    * Unblocks anything blocking on isEnabled().
+    * Notify the transaction logger before a commit command, potentially blocking.
+    * If transaction logging was not enabled during the prepare command, use the
+    * context to extract the list of modifications.
     */
-   void unblockNewTransactions();
+   void beforeCommand(CommitCommand command, TxInvocationContext context) throws InterruptedException;
+
+   /**
+    * Notify the transaction logger before a rollback command, potentially blocking.
+    */
+   void beforeCommand(RollbackCommand command) throws InterruptedException;
+
+   /**
+    * Causes new transactions to block when calling <code>beforeCommand()</code>.
+    */
+   void blockNewTransactions() throws InterruptedException;
+
+   /**
+    * Unblocks anything blocking on <code>beforeCommand()</code>.
+    */
+   void unblockNewTransactions() throws InterruptedException;
 }

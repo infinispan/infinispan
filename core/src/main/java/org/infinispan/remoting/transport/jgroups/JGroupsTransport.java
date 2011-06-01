@@ -37,7 +37,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.util.FileLookup;
-import org.infinispan.util.StringPropertyReplacer;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -47,7 +46,6 @@ import org.jgroups.*;
 import org.jgroups.blocks.Request;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.jmx.JmxConfigurator;
-import org.jgroups.protocols.UDP;
 import org.jgroups.protocols.pbcast.STREAMING_STATE_TRANSFER;
 import org.jgroups.stack.AddressGenerator;
 import org.jgroups.stack.ProtocolStack;
@@ -56,14 +54,10 @@ import org.jgroups.util.RspList;
 import org.jgroups.util.TopologyUUID;
 
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -86,29 +80,34 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    public static final String CONFIGURATION_FILE = "configurationFile";
    public static final String CHANNEL_LOOKUP = "channelLookup";
    protected static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "jgroups-udp.xml";
-   protected boolean startChannel = true, stopChannel = true;
 
-   protected Channel channel;
-   protected boolean createdChannel = false;
-   protected Address address;
-   protected Address physicalAddress;
-   protected volatile List<Address> members = Collections.emptyList();
-   protected volatile boolean coordinator = false;
-   protected final Object membersListLock = new Object(); // guards members
-   CommandAwareRpcDispatcher dispatcher;
    static final Log log = LogFactory.getLog(JGroupsTransport.class);
    static final boolean trace = log.isTraceEnabled();
+   final ConcurrentMap<String, StateTransferMonitor> stateTransfersInProgress = new ConcurrentHashMap<String, StateTransferMonitor>();
+
+   protected boolean startChannel = true, stopChannel = true;
+   private CommandAwareRpcDispatcher dispatcher;
    protected TypedProperties props;
    protected InboundInvocationHandler inboundInvocationHandler;
    protected StreamingMarshaller marshaller;
    protected ExecutorService asyncExecutor;
    protected CacheManagerNotifier notifier;
-   final ConcurrentMap<String, StateTransferMonitor> stateTransfersInProgress = new ConcurrentHashMap<String, StateTransferMonitor>();
    private final JGroupsDistSync flushTracker = new JGroupsDistSync();
-   long distributedSyncTimeout;
+   private long distributedSyncTimeout;
+
    private boolean globalStatsEnabled;
    private MBeanServer mbeanServer;
    private String domain;
+
+   protected Channel channel;
+   protected Address address;
+   protected Address physicalAddress;
+
+   // these members are not valid until we have received the first view on a second thread
+   // and channelConnectedLatch is signaled
+   protected volatile List<Address> members = null;
+   protected volatile boolean coordinator = false;
+   protected CountDownLatch channelConnectedLatch = new CountDownLatch(1);
 
    /**
     * This form is used when the transport is created by an external source and passed in to the GlobalConfiguration.
@@ -148,6 +147,8 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
       initChannelAndRPCDispatcher();
       startJGroupsChannelIfNeeded();
+
+      waitForChannelToConnect();
    }
 
    protected void startJGroupsChannelIfNeeded() {
@@ -171,6 +172,9 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          } catch (Exception e) {
             throw new CacheException("Channel connected, but unable to register MBeans", e);
          }
+      }
+      else {
+         channelConnectedLatch.countDown();
       }
       address = fromJGroupsAddress(channel.getAddress());
       if (log.isInfoEnabled())
@@ -219,7 +223,6 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
    protected void initChannel() {
       if (channel == null) {
-         createdChannel = true;
          buildChannel();
          // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise invalidations targeted at
          // remote instances will be received by self.
@@ -326,18 +329,16 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    }
 
    public Address getCoordinator() {
-      if (channel == null) return null;
-      synchronized (membersListLock) {
-         while (members.isEmpty()) {
-            log.debug("Waiting on view being accepted");
-            try {
-               membersListLock.wait();
-            } catch (InterruptedException e) {
-               log.interruptedWaitingForCoordinator(e);
-               break;
-            }
-         }
-         return members.isEmpty() ? null : members.get(0);
+      return members.isEmpty() ? null : members.get(0);
+   }
+
+   public void waitForChannelToConnect() {
+      if (channel == null) return;
+      log.debug("Waiting on view being accepted");
+      try {
+         channelConnectedLatch.await();
+      } catch (InterruptedException e) {
+         log.interruptedWaitingForCoordinator(e);
       }
    }
 
@@ -523,23 +524,22 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          }
       }
 
-      synchronized (membersListLock) {
-         boolean needNotification = false;
-         if (newMembers != null) {
-            oldMembers = members;
-            // we need a defensive copy anyway
-            members = fromJGroupsAddressList(newMembers);
-            needNotification = true;
-         }
-         // Now that we have a view, figure out if we are the coordinator
-         coordinator = (members != null && !members.isEmpty() && members.get(0).equals(getAddress()));
-
-         // now notify listeners - *after* updating the coordinator. - JBCACHE-662
-         if (needNotification && n != null) n.emitNotification(oldMembers, newView);
-
-         // Wake up any threads that are waiting to know about who the coordinator is
-         membersListLock.notifyAll();
+      boolean needNotification = false;
+      if (newMembers != null) {
+         oldMembers = members;
+         // we need a defensive copy anyway
+         members = fromJGroupsAddressList(newMembers);
+         needNotification = true;
       }
+      // Now that we have a view, figure out if we are the coordinator
+      coordinator = (members != null && !members.isEmpty() && members.get(0).equals(getAddress()));
+
+      // Wake up any threads that are waiting to know about who the coordinator is
+      // do it before the notifications, so if a listener throws an exception we can still start
+      channelConnectedLatch.countDown();
+
+      // now notify listeners - *after* updating the coordinator. - JBCACHE-662
+      if (needNotification && n != null) n.emitNotification(oldMembers, newView);
    }
 
    public void suspect(org.jgroups.Address suspected_mbr) {
@@ -630,7 +630,6 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       if (list == null) return null;
       if (list.isEmpty()) return new Vector<org.jgroups.Address>();
 
-      // optimize for the single node case
       Vector<org.jgroups.Address> retval = new Vector<org.jgroups.Address>(list.size());
       for (Address a : list) retval.add(toJGroupsAddress(a));
 
@@ -640,15 +639,10 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
    private static List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
       if (list == null || list.isEmpty()) return Collections.emptyList();
-      // optimize for the single node case
-      int sz = list.size();
-      List<Address> retval = new ArrayList<Address>(sz);
-      if (sz == 1) {
-         retval.add(fromJGroupsAddress(list.get(0)));
-      } else {
-         for (org.jgroups.Address a : list) retval.add(fromJGroupsAddress(a));
-      }
-      return retval;
+
+      List<Address> retval = new ArrayList<Address>(list.size());
+      for (org.jgroups.Address a : list) retval.add(fromJGroupsAddress(a));
+      return Collections.unmodifiableList(retval);
    }
 
    // mainly for unit testing

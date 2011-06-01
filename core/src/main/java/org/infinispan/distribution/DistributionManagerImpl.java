@@ -35,6 +35,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -66,23 +67,10 @@ import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 
 import static org.infinispan.context.Flag.*;
-import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
 
 /**
  * The default distribution manager implementation
@@ -98,19 +86,28 @@ public class DistributionManagerImpl implements DistributionManager {
    private static final Log log = LogFactory.getLog(DistributionManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private Configuration configuration;
-   private volatile ConsistentHash consistentHash;
-   private Address self;
+   // Injected components
    private CacheLoaderManager cacheLoaderManager;
+   private Configuration configuration;
    private RpcManager rpcManager;
    private CacheManagerNotifier notifier;
-
-   private ViewChangeListener listener;
    private CommandsFactory cf;
+   private TransactionLogger transactionLogger;
+   private DataContainer dataContainer;
+   private InterceptorChain interceptorChain;
+   private InvocationContextContainer icc;
+   private InboundInvocationHandler inboundInvocationHandler;
+   private CacheNotifier cacheNotifier;
 
+   private final ViewChangeListener listener;
    private final ExecutorService rehashExecutor;
 
-   private TransactionLogger transactionLogger;
+   // consistentHash and self are not valid in the inbound threads until
+   // joinStartedLatch has been signaled by the starting thread
+   // we don't have a getSelf() that waits on joinS
+   private volatile ConsistentHash consistentHash;
+   private Address self;
+   private final CountDownLatch joinStartedLatch = new CountDownLatch(1);
 
    /**
     * Set if the cluster is in rehash mode, i.e. not all the nodes have applied the new state.
@@ -123,16 +120,10 @@ public class DistributionManagerImpl implements DistributionManager {
    private final Map<Address, Integer> pushConfirmations = new HashMap<Address, Integer>(1);
    private final Object pushConfirmationsLock = new Object();
 
-   private DataContainer dataContainer;
-   private InterceptorChain interceptorChain;
-   private InvocationContextContainer icc;
-
    @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
    @Metric(displayName = "Is join completed?", dataType = DataType.TRAIT)
    private volatile boolean joinComplete = false;
-
-   InboundInvocationHandler inboundInvocationHandler;
-   private CacheNotifier cacheNotifier;
+   private final CountDownLatch joinCompletedLatch = new CountDownLatch(1);
 
    /**
     * Default constructor
@@ -151,6 +142,7 @@ public class DistributionManagerImpl implements DistributionManager {
       };
       rehashExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, rehashQueue, tf,
                                               new ThreadPoolExecutor.DiscardOldestPolicy());
+      listener = new ViewChangeListener();
    }
 
    @Inject
@@ -172,11 +164,9 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    // needs to be AFTER the RpcManager
-
    @Start(priority = 20)
    public void start() throws Exception {
       if (trace) log.trace("starting distribution manager on " + getMyAddress());
-      listener = new ViewChangeListener();
       notifier.addListener(listener);
       join();
    }
@@ -197,20 +187,19 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Start(priority = 1000)
    public void waitForJoinToComplete() throws Throwable {
-      while (rehashInProgress) {
-         // TODO use a monitor instead
-         Thread.sleep(10);
-      }
+      joinCompletedLatch.await();
       joinComplete = true;
    }
 
    private void join() throws Exception {
       Transport t = rpcManager.getTransport();
       List<Address> members = t.getMembers();
-      consistentHash = createConsistentHash(configuration, members);
       self = t.getAddress();
-      rehashInProgress = true;
       lastViewId = t.getViewId();
+      consistentHash = ConsistentHashHelper.createConsistentHash(configuration, members);
+
+      // allow incoming requests
+      joinStartedLatch.countDown();
 
       // nothing to push, but we need to inform the coordinator that we have finished our push
       if (t.isCoordinator()) {
@@ -227,6 +216,8 @@ public class DistributionManagerImpl implements DistributionManager {
    public void stop() {
       notifier.removeListener(listener);
       rehashExecutor.shutdownNow();
+      joinStartedLatch.countDown();
+      joinCompletedLatch.countDown();
       joinComplete = true;
    }
 
@@ -237,9 +228,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public DataLocality getLocality(Object key) {
-      if (consistentHash == null) return DataLocality.LOCAL;
-
-      boolean local = consistentHash.isKeyLocalToAddress(self, key, getReplCount());
+      boolean local = getConsistentHash().isKeyLocalToAddress(getSelf(), key, getReplCount());
       if (isRehashInProgress()) {
          if (local) {
             return DataLocality.LOCAL_UNCERTAIN;
@@ -257,8 +246,21 @@ public class DistributionManagerImpl implements DistributionManager {
 
 
    public List<Address> locate(Object key) {
-      if (consistentHash == null) return Collections.singletonList(self);
-      return consistentHash.locate(key, getReplCount());
+      return getConsistentHash().locate(key, getReplCount());
+   }
+
+   /**
+    * Hold up operations on incoming threads until the starting thread has finished initializing the consistent hash
+    */
+   private void waitForJoinToStart() {
+      try {
+         joinStartedLatch.await();
+      } catch (InterruptedException e) {
+         // TODO We're setting the interrupted flag so the caller can still check if the thread was interrupted, but it would be better to throw InterruptedException instead
+         // The only problem is that would require a lot of method signature changes
+         Thread.currentThread().interrupt();
+         throw new IllegalStateException("Thread interrupted", e);
+      }
    }
 
    public Map<Object, List<Address>> locateAll(Collection<Object> keys) {
@@ -266,13 +268,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public Map<Object, List<Address>> locateAll(Collection<Object> keys, int numOwners) {
-      if (consistentHash == null) {
-         Map<Object, List<Address>> m = new HashMap<Object, List<Address>>(keys.size());
-         List<Address> selfList = Collections.singletonList(self);
-         for (Object k : keys) m.put(k, selfList);
-         return m;
-      }
-      return consistentHash.locateAll(keys, numOwners);
+      return getConsistentHash().locateAll(keys, numOwners);
    }
 
    public void transformForL1(CacheEntry entry) {
@@ -299,8 +295,23 @@ public class DistributionManagerImpl implements DistributionManager {
       return null;
    }
 
+   public Address getSelf() {
+      if (self == null) {
+         waitForJoinToStart();
+      }
+      // after the waitForJoinToStart call we must see the value of self set before joinStartedLatch.countDown()
+      return self;
+   }
+
    public ConsistentHash getConsistentHash() {
-      return consistentHash;
+      // avoid a duplicate volatile read in the common case
+      ConsistentHash ch = consistentHash;
+      if (ch == null) {
+         waitForJoinToStart();
+         // after the waitForJoinToStart call we must see the value of consistentHash set before joinStartedLatch.countDown()
+         ch = consistentHash;
+      }
+      return ch;
    }
 
    public void setConsistentHash(ConsistentHash consistentHash) {
@@ -312,7 +323,7 @@ public class DistributionManagerImpl implements DistributionManager {
    @ManagedOperation(description = "Determines whether a given key is affected by an ongoing rehash, if any.")
    @Operation(displayName = "Could key be affected by rehash?")
    public boolean isAffectedByRehash(@Parameter(name = "key", description = "Key to check") Object key) {
-      return transactionLogger.isEnabled() && consistentHash != null && !consistentHash.locate(key, getReplCount()).contains(self);
+      return isRehashInProgress() && !getConsistentHash().locate(key, getReplCount()).contains(getSelf());
    }
 
    public TransactionLogger getTransactionLogger() {
@@ -321,17 +332,16 @@ public class DistributionManagerImpl implements DistributionManager {
 
    private Map<Object, InternalCacheValue> applyStateMap(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state, boolean withRetry) {
       Map<Object, InternalCacheValue> retry = withRetry ? new HashMap<Object, InternalCacheValue>() : null;
-      Address myself=self;
-      if(myself == null) {
-         myself=rpcManager.getTransport().getAddress();
-         self=myself;
-      }
+      waitForJoinToStart();
 
       for (Map.Entry<Object, InternalCacheValue> e : state.entrySet()) {
-         if (consistentHash.locate(e.getKey(), configuration.getNumOwners()).contains(myself)) {
+         if (consistentHash.locate(e.getKey(), configuration.getNumOwners()).contains(getSelf())) {
             InternalCacheValue v = e.getValue();
             InvocationContext ctx = icc.createInvocationContext();
-            ctx.setFlags(CACHE_MODE_LOCAL, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING, SKIP_OWNERSHIP_CHECK); // locking not necessary in the case of a join since the node isn't doing anything else.
+            // locking not necessary in the case of a join since the node isn't doing anything else
+            // TODO what if the node is already running?
+            ctx.setFlags(CACHE_MODE_LOCAL, SKIP_CACHE_LOAD, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING,
+                         SKIP_OWNERSHIP_CHECK);
             try {
                PutKeyValueCommand put = cf.buildPutKeyValueCommand(e.getKey(), v.getValue(), v.getLifespan(), v.getMaxIdle(), ctx.getFlags());
                interceptorChain.invoke(ctx, put);
@@ -344,6 +354,8 @@ public class DistributionManagerImpl implements DistributionManager {
                   log.problemApplyingStateForKey(ee.getMessage(), e.getKey());
                }
             }
+         } else {
+            log.keyDoesNotMapToLocalNode(e.getKey(), consistentHash.locate(e.getKey(), configuration.getNumOwners()));
          }
       }
       return retry;
@@ -376,8 +388,9 @@ public class DistributionManagerImpl implements DistributionManager {
          throw new IllegalStateException("Received rehash completed confirmation before confirming it ourselves");
       }
 
-      if (trace) log.tracef("Rehash completed on node %s, data container has %d keys", self, dataContainer.size());
+      if (trace) log.tracef("Rehash completed on node %s, data container has %d keys", getSelf(), dataContainer.size());
       rehashInProgress = false;
+      joinCompletedLatch.countDown();
    }
 
    @Override
@@ -422,7 +435,7 @@ public class DistributionManagerImpl implements DistributionManager {
             log.tracef("Coordinator: sending rehash completed notification for view %s", viewId);
 
          // all the nodes are up-to-date, broadcast the rehash completed command
-         final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.REHASH_COMPLETED, self, viewId);
+         final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.REHASH_COMPLETED, getSelf(), viewId);
 
          // all nodes will eventually receive the command, no need to wait here
          rpcManager.broadcastRpcCommand(cmd, false);

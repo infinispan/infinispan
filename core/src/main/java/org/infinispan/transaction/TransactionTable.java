@@ -37,6 +37,8 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
+import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.MembershipArithmetic;
@@ -50,16 +52,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 
 import static java.util.Collections.emptySet;
 
@@ -111,10 +105,12 @@ public class TransactionTable {
    private void start() {
       lockBreakingService = Executors.newFixedThreadPool(1);
       cm.addListener(listener);
+      notifier.addListener(listener);
    }
 
    @Stop
    private void stop() {
+      notifier.removeListener(listener);
       cm.removeListener(listener);
       lockBreakingService.shutdownNow();
       if (trace) log.tracef("Wait for on-going transactions to finish for %d seconds.", TimeUnit.MILLISECONDS.toSeconds(configuration.getCacheStopTimeout()));
@@ -176,22 +172,6 @@ public class TransactionTable {
       removeLocalTransaction(localTransactions.get(tx));
    }
 
-   public void memberJoined(ConsistentHash chNew, Address newMember) {
-      if (configuration.isEagerLockingSingleNodeInUse()) {
-         for (LocalTransaction localTx : localTransactions.values()) {
-            for (Object k : localTx.getAffectedKeys()) {
-               Address newMainOwner = chNew.locate(k, 1).get(0);
-               if (newMember.equals(newMainOwner)) {
-                  localTx.markForRollback(true);
-                  if (log.isTraceEnabled()) log.tracef("Marked local transaction for rollback, as the main data " +
-                                                            "owner has changed %s", localTx);
-                  break;
-               }
-            }
-         }
-      }
-   }
-
    /**
     * Returns true if the given transaction is already registered with the transaction table.
     * @param tx if null false is returned
@@ -202,23 +182,69 @@ public class TransactionTable {
 
    @Listener
    public class StaleTransactionCleanup {
+      /**
+       * Roll back remote transactions originating on nodes that have left the cluster.
+       */
       @ViewChanged
       public void onViewChange(ViewChangedEvent vce) {
-         final List<Address> leavers = MembershipArithmetic.getMembersLeft(vce.getOldMembers(), vce.getNewMembers());
+         final List<Address> leavers = MembershipArithmetic.getMembersLeft(vce.getOldMembers(),
+                                                                           vce.getNewMembers());
          if (!leavers.isEmpty()) {
-            if (trace) log.tracef("Saw %s leavers - kicking off a lock breaking task", leavers.size());
+            if (trace) log.tracef("Saw %d leavers - kicking off a lock breaking task", leavers.size());
             cleanTxForWhichTheOwnerLeft(leavers);
+         }
+      }
+
+      /**
+       * Roll back local transactions that have acquired lock that are no longer valid,
+       * either because the main data owner left the cluster or because a node joined
+       * the cluster and is the new data owner.
+       * This method will only ever be called in distributed mode.
+       */
+      @TopologyChanged
+      public void onTopologyChange(TopologyChangedEvent tce) {
+         // do all the work AFTER the consistent hash has changed
+         if (tce.isPre())
+            return;
+
+         final ConsistentHash chNew = tce.getConsistentHashAtEnd();
+         final Set<Address> oldMembers = tce.getConsistentHashAtStart().getCaches();
+         final Set<Address> newMembers = tce.getConsistentHashAtEnd().getCaches();
+
+         final Set<Address> leavers = MembershipArithmetic.getMembersLeft(oldMembers, newMembers);
+         if (!leavers.isEmpty()) {
+            // roll back local transactions if they had acquired locks on one of the leavers
             if (configuration.isEagerLockingSingleNodeInUse()) {
                for (LocalTransaction localTx : localTransactions.values()) {
                   if (localTx.hasRemoteLocksAcquired(leavers)) {
                      localTx.markForRollback(true);
+                     if (trace) log.tracef("Marked local transaction for rollback, as it had acquired " +
+                                                 "locks on a node that has left the cluster: %s", localTx);
+                  }
+               }
+            }
+         }
+
+         final Set<Address> joiners = MembershipArithmetic.getMembersJoined(oldMembers, newMembers);
+         if (!joiners.isEmpty()) {
+            // roll back local transactions if their main data owner has changed
+            if (configuration.isEagerLockingSingleNodeInUse()) {
+               for (LocalTransaction localTx : localTransactions.values()) {
+                  for (Object k : localTx.getAffectedKeys()) {
+                     Address newMainOwner = chNew.locate(k, 1).get(0);
+                     if (joiners.contains(newMainOwner)) {
+                        localTx.markForRollback(true);
+                        if (trace) log.tracef("Marked local transaction for rollback, as the main data " +
+                                                   "owner has changed %s", localTx);
+                        break;
+                     }
                   }
                }
             }
          }
       }
 
-      private void cleanTxForWhichTheOwnerLeft(final List<Address> leavers) {
+      private void cleanTxForWhichTheOwnerLeft(final Collection<Address> leavers) {
          try {
             lockBreakingService.submit(new Runnable() {
                public void run() {
@@ -236,7 +262,7 @@ public class TransactionTable {
       }
    }
 
-   protected void updateStateOnNodesLeaving(List<Address> leavers) {
+   protected void updateStateOnNodesLeaving(Collection<Address> leavers) {
       Set<GlobalTransaction> toKill = new HashSet<GlobalTransaction>();
       for (GlobalTransaction gt : remoteTransactions.keySet()) {
          if (leavers.contains(gt.getAddress())) toKill.add(gt);
