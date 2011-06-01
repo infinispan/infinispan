@@ -223,6 +223,11 @@ public class TestCacheManagerFactory {
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
       if (transactional) amendJTA(defaultCacheConfig);
+
+      // we stop caches during transactions all the time
+      // so wait at most 1 second for ongoing transactions when stopping
+      defaultCacheConfig.fluent().cacheStopTimeout(1000);
+
       return newDefaultCacheManager(true, globalConfiguration, defaultCacheConfig, false);
    }
 

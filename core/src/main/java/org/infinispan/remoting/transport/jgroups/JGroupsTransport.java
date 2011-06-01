@@ -534,11 +534,12 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       // Now that we have a view, figure out if we are the coordinator
       coordinator = (members != null && !members.isEmpty() && members.get(0).equals(getAddress()));
 
+      // Wake up any threads that are waiting to know about who the coordinator is
+      // do it before the notifications, so if a listener throws an exception we can still start
+      channelConnectedLatch.countDown();
+
       // now notify listeners - *after* updating the coordinator. - JBCACHE-662
       if (needNotification && n != null) n.emitNotification(oldMembers, newView);
-
-      // Wake up any threads that are waiting to know about who the coordinator is
-      channelConnectedLatch.countDown();
    }
 
    public void suspect(org.jgroups.Address suspected_mbr) {

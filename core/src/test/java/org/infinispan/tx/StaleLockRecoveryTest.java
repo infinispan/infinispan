@@ -27,6 +27,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
 import javax.transaction.NotSupportedException;
@@ -84,8 +85,8 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
       try {
          c.put(key, "dummy"); // should time out
          assert false : "Should have been locked!";
-      } catch (Exception e) {
-
+      } catch (TimeoutException e) {
+         // ignoring timeout exception
       } finally {
          tm.rollback();
       }
@@ -96,7 +97,7 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
       tm.begin();
       try {
          c.put(key, "dummy"); // should time out
-      } catch (Exception e) {
+      } catch (TimeoutException e) {
          assert false : "Should not have been locked!";
       } finally {
          tm.rollback();

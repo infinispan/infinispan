@@ -42,6 +42,9 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.util.Arrays.asList;
 
@@ -51,15 +54,10 @@ import static java.util.Arrays.asList;
  * Transaction logs can then be replayed after the state transferred during a rehash has been written.
  *
  * @author Manik Surtani
+ * @author Dan Berindei <dberinde@redhat.com>
  * @since 4.0
  */
 public class TransactionLoggerImpl implements TransactionLogger {
-   volatile boolean enabled;
-   volatile Address writeLockOwner = null;
-   final ReclosableLatch modsLatch = new ReclosableLatch();
-
-   final BlockingQueue<WriteCommand> commandQueue = new LinkedBlockingQueue<WriteCommand>();
-   final Map<GlobalTransaction, PrepareCommand> uncommittedPrepares = new ConcurrentHashMap<GlobalTransaction, PrepareCommand>();
    private static final Log log = LogFactory.getLog(TransactionLoggerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -68,8 +66,19 @@ public class TransactionLoggerImpl implements TransactionLogger {
    // If we see the queue growing this many times, lock.
    private static final int GROWTH_COUNT_THRESHOLD = 3;
    private int previousSize, growthCount;
-   private final ReclosableLatch txBlockGate = new ReclosableLatch(true);
 
+   private volatile boolean loggingEnabled;
+   // This lock is used to block new transactions during rehash
+   // Write commands must acquire the read lock for the duration of the command
+   // We acquire the write lock to block new transactions
+   // That means we wait for pending write commands to finish, and we might have to wait a lot if
+   // a command is deadlocked
+   // TODO Find a way to interrupt all transactions waiting for answers from remote nodes, instead
+   // of waiting for all of them to finish
+   private ReentrantReadWriteLock txLock = new ReentrantReadWriteLock();
+
+   final BlockingQueue<WriteCommand> commandQueue = new LinkedBlockingQueue<WriteCommand>();
+   final Map<GlobalTransaction, PrepareCommand> uncommittedPrepares = new ConcurrentHashMap<GlobalTransaction, PrepareCommand>();
 
    private final CommandsFactory cf;
 
@@ -78,8 +87,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    }
 
    public void enable() {
-      modsLatch.open();
-      enabled = true;
+      loggingEnabled = true;
    }
 
    public List<WriteCommand> drain() {
@@ -88,128 +96,95 @@ public class TransactionLoggerImpl implements TransactionLogger {
       return list;
    }
 
-   public List<WriteCommand> drainAndLock(Address lockedFor) {
-      if (writeLockOwner != null) throw new IllegalStateException("This cannot happen - write lock already owned by " + writeLockOwner);
-
-      modsLatch.close();
-      if (writeLockOwner != null) throw new IllegalStateException("This cannot happen - write lock already owned by " + writeLockOwner);
-      writeLockOwner = lockedFor;
+   public List<WriteCommand> drainAndLock() throws InterruptedException {
+      blockNewTransactions();
       return drain();
    }
 
-   public void unlockAndDisable(Address lockedFor) {
-      boolean unlock = true;
-      try {
-         if (!lockedFor.equals(writeLockOwner)) {
-            unlock = false;
-            throw new IllegalMonitorStateException("Compare-and-set for owner " + lockedFor + " failed - was " + writeLockOwner);
-         }
+   public void unlockAndDisable() {
+      loggingEnabled = false;
+      uncommittedPrepares.clear();
+      unblockNewTransactions();
+   }
 
-         enabled = false;
-         uncommittedPrepares.clear();
-         writeLockOwner = null;
-      } catch (IllegalMonitorStateException imse) {
-         log.unableToStopTransactionLogging(imse);
-      } finally {
-         if (unlock) modsLatch.open();
+   public void afterCommand(WriteCommand command) throws InterruptedException {
+      txLock.readLock().unlock();
+      if (loggingEnabled && command.isSuccessful()) {
+         commandQueue.put(command);
       }
    }
 
-   public boolean logIfNeeded(WriteCommand command) {
-      if (isEnabled()) {
-         waitForModsLatch();
-         if (enabled) {
-            try {
-               commandQueue.put(command);
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-            }
-            return true;
-         }
-      }
-      return false;
-   }
-
-   public void logIfNeeded(PrepareCommand command) {
-      if (isEnabled()) {
-         waitForModsLatch();
-         if (enabled) {
-            if (command.isOnePhaseCommit())
-               logModificationsInTransaction(command);
-            else
-               uncommittedPrepares.put(command.getGlobalTransaction(), command);
-         }
+   public void afterCommand(PrepareCommand command) throws InterruptedException {
+      txLock.readLock().unlock();
+      if (loggingEnabled) {
+         if (command.isOnePhaseCommit())
+            logModificationsInTransaction(command);
+         else
+            uncommittedPrepares.put(command.getGlobalTransaction(), command);
       }
    }
 
-   private void logModificationsInTransaction(PrepareCommand command) {
+   public void afterCommand(CommitCommand command, TxInvocationContext context) throws InterruptedException {
+      txLock.readLock().unlock();
+      if (loggingEnabled) {
+         PrepareCommand pc = uncommittedPrepares.remove(command.getGlobalTransaction());
+         if (pc == null)
+            logModifications(context.getModifications());
+         else
+            logModificationsInTransaction(pc);
+      }
+   }
+
+   public void afterCommand(RollbackCommand command) {
+      txLock.readLock().unlock();
+      if (loggingEnabled) {
+         if (loggingEnabled) uncommittedPrepares.remove(command.getGlobalTransaction());
+      }
+   }
+
+   private void logModificationsInTransaction(PrepareCommand command) throws InterruptedException {
       logModifications(asList(command.getModifications()));
    }
 
-   private void logModifications(Collection<WriteCommand> mods) {
+   private void logModifications(Collection<WriteCommand> mods) throws InterruptedException {
       for (WriteCommand wc : mods) {
-         try {
-            commandQueue.put(wc);
-         } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-         }
+         commandQueue.put(wc);
       }
    }
 
-   public void logModificationsIfNeeded(CommitCommand commit, TxInvocationContext context) {
-      if (isEnabled()) {
-         waitForModsLatch();
-         if (enabled) {
-            GlobalTransaction gtx;
-            if (!uncommittedPrepares.containsKey(gtx = commit.getGlobalTransaction()))
-               uncommittedPrepares.put(gtx, cf.buildPrepareCommand(gtx, context.getModifications(), false));
-         }
+   public void beforeCommand(WriteCommand command) throws InterruptedException {
+      txLock.readLock().lock();
+   }
+
+   public void beforeCommand(PrepareCommand command) throws InterruptedException {
+      txLock.readLock().lock();
+   }
+
+   public void beforeCommand(CommitCommand command, TxInvocationContext context) throws InterruptedException {
+      txLock.readLock().lock();
+
+      // if the prepare command wasn't logged, do it here instead
+      if (loggingEnabled) {
+         GlobalTransaction gtx;
+         if (!uncommittedPrepares.containsKey(gtx = context.getGlobalTransaction()))
+            uncommittedPrepares.put(gtx, cf.buildPrepareCommand(gtx, context.getModifications(), false));
       }
    }
 
-   public void logIfNeeded(CommitCommand command, TxInvocationContext context) {
-      if (isEnabled()) {
-         waitForModsLatch();
-         if (enabled) {
-            PrepareCommand pc = uncommittedPrepares.remove(command.getGlobalTransaction());
-            if (pc == null)
-               logModifications(context.getModifications());
-            else
-               logModificationsInTransaction(pc);
-         }
-      }
-   }
-
-   public void logIfNeeded(RollbackCommand command) {
-      if (isEnabled()) {
-         waitForModsLatch();
-         if (enabled) uncommittedPrepares.remove(command.getGlobalTransaction());
-      }
-   }
-
-   private void waitForModsLatch() {
-      try {
-         modsLatch.await();
-      } catch (InterruptedException i) {
-         Thread.currentThread().interrupt();
-      }
+   public void beforeCommand(RollbackCommand command) throws InterruptedException {
+      txLock.readLock().lock();
    }
 
    private int size() {
-      return enabled ? 0 : commandQueue.size();
+      return loggingEnabled ? commandQueue.size() : 0;
    }
 
    public boolean isEnabled() {
-      try {
-         txBlockGate.await();
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-      }
-      return enabled;
+      return loggingEnabled;
    }
 
    public boolean shouldDrainWithoutLock() {
-      if (enabled) {
+      if (loggingEnabled) {
          int sz = size();
          boolean shouldLock = (previousSize > 0 && growthCount > GROWTH_COUNT_THRESHOLD) || sz < DRAIN_LOCK_THRESHOLD;
          if (!shouldLock) {
@@ -228,12 +203,15 @@ public class TransactionLoggerImpl implements TransactionLogger {
       return commands;
    }
 
-   public void blockNewTransactions() {
-      txBlockGate.close();
+   public void blockNewTransactions() throws InterruptedException {
+      if (trace) log.debug("Blocking new transactions");
+      // we just want to ensure that all the modifications that passed through the tx gate have ended
+      txLock.writeLock().lockInterruptibly();
    }
 
    public void unblockNewTransactions() {
-      txBlockGate.open();
+      if (trace) log.debug("Unblocking new transactions");
+      txLock.writeLock().unlock();
    }
 
 

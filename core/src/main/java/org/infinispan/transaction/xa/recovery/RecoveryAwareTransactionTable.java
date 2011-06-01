@@ -35,6 +35,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.Xid;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -74,7 +75,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    }
 
    @Override
-   protected void updateStateOnNodesLeaving(List<Address> leavers) {
+   protected void updateStateOnNodesLeaving(Collection<Address> leavers) {
       Iterator<Map.Entry<GlobalTransaction,RemoteTransaction>> it = remoteTransactions.entrySet().iterator();
       while (it.hasNext()) {
          RecoveryAwareRemoteTransaction recTx = (RecoveryAwareRemoteTransaction) it.next().getValue();

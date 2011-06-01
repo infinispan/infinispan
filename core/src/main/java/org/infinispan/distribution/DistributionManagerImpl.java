@@ -256,6 +256,9 @@ public class DistributionManagerImpl implements DistributionManager {
       try {
          joinStartedLatch.await();
       } catch (InterruptedException e) {
+         // TODO We're setting the interrupted flag so the caller can still check if the thread was interrupted, but it would be better to throw InterruptedException instead
+         // The only problem is that would require a lot of method signature changes
+         Thread.currentThread().interrupt();
          throw new IllegalStateException("Thread interrupted", e);
       }
    }
@@ -352,7 +355,7 @@ public class DistributionManagerImpl implements DistributionManager {
                }
             }
          } else {
-            log.warnf("Received a key that doesn't map to this node: %s, mapped to %s", e.getKey(), consistentHash.locate(e.getKey(), configuration.getNumOwners()));
+            log.keyDoesNotMapToLocalNode(e.getKey(), consistentHash.locate(e.getKey(), configuration.getNumOwners()));
          }
       }
       return retry;

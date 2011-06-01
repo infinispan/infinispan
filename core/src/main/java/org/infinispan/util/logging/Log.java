@@ -196,7 +196,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to stop transaction logging!", id = 24)
-   void unableToStopTransactionLogging(IllegalMonitorStateException imse);
+   void unableToStopTransactionLogging(@Cause IllegalMonitorStateException imse);
 
    @LogMessage(level = INFO)
    @Message(value = "wakeUpInterval is <= 0, not starting eviction thread", id = 25)
@@ -595,7 +595,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Invocation of %s threw an exception %s. Exception is ignored.", id = 120)
-   void ignoringException(String name, Throwable t);
+   void ignoringException(String name, @Cause Throwable t);
 
    @LogMessage(level = ERROR)
    @Message(value = "Unable to set value!", id = 121)
@@ -670,7 +670,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = INFO)
    @Message(value = "Could not register object with name: %s (%s)", id = 138)
-   void couldNotRegisterObjectName(ObjectName objectName, InstanceAlreadyExistsException e);
+   void couldNotRegisterObjectName(ObjectName objectName, @Cause InstanceAlreadyExistsException e);
 
    @LogMessage(level = WARN)
    @Message(value = "Infinispan configuration schema could not be resolved locally nor fetched from URL. Local path=%s, schema path=%s, schema URL=%s", id = 139)
@@ -689,4 +689,24 @@ public interface Log extends BasicLogger {
          " to cache stop timeout (%d ms), so instead using %d ms for async store stop wait", id = 142)
    void asyncStoreShutdownTimeoutTooHigh(long configuredAsyncStopTimeout,
       long cacheStopTimeout, long asyncStopTimeout);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Received a key that doesn't map to this node: %s, mapped to %s", id = 143)
+   void keyDoesNotMapToLocalNode(Object key, Collection<Address> nodes);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Failed loading value for key %s from cache store", id = 144)
+   void failedLoadingValueFromCacheStore(Object key);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error during rehash", id = 145)
+   void errorDuringRehash(@Cause Throwable th);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error transferring state to node after rehash", id = 146)
+   void errorTransferringState(@Cause Exception e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error invalidating keys from L1 after rehash", id = 147)
+   void failedToInvalidateKeys(@Cause Throwable t);
 }
