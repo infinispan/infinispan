@@ -174,7 +174,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       // able to locate this registry via the InboundInvocationHandler
       this.globalComponents.registerNamedComponentRegistry(this, cacheName);
 
-      if (needToNotify) notifyCacheStarting(getConfiguration());
+      // Cache starting notification happens earlier in the call stack trace
 
       super.start();
 

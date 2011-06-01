@@ -52,11 +52,13 @@ import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Assert;
+import org.testng.annotations.Test;
 
 import static java.util.Arrays.asList;
 import static org.infinispan.config.Configuration.CacheMode.LOCAL;
 import static org.infinispan.query.helper.TestQueryHelperFactory.*;
 
+@Test(groups = "functional", testName = "query.blackbox.LocalCacheTest")
 public class LocalCacheTest extends SingleCacheManagerTest {
    protected Person person1;
    protected Person person2;
