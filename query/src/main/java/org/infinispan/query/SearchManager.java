@@ -58,4 +58,14 @@ public interface SearchManager {
     */
    public SearchFactory getSearchFactory();
 
+   /**
+    * 
+    * This should be hided into getQuery method...
+    * 
+    * @param luceneQuery
+    * @param classes
+    * @return
+    */
+   CacheQuery getClusteredQuery(Query luceneQuery, Class<?>... classes);
+
 }
