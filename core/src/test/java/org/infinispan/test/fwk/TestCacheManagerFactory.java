@@ -348,11 +348,18 @@ public class TestCacheManagerFactory {
       return null;
    }
 
+   static void testStarted(String testName) {
+      perThreadCacheManagers.get().setTestName(testName);
+   }
+
    static void testFinished(String testName) {
       perThreadCacheManagers.get().checkManagersClosed(testName);
+      perThreadCacheManagers.get().unsetTestName();
    }
 
    private static class PerThreadCacheManagers {
+      String testName = null;
+      private String oldThreadName;
       HashMap<EmbeddedCacheManager, String> cacheManagers = new HashMap<EmbeddedCacheManager, String>();
 
       public void checkManagersClosed(String testName) {
@@ -375,11 +382,23 @@ public class TestCacheManagerFactory {
       public String getNextCacheName() {
          int index = cacheManagers.size();
          char name = (char) ((int) 'A' + index);
-         return "Node" + name;
+         return (testName != null ? testName + "-" : "") + "Node" + name;
       }
 
       public void add(String methodName, DefaultCacheManager cm) {
          cacheManagers.put(cm, methodName);
+      }
+
+      public void setTestName(String testName) {
+         this.testName = testName;
+         this.oldThreadName = Thread.currentThread().getName();
+         Thread.currentThread().setName("testng-" + testName);
+      }
+
+      public void unsetTestName() {
+         this.testName = null;
+         Thread.currentThread().setName(oldThreadName);
+         this.oldThreadName = null;
       }
    }
 }

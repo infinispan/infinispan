@@ -32,11 +32,7 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
-import org.infinispan.interceptors.CacheLoaderInterceptor;
-import org.infinispan.interceptors.CacheStoreInterceptor;
-import org.infinispan.interceptors.CallInterceptor;
-import org.infinispan.interceptors.DistributionInterceptor;
-import org.infinispan.interceptors.LockingInterceptor;
+import org.infinispan.interceptors.*;
 import org.infinispan.jmx.JBossMBeanServerLookup;
 import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -54,11 +50,11 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.hash.MurmurHash3;
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.Assert.assertEquals;
 
 /**
  * Programmatic configuration test.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -176,7 +172,8 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
                   .purgeSynchronously(false))
             .addCacheLoader(
                new DummyInMemoryCacheStore.Cfg()
-                  .debug(true).cleanBetweenRestarts(false).failKey("fail")
+                  .debug(true)
+                  .failKey("fail")
                   .purgeOnStartup(false)
                   .asyncStore()
                      .threadPoolSize(21)
@@ -309,23 +306,22 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
 
       DummyInMemoryCacheStore.Cfg dummyStoreConfig = (DummyInMemoryCacheStore.Cfg) c.getCacheLoaders().get(1);
       assert dummyStoreConfig.isDebug();
-      assert !dummyStoreConfig.isCleanBetweenRestarts();
       assert !dummyStoreConfig.isPurgeOnStartup();
       assert dummyStoreConfig.isPurgeSynchronously();
-      assert 21 == dummyStoreConfig.asyncStore().getThreadPoolSize();
+      assert 21 == dummyStoreConfig.getAsyncStoreConfig().getThreadPoolSize();
       assert dummyStoreConfig.isPurgeSynchronously();
 
       FileCacheStoreConfig storeConfig = (FileCacheStoreConfig) c.getCacheLoaders().get(0);
       assertEquals("/tmp2", storeConfig.getLocation());
       assert 1615 == storeConfig.getStreamBufferSize();
       assert storeConfig.isPurgeOnStartup();
-      assert 14 == storeConfig.asyncStore().getThreadPoolSize();
-      assert 777L == storeConfig.asyncStore().getFlushLockTimeout();
-      assert 666L == storeConfig.asyncStore().getShutdownTimeout();
+      assert 14 == storeConfig.getAsyncStoreConfig().getThreadPoolSize();
+      assert 777L == storeConfig.getAsyncStoreConfig().getFlushLockTimeout();
+      assert 666L == storeConfig.getAsyncStoreConfig().getShutdownTimeout();
       assert !storeConfig.isFetchPersistentState();
       assert storeConfig.isIgnoreModifications();
-      assert storeConfig.singletonStore().isPushStateWhenCoordinator();
-      assert 8989L == storeConfig.singletonStore().getPushStateTimeout();
+      assert storeConfig.getSingletonStoreConfig().isPushStateWhenCoordinator();
+      assert 8989L == storeConfig.getSingletonStoreConfig().getPushStateTimeout();
       assert !storeConfig.isPurgeSynchronously();
 
       assert c.isCacheLoaderShared();

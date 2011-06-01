@@ -45,11 +45,13 @@ import java.util.Set;
 /**
  * A chaining cache loader that allows us to configure > 1 cache loader.
  * <p/>
- * READ operations are directed to each of the cache loaders (in the order which they were configured) until a non-null
- * (or non-empty in the case of retrieving collection objects) result is achieved.
+ * READ operations are directed to each of the cache loaders (in the order which they were
+ * configured) until a non-null (or non-empty in the case of retrieving collection objects) result
+ * is achieved.
  * <p/>
- * WRITE operations are propagated to ALL registered cache stores specified, that set ignoreModifications to false.
- *
+ * WRITE operations are propagated to ALL registered cache stores specified, except those that set
+ * ignoreModifications to false.
+ * 
  * @author Manik Surtani
  * @since 4.0
  */

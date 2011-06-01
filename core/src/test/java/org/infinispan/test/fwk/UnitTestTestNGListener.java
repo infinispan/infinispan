@@ -79,6 +79,7 @@ public class UnitTestTestNGListener implements ITestListener {
    }
 
    public void onStart(ITestContext arg0) {
+      TestCacheManagerFactory.testStarted(arg0.getName());
    }
 
    public void onFinish(ITestContext arg0) {

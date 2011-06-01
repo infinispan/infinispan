@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 
-@Test(groups = "functional", testName = "distribution.rehash.ConcurrentOverlappingLeaveTest", enabled = false, description = "Disabled due to instability - see ISPN-1123")
+@Test(groups = "functional", testName = "distribution.rehash.ConcurrentOverlappingLeaveTest")
 public class ConcurrentOverlappingLeaveTest extends RehashLeaveTestBase {
    Address l1, l2;
 

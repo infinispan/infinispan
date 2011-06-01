@@ -74,7 +74,7 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
       });
 
       TestingUtil.killCacheManagers(manager(1));
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0));
+      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(0));
 
       eventually(new Condition() {
          @Override

@@ -62,7 +62,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    protected final ThreadLocal<LockTestBaseTL> threadLocal = new ThreadLocal<LockTestBaseTL>();
 
 
-   @BeforeMethod
+   @BeforeMethod(alwaysRun = true)
    public void setUp() {
       LockTestBaseTL tl = new LockTestBaseTL();
       Configuration defaultCfg = new Configuration();
@@ -76,7 +76,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       threadLocal.set(tl);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() {
       LockTestBaseTL tl = threadLocal.get();
       log.debug("**** - STARTING TEARDOWN - ****");

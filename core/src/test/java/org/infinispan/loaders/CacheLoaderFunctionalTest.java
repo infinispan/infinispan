@@ -24,7 +24,6 @@ package org.infinispan.loaders;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -36,8 +35,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -67,17 +66,18 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      cfg = new Configuration();
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
-      cfg.setCacheLoaderManagerConfig(clmc);
+      cfg = new Configuration().fluent()
+         .loaders()
+            .addCacheLoader(new DummyInMemoryCacheStore.Cfg()
+               .storeName(this.getClass().getName())) // in order to use the same store
+         .build();
       cm = TestCacheManagerFactory.createCacheManager(cfg, true);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
       tm = TestingUtil.getTransactionManager(cache);
    }
 
-   @AfterClass
+   @AfterTest
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
       cache = null;
@@ -286,7 +286,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    public void testPreloading() throws CacheLoaderException {
       Configuration preloadingCfg = cfg.clone();
       preloadingCfg.getCacheLoaderManagerConfig().setPreload(true);
-      ((DummyInMemoryCacheStore.Cfg) preloadingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("preloadingCache");
+      ((DummyInMemoryCacheStore.Cfg) preloadingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("preloadingCache");
       cm.defineConfiguration("preloadingCache", preloadingCfg);
       Cache preloadingCache = cm.getCache("preloadingCache");
       CacheStore preloadingStore = TestingUtil.extractComponent(preloadingCache, CacheLoaderManager.class).getCacheStore();
@@ -329,7 +329,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       Configuration purgingCfg = cfg.clone();
       CacheStoreConfig firstCacheLoaderConfig = (CacheStoreConfig) purgingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig();
       firstCacheLoaderConfig.setPurgeOnStartup(true);
-      ((DummyInMemoryCacheStore.Cfg) purgingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("purgingCache");
+      ((DummyInMemoryCacheStore.Cfg) purgingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStoreName("purgingCache");
       cm.defineConfiguration("purgingCache", purgingCfg);
       Cache purgingCache = cm.getCache("purgingCache");
       CacheStore purgingStore = TestingUtil.extractComponent(purgingCache, CacheLoaderManager.class).getCacheStore();
