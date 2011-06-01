@@ -97,6 +97,7 @@
       <infinispan.test.parallel.threads>20</infinispan.test.parallel.threads>
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
+      <packaging>jar</packaging>
 
       <!-- Versions for dependencies -->
       <version.apacheds.jdbm>1.5.4</version.apacheds.jdbm>
