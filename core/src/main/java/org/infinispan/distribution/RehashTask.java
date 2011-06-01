@@ -73,7 +73,7 @@ public abstract class RehashTask implements Callable<Void> {
       }
       catch (Throwable th) {
          // there is no one else to handle the exception below us
-         log.error("Error during rehash", th);
+         log.errorDuringRehash(th);
       }
       return null;
    }

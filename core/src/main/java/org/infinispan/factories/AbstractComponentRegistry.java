@@ -598,12 +598,12 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             destroy(); // this will take us back to TERMINATED
 
          if (state.needToInitializeBeforeStart()) {
-            state = ComponentStatus.INITIALIZING;
             rewire();
          } else
             return;
       }
 
+      state = ComponentStatus.INITIALIZING;
       try {
          internalStart();
       }
