@@ -30,6 +30,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
 import org.infinispan.query.impl.CacheQueryImpl;
 
 /**
@@ -70,6 +71,20 @@ class SearchManagerImpl implements SearchManager {
    public CacheQuery getQuery(Query luceneQuery, Class<?>... classes) {
       queryInterceptor.enableClasses(classes);
       return new CacheQueryImpl(luceneQuery, searchFactory, cache, classes);
+   }
+   
+   /**
+    * 
+    * This probably should be hided in the getQuery method.
+    * 
+    * @param luceneQuery
+    * @param classes
+    * @return
+    */
+   @Override
+   public CacheQuery getClusteredQuery(Query luceneQuery, Class<?>... classes) {
+      queryInterceptor.enableClasses(classes);
+      return new ClusteredCacheQueryImpl(luceneQuery, searchFactory, cache, classes);
    }
 
    /* (non-Javadoc)

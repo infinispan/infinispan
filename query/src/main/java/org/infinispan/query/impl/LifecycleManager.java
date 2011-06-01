@@ -29,6 +29,7 @@ import java.util.TreeMap;
 import org.hibernate.search.cfg.SearchConfiguration;
 import org.hibernate.search.spi.SearchFactoryBuilder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.FluentConfiguration.CustomInterceptorPosition;
 import org.infinispan.factories.ComponentRegistry;
@@ -37,9 +38,11 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.LockingInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
+import org.infinispan.query.CommandInitializer;
 import org.infinispan.query.backend.LocalQueryInterceptor;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
+import org.infinispan.query.clustered.QueryBox;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -100,6 +103,15 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       if ( ! verifyChainContainsQueryInterceptor(cr) ) {
          throw new IllegalStateException( "It was expected to find the Query interceptor registered in the InterceptorChain but it wasn't found" );
       }
+      
+      // initializing the query module command initializer. we can t inject Cache with @inject in there
+      Cache cache = cr.getComponent(Cache.class);
+      CommandInitializer initializer = cr.getComponent(CommandInitializer.class);
+      initializer.setCache(cache);
+      
+      QueryBox queryBox = new QueryBox();
+      queryBox.setCache(cache.getAdvancedCache());
+      cr.registerComponent(queryBox, QueryBox.class);
    }
 
    private boolean verifyChainContainsQueryInterceptor(ComponentRegistry cr) {
