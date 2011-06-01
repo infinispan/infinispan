@@ -192,6 +192,14 @@ public class TransactionTable {
       }
    }
 
+   /**
+    * Returns true if the given transaction is already registered with the transaction table.
+    * @param tx if null false is returned
+    */
+   public boolean containsLocalTx(Transaction tx) {
+      return tx != null && localTransactions.containsKey(tx);
+   }
+
    @Listener
    public class StaleTransactionCleanup {
       @ViewChanged

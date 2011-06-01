@@ -128,9 +128,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
     * Otherwise, it returns false.
     */
    private boolean stoppingAndNotAllowed(ComponentStatus status, InvocationContext ctx) throws Exception {
-      return status.isStopping() &&
-         (!ctx.isInTxScope() ||
-                (ctx.isInTxScope() && txTable.getLocalTransaction(tm.getTransaction()) == null));
+      return status.isStopping() && (!ctx.isInTxScope() || !isOngoingTransaction(ctx));
    }
 
    private Object markTxForRollbackAndRethrow(InvocationContext ctx, Throwable te) throws Throwable {
@@ -152,5 +150,10 @@ public class InvocationContextInterceptor extends CommandInterceptor {
          throw new CacheException("Unexpected!", e);
       }
       return status == Status.STATUS_ACTIVE || status == Status.STATUS_PREPARING;
+   }
+
+   private boolean isOngoingTransaction(InvocationContext ctx) throws SystemException {
+      return ctx.isInTxScope() && (txTable.containsLocalTx(tm.getTransaction()) ||
+                                         txTable.containRemoteTx(((TxInvocationContext) ctx).getGlobalTransaction()));
    }
 }
