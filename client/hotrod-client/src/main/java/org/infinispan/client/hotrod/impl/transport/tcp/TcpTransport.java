@@ -79,7 +79,7 @@ public class TcpTransport extends AbstractTransport {
          // ensure we don't send a packet for every output byte
          socketOutputStream = new BufferedOutputStream(socket.getOutputStream(), socket.getSendBufferSize());
       } catch (IOException e) {
-         String message = String.format("Could not connect to server: %s" + serverAddress);
+         String message = String.format("Could not connect to server: %s", serverAddress);
          log.couldNotConnectToServer(serverAddress, e);
          throw new TransportException(message, e);
       }
