@@ -33,20 +33,6 @@ import org.jboss.logging.Logger;
  */
 public class LogFactory {
 
-   public static final boolean IS_LOG4J_AVAILABLE;
-
-   static {
-      boolean available;
-      try {
-         Util.loadClassStrict("org.apache.log4j.Logger");
-         available = true;
-      }
-      catch (ClassNotFoundException cnfe) {
-         available = false;
-      }
-      IS_LOG4J_AVAILABLE = available;
-   }
-
    public static Log getLog(Class clazz) {
       return Logger.getMessageLogger(Log.class, clazz.getName());
    }
