@@ -277,7 +277,7 @@ class ExternalizerTable implements ObjectTable {
             updateExtReadersWriters(adapter, typeClass, readerIndex);
       } else {
          throw new ConfigurationException(String.format(
-               "AdvancedExternalizer's getTypeClasses must return a non-empty set",
+               "AdvancedExternalizer's getTypeClasses for externalizer %s must return a non-empty set",
                adapter.externalizer.getClass().getName()));
       }
    }
