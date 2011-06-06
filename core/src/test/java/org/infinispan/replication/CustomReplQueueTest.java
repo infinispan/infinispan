@@ -33,8 +33,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import java.awt.color.CMMException;
-
 @Test(groups = "functional", testName = "replication.CustomReplQueueTest")
 public class CustomReplQueueTest extends SingleCacheManagerTest {
    @Override

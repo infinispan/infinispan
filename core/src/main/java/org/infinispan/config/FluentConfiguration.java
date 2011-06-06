@@ -313,7 +313,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       EvictionConfig wakeUpInterval(Long wakeUpInterval);
 
       /**
-       * Eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU' and 'NONE' (to disable
+       * Eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable
        * eviction).
        *
        * @param strategy

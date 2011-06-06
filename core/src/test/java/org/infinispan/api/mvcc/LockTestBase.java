@@ -52,7 +52,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    protected boolean lockParentForChildInsertRemove = false;
    private CacheContainer cm;
 
-   protected class LockTestBaseTL {
+   protected static final class LockTestBaseTL {
       public Cache<String, String> cache;
       public TransactionManager tm;
       public LockManager lockManager;
