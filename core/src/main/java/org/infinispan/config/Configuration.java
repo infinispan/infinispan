@@ -547,7 +547,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
-    * Eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU' and 'NONE' (to disable eviction).
+    * Eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable eviction).
     *
     * @param evictionStrategy
     * @deprecated Use {@link FluentConfiguration.EvictionConfig#strategy(org.infinispan.eviction.EvictionStrategy)} instead
@@ -558,7 +558,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
-    * Eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU' and 'NONE' (to disable eviction).
+    * Eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable eviction).
     *
     * @param eStrategy
     * @deprecated Use {@link FluentConfiguration.EvictionConfig#strategy(org.infinispan.eviction.EvictionStrategy)} instead
