@@ -25,7 +25,6 @@ package org.infinispan.util;
 import org.infinispan.CacheException;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.marshall.Marshaller;
-import org.omg.CORBA._PolicyStub;
 
 import javax.naming.Context;
 import java.io.Closeable;
