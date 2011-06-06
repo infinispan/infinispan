@@ -58,13 +58,18 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    public static final Integer FORTY = 40;
 
    Configuration config;
-   protected static String cacheName = "nbst";
+   protected final String cacheName;
 
    private volatile int testCount = 0;
 
    private static final Log log = LogFactory.getLog(StateTransferFunctionalTest.class);
 
    public StateTransferFunctionalTest() {
+      this("nbst");
+   }
+
+   public StateTransferFunctionalTest(String testCacheName) {
+      cacheName = testCacheName;
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
