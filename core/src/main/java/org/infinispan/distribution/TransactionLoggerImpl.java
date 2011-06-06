@@ -138,7 +138,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    public void afterCommand(RollbackCommand command) {
       txLock.readLock().unlock();
       if (loggingEnabled) {
-         if (loggingEnabled) uncommittedPrepares.remove(command.getGlobalTransaction());
+         uncommittedPrepares.remove(command.getGlobalTransaction());
       }
    }
 
