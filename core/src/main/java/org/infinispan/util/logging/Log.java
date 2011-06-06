@@ -709,4 +709,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Error invalidating keys from L1 after rehash", id = 147)
    void failedToInvalidateKeys(@Cause Throwable t);
+   
+   @LogMessage(level = WARN)
+   @Message(value = "Invalid %s value of %s. It can not be higher than %s which is %s", id = 148)
+   void invalidTimeoutValue(Object configName1, Object value1, Object configName2, Object value2);
+   
 }

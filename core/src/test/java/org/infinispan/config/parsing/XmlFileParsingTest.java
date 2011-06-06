@@ -25,11 +25,14 @@ package org.infinispan.config.parsing;
 import org.infinispan.Version;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
+import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationValidatingVisitor;
 import org.infinispan.config.AdvancedExternalizerConfig;
+import org.infinispan.config.DelegatingConfigurationVisitor;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
 import org.infinispan.config.InfinispanConfiguration;
+import org.infinispan.config.TimeoutConfigurationValidatingVisitor;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
@@ -58,6 +61,15 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       String schemaFileName = String.format("infinispan-config-%s.xsd", Version.MAJOR_MINOR);
       testNamedCacheFile(InfinispanConfiguration.newInfinispanConfiguration(
             "configs/named-cache-test.xml", "schema/" + schemaFileName, new ConfigurationValidatingVisitor()));
+   }
+   
+   public void testNamedCacheFileWithAllValidators() throws Exception {
+      String schemaFileName = String.format("infinispan-config-%s.xsd", Version.MAJOR_MINOR);
+      testNamedCacheFile(InfinispanConfiguration.newInfinispanConfiguration(
+               "configs/named-cache-test.xml", "schema/" + schemaFileName,
+               new DelegatingConfigurationVisitor(new ConfigurationBeanVisitor[] {
+                        new ConfigurationValidatingVisitor(),
+                        new TimeoutConfigurationValidatingVisitor()})));
    }
 
    public void testConfigurationMergingJaxb() throws Exception {
