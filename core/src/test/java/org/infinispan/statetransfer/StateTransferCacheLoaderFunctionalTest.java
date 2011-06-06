@@ -42,7 +42,7 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
    };
 
    public StateTransferCacheLoaderFunctionalTest() {
-      cacheName = "nbst-with-loader";
+      super("nbst-with-loader");
    }
 
    @Override
