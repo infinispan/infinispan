@@ -46,7 +46,9 @@ class StartupListener extends HttpServlet with Logging {
       //    setting ManagerInstance.instance
       // 2. Doing it here makes it a lot easier rather than needing to have a separate module
       //    within app server build system
-      ManagerInstance.instance = getMcInjectedCacheManager(cfg)
+      if (ManagerInstance.instance == null) {
+         ManagerInstance.instance = getMcInjectedCacheManager(cfg)
+      }
 
       // If cache manager is still null, create one for REST server's own usage
       if (ManagerInstance.instance == null) {
