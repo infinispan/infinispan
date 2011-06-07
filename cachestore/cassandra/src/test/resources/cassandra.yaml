@@ -69,6 +69,7 @@ reduce_cache_sizes_at: 1.0
 rpc_keepalive: true
 rpc_max_threads: 2147483647
 rpc_min_threads: 16
+rpc_address: 127.0.0.1
 rpc_port: 9160
 rpc_timeout_in_ms: 10000
 saved_caches_directory: ${java.io.tmpdir}/infinispan-cassandra-cachestore/savedcaches

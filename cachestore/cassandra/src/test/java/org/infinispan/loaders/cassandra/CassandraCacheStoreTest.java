@@ -60,7 +60,7 @@ public class CassandraCacheStoreTest extends BaseCacheStoreTest {
 	protected CacheStore createCacheStore() throws Exception {
 		CassandraCacheStore cs = new CassandraCacheStore();
 		CassandraCacheStoreConfig clc = new CassandraCacheStoreConfig();
-		clc.setHost("localhost");
+		clc.setHost("127.0.0.1");
 		clc.setKeySpace("Infinispan");
 		cs.init(clc, getCache(), getMarshaller());
 		cs.start();
