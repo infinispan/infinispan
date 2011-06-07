@@ -107,7 +107,7 @@ public interface CacheEntry extends Map.Entry<Object, Object> {
    void setLifespan(long lifespan);
 
    /**
-    * Sets the value of the entry, returing the previous value
+    * Sets the value of the entry, returning the previous value
     *
     * @param value value to set
     * @return previous value
