@@ -50,6 +50,12 @@
 			<artifactId>cassandra-all</artifactId>
 			<version>${version.cassandra}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>${version.slf4j}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
