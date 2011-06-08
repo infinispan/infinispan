@@ -44,6 +44,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       cfg.setEvictionStrategy(strategy);
       cfg.setEvictionThreadPolicy(threadPolicy);
       cfg.setEvictionMaxEntries(1);
+      cfg.setInvocationBatchingEnabled(true);
       return cfg;
    }
 
@@ -99,12 +100,28 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       Cache<String, String> testCache = cacheManager.getCache(name);
       testCache.clear();
       testCache.put("X", "4567");
-      testCache.put("Y", "4567");
-      testCache.put("Z", "4567");
+      testCache.put("Y", "4568");
+      testCache.put("Z", "4569");
 
-      assert null != testCache.get("X") : "Failure on test " + name;
-      assert null != testCache.get("Y") : "Failure on test " + name;
-      assert null != testCache.get("Z") : "Failure on test " + name;
+      assert "4567".equals( testCache.get("X") ) : "Failure on test " + name;
+      assert "4568".equals( testCache.get("Y") ) : "Failure on test " + name;
+      assert "4569".equals( testCache.get("Z") ) : "Failure on test " + name;
+
+      for (int i=0; i<10; i++) {
+         testCache.getAdvancedCache().startBatch();
+         String k = "A"+i;
+         testCache.put(k, k);
+         k = "B"+i;
+         testCache.put(k, k);
+         testCache.getAdvancedCache().endBatch(true);
+      }
+
+      for (int i=0; i<10; i++) {
+         String k = "A"+i;
+         assert k.equals(testCache.get(k)) : "Failure on test " + name;
+         k = "B"+i;
+         assert k.equals(testCache.get(k)) : "Failure on test " + name;
+      }
    }
 
 }

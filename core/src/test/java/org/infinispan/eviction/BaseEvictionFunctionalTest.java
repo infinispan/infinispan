@@ -26,6 +26,7 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
@@ -53,6 +54,7 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
       cfg.setEvictionWakeUpInterval(100);
       cfg.setEvictionMaxEntries(128); // 128 max entries
       cfg.setUseLockStriping(false); // to minimize chances of deadlock in the unit test
+      cfg.setInvocationBatchingEnabled(true);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       cache.addListener(new EvictionListener());
@@ -64,6 +66,18 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
          cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MINUTES);
       }
       Thread.sleep(1000); // sleep long enough to allow the thread to wake-up
+      assert CACHE_SIZE >= cache.size() : "cache size too big: " + cache.size();
+   }
+   
+   public void testEvictionDuringBatchOperations() throws Exception {
+      AdvancedCache<Object,Object> advancedCache = cache.getAdvancedCache();
+      for (int i = 0; i < 512; i++) {
+         advancedCache.startBatch();
+         cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MINUTES);
+         advancedCache.endBatch(true);
+      }
+      Thread.sleep(1000); // sleep long enough to allow the thread to wake-up
+      assert 0 < cache.size() : "no data in cache! all state lost? ";
       assert CACHE_SIZE >= cache.size() : "cache size too big: " + cache.size();
    }
 
