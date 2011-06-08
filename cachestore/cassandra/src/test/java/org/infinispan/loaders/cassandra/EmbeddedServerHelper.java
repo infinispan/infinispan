@@ -67,7 +67,6 @@ public class EmbeddedServerHelper {
 		System.setProperty("cassandra-foreground", "true");
 
 		cleanupAndLeaveDirs();
-		loadSchemaFromYaml();
 
 		executor.execute(new CassandraRunner());
 		try {
@@ -153,18 +152,6 @@ public class EmbeddedServerHelper {
 		try {
 			DatabaseDescriptor.createAllDirectories();
 		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	public static void loadSchemaFromYaml() {
-		try {
-			for (KSMetaData ksm : DatabaseDescriptor.readTablesFromYaml()) {
-				for (CFMetaData cfm : ksm.cfMetaData().values())
-					CFMetaData.map(cfm);
-				DatabaseDescriptor.setTableDefinition(ksm, DatabaseDescriptor.getDefsVersion());
-			}
-		} catch (ConfigurationException e) {
 			throw new RuntimeException(e);
 		}
 	}

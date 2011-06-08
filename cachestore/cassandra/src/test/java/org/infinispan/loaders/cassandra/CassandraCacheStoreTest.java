@@ -61,6 +61,7 @@ public class CassandraCacheStoreTest extends BaseCacheStoreTest {
 		CassandraCacheStore cs = new CassandraCacheStore();
 		CassandraCacheStoreConfig clc = new CassandraCacheStoreConfig();
 		clc.setHost("127.0.0.1");
+		clc.setAutoCreateKeyspace(true);
 		clc.setKeySpace("Infinispan");
 		cs.init(clc, getCache(), getMarshaller());
 		cs.start();

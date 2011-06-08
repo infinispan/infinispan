@@ -77,9 +77,15 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
 	
 	/**
 	 * @configRef desc=
-	 *            "The keymapper for converting keys to strings (uses the DefaultTwoWayKey2Stringmapper by default"
+	 *            "The keymapper for converting keys to strings (uses the DefaultTwoWayKey2Stringmapper by default)"
 	 */
 	String keyMapper = DefaultTwoWayKey2StringMapper.class.getName();
+	
+	/**
+	 * @configRef desc=
+	 * 			  "Whether to automatically create the keyspace with the appropriate column families (true by default)"
+	 */
+	boolean autoCreateKeyspace = true;
 
 	protected PoolProperties poolProperties;
 
@@ -94,7 +100,6 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
 
 	public void setKeySpace(String keySpace) {
 		this.keySpace = keySpace;
-		poolProperties.setKeySpace(keySpace);
 	}
 
 	public String getEntryColumnFamily() {
@@ -226,5 +231,13 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
 
 	public void setKeyMapper(String keyMapper) {
 		this.keyMapper = keyMapper;
+	}
+
+	public boolean isAutoCreateKeyspace() {
+		return autoCreateKeyspace;
+	}
+
+	public void setAutoCreateKeyspace(boolean autoCreateKeyspace) {
+		this.autoCreateKeyspace = autoCreateKeyspace;
 	}
 }

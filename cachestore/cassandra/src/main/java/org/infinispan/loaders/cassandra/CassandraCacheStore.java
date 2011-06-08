@@ -37,9 +37,10 @@ import java.util.Map;
 import java.util.Set;
 
 import net.dataforte.cassandra.pool.DataSource;
-import net.dataforte.cassandra.thrift.CassandraThriftDataSource;
 
+import org.apache.cassandra.locator.SimpleStrategy;
 import org.apache.cassandra.thrift.Cassandra;
+import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
 import org.apache.cassandra.thrift.ColumnParent;
@@ -48,6 +49,7 @@ import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.Deletion;
 import org.apache.cassandra.thrift.KeyRange;
 import org.apache.cassandra.thrift.KeySlice;
+import org.apache.cassandra.thrift.KsDef;
 import org.apache.cassandra.thrift.Mutation;
 import org.apache.cassandra.thrift.NotFoundException;
 import org.apache.cassandra.thrift.SlicePredicate;
@@ -62,6 +64,7 @@ import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
+import org.infinispan.loaders.cassandra.logging.Log;
 import org.infinispan.loaders.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.loaders.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.loaders.modifications.Modification;
@@ -69,7 +72,6 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.Util;
-import org.infinispan.loaders.cassandra.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -90,7 +92,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 
 	private CassandraCacheStoreConfig config;
 
-	private CassandraThriftDataSource dataSource;
+	private DataSource dataSource;
 
 	private ConsistencyLevel readConsistencyLevel;
 	private ConsistencyLevel writeConsistencyLevel;
@@ -120,6 +122,8 @@ public class CassandraCacheStore extends AbstractCacheStore {
 	public void start() throws CacheLoaderException {
 
 		try {
+			if(!config.autoCreateKeyspace)
+				config.poolProperties.setKeySpace(config.keySpace);
 			dataSource = new DataSource(config.getPoolProperties());
 			readConsistencyLevel = ConsistencyLevel.valueOf(config.readConsistencyLevel);
 			writeConsistencyLevel = ConsistencyLevel.valueOf(config.writeConsistencyLevel);
@@ -132,12 +136,59 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		} catch (Exception e) {
 			throw new ConfigurationException(e);
 		}
+		
+		if(config.autoCreateKeyspace) {
+			log.debug("automatically create keyspace");
+			createKeySpace();
+			dataSource.close(); // Make sure all connections are closed
+			dataSource.setKeySpace(config.keySpace); // Set the keyspace we have created
+		}
 
 		log.debug("cleaning up expired entries...");
 		purgeInternal();
 
 		log.debug("started");
 		super.start();
+	}
+
+	private void createKeySpace() throws CacheLoaderException {
+		Cassandra.Client cassandraClient = null;
+		try {
+			cassandraClient = dataSource.getConnection();
+			// check if the keyspace exists
+			try {
+				cassandraClient.describe_keyspace(config.keySpace);
+				return;
+			} catch (NotFoundException e) {
+				KsDef keySpace = new KsDef();
+				keySpace.setName(config.keySpace);
+				keySpace.setStrategy_class(SimpleStrategy.class.getName());
+				Map<String, String> strategy_options = new HashMap<String, String>();
+				strategy_options.put("replication_factor", "1");
+				keySpace.setStrategy_options(strategy_options);
+				
+				CfDef entryCF = new CfDef();
+				entryCF.setName(config.entryColumnFamily);
+				entryCF.setKeyspace(config.keySpace);
+				entryCF.setComparator_type("BytesType");
+				keySpace.addToCf_defs(entryCF);
+				
+				CfDef expirationCF = new CfDef();
+				expirationCF.setName(config.expirationColumnFamily);
+				expirationCF.setKeyspace(config.keySpace);
+				expirationCF.setColumn_type("Super");
+				expirationCF.setComparator_type("LongType");
+				expirationCF.setSubcomparator_type("BytesType");
+				keySpace.addToCf_defs(expirationCF);
+				
+				cassandraClient.system_add_keyspace(keySpace);
+			}
+		} catch (Exception e) {
+			throw new CacheLoaderException("Could not create keyspace/column families", e);
+		} finally {
+			dataSource.releaseConnection(cassandraClient);
+		}
+		
 	}
 
 	@Override
@@ -533,7 +584,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		addMutation(mutationMap, key, columnFamily, null, column, value);
 	}
 
-	private static void addMutation(Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap, ByteBuffer key, String columnFamily, ByteBuffer superColumn, ByteBuffer column, ByteBuffer value) {
+	private static void addMutation(Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap, ByteBuffer key, String columnFamily, ByteBuffer superColumn, ByteBuffer columnName, ByteBuffer value) {
 		Map<String, List<Mutation>> keyMutations = mutationMap.get(key);
 		// If the key doesn't exist yet, create the mutation holder
 		if (keyMutations == null) {
@@ -548,22 +599,29 @@ public class CassandraCacheStore extends AbstractCacheStore {
 		}
 
 		if (value == null) { // Delete
-			Deletion deletion = new Deletion(microTimestamp());
+			Deletion deletion = new Deletion();
+			deletion.setTimestamp(microTimestamp());
 			if (superColumn != null) {
 				deletion.setSuper_column(superColumn);
 			}
-			if (column != null) { // Single column delete				
-				deletion.setPredicate(new SlicePredicate().setColumn_names(Collections.singletonList(column)));
+			if (columnName != null) { // Single column delete				
+				deletion.setPredicate(new SlicePredicate().setColumn_names(Collections.singletonList(columnName)));
 			} // else Delete entire column family or supercolumn
 			columnFamilyMutations.add(new Mutation().setDeletion(deletion));
 		} else { // Insert/update
 			ColumnOrSuperColumn cosc = new ColumnOrSuperColumn();
 			if (superColumn != null) {
 				List<Column> columns = new ArrayList<Column>();
-				columns.add(new Column(column, value, microTimestamp()));
+				Column col = new Column(columnName);
+				col.setValue(value);
+				col.setTimestamp(microTimestamp());
+				columns.add(col);
 				cosc.setSuper_column(new SuperColumn(superColumn, columns));
 			} else {
-				cosc.setColumn(new Column(column, value, microTimestamp()));
+				Column col = new Column(columnName);
+				col.setValue(value);
+				col.setTimestamp(microTimestamp());
+				cosc.setColumn(col);
 			}
 			columnFamilyMutations.add(new Mutation().setColumn_or_supercolumn(cosc));
 		}
