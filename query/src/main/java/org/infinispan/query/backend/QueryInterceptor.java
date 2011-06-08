@@ -39,6 +39,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
 
 import javax.transaction.TransactionManager;
+import javax.transaction.TransactionSynchronizationRegistry;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Map;
@@ -66,13 +67,14 @@ public class QueryInterceptor extends CommandInterceptor {
    private final ConcurrentHashMap<Class,Class> knownClasses = new ConcurrentHashMap<Class,Class>();
    private final Lock mutating = new ReentrantLock();
    protected TransactionManager transactionManager;
+   protected TransactionSynchronizationRegistry transactionSynchronizationRegistry;
 
    public QueryInterceptor(SearchFactoryIntegrator searchFactory) {
       this.searchFactory = searchFactory;
    }
 
    @Inject
-   public void init(TransactionManager transactionManager) {
+   public void init(TransactionManager transactionManager, TransactionSynchronizationRegistry transactionSynchronizationRegistry) {
    }
 
    protected boolean shouldModifyIndexes(InvocationContext ctx) {
@@ -173,7 +175,7 @@ public class QueryInterceptor extends CommandInterceptor {
             Serializable id = null;
             if (providers != null && providers.length > 0) { //check as not all known classes are indexed
                searchFactory.getWorker().performWork(new Work<Object>(c, id, WorkType.PURGE_ALL),
-                                                  new TransactionalEventTransactionContext(transactionManager));
+                                                  new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry));
             }
          }
       }
@@ -188,7 +190,7 @@ public class QueryInterceptor extends CommandInterceptor {
       // The key is going to be the documentID for Lucene.
       // The object parameter is the actual value that needs to be put into lucene.
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
-      TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager);
+      TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry);
       searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.ADD), transactionContext);
    }
 
@@ -199,7 +201,7 @@ public class QueryInterceptor extends CommandInterceptor {
       // The key is going to be the documentID for Lucene.
       // The object parameter is the actual value that needs to be removed from lucene.
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
-      TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager);
+      TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry);
       searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.DELETE), transactionContext);
    }
 
@@ -208,7 +210,7 @@ public class QueryInterceptor extends CommandInterceptor {
       // The key is going to be the documentID for Lucene.
       // The object parameter is the actual value that needs to be removed from lucene.
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
-      TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager);
+      TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry);
       searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.UPDATE), transactionContext);
    }
 

@@ -166,6 +166,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       s.add(InterceptorChainFactory.class);
       s.add(RpcManagerFactory.class);
       s.add(TransactionManagerFactory.class);
+      s.add(TransactionSynchronizationRegistryFactory.class);
       s.add(ReplicationQueueFactory.class);
       s.add(StateTransferManagerFactory.class);
       s.add(LockManagerFactory.class);
