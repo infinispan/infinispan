@@ -108,7 +108,7 @@ class CacheLoaderConfigAdapter extends XmlAdapter<AbstractCacheStoreConfig, Cach
 
    private CacheLoaderConfig instantiateCacheLoaderConfig(String cacheLoaderImpl) throws Exception {
       // first see if the type is annotated
-      Class<? extends CacheLoaderConfig> clazz = Util.loadClass(cacheLoaderImpl);
+      Class<? extends CacheLoaderConfig> clazz = Util.loadClass(cacheLoaderImpl, Thread.currentThread().getContextClassLoader());
       Class<? extends CacheLoaderConfig> cacheLoaderConfigType;
       CacheLoaderMetadata metadata = clazz.getAnnotation(CacheLoaderMetadata.class);
       if (metadata == null) {

@@ -39,6 +39,6 @@ public class TransportFactory extends AbstractComponentFactory implements AutoIn
    public <T> T construct(Class<T> componentType) {
       String transportClass = globalConfiguration.getTransportClass();
       if (transportClass == null) return null;
-      return (T) Util.getInstance(transportClass);
+      return (T) Util.getInstance(transportClass, Thread.currentThread().getContextClassLoader());
    }
 }

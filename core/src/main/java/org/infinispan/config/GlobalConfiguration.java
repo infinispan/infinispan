@@ -1608,7 +1608,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       @XmlTransient
       public MBeanServerLookup getMBeanServerLookupInstance() {
          if (mBeanServerLookupInstance == null)
-            mBeanServerLookupInstance = (MBeanServerLookup) Util.getInstance(mBeanServerLookup);
+            mBeanServerLookupInstance = (MBeanServerLookup) Util.getInstance(mBeanServerLookup, Thread.currentThread().getContextClassLoader());
 
          return mBeanServerLookupInstance;
       }

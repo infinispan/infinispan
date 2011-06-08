@@ -324,7 +324,7 @@ public class TestCacheManagerFactory {
    public static void amendMarshaller(GlobalConfiguration configuration) {
       if (MARSHALLER != null) {
          try {
-            Util.loadClassStrict(MARSHALLER);
+            Util.loadClassStrict(MARSHALLER, Thread.currentThread().getContextClassLoader());
             configuration.setMarshallerClass(MARSHALLER);
          } catch (ClassNotFoundException e) {
             // No-op, stick to GlobalConfiguration default.

@@ -150,19 +150,19 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
       Class clazz;
       try {
          log.debugf("Trying WebSphere 5.1: %s", WS_FACTORY_CLASS_5_1);
-         clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_1);
+         clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_1, Thread.currentThread().getContextClassLoader());
          log.debugf("Found WebSphere 5.1: %s", WS_FACTORY_CLASS_5_1);
       }
       catch (ClassNotFoundException ex) {
          try {
             log.debugf("Trying WebSphere 5.0: %s", WS_FACTORY_CLASS_5_0);
-            clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_0);
+            clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_0, Thread.currentThread().getContextClassLoader());
             log.debugf("Found WebSphere 5.0: %s", WS_FACTORY_CLASS_5_0);
          }
          catch (ClassNotFoundException ex2) {
             try {
                log.debugf("Trying WebSphere 4: %s", WS_FACTORY_CLASS_4);
-               clazz = Util.loadClassStrict(WS_FACTORY_CLASS_4);
+               clazz = Util.loadClassStrict(WS_FACTORY_CLASS_4, Thread.currentThread().getContextClassLoader());
                log.debugf("Found WebSphere 4: %s", WS_FACTORY_CLASS_4);
             }
             catch (ClassNotFoundException ex3) {

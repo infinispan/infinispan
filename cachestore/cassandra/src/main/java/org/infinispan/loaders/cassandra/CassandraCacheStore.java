@@ -133,7 +133,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
          expirationColumnParent = new ColumnParent(config.expirationColumnFamily);
          expirationKey = ByteBufferUtil.bytes(EXPIRATION_KEY
                   + (config.isSharedKeyspace() ? "_" + cacheName : ""));
-         keyMapper = (TwoWayKey2StringMapper) Util.getInstance(config.getKeyMapper());
+         keyMapper = (TwoWayKey2StringMapper) Util.getInstance(config.getKeyMapper(), Thread.currentThread().getContextClassLoader());
       } catch (Exception e) {
          throw new ConfigurationException(e);
       }

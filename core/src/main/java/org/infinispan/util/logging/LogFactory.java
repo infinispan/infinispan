@@ -39,7 +39,7 @@ public class LogFactory {
    static {
       boolean available;
       try {
-         Util.loadClassStrict("org.apache.log4j.Logger");
+         Util.loadClassStrict("org.apache.log4j.Logger", Thread.currentThread().getContextClassLoader());
          available = true;
       }
       catch (ClassNotFoundException cnfe) {

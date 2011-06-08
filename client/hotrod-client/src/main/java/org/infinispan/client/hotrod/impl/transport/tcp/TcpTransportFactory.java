@@ -77,7 +77,7 @@ public class TcpTransportFactory implements TransportFactory {
          boolean pingOnStartup = cfg.getPingOnStartup();
          servers = Collections.unmodifiableCollection(new ArrayList(staticConfiguredServers));
          String balancerClass = cfg.getRequestBalancingStrategy();
-         balancer = (RequestBalancingStrategy) Util.getInstance(balancerClass);
+         balancer = (RequestBalancingStrategy) Util.getInstance(balancerClass, Thread.currentThread().getContextClassLoader());
          tcpNoDelay = cfg.getTcpNoDelay();
          soTimeout = cfg.getSoTimeout();
          if (log.isDebugEnabled()) {

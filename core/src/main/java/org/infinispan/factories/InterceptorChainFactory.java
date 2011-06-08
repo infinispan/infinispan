@@ -160,12 +160,12 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    @SuppressWarnings("unchecked")
    private Class<? extends CommandInterceptor> getCustomInterceptorType(CustomInterceptorConfig cfg) {
       if (cfg.getInterceptor() != null) return cfg.getInterceptor().getClass();
-      return Util.loadClass(cfg.getClassName());
+      return Util.loadClass(cfg.getClassName(), Thread.currentThread().getContextClassLoader());
    }
 
    private CommandInterceptor getOrCreateCustomInterceptor(CustomInterceptorConfig cfg) {
       if (cfg.getInterceptor() != null) return cfg.getInterceptor();
-      return (CommandInterceptor) Util.getInstance(cfg.getClassName());
+      return (CommandInterceptor) Util.getInstance(cfg.getClassName(), Thread.currentThread().getContextClassLoader());
    }
 
    private void buildCustomInterceptors(InterceptorChain interceptorChain, List<CustomInterceptorConfig> customInterceptors) {
