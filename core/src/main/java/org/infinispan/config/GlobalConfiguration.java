@@ -119,10 +119,35 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    @XmlTransient
    GlobalComponentRegistry gcr;
+   
+   @XmlTransient
+   private final ClassLoader cl;
 
+   /**
+    * Create a new GlobalConfiguration, using the Thread Context ClassLoader to load any
+    * classes or resources required by this configuration. The TCCL will also be used as
+    * default classloader for the CacheManager and any caches created.
+    * 
+    */
    public GlobalConfiguration() {
-      super();
+      this(Thread.currentThread().getContextClassLoader());
    }
+   
+   /**
+    * Create a new GlobalConfiguration, specifying the classloader to use. This classloader will
+    * be used to load resources or classes required by configuration, and used as the default
+    * classloader for the CacheManager and any caches created.
+    * 
+    * @param cl
+    */
+   public GlobalConfiguration(ClassLoader cl) {
+      super();
+      if (cl == null)
+         throw new IllegalArgumentException("cl must not be null");
+      this.cl = cl;
+   }
+
+
 
    public FluentGlobalConfiguration fluent() {
       return fluentGlobalConfig;
@@ -819,6 +844,15 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       gc.setTransportClass(null);
       gc.setTransportProperties((Properties) null);
       return gc;
+   }
+   
+   /**
+    * Get the classloader in use by this configuration.
+    * 
+    * @return
+    */
+   public ClassLoader getClassLoader() {
+      return cl;
    }
 
    public abstract static class FactoryClassWithPropertiesType extends AbstractConfigurationBeanWithGCR {
@@ -1608,7 +1642,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       @XmlTransient
       public MBeanServerLookup getMBeanServerLookupInstance() {
          if (mBeanServerLookupInstance == null)
-            mBeanServerLookupInstance = (MBeanServerLookup) Util.getInstance(mBeanServerLookup, Thread.currentThread().getContextClassLoader());
+            mBeanServerLookupInstance = (MBeanServerLookup) Util.getInstance(mBeanServerLookup, globalConfig.getClassLoader());
 
          return mBeanServerLookupInstance;
       }

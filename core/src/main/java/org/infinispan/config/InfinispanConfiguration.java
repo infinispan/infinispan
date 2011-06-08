@@ -95,7 +95,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
     * <p/>
     * Both configuration file and schema file are looked up in following order:
     * <p/>
-    * <ol> <li> using current thread's context ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
+    * <ol> <li> using the specified ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
     * fails, attempt is made to load it as a file from the disk </li> </ol>
     *
     * @param configFileName configuration file name
@@ -104,8 +104,8 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
     * @throws IOException if there are any issues creating InfinispanConfiguration object
     */
    public static InfinispanConfiguration newInfinispanConfiguration(String configFileName,
-                                                                    String schemaFileName) throws IOException {
-      return newInfinispanConfiguration(configFileName, schemaFileName, null);
+                                                                    String schemaFileName, ClassLoader cl) throws IOException {
+      return newInfinispanConfiguration(configFileName, schemaFileName, null, cl);
    }
 
    /**
@@ -114,7 +114,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
     * <p/>
     * Both configuration file and schema file are looked up in following order:
     * <p/>
-    * <ol> <li> using current thread's context ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
+    * <ol> <li> using specified ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
     * fails, attempt is made to load it as a file from the disk </li> </ol>
     *
     * @param configFileName configuration file name
@@ -124,9 +124,9 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
     * @throws IOException if there are any issues creating InfinispanConfiguration object
     */
    public static InfinispanConfiguration newInfinispanConfiguration(String configFileName,
-                                                                    String schemaFileName, ConfigurationBeanVisitor cbv) throws IOException {
+                                                                    String schemaFileName, ConfigurationBeanVisitor cbv, ClassLoader cl) throws IOException {
 
-      InputStream inputStream = configFileName != null ? findInputStream(configFileName, Thread.currentThread().getContextClassLoader()) : null;
+      InputStream inputStream = configFileName != null ? findInputStream(configFileName, cl) : null;
       InputStream schemaIS = schemaFileName != null ? findSchemaInputStream(schemaFileName) : null;
       try {
          return newInfinispanConfiguration(inputStream, schemaIS, cbv);
@@ -140,16 +140,16 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
     * <p/>
     * Configuration file is looked up in following order:
     * <p/>
-    * <ol> <li> using current thread's context ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
+    * <ol> <li> using the specified ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
     * fails, attempt is made to load it as a file from the disk </li> </ol>
     *
     * @param configFileName configuration file name
     * @return returns infinispan configuration
     * @throws IOException if there are any issues creating InfinispanConfiguration object
     */
-   public static InfinispanConfiguration newInfinispanConfiguration(String configFileName)
+   public static InfinispanConfiguration newInfinispanConfiguration(String configFileName, ClassLoader cl)
            throws IOException {
-      return newInfinispanConfiguration(configFileName, null);
+      return newInfinispanConfiguration(configFileName, null, cl);
    }
 
    /**
@@ -363,7 +363,8 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
       FileLookup fileLookup = new FileLookup();
       InputStream is = null;
       if (localPathToSchema != null) {
-         is = fileLookup.lookupFile(localPathToSchema, Thread.currentThread().getContextClassLoader());
+         // Schema's are always stored in Infinispan
+         is = fileLookup.lookupFile(localPathToSchema, null);
          if (is != null) {
             log.debugf("Using schema %s", localPathToSchema);
             return is;
@@ -375,7 +376,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
       }
 
       //2. resolve local schema path in infinispan distro
-      is = fileLookup.lookupFile(schemaPath(), Thread.currentThread().getContextClassLoader());
+      is = fileLookup.lookupFile(schemaPath(), null);
       if (is != null) {
          log.debugf("Using schema %s", schemaPath());
          return is;

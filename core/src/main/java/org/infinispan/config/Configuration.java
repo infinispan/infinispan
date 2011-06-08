@@ -97,6 +97,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    @XmlTransient
    FluentConfiguration fluentConfig = new FluentConfiguration(this);
+   
+   @XmlTransient
+   private ClassLoader cl;
 
    @XmlElement
    LockingType locking = new LockingType().setConfiguration(this);
@@ -199,6 +202,22 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    @Inject
    private void injectGlobalConfiguration(GlobalConfiguration globalConfiguration) {
       this.globalConfiguration = globalConfiguration;
+   }
+   
+   public ClassLoader getClassLoader() {
+      if (cl != null)
+         // The classloader has been set for this configuration
+         return cl;
+      else if (cl == null && globalConfiguration != null)
+         // The classloader is not set for this configuration, and we have a global config
+         return globalConfiguration.getClassLoader();
+      else 
+         // Return the default CL 
+         return Thread.currentThread().getContextClassLoader();
+   }
+   
+   public void setClassLoader(ClassLoader cl) {
+      this.cl = cl;
    }
 
    public boolean isStateTransferEnabled() {

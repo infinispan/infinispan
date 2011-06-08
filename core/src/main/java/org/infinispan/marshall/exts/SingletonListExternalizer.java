@@ -61,7 +61,8 @@ public class SingletonListExternalizer extends AbstractExternalizer<List<?>> {
 
    @Override
    public Set<Class<? extends List<?>>> getTypeClasses() {
-      return Util.<Class<? extends List<?>>>asSet(Util.<List<?>>loadClass("java.util.Collections$SingletonList", Thread.currentThread().getContextClassLoader()));
+      // This is loadable from any classloader
+      return Util.<Class<? extends List<?>>>asSet(Util.<List<?>>loadClass("java.util.Collections$SingletonList", null));
    }
 
 }

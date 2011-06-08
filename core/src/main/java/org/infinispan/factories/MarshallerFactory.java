@@ -36,6 +36,6 @@ import org.infinispan.util.Util;
 public class MarshallerFactory extends EmptyConstructorFactory implements AutoInstantiableFactory {
    @Override
    public <T> T construct(Class<T> componentType) {
-      return componentType.cast(Util.getInstance(globalConfiguration.getMarshallerClass(), Thread.currentThread().getContextClassLoader()));
+      return componentType.cast(Util.getInstance(globalConfiguration.getMarshallerClass(), globalConfiguration.getClassLoader()));
    }
 }

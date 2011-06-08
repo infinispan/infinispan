@@ -69,7 +69,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                         + configuration.getEvictionStrategy());
          }
       } else {
-         DataContainer dataContainer = DataContainer.class.cast(Util.getInstance(configuration.getDataContainerClass(), Thread.currentThread().getContextClassLoader()));
+         DataContainer dataContainer = DataContainer.class.cast(Util.getInstance(configuration.getDataContainerClass(), configuration.getClassLoader()));
          XmlConfigHelper.setValues(dataContainer, configuration.getDataContainerProperties(), false, true);
          return (T) dataContainer;
       }

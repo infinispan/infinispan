@@ -44,7 +44,7 @@ import org.infinispan.util.Util;
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
    public <T> T construct(Class<T> componentType) {
       if (componentType.isInterface()) {
-         return componentType.cast(Util.getInstance(componentType.getName() + "Impl", Thread.currentThread().getContextClassLoader()));
+         return componentType.cast(Util.getInstance(componentType.getName() + "Impl", globalConfiguration.getClassLoader()));
       } else {
          return Util.getInstance(componentType);
       }

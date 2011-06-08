@@ -728,4 +728,12 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
          }
       }
    }
+
+   @Override
+   public ClassLoader getClassLoader() {
+      // TODO Make this overriable
+      return config.getClassLoader();
+   }
+   
+   
 }

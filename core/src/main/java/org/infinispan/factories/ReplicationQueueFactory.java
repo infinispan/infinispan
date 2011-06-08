@@ -42,7 +42,7 @@ public class ReplicationQueueFactory extends EmptyConstructorNamedCacheFactory i
          if (type == null)
             return super.construct(componentType);
          else
-            return (T) super.construct(Util.loadClass(type, Thread.currentThread().getContextClassLoader()));
+            return (T) super.construct(Util.loadClass(type, configuration.getClassLoader()));
       } else {
          return null;
       }

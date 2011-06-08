@@ -22,7 +22,6 @@
  */
 package org.infinispan.util.logging;
 
-import org.infinispan.util.Util;
 import org.jboss.logging.Logger;
 import org.jboss.logging.NDC;
 
@@ -34,25 +33,11 @@ import org.jboss.logging.NDC;
  */
 public class LogFactory {
 
-   public static final boolean IS_LOG4J_AVAILABLE;
-
-   static {
-      boolean available;
-      try {
-         Util.loadClassStrict("org.apache.log4j.Logger", Thread.currentThread().getContextClassLoader());
-         available = true;
-      }
-      catch (ClassNotFoundException cnfe) {
-         available = false;
-      }
-      IS_LOG4J_AVAILABLE = available;
-   }
-
-   public static Log getLog(Class clazz) {
+   public static Log getLog(Class<?> clazz) {
       return Logger.getMessageLogger(Log.class, clazz.getName());
    }
 
-   public static <T> T getLog(Class clazz, Class<T> logClass) {
+   public static <T> T getLog(Class<?> clazz, Class<T> logClass) {
       return Logger.getMessageLogger(logClass, clazz.getName());
    }
 
