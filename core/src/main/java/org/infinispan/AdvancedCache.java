@@ -32,6 +32,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.stats.Stats;
+import org.infinispan.util.concurrent.locks.LockManager;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -154,6 +155,11 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    DataContainer getDataContainer();
 
    TransactionManager getTransactionManager();
+
+   /**
+    * @return retrieves the lock manager associated with this cache instance.
+    */
+   LockManager getLockManager();
 
    Stats getStats();
 

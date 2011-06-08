@@ -31,6 +31,7 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.util.concurrent.locks.LockManager;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -52,60 +53,79 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
       this.cache = cache;
    }
 
+   @Override
    public void addInterceptor(CommandInterceptor i, int position) {
       cache.addInterceptor(i, position);
    }
 
+   @Override
    public void addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
       cache.addInterceptorAfter(i, afterInterceptor);
    }
 
+   @Override
    public void addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
       cache.addInterceptorBefore(i, beforeInterceptor);
    }
 
+   @Override
    public void removeInterceptor(int position) {
       cache.removeInterceptor(position);
    }
 
+   @Override
    public void removeInterceptor(Class<? extends CommandInterceptor> interceptorType) {
       cache.removeInterceptor(interceptorType);
    }
 
+   @Override
    public List<CommandInterceptor> getInterceptorChain() {
       return cache.getInterceptorChain();
    }
 
+   @Override
    public EvictionManager getEvictionManager() {
       return cache.getEvictionManager();
    }
 
+   @Override
    public ComponentRegistry getComponentRegistry() {
       return cache.getComponentRegistry();
    }
 
+   @Override
    public DistributionManager getDistributionManager() {
       return cache.getDistributionManager();
    }
 
+   @Override
    public RpcManager getRpcManager() {
       return cache.getRpcManager();
    }
 
+   @Override
    public BatchContainer getBatchContainer() {
       return cache.getBatchContainer();
    }
 
+   @Override
    public InvocationContextContainer getInvocationContextContainer() {
       return cache.getInvocationContextContainer();
    }
 
+   @Override
    public DataContainer getDataContainer() {
       return cache.getDataContainer();
    }
 
+   @Override
    public TransactionManager getTransactionManager() {
       return cache.getTransactionManager();
+   }
+
+   @Override
+   public LockManager getLockManager() {
+      return cache.getLockManager();
    }
 
    @Override
@@ -113,15 +133,18 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
       return cache.getXAResource();
    }
 
+   @Override
    public AdvancedCache<K, V> withFlags(Flag... flags) {
       cache.withFlags(flags);
       return this;
    }
 
+   @Override
    public boolean lock(K... key) {
       return cache.lock(key);
    }
 
+   @Override
    public boolean lock(Collection<? extends K> keys) {
       return cache.lock(keys);
    }

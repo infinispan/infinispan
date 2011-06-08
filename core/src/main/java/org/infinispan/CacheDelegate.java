@@ -75,6 +75,7 @@ import org.infinispan.util.concurrent.AbstractInProcessNotifyingFuture;
 import org.infinispan.util.concurrent.DeferredReturnFuture;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
@@ -129,6 +130,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    private StateTransferManager stateTransferManager;
    // as above for ResponseGenerator
    private ResponseGenerator responseGenerator;
+   private LockManager lockManager;
    private DistributionManager distributionManager;
    private ExecutorService asyncExecutor;
    private TransactionTable txTable;
@@ -160,7 +162,8 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
                                   DistributionManager distributionManager,
                                   EmbeddedCacheManager cacheManager, StateTransferManager stateTransferManager,
                                   @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
-                                  TransactionTable txTable, RecoveryManager recoveryManager, TransactionCoordinator txCoordinator) {
+                                  TransactionTable txTable, RecoveryManager recoveryManager, TransactionCoordinator txCoordinator,
+                                  LockManager lockManager) {
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.config = configuration;
@@ -181,6 +184,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       this.txTable = txTable;
       this.recoveryManager = recoveryManager;
       this.txCoordinator = txCoordinator;
+      this.lockManager = lockManager;
    }
 
    private void assertKeyNotNull(Object key) {
@@ -482,6 +486,10 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
 
    public TransactionManager getTransactionManager() {
       return transactionManager;
+   }
+
+   public LockManager getLockManager() {
+      return this.lockManager;
    }
 
    public EmbeddedCacheManager getCacheManager() {
