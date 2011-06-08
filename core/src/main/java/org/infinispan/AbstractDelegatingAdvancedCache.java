@@ -32,6 +32,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.stats.Stats;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -148,4 +149,9 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    public boolean lock(Collection<? extends K> keys) {
       return cache.lock(keys);
    }
+   
+   @Override
+    public Stats getStats() {
+        return cache.getStats();
+    }
 }
