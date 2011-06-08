@@ -24,6 +24,7 @@ package org.infinispan.util.logging;
 
 import org.infinispan.util.Util;
 import org.jboss.logging.Logger;
+import org.jboss.logging.NDC;
 
 /**
  * Factory that creates {@link Log} instances.
@@ -53,6 +54,16 @@ public class LogFactory {
 
    public static <T> T getLog(Class clazz, Class<T> logClass) {
       return Logger.getMessageLogger(logClass, clazz.getName());
+   }
+
+   public static void pushNDC(String cacheName, boolean isTrace) {
+      if (isTrace)
+         NDC.push(cacheName);
+   }
+
+   public static void popNDC(boolean isTrace) {
+      if (isTrace)
+         NDC.pop();
    }
 
 }

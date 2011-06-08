@@ -35,7 +35,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.transaction.TransactionTable;
-import org.jboss.logging.NDC;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;
@@ -86,7 +86,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
                getCacheNamePrefix()));
       }
 
-      NDC.push(componentRegistry.getCacheName());
+      LogFactory.pushNDC(componentRegistry.getCacheName(), trace);
       try {
          if (trace) log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
          if (ctx == null) throw new IllegalStateException("Null context not allowed!!");
@@ -115,7 +115,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
             ctx.reset();
          }
       } finally {
-         NDC.pop();
+         LogFactory.popNDC(trace);
       }
    }
 
