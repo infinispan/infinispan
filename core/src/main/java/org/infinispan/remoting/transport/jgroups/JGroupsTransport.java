@@ -259,6 +259,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       dispatcher.setResponseMarshaller(adapter);
    }
 
+   // This is per CM, so the CL in use should be the CM CL
    private void buildChannel() {
       // in order of preference - we first look for an external JGroups file, then a set of XML properties, and
       // finally the legacy JGroups String properties.
@@ -268,7 +269,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
             String channelLookupClassName = props.getProperty(CHANNEL_LOOKUP);
 
             try {
-               JGroupsChannelLookup lookup = (JGroupsChannelLookup) Util.getInstance(channelLookupClassName, Thread.currentThread().getContextClassLoader());
+               JGroupsChannelLookup lookup = (JGroupsChannelLookup) Util.getInstance(channelLookupClassName, configuration.getClassLoader());
                channel = lookup.getJGroupsChannel(props);
                startChannel = lookup.shouldStartAndConnect();
                stopChannel = lookup.shouldStopAndDisconnect();
@@ -282,7 +283,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
             cfg = props.getProperty(CONFIGURATION_FILE);
             try {
-               channel = new JChannel(new FileLookup().lookupFileLocation(cfg, Thread.currentThread().getContextClassLoader()));
+               channel = new JChannel(new FileLookup().lookupFileLocation(cfg, configuration.getClassLoader()));
             } catch (Exception e) {
                log.errorCreatingChannelFromConfigFile(cfg);
                throw new CacheException(e);
@@ -313,7 +314,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       if (channel == null) {
          log.unableToUseJGroupsPropertiesProvided(props);
          try {
-            channel = new JChannel(new FileLookup().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, Thread.currentThread().getContextClassLoader()));
+            channel = new JChannel(new FileLookup().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.getClassLoader()));
          } catch (ChannelException e) {
             throw new CacheException("Unable to start JGroups channel", e);
          }

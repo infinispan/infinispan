@@ -60,7 +60,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    public void testNamedCacheFileJaxb() throws Exception {
       String schemaFileName = String.format("infinispan-config-%s.xsd", Version.MAJOR_MINOR);
       testNamedCacheFile(InfinispanConfiguration.newInfinispanConfiguration(
-            "configs/named-cache-test.xml", "schema/" + schemaFileName, new ConfigurationValidatingVisitor()));
+            "configs/named-cache-test.xml", "schema/" + schemaFileName, new ConfigurationValidatingVisitor(), Thread.currentThread().getContextClassLoader()));
    }
    
    public void testNamedCacheFileWithAllValidators() throws Exception {
@@ -69,17 +69,17 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
                "configs/named-cache-test.xml", "schema/" + schemaFileName,
                new DelegatingConfigurationVisitor(new ConfigurationBeanVisitor[] {
                         new ConfigurationValidatingVisitor(),
-                        new TimeoutConfigurationValidatingVisitor()})));
+                        new TimeoutConfigurationValidatingVisitor()}), Thread.currentThread().getContextClassLoader()));
    }
 
    public void testConfigurationMergingJaxb() throws Exception {
       testConfigurationMerging(InfinispanConfiguration
-            .newInfinispanConfiguration("configs/named-cache-test.xml"));
+            .newInfinispanConfiguration("configs/named-cache-test.xml", Thread.currentThread().getContextClassLoader()));
    }
 
    public void testConfigSampleAllValidation() throws Exception {
       String schemaFileName = String.format("infinispan-config-%s.xsd", Version.MAJOR_MINOR);
-      InfinispanConfiguration.newInfinispanConfiguration("config-samples/sample.xml", "schema/" + schemaFileName, new ConfigurationValidatingVisitor());
+      InfinispanConfiguration.newInfinispanConfiguration("config-samples/sample.xml", "schema/" + schemaFileName, new ConfigurationValidatingVisitor(), Thread.currentThread().getContextClassLoader());
    }
 
    public void testNoNamedCaches() throws Exception {

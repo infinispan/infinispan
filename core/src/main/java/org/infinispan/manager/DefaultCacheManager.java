@@ -251,7 +251,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       try {
          InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration(
                  configurationFile, InfinispanConfiguration.resolveSchemaPath(),
-                getConfigurationVisitors());
+                getConfigurationVisitors(), Thread.currentThread().getContextClassLoader());
 
          globalConfiguration = configuration.parseGlobalConfiguration();
          defaultConfiguration = configuration.parseDefaultConfiguration();
@@ -336,20 +336,20 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       try {
          InfinispanConfiguration gconfiguration = InfinispanConfiguration.newInfinispanConfiguration(
                  globalConfigurationFile, InfinispanConfiguration.resolveSchemaPath(),
-                 getConfigurationVisitors());
+                 getConfigurationVisitors(), Thread.currentThread().getContextClassLoader());
 
          globalConfiguration = gconfiguration.parseGlobalConfiguration();
 
          InfinispanConfiguration dconfiguration = InfinispanConfiguration.newInfinispanConfiguration(
                  defaultConfigurationFile, InfinispanConfiguration.resolveSchemaPath(),
-                 getConfigurationVisitors());
+                 getConfigurationVisitors(), Thread.currentThread().getContextClassLoader());
 
          defaultConfiguration = dconfiguration.parseDefaultConfiguration();
 
          if (namedCacheFile != null) {
             InfinispanConfiguration NCconfiguration = InfinispanConfiguration.newInfinispanConfiguration(
                     namedCacheFile, InfinispanConfiguration.resolveSchemaPath(),
-                    getConfigurationVisitors());
+                    getConfigurationVisitors(), Thread.currentThread().getContextClassLoader());
 
             for (Map.Entry<String, Configuration> entry : NCconfiguration.parseNamedConfigurations().entrySet()) {
                Configuration c = defaultConfiguration.clone();
@@ -801,7 +801,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    protected ConfigurationBeanVisitor getConfigurationVisitors(){
       return new DelegatingConfigurationVisitor(new ConfigurationBeanVisitor[] {
                new ConfigurationValidatingVisitor(), new TimeoutConfigurationValidatingVisitor() });
-   }   
+   }
 }
 
 class CacheWrapper {

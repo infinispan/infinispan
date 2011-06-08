@@ -98,7 +98,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
 
-         Map<Byte, ModuleCommandFactory> factories = ModuleProperties.moduleCommandFactories();
+         Map<Byte, ModuleCommandFactory> factories = ModuleProperties.moduleCommandFactories(configuration.getClassLoader());
          if (factories != null && !factories.isEmpty())
             registerNonVolatileComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
          else

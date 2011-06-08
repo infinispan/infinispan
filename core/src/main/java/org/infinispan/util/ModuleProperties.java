@@ -37,7 +37,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -69,28 +68,16 @@ public class ModuleProperties extends Properties {
     private static Map<String,ModuleProperties> moduleProperties;
     private static Map<Byte,ModuleCommandFactory> commandFactories;
     private static Map<Byte,Class<? extends ModuleCommandInitializer>> commandInitializers;
-   private static Collection<Class<? extends ReplicableCommand>> moduleCommands;
+    private static Collection<Class<? extends ReplicableCommand>> moduleCommands;
 
-   protected static Enumeration<URL> getResources(String filename) throws IOException {
-        Enumeration<URL> result;
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        result = cl == null ? null : cl.getResources(filename);
-        if (result == null) {
-            // check system class
-            result = ModuleProperties.class.getClassLoader().getResources(filename);
-        }
-        return result;
-    }
+    public static ModuleProperties loadModuleProperties(String moduleName, ClassLoader cl) throws IOException {
 
-    public static ModuleProperties loadModuleProperties(String moduleName) throws IOException {
-
-        Enumeration<URL> resources = getResources(MODULE_PROPERTIES_FILENAME);
+        Collection<URL> resources = new FileLookup().lookupFileLocations(MODULE_PROPERTIES_FILENAME, cl);
         if (resources == null)
             throw new IOException("Could not find " + MODULE_PROPERTIES_FILENAME
                             + " files on classpath for module " + moduleName);
 
-        while (resources.hasMoreElements()) {
-            URL url = resources.nextElement();
+        for (URL url : resources) {
             ModuleProperties props = new ModuleProperties();
             InputStream inStream = url.openStream();
             try {
@@ -107,45 +94,42 @@ public class ModuleProperties extends Properties {
         return null;
     }
 
-   private static Map<String, ModuleProperties> loadModuleProperties() throws IOException {
+   private static Map<String, ModuleProperties> loadModuleProperties(ClassLoader cl) throws IOException {
       Map<String, ModuleProperties> map = new HashMap<String, ModuleProperties>();
-      Enumeration<URL> resources = getResources(MODULE_PROPERTIES_FILENAME);
-      if (resources != null) {
-         while (resources.hasMoreElements()) {
-            URL url = null;
+      Collection<URL> resources = new FileLookup().lookupFileLocations(MODULE_PROPERTIES_FILENAME, cl);
+      for (URL url : resources)
+      {
+         try {
+            ModuleProperties props = new ModuleProperties();
+            InputStream inStream = url.openStream();
             try {
-               url = resources.nextElement();
-               ModuleProperties props = new ModuleProperties();
-               InputStream inStream = url.openStream();
-               try {
-                  props.load(inStream);
-               } finally {
-                  Util.close(inStream);
-               }
-               props.verify();
-               map.put(props.getName(), props);
-            } catch (Exception e) {
-               log.couldNotLoadModuleAtUrl(url, e);
+               props.load(inStream);
+            } finally {
+               Util.close(inStream);
             }
+            props.verify();
+            map.put(props.getName(), props);
+         } catch (Exception e) {
+            log.couldNotLoadModuleAtUrl(url, e);
          }
       }
       return map;
    }
 
-   private static Map<String, ModuleProperties> getModuleProperties() throws IOException {
-      if (moduleProperties == null) moduleProperties = loadModuleProperties();
+   private static Map<String, ModuleProperties> getModuleProperties(ClassLoader cl) throws IOException {
+      if (moduleProperties == null) moduleProperties = loadModuleProperties(cl);
       return moduleProperties;
    }
 
-   public static List<ModuleLifecycle> resolveModuleLifecycles() {
+   public static List<ModuleLifecycle> resolveModuleLifecycles(ClassLoader cl) {
       try {
          List<ModuleLifecycle> lifecycles = new ArrayList<ModuleLifecycle>();
-         Map<String, ModuleProperties> p = ModuleProperties.getModuleProperties();
+         Map<String, ModuleProperties> p = ModuleProperties.getModuleProperties(cl);
          for (Map.Entry<String, ModuleProperties> m : p.entrySet()) {
             try {
                String lifecycleClassName = m.getValue().getLifecycleClassName();
                if (lifecycleClassName != null && !lifecycleClassName.isEmpty()) {
-               Class<?> loadClass = Util.loadClassStrict(lifecycleClassName, Thread.currentThread().getContextClassLoader());
+               Class<?> loadClass = Util.loadClassStrict(lifecycleClassName, cl);
                   Object proxy = Proxies.newCatchThrowableProxy(loadClass.newInstance());
                   ModuleLifecycle ml = (ModuleLifecycle) proxy;
                   lifecycles.add(ml);
@@ -201,21 +185,21 @@ public class ModuleProperties extends Properties {
     }
 
    @SuppressWarnings("unchecked")
-   private static void loadModuleCommandHandlers() {
+   private static void loadModuleCommandHandlers(ClassLoader cl) {
       try {
          // initialize these collections to be really small, memory efficient
          commandFactories = new HashMap<Byte, ModuleCommandFactory>(1);
          commandInitializers = new HashMap<Byte, Class<? extends ModuleCommandInitializer>>(1);
          moduleCommands = new HashSet<Class<? extends ReplicableCommand>>(1);
 
-         Map<String, ModuleProperties> p = ModuleProperties.getModuleProperties();
+         Map<String, ModuleProperties> p = ModuleProperties.getModuleProperties(cl);
          for (Map.Entry<String, ModuleProperties> module: p.entrySet()) {
             String factClass = module.getValue().getCommandFactoryClassName();
             String initClass = module.getValue().getCommandInitializerClassName();
             if (factClass != null && initClass != null) {
                try {
-                  ModuleCommandFactory fact = (ModuleCommandFactory) Util.getInstance(factClass, Thread.currentThread().getContextClassLoader());
-                  Class<? extends ModuleCommandInitializer> initClazz = Util.loadClass(initClass, Thread.currentThread().getContextClassLoader());
+                  ModuleCommandFactory fact = (ModuleCommandFactory) Util.getInstance(factClass, cl);
+                  Class<? extends ModuleCommandInitializer> initClazz = Util.loadClass(initClass, cl);
                   for (Map.Entry<Byte, Class<? extends ReplicableCommand>> entry: fact.getModuleCommands().entrySet()) {
                      byte id = entry.getKey();
                      if (commandFactories.containsKey(id))
@@ -236,18 +220,18 @@ public class ModuleProperties extends Properties {
       }
    }
 
-   public static Collection<Class<? extends ReplicableCommand>> moduleCommands() {
-      if (moduleCommands == null) loadModuleCommandHandlers();
+   public static Collection<Class<? extends ReplicableCommand>> moduleCommands(ClassLoader cl) {
+      if (moduleCommands == null) loadModuleCommandHandlers(cl);
       return moduleCommands;
    }
 
-   public static Map<Byte, ModuleCommandFactory> moduleCommandFactories() {
-      if (commandFactories == null) loadModuleCommandHandlers();
+   public static Map<Byte, ModuleCommandFactory> moduleCommandFactories(ClassLoader cl) {
+      if (commandFactories == null) loadModuleCommandHandlers(cl);
       return commandFactories;
    }
 
-   public static Map<Byte, ModuleCommandInitializer> moduleCommandInitializers() {
-      if (commandInitializers == null) loadModuleCommandHandlers();
+   public static Map<Byte, ModuleCommandInitializer> moduleCommandInitializers(ClassLoader cl) {
+      if (commandInitializers == null) loadModuleCommandHandlers(cl);
       if (commandInitializers.isEmpty())
          return Collections.emptyMap();
       else {

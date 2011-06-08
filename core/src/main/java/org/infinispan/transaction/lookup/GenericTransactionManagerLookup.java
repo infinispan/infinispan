@@ -22,6 +22,8 @@
  */
 package org.infinispan.transaction.lookup;
 
+import org.infinispan.config.Configuration;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -48,17 +50,17 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
    /**
     * JNDI lookups performed?
     */
-   private static boolean lookupDone = false;
+   private boolean lookupDone = false;
 
    /**
     * No JNDI available?
     */
-   private static boolean lookupFailed = false;
+   private boolean lookupFailed = false;
 
    /**
     * The JVM TransactionManager found.
     */
-   private static TransactionManager tm = null;
+   private TransactionManager tm = null;
 
    /**
     * JNDI locations for TransactionManagers we know of
@@ -87,6 +89,13 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
     * WebSphere 4.0 TransactionManagerFactory
     */
    private static final String WS_FACTORY_CLASS_4 = "com.ibm.ejs.jts.jta.JTSXA";
+   
+   private Configuration configuration;
+   
+   @Inject
+   public void setConfiguration(Configuration configuration) {
+      this.configuration = configuration;
+   }
 
    /**
     * Get the systemwide used TransactionManager
@@ -95,7 +104,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
     */
    public TransactionManager getTransactionManager() {
       if (!lookupDone)
-         doLookups();
+         doLookups(configuration.getClassLoader());
       if (tm != null)
          return tm;
       if (lookupFailed) {
@@ -109,7 +118,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
    /**
     * Try to figure out which TransactionManager to use
     */
-   private static void doLookups() {
+   private void doLookups(ClassLoader cl) {
       if (lookupFailed)
          return;
       InitialContext ctx = null;
@@ -147,22 +156,23 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
       }
 
       //try to find websphere lookups since we came here
+      // The TM may be deployed embedded alongside the app, so this needs to be looked up on the same CL as the Cache
       Class clazz;
       try {
          log.debugf("Trying WebSphere 5.1: %s", WS_FACTORY_CLASS_5_1);
-         clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_1, Thread.currentThread().getContextClassLoader());
+         clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_1, cl);
          log.debugf("Found WebSphere 5.1: %s", WS_FACTORY_CLASS_5_1);
       }
       catch (ClassNotFoundException ex) {
          try {
             log.debugf("Trying WebSphere 5.0: %s", WS_FACTORY_CLASS_5_0);
-            clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_0, Thread.currentThread().getContextClassLoader());
+            clazz = Util.loadClassStrict(WS_FACTORY_CLASS_5_0, cl);
             log.debugf("Found WebSphere 5.0: %s", WS_FACTORY_CLASS_5_0);
          }
          catch (ClassNotFoundException ex2) {
             try {
                log.debugf("Trying WebSphere 4: %s", WS_FACTORY_CLASS_4);
-               clazz = Util.loadClassStrict(WS_FACTORY_CLASS_4, Thread.currentThread().getContextClassLoader());
+               clazz = Util.loadClassStrict(WS_FACTORY_CLASS_4, cl);
                log.debugf("Found WebSphere 4: %s", WS_FACTORY_CLASS_4);
             }
             catch (ClassNotFoundException ex3) {

@@ -129,7 +129,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             RemoveCommand.class, ReplaceCommand.class,
             RemoveCacheCommand.class, RemoveRecoveryInfoCommand.class, GetInDoubtTransactionsCommand.class,
             GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class);
-      Collection<Class<? extends ReplicableCommand>> moduleCommands = ModuleProperties.moduleCommands();
+      Collection<Class<? extends ReplicableCommand>> moduleCommands = ModuleProperties.moduleCommands(null);
       if (moduleCommands != null && !moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);
       return coreCommands;
    }
