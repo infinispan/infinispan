@@ -78,7 +78,7 @@ public class ConsistentHashFactory {
          if (log.isTraceEnabled()) log.tracef("Trying to use default value: %s", hashFunctionClass);
          version2ConsistentHash.put(version, hashFunctionClass);
       }
-      return (ConsistentHash) Util.getInstance(hashFunctionClass);
+      return (ConsistentHash) Util.getInstance(hashFunctionClass, Thread.currentThread().getContextClassLoader());
    }
 
    public Map<Integer, String> getVersion2ConsistentHash() {

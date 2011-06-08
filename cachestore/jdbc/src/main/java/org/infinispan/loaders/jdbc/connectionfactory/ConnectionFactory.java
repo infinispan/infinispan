@@ -39,7 +39,7 @@ public abstract class ConnectionFactory {
     * name.
     */
    public static ConnectionFactory getConnectionFactory(String connectionFactoryClass) throws CacheLoaderException {
-      return (ConnectionFactory) Util.getInstance(connectionFactoryClass);
+      return (ConnectionFactory) Util.getInstance(connectionFactoryClass, Thread.currentThread().getContextClassLoader());
    }
 
    /**

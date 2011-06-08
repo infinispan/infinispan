@@ -88,7 +88,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
    }
 
    private byte[] marshallOldHouse(MarshallingMethod method) throws Exception {
-      Class clazz = Util.loadClass(HOUSE);
+      Class clazz = Util.loadClass(HOUSE, Thread.currentThread().getContextClassLoader());
       Object old = clazz.newInstance();
       Field street = clazz.getDeclaredField("street");
       street.set(old, "Rue du Seyon");
@@ -99,7 +99,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
    }
 
    private byte[] marshallOldCar(MarshallingMethod method) throws Exception {
-      Class oldCarClass = Util.loadClass(CAR);
+      Class oldCarClass = Util.loadClass(CAR, Thread.currentThread().getContextClassLoader());
       Object oldCar = oldCarClass.newInstance();
       Field oldPlate = oldCarClass.getDeclaredField("plateNumber");
       oldPlate.set(oldCar, "E 1660");
@@ -107,7 +107,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
    }
 
    private byte[] marshallOldPerson(MarshallingMethod method) throws Exception {
-      Class clazz = Util.loadClass(PERSON);
+      Class clazz = Util.loadClass(PERSON, Thread.currentThread().getContextClassLoader());
       Object old = clazz.newInstance();
       Field ageField = clazz.getDeclaredField("age");
       ageField.set(old, 23);

@@ -22,6 +22,7 @@
  */
 package org.infinispan.loaders;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.config.CacheLoaderManagerConfig;
@@ -56,14 +57,14 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
 
    Configuration configuration;
    CacheLoaderManagerConfig clmConfig;
-   Cache<Object, Object> cache;
+   AdvancedCache<Object, Object> cache;
    StreamingMarshaller m;
    CacheLoader loader;
    InvocationContextContainer icc;
    private static final Log log = LogFactory.getLog(CacheLoaderManagerImpl.class);
 
    @Inject
-   public void inject(Cache cache, StreamingMarshaller marshaller, Configuration configuration, InvocationContextContainer icc) {
+   public void inject(AdvancedCache<Object, Object> cache, StreamingMarshaller marshaller, Configuration configuration, InvocationContextContainer icc) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;
@@ -254,8 +255,8 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       return tmpLoader;
    }
 
-   CacheLoader createCacheLoader(CacheLoaderConfig cfg, Cache cache) throws Exception {
-      CacheLoader tmpLoader = (CacheLoader) Util.getInstance(cfg.getCacheLoaderClassName());
+   CacheLoader createCacheLoader(CacheLoaderConfig cfg, AdvancedCache<Object, Object> cache) throws Exception {
+      CacheLoader tmpLoader = (CacheLoader) Util.getInstance(cfg.getCacheLoaderClassName(), Thread.currentThread().getContextClassLoader());
 
       if (tmpLoader != null) {
          if (cfg instanceof CacheStoreConfig) {

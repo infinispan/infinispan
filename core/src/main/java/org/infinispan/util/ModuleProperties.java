@@ -145,7 +145,7 @@ public class ModuleProperties extends Properties {
             try {
                String lifecycleClassName = m.getValue().getLifecycleClassName();
                if (lifecycleClassName != null && !lifecycleClassName.isEmpty()) {
-               Class<?> loadClass = Util.loadClassStrict(lifecycleClassName);
+               Class<?> loadClass = Util.loadClassStrict(lifecycleClassName, Thread.currentThread().getContextClassLoader());
                   Object proxy = Proxies.newCatchThrowableProxy(loadClass.newInstance());
                   ModuleLifecycle ml = (ModuleLifecycle) proxy;
                   lifecycles.add(ml);
@@ -214,8 +214,8 @@ public class ModuleProperties extends Properties {
             String initClass = module.getValue().getCommandInitializerClassName();
             if (factClass != null && initClass != null) {
                try {
-                  ModuleCommandFactory fact = (ModuleCommandFactory) Util.getInstance(factClass);
-                  Class<? extends ModuleCommandInitializer> initClazz = Util.loadClass(initClass);
+                  ModuleCommandFactory fact = (ModuleCommandFactory) Util.getInstance(factClass, Thread.currentThread().getContextClassLoader());
+                  Class<? extends ModuleCommandInitializer> initClazz = Util.loadClass(initClass, Thread.currentThread().getContextClassLoader());
                   for (Map.Entry<Byte, Class<? extends ReplicableCommand>> entry: fact.getModuleCommands().entrySet()) {
                      byte id = entry.getKey();
                      if (commandFactories.containsKey(id))

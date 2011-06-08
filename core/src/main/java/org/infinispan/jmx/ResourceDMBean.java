@@ -214,7 +214,7 @@ public class ResourceDMBean implements DynamicMBean {
       try {
          Class<?>[] classes = new Class[sig.length];
          for (int i = 0; i < classes.length; i++) {
-            classes[i] = getClassForName(sig[i]);
+            classes[i] = getClassForName(sig[i], Thread.currentThread().getContextClassLoader());
          }
          Method method = getObject().getClass().getMethod(name, classes);
          return method.invoke(getObject(), args);
@@ -223,9 +223,9 @@ public class ResourceDMBean implements DynamicMBean {
       }
    }
 
-   public static Class<?> getClassForName(String name) throws ClassNotFoundException {
+   public static Class<?> getClassForName(String name, ClassLoader cl) throws ClassNotFoundException {
       try {
-         return Util.loadClassStrict(name);
+         return Util.loadClassStrict(name, cl);
       } catch (ClassNotFoundException cnfe) {
          // Could be a primitive - let's check
          for (Class<?> primitive : primitives) if (name.equals(primitive.getName())) return primitive;

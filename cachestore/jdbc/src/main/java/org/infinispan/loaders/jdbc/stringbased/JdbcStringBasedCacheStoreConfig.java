@@ -77,7 +77,7 @@ public class JdbcStringBasedCacheStoreConfig extends AbstractNonDelegatingJdbcCa
     */
    public void setKey2StringMapperClass(String className) {
       testImmutability("key2StringMapper");
-      key2StringMapper = (Key2StringMapper) Util.getInstance(className);
+      key2StringMapper = (Key2StringMapper) Util.getInstance(className, Thread.currentThread().getContextClassLoader());
    }
 
    /**
