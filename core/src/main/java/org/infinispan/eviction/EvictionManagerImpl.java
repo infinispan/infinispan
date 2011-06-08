@@ -35,6 +35,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -165,7 +166,10 @@ public class EvictionManagerImpl implements EvictionManager {
 
    private void onEntryEviction(Object key, InternalCacheEntry value) {
       final Object entryValue = value.getValue();
-      InvocationContext context = getInvocationContext();
+      // don't reuse the threadlocal context as we don't want to include eviction
+      // operations in any ongoing transaction, nor be affected by flags
+      // especially see ISPN-1154: it's illegal to acquire locks in a committing transaction
+      InvocationContext context = ImmutableContext.INSTANCE;
 
       cacheNotifier.notifyCacheEntryEvicted(key, entryValue, true, context);
 

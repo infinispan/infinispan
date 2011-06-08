@@ -37,7 +37,7 @@ import java.util.NoSuchElementException;
  */
 public class InfinispanCollections {
    private static final ReversibleOrderedSet EMPTY_ROS = new EmptyReversibleOrderedSet();
-   private static final BidirectionalMap EMPTY_BIDI_MAP = new EmptyBidiMap();
+   public static final BidirectionalMap EMPTY_BIDI_MAP = new EmptyBidiMap();
 
    @SuppressWarnings("unchecked")
    public static <T> ReversibleOrderedSet<T> emptyReversibleOrderedSet() {
