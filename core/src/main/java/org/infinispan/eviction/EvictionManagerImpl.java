@@ -50,6 +50,7 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.logging.NDC;
 
 @ThreadSafe
 public class EvictionManagerImpl implements EvictionManager {
@@ -151,7 +152,12 @@ public class EvictionManagerImpl implements EvictionManager {
 
    class ScheduledTask implements Runnable {
       public void run() {
-         processEviction();
+         NDC.push(configuration.getName());
+         try {
+            processEviction();
+         } finally {
+            NDC.pop();
+         }
       }
    }
 

@@ -35,6 +35,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.transaction.TransactionTable;
+import org.jboss.logging.NDC;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;
@@ -85,31 +86,36 @@ public class InvocationContextInterceptor extends CommandInterceptor {
                getCacheNamePrefix()));
       }
 
-      if (trace) log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
-      if (ctx == null) throw new IllegalStateException("Null context not allowed!!");
-
-      if (ctx.hasFlag(Flag.FAIL_SILENTLY)) {
-         suppressExceptions = true;
-      }
-
+      NDC.push(componentRegistry.getCacheName());
       try {
-         return invokeNextInterceptor(ctx, command);
-      }
-      catch (Throwable th) {
-         if (suppressExceptions) {
-            log.trace("Exception while executing code, failing silently...", th);
-            return null;
-         } else {
-            log.executionError(th);
-            if (ctx.isInTxScope() && ctx.isOriginLocal()) {
-               if (trace) log.trace("Transaction marked for rollback as exception was received.");
-               markTxForRollbackAndRethrow(ctx, th);
-               throw new IllegalStateException("This should not be reached");
+         if (trace) log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
+         if (ctx == null) throw new IllegalStateException("Null context not allowed!!");
+
+         if (ctx.hasFlag(Flag.FAIL_SILENTLY)) {
+            suppressExceptions = true;
+         }
+
+         try {
+            return invokeNextInterceptor(ctx, command);
+         }
+         catch (Throwable th) {
+            if (suppressExceptions) {
+               log.trace("Exception while executing code, failing silently...", th);
+               return null;
+            } else {
+               log.executionError(th);
+               if (ctx.isInTxScope() && ctx.isOriginLocal()) {
+                  if (trace) log.trace("Transaction marked for rollback as exception was received.");
+                  markTxForRollbackAndRethrow(ctx, th);
+                  throw new IllegalStateException("This should not be reached");
+               }
+               throw th;
             }
-            throw th;
+         } finally {
+            ctx.reset();
          }
       } finally {
-         ctx.reset();
+         NDC.pop();
       }
    }
 
