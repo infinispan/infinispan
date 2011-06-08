@@ -238,21 +238,6 @@
    </dependencies>
 
 	<!-- =================================================== -->
-	<!-- Since we use a milestone release of Spring, these aren't in Maven Central -->
-	<!-- =================================================== -->
-
-   <repositories>
-      <repository>
-         <id>spring-milestones</id>
-         <url>https://s3.amazonaws.com/maven.springframework.org/milestone</url>
-         <snapshots>
-            <enabled>false</enabled>
-         </snapshots>
-      </repository>
-   </repositories>
-
-
-	<!-- =================================================== -->
 	<!-- Project Plugins -->
 	<!-- =================================================== -->
 
