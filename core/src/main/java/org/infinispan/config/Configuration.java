@@ -41,6 +41,7 @@ import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.ReplicationQueueImpl;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -1139,6 +1140,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return transaction.transactionManagerLookup;
    }
 
+   public TransactionSynchronizationRegistryLookup getTransactionSynchronizationRegistryLookup() {
+      return transaction.transactionSynchronizationRegistryLookup;
+   }
+
    /**
     * @deprecated Use {@link #getCacheLoaders()}, {@link #isCacheLoaderShared()}
     * {@link #isFetchPersistentState()}, {@link #isCacheLoaderPassivation()}
@@ -1543,6 +1548,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @XmlTransient
       protected TransactionManagerLookup transactionManagerLookup;
 
+      @XmlTransient
+      protected TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
+
       @Dynamic
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setSyncCommitPhase")
       protected Boolean syncCommitPhase = false;
@@ -1691,6 +1699,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return this;
       }
 
+      @Override
+      public TransactionConfig transactionSynchronizationRegistryLookup(TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup) {
+         testImmutability("transactionSynchronizationRegistryLookup");
+         this.transactionSynchronizationRegistryLookup = transactionSynchronizationRegistryLookup;
+         return this;
+      }
+
+      public TransactionSynchronizationRegistryLookup getTransactionSynchronizationRegistryLookup() {
+         return transactionSynchronizationRegistryLookup;
+      }
 
       @XmlAttribute
       public Boolean isEagerLockSingleNode() {

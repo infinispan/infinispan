@@ -52,6 +52,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
+import javax.transaction.TransactionSynchronizationRegistry;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -86,11 +87,12 @@ public class TransactionTable {
    private RpcManager rpcManager;
    private ExecutorService lockBreakingService;
    private EmbeddedCacheManager cm;
+   private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration,
                           InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier,
-                          TransactionFactory gtf, EmbeddedCacheManager cm, TransactionCoordinator txCoordinator) {
+                          TransactionFactory gtf, EmbeddedCacheManager cm, TransactionCoordinator txCoordinator, TransactionSynchronizationRegistry transactionSynchronizationRegistry) {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.icc = icc;
@@ -99,6 +101,7 @@ public class TransactionTable {
       this.txFactory = gtf;
       this.cm = cm;
       this.txCoordinator = txCoordinator;
+      this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
    }
 
    @Start
@@ -158,11 +161,22 @@ public class TransactionTable {
    public void enlist(Transaction transaction, LocalTransaction localTransaction) {
       if (!localTransaction.isEnlisted()) {
          SynchronizationAdapter sync = new SynchronizationAdapter(localTransaction, txCoordinator);
-         try {
-            transaction.registerSynchronization(sync);
-         } catch (Exception e) {
-            log.failedSynchronizationRegistration(e);
-            throw new CacheException(e);
+         if(transactionSynchronizationRegistry != null) {
+            try {
+               transactionSynchronizationRegistry.registerInterposedSynchronization(sync);
+            } catch (Exception e) {
+               log.failedSynchronizationRegistration(e);
+               throw new CacheException(e);
+            }
+
+         } else {
+
+            try {
+               transaction.registerSynchronization(sync);
+            } catch (Exception e) {
+               log.failedSynchronizationRegistration(e);
+               throw new CacheException(e);
+            }
          }
          ((SyncLocalTransaction) localTransaction).setEnlisted(true);
       }
