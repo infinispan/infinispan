@@ -166,20 +166,29 @@ public class EvictionManagerImpl implements EvictionManager {
    private void onEntryEviction(Object key, InternalCacheEntry value) {
       final Object entryValue = value.getValue();
       InvocationContext context = getInvocationContext();
-      try {
-         acquireLock(context, key);
-      } catch (Exception e) {
-         log.couldNotAcquireLockForEviction(key, e);
-      }
+
       cacheNotifier.notifyCacheEntryEvicted(key, entryValue, true, context);
 
-      try {
-         passivator.passivate(key, value, null);
-      } catch (CacheLoaderException e) {
-         log.unableToPassivateEntry(key, e);
+      if (passivator.isEnabled()) {
+         boolean locked = false;
+         try {
+            locked = acquireLock(context, key);
+         } catch (Exception e) {
+            log.couldNotAcquireLockForEviction(key, e);
+         }
+         try {
+            passivator.passivate(key, value, null);
+         } catch (CacheLoaderException e) {
+            log.unableToPassivateEntry(key, e);
+         }
+         finally {
+            if (locked) {
+               releaseLock(key);
+            }
+         }
       }
+
       cacheNotifier.notifyCacheEntryEvicted(key, entryValue, false, getInvocationContext());
-      releaseLock(key);
    }
 
    private InvocationContext getInvocationContext(){
