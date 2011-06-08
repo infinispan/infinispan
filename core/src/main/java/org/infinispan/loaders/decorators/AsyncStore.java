@@ -40,7 +40,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.logging.NDC;
 
 import java.util.HashSet;
 import java.util.List;
@@ -304,7 +303,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       boolean runAgainAfterWaiting = false;
 
       public void run() {
-         NDC.push(cacheName);
+         LogFactory.pushNDC(cacheName, trace);
          try {
             clearAllReadLock.lock();
             try {
@@ -324,7 +323,7 @@ public class AsyncStore extends AbstractDelegatingStore {
                ensureMoreWorkIsHandled();
             }
          } finally {
-            NDC.pop();
+            LogFactory.popNDC(trace);
          }
       }
       
@@ -436,7 +435,7 @@ public class AsyncStore extends AbstractDelegatingStore {
 
       @Override
       public void run() {
-         NDC.push(cacheName);
+         LogFactory.pushNDC(cacheName, trace);
          try {
             while (true) {
                try {
@@ -457,7 +456,7 @@ public class AsyncStore extends AbstractDelegatingStore {
                }
             }
          } finally {
-            NDC.pop();
+            LogFactory.popNDC(trace);
          }
       }
 
