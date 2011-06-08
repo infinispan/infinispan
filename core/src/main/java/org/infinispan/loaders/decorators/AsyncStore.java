@@ -40,6 +40,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.logging.NDC;
 
 import java.util.HashSet;
 import java.util.List;
@@ -114,6 +115,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    private final LinkedBlockingQueue<Modification> changesDeque = new LinkedBlockingQueue<Modification>();
    public volatile boolean lastAsyncProcessorShutsDownExecutor = false;
    private long shutdownTimeout;
+   private String cacheName;
 
    public AsyncStore(CacheStore delegate, AsyncStoreConfig asyncStoreConfig) {
       super(delegate);
@@ -127,6 +129,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       concurrencyLevel = cacheCfg != null ? cacheCfg.getConcurrencyLevel() : 16;
       int cacheStopTimeout = cacheCfg != null ? cacheCfg.getCacheStopTimeout() : 30000;
       Long configuredAsyncStopTimeout = asyncStoreConfig.getShutdownTimeout();
+      cacheName = cacheCfg != null ? cacheCfg.getName() : null;
 
       // Async store shutdown timeout cannot be bigger than
       // the overall cache stop timeout, so limit it accordingly.
@@ -301,22 +304,27 @@ public class AsyncStore extends AbstractDelegatingStore {
       boolean runAgainAfterWaiting = false;
 
       public void run() {
-         clearAllReadLock.lock();
+         NDC.push(cacheName);
          try {
-            innerRun();
-         } catch (Throwable t) {
-            runAgainAfterWaiting = false;
-            log.unexpectedErrorInAsyncProcessor(t);
-         } finally {
-            clearAllReadLock.unlock();
-         }
-         if (runAgainAfterWaiting) {
+            clearAllReadLock.lock();
             try {
-               Thread.sleep(10);
-            } catch (InterruptedException e) {
-               // just speedup ignoring more sleep but still make sure to store all data
+               innerRun();
+            } catch (Throwable t) {
+               runAgainAfterWaiting = false;
+               log.unexpectedErrorInAsyncProcessor(t);
+            } finally {
+               clearAllReadLock.unlock();
             }
-            ensureMoreWorkIsHandled();
+            if (runAgainAfterWaiting) {
+               try {
+                  Thread.sleep(10);
+               } catch (InterruptedException e) {
+                  // just speedup ignoring more sleep but still make sure to store all data
+               }
+               ensureMoreWorkIsHandled();
+            }
+         } finally {
+            NDC.pop();
          }
       }
       
@@ -428,23 +436,28 @@ public class AsyncStore extends AbstractDelegatingStore {
 
       @Override
       public void run() {
-         while (true) {
-            try {
-               Modification take = changesDeque.take();
-               if (take == QUIT_SIGNAL) {
-                  lastAsyncProcessorShutsDownExecutor = true;
-                  ensureMoreWorkIsHandled();
+         NDC.push(cacheName);
+         try {
+            while (true) {
+               try {
+                  Modification take = changesDeque.take();
+                  if (take == QUIT_SIGNAL) {
+                     lastAsyncProcessorShutsDownExecutor = true;
+                     ensureMoreWorkIsHandled();
+                     return;
+                  }
+                  else {
+                     handleSafely(take);
+                  }
+               } catch (InterruptedException e) {
+                  log.asyncStoreCoordinatorInterrupted(e);
                   return;
+               } catch (Throwable t) {
+                  log.unexpectedErrorInAsyncStoreCoordinator(t);
                }
-               else {
-                  handleSafely(take);
-               }
-            } catch (InterruptedException e) {
-               log.asyncStoreCoordinatorInterrupted(e);
-               return;
-            } catch (Throwable t) {
-               log.unexpectedErrorInAsyncStoreCoordinator(t);
             }
+         } finally {
+            NDC.pop();
          }
       }
 

@@ -35,6 +35,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.logging.NDC;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -103,7 +104,12 @@ public class ReplicationQueueImpl implements ReplicationQueue {
       if (enabled && interval > 0) {
          scheduledFuture = scheduledExecutor.scheduleWithFixedDelay(new Runnable() {
             public void run() {
-               flush();
+               NDC.push(configuration.getName());
+               try {
+                  flush();
+               } finally {
+                  NDC.pop();
+               }
             }
          }, interval, interval, TimeUnit.MILLISECONDS);
       }
