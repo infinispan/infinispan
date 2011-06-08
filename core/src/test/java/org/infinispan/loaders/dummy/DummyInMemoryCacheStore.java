@@ -232,7 +232,10 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    public void stop() {
       record("stop");
       if (config.isPurgeOnStartup()) {
-         stores.remove(config.getStoreName());
+         String storeName = config.getStoreName();
+         if (storeName != null) {
+            stores.remove(storeName);
+         }
       }
    }
 
