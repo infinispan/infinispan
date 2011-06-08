@@ -155,7 +155,7 @@ public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
 
    public Properties readEnvironmentProperties() throws CacheLoaderException {
       if (environmentPropertiesFile == null || environmentPropertiesFile.trim().length() == 0) return null;
-      InputStream i = new FileLookup().lookupFile(environmentPropertiesFile);
+      InputStream i = new FileLookup().lookupFile(environmentPropertiesFile, Thread.currentThread().getContextClassLoader());
       if (i != null) {
          Properties p = new Properties();
          try {

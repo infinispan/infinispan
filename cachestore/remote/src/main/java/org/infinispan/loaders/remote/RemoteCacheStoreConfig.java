@@ -84,7 +84,7 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
 
    public void setHotRodClientPropertiesFile(String hotRodClientProperties) {
       FileLookup fileLookup = new FileLookup();
-      InputStream inputStream = fileLookup.lookupFile(hotRodClientProperties);
+      InputStream inputStream = fileLookup.lookupFile(hotRodClientProperties, Thread.currentThread().getContextClassLoader());
       try {
          this.hotRodClientProperties.load(inputStream);
       } catch (IOException e) {

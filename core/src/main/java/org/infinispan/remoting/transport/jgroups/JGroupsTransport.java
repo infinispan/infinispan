@@ -282,7 +282,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
             cfg = props.getProperty(CONFIGURATION_FILE);
             try {
-               channel = new JChannel(new FileLookup().lookupFileLocation(cfg));
+               channel = new JChannel(new FileLookup().lookupFileLocation(cfg, Thread.currentThread().getContextClassLoader()));
             } catch (Exception e) {
                log.errorCreatingChannelFromConfigFile(cfg);
                throw new CacheException(e);
@@ -313,7 +313,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       if (channel == null) {
          log.unableToUseJGroupsPropertiesProvided(props);
          try {
-            channel = new JChannel(new FileLookup().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE));
+            channel = new JChannel(new FileLookup().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, Thread.currentThread().getContextClassLoader()));
          } catch (ChannelException e) {
             throw new CacheException("Unable to start JGroups channel", e);
          }
