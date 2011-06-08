@@ -1510,10 +1510,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    public void assertValid() throws ConfigurationException {
-      // certain combinations are illegal, such as state transfer + DIST
-      if (clustering.mode.isDistributed() && clustering.stateRetrieval.fetchInMemoryState)
-         throw new ConfigurationException("Cache cannot use DISTRIBUTION mode and have fetchInMemoryState set to true.  Perhaps you meant to enable rehashing?");
-
       if (clustering.mode.isClustered() && (globalConfiguration != null
               && (globalConfiguration.getTransportClass() == null || globalConfiguration.getTransportClass().length() == 0)))
          throw new ConfigurationException("Cache cannot use a clustered mode (" + clustering.mode + ") mode and not define a transport!");

@@ -26,6 +26,8 @@ import org.infinispan.config.Configuration.EvictionType;
 import org.infinispan.config.GlobalConfiguration.TransportType;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 
+import java.util.Set;
+
 /**
  * ConfigurationValidatingVisitor checks semantic validity of InfinispanConfiguration instance.
  * 
@@ -52,11 +54,27 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
 
    @Override
    public void visitClusteringType(Configuration.ClusteringType clusteringType) {
-      if (clusteringType.mode.isDistributed() && clusteringType.async.useReplQueue)
+      Configuration.CacheMode mode = clusteringType.mode;
+      Configuration.AsyncType async = clusteringType.async;
+      Configuration.StateRetrievalType state = clusteringType.stateRetrieval;
+      // certain combinations are illegal, such as state transfer + DIST
+      if (mode.isDistributed() && state.fetchInMemoryState)
+         throw new ConfigurationException("Cache cannot use DISTRIBUTION mode and have fetchInMemoryState set to true.  Perhaps you meant to enable rehashing?");
+
+      if (mode.isDistributed() && async.useReplQueue)
          throw new ConfigurationException("Use of the replication queue is invalid when using DISTRIBUTED mode.");
 
-      if (clusteringType.mode.isSynchronous() && clusteringType.async.useReplQueue)
+      if (mode.isSynchronous() && async.useReplQueue)
          throw new ConfigurationException("Use of the replication queue is only allowed with an ASYNCHRONOUS cluster mode.");
+
+      // If replicated and fetch state transfer was not explicitly
+      // disabled, then force enabling of state transfer
+      Set<String> overriden = clusteringType.stateRetrieval.overriddenConfigurationElements;
+      if (mode.isReplicated() && !state.isFetchInMemoryState()
+            && !overriden.contains("fetchInMemoryState")) {
+         log.debug("Cache is replicated but state transfer was not defined, so force enabling it");
+         state.fetchInMemoryState(true);
+      }
    }
    
    public void visitEvictionType(EvictionType et) {
