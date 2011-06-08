@@ -35,6 +35,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.hash.Hash;
 
@@ -176,6 +177,14 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @return this TransactionConfig
        */
       TransactionConfig transactionManagerLookup(TransactionManagerLookup transactionManagerLookup);
+
+      /**
+       * Configure Transaction Synchronization Registry lookup directly using an instance of TransactionManagerLookup
+       *
+       * @param transactionSynchronizationRegistryLookup instance to use as lookup
+       * @return this TransactionConfig
+       */
+      TransactionConfig transactionSynchronizationRegistryLookup(TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup);
 
       /**
        * If true, the cluster-wide commit phase in two-phase commit (2PC) transactions will be
@@ -902,6 +911,10 @@ abstract class AbstractFluentConfigurationBean extends AbstractNamedCacheConfigu
 
    public FluentConfiguration.TransactionConfig transactionManagerLookup(TransactionManagerLookup transactionManagerLookup) {
       return transaction().transactionManagerLookup(transactionManagerLookup);
+   }
+
+   public FluentConfiguration.TransactionConfig transactionSynchronizationRegistryLookup(TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup) {
+      return transaction().transactionSynchronizationRegistryLookup(transactionSynchronizationRegistryLookup);
    }
 
    public FluentConfiguration.TransactionConfig syncCommitPhase(Boolean syncCommitPhase) {

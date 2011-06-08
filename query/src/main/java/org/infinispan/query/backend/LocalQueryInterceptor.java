@@ -27,6 +27,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 
 import javax.transaction.TransactionManager;
+import javax.transaction.TransactionSynchronizationRegistry;
 
 /**
  * <p/>
@@ -45,10 +46,11 @@ public class LocalQueryInterceptor extends QueryInterceptor {
    }
 
    @Inject
-   public void init(TransactionManager transactionManager) {
+   public void init(TransactionManager transactionManager, TransactionSynchronizationRegistry transactionSynchronizationRegistry) {
       log.debug("Entered LocalQueryInterceptor.init()");
       // Fields on superclass.
       this.transactionManager = transactionManager;
+      this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
    }
 
    @Override

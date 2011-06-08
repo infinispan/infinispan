@@ -31,6 +31,7 @@ import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import javax.transaction.TransactionSynchronizationRegistry;
 
 /**
  * This class implements the {@link org.hibernate.search.backend.TransactionContext} interface.  It retrieves
@@ -48,6 +49,7 @@ import javax.transaction.TransactionManager;
 public class TransactionalEventTransactionContext implements TransactionContext {
 
    private final TransactionManager transactionManager;
+   private final TransactionSynchronizationRegistry transactionSynchronizationRegistry;
    private static final Log log = LogFactory.getLog(TransactionalEventTransactionContext.class);
 
    /**
@@ -55,10 +57,12 @@ public class TransactionalEventTransactionContext implements TransactionContext 
     * <p/>
     *
     * @param transactionManager a NodeModifiedEvent to wrap.  Should not be null.
+    * @param transactionSynchronizationRegistry
     * @throws NullPointerException if event is null.
     */
-   public TransactionalEventTransactionContext(TransactionManager transactionManager) {
+   public TransactionalEventTransactionContext(TransactionManager transactionManager, final TransactionSynchronizationRegistry transactionSynchronizationRegistry) {
       this.transactionManager = transactionManager;
+      this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
    }
 
    /**
@@ -110,7 +114,11 @@ public class TransactionalEventTransactionContext implements TransactionContext 
     * @throws NullPointerException if the synchronization is null.
     */
    public void registerSynchronization(Synchronization synchronization) {
-      if (transactionManager != null) {
+      if(transactionSynchronizationRegistry != null) {
+         if (synchronization == null) throw new NullPointerException("Synchronization passed in is null!");
+         transactionSynchronizationRegistry.registerInterposedSynchronization(synchronization);
+      }
+      else if (transactionManager != null) {
          if (synchronization == null) throw new NullPointerException("Synchronization passed in is null!");
 
          try {
