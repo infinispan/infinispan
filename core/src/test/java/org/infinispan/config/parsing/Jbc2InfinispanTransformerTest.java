@@ -63,7 +63,7 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          Thread.currentThread().setContextClassLoader(delegatingCl);
          String fileName = getFileName("all.xml");
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
-         convertor.parse(fileName, baos, XSLT_FILE);
+         convertor.parse(fileName, baos, XSLT_FILE, Thread.currentThread().getContextClassLoader());
 
          EmbeddedCacheManager ecm = new DefaultCacheManager(new ByteArrayInputStream(baos.toByteArray()), false);
          Configuration defaultConfig = ecm.getDefaultConfiguration();
@@ -141,7 +141,7 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          for (String name : testFiles) {
             String fileName = getFileName(name);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            convertor.parse(fileName, baos, XSLT_FILE);
+            convertor.parse(fileName, baos, XSLT_FILE, Thread.currentThread().getContextClassLoader());
 
          }
       } finally {

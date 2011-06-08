@@ -45,7 +45,7 @@ public class CacheBuilder {
    private String findConfigFile(String configFile) {
       FileLookup fl = new FileLookup();
       if (configFile != null) {
-         InputStream inputStream = fl.lookupFile(configFile);
+         InputStream inputStream = fl.lookupFile(configFile, Thread.currentThread().getContextClassLoader());
          try {
             if (inputStream != null)
                return configFile;
