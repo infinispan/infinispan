@@ -32,7 +32,6 @@ import net.jcip.annotations.ThreadSafe;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.ImmutableContext;
@@ -187,7 +186,7 @@ public class EvictionManagerImpl implements EvictionManager {
          }
          finally {
             if (locked) {
-               releaseLock(key);
+               lockManager.unlock(key);
             }
          }
       }
@@ -217,40 +216,17 @@ public class EvictionManagerImpl implements EvictionManager {
       // nothing wrong, just means that we fail to record the lock.  And that is a problem.
       // Better to check our records and lock again if necessary.
 
-      boolean shouldSkipLocking = ctx.hasFlag(Flag.SKIP_LOCKING);
-
-      if (!ctx.hasLockedKey(key) && !shouldSkipLocking) {
-         if (lockManager.lockAndRecord(key, ctx)) {
-            return true;
-         } else {
-            Object owner = lockManager.getOwner(key);
-            // if lock cannot be acquired, expose the key itself, not the marshalled value
-            if (key instanceof MarshalledValue) {
-               key = ((MarshalledValue) key).get();
-            }
-            throw new TimeoutException("Unable to acquire lock after [" + Util.prettyPrintTime(getLockAcquisitionTimeout(ctx)) + "] on key [" + key + "] for requestor [" +
-                  ctx.getLockOwner() + "]! Lock held by [" + owner + "]");
-         }
+      if (lockManager.lockAndRecord(key, ctx)) {
+         return true;
       } else {
-         if (trace) {
-            if (shouldSkipLocking) {
-               log.trace("SKIP_LOCKING flag used!");
-            } else {
-               log.trace("Already own lock for entry");
-            }
+         Object owner = lockManager.getOwner(key);
+         // if lock cannot be acquired, expose the key itself, not the marshalled value
+         if (key instanceof MarshalledValue) {
+            key = ((MarshalledValue) key).get();
          }
+         throw new TimeoutException("Unable to acquire lock after [" + configuration.getLockAcquisitionTimeout() + "] on key [" + key + "] for requestor [" +
+               ctx.getLockOwner() + "]! Lock held by [" + owner + "]");
       }
-
-      return false;
-   }
-
-   public final void releaseLock(Object key) {
-      lockManager.unlock(key);
-   }
-
-   private long getLockAcquisitionTimeout(InvocationContext ctx) {
-      return ctx.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
-            0 : configuration.getLockAcquisitionTimeout();
    }
 
 }
