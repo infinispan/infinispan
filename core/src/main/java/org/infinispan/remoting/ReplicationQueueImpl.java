@@ -72,6 +72,7 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    private boolean enabled;
    private CommandsFactory commandsFactory;
    private volatile ScheduledFuture<?> scheduledFuture;
+   private boolean trace;
 
    /**
     * @return true if this replication queue is enabled, false otherwise.
@@ -96,14 +97,22 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    @Start
    public void start() {
       long interval = configuration.getReplQueueInterval();
-      log.tracef("Starting replication queue, with interval %s and maxElements %s", interval, maxElements);
+      trace = log.isTraceEnabled();
+      if (trace)
+         log.tracef("Starting replication queue, with interval %d and maxElements %s", interval, maxElements);
+
       this.maxElements = configuration.getReplQueueMaxElements();
       // check again
       enabled = configuration.isUseReplQueue();
       if (enabled && interval > 0) {
          scheduledFuture = scheduledExecutor.scheduleWithFixedDelay(new Runnable() {
             public void run() {
-               flush();
+               LogFactory.pushNDC(configuration.getName(), trace);
+               try {
+                  flush();
+               } finally {
+                  LogFactory.popNDC(trace);
+               }
             }
          }, interval, interval, TimeUnit.MILLISECONDS);
       }
@@ -139,7 +148,7 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    @Override
    public synchronized int flush() {
       List<ReplicableCommand> toReplicate = drainReplQueue();
-      if (log.isTraceEnabled()) log.tracef("flush(): flushing repl queue (num elements=%s)", toReplicate.size());
+      if (trace) log.tracef("flush(): flushing repl queue (num elements=%s)", toReplicate.size());
 
       int toReplicateSize = toReplicate.size();
       if (toReplicateSize > 0) {

@@ -151,7 +151,12 @@ public class EvictionManagerImpl implements EvictionManager {
 
    class ScheduledTask implements Runnable {
       public void run() {
-         processEviction();
+         LogFactory.pushNDC(configuration.getName(), trace);
+         try {
+            processEviction();
+         } finally {
+            LogFactory.popNDC(trace);
+         }
       }
    }
 
