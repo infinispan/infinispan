@@ -90,6 +90,14 @@ public final class Util {
          throw new ConfigurationException("Unable to instantiate class " + classname, e);
       }
    }
+   
+   public static ClassLoader[] getClassLoaders(ClassLoader appClassLoader) {
+      return new ClassLoader[] {
+            appClassLoader,  // User defined classes
+            Util.class.getClassLoader(), // Infinispan classes (not always on TCCL [modular env])
+            ClassLoader.getSystemClassLoader() // Used when load time instrumentation is in effect
+            };
+   }
 
    /**
     * <p>
@@ -108,13 +116,7 @@ public final class Util {
     */
    @SuppressWarnings("unchecked")
    public static <T> Class<T> loadClassStrict(String classname, ClassLoader userClassLoader) throws ClassNotFoundException {
-      ClassLoader[] cls = new ClassLoader[] {
-            userClassLoader,  // User defined classes
-            Util.class.getClassLoader(), // Infinispan classes (not always on TCCL [modular env])
-            ClassLoader.getSystemClassLoader() // Used when load time instrumentation is in effect
-            };
-
-
+      ClassLoader[] cls = getClassLoaders(userClassLoader);
          ClassNotFoundException e = null;
          NoClassDefFoundError ne = null;
          for (ClassLoader cl : cls)  {
