@@ -34,37 +34,39 @@ import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "loaders.cassandra.CassandraCacheStoreTest")
 public class CassandraCacheStoreTest extends BaseCacheStoreTest {
-	private static EmbeddedServerHelper embedded;
+   private static EmbeddedServerHelper embedded;
 
-	/**
-	 * Set embedded cassandra up and spawn it in a new thread.
-	 * 
-	 * @throws TTransportException
-	 * @throws IOException
-	 * @throws InterruptedException
-	 * @throws ConfigurationException
-	 */
-	@BeforeClass
-	public static void setup() throws TTransportException, IOException, InterruptedException, ConfigurationException {
-		embedded = new EmbeddedServerHelper();
-		embedded.setup();
-	}
-	
-	@AfterClass
-	public static void cleanup() {
-		EmbeddedServerHelper.teardown();
-		embedded = null;
-	}
+   /**
+    * Set embedded cassandra up and spawn it in a new thread.
+    * 
+    * @throws TTransportException
+    * @throws IOException
+    * @throws InterruptedException
+    * @throws ConfigurationException
+    */
+   @BeforeClass
+   public static void setup() throws TTransportException, IOException, InterruptedException,
+            ConfigurationException {
+      embedded = new EmbeddedServerHelper();
+      embedded.setup();
+   }
 
-	@Override
-	protected CacheStore createCacheStore() throws Exception {
-		CassandraCacheStore cs = new CassandraCacheStore();
-		CassandraCacheStoreConfig clc = new CassandraCacheStoreConfig();
-		clc.setHost("127.0.0.1");
-		clc.setKeySpace("Infinispan");
-		cs.init(clc, getCache(), getMarshaller());
-		cs.start();
-		return cs;
-	}
+   @AfterClass
+   public static void cleanup() {
+      EmbeddedServerHelper.teardown();
+      embedded = null;
+   }
+
+   @Override
+   protected CacheStore createCacheStore() throws Exception {
+      CassandraCacheStore cs = new CassandraCacheStore();
+      CassandraCacheStoreConfig clc = new CassandraCacheStoreConfig();
+      clc.setHost("127.0.0.1");
+      clc.setAutoCreateKeyspace(true);
+      clc.setKeySpace("Infinispan");
+      cs.init(clc, getCache(), getMarshaller());
+      cs.start();
+      return cs;
+   }
 
 }
