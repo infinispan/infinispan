@@ -46,7 +46,7 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
       if (lookup == null) {
          // Nope. See if we can look it up from JNDI
          if (configuration.getTransactionManagerLookupClass() != null) {
-            lookup = (TransactionManagerLookup) Util.getInstance(configuration.getTransactionManagerLookupClass());
+            lookup = (TransactionManagerLookup) Util.getInstance(configuration.getTransactionManagerLookupClass(), Thread.currentThread().getContextClassLoader());
          }
       }
 

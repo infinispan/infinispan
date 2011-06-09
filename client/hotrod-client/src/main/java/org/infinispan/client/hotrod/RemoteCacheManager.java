@@ -348,16 +348,16 @@ public class RemoteCacheManager implements CacheContainer {
    @Override
    public void start() {
       String factory = config.getTransportFactory();
-      transportFactory = (TransportFactory) getInstance(factory);
+      transportFactory = (TransportFactory) getInstance(factory, Thread.currentThread().getContextClassLoader());
       Collection<InetSocketAddress> servers = config.getServerList();
       transportFactory.start(config, servers, topologyId);
       if (marshaller == null) {
          String marshallerName = config.getMarshaller();
-         setMarshaller((Marshaller) getInstance(marshallerName));
+         setMarshaller((Marshaller) getInstance(marshallerName, Thread.currentThread().getContextClassLoader()));
       }
 
       String asyncExecutorClass = config.getAsyncExecutorFactory();
-      ExecutorFactory executorFactory = (ExecutorFactory) getInstance(asyncExecutorClass);
+      ExecutorFactory executorFactory = (ExecutorFactory) getInstance(asyncExecutorClass, Thread.currentThread().getContextClassLoader());
       asyncExecutorService = executorFactory.getExecutor(config.getProperties());
 
       forceReturnValueDefault = config.getForceReturnValues();

@@ -26,7 +26,6 @@ import net.jcip.annotations.Immutable;
 
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
@@ -43,7 +42,7 @@ import java.util.Set;
  * @since 4.0
  */
 @Immutable
-public class SingletonListExternalizer extends AbstractExternalizer<List> {
+public class SingletonListExternalizer extends AbstractExternalizer<List<?>> {
 
    @Override
    public void writeObject(ObjectOutput output, List list) throws IOException {
@@ -51,7 +50,7 @@ public class SingletonListExternalizer extends AbstractExternalizer<List> {
    }
 
    @Override
-   public List readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public List<?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       return Collections.singletonList(input.readObject());
    }
 
@@ -61,8 +60,8 @@ public class SingletonListExternalizer extends AbstractExternalizer<List> {
    }
 
    @Override
-   public Set<Class<? extends List>> getTypeClasses() {
-      return Util.<Class<? extends List>>asSet(Util.loadClass("java.util.Collections$SingletonList"));
+   public Set<Class<? extends List<?>>> getTypeClasses() {
+      return Util.<Class<? extends List<?>>>asSet(Util.<List<?>>loadClass("java.util.Collections$SingletonList", Thread.currentThread().getContextClassLoader()));
    }
 
 }

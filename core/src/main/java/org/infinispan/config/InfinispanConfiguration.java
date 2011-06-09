@@ -126,7 +126,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    public static InfinispanConfiguration newInfinispanConfiguration(String configFileName,
                                                                     String schemaFileName, ConfigurationBeanVisitor cbv) throws IOException {
 
-      InputStream inputStream = configFileName != null ? findInputStream(configFileName) : null;
+      InputStream inputStream = configFileName != null ? findInputStream(configFileName, Thread.currentThread().getContextClassLoader()) : null;
       InputStream schemaIS = schemaFileName != null ? findSchemaInputStream(schemaFileName) : null;
       try {
          return newInfinispanConfiguration(inputStream, schemaIS, cbv);
@@ -363,7 +363,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
       FileLookup fileLookup = new FileLookup();
       InputStream is = null;
       if (localPathToSchema != null) {
-         is = fileLookup.lookupFile(localPathToSchema);
+         is = fileLookup.lookupFile(localPathToSchema, Thread.currentThread().getContextClassLoader());
          if (is != null) {
             log.debugf("Using schema %s", localPathToSchema);
             return is;
@@ -375,7 +375,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
       }
 
       //2. resolve local schema path in infinispan distro
-      is = fileLookup.lookupFile(schemaPath());
+      is = fileLookup.lookupFile(schemaPath(), Thread.currentThread().getContextClassLoader());
       if (is != null) {
          log.debugf("Using schema %s", schemaPath());
          return is;
@@ -426,11 +426,11 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
       }
    }
 
-   private static InputStream findInputStream(String fileName) throws FileNotFoundException {
+   private static InputStream findInputStream(String fileName, ClassLoader cl) throws FileNotFoundException {
       if (fileName == null)
          throw new NullPointerException("File name cannot be null!");
       FileLookup fileLookup = new FileLookup();
-      InputStream is = fileLookup.lookupFile(fileName);
+      InputStream is = fileLookup.lookupFile(fileName, cl);
       if (is == null)
          throw new FileNotFoundException("File " + fileName
                  + " could not be found, either on the classpath or on the file system!");

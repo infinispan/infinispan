@@ -63,58 +63,81 @@ public final class Util {
    private static final boolean isArraysDebug = Boolean.getBoolean("infinispan.arrays.debug");
 
    /**
-    * Loads the specified class using this class's classloader, or, if it is <code>null</code> (i.e. this class was
-    * loaded by the bootstrap classloader), the system classloader. <p/> If loadtime instrumentation via
-    * GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap classloader. <p/>
-    * If the class is not found, the {@link ClassNotFoundException} is wrapped as a {@link ConfigurationException} and
-    * is re-thrown.
-    *
+    * <p>
+    * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Inifinispan classes'
+    * classloader.
+    * </p>
+    * 
+    * <p>
+    * If loadtime instrumentation via GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap
+    * classloader.
+    * </p>
+    * <p>
+    * If the class is not found, the {@link ClassNotFoundException} or {@link NoClassDefFoundError} is wrapped as a
+    * {@link ConfigurationException} and is re-thrown.
+    * </p>
+    * 
     * @param classname name of the class to load
+    * @param cl the application classloader which should be used to load the class, or null if the class is always packaged with
+    *        Infinispan
     * @return the class
+    * @throws ConfigurationException if the class cannot be loaded
     */
-   public static Class loadClass(String classname) {
+   public static <T> Class<T> loadClass(String classname, ClassLoader cl) {
       try {
-         return loadClassStrict(classname);
-      } catch (Exception e) {
+         return loadClassStrict(classname, cl);
+      } catch (ClassNotFoundException e) {
          throw new ConfigurationException("Unable to instantiate class " + classname, e);
       }
    }
+   
+   public static ClassLoader[] getClassLoaders(ClassLoader appClassLoader) {
+      return new ClassLoader[] {
+            appClassLoader,  // User defined classes
+            Util.class.getClassLoader(), // Infinispan classes (not always on TCCL [modular env])
+            ClassLoader.getSystemClassLoader() // Used when load time instrumentation is in effect
+            };
+   }
 
    /**
-    * Similar to {@link #loadClass(String)} except that any {@link ClassNotFoundException}s experienced is propagated
-    * to the caller.
+    * <p>
+    * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Inifinispan classes' classloader. 
+    * </p>
+    * 
+    * <p>
+    * If loadtime instrumentation via GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap classloader.
+    * </p>
     *
     * @param classname name of the class to load
     * @return the class
-    * @throws ClassNotFoundException
+    * @param cl the application classloader which should be used to load the class, or null if the class is always packaged with
+    *        Infinispan
+    * @throws ClassNotFoundException if the class cannot be loaded
     */
-   public static Class loadClassStrict(String classname) throws ClassNotFoundException {
-      ClassLoader[] cls = new ClassLoader[] {
-         Thread.currentThread().getContextClassLoader(),  // User defined classes
-         Util.class.getClassLoader(),                     // Infinispan classes (not always on TCCL [modular env])
-         ClassLoader.getSystemClassLoader()};             // System loader, usually has app class path
+   @SuppressWarnings("unchecked")
+   public static <T> Class<T> loadClassStrict(String classname, ClassLoader userClassLoader) throws ClassNotFoundException {
+      ClassLoader[] cls = getClassLoaders(userClassLoader);
+         ClassNotFoundException e = null;
+         NoClassDefFoundError ne = null;
+         for (ClassLoader cl : cls)  {
+            if (cl == null)
+               continue;
 
-      ClassNotFoundException e = null;
-      NoClassDefFoundError ne = null;
-      for (ClassLoader cl : cls)  {
-         if (cl == null)
-            continue;
-
-         try {
-            return cl.loadClass(classname);
-         } catch (ClassNotFoundException ce) {
-            e = ce;
-         } catch (NoClassDefFoundError ce) {
-            ne = ce;
+            try {
+               return (Class<T>) Class.forName(classname, true, cl);
+            } catch (ClassNotFoundException ce) {
+               e = ce;
+            } catch (NoClassDefFoundError ce) {
+               ne = ce;
+            }
          }
-      }
 
-      if (e != null)
-         throw e;
-      else if (ne != null)
-         throw new ClassNotFoundException(classname, ne);
-      else
-         throw new ClassNotFoundException(classname);
+         if (e != null)
+            throw e;
+         else if (ne != null)
+            throw new ClassNotFoundException(classname, ne);
+         else
+            throw new IllegalStateException();
    }
 
    private static Method getFactoryMethod(Class<?> c) {
@@ -134,7 +157,6 @@ public final class Util {
     * @param clazz class to instantiate
     * @return an instance of the class
     */
-   @SuppressWarnings("unchecked")
    public static <T> T getInstance(Class<T> clazz) {
       try {
          return getInstanceStrict(clazz);
@@ -181,10 +203,9 @@ public final class Util {
     * @param classname class to instantiate
     * @return an instance of classname
     */
-   @SuppressWarnings("unchecked")
-   public static Object getInstance(String classname) {
+   public static <T> T getInstance(String classname, ClassLoader cl) {
       if (classname == null) throw new IllegalArgumentException("Cannot load null class!");
-      Class clazz = loadClass(classname);
+      Class<T> clazz = loadClass(classname, cl);
       return getInstance(clazz);
    }
 
@@ -197,10 +218,9 @@ public final class Util {
     * @throws InstantiationException
     * @throws IllegalAccessException
     */
-   @SuppressWarnings("unchecked")
-   public static Object getInstanceStrict(String classname) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+   public static <T> T getInstanceStrict(String classname, ClassLoader cl) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
       if (classname == null) throw new IllegalArgumentException("Cannot load null class!");
-      Class clazz = loadClassStrict(classname);
+      Class<T> clazz = loadClassStrict(classname, cl);
       return getInstanceStrict(clazz);
    }
    

@@ -103,7 +103,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    private ExecutorService buildAndConfigureExecutorService(String factoryName, Properties p, String componentName) throws Exception {
       Properties props = new Properties(p); // defensive copy
       if (p != null && !p.isEmpty()) props.putAll(p);
-      ExecutorFactory f = (ExecutorFactory) Util.getInstance(factoryName);
+      ExecutorFactory f = (ExecutorFactory) Util.getInstance(factoryName, Thread.currentThread().getContextClassLoader());
       setComponentName(componentName, props);
       setDefaultThreads(KnownComponentNames.getDefaultThreads(componentName), props);
       setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
@@ -113,7 +113,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    private ScheduledExecutorService buildAndConfigureScheduledExecutorService(String factoryName, Properties p, String componentName) throws Exception {
       Properties props = new Properties(); // defensive copy
       if (p != null && !p.isEmpty()) props.putAll(p);
-      ScheduledExecutorFactory f = (ScheduledExecutorFactory) Util.getInstance(factoryName);
+      ScheduledExecutorFactory f = (ScheduledExecutorFactory) Util.getInstance(factoryName, Thread.currentThread().getContextClassLoader());
       setComponentName(componentName, props);
       setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
       return f.getScheduledExecutor(props);

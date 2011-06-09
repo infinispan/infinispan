@@ -80,7 +80,7 @@ public class SimpleConnectionFactory extends ConnectionFactory {
 
    private void loadDriver(String driverClass) throws CacheLoaderException {
       if (log.isTraceEnabled()) log.tracef("Attempting to load driver %s", driverClass);
-      Util.getInstance(driverClass);
+      Util.getInstance(driverClass, Thread.currentThread().getContextClassLoader());
    }
 
    public String getConnectionUrl() {

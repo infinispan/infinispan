@@ -63,7 +63,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return componentType.cast(versionAwareMarshaller);
          } else {
             // add an "Impl" to the end of the class name and try again
-            componentImpl = loadClass(componentType.getName() + "Impl");
+            componentImpl = loadClass(componentType.getName() + "Impl", Thread.currentThread().getContextClassLoader());
          }
          return componentType.cast(getInstance(componentImpl));
       } else {

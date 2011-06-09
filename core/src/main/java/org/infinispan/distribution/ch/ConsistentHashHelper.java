@@ -69,9 +69,9 @@ public class ConsistentHashHelper {
    }
 
    private static ConsistentHash constructConsistentHashInstance(Configuration c) {
-      ConsistentHash ch = (ConsistentHash) Util.getInstance(c.getConsistentHashClass());
+      ConsistentHash ch = (ConsistentHash) Util.getInstance(c.getConsistentHashClass(), Thread.currentThread().getContextClassLoader());
       if (ch instanceof AbstractWheelConsistentHash) {
-         Hash h = (Hash) Util.getInstance(c.getHashFunctionClass());
+         Hash h = (Hash) Util.getInstance(c.getHashFunctionClass(), Thread.currentThread().getContextClassLoader());
          AbstractWheelConsistentHash wch = (AbstractWheelConsistentHash) ch;
          wch.setHashFunction(h);
          wch.setNumVirtualNodes(c.getNumVirtualNodes());

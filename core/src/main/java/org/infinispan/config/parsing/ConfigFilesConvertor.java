@@ -71,8 +71,8 @@ public class ConfigFilesConvertor {
       TRANSFORMATIONS.put(COHERENCE_35X, "xslt/coherence35x2infinispan4x.xslt");
    }
 
-   public void parse(InputStream is, OutputStream os, String xsltFile) throws Exception {
-      InputStream xsltInStream = new FileLookup().lookupFile(xsltFile);
+   public void parse(InputStream is, OutputStream os, String xsltFile, ClassLoader cl) throws Exception {
+      InputStream xsltInStream = new FileLookup().lookupFile(xsltFile, cl);
       if (xsltInStream == null) {
          throw new IllegalStateException("Cold not find xslt file! : " + xsltFile);
       }
@@ -88,7 +88,7 @@ public class ConfigFilesConvertor {
          StreamResult result = new StreamResult(byteArrayOutputStream);
          transformer.transform(source, result);
 
-         InputStream indentation = new FileLookup().lookupFile("xslt/indent.xslt");
+         InputStream indentation = new FileLookup().lookupFile("xslt/indent.xslt", cl);
          try {
             // Use a Transformer for output
             transformer = getTransformer(indentation);
@@ -108,10 +108,10 @@ public class ConfigFilesConvertor {
     * in as <b>inputFile</b>. Transformation is performed according to the <b>xsltFile</b>. Both <b>inputFile</b> and he
     * xslt file are looked up using a {@link org.infinispan.util.FileLookup}
     */
-   public void parse(String inputFile, OutputStream os, String xsltFile) throws Exception {
-      InputStream stream = new FileLookup().lookupFileStrict(inputFile);
+   public void parse(String inputFile, OutputStream os, String xsltFile, ClassLoader cl) throws Exception {
+      InputStream stream = new FileLookup().lookupFileStrict(inputFile, cl);
       try {
-         parse(stream, os, xsltFile);
+         parse(stream, os, xsltFile, cl);
       }
       finally {
          Util.close(stream);
@@ -155,9 +155,9 @@ public class ConfigFilesConvertor {
       }
 
       if (type.equals(JBOSS_CACHE3X)) {
-         transformFromJbossCache3x(sourceName, destinationName);
+         transformFromJbossCache3x(sourceName, destinationName, ConfigFilesConvertor.class.getClassLoader());
       } else {
-         transformFromNonJBoss(sourceName, destinationName, TRANSFORMATIONS.get(type));
+         transformFromNonJBoss(sourceName, destinationName, TRANSFORMATIONS.get(type), ConfigFilesConvertor.class.getClassLoader());
       }
 
       System.out.println("---");
@@ -171,7 +171,7 @@ public class ConfigFilesConvertor {
       return supported.toString();
    }
 
-   private static void transformFromNonJBoss(String sourceName, String destinationName, String xslt) throws Exception {
+   private static void transformFromNonJBoss(String sourceName, String destinationName, String xslt, ClassLoader cl) throws Exception {
       File oldConfig = new File(sourceName);
       if (!oldConfig.exists()) {
          System.err.println("File specified as input ('" + sourceName + ") does not exist.");
@@ -192,7 +192,7 @@ public class ConfigFilesConvertor {
          }
 
          fos = new FileOutputStream(destinationName);
-         convertor.parse(is, fos, xslt);
+         convertor.parse(is, fos, xslt, cl);
       } finally {
          Util.flushAndCloseStream(fos);
          Util.close(is);
@@ -207,7 +207,7 @@ public class ConfigFilesConvertor {
       }
    }
 
-   private static void transformFromJbossCache3x(String sourceName, String destinationName) throws Exception {
+   private static void transformFromJbossCache3x(String sourceName, String destinationName, ClassLoader cl) throws Exception {
       File oldConfig = new File(sourceName);
       if (!oldConfig.exists()) {
          System.err.println("File specified as input ('" + sourceName + ") does not exist.");
@@ -226,7 +226,7 @@ public class ConfigFilesConvertor {
             }
          }
          fos = new FileOutputStream(destinationName);
-         convertor.parse(is, fos, "xslt/jbc3x2infinispan4x.xslt");
+         convertor.parse(is, fos, "xslt/jbc3x2infinispan4x.xslt", cl);
          fos.close();
          is.close();
 
@@ -241,7 +241,7 @@ public class ConfigFilesConvertor {
          is = new FileInputStream(oldConfig);
          fos = new FileOutputStream(jgroupsConfigFile);
          convertor = new ConfigFilesConvertor();
-         convertor.parse(is, fos, "xslt/jgroupsFileGen.xslt");
+         convertor.parse(is, fos, "xslt/jgroupsFileGen.xslt", cl);
       } finally {
          Util.close(is);
          Util.flushAndCloseStream(fos);

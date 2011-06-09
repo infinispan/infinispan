@@ -49,8 +49,8 @@ public class FileLookup {
     * @param filename might be the name of the file (too look it up in the class path) or an url to a file.
     * @return an input stream to the file or null if nothing found through all lookup steps.
     */
-   public InputStream lookupFile(String filename) {
-      InputStream is = filename == null || filename.length() == 0 ? null : getAsInputStreamFromClassLoader(filename);
+   public InputStream lookupFile(String filename, ClassLoader cl) {
+      InputStream is = filename == null || filename.length() == 0 ? null : getAsInputStreamFromClassLoader(filename, cl);
       if (is == null) {
          if (log.isDebugEnabled())
             log.debugf("Unable to find file %s in classpath; searching for this file on the filesystem instead.", filename);
@@ -71,8 +71,8 @@ public class FileLookup {
     * @return an input stream to the file or null if nothing found through all lookup steps.
     * @throws FileNotFoundException if file cannot be found
     */
-   public InputStream lookupFileStrict(String filename) throws FileNotFoundException {
-      InputStream is = filename == null || filename.length() == 0 ? null : getAsInputStreamFromClassLoader(filename);
+   public InputStream lookupFileStrict(String filename, ClassLoader cl) throws FileNotFoundException {
+      InputStream is = filename == null || filename.length() == 0 ? null : getAsInputStreamFromClassLoader(filename, cl);
       if (is == null) {
          if (log.isDebugEnabled())
             log.debugf("Unable to find file %s in classpath; searching for this file on the filesystem instead.", filename);
@@ -82,30 +82,24 @@ public class FileLookup {
    }
 
 
-   protected InputStream getAsInputStreamFromClassLoader(String filename) {
-      ClassLoader cl = Thread.currentThread().getContextClassLoader();
-      InputStream is;
-      try {
-         is = cl == null ? null : cl.getResourceAsStream(filename);
-      } catch (RuntimeException re) {
-         // could be valid; see ISPN-827
-         is = null;
-      }
+   protected InputStream getAsInputStreamFromClassLoader(String filename, ClassLoader appClassLoader) {
+      
+      ClassLoader[] cls = Util.getClassLoaders(appClassLoader);
 
-      if (is == null) {
-         try {
-            // check system class loader
-            is = getClass().getClassLoader().getResourceAsStream(filename);
-         } catch (RuntimeException re) {
-            // could be valid; see ISPN-827
-            is = null;
+         for (ClassLoader cl : cls)  {
+            if (cl == null)
+               continue;
+
+            try {
+               return cl.getResourceAsStream(filename);
+            } catch (RuntimeException e) {
+               // Ignore this as the classloader may throw exceptions for a valid path on Windows
+            }
          }
-      }
-      return is;
+         return null;
    }
 
-   public URL lookupFileLocation(String filename) {
-      ClassLoader cl = Thread.currentThread().getContextClassLoader();
+   public URL lookupFileLocation(String filename, ClassLoader cl) {
       URL u;
       try {
          u = cl == null ? null : cl.getResource(filename);

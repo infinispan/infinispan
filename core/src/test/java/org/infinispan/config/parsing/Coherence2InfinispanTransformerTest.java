@@ -61,7 +61,7 @@ public class Coherence2InfinispanTransformerTest extends AbstractInfinispanTest 
          Thread.currentThread().setContextClassLoader(delegatingCl);
          String fileName = getFileName(coherenceFileName);
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
-         convertor.parse(fileName, baos, ConfigFilesConvertor.TRANSFORMATIONS.get(ConfigFilesConvertor.COHERENCE_35X));
+         convertor.parse(fileName, baos, ConfigFilesConvertor.TRANSFORMATIONS.get(ConfigFilesConvertor.COHERENCE_35X), Thread.currentThread().getContextClassLoader());
          dcm = TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()), true);
          Cache<Object,Object> defaultCache = dcm.getCache();
          defaultCache.put("key", "value");

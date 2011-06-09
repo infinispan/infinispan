@@ -247,7 +247,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       public T readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          T abstractWheelConsistentHash = instance();
          String hashFuctionName = (String) unmarshaller.readObject();
-         abstractWheelConsistentHash.setHashFunction((Hash) Util.getInstance(hashFuctionName));
+         abstractWheelConsistentHash.setHashFunction((Hash) Util.getInstance(hashFuctionName, Thread.currentThread().getContextClassLoader()));
          abstractWheelConsistentHash.caches = (Set<Address>) unmarshaller.readObject();
          abstractWheelConsistentHash.positions = (SortedMap<Integer, Address>) unmarshaller.readObject();
          abstractWheelConsistentHash.addressToHashIds = (Map<Address, Integer>) unmarshaller.readObject();

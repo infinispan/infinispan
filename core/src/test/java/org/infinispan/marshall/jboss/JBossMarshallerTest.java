@@ -303,9 +303,9 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       @Override
       public Set<Class<? extends Object>> getTypeClasses() {
          return Util.<Class<? extends Object>>asSet(
-               Util.loadClass("org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj"),
-               Util.loadClass("org.infinispan.marshall.AdvancedExternalizerTest$IdViaAnnotationObj"),
-               Util.loadClass("org.infinispan.marshall.AdvancedExternalizerTest$IdViaBothObj"));
+               Util.loadClass("org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj", Thread.currentThread().getContextClassLoader()),
+               Util.loadClass("org.infinispan.marshall.AdvancedExternalizerTest$IdViaAnnotationObj", Thread.currentThread().getContextClassLoader()),
+               Util.loadClass("org.infinispan.marshall.AdvancedExternalizerTest$IdViaBothObj", Thread.currentThread().getContextClassLoader()));
       }
    }
 }

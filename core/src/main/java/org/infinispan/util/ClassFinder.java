@@ -125,7 +125,7 @@ public class ClassFinder {
             String clazz = null;
             try {
                clazz = toClassName(cf.getAbsolutePath());
-               claz = Util.loadClassStrict(clazz);
+               claz = Util.loadClassStrict(clazz, null);
                classes.add(claz);
             } catch (NoClassDefFoundError ncdfe) {
                log.warnf("%s has reference to a class %s that could not be loaded from classpath",
@@ -151,7 +151,7 @@ public class ClassFinder {
                   String clazz = null;
                   try {
                      clazz = toClassName(entry.getName());
-                     claz = Util.loadClassStrict(clazz);
+                     claz = Util.loadClassStrict(clazz, null);
                      classes.add(claz);
                   } catch (NoClassDefFoundError ncdfe) {
                      log.warnf("%s has reference to a class %s that could not be loaded from classpath",
