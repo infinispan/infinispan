@@ -22,6 +22,7 @@
  */
 package org.infinispan.factories;
 
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 
@@ -46,7 +47,7 @@ public class TransactionSynchronizationRegistryFactory extends AbstractNamedCach
          }
       }
       catch (Exception e) {
-         log.info("failed looking up TransactionSynchronizationRegistry, will not use interposed synchronizations", e);
+         throw new ConfigurationException("failed obtaining TransactionSynchronizationRegistry", e);
       }
       return null;
    }
