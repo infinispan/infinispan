@@ -24,7 +24,6 @@ package org.infinispan.query.blackbox;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
-import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -45,11 +44,9 @@ import static org.infinispan.config.Configuration.CacheMode.LOCAL;
  *
  * @author Navin Surtani
  */
-
 @Test(groups = "functional")
-public class KeyTypeTest extends SingleCacheManagerTest{
+public class KeyTypeTest extends SingleCacheManagerTest {
 
-   Cache<Object, Person> cache;
    Person person1;
 
    public KeyTypeTest() {
@@ -64,7 +61,6 @@ public class KeyTypeTest extends SingleCacheManagerTest{
          .indexLocalOnly(false)
          .addProperty("hibernate.search.default.directory_provider", "ram");
       cacheManager = TestCacheManagerFactory.createCacheManager(c, true);
-      cache = cacheManager.getCache();
 
       person1 = new Person();
       person1.setName("Navin");
