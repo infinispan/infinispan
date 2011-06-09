@@ -82,14 +82,9 @@ public class FileLookup {
    }
 
 
-   protected InputStream getAsInputStreamFromClassLoader(String filename, ClassLoader userClassLoader) {
+   protected InputStream getAsInputStreamFromClassLoader(String filename, ClassLoader appClassLoader) {
       
-      ClassLoader[] cls = new ClassLoader[] {
-            userClassLoader,  // User defined classes
-            Util.class.getClassLoader(), // Infinispan classes (not always on TCCL [modular env])
-            ClassLoader.getSystemClassLoader() // Used when load time instrumentation is in effect
-            };
-
+      ClassLoader[] cls = Util.getClassLoaders(appClassLoader);
 
          for (ClassLoader cl : cls)  {
             if (cl == null)
