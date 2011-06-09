@@ -39,205 +39,207 @@ import org.infinispan.util.Util;
  */
 public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
 
-	/**
-	 * @configRef desc="The Cassandra keyspace"
-	 */
-	String keySpace = "Infinispan";
+   /**
+    * @configRef desc="The Cassandra keyspace"
+    */
+   String keySpace = "Infinispan";
 
-	/**
-	 * @configRef desc="The Cassandra column family for entries"
-	 */
-	String entryColumnFamily = "InfinispanEntries";
+   /**
+    * @configRef desc="The Cassandra column family for entries"
+    */
+   String entryColumnFamily = "InfinispanEntries";
 
-	/**
-	 * @configRef desc="The Cassandra column family for expirations"
-	 */
-	String expirationColumnFamily = "InfinispanExpiration";
+   /**
+    * @configRef desc="The Cassandra column family for expirations"
+    */
+   String expirationColumnFamily = "InfinispanExpiration";
 
-	/**
-	 * @configRef desc="Whether the keySpace is shared between multiple caches"
-	 */
-	boolean sharedKeyspace = false;
+   /**
+    * @configRef desc="Whether the keySpace is shared between multiple caches"
+    */
+   boolean sharedKeyspace = false;
 
-	/**
-	 * @configRef desc="Which Cassandra consistency level to use when reading"
-	 */
-	String readConsistencyLevel = "ONE";
+   /**
+    * @configRef desc="Which Cassandra consistency level to use when reading"
+    */
+   String readConsistencyLevel = "ONE";
 
-	/**
-	 * @configRef desc="Which Cassandra consistency level to use when writing"
-	 */
-	String writeConsistencyLevel = "ONE";
+   /**
+    * @configRef desc="Which Cassandra consistency level to use when writing"
+    */
+   String writeConsistencyLevel = "ONE";
 
-	/**
-	 * @configRef desc=
-	 *            "An optional properties file for configuring the underlying cassandra connection pool"
-	 */
-	String configurationPropertiesFile;
-	
-	/**
-	 * @configRef desc=
-	 *            "The keymapper for converting keys to strings (uses the DefaultTwoWayKey2Stringmapper by default)"
-	 */
-	String keyMapper = DefaultTwoWayKey2StringMapper.class.getName();
-	
-	/**
-	 * @configRef desc=
-	 * 			  "Whether to automatically create the keyspace with the appropriate column families (true by default)"
-	 */
-	boolean autoCreateKeyspace = true;
+   /**
+    * @configRef desc=
+    *            "An optional properties file for configuring the underlying cassandra connection pool"
+    */
+   String configurationPropertiesFile;
 
-	protected PoolProperties poolProperties;
+   /**
+    * @configRef desc=
+    *            "The keymapper for converting keys to strings (uses the DefaultTwoWayKey2Stringmapper by default)"
+    */
+   String keyMapper = DefaultTwoWayKey2StringMapper.class.getName();
 
-	public CassandraCacheStoreConfig() {
-		setCacheLoaderClassName(CassandraCacheStore.class.getName());
-		poolProperties = new PoolProperties();
-	}
+   /**
+    * @configRef desc=
+    *            "Whether to automatically create the keyspace with the appropriate column families (true by default)"
+    */
+   boolean autoCreateKeyspace = true;
 
-	public String getKeySpace() {
-		return keySpace;
-	}
+   protected PoolProperties poolProperties;
 
-	public void setKeySpace(String keySpace) {
-		this.keySpace = keySpace;
-	}
+   public CassandraCacheStoreConfig() {
+      setCacheLoaderClassName(CassandraCacheStore.class.getName());
+      poolProperties = new PoolProperties();
+   }
 
-	public String getEntryColumnFamily() {
-		return entryColumnFamily;
-	}
+   public String getKeySpace() {
+      return keySpace;
+   }
 
-	public void setEntryColumnFamily(String entryColumnFamily) {
-		this.entryColumnFamily = entryColumnFamily;
-	}
+   public void setKeySpace(String keySpace) {
+      this.keySpace = keySpace;
+   }
 
-	public String getExpirationColumnFamily() {
-		return expirationColumnFamily;
-	}
+   public String getEntryColumnFamily() {
+      return entryColumnFamily;
+   }
 
-	public void setExpirationColumnFamily(String expirationColumnFamily) {
-		this.expirationColumnFamily = expirationColumnFamily;
-	}
+   public void setEntryColumnFamily(String entryColumnFamily) {
+      this.entryColumnFamily = entryColumnFamily;
+   }
 
-	public boolean isSharedKeyspace() {
-		return sharedKeyspace;
-	}
+   public String getExpirationColumnFamily() {
+      return expirationColumnFamily;
+   }
 
-	public void setSharedKeyspace(boolean sharedKeyspace) {
-		this.sharedKeyspace = sharedKeyspace;
-	}
+   public void setExpirationColumnFamily(String expirationColumnFamily) {
+      this.expirationColumnFamily = expirationColumnFamily;
+   }
 
-	public String getReadConsistencyLevel() {
-		return readConsistencyLevel;
-	}
+   public boolean isSharedKeyspace() {
+      return sharedKeyspace;
+   }
 
-	public void setReadConsistencyLevel(String readConsistencyLevel) {
-		this.readConsistencyLevel = readConsistencyLevel;
-	}
+   public void setSharedKeyspace(boolean sharedKeyspace) {
+      this.sharedKeyspace = sharedKeyspace;
+   }
 
-	public String getWriteConsistencyLevel() {
-		return writeConsistencyLevel;
-	}
+   public String getReadConsistencyLevel() {
+      return readConsistencyLevel;
+   }
 
-	public void setWriteConsistencyLevel(String writeConsistencyLevel) {
-		this.writeConsistencyLevel = writeConsistencyLevel;
-	}
+   public void setReadConsistencyLevel(String readConsistencyLevel) {
+      this.readConsistencyLevel = readConsistencyLevel;
+   }
 
-	public PoolProperties getPoolProperties() {
-		return poolProperties;
-	}
+   public String getWriteConsistencyLevel() {
+      return writeConsistencyLevel;
+   }
 
-	public void setHost(String host) {
-		poolProperties.setHost(host);
-	}
+   public void setWriteConsistencyLevel(String writeConsistencyLevel) {
+      this.writeConsistencyLevel = writeConsistencyLevel;
+   }
 
-	public String getHost() {
-		return poolProperties.getHost();
-	}
+   public PoolProperties getPoolProperties() {
+      return poolProperties;
+   }
 
-	public void setPort(int port) {
-		poolProperties.setPort(port);
-	}
+   public void setHost(String host) {
+      poolProperties.setHost(host);
+   }
 
-	public int getPort() {
-		return poolProperties.getPort();
-	}
+   public String getHost() {
+      return poolProperties.getHost();
+   }
 
-	public boolean isFramed() {
-		return poolProperties.isFramed();
-	}
+   public void setPort(int port) {
+      poolProperties.setPort(port);
+   }
 
-	public String getPassword() {
-		return poolProperties.getPassword();
-	}
+   public int getPort() {
+      return poolProperties.getPort();
+   }
 
-	public String getUsername() {
-		return poolProperties.getUsername();
-	}
+   public boolean isFramed() {
+      return poolProperties.isFramed();
+   }
 
-	public void setFramed(boolean framed) {
-		poolProperties.setFramed(framed);
+   public String getPassword() {
+      return poolProperties.getPassword();
+   }
 
-	}
+   public String getUsername() {
+      return poolProperties.getUsername();
+   }
 
-	public void setPassword(String password) {
-		poolProperties.setPassword(password);
-	}
+   public void setFramed(boolean framed) {
+      poolProperties.setFramed(framed);
 
-	public void setUsername(String username) {
-		poolProperties.setUsername(username);
-	}
+   }
 
-	public void setDatasourceJndiLocation(String location) {
-		poolProperties.setDataSourceJNDI(location);
-	}
+   public void setPassword(String password) {
+      poolProperties.setPassword(password);
+   }
 
-	public String getDatasourceJndiLocation() {
-		return poolProperties.getDataSourceJNDI();
-	}
+   public void setUsername(String username) {
+      poolProperties.setUsername(username);
+   }
 
-	public String getConfigurationPropertiesFile() {
-		return configurationPropertiesFile;
-	}
+   public void setDatasourceJndiLocation(String location) {
+      poolProperties.setDataSourceJNDI(location);
+   }
 
-	public void setConfigurationPropertiesFile(String configurationPropertiesFile) throws CacheLoaderException {
-		this.configurationPropertiesFile = configurationPropertiesFile;
-		readConfigurationProperties();
-	}
+   public String getDatasourceJndiLocation() {
+      return poolProperties.getDataSourceJNDI();
+   }
 
-	private void readConfigurationProperties() throws CacheLoaderException {
-		if (configurationPropertiesFile == null || configurationPropertiesFile.trim().length() == 0)
-			return;
-		InputStream i = new FileLookup().lookupFile(configurationPropertiesFile);
-		if (i != null) {
-			Properties p = new Properties();
-			try {
-				p.load(i);
-			} catch (IOException ioe) {
-				throw new CacheLoaderException("Unable to read environment properties file " + configurationPropertiesFile, ioe);
+   public String getConfigurationPropertiesFile() {
+      return configurationPropertiesFile;
+   }
+
+   public void setConfigurationPropertiesFile(String configurationPropertiesFile)
+            throws CacheLoaderException {
+      this.configurationPropertiesFile = configurationPropertiesFile;
+      readConfigurationProperties();
+   }
+
+   private void readConfigurationProperties() throws CacheLoaderException {
+      if (configurationPropertiesFile == null || configurationPropertiesFile.trim().length() == 0)
+         return;
+      InputStream i = new FileLookup().lookupFile(configurationPropertiesFile);
+      if (i != null) {
+         Properties p = new Properties();
+         try {
+            p.load(i);
+         } catch (IOException ioe) {
+            throw new CacheLoaderException("Unable to read environment properties file "
+                     + configurationPropertiesFile, ioe);
          } finally {
             Util.close(i);
          }
 
-			// Apply all properties to the PoolProperties object
-			for(String propertyName : p.stringPropertyNames()) {
-				poolProperties.set(propertyName, p.getProperty(propertyName));
-			}
-		}
-	}
+         // Apply all properties to the PoolProperties object
+         for (String propertyName : p.stringPropertyNames()) {
+            poolProperties.set(propertyName, p.getProperty(propertyName));
+         }
+      }
+   }
 
-	public String getKeyMapper() {
-		return keyMapper;
-	}
+   public String getKeyMapper() {
+      return keyMapper;
+   }
 
-	public void setKeyMapper(String keyMapper) {
-		this.keyMapper = keyMapper;
-	}
+   public void setKeyMapper(String keyMapper) {
+      this.keyMapper = keyMapper;
+   }
 
-	public boolean isAutoCreateKeyspace() {
-		return autoCreateKeyspace;
-	}
+   public boolean isAutoCreateKeyspace() {
+      return autoCreateKeyspace;
+   }
 
-	public void setAutoCreateKeyspace(boolean autoCreateKeyspace) {
-		this.autoCreateKeyspace = autoCreateKeyspace;
-	}
+   public void setAutoCreateKeyspace(boolean autoCreateKeyspace) {
+      this.autoCreateKeyspace = autoCreateKeyspace;
+   }
 }

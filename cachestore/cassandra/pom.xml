@@ -49,6 +49,7 @@
 			<groupId>org.apache.cassandra</groupId>
 			<artifactId>cassandra-all</artifactId>
 			<version>${version.cassandra}</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
