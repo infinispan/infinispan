@@ -44,14 +44,7 @@
       </dependency>
    </dependencies>
 
-   <repositories>
-      <repository>
-         <id>berkeleydb-je.repository</id>
-         <url>http://download.oracle.com/maven/</url>
-      </repository>
-   </repositories>
-
-   <build>     
+   <build>
       <plugins>
          <plugin>
             <groupId>org.apache.felix</groupId>

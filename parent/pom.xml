@@ -402,44 +402,6 @@
       </snapshotRepository>
    </distributionManagement>
 
-   <repositories>
-      <repository>
-         <id>atlas</id>
-         <url>https://maven.atlassian.com/content/groups/public</url>
-      </repository>
-      <repository>
-         <id>jboss</id>
-         <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
-      </repository>
-      <repository>
-         <id>scala-tools.org</id>
-         <name>Scala-tools Maven2 Repository</name>
-         <url>http://scala-tools.org/repo-releases</url>
-         <snapshots>
-            <enabled>true</enabled>
-            <updatePolicy>never</updatePolicy>
-         </snapshots>
-      </repository>
-      <!-- needed for the scala-tools build plugins -->
-      <repository>
-         <id>glassfish.java.net</id>
-         <url>http://download.java.net/maven/glassfish</url>
-      </repository>
-   </repositories>
-
-   <pluginRepositories>
-      <pluginRepository>
-         <id>jboss</id>
-         <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
-      </pluginRepository>
-
-      <pluginRepository>
-         <id>scala-tools.org</id>
-         <name>Scala-tools Maven2 Repository</name>
-         <url>http://scala-tools.org/repo-releases</url>
-      </pluginRepository>
-   </pluginRepositories>
-
    <profiles>
       <profile>
          <id>extras</id>
