@@ -64,16 +64,18 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    protected void createBeforeClass() throws Exception {
       try {
          if (cleanupAfterTest()) setup();
+         else assert cleanupAfterMethod() : "you must either cleanup after test or after method";
       } catch (Exception e) {
          log.error("Unexpected!", e);
          throw e;
       }
    }
 
-   @BeforeMethod
+   @BeforeMethod(alwaysRun = true)
    protected void createBeforeMethod() throws Exception {
       try {
          if (cleanupAfterMethod()) setup();
+         else assert cleanupAfterTest() : "you must either cleanup after test or after method";
       } catch (Exception e) {
          log.error("Unexpected!", e);
          throw e;
