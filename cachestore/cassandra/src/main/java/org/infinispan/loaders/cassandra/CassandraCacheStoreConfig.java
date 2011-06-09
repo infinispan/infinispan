@@ -208,7 +208,7 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
    private void readConfigurationProperties() throws CacheLoaderException {
       if (configurationPropertiesFile == null || configurationPropertiesFile.trim().length() == 0)
          return;
-      InputStream i = new FileLookup().lookupFile(configurationPropertiesFile);
+      InputStream i = new FileLookup().lookupFile(configurationPropertiesFile, Thread.currentThread().getContextClassLoader());
       if (i != null) {
          Properties p = new Properties();
          try {
