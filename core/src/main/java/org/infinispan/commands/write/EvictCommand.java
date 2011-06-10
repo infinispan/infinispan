@@ -27,9 +27,6 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
-import java.util.Collections;
-import java.util.Map;
-
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.0
@@ -61,8 +58,7 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
 
    @Override
    public void notify(InvocationContext ctx, Object value, boolean isPre) {
-      Map<Object,Object> entries = Collections.singletonMap(key, value);
-      notifier.notifyCacheEntriesEvicted(entries, isPre, ctx);
+      notifier.notifyCacheEntriesEvicted(key, value, isPre, ctx);
    }
 
    @Override

@@ -23,6 +23,7 @@
 package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.Cache;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -33,17 +34,20 @@ import org.infinispan.notifications.cachelistener.annotation.*;
 import org.infinispan.notifications.cachelistener.event.*;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.infinispan.notifications.cachelistener.event.Event.Type.*;
+import static org.infinispan.util.InfinispanCollections.transformMapValue;
 
 /**
  * Helper class that handles all notifications to registered listeners.
@@ -198,13 +202,35 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    }
 
    @Override
-   public void notifyCacheEntriesEvicted(Map<Object, Object> entries, final boolean pre, InvocationContext ctx) {
+   public void notifyCacheEntriesEvicted(Map<Object, InternalCacheEntry> entries, final boolean pre, InvocationContext ctx) {
       if (!cacheEntryEvictedListeners.isEmpty()) {
          InvocationContext contexts = icc.suspend();
          try {
             EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
             e.setPre(pre);
-            e.setEntries(entries);
+            Map<Object, Object> copy = transformMapValue(entries,
+               new InfinispanCollections.Function<InternalCacheEntry, Object>() {
+                  public Object transform(InternalCacheEntry input) {
+                     return input.getValue();
+                  }
+               }
+            );
+            e.setEntries(copy);
+            for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e);
+         } finally {
+            icc.resume(contexts);
+         }
+      }
+   }
+
+   @Override
+   public void notifyCacheEntriesEvicted(Object key, Object value, boolean pre, InvocationContext ctx) {
+      if (!cacheEntryEvictedListeners.isEmpty()) {
+         InvocationContext contexts = icc.suspend();
+         try {
+            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
+            e.setPre(pre);
+            e.setEntries(Collections.singletonMap(key, value));
             for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);
@@ -277,13 +303,24 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    }
 
    @Override
-   public void notifyCacheEntriesPassivated(Map<Object, Object> entries, boolean pre, InvocationContext ctx) {
+   public void notifyCacheEntriesPassivated(Map<Object, InternalCacheEntry> entries, boolean pre, InvocationContext ctx) {
       if (!cacheEntryPassivatedListeners.isEmpty()) {
          InvocationContext contexts = icc.suspend();
          try {
             EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_PASSIVATED);
             e.setPre(pre);
-            e.setEntries(entries);
+            // TODO: Make this more efficient
+            // This is suboptimal when there's a combination of evict and
+            // passivation listeners cos the eviction notification code
+            // already calculated this.
+            Map<Object, Object> copy = transformMapValue(entries,
+               new InfinispanCollections.Function<InternalCacheEntry, Object>() {
+                  public Object transform(InternalCacheEntry input) {
+                     return input.getValue();
+                  }
+               }
+            );
+            e.setEntries(copy);
             for (ListenerInvocation listener : cacheEntryPassivatedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);

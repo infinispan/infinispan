@@ -22,6 +22,7 @@
  */
 package org.infinispan.notifications.cachelistener;
 
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
@@ -64,7 +65,12 @@ public interface CacheNotifier extends Listenable {
    /**
     * Notifies all registered listeners of a CacheEntriesEvicted event.
     */
-   void notifyCacheEntriesEvicted(Map<Object, Object> entries, boolean pre, InvocationContext ctx);
+   void notifyCacheEntriesEvicted(Map<Object, InternalCacheEntry> entries, boolean pre, InvocationContext ctx);
+
+   /**
+    * Notifies all registered listeners of a CacheEntriesEvicted event.
+    */
+   void notifyCacheEntriesEvicted(Object key, Object value, boolean pre, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a CacheEntryInvalidated event.
@@ -84,7 +90,7 @@ public interface CacheNotifier extends Listenable {
    /**
     * Notifies all registered listeners of a CacheEntriesPassivated event.
     */
-   void notifyCacheEntriesPassivated(Map<Object, Object> entries, boolean pre, InvocationContext ctx);
+   void notifyCacheEntriesPassivated(Map<Object, InternalCacheEntry> entries, boolean pre, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a transaction completion event.

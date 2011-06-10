@@ -47,7 +47,7 @@ public class EvictionManagerTest extends AbstractInfinispanTest {
       cfg.setEvictionWakeUpInterval(0);
 
       ScheduledExecutorService mockService = createMock(ScheduledExecutorService.class);
-      em.initialize(mockService, cfg, null, null, null,null,null,null);
+      em.initialize(mockService, cfg, null, null, null, null);
       replay(mockService);
       em.start();
 
@@ -61,7 +61,7 @@ public class EvictionManagerTest extends AbstractInfinispanTest {
       cfg.setEvictionWakeUpInterval(789);
 
       ScheduledExecutorService mockService = createMock(ScheduledExecutorService.class);
-      em.initialize(mockService, cfg, null, null, null,null,null,null);
+      em.initialize(mockService, cfg, null, null, null, null);
 
       ScheduledFuture mockFuture = createNiceMock(ScheduledFuture.class);
       expect(mockService.scheduleWithFixedDelay(isA(EvictionManagerImpl.ScheduledTask.class), eq((long) 789),
