@@ -494,4 +494,10 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       tm.commit();
       assert value.equals(cache.get(key));
    }
+
+   public void testGetCacheLoadersFroomConfigAfterStart() {
+      cache.getConfiguration().getCacheLoaders();
+      cache.getConfiguration().getCacheLoaders();
+   }
+
 }
