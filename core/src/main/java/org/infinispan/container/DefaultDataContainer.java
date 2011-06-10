@@ -22,6 +22,19 @@
  */
 package org.infinispan.container;
 
+import net.jcip.annotations.ThreadSafe;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.eviction.EvictionManager;
+import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.eviction.PassivationManager;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.util.Immutables;
+import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
+import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
+import org.infinispan.util.concurrent.BoundedConcurrentHashMap.EvictionListener;
+
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -31,19 +44,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import net.jcip.annotations.ThreadSafe;
-
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
-import org.infinispan.eviction.EvictionManager;
-import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.eviction.EvictionThreadPolicy;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.util.Immutables;
-import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
-import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
-import org.infinispan.util.concurrent.BoundedConcurrentHashMap.EvictionListener;
 
 /**
  * DefaultDataContainer is both eviction and non-eviction based data container.
@@ -63,6 +63,7 @@ public class DefaultDataContainer implements DataContainer {
    final InternalEntryFactory entryFactory;
    final DefaultEvictionListener evictionListener;
    private EvictionManager evictionManager;
+   private PassivationManager passivator;
 
    protected DefaultDataContainer(int concurrencyLevel) {
       entries = new ConcurrentHashMap<Object, InternalCacheEntry>(128, 0.75f,concurrencyLevel);
@@ -100,8 +101,9 @@ public class DefaultDataContainer implements DataContainer {
    }
 
    @Inject
-   public void initialize(EvictionManager evictionManager) {
+   public void initialize(EvictionManager evictionManager, PassivationManager passivator) {
       this.evictionManager = evictionManager;
+      this.passivator = passivator;
    }
 
    public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries,
@@ -199,6 +201,11 @@ public class DefaultDataContainer implements DataContainer {
       @Override
       public void onEntryEviction(Map<Object, InternalCacheEntry> evicted) {
          evictionManager.onEntryEviction(evicted);
+      }
+
+      @Override
+      public void passivate(InternalCacheEntry internalCacheEntry) {
+         passivator.passivate(internalCacheEntry);
       }
    }
 

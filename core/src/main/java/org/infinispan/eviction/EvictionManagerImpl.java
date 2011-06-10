@@ -27,7 +27,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -62,20 +61,17 @@ public class EvictionManagerImpl implements EvictionManager {
    private DataContainer dataContainer;
    private CacheStore cacheStore;
    private CacheNotifier cacheNotifier;
-   private PassivationManager passivator;
    private boolean enabled;
 
    @Inject
    public void initialize(@ComponentName(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR) ScheduledExecutorService executor,
             Configuration configuration, DataContainer dataContainer,
-            CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier,
-            PassivationManager passivator) {
+            CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier) {
       this.executor = executor;
       this.configuration = configuration;
       this.dataContainer = dataContainer;
       this.cacheLoaderManager = cacheLoaderManager;
       this.cacheNotifier = cacheNotifier;
-      this.passivator = passivator;
    }
 
    @Start(priority = 55)
@@ -166,10 +162,6 @@ public class EvictionManagerImpl implements EvictionManager {
       // However, when a user calls cache.evict(), you do want to carry over the
       // contextual information, hence it makes sense for the notifyyCacheEntriesEvicted()
       // call to carry on taking an InvocationContext object.
-      // To avoid re-calculation, pass the naked eviction entries to the
-      // passivator, so that it can use them in its notifications
-      passivator.passivate(evicted.values(), ctx);
       cacheNotifier.notifyCacheEntriesEvicted(evicted.values(), ctx);
    }
-
 }
