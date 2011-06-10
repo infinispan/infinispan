@@ -126,7 +126,7 @@ object Main extends Log {
          case "hotrod" => "org.infinispan.server.hotrod.HotRodServer"
          case "websocket" => "org.infinispan.server.websocket.WebSocketServer"
       }
-      server = Util.getInstance(clazz).asInstanceOf[ProtocolServer]
+      server = Util.getInstance(clazz, Thread.currentThread().getContextClassLoader()).asInstanceOf[ProtocolServer]
 
       val configFile = props.getProperty(PROP_KEY_CACHE_CONFIG)
       cacheManager = instantiateCacheManager(configFile)
