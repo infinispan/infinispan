@@ -197,7 +197,7 @@ public class DefaultDataContainer implements DataContainer {
       return new EntryIterator(entries.values().iterator());
    }
 
-   private class DefaultEvictionListener implements EvictionListener<Object, InternalCacheEntry> {
+   private final class DefaultEvictionListener implements EvictionListener<Object, InternalCacheEntry> {
       @Override
       public void onEntryEviction(Map<Object, InternalCacheEntry> evicted) {
          evictionManager.onEntryEviction(evicted);

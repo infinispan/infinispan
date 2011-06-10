@@ -33,7 +33,20 @@
 package org.infinispan.util.concurrent;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.Map;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -306,7 +319,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       void passivate(V internalCacheEntry);
    }
 
-   static class NullEvictionListener<K, V> implements EvictionListener<K, V> {
+   static final class NullEvictionListener<K, V> implements EvictionListener<K, V> {
       @Override
       public void onEntryEviction(Map<K, V> evicted) {
          // Do nothing.
