@@ -93,16 +93,17 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
    public void testLifespanExpiryInPutAll() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
-      long startTime = System.currentTimeMillis();
-      long lifespan = 30000;
+      final long startTime = System.currentTimeMillis();
+      final long lifespan = 10000;
       Map<String, String> m = new HashMap();
       m.put("k1", "v");
       m.put("k2", "v");
       cache.putAll(m, lifespan, MILLISECONDS);
-      while (System.currentTimeMillis() < startTime + lifespan) {
+      //stop checking 10ms before expiration to prevent races
+      while (System.currentTimeMillis() < startTime + lifespan - 10) {
          assert cache.get("k1").equals("v");
          assert cache.get("k2").equals("v");
-         Thread.sleep(50);
+         Thread.sleep(100);
       }
 
       //make sure that in the next 30 secs data is removed
@@ -115,7 +116,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
    public void testIdleExpiryInPutAll() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
-      long idleTime = 30000;
+      final long idleTime = 10000;
       Map<String, String> m = new HashMap();
       m.put("k1", "v");
       m.put("k2", "v");
@@ -131,8 +132,8 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
    public void testLifespanExpiryInPutIfAbsent() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
-      long startTime = System.currentTimeMillis();
-      long lifespan = 30000;
+      final long startTime = System.currentTimeMillis();
+      final long lifespan = 10000;
       assert cache.putIfAbsent("k", "v", lifespan, MILLISECONDS) == null;
       long partial = lifespan / 10;
        // Sleep some time within the lifespan boundaries
@@ -143,7 +144,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       assert cache.get("k") == null;
 
       //make sure that in the next 2 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 30000) {
+      while (System.currentTimeMillis() < startTime + lifespan + 2000) {
          if (cache.get("k") == null) break;
          Thread.sleep(50);
       }
@@ -169,7 +170,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
    public void testLifespanExpiryInReplace() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
-      long lifespan = 30000;
+      final long lifespan = 10000;
       assert cache.get("k") == null;
       assert cache.replace("k", "v", lifespan, MILLISECONDS) == null;
       assert cache.get("k") == null;
@@ -178,13 +179,13 @@ public class ExpiryTest extends AbstractInfinispanTest {
       long startTime = System.currentTimeMillis();
       assert cache.replace("k", "v", lifespan, MILLISECONDS) != null;
       assert cache.get("k").equals("v");
-      while (System.currentTimeMillis() < startTime + lifespan) {
+      while (System.currentTimeMillis() < startTime + lifespan - 10) {
          assert cache.get("k").equals("v");
          Thread.sleep(50);
       }
 
       //make sure that in the next 2 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 30000) {
+      while (System.currentTimeMillis() < startTime + lifespan + 2000) {
          if (cache.get("k") == null) break;
          Thread.sleep(50);
       }
@@ -197,14 +198,14 @@ public class ExpiryTest extends AbstractInfinispanTest {
       while (System.currentTimeMillis() < startTime + lifespan) {
          Object val = cache.get("k");
          //only run the assertion if the time condition still stands
-         if (System.currentTimeMillis() < startTime + lifespan) {
+         if (System.currentTimeMillis() < startTime + lifespan - 10) {
             assert val.equals("v2");
          }
          Thread.sleep(50);
       }
 
       //make sure that in the next 2 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 30000) {
+      while (System.currentTimeMillis() < startTime + lifespan + 2000) {
          if (cache.get("k") == null) break;
          Thread.sleep(50);
       }
