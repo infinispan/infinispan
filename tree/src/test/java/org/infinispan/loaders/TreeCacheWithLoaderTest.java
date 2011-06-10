@@ -22,8 +22,6 @@
  */
 package org.infinispan.loaders;
 
-import org.infinispan.atomic.AtomicMap;
-import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -51,11 +49,11 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
-      Configuration c = getDefaultStandaloneConfig(true);
-      c.setInvocationBatchingEnabled(true);
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
-      c.setCacheLoaderManagerConfig(clmc);
+      Configuration c = getDefaultStandaloneConfig(true).fluent()
+            .invocationBatching()
+            .loaders()
+               .addCacheLoader(new DummyInMemoryCacheStore.Cfg(getClass().getName()))
+            .build();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
       cache = new TreeCacheImpl<String, String>(cm.getCache());
       CacheLoaderManager m = TestingUtil.extractComponent(cache.getCache(), CacheLoaderManager.class);
