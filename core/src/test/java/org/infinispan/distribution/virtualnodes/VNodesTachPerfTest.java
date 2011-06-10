@@ -1,20 +1,24 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2011 Red Hat Inc. and/or its affiliates and other contributors
- * as indicated by the @author tags. All rights reserved.
- * See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
- * This copyrighted material is made available to anyone wishing to use,
- * modify, copy, or redistribute it subject to the terms and conditions
- * of the GNU Lesser General Public License, v. 2.1.
- * This program is distributed in the hope that it will be useful, but WITHOUT A
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
- * You should have received a copy of the GNU Lesser General Public License,
- * v.2.1 along with this distribution; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- * MA  02110-1301, USA.
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
 package org.infinispan.distribution.virtualnodes;
@@ -22,18 +26,24 @@ package org.infinispan.distribution.virtualnodes;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.*;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 /**
  * Tests the uniformity and performance of the distribution hash algo with virtual nodes.
@@ -42,12 +52,13 @@ import static org.testng.Assert.*;
  * @since 5.0
  */
 @Test(testName = "distribution.VNodesCHPerfTest", groups = "manual")
-public class VNodesCHPerfTest extends AbstractInfinispanTest {
+public class VNodesTachPerfTest extends AbstractInfinispanTest {
 
    private Set<Address> createAddresses(int numNodes) {
       Set<Address> addresses = new HashSet<Address>(numNodes);
       for (int i = 0; i < numNodes; i++) {
-         addresses.add(new JGroupsAddress(org.jgroups.util.UUID.randomUUID()));
+         String machineId = "m" + i;
+         addresses.add(new JGroupsTopologyAwareAddress(org.jgroups.util.TopologyUUID.randomUUID(null, null, machineId)));
       }
       return addresses;
    }
@@ -84,7 +95,7 @@ public class VNodesCHPerfTest extends AbstractInfinispanTest {
    private ConsistentHash createConsistentHash(int numNodes) {
       Configuration c = new Configuration();
       c.fluent().hash()
-            .consistentHashClass(DefaultConsistentHash.class)
+            .consistentHashClass(TopologyAwareConsistentHash.class)
             .numVirtualNodes(10);
       Set<Address> addresses = createAddresses(numNodes);
       return ConsistentHashHelper.createConsistentHash(c, addresses);

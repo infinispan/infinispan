@@ -55,9 +55,10 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
       int[] numNodes = {1, 2, 3, 4, 10, 100, 1000};
       int iterations = 100000;
       // warmup
-      doPerfTest(10000, 2, iterations);
+      doPerfTest(10, 2, iterations);
 
       for (int numOwners = 1; numOwners < 5; numOwners++) {
+         System.out.println("numOwners=" + numOwners);
          for (int nn: numNodes) {
             Long duration = doPerfTest(nn, numOwners, iterations);
             System.out.println("With "+nn+" cache(s), time to do " + iterations + " lookups was " + Util.prettyPrintTime(TimeUnit.NANOSECONDS.toMillis(duration)));
@@ -79,7 +80,7 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
    }
 
    public void testDistribution() {
-      final int numKeys = 100000;
+      final int numKeys = 10000;
       final int[] numNodes = {1, 2, 3, 4, 10, 100, 1000};
 
       List<Object> keys = new ArrayList<Object>(numKeys);

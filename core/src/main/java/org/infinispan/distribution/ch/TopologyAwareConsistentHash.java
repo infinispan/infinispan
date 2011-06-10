@@ -31,13 +31,7 @@ import org.infinispan.util.hash.Hash;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.SortedMap;
+import java.util.*;
 
 import static java.lang.Math.min;
 
@@ -61,6 +55,12 @@ import static java.lang.Math.min;
  * @since 4.2
  */
 public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
+   private enum Level { SITE, RACK, MACHINE, NONE }
+
+   private SortedSet<Integer> siteIdChangeIndexes = new TreeSet<Integer>();
+   private SortedSet<Integer> rackIdChangeIndexes = new TreeSet<Integer>();
+   private SortedSet<Integer> machineIdChangeIndexes = new TreeSet<Integer>();
+
    public TopologyAwareConsistentHash() {
    }
 
@@ -69,124 +69,125 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
    }
 
    @Override
+   public void setCaches(Set<Address> newCaches) {
+      super.setCaches(newCaches);
+
+      siteIdChangeIndexes.clear();
+      rackIdChangeIndexes.clear();
+      machineIdChangeIndexes.clear();
+      TopologyAwareAddress lastSiteAddr = (TopologyAwareAddress) positionValues[positionValues.length - 1];
+      TopologyAwareAddress lastRackAddr = (TopologyAwareAddress) positionValues[positionValues.length - 1];
+      TopologyAwareAddress lastMachineAddr = (TopologyAwareAddress) positionValues[positionValues.length - 1];
+      for (int i = 0; i < positionKeys.length; i++) {
+         TopologyAwareAddress a = (TopologyAwareAddress) positionValues[i];
+         if (!lastSiteAddr.isSameSite(a)) {
+            siteIdChangeIndexes.add(i);
+            lastSiteAddr = a;
+         }
+         if (!lastRackAddr.isSameRack(a)) {
+            rackIdChangeIndexes.add(i);
+            lastRackAddr = a;
+         }
+         if (!lastMachineAddr.isSameMachine(a)) {
+            machineIdChangeIndexes.add(i);
+            lastMachineAddr = a;
+         }
+      }
+   }
+
+   @Override
    public List<Address> locate(Object key, int replCount) {
-      Address owner = getOwner(key);
-      if (trace) log.tracef("Owner of key %s identified as %s", key, owner);
-      return getOwners(owner, replCount);
+      return locateInternal(key, replCount, null);
    }
 
    @Override
-   public List<Address> getStateProvidersOnLeave(Address leaver, int replCount) {
-      Set<Address> result = new HashSet<Address>();
-
-      Address realLeaver = getRealAddress(leaver);
-      
-      //1. first get all the node that replicated on leaver
-      for (Address address : caches) {
-         if (address.equals(leaver)) continue;
-         if (getOwners(address, replCount).contains(realLeaver)) {
-            result.add(address);
-         }
-      }
-
-      //2. then get first leaver's backup
-      List<Address> addressList = getOwners(realLeaver, replCount);
-      if (addressList.size() > 1) {
-         result.add(addressList.get(1));
-      }
-      return new ArrayList<Address>(result);
-   }
-
-
-   /**
-    * In this situation are the same nodes providing state on join as the nodes that provide state on leave.
-    */
-   @Override
-   public List<Address> getStateProvidersOnJoin(Address joiner, int replCount) {
-      return getStateProvidersOnLeave(joiner, replCount);
+   public boolean isKeyLocalToAddress(Address target, Object key, int replCount) {
+      return locateInternal(key, replCount, target).contains(target);
    }
 
    /**
-    * @param numOwners if this param is greater than the number of caches then the min(caches.size(), numOwners)
-    * is used.
+    * Locate <code>replCount</code> owners for key <code>key</code> and return the list.
+    * If one of the owners is identical to <code>target</code>, return after adding <code>target</code> to the list.
     */
-   private List<Address> getOwners(Address address, int numOwners) {
-      Address realAddress = getRealAddress(address);
-      int ownerHash = getNormalizedHash(getGrouping(address));
-      Collection<Address> beforeOnWheel = positions.headMap(ownerHash).values();
-      Collection<Address> afterOnWheel = positions.tailMap(ownerHash).values();
-      ArrayList<Address> processSequence = new ArrayList<Address>(afterOnWheel);
-      processSequence.addAll(beforeOnWheel);
-      List<Address> result = new ArrayList<Address>();
-      result.add(getRealAddress(processSequence.remove(0)));
-      int level = 0;
-      int numNodesToReturn = Math.min(numOwners, caches.size());
-      while (result.size() < numNodesToReturn && level <= 3) {
-         Iterator<Address> addrIt = processSequence.iterator();
-         while (addrIt.hasNext()) {
-            Address a = addrIt.next();
-            Address ra = getRealAddress(a);
-            switch (level) {
-               case 0: { //site level
-                  if (!isSameSite(realAddress, ra)) {
-                     if (trace) log.tracef("Owner (different site) identified as %s", a);
-                     result.add(ra);
-                     addrIt.remove();
-                  }
-                  break;
-               }
-               case 1: { //rack level
-                  if (!isSameRack(realAddress, ra)) {
-                     if (trace) log.tracef("Owner (different rack) identified as %s", a);
-                     result.add(ra);
-                     addrIt.remove();
-                  }
-                  break;
-               }
-               case 2: { //machine level
-                  if (!isSameMachine(realAddress, ra)) {
-                     if (trace) log.tracef("Owner (different machine) identified as %s", a);
-                     result.add(ra);
-                     addrIt.remove();
-                  }
-                  break;
-               }
-               case 3: { //virtual nodes level
-                  if (trace) log.tracef("Owner (same machine) identified as %s", a);
-                  result.add(ra);
-                  addrIt.remove();
-                  break;
-               }
-            }
-            if (result.size() == numOwners) break;
+   private List<Address> locateInternal(Object key, int replCount, Address target) {
+      int actualReplCount = Math.min(replCount, caches.size());
+      int keyNormalizedHash = getNormalizedHash(getGrouping(key));
+      int firstOwnerIndex = getPositionIndex(keyNormalizedHash);
+      Address firstOwner = positionValues[firstOwnerIndex];
+
+      List<Address> owners = new ArrayList<Address>(actualReplCount);
+      owners.add(firstOwner);
+      if (owners.size() >= actualReplCount)
+         return owners;
+
+      // try to find owners with different site ids
+      if (locateOwnersForLevel(firstOwnerIndex, actualReplCount, Level.SITE, siteIdChangeIndexes, target, owners))
+         return owners;
+      // try to find owners with different site ids and rack ids
+      if (locateOwnersForLevel(firstOwnerIndex, actualReplCount, Level.RACK, rackIdChangeIndexes, target, owners))
+         return owners;
+      // try to find owners with different site ids, rack ids and machine ids
+      if (locateOwnersForLevel(firstOwnerIndex, actualReplCount, Level.MACHINE, machineIdChangeIndexes, target, owners))
+         return owners;
+
+      // we have exhausted all the levels, now check for duplicate nodes on the same machines
+      for (Iterator<Map.Entry<Integer, Address>> it = getPositionsIterator(keyNormalizedHash); it.hasNext();) {
+         TopologyAwareAddress address = (TopologyAwareAddress) it.next().getValue();
+         if (addOwner(owners, address, replCount, target, Level.NONE))
+            return owners;
+      }
+
+      // might return < replCount owners if there aren't enough nodes in the list
+      return owners;
+   }
+
+   /**
+    * Locate owners for <code>keyNormalizedHash</code>, but consider only the addresses in <code>levelIdChangeIndexes</code>.
+    * Return <code>false</code> when the list is exhausted, and <code>true</code> when we have found <code>replCount</code>
+    * owners or <code>target</code> is one of the owners.
+    */
+   private boolean locateOwnersForLevel(int firstOwnerIndex, int replCount, Level level, SortedSet<Integer> levelIdChangeIndexes, Address target, List<Address> owners) {
+      // start with the nodes after firstOwnerIndex in the wheel
+      for (Integer addrIndex : levelIdChangeIndexes.tailSet(firstOwnerIndex)) {
+         TopologyAwareAddress address = (TopologyAwareAddress) positionValues[addrIndex];
+         if (addOwner(owners, address, replCount, target, level))
+            return true;
+      }
+      // continue with the nodes from the beginning to firstOwnerIndex
+      for (Integer addrIndex : levelIdChangeIndexes.headSet(firstOwnerIndex)) {
+         TopologyAwareAddress address = (TopologyAwareAddress) positionValues[addrIndex];
+         if (addOwner(owners, address, replCount, target, level))
+            return true;
+      }
+      return false;
+   }
+
+   private boolean addOwner(List<Address> owners, TopologyAwareAddress address, int replCount, Address target, Level level) {
+      boolean alreadyAdded = false;
+      for (Address owner : owners) {
+         switch (level) {
+            case SITE:
+               alreadyAdded = ((TopologyAwareAddress)owner).isSameSite(address);
+               break;
+            case RACK:
+               alreadyAdded = ((TopologyAwareAddress)owner).isSameRack(address);
+               break;
+            case MACHINE:
+               alreadyAdded = ((TopologyAwareAddress)owner).isSameMachine(address);
+               break;
+            case NONE:
+               alreadyAdded = owner == address;
          }
-         level++;
+         if (alreadyAdded)
+            break;
       }
-      //assertion
-      if (result.size() != numNodesToReturn) throw new AssertionError("This should not happen!");
-      return result;
-   }
+      if (!alreadyAdded) {
+         owners.add(address);
 
-   private boolean isSameSite(Address a, Address b) {
-      return (a instanceof TopologyAwareAddress) && (b instanceof TopologyAwareAddress) && ((TopologyAwareAddress) a).isSameSite((TopologyAwareAddress) b);
-   }
-
-   private boolean isSameRack(Address a, Address b) {
-      return (a instanceof TopologyAwareAddress) && (b instanceof TopologyAwareAddress) && ((TopologyAwareAddress) a).isSameRack((TopologyAwareAddress) b);
-   }
-
-   private boolean isSameMachine(Address a, Address b) {
-      return (a instanceof TopologyAwareAddress) && (b instanceof TopologyAwareAddress) && ((TopologyAwareAddress) a).isSameMachine((TopologyAwareAddress) b);
-   }
-
-   private Address getOwner(Object key) {
-      int hash = getNormalizedHash(getGrouping(key));
-      SortedMap<Integer, Address> map = positions.tailMap(hash);
-      if (map.size() == 0) {
-         return positions.get(positions.firstKey());
+         if (owners.size() >= replCount || address == target)
+            return true;
       }
-      Integer ownerHash = map.firstKey();
-      return positions.get(ownerHash);
+      return false;
    }
 
    public static class Externalizer extends AbstractWheelConsistentHash.Externalizer<TopologyAwareConsistentHash> {
@@ -217,16 +218,4 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       }
    }
 
-   @Override
-   public String toString() {
-      return "TopologyAwareConsistentHash {" +
-            "positions=" + positions +
-            "}";
-   }
-   
-   @Override
-   protected boolean isVirtualNodesEnabled() {
-      return numVirtualNodes > 1;
-   }
-   
 }

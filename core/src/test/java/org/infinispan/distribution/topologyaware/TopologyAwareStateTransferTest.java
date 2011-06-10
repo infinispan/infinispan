@@ -32,6 +32,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -44,6 +45,7 @@ import java.util.Set;
  * @since 4.2
  */
 @Test(groups = "functional", testName = "topologyaware.TopologyAwareStateTransferTest")
+@CleanupAfterTest
 public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
 
    private Address[] addresses;
@@ -64,7 +66,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
 
    @AfterMethod
    @Override
-   protected void clearContent() throws Throwable {      
+   protected void clearContent() throws Throwable {
    }
 
    Cache cache(Address addr) {
@@ -80,6 +82,12 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       cache(0).put(addresses[2],"v2");
       cache(0).put(addresses[3],"v3");
       cache(0).put(addresses[4],"v4");
+
+      log.debugf("Cache on node %s: %s", addresses[0], TestingUtil.printCache(cache(addresses[0])));
+      log.debugf("Cache on node %s: %s", addresses[1], TestingUtil.printCache(cache(addresses[1])));
+      log.debugf("Cache on node %s: %s", addresses[2], TestingUtil.printCache(cache(addresses[2])));
+      log.debugf("Cache on node %s: %s", addresses[3], TestingUtil.printCache(cache(addresses[3])));
+
       assertExistence(addresses[0]);
       assertExistence(addresses[1]);
       assertExistence(addresses[2]);
@@ -98,11 +106,10 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       Set<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getCaches();
       log.debug("After shutting down " + addresses[4] + " caches are " +  addressList);
 
-
-      log.debug(TestingUtil.printCache(cache(addresses[0])));
-      log.debug(TestingUtil.printCache(cache(addresses[1])));
-      log.debug(TestingUtil.printCache(cache(addresses[2])));
-      log.debug(TestingUtil.printCache(cache(addresses[3])));
+      log.debugf("Cache on node %s: %s", addresses[0], TestingUtil.printCache(cache(addresses[0])));
+      log.debugf("Cache on node %s: %s", addresses[1], TestingUtil.printCache(cache(addresses[1])));
+      log.debugf("Cache on node %s: %s", addresses[2], TestingUtil.printCache(cache(addresses[2])));
+      log.debugf("Cache on node %s: %s", addresses[3], TestingUtil.printCache(cache(addresses[3])));
 
       assertExistence(addresses[0]);
       assertExistence(addresses[1]);
@@ -117,6 +124,13 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
       BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(addresses[0]), cache(addresses[1]), cache(addresses[3]));
+      Set<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getCaches();
+      log.debug("After shutting down " + addresses[2] + " caches are " +  addressList);
+
+      log.debugf("Cache on node %s: %s", addresses[0], TestingUtil.printCache(cache(addresses[0])));
+      log.debugf("Cache on node %s: %s", addresses[1], TestingUtil.printCache(cache(addresses[1])));
+      log.debugf("Cache on node %s: %s", addresses[3], TestingUtil.printCache(cache(addresses[3])));
+
       assertExistence(addresses[0]);
       assertExistence(addresses[1]);
       assertExistence(addresses[2]);
@@ -130,6 +144,12 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
       BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(addresses[0]), cache(addresses[3]));
+      Set<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getCaches();
+      log.debug("After shutting down " + addresses[1] + " caches are " +  addressList);
+
+      log.debugf("Cache on node %s: %s", addresses[0], TestingUtil.printCache(cache(addresses[0])));
+      log.debugf("Cache on node %s: %s", addresses[3], TestingUtil.printCache(cache(addresses[3])));
+
       assertExistence(addresses[0]);
       assertExistence(addresses[1]);
       assertExistence(addresses[2]);

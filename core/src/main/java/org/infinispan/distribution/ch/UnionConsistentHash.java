@@ -78,20 +78,6 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       throw new UnsupportedOperationException("Unsupported!");
    }
 
-   public List<Address> getStateProvidersOnLeave(Address leaver, int replCount) {
-      throw new UnsupportedOperationException("Unsupported!");
-   }
-
-   @Override
-   public List<Address> getStateProvidersOnJoin(Address joiner, int replCount) {
-      throw new UnsupportedOperationException("Unsupported!");
-   }
-
-   @Override
-   public List<Address> getBackupsForNode(Address node, int replCount) {
-      return oldCH.locate(node, replCount);
-   }
-
    @Override
    public int getHashSpace() {
       int oldHashSpace = oldCH.getHashSpace();

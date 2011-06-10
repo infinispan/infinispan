@@ -25,6 +25,7 @@ package org.infinispan.distribution.ch;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.remoting.transport.Address;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -47,26 +48,7 @@ import java.util.TreeSet;
  */
 public abstract class AbstractConsistentHash implements ConsistentHash {
 
-   protected Set<Address> caches;
-   
    protected GroupManager groupManager;
-
-   @Override
-   public void setCaches(Set<Address> caches) {
-      this.caches = new TreeSet<Address>(new Comparator<Address>() {
-         @Override
-         public int compare(Address o1, Address o2) {
-            return o1.hashCode() - o2.hashCode();
-         }
-      });
-
-      for (Address a: caches) this.caches.add(a);
-   }
-
-   @Override
-   public Set<Address> getCaches() {
-      return caches;
-   }
 
    @Override
    public Map<Object, List<Address>> locateAll(Collection<Object> keys, int replCount) {
@@ -86,9 +68,24 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
    }
 
    @Override
+   public List<Address> getStateProvidersOnLeave(Address leaver, int replCount) {
+      throw new UnsupportedOperationException("No longer supported");
+   }
+
+   @Override
+   public List<Address> getStateProvidersOnJoin(Address joiner, int replCount) {
+      throw new UnsupportedOperationException("No longer supported");
+   }
+
+   @Override
+   public List<Address> getBackupsForNode(Address node, int replCount) {
+      throw new UnsupportedOperationException("No longer supported");
+   }
+
+   @Override
    public String toString() {
       return getClass().getSimpleName() + " {" +
-            "caches=" + caches +
+            "caches=" + getCaches() +
             '}';
    }
    

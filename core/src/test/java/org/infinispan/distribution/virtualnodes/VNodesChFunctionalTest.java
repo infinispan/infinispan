@@ -24,8 +24,8 @@ package org.infinispan.distribution.virtualnodes;
 
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.distribution.DistSyncFuncTest;
+import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
-import org.infinispan.distribution.ch.VirtualAddress;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -41,60 +41,18 @@ public class VNodesChFunctionalTest extends DistSyncFuncTest {
       numVirtualNodes = 10;
    }
 
-   @Override
-   protected EmbeddedCacheManager addClusterEnabledCacheManager() {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
-      int index = cacheManagers.size();
-      String rack;
-      String machine;
-      switch (index) {
-         case 0 : {
-            rack = "r0";
-            machine = "m0";
-            break;
-         }
-         case 1 : {
-            rack = "r0";
-            machine = "m1";
-            break;
-         }
-         case 2 : {
-            rack = "r1";
-            machine = "m0";
-            break;
-         }
-         case 3 : {
-            rack = "r2";
-            machine = "m0";
-            break;
-         }
-         default : {
-            throw new RuntimeException("Bad!");
-         }
-      }
-      GlobalConfiguration globalConfiguration = cm.getGlobalConfiguration();      
-      globalConfiguration.setRackId(rack);
-      globalConfiguration.setMachineId(machine);
-      cacheManagers.add(cm);
-      return cm;
-   }
-
    public void testHashesInitiated() {
-      TopologyAwareConsistentHash hash = (TopologyAwareConsistentHash) advancedCache(0, cacheName).getDistributionManager().getConsistentHash();
+      DefaultConsistentHash hash = (DefaultConsistentHash) advancedCache(0, cacheName).getDistributionManager().getConsistentHash();
       containsAllHashes(hash);
-      containsAllHashes((TopologyAwareConsistentHash) advancedCache(1, cacheName).getDistributionManager().getConsistentHash());
-      containsAllHashes((TopologyAwareConsistentHash) advancedCache(2, cacheName).getDistributionManager().getConsistentHash());
-      containsAllHashes((TopologyAwareConsistentHash) advancedCache(3, cacheName).getDistributionManager().getConsistentHash());
+      containsAllHashes((DefaultConsistentHash) advancedCache(1, cacheName).getDistributionManager().getConsistentHash());
+      containsAllHashes((DefaultConsistentHash) advancedCache(2, cacheName).getDistributionManager().getConsistentHash());
+      containsAllHashes((DefaultConsistentHash) advancedCache(3, cacheName).getDistributionManager().getConsistentHash());
    }
 
-   private void containsAllHashes(TopologyAwareConsistentHash ch) {
+   private void containsAllHashes(DefaultConsistentHash ch) {
       assert ch.getCaches().contains(address(0));
       assert ch.getCaches().contains(address(1));
       assert ch.getCaches().contains(address(2));
       assert ch.getCaches().contains(address(3));
-      assert ch.getHashId(new VirtualAddress(address(0), 0)) != -1 : ch;
-      assert ch.getHashId(new VirtualAddress(address(1), 0)) != -1 : ch;
-      assert ch.getHashId(new VirtualAddress(address(2), 0)) != -1 : ch;
-      assert ch.getHashId(new VirtualAddress(address(3), 0)) != -1 : ch;
    }
 }

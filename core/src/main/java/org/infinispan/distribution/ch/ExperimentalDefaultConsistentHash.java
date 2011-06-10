@@ -32,6 +32,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -93,8 +94,13 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
       return new LinkedHashSet<Address>(nodes);
    }
 
-   public void setCaches(List<Address> caches) {
-      nodes = caches;
+   @Override
+   public void setCaches(Set<Address> caches) {
+      setCaches((Collection<Address>)caches);
+   }
+
+   public void setCaches(Collection<Address> caches) {
+      nodes = new ArrayList<Address>(caches);
       int numNodes = nodes.size();
 
       int poolSize = 0;
@@ -403,24 +409,5 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
       public String toString() {
          return string + ":" + Integer.toHexString(hash);
       }
-   }
-
-   public List<Address> getStateProvidersOnLeave(Address leaver, int replCount) {
-      Set<Address> holders = new HashSet<Address>();
-      for (Address address : nodes) {
-         if (isAdjacent(leaver, address)) {
-            holders.add(address);
-         }
-      }
-      return new ArrayList<Address>(holders);
-   }
-
-   public List<Address> getStateProvidersOnJoin(Address joiner, int replCount) {
-      throw new RuntimeException("Not implemented!");
-   }
-
-   @Override
-   public List<Address> getBackupsForNode(Address node, int replCount) {
-      throw new RuntimeException("Not implemented!");
    }
 }
