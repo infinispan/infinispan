@@ -31,29 +31,15 @@
  */
 
 package org.infinispan.util.concurrent;
-import static java.util.Collections.*;
-
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.AbstractCollection;
-import java.util.AbstractMap;
-import java.util.AbstractSet;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.ConcurrentModificationException;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static java.util.Collections.singletonMap;
+import static java.util.Collections.unmodifiableMap;
 
 
 /**
@@ -317,11 +303,16 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
    public interface EvictionListener<K, V> {
       void onEntryEviction(Map<K, V> evicted);
+      void passivate(V internalCacheEntry);
    }
 
    static class NullEvictionListener<K, V> implements EvictionListener<K, V> {
       @Override
       public void onEntryEviction(Map<K, V> evicted) {
+         // Do nothing.
+      }
+      @Override
+      public void passivate(V internalCacheEntry) {
          // Do nothing.
       }
    }
@@ -466,6 +457,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             }
             while (isOverflow()) {
                HashEntry<K, V> first = lruQueue.getLast();
+               segment.evictionListener.passivate(first.value);
                segment.remove(first.key, first.hash, null);
                evicted.add(first);
             }
@@ -645,6 +637,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
       private void removeFromSegment(Set<HashEntry<K, V>> evicted) {
          for (HashEntry<K, V> e : evicted) {
+            segment.evictionListener.passivate(e.value);
             segment.remove(e.key, e.hash, null);
          }
       }
