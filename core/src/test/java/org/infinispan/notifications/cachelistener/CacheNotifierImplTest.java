@@ -30,22 +30,16 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.InvocationContextContainerImpl;
 import org.infinispan.context.impl.NonTxInvocationContext;
-import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvictedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
-import org.infinispan.notifications.cachelistener.event.Event;
-import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
-import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
+import org.infinispan.notifications.cachelistener.event.*;
+import org.infinispan.notifications.cachelistener.event.CacheEntriesPassivatedEvent;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 @Test(groups = "unit", testName = "notifications.cachelistener.CacheNotifierImplTest")
 public class CacheNotifierImplTest extends AbstractInfinispanTest {
@@ -134,20 +128,25 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryEvicted() {
-      n.notifyCacheEntryEvicted("k", "v", true, ctx);
-      n.notifyCacheEntryEvicted("k", "v", false, ctx);
+      Map<Object, Object> entries = Collections.<Object, Object>singletonMap("k", "v");
+      n.notifyCacheEntriesEvicted(entries, false, null);
+      n.notifyCacheEntriesEvicted(entries, true, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();
       assert cl.getInvocationCount() == 2;
       assert cl.getEvents().get(0).getCache() == mockCache;
       assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_EVICTED;
-      assert ((CacheEntryEvent) cl.getEvents().get(0)).getKey().equals("k");
-      assert ((CacheEntryEvictedEvent) cl.getEvents().get(0)).getValue().equals("v");
+      entries = ((CacheEntriesEvictedEvent) cl.getEvents().get(0)).getEntries();
+      Map.Entry<Object, Object> entry = entries.entrySet().iterator().next();
+      assert entry.getKey().equals("k");
+      assert entry.getValue().equals("v");
       assert cl.getEvents().get(1).getCache() == mockCache;
       assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_EVICTED;
-      assert ((CacheEntryEvent) cl.getEvents().get(1)).getKey().equals("k");
-      assert ((CacheEntryEvictedEvent) cl.getEvents().get(1)).getValue().equals("v");
+      entries = ((CacheEntriesEvictedEvent) cl.getEvents().get(1)).getEntries();
+      entry = entries.entrySet().iterator().next();
+      assert entry.getKey().equals("k");
+      assert entry.getValue().equals("v");
    }
 
    public void testNotifyCacheEntryInvalidated() {
@@ -202,20 +201,25 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryPassivated() {
-      n.notifyCacheEntryPassivated("k", "v", true, ctx);
-      n.notifyCacheEntryPassivated("k", "v", false, ctx);
+      Map<Object, Object> entries = Collections.<Object, Object>singletonMap("k", "v");
+      n.notifyCacheEntriesPassivated(entries, true, null);
+      n.notifyCacheEntriesPassivated(entries, false, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();
       assert cl.getInvocationCount() == 2;
       assert cl.getEvents().get(0).getCache() == mockCache;
       assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_PASSIVATED;
-      assert ((CacheEntryEvent) cl.getEvents().get(0)).getKey().equals("k");
-      assert ((CacheEntryPassivatedEvent) cl.getEvents().get(0)).getValue().equals("v");
+      entries = ((CacheEntriesEvictedEvent) cl.getEvents().get(0)).getEntries();
+      Map.Entry<Object, Object> entry = entries.entrySet().iterator().next();
+      assert entry.getKey().equals("k");
+      assert entry.getValue().equals("v");
       assert cl.getEvents().get(1).getCache() == mockCache;
       assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_PASSIVATED;
-      assert ((CacheEntryEvent) cl.getEvents().get(1)).getKey().equals("k");
-      assert ((CacheEntryPassivatedEvent) cl.getEvents().get(1)).getValue().equals("v");
+      entries = ((CacheEntriesEvictedEvent) cl.getEvents().get(1)).getEntries();
+      entry = entries.entrySet().iterator().next();
+      assert entry.getKey().equals("k");
+      assert entry.getValue().equals("v");
    }
 
    public void testNotifyTransactionCompleted() {

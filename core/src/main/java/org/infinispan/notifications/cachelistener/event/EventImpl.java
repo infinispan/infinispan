@@ -31,7 +31,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.Util;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Map;
 
 /**
  * Basic implementation of an event that covers all event types.
@@ -40,8 +40,8 @@ import java.util.List;
  * @since 4.0
  */
 @NotThreadSafe
-public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCreatedEvent, CacheEntryEvictedEvent, CacheEntryLoadedEvent, CacheEntryModifiedEvent,
-                                  CacheEntryPassivatedEvent, CacheEntryRemovedEvent, CacheEntryVisitedEvent, TransactionCompletedEvent, TransactionRegisteredEvent,
+public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCreatedEvent, CacheEntriesEvictedEvent, CacheEntryLoadedEvent, CacheEntryModifiedEvent,
+                                        CacheEntriesPassivatedEvent, CacheEntryRemovedEvent, CacheEntryVisitedEvent, TransactionCompletedEvent, TransactionRegisteredEvent,
                                   CacheEntryInvalidatedEvent, DataRehashedEvent, TopologyChangedEvent {
    private boolean pre = false; // by default events are after the fact
    private Cache<K, V> cache;
@@ -54,6 +54,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    private Collection<Address> membersAtStart, membersAtEnd;
    private ConsistentHash consistentHashAtStart, consistentHashAtEnd;
    private long newViewId;
+   private Map<Object, Object> entries;
 
    public EventImpl() {
    }
@@ -157,6 +158,10 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       this.value = value;
    }
 
+   public void setEntries(Map<Object, Object> entries) {
+      this.entries = entries;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -235,5 +240,10 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    @Override
    public ConsistentHash getConsistentHashAtEnd() {
       return consistentHashAtEnd;
+   }
+
+   @Override
+   public Map getEntries() {
+      return entries;
    }
 }

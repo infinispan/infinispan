@@ -20,19 +20,30 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.notifications.cachelistener.event;
+package org.infinispan.notifications.cachelistener.annotation;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * This event subtype is passed in to any method annotated with {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryEvicted}.
+ * This annotation should be used on methods that need to be notified when cache entries are passivated.
+ * <p/>
+ * Methods annotated with this annotation should accept a single parameter, a {@link
+ * org.infinispan.notifications.cachelistener.event.CacheEntriesPassivatedEvent} otherwise a {@link
+ * org.infinispan.notifications.IncorrectListenerException} will be thrown when registering your listener.
+ *  <p/>
+ *  Locking: notification is performed WITH locks on the given key.
  *
  * @author Manik Surtani
- * @since 4.0
+ * @author Galder Zamarreño
+ * @see org.infinispan.notifications.Listener
+ * @since 5.0
  */
-public interface CacheEntryEvictedEvent<K, V> extends CacheEntryEvent<K, V> {
-   /**
-    * Retrieves the value of the entry being evicted.
-    *
-    * @return the value of the evicted entry
-    */
-   V getValue();
+// ensure this annotation is available at runtime.
+@Retention(RetentionPolicy.RUNTIME)
+// ensure that this annotation is applied to classes.
+@Target(ElementType.METHOD)
+public @interface CacheEntriesPassivated {
 }
