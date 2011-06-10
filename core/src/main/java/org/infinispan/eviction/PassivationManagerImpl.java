@@ -26,22 +26,18 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class PassivationManagerImpl implements PassivationManager {
@@ -57,20 +53,18 @@ public class PassivationManagerImpl implements PassivationManager {
    private final AtomicLong passivations = new AtomicLong(0);
    private DataContainer container;
    private static final boolean trace = log.isTraceEnabled();
-   private LockManager lockManager;
 
    @Inject
-   public void inject(CacheLoaderManager cacheLoaderManager, CacheNotifier notifier, Configuration cfg, DataContainer container, LockManager lockManager) {
+   public void inject(CacheLoaderManager cacheLoaderManager, CacheNotifier notifier, Configuration cfg, DataContainer container) {
       this.cacheLoaderManager = cacheLoaderManager;
       this.notifier = notifier;
       this.cfg = cfg;
       this.container = container;
-      this.lockManager = lockManager;
    }
 
    @Start(priority = 11)
    public void start() {
-      enabled = cfg.getCacheLoaderManagerConfig().isPassivation();
+      enabled = cacheLoaderManager.isUsingPassivation();
       if (enabled) {
          cacheStore = cacheLoaderManager == null ? null : cacheLoaderManager.getCacheStore();
          if (cacheStore == null) {
@@ -88,34 +82,19 @@ public class PassivationManagerImpl implements PassivationManager {
    }
 
    @Override
-   public void passivate(Collection<InternalCacheEntry> entries, InvocationContext ctx) {
-      if (enabled) {
-         for (InternalCacheEntry entry : entries) {
-            Object key = entry.getKey();
-            notifier.notifyCacheEntryPassivated(key, entry.getValue(), true, ctx);
-            boolean locked = false;
-            try {
-               locked = acquireLock(ctx, key);
-            } catch (Exception e) {
-               log.couldNotAcquireLockForEviction(key, e);
-            }
-            try {
-               // notify listeners that this entry is about to be passivated
-               if (trace) log.tracef("Passivating entry %s", key);
-               cacheStore.store(entry);
-               if (statsEnabled && entry.getValue() != null) {
-                  passivations.getAndIncrement();
-               }
-               notifier.notifyCacheEntryPassivated(key, null, false, ctx);
-            } catch (CacheLoaderException e) {
-               log.unableToPassivateEntry(key, e);
-            }
-            finally {
-               if (locked) {
-                  lockManager.unlock(key);
-               }
-            }
+   public void passivate(InternalCacheEntry entry) {
+      if (enabled && entry != null) {
+         Object key = entry.getKey();
+         // notify listeners that this entry is about to be passivated
+         notifier.notifyCacheEntryPassivated(key, entry.getValue(), true, ImmutableContext.INSTANCE);
+         if (trace) log.tracef("Passivating entry %s", key);
+         try {
+            cacheStore.store(entry);
+            if (statsEnabled) passivations.getAndIncrement();
+         } catch (CacheLoaderException e) {
+            log.unableToPassivateEntry(key, e);
          }
+         notifier.notifyCacheEntryPassivated(key, null, false, ImmutableContext.INSTANCE);
       }
    }
 
@@ -138,37 +117,5 @@ public class PassivationManagerImpl implements PassivationManager {
 
    public void resetPassivationCount() {
       passivations.set(0L);
-   }
-
-      /**
-    * Attempts to lock an entry if the lock isn't already held in the current scope, and records the lock in the
-    * context.
-    *
-    * @param ctx context
-    * @param key Key to lock
-    * @return true if a lock was needed and acquired, false if it didn't need to acquire the lock (i.e., lock was
-    *         already held)
-    * @throws InterruptedException if interrupted
-    * @throws org.infinispan.util.concurrent.TimeoutException
-    *                              if we are unable to acquire the lock after a specified timeout.
-    */
-   private boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException {
-      // don't EVER use lockManager.isLocked() since with lock striping it may be the case that we hold the relevant
-      // lock which may be shared with another key that we have a lock for already.
-      // nothing wrong, just means that we fail to record the lock.  And that is a problem.
-      // Better to check our records and lock again if necessary.
-
-      if (lockManager.lockAndRecord(key, ctx)) {
-         return true;
-      } else {
-         Object owner = lockManager.getOwner(key);
-         // if lock cannot be acquired, expose the key itself, not the marshalled value
-         if (key instanceof MarshalledValue) {
-            key = ((MarshalledValue) key).get();
-         }
-         throw new TimeoutException(String.format(
-            "Unable to acquire lock after [%d] on key [%s] for requestor [%s]! Lock held by [%s]",
-            cfg.getLockAcquisitionTimeout(), key, ctx.getLockOwner(), owner));
-      }
    }
 }
