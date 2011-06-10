@@ -27,7 +27,6 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -89,10 +88,9 @@ public class PassivationManagerImpl implements PassivationManager {
    }
 
    @Override
-   public void passivate(Map<Object, InternalCacheEntry> entries,
-                         Map<Object, Object> nakedEntries, InvocationContext ctx) {
+   public void passivate(Map<Object, InternalCacheEntry> entries, InvocationContext ctx) {
       if (enabled) {
-         notifier.notifyCacheEntriesPassivated(nakedEntries, true, ctx);
+         notifier.notifyCacheEntriesPassivated(entries, true, ctx);
          for (Map.Entry<Object, InternalCacheEntry> entry : entries.entrySet()) {
             Object key = entry.getKey();
             boolean locked = false;
@@ -117,7 +115,7 @@ public class PassivationManagerImpl implements PassivationManager {
                }
             }
          }
-         notifier.notifyCacheEntriesPassivated(nakedEntries, false, ctx);
+         notifier.notifyCacheEntriesPassivated(entries, false, ctx);
       }
    }
 

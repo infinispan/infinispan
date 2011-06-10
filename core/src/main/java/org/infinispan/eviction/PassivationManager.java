@@ -43,8 +43,7 @@ public interface PassivationManager {
    
    boolean isEnabled();
 
-   void passivate(Map<Object, InternalCacheEntry> entries,
-                  Map<Object, Object> nakedEntries, InvocationContext ctx);
+   void passivate(Map<Object, InternalCacheEntry> entries, InvocationContext ctx);
 
    void passivateAll() throws CacheLoaderException;
 

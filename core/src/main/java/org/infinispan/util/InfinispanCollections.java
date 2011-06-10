@@ -30,7 +30,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import static java.util.Collections.reverse;
 import static java.util.Collections.singletonMap;
 import static java.util.Collections.unmodifiableMap;
 
@@ -158,8 +157,7 @@ public class InfinispanCollections {
    /**
     * Given a map of well known key/value types, it makes a swallow copy of it
     * while at the same time transforming it's value type to a desired output
-    * type. The transformation of the value type is done using a given a
-    * function.
+    * type. The transformation of the value type is done using a given function.
     *
     * @param input contains the input key/value pair map
     * @param f function instance to use to transform the value part of the map
