@@ -29,7 +29,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.loaders.CacheLoaderException;
 
-import java.util.Map;
+import java.util.Collection;
 
 /**
  * A passivation manager
@@ -43,8 +43,7 @@ public interface PassivationManager {
    
    boolean isEnabled();
 
-   void passivate(Map<Object, InternalCacheEntry> entries,
-                  Map<Object, Object> nakedEntries, InvocationContext ctx);
+   void passivate(Collection<InternalCacheEntry> entries, InvocationContext ctx);
 
    void passivateAll() throws CacheLoaderException;
 

@@ -27,7 +27,6 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -42,7 +41,7 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Map;
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class PassivationManagerImpl implements PassivationManager {
@@ -89,12 +88,11 @@ public class PassivationManagerImpl implements PassivationManager {
    }
 
    @Override
-   public void passivate(Map<Object, InternalCacheEntry> entries,
-                         Map<Object, Object> nakedEntries, InvocationContext ctx) {
+   public void passivate(Collection<InternalCacheEntry> entries, InvocationContext ctx) {
       if (enabled) {
-         notifier.notifyCacheEntriesPassivated(nakedEntries, true, ctx);
-         for (Map.Entry<Object, InternalCacheEntry> entry : entries.entrySet()) {
+         for (InternalCacheEntry entry : entries) {
             Object key = entry.getKey();
+            notifier.notifyCacheEntryPassivated(key, entry.getValue(), true, ctx);
             boolean locked = false;
             try {
                locked = acquireLock(ctx, key);
@@ -104,10 +102,11 @@ public class PassivationManagerImpl implements PassivationManager {
             try {
                // notify listeners that this entry is about to be passivated
                if (trace) log.tracef("Passivating entry %s", key);
-               cacheStore.store(entry.getValue());
+               cacheStore.store(entry);
                if (statsEnabled && entry.getValue() != null) {
                   passivations.getAndIncrement();
                }
+               notifier.notifyCacheEntryPassivated(key, null, false, ctx);
             } catch (CacheLoaderException e) {
                log.unableToPassivateEntry(key, e);
             }
@@ -117,7 +116,6 @@ public class PassivationManagerImpl implements PassivationManager {
                }
             }
          }
-         notifier.notifyCacheEntriesPassivated(nakedEntries, false, ctx);
       }
    }
 

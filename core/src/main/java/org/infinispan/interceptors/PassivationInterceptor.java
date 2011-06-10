@@ -36,9 +36,7 @@ import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 
 /**
  * Writes evicted entries back to the store on the way in through the CacheStore
@@ -62,10 +60,7 @@ public class PassivationInterceptor extends JmxStatsCommandInterceptor {
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       Object key = command.getKey();
       InternalCacheEntry value = dataContainer.get(key);
-      Map<Object, InternalCacheEntry> entries = Collections.singletonMap(key, value);
-      Map<Object, Object> nakedEntries =
-            Collections.singletonMap(key, value == null ? null : value.getValue());
-      passivator.passivate(entries, nakedEntries, ctx);
+      if (value != null) passivator.passivate(Collections.singleton(value), ctx);
       return invokeNextInterceptor(ctx, command);
    }
 

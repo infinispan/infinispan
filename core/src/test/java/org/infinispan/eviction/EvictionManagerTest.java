@@ -22,8 +22,6 @@
  */
 package org.infinispan.eviction;
 
-import static org.easymock.EasyMock.*;
-
 import org.infinispan.config.Configuration;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
@@ -31,6 +29,8 @@ import org.testng.annotations.Test;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import static org.easymock.EasyMock.*;
 
 @Test(groups = "unit", testName = "eviction.EvictionManagerTest")
 public class EvictionManagerTest extends AbstractInfinispanTest {
@@ -47,7 +47,7 @@ public class EvictionManagerTest extends AbstractInfinispanTest {
       cfg.setEvictionWakeUpInterval(0);
 
       ScheduledExecutorService mockService = createMock(ScheduledExecutorService.class);
-      em.initialize(mockService, cfg, null, null, null,null,null,null);
+      em.initialize(mockService, cfg, null, null, null,null);
       replay(mockService);
       em.start();
 
@@ -61,7 +61,7 @@ public class EvictionManagerTest extends AbstractInfinispanTest {
       cfg.setEvictionWakeUpInterval(789);
 
       ScheduledExecutorService mockService = createMock(ScheduledExecutorService.class);
-      em.initialize(mockService, cfg, null, null, null,null,null,null);
+      em.initialize(mockService, cfg, null, null, null,null);
 
       ScheduledFuture mockFuture = createNiceMock(ScheduledFuture.class);
       expect(mockService.scheduleWithFixedDelay(isA(EvictionManagerImpl.ScheduledTask.class), eq((long) 789),

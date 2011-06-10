@@ -29,8 +29,8 @@ import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntriesPassivated;
-import org.infinispan.notifications.cachelistener.event.CacheEntriesPassivatedEvent;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated;
+import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -178,11 +178,9 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
          if (e.isPre()) activated.add(e.getKey());
       }
 
-      @CacheEntriesPassivated
-      public void handlePassivated(CacheEntriesPassivatedEvent e) {
-         if (e.isPre()) {
-            passivated.add(e.getEntries().keySet().iterator().next());
-         }
+      @CacheEntryPassivated
+      public void handlePassivated(CacheEntryPassivatedEvent e) {
+         if (e.isPre()) passivated.add(e.getKey());
       }
 
       void reset() {

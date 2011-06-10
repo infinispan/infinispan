@@ -22,13 +22,7 @@
  */
 package org.infinispan.eviction;
 
-import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
 import net.jcip.annotations.ThreadSafe;
-
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -40,17 +34,18 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.util.InfinispanCollections.transformMapValue;
 
@@ -67,24 +62,20 @@ public class EvictionManagerImpl implements EvictionManager {
    private DataContainer dataContainer;
    private CacheStore cacheStore;
    private CacheNotifier cacheNotifier;
-   private LockManager lockManager;
    private PassivationManager passivator;
-   private InvocationContextContainer ctxContainer;
    private boolean enabled;
 
    @Inject
    public void initialize(@ComponentName(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR) ScheduledExecutorService executor,
             Configuration configuration, DataContainer dataContainer,
             CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier,
-            LockManager lockManager, PassivationManager passivator, InvocationContextContainer ctxContainer) {
+            PassivationManager passivator) {
       this.executor = executor;
       this.configuration = configuration;
       this.dataContainer = dataContainer;
       this.cacheLoaderManager = cacheLoaderManager;
       this.cacheNotifier = cacheNotifier;
-      this.lockManager = lockManager;
       this.passivator = passivator;
-      this.ctxContainer = ctxContainer;
    }
 
    @Start(priority = 55)
@@ -165,14 +156,6 @@ public class EvictionManagerImpl implements EvictionManager {
 
    @Override
    public void onEntryEviction(Map<Object, InternalCacheEntry> evicted) {
-      Map<Object, Object> evictedCopy = transformMapValue(evicted,
-         new InfinispanCollections.Function<InternalCacheEntry, Object>() {
-            public Object transform(InternalCacheEntry input) {
-               return input.getValue();
-            }
-         }
-      );
-
       // don't reuse the threadlocal context as we don't want to include eviction
       // operations in any ongoing transaction, nor be affected by flags
       // especially see ISPN-1154: it's illegal to acquire locks in a committing transaction
@@ -183,11 +166,10 @@ public class EvictionManagerImpl implements EvictionManager {
       // However, when a user calls cache.evict(), you do want to carry over the
       // contextual information, hence it makes sense for the notifyyCacheEntriesEvicted()
       // call to carry on taking an InvocationContext object.
-      cacheNotifier.notifyCacheEntriesEvicted(evictedCopy, true, ctx);
       // To avoid re-calculation, pass the naked eviction entries to the
       // passivator, so that it can use them in its notifications
-      passivator.passivate(evicted, evictedCopy, ctx);
-      cacheNotifier.notifyCacheEntriesEvicted(evictedCopy, false, ctx);
+      passivator.passivate(evicted.values(), ctx);
+      cacheNotifier.notifyCacheEntriesEvicted(evicted.values(), ctx);
    }
 
 }

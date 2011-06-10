@@ -22,6 +22,7 @@
  */
 package org.infinispan.notifications.cachelistener;
 
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
@@ -31,7 +32,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * Public interface with all allowed notifications.
@@ -64,7 +64,15 @@ public interface CacheNotifier extends Listenable {
    /**
     * Notifies all registered listeners of a CacheEntriesEvicted event.
     */
-   void notifyCacheEntriesEvicted(Map<Object, Object> entries, boolean pre, InvocationContext ctx);
+   void notifyCacheEntriesEvicted(Collection<InternalCacheEntry> entries, InvocationContext ctx);
+
+   /**
+    * Syntactic sugar
+    * @param key key evicted
+    * @param value value evicted
+    * @param ctx context
+    */
+   void notifyCacheEntryEvicted(Object key, Object value, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a CacheEntryInvalidated event.
@@ -82,9 +90,9 @@ public interface CacheNotifier extends Listenable {
    void notifyCacheEntryActivated(Object key, Object value, boolean pre, InvocationContext ctx);
 
    /**
-    * Notifies all registered listeners of a CacheEntriesPassivated event.
+    * Notifies all registered listeners of a CacheEntryPassivated event.
     */
-   void notifyCacheEntriesPassivated(Map<Object, Object> entries, boolean pre, InvocationContext ctx);
+   void notifyCacheEntryPassivated(Object key, Object value, boolean pre, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a transaction completion event.
@@ -104,4 +112,6 @@ public interface CacheNotifier extends Listenable {
    void notifyDataRehashed(Collection<Address> oldView, Collection<Address> newView, long newViewId, boolean pre);
 
    void notifyTopologyChanged(ConsistentHash oldConsistentHash, ConsistentHash newConsistentHash, boolean pre);
+
+
 }

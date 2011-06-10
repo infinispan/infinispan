@@ -81,8 +81,8 @@ import java.lang.annotation.Target;
  * cache entries were evicted</td> </tr> <tr> <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated}</td>
  * <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent}</td> <td
  * valign="top">A cache entry was activated</td> </tr> <tr> <td valign="top">{@link
- * org.infinispan.notifications.cachelistener.annotation.CacheEntriesPassivated}</td> <td valign="top">{@link
- * org.infinispan.notifications.cachelistener.event.CacheEntriesPassivatedEvent}</td> <td valign="top">One or more cache entries were
+ * org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated}</td> <td valign="top">{@link
+ * org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent}</td> <td valign="top">One or more cache entries were
  * passivated</td> </tr> <tr> <td valign="top">{@link org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged}</td>
  * <td valign="top">{@link org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent}</td> <td
  * valign="top">A view change event was detected</td> </tr> <tr> <td valign="top">{@link
@@ -203,7 +203,7 @@ import java.lang.annotation.Target;
  * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded
  * @see org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted
  * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated
- * @see org.infinispan.notifications.cachelistener.annotation.CacheEntriesPassivated
+ * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated
  * @see org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged
  * @see org.infinispan.notifications.cachelistener.annotation.TransactionCompleted
  * @see org.infinispan.notifications.cachelistener.annotation.TransactionRegistered
