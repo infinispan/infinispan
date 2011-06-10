@@ -189,7 +189,6 @@ public class CacheLoaderManagerConfig extends AbstractFluentConfigurationBean im
    }
    
    public List<CacheLoaderConfig> getCacheLoaderConfigs() {
-      testImmutability("cacheLoaderConfigs");
       return cacheLoaderConfigs;
    }
 
