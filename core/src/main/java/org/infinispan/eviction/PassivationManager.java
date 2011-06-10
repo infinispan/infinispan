@@ -24,12 +24,9 @@ package org.infinispan.eviction;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.loaders.CacheLoaderException;
-
-import java.util.Collection;
 
 /**
  * A passivation manager
@@ -43,7 +40,7 @@ public interface PassivationManager {
    
    boolean isEnabled();
 
-   void passivate(Collection<InternalCacheEntry> entries, InvocationContext ctx);
+   void passivate(InternalCacheEntry entry);
 
    void passivateAll() throws CacheLoaderException;
 

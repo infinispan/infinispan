@@ -24,7 +24,6 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
@@ -35,8 +34,6 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
-
-import java.util.Collections;
 
 /**
  * Writes evicted entries back to the store on the way in through the CacheStore
@@ -59,8 +56,7 @@ public class PassivationInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       Object key = command.getKey();
-      InternalCacheEntry value = dataContainer.get(key);
-      if (value != null) passivator.passivate(Collections.singleton(value), ctx);
+      passivator.passivate(dataContainer.get(key));
       return invokeNextInterceptor(ctx, command);
    }
 
