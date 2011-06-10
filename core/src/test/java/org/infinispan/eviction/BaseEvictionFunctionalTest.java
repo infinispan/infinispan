@@ -30,8 +30,8 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryEvicted;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvictedEvent;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
+import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -155,10 +155,11 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
    @Listener
    public class EvictionListener {
       
-      @CacheEntryEvicted
-      public void nodeEvicted(CacheEntryEvictedEvent e){
+      @CacheEntriesEvicted
+      public void nodeEvicted(CacheEntriesEvictedEvent e){
          assert e.isPre() || !e.isPre();
-         assert e.getKey() != null;
+         Object key = e.getEntries().keySet().iterator().next();
+         assert key != null;
          assert e.getCache() != null;
          assert e.getType() == Event.Type.CACHE_ENTRY_EVICTED;         
       }

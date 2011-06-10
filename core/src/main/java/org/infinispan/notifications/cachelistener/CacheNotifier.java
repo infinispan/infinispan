@@ -31,6 +31,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Public interface with all allowed notifications.
@@ -61,9 +62,9 @@ public interface CacheNotifier extends Listenable {
    void notifyCacheEntryVisited(Object key, Object value, boolean pre, InvocationContext ctx);
 
    /**
-    * Notifies all registered listeners of a CacheEntryEvicted event.
+    * Notifies all registered listeners of a CacheEntriesEvicted event.
     */
-   void notifyCacheEntryEvicted(Object key, Object value, boolean pre, InvocationContext ctx);
+   void notifyCacheEntriesEvicted(Map<Object, Object> entries, boolean pre, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a CacheEntryInvalidated event.
@@ -81,9 +82,9 @@ public interface CacheNotifier extends Listenable {
    void notifyCacheEntryActivated(Object key, Object value, boolean pre, InvocationContext ctx);
 
    /**
-    * Notifies all registered listeners of a CacheEntryPassivated event.
+    * Notifies all registered listeners of a CacheEntriesPassivated event.
     */
-   void notifyCacheEntryPassivated(Object key, Object value, boolean pre, InvocationContext ctx);
+   void notifyCacheEntriesPassivated(Map<Object, Object> entries, boolean pre, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a transaction completion event.

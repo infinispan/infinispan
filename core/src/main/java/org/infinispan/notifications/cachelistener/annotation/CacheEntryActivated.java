@@ -37,7 +37,7 @@ import java.lang.annotation.Target;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @see org.infinispan.notifications.Listener
- * @see CacheEntryPassivated
+ * @see CacheEntriesPassivated
  * @since 4.0
  */
 @Retention(RetentionPolicy.RUNTIME)

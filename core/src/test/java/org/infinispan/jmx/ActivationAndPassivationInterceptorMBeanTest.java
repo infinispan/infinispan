@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tester class for ActivationInterceptor and PassivationInterceptor.
@@ -175,7 +176,8 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
    }
 
    private void assertPassivationCount(int activationCount) throws Exception {
-      assert Integer.valueOf(threadMBeanServer.getAttribute(passivationInterceptorObjName, "Passivations").toString()).equals(activationCount);
+      Object passivations = threadMBeanServer.getAttribute(passivationInterceptorObjName, "Passivations");
+      assertEquals(activationCount, Integer.valueOf(passivations.toString()).intValue());
    }
 
 }

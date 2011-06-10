@@ -70,11 +70,11 @@ public class CacheListener {
 
    @CacheEntryActivated
    @CacheEntryCreated
-   @CacheEntryEvicted
+   @CacheEntriesEvicted
    @CacheEntryInvalidated
    @CacheEntryLoaded
    @CacheEntryModified
-   @CacheEntryPassivated
+   @CacheEntriesPassivated
    @CacheEntryRemoved
    @CacheEntryVisited
    @TransactionCompleted

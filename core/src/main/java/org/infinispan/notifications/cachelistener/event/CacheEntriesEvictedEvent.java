@@ -20,28 +20,26 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.notifications.cachelistener.annotation;
+package org.infinispan.notifications.cachelistener.event;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.Map;
 
 /**
- * This annotation should be used on methods that need to be notified when a cache entry is evicted.
- * <p/>
- * Methods annotated with this annotation should be public and take in a single parameter, a {@link
- * org.infinispan.notifications.cachelistener.event.CacheEntryEvictedEvent} otherwise an {@link
- * org.infinispan.notifications.IncorrectListenerException} will be thrown when registering your cache listener.
- * <p/>
- *  Locking: notification is performed WITH locks on the given key.
+ * This event subtype is passed in to any method annotated with
+ * {@link org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted}.
  *
- * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @see org.infinispan.notifications.Listener
- * @see CacheEntryLoaded
- * @since 4.0
+ * @author Manik Surtani
+ * @author Galder Zamarreño
+ * @since 5.0
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface CacheEntryEvicted {
+public interface CacheEntriesEvictedEvent<K, V> extends Event<K, V> {
+
+   /**
+    * Retrieves entries being evicted.
+    *
+    * @return A map containing the key/value pairs of the
+    *         cache entries being evicted.
+    */
+   Map<K, V> getEntries();
+
 }

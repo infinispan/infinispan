@@ -25,9 +25,14 @@ package org.infinispan.util;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+
+import static java.util.Collections.reverse;
+import static java.util.Collections.singletonMap;
+import static java.util.Collections.unmodifiableMap;
 
 /**
  * Static helpers for Infinispan-specific collections
@@ -129,4 +134,51 @@ public class InfinispanCollections {
          return EMPTY_ROS;
       }
    }
+
+   // Below you can find some functional programming style helpers
+
+   /**
+    * A function that converts a type into another one.
+    *
+    * @param <E> Input type.
+    * @param <T> Output type.
+    */
+   public static interface Function<E, T> {
+
+      /**
+       * Transforms an instance of the given input into an instace of the
+       * type to be returned.
+       *
+       * @param input Instance of the input type.
+       * @return Instance of the output type.
+       */
+      T transform(E input);
+   }
+
+   /**
+    * Given a map of well known key/value types, it makes a swallow copy of it
+    * while at the same time transforming it's value type to a desired output
+    * type. The transformation of the value type is done using a given a
+    * function.
+    *
+    * @param input contains the input key/value pair map
+    * @param f function instance to use to transform the value part of the map
+    * @param <K> input map's key type
+    * @param <V> desired output type of the map's value
+    * @param <E> input map's value type
+    * @return a swallow copy of the input Map with all its values transformed.
+    */
+   public static <K, V, E> Map<K, V> transformMapValue(Map<K, E> input, Function<E, V> f) {
+      // This screams for a map function! Gimme functional programming pleasee...
+      if (input.size() == 1) {
+         Map.Entry<K, E> single = input.entrySet().iterator().next();
+         return singletonMap(single.getKey(), f.transform(single.getValue()));
+      } else {
+         Map<K, V> copy = new HashMap<K, V>(input.size());
+         for (Map.Entry<K, E> entry : input.entrySet())
+            copy.put(entry.getKey(), f.transform(entry.getValue()));
+         return unmodifiableMap(copy);
+      }
+   }
+
 }
