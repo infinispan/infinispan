@@ -63,9 +63,9 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       allowedListeners.put(CacheEntryVisited.class, CacheEntryVisitedEvent.class);
       allowedListeners.put(CacheEntryModified.class, CacheEntryModifiedEvent.class);
       allowedListeners.put(CacheEntryActivated.class, CacheEntryActivatedEvent.class);
-      allowedListeners.put(CacheEntryPassivated.class, CacheEntryPassivatedEvent.class);
+      allowedListeners.put(CacheEntriesPassivated.class, CacheEntriesPassivatedEvent.class);
       allowedListeners.put(CacheEntryLoaded.class, CacheEntryLoadedEvent.class);
-      allowedListeners.put(CacheEntryEvicted.class, CacheEntryEvictedEvent.class);
+      allowedListeners.put(CacheEntriesEvicted.class, CacheEntriesEvictedEvent.class);
       allowedListeners.put(TransactionRegistered.class, TransactionRegisteredEvent.class);
       allowedListeners.put(TransactionCompleted.class, TransactionCompletedEvent.class);
       allowedListeners.put(CacheEntryInvalidated.class, CacheEntryInvalidatedEvent.class);
@@ -97,9 +97,9 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       listenersMap.put(CacheEntryVisited.class, cacheEntryVisitedListeners);
       listenersMap.put(CacheEntryModified.class, cacheEntryModifiedListeners);
       listenersMap.put(CacheEntryActivated.class, cacheEntryActivatedListeners);
-      listenersMap.put(CacheEntryPassivated.class, cacheEntryPassivatedListeners);
+      listenersMap.put(CacheEntriesPassivated.class, cacheEntryPassivatedListeners);
       listenersMap.put(CacheEntryLoaded.class, cacheEntryLoadedListeners);
-      listenersMap.put(CacheEntryEvicted.class, cacheEntryEvictedListeners);
+      listenersMap.put(CacheEntriesEvicted.class, cacheEntryEvictedListeners);
       listenersMap.put(TransactionRegistered.class, transactionRegisteredListeners);
       listenersMap.put(TransactionCompleted.class, transactionCompletedListeners);
       listenersMap.put(CacheEntryInvalidated.class, cacheEntryInvalidatedListeners);
@@ -198,17 +198,13 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    }
 
    @Override
-   public void notifyCacheEntryEvicted(final Object key, Object value, final boolean pre, InvocationContext ctx) {
+   public void notifyCacheEntriesEvicted(Map<Object, Object> entries, final boolean pre, InvocationContext ctx) {
       if (!cacheEntryEvictedListeners.isEmpty()) {
-         final boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
          try {
             EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
-            e.setOriginLocal(originLocal);
             e.setPre(pre);
-            e.setKey(key);
-            e.setValue(value);
-            setTx(ctx, e);
+            e.setEntries(entries);
             for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);
@@ -281,15 +277,13 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    }
 
    @Override
-   public void notifyCacheEntryPassivated(Object key, Object value, boolean pre, InvocationContext ctx) {
+   public void notifyCacheEntriesPassivated(Map<Object, Object> entries, boolean pre, InvocationContext ctx) {
       if (!cacheEntryPassivatedListeners.isEmpty()) {
          InvocationContext contexts = icc.suspend();
          try {
             EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_PASSIVATED);
             e.setPre(pre);
-            e.setKey(key);
-            e.setValue(value);
-            setTx(ctx, e);
+            e.setEntries(entries);
             for (ListenerInvocation listener : cacheEntryPassivatedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);
