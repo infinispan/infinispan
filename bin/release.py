@@ -53,11 +53,11 @@ def help_and_exit():
 
 def validate_version(version):  
   version_pattern = get_version_pattern()
-  if version_pattern.match(version):
-    return version.strip().upper()
-  else:
-    prettyprint("Invalid version '"+version+"'!\n", Levels.FATAL)
-    help_and_exit()
+  #if version_pattern.match(version):
+  return version.strip().upper()
+  #else:
+   # prettyprint("Invalid version '"+version+"'!\n", Levels.FATAL)
+   # help_and_exit()
 
 def tag_release(version, branch):
   if git.remote_branch_exists():
