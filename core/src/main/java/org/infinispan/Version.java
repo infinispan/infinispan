@@ -38,7 +38,7 @@ public class Version {
    private static final String MAJOR = "5";
    private static final String MINOR = "0";
    private static final String MICRO = "0";
-   private static final String MODIFIER = "CR4";
+   private static final String MODIFIER = "CR4_AS7";
    private static final boolean SNAPSHOT = false;
 
    public static String VERSION = String.format("%s.%s.%s%s%s", MAJOR, MINOR, MICRO, SNAPSHOT ? "-" : ".", MODIFIER);
