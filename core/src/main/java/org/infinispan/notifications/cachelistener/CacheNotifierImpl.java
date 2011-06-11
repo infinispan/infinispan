@@ -75,6 +75,9 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       allowedListeners.put(CacheEntryInvalidated.class, CacheEntryInvalidatedEvent.class);
       allowedListeners.put(DataRehashed.class, DataRehashedEvent.class);
       allowedListeners.put(TopologyChanged.class, TopologyChangedEvent.class);
+
+      // For backward compat
+      allowedListeners.put(CacheEntryEvicted.class, CacheEntryEvictedEvent.class);
    }
 
    final List<ListenerInvocation> cacheEntryCreatedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
@@ -85,11 +88,14 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    final List<ListenerInvocation> cacheEntryPassivatedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
    final List<ListenerInvocation> cacheEntryLoadedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
    final List<ListenerInvocation> cacheEntryInvalidatedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> cacheEntryEvictedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
+   final List<ListenerInvocation> cacheEntriesEvictedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
    final List<ListenerInvocation> transactionRegisteredListeners = new CopyOnWriteArrayList<ListenerInvocation>();
    final List<ListenerInvocation> transactionCompletedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
    final List<ListenerInvocation> dataRehashedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
    final List<ListenerInvocation> topologyChangedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
+
+   // For backward compat
+   final List<ListenerInvocation> cacheEntryEvictedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
 
    private InvocationContextContainer icc;
    private Cache<Object, Object> cache;
@@ -103,12 +109,15 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       listenersMap.put(CacheEntryActivated.class, cacheEntryActivatedListeners);
       listenersMap.put(CacheEntryPassivated.class, cacheEntryPassivatedListeners);
       listenersMap.put(CacheEntryLoaded.class, cacheEntryLoadedListeners);
-      listenersMap.put(CacheEntriesEvicted.class, cacheEntryEvictedListeners);
+      listenersMap.put(CacheEntriesEvicted.class, cacheEntriesEvictedListeners);
       listenersMap.put(TransactionRegistered.class, transactionRegisteredListeners);
       listenersMap.put(TransactionCompleted.class, transactionCompletedListeners);
       listenersMap.put(CacheEntryInvalidated.class, cacheEntryInvalidatedListeners);
       listenersMap.put(DataRehashed.class, dataRehashedListeners);
       listenersMap.put(TopologyChanged.class, topologyChangedListeners);
+
+      // For backward compat
+      listenersMap.put(CacheEntryEvicted.class, cacheEntryEvictedListeners);
    }
 
    @Inject
@@ -203,49 +212,79 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
 
    @Override
    public void notifyCacheEntriesEvicted(Collection<InternalCacheEntry> entries, InvocationContext ctx) {
-      if (!cacheEntryEvictedListeners.isEmpty() && !entries.isEmpty()) {
-         InvocationContext contexts = icc.suspend();
-         try {
-            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
-            Map<Object, Object> evictedKeysAndValues = transformCollectionToMap(entries,
-                                                                                new InfinispanCollections.MapMakerFunction<Object, Object, InternalCacheEntry>() {
-                                                                                   public Map.Entry<Object, Object> transform(final InternalCacheEntry input) {
-                                                                                      return new Map.Entry<Object, Object>() {
+      if (!entries.isEmpty()) {
+         if (!cacheEntriesEvictedListeners.isEmpty()) {
+            InvocationContext contexts = icc.suspend();
+            try {
+               EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
+               Map<Object, Object> evictedKeysAndValues = transformCollectionToMap(entries,
+                                                                                   new InfinispanCollections.MapMakerFunction<Object, Object, InternalCacheEntry>() {
+                                                                                      public Map.Entry<Object, Object> transform(final InternalCacheEntry input) {
+                                                                                         return new Map.Entry<Object, Object>() {
 
-                                                                                         @Override
-                                                                                         public Object getKey() {
-                                                                                            return input.getKey();
-                                                                                         }
+                                                                                            @Override
+                                                                                            public Object getKey() {
+                                                                                               return input.getKey();
+                                                                                            }
 
-                                                                                         @Override
-                                                                                         public Object getValue() {
-                                                                                            return input.getValue();
-                                                                                         }
+                                                                                            @Override
+                                                                                            public Object getValue() {
+                                                                                               return input.getValue();
+                                                                                            }
 
-                                                                                         @Override
-                                                                                         public Object setValue(Object value) {
-                                                                                            throw new UnsupportedOperationException();
-                                                                                         }
-                                                                                      };
+                                                                                            @Override
+                                                                                            public Object setValue(Object value) {
+                                                                                               throw new UnsupportedOperationException();
+                                                                                            }
+                                                                                         };
+                                                                                      }
                                                                                    }
-                                                                                }
-            );
+               );
 
-            e.setEntries(evictedKeysAndValues);
-            for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e);
-         } finally {
-            icc.resume(contexts);
+               e.setEntries(evictedKeysAndValues);
+               for (ListenerInvocation listener : cacheEntriesEvictedListeners) listener.invoke(e);
+            } finally {
+               icc.resume(contexts);
+            }
+         }
+
+         // For backward compat
+         if (!cacheEntryEvictedListeners.isEmpty()) {
+            InvocationContext contexts = icc.suspend();
+            for (InternalCacheEntry ice : entries) {
+               try {
+                  EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
+                  e.setKey(ice.getKey());
+                  e.setValue(ice.getValue());
+                  for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e);
+               } finally {
+                  icc.resume(contexts);
+               }
+            }
          }
       }
    }
 
    @Override
    public void notifyCacheEntryEvicted(Object key, Object value, InvocationContext ctx) {
-      if (!cacheEntryEvictedListeners.isEmpty()) {
+      if (!cacheEntriesEvictedListeners.isEmpty()) {
          InvocationContext contexts = icc.suspend();
          try {
             EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
             e.setEntries(Collections.singletonMap(key, value));
+            for (ListenerInvocation listener : cacheEntriesEvictedListeners) listener.invoke(e);
+         } finally {
+            icc.resume(contexts);
+         }
+      }
+
+      // For backward compat
+      if (!cacheEntryEvictedListeners.isEmpty()) {
+         InvocationContext contexts = icc.suspend();
+         try {
+            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
+            e.setKey(key);
+            e.setValue(value);
             for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e);
          } finally {
             icc.resume(contexts);

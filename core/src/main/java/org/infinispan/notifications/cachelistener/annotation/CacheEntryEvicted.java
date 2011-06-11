@@ -1,0 +1,46 @@
+/*
+ * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ */
+
+package org.infinispan.notifications.cachelistener.annotation;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * This annotation should be used on methods that need to be notified when cache entries are evicted.
+ * <p/>
+ * Methods annotated with this annotation should be public and take in a single parameter, a {@link
+ * org.infinispan.notifications.cachelistener.event.CacheEntryEvictedEvent} otherwise an {@link
+ * org.infinispan.notifications.IncorrectListenerException} will be thrown when registering your cache listener.
+ * <p/>
+ *
+ * @author Manik Surtani
+ * @author Galder Zamarreño
+ * @see org.infinispan.notifications.Listener
+ * @see CacheEntryLoaded
+ * @deprecated Note that this annotation will be removed in Infinispan 6.0
+ * @see CacheEntriesEvicted
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+@Deprecated
+public @interface CacheEntryEvicted {
+}
