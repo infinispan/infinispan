@@ -24,6 +24,8 @@ package org.infinispan.config;
 
 import org.infinispan.config.Configuration.EvictionType;
 import org.infinispan.config.GlobalConfiguration.TransportType;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 
 import java.util.Set;
@@ -76,7 +78,41 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
          state.fetchInMemoryState(true);
       }
    }
-   
+
+   @Override
+   public void visitL1Type(Configuration.L1Type l1Type) {
+      boolean l1Enabled = l1Type.enabled;
+      boolean l1OnRehash = l1Type.onRehash;
+
+      // If L1 is disabled, L1ForRehash should also be disabled
+      if (!l1Enabled && l1OnRehash) {
+         Set<String> overridden = l1Type.overriddenConfigurationElements;
+         if (overridden.contains("onRehash")) {
+            throw new ConfigurationException("Can only move entries to L1 on rehash when L1 is enabled");
+         } else {
+            log.debug("L1 is disabled and L1OnRehash was not defined, disabling it");
+            l1Type.onRehash(false);
+         }
+      }
+   }
+
+   @Override
+   public void visitCacheLoaderManagerConfig(CacheLoaderManagerConfig cacheLoaderManagerConfig) {
+      boolean shared = cacheLoaderManagerConfig.isShared();
+      if (!shared) {
+         for (CacheLoaderConfig loaderConfig : cacheLoaderManagerConfig.getCacheLoaderConfigs()) {
+            if (loaderConfig instanceof CacheStoreConfig) {
+               CacheStoreConfig storeConfig = (CacheStoreConfig)loaderConfig;
+               Boolean fetchPersistentState = storeConfig.isFetchPersistentState();
+               Boolean purgeOnStartup = storeConfig.isPurgeOnStartup();
+               if (!fetchPersistentState && !purgeOnStartup) {
+                  log.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
+               }
+            }
+         }
+      }
+   }
+
    public void visitEvictionType(EvictionType et) {
       if (et.strategy.isEnabled() && et.maxEntries <= 0)
          throw new ConfigurationException("Eviction maxEntries value cannot be less than or equal to zero if eviction is enabled");

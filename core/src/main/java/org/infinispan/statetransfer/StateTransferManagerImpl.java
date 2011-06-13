@@ -66,6 +66,7 @@ import java.util.Set;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.infinispan.context.Flag.SKIP_SHARED_CACHE_STORE;
 
 public class StateTransferManagerImpl implements StateTransferManager {
 
@@ -313,8 +314,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
             boolean canProvideState = (Boolean) marshaller.objectFromObjectStream(oi);
             if (canProvideState) {
                assertDelimited(oi);
-               // First clear the cache store!!
-               if (cs != null) cs.clear();
                if (transientState) applyInMemoryState(oi);
                assertDelimited(oi);
                if (persistentState) applyPersistentState(oi);
@@ -343,7 +342,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       try {
          Set<InternalCacheEntry> set = (Set<InternalCacheEntry>) marshaller.objectFromObjectStream(i);
          for (InternalCacheEntry se : set)
-            cache.withFlags(CACHE_MODE_LOCAL).put(se.getKey(), se.getValue(), se.getLifespan(), MILLISECONDS, se.getMaxIdle(), MILLISECONDS);
+            cache.withFlags(CACHE_MODE_LOCAL, SKIP_SHARED_CACHE_STORE).put(se.getKey(), se.getValue(), se.getLifespan(), MILLISECONDS, se.getMaxIdle(), MILLISECONDS);
       } catch (Exception e) {
          dataContainer.clear();
          throw new StateTransferException(e);

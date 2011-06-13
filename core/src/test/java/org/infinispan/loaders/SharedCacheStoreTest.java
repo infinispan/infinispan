@@ -39,12 +39,12 @@ public class SharedCacheStoreTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       Configuration cfg = new Configuration().fluent()
          .loaders()
-         .shared(true)
-         .addCacheLoader(new DummyInMemoryCacheStore.Cfg()
-            .storeName(SharedCacheStoreTest.class.getName())
-            .purgeOnStartup(false))
+            .shared(true)
+            .addCacheLoader(new DummyInMemoryCacheStore.Cfg()
+               .storeName(SharedCacheStoreTest.class.getName())
+               .purgeOnStartup(false))
          .clustering()
-         .mode(Configuration.CacheMode.REPL_SYNC)
+            .mode(Configuration.CacheMode.REPL_SYNC)
          .build();
       createCluster(cfg, true, 3);
    }
@@ -59,12 +59,16 @@ public class SharedCacheStoreTest extends MultipleCacheManagersTest {
    public void testUnnecessaryWrites() throws CacheLoaderException {
       cache(0).put("key", "value");
 
+      // the second and third cache are only started here
+      // so state transfer will copy the key to the other caches
+      // however is should not write it to the cache store again
       for (Cache<Object, Object> c: caches())
          assert "value".equals(c.get("key"));
 
       for (CacheStore cs: cachestores()) {
          assert cs.containsKey("key");
          DummyInMemoryCacheStore dimcs = (DummyInMemoryCacheStore) cs;
+         assert dimcs.stats().get("clear") == 0: "Cache store should not be cleared, purgeOnStartup is false";
          assert dimcs.stats().get("store") == 1: "Cache store should have been written to just once, but was written to " + dimcs.stats().get("store") + " times";
       }
 
