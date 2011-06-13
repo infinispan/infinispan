@@ -145,7 +145,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       manager(2).stop();
       log.trace("Just stopped server 2");
 
-      waitForClusterToForm(2);
+      waitForServerToDie(2);
 
       InetSocketAddress server3Address = new InetSocketAddress("localhost", hotRodServer3.getPort());      
 
@@ -176,5 +176,9 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       for (int i = 0; i < memberCount; i++) {
          TestingUtil.blockUntilCacheStatusAchieved(manager(i).getCache(), ComponentStatus.RUNNING, 30000);
       }
+   }
+
+   protected void waitForServerToDie(int memberCount) {
+      TestingUtil.blockUntilViewReceived(manager(0).getCache(), memberCount, 30000, false);
    }
 }

@@ -173,7 +173,7 @@ public class EagerLockingSingleLockTest extends MultipleCacheManagersTest {
       assert TestingUtil.extractLockManager(cache(3)).isLocked(k);
 
       manager(3).stop();
-      TestingUtil.blockUntilViewReceived(cache(0), 3, 10000);
+      TestingUtil.blockUntilViewReceived(cache(0), 3, 10000, false);
       BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(0), cache(1), cache(2));
 
       try {
