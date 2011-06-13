@@ -87,6 +87,5 @@ public interface Ids {
    int XID_DEADLOCK_DETECTING_GLOBAL_TRANSACTION = 67;
    int XID_GLOBAL_TRANSACTION = 68;
 
-   int VIRTUAL_ADDRESS = 69;
    int IN_DOUBT_TX_INFO = 70;
 }

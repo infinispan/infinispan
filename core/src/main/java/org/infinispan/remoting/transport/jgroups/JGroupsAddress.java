@@ -67,11 +67,7 @@ public class JGroupsAddress implements Address {
 
    @Override
    public String toString() {
-      if (address != null) {
-         return address.toString();
-      } else {
-         return "null";
-      }
+      return String.valueOf(address);
    }
 
    public org.jgroups.Address getJGroupsAddress() {

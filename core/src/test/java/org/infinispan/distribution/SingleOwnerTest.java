@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "unit", testName = "distribution.SingleOwnerTest")
+@Test(groups = "functional", testName = "distribution.SingleOwnerTest")
 public class SingleOwnerTest extends BaseDistFunctionalTest {
    
    @Override

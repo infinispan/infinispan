@@ -58,26 +58,21 @@ public class TestTopologyAwareAddress extends TestAddress implements TopologyAwa
 
    @Override
    public boolean isSameSite(TopologyAwareAddress addr) {
-      if (!(addr instanceof TestTopologyAwareAddress))
-         return false;
-      TestTopologyAwareAddress taa = (TestTopologyAwareAddress) addr;
-      return siteId != null ? siteId.equals(taa.siteId) : taa.siteId == null;
+      return siteId != null ? siteId.equals(addr.getSiteId()) : addr.getSiteId() == null;
    }
 
    @Override
    public boolean isSameRack(TopologyAwareAddress addr) {
-      if (!(addr instanceof TestTopologyAwareAddress))
+      if (!isSameSite(addr))
          return false;
-      TestTopologyAwareAddress taa = (TestTopologyAwareAddress) addr;
-      return rackId != null ? rackId.equals(taa.rackId) : taa.rackId == null;
+      return rackId != null ? rackId.equals(addr.getRackId()) : addr.getRackId() == null;
    }
 
    @Override
    public boolean isSameMachine(TopologyAwareAddress addr) {
-      if (!(addr instanceof TestTopologyAwareAddress))
+      if (!isSameSite(addr) || !isSameRack(addr))
          return false;
-      TestTopologyAwareAddress taa = (TestTopologyAwareAddress) addr;
-      return machineId != null ? machineId.equals(taa.machineId) : taa.machineId == null;
+      return machineId != null ? machineId.equals(addr.getMachineId()) : addr.getMachineId() == null;
    }
 
    public String getSiteId() {

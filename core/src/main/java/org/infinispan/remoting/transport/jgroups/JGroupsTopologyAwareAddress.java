@@ -21,6 +21,7 @@ package org.infinispan.remoting.transport.jgroups;
 
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
+import org.jgroups.Address;
 import org.jgroups.util.TopologyUUID;
 
 import java.io.IOException;
@@ -36,10 +37,6 @@ import java.util.Set;
  * @since 5.0
  */
 public class JGroupsTopologyAwareAddress extends JGroupsAddress implements TopologyAwareAddress {
-
-   public JGroupsTopologyAwareAddress() {
-      super();
-   }
 
    public JGroupsTopologyAwareAddress(org.jgroups.Address address) {
       super(address);
@@ -64,26 +61,21 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
 
    @Override
    public boolean isSameSite(TopologyAwareAddress addr) {
-      TopologyUUID my_addr= (TopologyUUID) getJGroupsAddress();
-      TopologyUUID other_addr= addr instanceof JGroupsTopologyAwareAddress?
-            (TopologyUUID) ((JGroupsTopologyAwareAddress) addr).getJGroupsAddress() : null;
-      return other_addr != null && (my_addr.getSiteId() == null && other_addr.getSiteId() == null || my_addr.getSiteId().equals(other_addr.getSiteId()));
+      return getSiteId() == null ? addr.getSiteId() == null : getSiteId().equals(addr.getSiteId());
    }
 
    @Override
    public boolean isSameRack(TopologyAwareAddress addr) {
-      TopologyUUID my_addr= (TopologyUUID) getJGroupsAddress();
-      TopologyUUID other_addr= addr instanceof JGroupsTopologyAwareAddress?
-            (TopologyUUID) ((JGroupsTopologyAwareAddress) addr).getJGroupsAddress() : null;
-      return other_addr != null && (my_addr.getRackId() == null && other_addr.getRackId() == null || my_addr.getRackId().equals(other_addr.getRackId()));
+      if (!isSameSite(addr))
+         return false;
+      return getRackId() == null ? addr.getRackId() == null : getRackId().equals(addr.getRackId());
    }
 
    @Override
    public boolean isSameMachine(TopologyAwareAddress addr) {
-      TopologyUUID my_addr= (TopologyUUID) getJGroupsAddress();
-      TopologyUUID other_addr= addr instanceof JGroupsTopologyAwareAddress?
-            (TopologyUUID) ((JGroupsTopologyAwareAddress) addr).getJGroupsAddress() : null;
-      return other_addr != null && (my_addr.getMachineId() == null && other_addr.getMachineId() == null || my_addr.getMachineId().equals(other_addr.getMachineId()));
+      if (!isSameSite(addr) || !isSameRack(addr))
+         return false;
+      return getMachineId() == null ? addr.getMachineId() == null : getMachineId().equals(addr.getMachineId());
    }
 
    public static class Externalizer implements org.infinispan.marshall.AdvancedExternalizer<JGroupsTopologyAwareAddress> {
@@ -93,8 +85,8 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
       }
 
       public JGroupsTopologyAwareAddress readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         JGroupsTopologyAwareAddress address = new JGroupsTopologyAwareAddress();
-         address.address = (org.jgroups.Address) unmarshaller.readObject();
+         Address jgroupsAddress = (Address) unmarshaller.readObject();
+         JGroupsTopologyAwareAddress address = new JGroupsTopologyAwareAddress(jgroupsAddress);
          return address;
       }
 

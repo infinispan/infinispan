@@ -53,9 +53,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       Random r = new Random();
       for (int i = 0; i < 100; i++) keys[i] = Integer.toHexString(r.nextInt());
 
-      // always expect key to be mapped to adjacent nodes!
       for (String key : keys) {
-
          List<Address> owners = new ArrayList<Address>();
          for (Cache<Object, String> c : caches) {
             boolean isOwner = isOwner(c, key);

@@ -43,7 +43,7 @@ import org.infinispan.util.Util;
  * @author Pete Muir
  *
  */
-public class VirtualAddress implements Address {
+class VirtualAddress implements Address {
    
    private final Address realAddress;
    private final int id;
@@ -65,8 +65,9 @@ public class VirtualAddress implements Address {
    
    @Override
    public int hashCode() {
-      int result = realAddress.hashCode();
-      result = 31 * result + id;
+      // ensure that the virtual address with id 0 has the same hash code as the wrapped address
+      int result = id;
+      result = 31 * result + realAddress.hashCode();
       return result;
    }
    
@@ -83,31 +84,4 @@ public class VirtualAddress implements Address {
    public String toString() {
       return formatString("%s-%d", realAddress, id);
    }
-   
-   public static class Externalizer extends AbstractExternalizer<VirtualAddress> {
-      @Override
-      public void writeObject(ObjectOutput output, VirtualAddress address) throws IOException {
-         output.writeObject(address.realAddress);
-         output.writeInt(address.id);
-      }
-
-      @Override
-      public VirtualAddress readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         Address realAddress = (Address) unmarshaller.readObject();
-         int id = unmarshaller.readInt();
-         VirtualAddress address = new VirtualAddress(realAddress, id);
-         return address;
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.VIRTUAL_ADDRESS;
-      }
-
-      @Override
-      public Set<Class<? extends VirtualAddress>> getTypeClasses() {
-         return Util.<Class<? extends VirtualAddress>>asSet(VirtualAddress.class);
-      }
-   }
-   
 }

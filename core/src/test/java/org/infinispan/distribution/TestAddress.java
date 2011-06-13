@@ -22,6 +22,7 @@
  */
 package org.infinispan.distribution;
 
+import org.infinispan.distribution.ch.AbstractWheelConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -38,14 +39,6 @@ public class TestAddress implements Address {
    }
 
    public TestAddress(int addressNum) {
-      this.addressNum = addressNum;
-   }
-
-   public int getAddressNum() {
-      return addressNum;
-   }
-
-   public void setAddressNum(int addressNum) {
       this.addressNum = addressNum;
    }
 

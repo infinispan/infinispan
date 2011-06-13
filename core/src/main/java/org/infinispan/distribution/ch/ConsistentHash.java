@@ -90,7 +90,7 @@ public interface ConsistentHash {
     * value for an address, this method will return -1.
     *
     * @return An int between 0 and hash space if the address is present in the hash wheel, otherwise it returns -1.
-    * @deprecated This method doesn't work with virtual nodes enabled (it will always return -1)
+    * @throws IllegalStateException If virtual nodes are enabled.
     */
    int getHashId(Address a);
 
@@ -109,6 +109,7 @@ public interface ConsistentHash {
     * Pre: leaver must be present in the caches known to this CH, as returned by {@link #getCaches()}
     * @param leaver the node that leaves the cluster
     * @param replCount
+    * @deprecated No longer supported. This method doesn't make sense with virtual nodes enabled.
     */
    List<Address> getStateProvidersOnLeave(Address leaver, int replCount);
 
@@ -116,11 +117,13 @@ public interface ConsistentHash {
     * Returns the nodes that would act as state providers when a new node joins:
     * - the nodes for which the joiner is a backup
     * - the nodes that held joiner's state
+    * @deprecated No longer supported. This method doesn't make sense with virtual nodes enabled.
     */
    List<Address> getStateProvidersOnJoin(Address joiner, int replCount);
 
    /**
     * Returns the nodes that backup data for the supplied node including the node itself.
+    * @deprecated No longer supported. This method doesn't make sense with virtual nodes enabled.
     */
    List<Address> getBackupsForNode(Address node, int replCount);
 }

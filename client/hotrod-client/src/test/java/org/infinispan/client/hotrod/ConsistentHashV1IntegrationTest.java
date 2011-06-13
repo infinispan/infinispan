@@ -128,7 +128,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
    }
 
    private void runTest(int cacheIndex) {
-      List<Address> backups = advancedCache(cacheIndex).getDistributionManager().getConsistentHash().getBackupsForNode(address(cacheIndex), 2);
+      List<Address> backups = advancedCache(cacheIndex).getDistributionManager().getConsistentHash().locate(address(cacheIndex), 2);
       assert backups.contains(address(cacheIndex));
       Map<Address, Integer> hitNodes = new HashMap<Address, Integer>();
       hitNodes.put(backups.get(0), 0);

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,7 +20,8 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.distribution.topologyaware;
+
+package org.infinispan.distribution.virtualnodes;
 
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.distribution.DistSyncFuncTest;
@@ -33,8 +34,12 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test (groups = "functional", testName = "distribution.TopologyAwareChFunctionalTest")
-public class TopologyAwareChFunctionalTest extends DistSyncFuncTest {
+@Test (groups = "functional", testName = "topologyaware.VNodesChFunctionalTest")
+public class VNodesTachFunctionalTest extends DistSyncFuncTest {
+
+   public VNodesTachFunctionalTest() {
+      numVirtualNodes = 10;
+   }
 
    @Override
    protected EmbeddedCacheManager addClusterEnabledCacheManager() {
