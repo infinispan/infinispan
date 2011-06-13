@@ -28,9 +28,12 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * Holds the logic of looking up a file, in the following sequence: <ol> <li> try to load it with the current thread's
@@ -85,38 +88,63 @@ public class FileLookup {
    protected InputStream getAsInputStreamFromClassLoader(String filename, ClassLoader appClassLoader) {
       
       ClassLoader[] cls = Util.getClassLoaders(appClassLoader);
-
-         for (ClassLoader cl : cls)  {
-            if (cl == null)
-               continue;
-
-            try {
-               return cl.getResourceAsStream(filename);
-            } catch (RuntimeException e) {
-               // Ignore this as the classloader may throw exceptions for a valid path on Windows
-            }
+      for (ClassLoader cl : cls)  {
+         if (cl == null)
+            continue;
+         try {
+            return cl.getResourceAsStream(filename);
+         } catch (RuntimeException e) {
+            // Ignore this as the classloader may throw exceptions for a valid path on Windows
          }
-         return null;
+      }
+      return null;
+   }
+   
+   protected URL getAsURLFromClassLoader(String filename, ClassLoader userClassLoader) {
+      
+      ClassLoader[] cls = new ClassLoader[] {
+            userClassLoader,  // User defined classes
+            Util.class.getClassLoader(), // Infinispan classes (not always on TCCL [modular env])
+            ClassLoader.getSystemClassLoader() // Used when load time instrumentation is in effect
+            };
+
+
+      for (ClassLoader cl : cls)  {
+         if (cl == null)
+            continue;
+
+         try {
+            return cl.getResource(filename);
+         } catch (RuntimeException e) {
+            // Ignore this as the classloader may throw exceptions for a valid path on Windows
+         }
+      }
+      return null;
+   }
+   
+   protected Collection<URL> getAsURLsFromClassLoader(String filename, ClassLoader userClassLoader) throws IOException {
+      
+      ClassLoader[] cls = new ClassLoader[] {
+            userClassLoader,  // User defined classes
+            Util.class.getClassLoader(), // Infinispan classes (not always on TCCL [modular env])
+            ClassLoader.getSystemClassLoader() // Used when load time instrumentation is in effect
+            };
+      
+      Collection<URL> urls = new HashSet<URL>();
+      for (ClassLoader cl : cls)  {
+         if (cl == null)
+            continue;
+         try {
+            urls.addAll(new EnumerationList<URL>(cl.getResources(filename)));
+         } catch (RuntimeException e) {
+            // Ignore this as the classloader may throw exceptions for a valid path on Windows
+         }
+      }
+      return urls;
    }
 
    public URL lookupFileLocation(String filename, ClassLoader cl) {
-      URL u;
-      try {
-         u = cl == null ? null : cl.getResource(filename);
-      } catch (RuntimeException re) {
-         // could be valid; see ISPN-827
-         u = null;
-      }
-
-      if (u == null) {
-         try {
-            // check system class loader
-            u = getClass().getClassLoader().getResource(filename);
-         } catch (RuntimeException re) {
-            // could be valid; see ISPN-827
-            u = null;
-         }
-      }
+      URL u = getAsURLFromClassLoader(filename, cl);
 
       if (u == null) {
          File f = new File(filename);
@@ -129,4 +157,18 @@ public class FileLookup {
       }
       return u;
    }
+   
+   public Collection<URL> lookupFileLocations(String filename, ClassLoader cl) throws IOException{
+      Collection<URL> u = getAsURLsFromClassLoader(filename, cl);
+
+         File f = new File(filename);
+         if (f.exists()) try {
+            u.add(f.toURI().toURL());
+         }
+         catch (MalformedURLException e) {
+            // what do we do here?
+         }
+      return u;
+   }
+   
 }

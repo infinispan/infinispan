@@ -256,7 +256,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
    }
 
    CacheLoader createCacheLoader(CacheLoaderConfig cfg, AdvancedCache<Object, Object> cache) throws Exception {
-      CacheLoader tmpLoader = (CacheLoader) Util.getInstance(cfg.getCacheLoaderClassName(), Thread.currentThread().getContextClassLoader());
+      CacheLoader tmpLoader = (CacheLoader) Util.getInstance(cfg.getCacheLoaderClassName(), cache.getClassLoader());
 
       if (tmpLoader != null) {
          if (cfg instanceof CacheStoreConfig) {

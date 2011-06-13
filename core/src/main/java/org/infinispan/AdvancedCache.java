@@ -168,4 +168,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * reference to Infinispan's XAResource implementation.
     */
    XAResource getXAResource();
+   
+   ClassLoader getClassLoader();
 }

@@ -75,7 +75,8 @@ public class TestCacheManagerFactory {
       InfinispanConfiguration parser = InfinispanConfiguration.newInfinispanConfiguration(
             xmlFile,
             InfinispanConfiguration.resolveSchemaPath(),
-            new ConfigurationValidatingVisitor());
+            new ConfigurationValidatingVisitor(),
+            Thread.currentThread().getContextClassLoader());
       return fromConfigFileParser(parser, allowDupeDomains);
    }
 

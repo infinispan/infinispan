@@ -286,7 +286,7 @@ class ExternalizerTable implements ObjectTable {
       List<AdvancedExternalizerConfig> configs = globalCfg.getExternalizers();
       for (AdvancedExternalizerConfig config : configs) {
          AdvancedExternalizer ext = config.getAdvancedExternalizer() != null ? config.getAdvancedExternalizer()
-               : (AdvancedExternalizer) Util.getInstance(config.getExternalizerClass(), Thread.currentThread().getContextClassLoader());
+               : (AdvancedExternalizer) Util.getInstance(config.getExternalizerClass(), globalCfg.getClassLoader());
 
          // If no XML or programmatic config, id in annotation is used
          // as long as it's not default one (meaning, user did not set it).

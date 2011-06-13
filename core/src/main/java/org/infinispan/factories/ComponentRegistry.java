@@ -87,7 +87,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
          registerComponent(new BootstrapFactory(cache, configuration, this), BootstrapFactory.class);
 
          // register any module-specific commmand initializers
-         Map<Byte, ModuleCommandInitializer> initializers = ModuleProperties.moduleCommandInitializers();
+         // Moduiles are on the same classloader as Infinispan
+         Map<Byte, ModuleCommandInitializer> initializers = ModuleProperties.moduleCommandInitializers(null);
          if (initializers != null && !initializers.isEmpty()) {
             registerNonVolatileComponent(initializers, MODULE_COMMAND_INITIALIZERS);
             for (ModuleCommandInitializer mci: initializers.values()) registerNonVolatileComponent(mci, mci.getClass());

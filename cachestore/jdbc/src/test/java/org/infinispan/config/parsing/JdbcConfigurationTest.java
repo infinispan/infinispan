@@ -44,7 +44,7 @@ import java.util.Map;
 public class JdbcConfigurationTest {
    
    public void testParseCacheLoaders() throws Exception {
-      InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration("configs/jdbc-parsing-test.xml");
+      InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration("configs/jdbc-parsing-test.xml", Thread.currentThread().getContextClassLoader());
       Map<String, Configuration> namedConfigurations = configuration.parseNamedConfigurations();
       Configuration c = namedConfigurations.get("withJDBCLoader");
       CacheLoaderManagerConfig clc = c.getCacheLoaderManagerConfig();

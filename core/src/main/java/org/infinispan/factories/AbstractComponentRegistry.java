@@ -104,7 +104,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    // component and method containers
    private final Map<String, Component> componentLookup = new HashMap<String, Component>(1);
 
-   protected static List<ModuleLifecycle> moduleLifecycles = ModuleProperties.resolveModuleLifecycles();
+   // Modules must be on the same classloader as Infinispan 
+   // TODO revise this assumption
+   protected static List<ModuleLifecycle> moduleLifecycles = ModuleProperties.resolveModuleLifecycles(null);
 
    protected volatile ComponentStatus state = ComponentStatus.INSTANTIATED;
 
