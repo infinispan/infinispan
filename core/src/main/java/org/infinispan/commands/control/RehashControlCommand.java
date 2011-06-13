@@ -91,11 +91,12 @@ public class RehashControlCommand extends BaseRpcCommand {
    }
 
 
-   public RehashControlCommand(String cacheName, Type type, Address sender, Map<Object, InternalCacheValue> state,ConsistentHash oldConsistentHash,
+   public RehashControlCommand(String cacheName, Type type, Address sender, int viewId, Map<Object, InternalCacheValue> state,ConsistentHash oldConsistentHash,
                                 ConsistentHash consistentHash) {
       super(cacheName);
       this.type = type;
       this.sender = sender;
+      this.viewId = viewId;
       this.state = state;
       this.oldCH = oldConsistentHash;
       this.newCH = consistentHash;

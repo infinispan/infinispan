@@ -378,10 +378,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new RehashControlCommand(cacheName, type, sender, viewId);
    }
 
-   public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type,
-            Address sender, Map<Object, InternalCacheValue> state, ConsistentHash oldCH,
-            ConsistentHash newCH) {
-      return new RehashControlCommand(cacheName, type, sender, state, oldCH, newCH);
+   public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type, Address sender,
+         int viewId, Map<Object, InternalCacheValue> state, ConsistentHash oldCH, ConsistentHash newCH) {
+      return new RehashControlCommand(cacheName, type, sender, viewId, state, oldCH, newCH);
    }
 
    public String getCacheName() {
