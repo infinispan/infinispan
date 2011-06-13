@@ -595,7 +595,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Invocation of %s threw an exception %s. Exception is ignored.", id = 120)
-   void ignoringException(String name, @Cause Throwable t);
+   void ignoringException(String methodName, String exceptionName, @Cause Throwable t);
 
    @LogMessage(level = ERROR)
    @Message(value = "Unable to set value!", id = 121)
