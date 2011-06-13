@@ -44,9 +44,9 @@ import org.infinispan.marshall.StreamingMarshaller;
 public class JBossMarshaller extends GenericJBossMarshaller implements StreamingMarshaller {   
    ExternalizerTable externalizerTable;
 
-   public void start(ClassLoader defaultCl, RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller, GlobalConfiguration globalCfg) {
+   public void start(ClassLoader appClassLoader, RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller, GlobalConfiguration globalCfg) {
       if (log.isDebugEnabled()) log.debug("Using JBoss Marshalling");
-      this.defaultCl = defaultCl;
+      this.appClassLoader = appClassLoader;
       externalizerTable = createExternalizerTable(cmdFactory, ispnMarshaller, globalCfg);
       configuration.setObjectTable(externalizerTable);
    }
@@ -54,7 +54,7 @@ public class JBossMarshaller extends GenericJBossMarshaller implements Streaming
    public void stop() {
       super.stop();
       // Do not leak classloader when cache is stopped.
-      defaultCl = null;
+      appClassLoader = null;
       if (externalizerTable != null) externalizerTable.stop();
    }
 
@@ -65,7 +65,7 @@ public class JBossMarshaller extends GenericJBossMarshaller implements Streaming
 
    protected ExternalizerTable createExternalizerTable(RemoteCommandsFactory f, StreamingMarshaller m, GlobalConfiguration g) {
       ExternalizerTable extTable = new ExternalizerTable();
-      extTable.start(f, m, g);
+      extTable.start(f, m, g, appClassLoader);
       return extTable;
    }
 }

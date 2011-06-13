@@ -161,7 +161,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
          protected ExternalizerTable createExternalizerTable(RemoteCommandsFactory f, StreamingMarshaller m, GlobalConfiguration g) {
             ExternalizerTable objectTable = new ExternalizerTable();
             objectTable.addInternalExternalizer(ext);
-            objectTable.start(f, m, g);
+            objectTable.start(f, m, g, Thread.currentThread().getContextClassLoader());
             return objectTable;
          }
       };

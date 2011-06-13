@@ -43,6 +43,7 @@ import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.distribution.RemoteTransactionLogDetails;
+import org.infinispan.distribution.ch.AbstractWheelConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.ch.UnionConsistentHash;
@@ -178,9 +179,9 @@ class ExternalizerTable implements ObjectTable {
       internalExternalizers.add(ext);
    }
 
-   public void start(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller, GlobalConfiguration globalCfg) {
+   public void start(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller, GlobalConfiguration globalCfg, ClassLoader appClassLoader) {
       initInternalExternalizers();
-      loadInternalMarshallables(cmdFactory, ispnMarshaller);
+      loadInternalMarshallables(cmdFactory, ispnMarshaller, appClassLoader);
       loadForeignMarshallables(globalCfg);
       started = true;
       if (log.isTraceEnabled()) {
@@ -252,13 +253,15 @@ class ExternalizerTable implements ObjectTable {
       return writers.get(o.getClass()).getExternalizerId();
    }
 
-   private void loadInternalMarshallables(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller) {
+   private void loadInternalMarshallables(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller, ClassLoader appClassLoader) {
       for (AdvancedExternalizer ext : internalExternalizers) {
          if (ext instanceof ReplicableCommandExternalizer)
             ((ReplicableCommandExternalizer) ext).inject(cmdFactory);
          if (ext instanceof MarshalledValue.Externalizer)
             ((MarshalledValue.Externalizer) ext).inject(ispnMarshaller);
-
+         if (ext instanceof AbstractWheelConsistentHash.Externalizer) 
+            ((AbstractWheelConsistentHash.Externalizer<?>) ext).inject(appClassLoader);
+         
          int id = checkInternalIdLimit(ext.getId(), ext);
          updateExtReadersWritersWithTypes(new ExternalizerAdapter(id, ext));
       }
