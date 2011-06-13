@@ -26,6 +26,8 @@ import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 
+import java.beans.PropertyEditorSupport;
+
 /**
  * Configures {@link org.infinispan.loaders.file.FileCacheStore}.  This allows you to tune a number of characteristics
  * of the {@link FileCacheStore}.
@@ -45,18 +47,38 @@ import org.infinispan.loaders.decorators.AsyncStoreConfig;
  * memory. By default, this is set to <tt>2048</tt>.</li>
  *    <li><tt>lockAcquistionTimeout</tt> - the length of time, in milliseconds, to wait for locks
  * before timing out and throwing an exception.  By default, this is set to <tt>60000</tt>.</li>
+ *    <li><tt>fsyncMode</tt> - configures how the file changes will be
+ * synchronized with the underlying file system. This property has three
+ * possible values:
+ *       <ul>
+ *          <li><tt>default</tt> means that the file system will be
+ *       synchronized when the OS buffer is full or when the bucket is read.</li>
+ *          <li><tt>perWrite<tt/> configures the file cache store to sync up
+ *       changes after each write request<li/>
+ *          <li><tt>periodic<tt/> enables sync operations to happen as per a
+ *       defined interval, or when the bucket is about to be read.<li/>
+ *   The default mode configured is <tt>default</tt>
+ *   </li>
+ *   <li><tt>fsyncInterval</tt> - specifies the time after which the file
+ * changes in the cache need to be flushed. This option has only effect when
+ * <tt>periodic<tt/> fsync mode is in use. The default fsync interval is 1
+ * second.</li>
+ *
  * </ul>
  *
  * @author Manik Surtani
- * @autor Vladimir Blagojevic
+ * @author Vladimir Blagojevic
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public class FileCacheStoreConfig extends LockSupportCacheStoreConfig {
 
    private static final long serialVersionUID = 1551092386868095926L;
    
-   String location = "Infinispan-FileCacheStore";
+   private String location = "Infinispan-FileCacheStore";
    private int streamBufferSize = 8192;
+   private FsyncMode fsyncMode = FsyncMode.DEFAULT;
+   private long fsyncInterval = 1000;
 
    public FileCacheStoreConfig() {
       setCacheLoaderClassName(FileCacheStore.class.getName());
@@ -122,5 +144,63 @@ public class FileCacheStoreConfig extends LockSupportCacheStoreConfig {
    public FileCacheStoreConfig ignoreModifications(Boolean ignoreModifications) {
       super.ignoreModifications(ignoreModifications);
       return this;
+   }
+
+   public long getFsyncInterval() {
+      return fsyncInterval;
+   }
+
+   // TODO: This should be private since they should only be used for XML parsing, defer to XML changes for ISPN-1065
+   public void setFsyncInterval(long fsyncInterval) {
+      this.fsyncInterval = fsyncInterval;
+   }
+
+   public FileCacheStoreConfig fsyncInterval(long fsyncInterval) {
+      setFsyncInterval(fsyncInterval);
+      return this;
+   }
+
+   public FsyncMode getFsyncMode() {
+      return fsyncMode;
+   }
+
+   // TODO: This should be private since they should only be used for XML parsing, defer to XML changes for ISPN-1065
+   public void setFsyncMode(FsyncMode fsyncMode) {
+      this.fsyncMode = fsyncMode;
+   }
+
+   public FileCacheStoreConfig fsyncMode(FsyncMode fsyncMode) {
+      setFsyncMode(fsyncMode);
+      return this;
+   }
+
+   public static enum FsyncMode {
+      DEFAULT, PER_WRITE, PERIODIC
+   }
+
+   /**
+    * Property editor for fsync mode configuration. It's automatically
+    * registered the {@link java.beans.PropertyEditorManager} so that it can
+    * transform text based modes into its corresponding enum value.
+    */
+   public static class FsyncModeEditor extends PropertyEditorSupport {
+      private FsyncMode mode;
+
+      @Override
+      public void setAsText(String text) throws IllegalArgumentException {
+         if (text.equals("default"))
+            mode = FsyncMode.DEFAULT;
+         else if (text.equals("perWrite"))
+            mode = FsyncMode.PER_WRITE;
+         else if (text.equals("periodic"))
+            mode = FsyncMode.PERIODIC;
+         else
+            throw new IllegalArgumentException("Unknown fsyncMode value: " + text);
+      }
+
+      @Override
+      public Object getValue() {
+         return mode;
+      }
    }
 }
