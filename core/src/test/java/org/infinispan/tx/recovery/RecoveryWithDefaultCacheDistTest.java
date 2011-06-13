@@ -114,7 +114,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
 
       manager(1).stop();
       super.cacheManagers.remove(1);
-      TestingUtil.blockUntilViewReceived(cache(0), 1, 60000);
+      TestingUtil.blockUntilViewReceived(cache(0), 1, 60000, false);
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {

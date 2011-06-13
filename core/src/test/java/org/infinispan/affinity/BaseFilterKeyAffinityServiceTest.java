@@ -89,7 +89,7 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
       caches.get(0).getCacheManager().stop();
       caches.remove(0);
       Assert.assertEquals(1, caches.size());
-      TestingUtil.blockUntilViewsReceived(10000, caches);
+      TestingUtil.blockUntilViewsReceived(10000, false, (Cache[]) caches.toArray(new Cache[0]));
       Assert.assertEquals(1, topology().size());
 
       eventually(new Condition() {
