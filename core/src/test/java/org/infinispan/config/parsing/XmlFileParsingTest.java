@@ -264,11 +264,19 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert csConf.isIgnoreModifications();
       assert csConf.isPurgeOnStartup();
       assert csConf.getLocation().equals("/tmp/FileCacheStore-Location");
+      assert csConf.getFsyncMode() == FileCacheStoreConfig.FsyncMode.PER_WRITE;
+      assert csConf.getFsyncInterval() == 2000;
       assert csConf.getSingletonStoreConfig().getPushStateTimeout() == 20000;
       assert csConf.getSingletonStoreConfig().isPushStateWhenCoordinator();
       assert csConf.getAsyncStoreConfig().getThreadPoolSize() == 5;
       assert csConf.getAsyncStoreConfig().getFlushLockTimeout() == 15000;
       assert csConf.getAsyncStoreConfig().isEnabled();
+
+      c = getNamedCacheConfig(namedCaches, "withLoaderDefaults");
+      csConf = (FileCacheStoreConfig) c.getCacheLoaders().get(0);
+      assert csConf.getCacheLoaderClassName().equals("org.infinispan.loaders.file.FileCacheStore");
+      assert csConf.getLocation().equals("/tmp/Another-FileCacheStore-Location");
+      assert csConf.getFsyncMode() == FileCacheStoreConfig.FsyncMode.DEFAULT;
 
       c = getNamedCacheConfig(namedCaches, "withouthJmxEnabled");
       assert !c.isExposeJmxStatistics();

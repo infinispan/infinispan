@@ -49,8 +49,8 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "loaders.file.FileCacheStoreTest")
 public class FileCacheStoreTest extends BaseCacheStoreTest {
 
-   private FileCacheStore fcs;
-   private String tmpDirectory;
+   FileCacheStore fcs;
+   String tmpDirectory;
 
    @BeforeClass
    @Parameters({"basedir"})
@@ -70,11 +70,16 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
       fcs = new FileCacheStore();
       FileCacheStoreConfig cfg = new FileCacheStoreConfig()
          .fetchPersistentState(true)
+         .fsyncMode(getFsyncMode())
          .location(tmpDirectory)
          .purgeSynchronously(true); // for more accurate unit testing
       fcs.init(cfg, getCache(), getMarshaller());
       fcs.start();
       return fcs;
+   }
+
+   protected FileCacheStoreConfig.FsyncMode getFsyncMode() {
+      return FileCacheStoreConfig.FsyncMode.DEFAULT;
    }
 
    @Override
@@ -114,7 +119,13 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
       assert b.getEntries().isEmpty();
 
       fcs.updateBucket(b);
-      assert !new File(fcs.root, b.getBucketIdAsString()).exists();
+      checkBucketExists(b);
+   }
+
+   protected void checkBucketExists(Bucket b) {
+      File file = new File(fcs.root, b.getBucketIdAsString());
+      assert file.exists();
+      assert file.length() == 0;
    }
 
    public void testToStream() throws Exception {
