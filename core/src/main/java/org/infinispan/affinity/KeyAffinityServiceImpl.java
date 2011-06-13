@@ -121,13 +121,23 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
          throw new NullPointerException("Null address not supported!");
       BlockingQueue queue = address2key.get(address);
       if (queue == null)
-         return null; // No address for key, unlikely
+         throw new IllegalStateException("Address " + address + " is no longer in the cluster");
 
       try {
          maxNumberInvariant.readLock().lock();
          Object result;
          try {
-            result = queue.take();
+            // first try to take an element without waiting
+            result = queue.poll();
+            if (result == null) {
+               // there are no elements in the queue, make sure the producer is started
+               keyProducerStartLatch.open();
+               // our address might have been removed from the consistent hash
+               if (!address.equals(getAddressForKey(address)))
+                  throw new IllegalStateException("Address " + address + " is no longer in the cluster");
+
+               result = queue.take();
+            }
          } finally {
             maxNumberInvariant.readLock().unlock();
          }
@@ -242,7 +252,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
       private void generateKeys() {
          maxNumberInvariant.readLock().lock();
          try {
-            while (maxNumberOfKeys.get() != exitingNumberOfKeys.get()) {
+            while (!Thread.currentThread().isInterrupted() && exitingNumberOfKeys.get() < maxNumberOfKeys.get()) {
                Object key = keyGenerator.getKey();
                Address addressForKey = getAddressForKey(key);
                if (interestedInAddress(addressForKey)) {
