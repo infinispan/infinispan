@@ -61,7 +61,7 @@ import java.util.concurrent.ConcurrentMap;
 public class GenericJBossMarshaller extends AbstractMarshaller {
 
    protected static final Log log = LogFactory.getLog(JBossMarshaller.class);
-   protected ClassLoader defaultCl = this.getClass().getClassLoader();
+   protected ClassLoader appClassLoader = this.getClass().getClassLoader();
    protected MarshallingConfiguration configuration;
    protected MarshallerFactory factory;
    /**
@@ -79,7 +79,7 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
       configuration.setCreator(new SunReflectiveCreator());
       configuration.setExceptionListener(new DebuggingExceptionListener());
       // ContextClassResolver provides same functionality as MarshalledValueInputStream
-      configuration.setClassResolver(new DefaultContextClassResolver(defaultCl));
+      configuration.setClassResolver(new DefaultContextClassResolver(appClassLoader));
       configuration.setClassExternalizerFactory(new SerializeWithExtFactory());
       configuration.setVersion(3);
    }

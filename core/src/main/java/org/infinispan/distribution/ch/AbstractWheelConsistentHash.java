@@ -27,6 +27,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
 
+import org.infinispan.config.Configuration;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
@@ -239,6 +240,12 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
 
    public static abstract class Externalizer<T extends AbstractWheelConsistentHash> extends AbstractExternalizer<T> {
 
+      private ClassLoader cl;
+      
+      public void inject(ClassLoader cl) {
+         this.cl = cl;
+      }
+
       protected abstract T instance();
 
       @Override
@@ -254,7 +261,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          T instance = instance();
          instance.numVirtualNodes = unmarshaller.readInt();
          String hashFunctionName = (String) unmarshaller.readObject();
-         instance.setHashFunction((Hash) Util.getInstance(hashFunctionName, Thread.currentThread().getContextClassLoader()));
+         instance.setHashFunction((Hash) Util.getInstance(hashFunctionName, cl));
          Set<Address> caches = (Set<Address>) unmarshaller.readObject();
          instance.setCaches(caches);
          return instance;
