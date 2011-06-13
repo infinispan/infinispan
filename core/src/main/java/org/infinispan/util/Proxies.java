@@ -87,7 +87,7 @@ public class Proxies {
             try {
                 result = m.invoke(obj, args);
             } catch (Throwable t) {
-                log.ignoringException(m.getName(), t.getCause());
+                log.ignoringException(m.getName(), t.getMessage(), t.getCause());
             } finally {
             }
             return result;
