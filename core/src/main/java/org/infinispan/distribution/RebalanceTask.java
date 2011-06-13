@@ -153,7 +153,7 @@ public class RebalanceTask extends RehashTask {
                      log.tracef("pushing %d keys to %s", state.size(), target);
 
                   final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.APPLY_STATE, self,
-                                                                                state, chOld, chNew);
+                        newViewId, state, chOld, chNew);
 
                   rpcManager.invokeRemotelyInFuture(Collections.singleton(target), cmd,
                                                     false, stateTransferFuture, configuration.getRehashRpcTimeout());

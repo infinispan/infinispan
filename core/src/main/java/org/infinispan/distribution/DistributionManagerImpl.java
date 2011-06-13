@@ -449,7 +449,7 @@ public class DistributionManagerImpl implements DistributionManager {
       @Merged @ViewChanged
       public void handleViewChange(ViewChangedEvent e) {
          if(trace)
-            log.tracef("New view received: type=%s, members: %s. Starting the RebalanceTask", e.getType(), e.getNewMembers());
+            log.tracef("New view received: %d, type=%s, members: %s. Starting the RebalanceTask", e.getViewId(), e.getType(), e.getNewMembers());
 
          rehashInProgress = true;
          lastViewId = e.getViewId();

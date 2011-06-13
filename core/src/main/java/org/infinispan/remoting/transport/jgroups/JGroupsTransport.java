@@ -508,12 +508,28 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    }
 
    public void viewAccepted(View newView) {
+      log.debugf("New view accepted: %s", newView);
       Vector<org.jgroups.Address> newMembers = newView.getMembers();
-      List<Address> oldMembers = null;
-      boolean hasNotifier = notifier != null;
-      Notify n = null;
+      if (newMembers == null || newMembers.isEmpty()) {
+         log.debugf("Received null or empty member list from JGroups channel: " + newView);
+         return;
+      }
 
+      List<Address> oldMembers = members;
+      // we need a defensive copy anyway
+      members = fromJGroupsAddressList(newMembers);
+
+      // Now that we have a view, figure out if we are the coordinator
+      coordinator = members.get(0).equals(getAddress());
+
+      // Wake up any threads that are waiting to know about who the coordinator is
+      // do it before the notifications, so if a listener throws an exception we can still start
+      channelConnectedLatch.countDown();
+
+      // now notify listeners - *after* updating the coordinator. - JBCACHE-662
+      boolean hasNotifier = notifier != null;
       if (hasNotifier) {
+         Notify n = null;
          if (newView instanceof MergeView) {
             if (log.isInfoEnabled())
                if (log.isInfoEnabled()) log.receivedMergedView(newView);
@@ -523,24 +539,9 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
                if (log.isInfoEnabled()) log.receivedClusterView(newView);
             n = new NotifyViewChange();
          }
+
+         n.emitNotification(oldMembers, newView);
       }
-
-      boolean needNotification = false;
-      if (newMembers != null) {
-         oldMembers = members;
-         // we need a defensive copy anyway
-         members = fromJGroupsAddressList(newMembers);
-         needNotification = true;
-      }
-      // Now that we have a view, figure out if we are the coordinator
-      coordinator = (members != null && !members.isEmpty() && members.get(0).equals(getAddress()));
-
-      // Wake up any threads that are waiting to know about who the coordinator is
-      // do it before the notifications, so if a listener throws an exception we can still start
-      channelConnectedLatch.countDown();
-
-      // now notify listeners - *after* updating the coordinator. - JBCACHE-662
-      if (needNotification && n != null) n.emitNotification(oldMembers, newView);
    }
 
    public void suspect(org.jgroups.Address suspected_mbr) {

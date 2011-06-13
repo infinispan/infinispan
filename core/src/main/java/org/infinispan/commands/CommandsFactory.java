@@ -271,9 +271,8 @@ public interface CommandsFactory {
     * Builds a RehashControlCommand for coordinating a rehash event. This particular variation of RehashControlCommand
     * coordinates rehashing of nodes when a node join or leaves
     */
-   RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype,
-            Address sender, Map<Object, InternalCacheValue> state, ConsistentHash oldCH,
-            ConsistentHash newCH);
+   RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender, int viewId,
+         Map<Object, InternalCacheValue> state, ConsistentHash oldCH, ConsistentHash newCH);
 
    /**
     * Retrieves the cache name this CommandFactory is set up to construct commands for.
