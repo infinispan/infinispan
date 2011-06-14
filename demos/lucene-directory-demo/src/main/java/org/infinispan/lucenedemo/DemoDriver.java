@@ -63,7 +63,7 @@ public class DemoDriver implements Runnable {
       }
    }
 
-   private void doQuery(Scanner scanner) throws IOException {
+   private void doQuery(Scanner scanner) {
       scanner.nextLine();
       Query query = null;
       while (query == null) {
