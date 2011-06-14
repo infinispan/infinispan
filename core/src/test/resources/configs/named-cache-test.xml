@@ -142,7 +142,7 @@
             <!-- See the documentation for more configuration examples and flags. -->
             <properties>
                <property name="location" value="/tmp/FileCacheStore-Location"/>
-               <property name="fsyncMode" value="perWrite"/>
+               <property name="fsyncMode" value="periodic"/>
                <property name="fsyncInterval" value="2000"/>
             </properties>
             <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
