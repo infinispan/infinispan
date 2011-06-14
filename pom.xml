@@ -157,6 +157,9 @@ pageTracker._trackPageview();
                      <finalName>${artifactId}-${project.version}</finalName>
                      <outputDirectory>target/distribution</outputDirectory>
                      <workDirectory>target/assembly/work</workDirectory>
+
+                     <!-- Do not attach ZIP files to the Maven repository -->
+                     <attach>false</attach>
                   </configuration>
                </plugin>
             </plugins>
