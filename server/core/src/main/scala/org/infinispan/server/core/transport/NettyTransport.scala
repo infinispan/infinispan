@@ -28,6 +28,7 @@ import org.jboss.netty.bootstrap.ServerBootstrap
 import java.util.concurrent.Executors
 import scala.collection.JavaConversions._
 import org.infinispan.server.core.ProtocolServer
+import org.infinispan.util.Util
 import org.jboss.netty.util.{ThreadNameDeterminer, ThreadRenamingRunnable}
 import org.infinispan.util.logging.LogFactory
 import org.jboss.netty.logging.{InternalLoggerFactory, Log4JLoggerFactory}
@@ -80,7 +81,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
          }
       })
       // Make netty use log4j, otherwise it goes to JDK logging.
-      if (LogFactory.IS_LOG4J_AVAILABLE)
+      if (isLog4jAvailable())
          InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory)
 
       val bootstrap = new ServerBootstrap(factory)
@@ -93,6 +94,17 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
 
       val ch = bootstrap.bind(address)
       serverChannels.add(ch)
+   }
+   
+   private def isLog4jAvailable(): Boolean = {
+      try {
+         Util.loadClassStrict("org.apache.log4j.Logger", Thread.currentThread().getContextClassLoader)
+         return true;
+      }
+      catch {
+        case cnfe: ClassNotFoundException => return false
+      }
+      return false
    }
 
    override def stop {
