@@ -87,7 +87,7 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    /**
-    * Unility method that sets the value of the given flag to true.
+    * Utility method that sets the value of the given flag to true.
     *
     * @param flag flag to set
     */
