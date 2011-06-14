@@ -46,7 +46,7 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
 
       assert c4.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k1) == null;
 
-      assertOwnershipAndNonOwnership(k1);
+      assertOwnershipAndNonOwnership(k1, false);
    }
    
    public void testSkipLookupOnGetWhileBatching() {
@@ -62,7 +62,7 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
       assert c4.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k1) == null;
       c4.endBatch(true);
 
-      assertOwnershipAndNonOwnership(k1);
+      assertOwnershipAndNonOwnership(k1, false);
    }
 
    public void testCorrectFunctionalityOnConditionalWrite() {
