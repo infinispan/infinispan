@@ -546,6 +546,11 @@ public class FileCacheStore extends BucketBasedCacheStore {
          super.write(bytes, f);
       }
 
+      @Override
+      public void stop() {
+         executor.shutdown();
+         super.stop();
+      }
    }
 
    private class PerWriteFileSync implements FileSync {
