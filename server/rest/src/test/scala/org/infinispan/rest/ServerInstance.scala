@@ -45,6 +45,7 @@ object ServerInstance {
     
     val sh = new ServletHolder(classOf[StartupListener])
     sh setInitOrder 1
+    sh.setInitParameter("infinispan.config", "config-samples/sample.xml")
     
     ctx.addServlet(sh, "/listener/*")
   }

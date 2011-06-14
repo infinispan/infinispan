@@ -33,6 +33,7 @@ import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.remoting.transport.Transport;
 
+import javax.sound.midi.SysexMessage;
 import java.util.Properties;
 
 /**
@@ -330,8 +331,9 @@ abstract class AbstractConfigurationBeanWithGCR extends AbstractConfigurationBea
    GlobalConfiguration globalConfig;
 
    @Inject
-   public void inject(GlobalComponentRegistry gcr) {
+   public void inject(GlobalComponentRegistry gcr, GlobalConfiguration globalConfig) {
       this.gcr = gcr;
+      this.globalConfig = globalConfig;
    }
 
    @Override
