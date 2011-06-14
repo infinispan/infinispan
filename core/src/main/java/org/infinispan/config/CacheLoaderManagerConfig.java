@@ -192,11 +192,24 @@ public class CacheLoaderManagerConfig extends AbstractFluentConfigurationBean im
       return cacheLoaderConfigs;
    }
 
+   // JAXB method
+   private List<CacheLoaderConfig> getCacheLoaders() {
+      testImmutability("cacheLoaderConfigs");
+      return cacheLoaderConfigs;
+   }
+
+   // JAXB method
+   @XmlElement(name = "loader")
+   private LoadersConfig setCacheLoaders(List<CacheLoaderConfig> configs) {
+      testImmutability("cacheLoaderConfigs");
+      this.cacheLoaderConfigs = configs == null ? new LinkedList<CacheLoaderConfig>() : configs;
+      return this;
+   }
+
    /**
     * @deprecated The visibility of this method will be reduced and
     * XMLElement definition is likely to move to the getCacheLoaderConfigs().
     */
-   @XmlElement(name = "loader")
    @Deprecated
    public LoadersConfig setCacheLoaderConfigs(List<CacheLoaderConfig> configs) {
       testImmutability("cacheLoaderConfigs");
