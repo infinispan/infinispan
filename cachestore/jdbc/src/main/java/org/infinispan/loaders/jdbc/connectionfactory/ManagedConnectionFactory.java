@@ -50,7 +50,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
 
    private DataSource dataSource;
 
-   public void start(ConnectionFactoryConfig config) throws CacheLoaderException {
+   public void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException {
       InitialContext ctx = null;
       String datasourceName = config.getDatasourceJndiLocation();
       try {

@@ -103,7 +103,7 @@ public class LazyIteratorTest {
       extractor.close();
       expectLastCall().once();
       EasyMock.replay(cache, extractor, hsQuery);
-      iterator = new LazyIterator(hsQuery, cache, fetchSize);
+      iterator = new LazyIterator(hsQuery, cache.getAdvancedCache(), fetchSize);
    }
 
    @AfterMethod(alwaysRun = false)

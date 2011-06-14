@@ -74,7 +74,7 @@ public class EagerIteratorTest {
          }
       }).anyTimes();
 
-      iterator = new EagerIterator(keys, cache, fetchSize);
+      iterator = new EagerIterator(keys, cache.getAdvancedCache(), fetchSize);
       EasyMock.replay(cache);
    }
 

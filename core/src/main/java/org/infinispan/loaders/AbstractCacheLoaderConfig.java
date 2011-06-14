@@ -33,6 +33,7 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.infinispan.CacheException;
 import org.infinispan.config.AbstractNamedCacheConfigurationBean;
+import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationDocRef;
 import org.infinispan.config.parsing.XmlConfigHelper;
@@ -105,6 +106,16 @@ public class AbstractCacheLoaderConfig extends AbstractNamedCacheConfigurationBe
       } catch (CloneNotSupportedException e) {
          throw new CacheException(e);
       }
+   }
+   
+   public ClassLoader getClassLoader() {
+      // TODO This is a total mess, but requires config to be re-architected to fix
+      if (cr != null && cr.getComponent(Configuration.class) != null)
+         return cr.getComponent(Configuration.class).getClassLoader();
+      else if (Thread.currentThread().getContextClassLoader() != null)
+         return Thread.currentThread().getContextClassLoader();
+      else
+         return null;
    }
 
    public void accept(ConfigurationBeanVisitor v) {}

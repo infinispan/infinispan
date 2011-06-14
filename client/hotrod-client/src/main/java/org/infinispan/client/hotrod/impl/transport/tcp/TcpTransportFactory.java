@@ -71,13 +71,13 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile int soTimeout;
 
    @Override
-   public void start(ConfigurationProperties cfg, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId) {
+   public void start(ConfigurationProperties cfg, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId, ClassLoader classLoader) {
       synchronized (lock) {
-         hashFactory.init(cfg);
+         hashFactory.init(cfg, classLoader);
          boolean pingOnStartup = cfg.getPingOnStartup();
          servers = Collections.unmodifiableCollection(new ArrayList(staticConfiguredServers));
          String balancerClass = cfg.getRequestBalancingStrategy();
-         balancer = (RequestBalancingStrategy) Util.getInstance(balancerClass, Thread.currentThread().getContextClassLoader());
+         balancer = (RequestBalancingStrategy) Util.getInstance(balancerClass, classLoader);
          tcpNoDelay = cfg.getTcpNoDelay();
          soTimeout = cfg.getSoTimeout();
          if (log.isDebugEnabled()) {

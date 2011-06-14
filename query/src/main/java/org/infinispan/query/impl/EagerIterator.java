@@ -23,14 +23,15 @@
 
 package org.infinispan.query.impl;
 
-import net.jcip.annotations.NotThreadSafe;
-import org.infinispan.Cache;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import net.jcip.annotations.NotThreadSafe;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * This is the implementation class for the interface QueryResultIterator which extends ListIterator. It is what is
@@ -48,7 +49,7 @@ public class EagerIterator extends AbstractIterator {
    private static final Log log = LogFactory.getLog(EagerIterator.class);
 
 
-   public EagerIterator(List<Object> idList, Cache cache, int fetchSize) {
+   public EagerIterator(List<Object> idList, AdvancedCache<?, ?> cache, int fetchSize) {
       if (fetchSize < 1) {
          throw new IllegalArgumentException("Incorrect value for fetchsize passed. Your fetchSize is less than 1");
       }

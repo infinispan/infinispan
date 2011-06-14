@@ -22,7 +22,7 @@
  */
 package org.infinispan.query.impl;
 
-import org.infinispan.Cache;
+import org.infinispan.AdvancedCache;
 import org.infinispan.query.QueryIterator;
 
 /**
@@ -37,7 +37,7 @@ import org.infinispan.query.QueryIterator;
 public abstract class AbstractIterator implements QueryIterator {
 
    protected Object[] buffer;
-   protected Cache cache;
+   protected AdvancedCache<?, ?> cache;
 
    protected int index = 0;
    protected int bufferIndex = -1;

@@ -37,6 +37,7 @@ import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.FacetManager;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryIterator;
@@ -51,10 +52,10 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  */
 public class CacheQueryImpl implements CacheQuery {
 
-   private final Cache cache;
+   private final AdvancedCache<?, ?> cache;
    private final HSQuery hSearchQuery;
 
-   public CacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory, Cache cache, Class<?>... classes) {
+   public CacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory, AdvancedCache<?, ?> cache, Class<?>... classes) {
       this.cache = cache;
       hSearchQuery = searchFactory.createHSQuery();
       hSearchQuery
@@ -155,7 +156,7 @@ public class CacheQueryImpl implements CacheQuery {
    private List<Object> fromEntityInfosToKeys(final List<EntityInfo> entityInfos) {
       List<Object> keyList = new ArrayList<Object>(entityInfos.size());
       for (EntityInfo ei : entityInfos) {
-         Object cacheKey = KeyTransformationHandler.stringToKey(ei.getId().toString());
+         Object cacheKey = KeyTransformationHandler.stringToKey(ei.getId().toString(), cache.getClassLoader());
          keyList.add(cacheKey);
       }
       return keyList;

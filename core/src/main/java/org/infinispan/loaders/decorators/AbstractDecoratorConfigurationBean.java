@@ -24,6 +24,7 @@
 package org.infinispan.loaders.decorators;
 
 import org.infinispan.config.AbstractNamedCacheConfigurationBean;
+import org.infinispan.config.Configuration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.CacheStoreConfig;
@@ -182,5 +183,9 @@ public abstract class AbstractDecoratorConfigurationBean
       }
    }
 
-
+   @Override
+   public ClassLoader getClassLoader() {
+      return cacheStoreConfig.getClassLoader();
+   }
+   
 }

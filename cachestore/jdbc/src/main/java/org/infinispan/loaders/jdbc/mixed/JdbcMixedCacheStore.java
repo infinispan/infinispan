@@ -88,8 +88,8 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
    public void start() throws CacheLoaderException {
       super.start();
       ConnectionFactoryConfig factoryConfig = config.getConnectionFactoryConfig();
-      sharedConnectionFactory = ConnectionFactory.getConnectionFactory(factoryConfig.getConnectionFactoryClass());
-      sharedConnectionFactory.start(factoryConfig);
+      sharedConnectionFactory = ConnectionFactory.getConnectionFactory(factoryConfig.getConnectionFactoryClass(), config.getClassLoader());
+      sharedConnectionFactory.start(factoryConfig, config.getClassLoader());
       binaryCacheStore.doConnectionFactoryInitialization(sharedConnectionFactory);
       binaryCacheStore.start();
       stringBasedCacheStore.doConnectionFactoryInitialization(sharedConnectionFactory);

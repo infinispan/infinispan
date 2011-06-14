@@ -97,8 +97,8 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
       super.start();
       String connectionFactoryClass = config.getConnectionFactoryConfig().getConnectionFactoryClass();
       if (config.isManageConnectionFactory()) {
-         ConnectionFactory factory = ConnectionFactory.getConnectionFactory(connectionFactoryClass);
-         factory.start(config.getConnectionFactoryConfig());
+         ConnectionFactory factory = ConnectionFactory.getConnectionFactory(connectionFactoryClass, config.getClassLoader());
+         factory.start(config.getConnectionFactoryConfig(), config.getClassLoader());
          doConnectionFactoryInitialization(factory);
       }
       dmHelper = new DataManipulationHelper(connectionFactory, tableManipulation, marshaller) {

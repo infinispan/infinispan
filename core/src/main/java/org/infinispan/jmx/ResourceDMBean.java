@@ -214,7 +214,7 @@ public class ResourceDMBean implements DynamicMBean {
       try {
          Class<?>[] classes = new Class[sig.length];
          for (int i = 0; i < classes.length; i++) {
-            classes[i] = getClassForName(sig[i], Thread.currentThread().getContextClassLoader());
+            classes[i] = getClassForName(sig[i], null);
          }
          Method method = getObject().getClass().getMethod(name, classes);
          return method.invoke(getObject(), args);

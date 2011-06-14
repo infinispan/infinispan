@@ -68,39 +68,39 @@ public class KeyTransformationHandlerTest {
    }
 
    public void testStringToKeyWithStringAndPrimitives() {
-      key = KeyTransformationHandler.stringToKey("S:key1");
+      key = KeyTransformationHandler.stringToKey("S:key1", Thread.currentThread().getContextClassLoader());
       assert key.getClass().equals(String.class);
       assert key.equals("key1");
 
-      key = KeyTransformationHandler.stringToKey("I:2");
+      key = KeyTransformationHandler.stringToKey("I:2", Thread.currentThread().getContextClassLoader());
       assert key.getClass().equals(Integer.class);
       assert key.equals(2);
 
-      key = KeyTransformationHandler.stringToKey("Y:3");
+      key = KeyTransformationHandler.stringToKey("Y:3", Thread.currentThread().getContextClassLoader());
       assert key.getClass().equals(Byte.class);
       assert key.equals((byte) 3);
 
-      key = KeyTransformationHandler.stringToKey("F:4.0");
+      key = KeyTransformationHandler.stringToKey("F:4.0", Thread.currentThread().getContextClassLoader());
       assert key.getClass().equals(Float.class);
       assert key.equals((float) 4.0);
 
-      key = KeyTransformationHandler.stringToKey("L:5");
+      key = KeyTransformationHandler.stringToKey("L:5", Thread.currentThread().getContextClassLoader());
       assert key.getClass().equals(Long.class);
       assert key.equals((long) 5);
 
-      key = KeyTransformationHandler.stringToKey("X:6");
+      key = KeyTransformationHandler.stringToKey("X:6", Thread.currentThread().getContextClassLoader());
       assert key.getClass().equals(Short.class);
       assert key.equals((short) 6);
 
-      key = KeyTransformationHandler.stringToKey("B:true");
+      key = KeyTransformationHandler.stringToKey("B:true", Thread.currentThread().getContextClassLoader());
       assert key.getClass().equals(Boolean.class);
       assert key.equals(true);
 
-      key = KeyTransformationHandler.stringToKey("D:8.0");
+      key = KeyTransformationHandler.stringToKey("D:8.0", Thread.currentThread().getContextClassLoader());
       assert key.getClass().equals(Double.class);
       assert key.equals(8.0);
 
-      key = KeyTransformationHandler.stringToKey("C:9");
+      key = KeyTransformationHandler.stringToKey("C:9", Thread.currentThread().getContextClassLoader());
       assert key.getClass().equals(Character.class);
       assert key.equals('9');
 
@@ -109,12 +109,12 @@ public class KeyTransformationHandlerTest {
    public void testStringToKeyWithCustomTransformable(){
       CustomKey customKey = new CustomKey(88, 8800, 12889976);
       String strRep = KeyTransformationHandler.keyToString(customKey);
-      assert customKey.equals(KeyTransformationHandler.stringToKey(strRep));
+      assert customKey.equals(KeyTransformationHandler.stringToKey(strRep, Thread.currentThread().getContextClassLoader()));
    }
 
    public void testStringToKeyWithDefaultTransformer() {
       CustomKey2 ck2 = new CustomKey2(Integer.MAX_VALUE, Integer.MIN_VALUE, 0);
       String strRep = KeyTransformationHandler.keyToString(ck2);
-      assert ck2.equals(KeyTransformationHandler.stringToKey(strRep));
+      assert ck2.equals(KeyTransformationHandler.stringToKey(strRep, Thread.currentThread().getContextClassLoader()));
    }
 }

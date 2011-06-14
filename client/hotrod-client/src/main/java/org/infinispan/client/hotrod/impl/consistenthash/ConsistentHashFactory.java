@@ -54,8 +54,10 @@ public class ConsistentHashFactory {
 
    private final Map<Integer, String> version2ConsistentHash = new HashMap<Integer, String>();
 
-   public void init(ConfigurationProperties config) {
-
+   private ClassLoader classLoader;
+   
+   public void init(ConfigurationProperties config, ClassLoader classLoader) {
+	  this.classLoader = classLoader;
       for (String propName : config.getProperties().stringPropertyNames()) {
          if (propName.startsWith(HASH_FUNCTION_PREFIX)) {
             if (log.isTraceEnabled()) log.tracef("Processing consistent hash: %s", propName);
@@ -78,7 +80,7 @@ public class ConsistentHashFactory {
          if (log.isTraceEnabled()) log.tracef("Trying to use default value: %s", hashFunctionClass);
          version2ConsistentHash.put(version, hashFunctionClass);
       }
-      return (ConsistentHash) Util.getInstance(hashFunctionClass, Thread.currentThread().getContextClassLoader());
+      return (ConsistentHash) Util.getInstance(hashFunctionClass, classLoader);
    }
 
    public Map<Integer, String> getVersion2ConsistentHash() {

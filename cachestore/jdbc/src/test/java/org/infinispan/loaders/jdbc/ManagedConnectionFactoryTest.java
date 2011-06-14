@@ -81,7 +81,7 @@ public abstract class ManagedConnectionFactoryTest extends BaseCacheStoreTest {
       public void start() throws CacheLoaderException {
          ConnectionFactoryConfig config = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
          simpleFactory = new SimpleConnectionFactory();
-         simpleFactory.start(config);
+         simpleFactory.start(config, Thread.currentThread().getContextClassLoader());
       }
 
       public void stop() {

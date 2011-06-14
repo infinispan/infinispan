@@ -38,14 +38,14 @@ public abstract class ConnectionFactory {
     * Constructs a {@link org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory} based on the supplied class
     * name.
     */
-   public static ConnectionFactory getConnectionFactory(String connectionFactoryClass) throws CacheLoaderException {
-      return (ConnectionFactory) Util.getInstance(connectionFactoryClass, Thread.currentThread().getContextClassLoader());
+   public static ConnectionFactory getConnectionFactory(String connectionFactoryClass, ClassLoader classLoader) throws CacheLoaderException {
+      return (ConnectionFactory) Util.getInstance(connectionFactoryClass, classLoader);
    }
 
    /**
     * Starts the connection factory. A pooled factory might be create connections here.
     */
-   public abstract void start(ConnectionFactoryConfig config) throws CacheLoaderException;
+   public abstract void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException;
 
    /**
     * Closes the connection factory, including all allocated connections etc.

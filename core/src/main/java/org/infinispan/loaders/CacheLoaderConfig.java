@@ -22,6 +22,7 @@
  */
 package org.infinispan.loaders;
 
+import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.parsing.XmlConfigHelper;
@@ -52,6 +53,12 @@ public interface CacheLoaderConfig extends Cloneable, Serializable {
    String getCacheLoaderClassName();
 
    void setCacheLoaderClassName(String s);
+   
+   /**
+    * Get the classloader that should be used to load resources from the classpath
+    * @return
+    */
+   ClassLoader getClassLoader();
 }
 
 class CacheLoaderInvocationHandler implements InvocationHandler {
@@ -83,7 +90,7 @@ class CacheLoaderConfigAdapter extends XmlAdapter<AbstractCacheStoreConfig, Cach
 
       CacheLoaderConfig clc;
       try {
-         clc = instantiateCacheLoaderConfig(clClass, Thread.currentThread().getContextClassLoader());
+         clc = instantiateCacheLoaderConfig(clClass, storeConfig.getClassLoader());
       } catch (Exception e) {
          throw new ConfigurationException("Unable to instantiate cache loader or configuration", e);
       }
