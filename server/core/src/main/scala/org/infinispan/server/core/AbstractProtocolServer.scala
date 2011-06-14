@@ -27,7 +27,7 @@ import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.Main._
 import java.util.Properties
 import transport.NettyTransport
-import org.infinispan.util.{ClusterIdGenerator, TypedProperties, Util}
+import org.infinispan.util.{ClusterIdGenerator, TypedProperties, Util, FileLookup}
 import logging.Log
 import org.infinispan.jmx.{JmxUtil, ResourceDMBean}
 import org.infinispan.config.GlobalConfiguration
@@ -123,7 +123,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
 
    def start(propertiesFileName: String, cacheManager: EmbeddedCacheManager) {
       val propsObject = new TypedProperties()
-      val stream = Util.loadResourceAsStream(propertiesFileName)
+      val stream = new FileLookup().lookupFile(propertiesFileName, Thread.currentThread().getContextClassLoader())
       propsObject.load(stream)
       start(propsObject, cacheManager)
    }
