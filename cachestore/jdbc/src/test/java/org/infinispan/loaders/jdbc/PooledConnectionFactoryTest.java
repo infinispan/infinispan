@@ -52,7 +52,7 @@ public class PooledConnectionFactoryTest {
    public void testValuesNoOverrides() throws Exception {
       factory = new PooledConnectionFactory();
       ConnectionFactoryConfig config = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-      factory.start(config);
+      factory.start(config, Thread.currentThread().getContextClassLoader());
       int hadcodedMaxPoolSize = factory.getPooledDataSource().getMaxPoolSize();
       Set<Connection> connections = new HashSet<Connection>();
       for (int i = 0; i < hadcodedMaxPoolSize; i++) {

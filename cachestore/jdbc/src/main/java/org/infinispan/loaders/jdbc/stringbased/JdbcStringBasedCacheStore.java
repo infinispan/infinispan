@@ -116,8 +116,8 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
          if (log.isTraceEnabled()) {
             log.tracef("Using managed connection factory: %s", connectionFactoryClass);
          }
-         ConnectionFactory connectionFactory = ConnectionFactory.getConnectionFactory(connectionFactoryClass);
-         connectionFactory.start(config.getConnectionFactoryConfig());
+         ConnectionFactory connectionFactory = ConnectionFactory.getConnectionFactory(connectionFactoryClass, config.getClassLoader());
+         connectionFactory.start(config.getConnectionFactoryConfig(), config.getClassLoader());
          doConnectionFactoryInitialization(connectionFactory);
       }
       key2StringMapper = config.getKey2StringMapper();

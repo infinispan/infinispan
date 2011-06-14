@@ -45,8 +45,8 @@ public class SimpleConnectionFactory extends ConnectionFactory {
    private String userName;
    private String password;
 
-   public void start(ConnectionFactoryConfig config) throws CacheLoaderException {
-      loadDriver(config.getDriverClass());
+   public void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException {
+      loadDriver(config.getDriverClass(), classLoader);
       this.connectionUrl = config.getConnectionUrl();
       this.userName = config.getUserName();
       this.password = config.getPassword();
@@ -78,9 +78,9 @@ public class SimpleConnectionFactory extends ConnectionFactory {
       }
    }
 
-   private void loadDriver(String driverClass) throws CacheLoaderException {
+   private void loadDriver(String driverClass, ClassLoader classLoader) throws CacheLoaderException {
       if (log.isTraceEnabled()) log.tracef("Attempting to load driver %s", driverClass);
-      Util.getInstance(driverClass, Thread.currentThread().getContextClassLoader());
+      Util.getInstance(driverClass, classLoader);
    }
 
    public String getConnectionUrl() {

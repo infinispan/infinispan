@@ -23,16 +23,17 @@
 
 package org.infinispan.query.impl;
 
-import net.jcip.annotations.NotThreadSafe;
-import org.hibernate.search.query.engine.spi.DocumentExtractor;
-import org.hibernate.search.query.engine.spi.HSQuery;
-import org.infinispan.Cache;
-import org.infinispan.CacheException;
-import org.infinispan.query.backend.KeyTransformationHandler;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
+
+import net.jcip.annotations.NotThreadSafe;
+
+import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.hibernate.search.query.engine.spi.HSQuery;
+import org.infinispan.AdvancedCache;
+import org.infinispan.CacheException;
+import org.infinispan.query.backend.KeyTransformationHandler;
 
 /**
  * Implementation for {@link org.infinispan.query.QueryIterator}. This is what is returned when the {@link
@@ -46,7 +47,7 @@ public class LazyIterator extends AbstractIterator {
 
    private final DocumentExtractor extractor;
 
-   public LazyIterator(HSQuery hSearchQuery, Cache cache, int fetchSize) {
+   public LazyIterator(HSQuery hSearchQuery, AdvancedCache<?, ?> cache, int fetchSize) {
       if (fetchSize < 1) {
          throw new IllegalArgumentException("Incorrect value for fetchsize passed. Your fetchSize is less than 1");
       }
@@ -90,7 +91,7 @@ public class LazyIterator extends AbstractIterator {
 
          try {
             String documentId = (String) extractor.extract(index).getId();
-            toReturn = cache.get(KeyTransformationHandler.stringToKey(documentId));
+            toReturn = cache.get(KeyTransformationHandler.stringToKey(documentId, cache.getClassLoader()));
 
             //Wiping bufferObjects and the bufferIndex so that there is no stale data.
             Arrays.fill(buffer, null);
@@ -102,7 +103,7 @@ public class LazyIterator extends AbstractIterator {
 
             for (int i = 1; i < bufferSize; i++) {
                String bufferDocumentId = (String) extractor.extract(index + i).getId();
-               Object toBuffer = cache.get(KeyTransformationHandler.stringToKey(bufferDocumentId));
+               Object toBuffer = cache.get(KeyTransformationHandler.stringToKey(bufferDocumentId, cache.getClassLoader()));
                buffer[i] = toBuffer;
             }
             bufferIndex = index;
@@ -138,14 +139,14 @@ public class LazyIterator extends AbstractIterator {
          Arrays.fill(buffer, null);
 
          String documentId = (String) extractor.extract(index).getId();
-         toReturn = cache.get(KeyTransformationHandler.stringToKey(documentId));
+         toReturn = cache.get(KeyTransformationHandler.stringToKey(documentId, cache.getClassLoader()));
 
          buffer[0] = toReturn;
 
          //now loop through bufferSize times to add the rest of the objects into the list.
          for (int i = 1; i < bufferSize; i++) {
             String bufferDocumentId = (String) extractor.extract(index - i).getId();    //In this case it has to be index - i because previous() is called.
-            Object toBuffer = cache.get(KeyTransformationHandler.stringToKey(bufferDocumentId));
+            Object toBuffer = cache.get(KeyTransformationHandler.stringToKey(bufferDocumentId, cache.getClassLoader()));
             buffer[i] = toBuffer;
          }
 

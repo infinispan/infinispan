@@ -32,8 +32,8 @@ import org.infinispan.Cache;
  */
 public class Search {
    
-   public static SearchManager getSearchManager(Cache cache) {
-      return new SearchManagerImpl(cache);
+   public static SearchManager getSearchManager(Cache<?, ?> cache) {
+      return new SearchManagerImpl(cache.getAdvancedCache());
    }
 
 }

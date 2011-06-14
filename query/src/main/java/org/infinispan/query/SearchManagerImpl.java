@@ -26,6 +26,7 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.SearchFactory;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.backend.QueryInterceptor;
@@ -40,11 +41,11 @@ import org.infinispan.query.impl.CacheQueryImpl;
  */
 class SearchManagerImpl implements SearchManager {
 
-   private final Cache cache;
+   private final AdvancedCache<?, ?> cache;
    private final SearchFactoryIntegrator searchFactory;
    private final QueryInterceptor queryInterceptor;
    
-   SearchManagerImpl(Cache cache) {
+   SearchManagerImpl(AdvancedCache<?, ?> cache) {
       if (cache==null) {
          throw new IllegalArgumentException("cache parameter shall not be null");
       }

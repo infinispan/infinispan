@@ -144,10 +144,10 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       static boolean started = false;
 
       @Override
-      public void start(ConnectionFactoryConfig config) throws CacheLoaderException {
+      public void start(ConnectionFactoryConfig config, ClassLoader classLoader) throws CacheLoaderException {
          if (!started) {
             sharedFactory = new PooledConnectionFactory();
-            sharedFactory.start(config);
+            sharedFactory.start(config, classLoader);
          }
       }
 

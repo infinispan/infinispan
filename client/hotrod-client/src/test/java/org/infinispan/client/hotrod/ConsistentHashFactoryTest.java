@@ -44,7 +44,7 @@ public class ConsistentHashFactoryTest {
       String value = "org.infinispan.client.hotrod.impl.consistenthash.SomeCustomConsitentHashV1";
       propos.put(ConfigurationProperties.HASH_FUNCTION_PREFIX + ".1", value);
       ConsistentHashFactory chf = new ConsistentHashFactory();
-      chf.init(new ConfigurationProperties(propos));
+      chf.init(new ConfigurationProperties(propos), Thread.currentThread().getContextClassLoader());
       String s = chf.getVersion2ConsistentHash().get(1);
       assert s != null;
       assert value.equals(s);

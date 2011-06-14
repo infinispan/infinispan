@@ -208,7 +208,7 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
    private void readConfigurationProperties() throws CacheLoaderException {
       if (configurationPropertiesFile == null || configurationPropertiesFile.trim().length() == 0)
          return;
-      InputStream i = new FileLookup().lookupFile(configurationPropertiesFile, Thread.currentThread().getContextClassLoader());
+      InputStream i = new FileLookup().lookupFile(configurationPropertiesFile, getClassLoader());
       if (i != null) {
          Properties p = new Properties();
          try {
@@ -242,4 +242,6 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
    public void setAutoCreateKeyspace(boolean autoCreateKeyspace) {
       this.autoCreateKeyspace = autoCreateKeyspace;
    }
+   
+   
 }

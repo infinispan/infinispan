@@ -37,18 +37,18 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  */
 public class EntityLoader {
    
-   private final AdvancedCache cache;
+   private final AdvancedCache<?, ?> cache;
    
-   public EntityLoader(Cache cache) {
+   public EntityLoader(Cache<?, ?> cache) {
       this.cache = cache.getAdvancedCache();
    }
 
    public Object load(EntityInfo entityInfo) {
-      Object cacheKey = KeyTransformationHandler.stringToKey(entityInfo.getId().toString());
+      Object cacheKey = KeyTransformationHandler.stringToKey(entityInfo.getId().toString(), cache.getClassLoader());
       return cache.get(cacheKey);
    }
 
-   public List load(EntityInfo... entityInfos) {
+   public List<Object> load(EntityInfo... entityInfos) {
       int size = entityInfos.length;
       ArrayList<Object> list = new ArrayList<Object>(size);
       for (EntityInfo e : entityInfos) {

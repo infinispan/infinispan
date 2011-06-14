@@ -41,7 +41,7 @@ public interface TransportFactory {
 
    public void releaseTransport(Transport transport);
 
-   void start(ConfigurationProperties props, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId);
+   void start(ConfigurationProperties props, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId, ClassLoader classLoader);
 
    void updateServers(Collection<InetSocketAddress> newServers);
 

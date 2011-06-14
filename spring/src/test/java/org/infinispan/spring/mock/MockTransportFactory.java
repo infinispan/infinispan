@@ -46,7 +46,7 @@ public final class MockTransportFactory implements TransportFactory {
    @Override
    public void start(final ConfigurationProperties props,
             final Collection<InetSocketAddress> staticConfiguredServers,
-            final AtomicInteger topologyId) {
+            final AtomicInteger topologyId, ClassLoader cl) {
    }
 
    @Override

@@ -26,6 +26,7 @@ import org.infinispan.CacheException;
 import org.infinispan.query.Transformable;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.logging.Log;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -47,7 +48,7 @@ import org.infinispan.util.logging.LogFactory;
 public class KeyTransformationHandler {
    private static final Log log = LogFactory.getLog(KeyTransformationHandler.class, Log.class);
 
-   public static Object stringToKey(String s) {
+   public static Object stringToKey(String s, ClassLoader classLoader) {
       char type = s.charAt(0);
       switch (type) {
          case 'S':
@@ -86,7 +87,7 @@ public class KeyTransformationHandler {
             // try and locate class
             Class keyClass = null;
             try {
-               keyClass = Thread.currentThread().getContextClassLoader().loadClass(keyClassName);
+               keyClass = Util.loadClassStrict(keyClassName, classLoader);
             } catch (ClassNotFoundException e) {
                log.keyClassNotFound(keyClassName, e);
             }
