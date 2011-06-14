@@ -29,6 +29,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
@@ -235,9 +236,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
       c1.put("k1", "value");
       asyncWait("k1", PutKeyValueCommand.class);
-      for (Cache<Object, String> c : caches)
-         assert "value".equals(c.get("k1")) : "Failed on cache " + addressOf(c);
-      assertOwnershipAndNonOwnership("k1");
+      assertOnAllCachesAndOwnership("k1", "value");
    }
 
    protected Address addressOf(Cache<?, ?> cache) {
@@ -257,8 +256,13 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected void assertOnAllCachesAndOwnership(Object key, String value) {
+      assertOwnershipAndNonOwnership(key, l1CacheEnabled);
+      // checking the values will bring the keys to L1, so we want to do it after checking ownership
       assertOnAllCaches(key, value);
-      if (value != null) assertOwnershipAndNonOwnership(key);
+   }
+
+   protected void assertRemovedOnAllCaches(Object key) {
+      assertOnAllCaches(key, null);
    }
 
    protected void assertOnAllCaches(Object key, String value) {
@@ -274,15 +278,20 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       }
    }
 
-   protected void assertOwnershipAndNonOwnership(Object key) {
+   protected void assertOwnershipAndNonOwnership(Object key, boolean allowL1) {
       for (Cache<Object, String> c : caches) {
          DataContainer dc = c.getAdvancedCache().getDataContainer();
          InternalCacheEntry ice = dc.get(key);
          if (isOwner(c, key)) {
-            assert ice != null : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned null!";
-            assert ice instanceof ImmortalCacheEntry : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
+            assert ice != null : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned null!";
+            assert ice instanceof ImmortalCacheEntry : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
+         } else {
+            if (allowL1) {
+               assert ice == null || ice instanceof MortalCacheEntry : "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
+            } else {
+               assert ice == null : "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + ice + "!";
+            }
          }
-         // Invalidation may need some time to "catch up", so this should not be strictly enforced if the node is a NON OWNER.
       }
    }
 

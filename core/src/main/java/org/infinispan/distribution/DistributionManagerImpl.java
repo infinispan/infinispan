@@ -96,7 +96,6 @@ public class DistributionManagerImpl implements DistributionManager {
    private DataContainer dataContainer;
    private InterceptorChain interceptorChain;
    private InvocationContextContainer icc;
-   private InboundInvocationHandler inboundInvocationHandler;
    private CacheNotifier cacheNotifier;
 
    private final ViewChangeListener listener;
@@ -159,7 +158,6 @@ public class DistributionManagerImpl implements DistributionManager {
       this.dataContainer = dataContainer;
       this.interceptorChain = interceptorChain;
       this.icc = icc;
-      this.inboundInvocationHandler = inboundInvocationHandler;
       this.cacheNotifier = cacheNotifier;
    }
 
@@ -207,8 +205,7 @@ public class DistributionManagerImpl implements DistributionManager {
       } else {
          final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED, self, t.getViewId());
 
-         // doesn't matter when the coordinator receives the command, the transport will ensure that it eventually gets there
-         rpcManager.invokeRemotely(Collections.singleton(rpcManager.getTransport().getCoordinator()), cmd, false);
+         rpcManager.invokeRemotely(Collections.singleton(rpcManager.getTransport().getCoordinator()), cmd, true);
       }
    }
 
@@ -395,9 +392,6 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public void markNodePushCompleted(int viewId, Address node) {
-      if (!rpcManager.getTransport().isCoordinator())
-         throw new IllegalStateException("Only the coordinator should handle node push completed events");
-
       if (trace)
          log.tracef("Coordinator: received push completed notification for %s, view id %s", node, viewId);
 
@@ -432,7 +426,7 @@ public class DistributionManagerImpl implements DistributionManager {
          }
 
          if (trace)
-            log.tracef("Coordinator: sending rehash completed notification for view %s", viewId);
+            log.tracef("Coordinator: sending rehash completed notification for view %d, lastView %d, notifications received: %s", viewId, lastViewId, pushConfirmations);
 
          // all the nodes are up-to-date, broadcast the rehash completed command
          final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.REHASH_COMPLETED, getSelf(), viewId);
@@ -454,30 +448,29 @@ public class DistributionManagerImpl implements DistributionManager {
          rehashInProgress = true;
          lastViewId = e.getViewId();
 
-         if (rpcManager.getTransport().isCoordinator()) {
-            // make sure the pushConfirmations map has one entry for each cluster member
-            synchronized (pushConfirmationsLock) {
-               for (Address newNode : e.getNewMembers()) {
-                  if (!pushConfirmations.containsKey(newNode)) {
-                     if (trace)
-                        log.tracef("Coordinator: adding new node %s", newNode);
-                     pushConfirmations.put(newNode, -1);
-                  }
+         // make sure the pushConfirmations map has one entry for each cluster member
+         // must do it on all members because we might get a node push confirmation before we know we're the coordinator
+         synchronized (pushConfirmationsLock) {
+            for (Address newNode : e.getNewMembers()) {
+               if (!pushConfirmations.containsKey(newNode)) {
+                  if (trace)
+                     log.tracef("Coordinator: adding new node %s", newNode);
+                  pushConfirmations.put(newNode, -1);
                }
-               for (Address oldNode : e.getOldMembers()) {
-                  if (!e.getNewMembers().contains(oldNode)) {
-                     if (trace)
-                        log.tracef("Coordinator: removing node %s", oldNode);
-                     pushConfirmations.remove(oldNode);
-                  }
-               }
-               if (trace)
-                  log.tracef("Coordinator: push confirmations list updated: %s", pushConfirmations);
             }
+            for (Address oldNode : e.getOldMembers()) {
+               if (!e.getNewMembers().contains(oldNode)) {
+                  if (trace)
+                     log.tracef("Coordinator: removing node %s", oldNode);
+                  pushConfirmations.remove(oldNode);
+               }
+            }
+            if (trace)
+               log.tracef("Coordinator: push confirmations list updated: %s", pushConfirmations);
          }
-         
+
          RebalanceTask rebalanceTask = new RebalanceTask(rpcManager, cf, configuration, dataContainer,
-                                                         DistributionManagerImpl.this, icc, e.getViewId(), cacheNotifier);
+                                                         DistributionManagerImpl.this, icc, cacheNotifier, interceptorChain, e.getViewId());
          rehashExecutor.submit(rebalanceTask);
       }
    }

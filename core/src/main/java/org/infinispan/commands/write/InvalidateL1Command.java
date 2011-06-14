@@ -104,8 +104,8 @@ public class InvalidateL1Command extends InvalidateCommand {
 
             if (!locality.isLocal()) {
                if (forRehash && config.isL1OnRehash()) {
-                  if (log.isTraceEnabled()) log.trace("Not removing, instead putting entry into L1.");
-                  dataContainer.put(k, ice.getValue(), config.getL1Lifespan(), config.getExpirationMaxIdle());
+                  if (log.isTraceEnabled()) log.trace("Not removing, instead entry will be stored in L1");
+                  // don't need to do anything here, DistLockingInterceptor.commitEntry() will put the entry in L1
                } else {
                	if (log.isTraceEnabled()) log.tracef("Invalidating key %s.", k);
                   invalidate(ctx, k);

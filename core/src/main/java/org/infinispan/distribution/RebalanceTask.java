@@ -19,20 +19,23 @@
 
 package org.infinispan.distribution;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -42,12 +45,7 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
@@ -73,19 +71,19 @@ import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsiste
  */
 public class RebalanceTask extends RehashTask {
    private final InvocationContextContainer icc;
-   private int newViewId;
    private final CacheNotifier notifier;
-
-
+   private final InterceptorChain interceptorChain;
+   private int newViewId;
 
    public RebalanceTask(RpcManager rpcManager, CommandsFactory commandsFactory, Configuration conf,
                         DataContainer dataContainer, DistributionManagerImpl dmi,
-                        InvocationContextContainer icc, int newViewId,
-                        CacheNotifier notifier) {
+                        InvocationContextContainer icc, CacheNotifier notifier,
+                        InterceptorChain interceptorChain, int newViewId) {
       super(dmi, rpcManager, conf, commandsFactory, dataContainer);
       this.icc = icc;
-      this.newViewId = newViewId;
       this.notifier = notifier;
+      this.interceptorChain = interceptorChain;
+      this.newViewId = newViewId;
    }
 
 
@@ -123,7 +121,7 @@ public class RebalanceTask extends RehashTask {
                // notify listeners that a rehash is about to start
                notifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, true);
 
-               List<Object> removedKeys = new ArrayList<Object>();
+               List<Object> keysToRemove = new ArrayList<Object>();
                NotifyingNotifiableFuture<Object> stateTransferFuture = new AggregatingNotifyingFutureImpl(null, newMembers.size());
 
                int numOwners = configuration.getNumOwners();
@@ -132,14 +130,14 @@ public class RebalanceTask extends RehashTask {
                final Map<Address, Map<Object, InternalCacheValue>> states = new HashMap<Address, Map<Object, InternalCacheValue>>();
 
                for (InternalCacheEntry ice : dataContainer) {
-                  rebalance(ice.getKey(), ice, numOwners, chOld, chNew, null, states, removedKeys);
+                  rebalance(ice.getKey(), ice, numOwners, chOld, chNew, null, states, keysToRemove);
                }
 
                // Only fetch the data from the cache store if the cache store is not shared
                CacheStore cacheStore = distributionManager.getCacheStoreForRehashing();
                if (cacheStore != null) {
                   for (Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
-                     rebalance(key, null, numOwners, chOld, chNew, cacheStore, states, removedKeys);
+                     rebalance(key, null, numOwners, chOld, chNew, cacheStore, states, keysToRemove);
                   }
                } else {
                   if (trace) log.trace("Shared cache store or fetching of persistent state disabled");
@@ -150,7 +148,7 @@ public class RebalanceTask extends RehashTask {
                   final Address target = entry.getKey();
                   Map<Object, InternalCacheValue> state = entry.getValue();
                   if (trace)
-                     log.tracef("pushing %d keys to %s", state.size(), target);
+                     log.tracef("%s pushing to %s keys %s", self, target, state.keySet());
 
                   final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.APPLY_STATE, self,
                         newViewId, state, chOld, chNew);
@@ -179,16 +177,17 @@ public class RebalanceTask extends RehashTask {
 
                // now we can invalidate the keys
                try {
-                  InvalidateCommand invalidateCmd = cf.buildInvalidateFromL1Command(true, removedKeys);
+                  InvalidateCommand invalidateCmd = cf.buildInvalidateFromL1Command(true, keysToRemove);
                   InvocationContext ctx = icc.createNonTxInvocationContext();
-                  invalidateCmd.perform(ctx);
+                  ctx.setFlags(Flag.SKIP_LOCKING);
+                  interceptorChain.invoke(ctx, invalidateCmd);
                } catch (Throwable t) {
                   log.failedToInvalidateKeys(t);
                }
 
                if (trace) {
-                  if (removedKeys.size() > 0)
-                     log.tracef("removed %d keys", removedKeys.size());
+                  if (keysToRemove.size() > 0)
+                     log.tracef("%s removed keys %s", self, keysToRemove);
                   log.tracef("data container has now %d keys", dataContainer.size());
                }
             } else {
@@ -207,8 +206,7 @@ public class RebalanceTask extends RehashTask {
          } else {
             final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED, self, newViewId);
 
-            // doesn't matter when the coordinator receives the command, the transport will ensure that it eventually gets there
-            rpcManager.invokeRemotely(Collections.singleton(t.getCoordinator()), cmd, false);
+            rpcManager.invokeRemotely(Collections.singleton(t.getCoordinator()), cmd, ResponseMode.SYNCHRONOUS, configuration.getRehashRpcTimeout());
          }
       } finally {
          log.debugf("Node %s completed join rehash in %s!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
@@ -218,7 +216,7 @@ public class RebalanceTask extends RehashTask {
 
    /**
     * Computes the list of old and new servers for a given key K and value V. Adds (K, V) to the <code>states</code> map
-    * if K should be pushed to other servers. Adds K to the <code>removedKeys</code> list if this node is no longer an
+    * if K should be pushed to other servers. Adds K to the <code>keysToRemove</code> list if this node is no longer an
     * owner for K.
     *
     * @param key         The key
@@ -228,31 +226,33 @@ public class RebalanceTask extends RehashTask {
     * @param chNew       The new consistent hash
     * @param cacheStore  If the value is <code>null</code>, try to load it from this cache store
     * @param states      The result hashmap. Keys are servers, values are states (hashmaps) to be pushed to them
-    * @param removedKeys A list that the keys that we need to remove will be added to
+    * @param keysToRemove A list that the keys that we need to remove will be added to
     */
    protected void rebalance(Object key, InternalCacheEntry value, int numOwners, ConsistentHash chOld, ConsistentHash chNew,
-                            CacheStore cacheStore, Map<Address, Map<Object, InternalCacheValue>> states, List<Object> removedKeys) {
+                            CacheStore cacheStore, Map<Address, Map<Object, InternalCacheValue>> states, List<Object> keysToRemove) {
       // 1. Get the old and new servers for key K
-      List<Address> oldServers = chOld.locate(key, numOwners);
-      List<Address> newServers = chNew.locate(key, numOwners);
+      List<Address> oldOwners = chOld.locate(key, numOwners);
+      List<Address> newOwners = chNew.locate(key, numOwners);
 
       // 2. If the target set for K hasn't changed --> no-op
-      if (oldServers.equals(newServers))
+      if (oldOwners.equals(newOwners))
          return;
 
-      // 3. The old owner is the last node in the old server list that's also in the new server list
-      // This might be null if we have old servers={A,B} and new servers={C,D}
-      Address oldOwner = null;
-      for (int i = oldServers.size() - 1; i >= 0; i--) {
-         Address tmp = oldServers.get(i);
-         if (newServers.contains(tmp)) {
-            oldOwner = tmp;
+      if (trace) log.tracef("Rebalancing key %s from %s to %s", key, oldOwners, newOwners);
+
+      // 3. The pushing server is the last node in the old owner list that's also in the new owner list
+      // It will only be null if all the old owners left the cluster
+      Address pushingOwner = null;
+      for (int i = oldOwners.size() - 1; i >= 0; i--) {
+         Address server = oldOwners.get(i);
+         if (newOwners.contains(server)) {
+            pushingOwner = server;
             break;
          }
       }
 
       // 4. Push K to all the new servers which are *not* in the old servers list
-      if (self.equals(oldOwner)) {
+      if (self.equals(pushingOwner)) {
          if (value == null) {
             try {
                value = cacheStore.load(key);
@@ -261,8 +261,8 @@ public class RebalanceTask extends RehashTask {
             }
          }
 
-         for (Address server : newServers) {
-            if (!oldServers.contains(server)) { // server doesn't have K
+         for (Address server : newOwners) {
+            if (!oldOwners.contains(server)) { // server doesn't have K
                Map<Object, InternalCacheValue> map = states.get(server);
                if (map == null) {
                   map = new HashMap<Object, InternalCacheValue>();
@@ -274,10 +274,9 @@ public class RebalanceTask extends RehashTask {
          }
       }
 
-      // TODO do we really need to check if oldServers.contains(self) ?
       // 5. Remove K if it should not be stored here any longer; rebalancing moved K to a different server
-      if (oldServers.contains(self) && !newServers.contains(self)) {
-         removedKeys.add(key);
+      if (oldOwners.contains(self) && !newOwners.contains(self)) {
+         keysToRemove.add(key);
       }
    }
 

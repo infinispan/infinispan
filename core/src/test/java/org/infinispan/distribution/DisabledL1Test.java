@@ -53,7 +53,7 @@ public class DisabledL1Test extends BaseDistFunctionalTest {
       asyncWait("k1", RemoveCommand.class, getFirstNonOwner("k1"));
       if (testRetVals) assert "value".equals(retval);
 
-      assertOnAllCachesAndOwnership("k1", null);
+      assertRemovedOnAllCaches("k1");
    }
 
    public void testReplaceFromNonOwner(Method m) {

@@ -144,7 +144,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       asyncWait("k1", RemoveCommand.class, getSecondNonOwner("k1"));
       if (testRetVals) assert "value".equals(retval);
 
-      assertOnAllCachesAndOwnership("k1", null);
+      assertRemovedOnAllCaches("k1");
    }
 
    public void testConditionalRemoveFromNonOwner() {
@@ -163,7 +163,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       if (testRetVals) assert retval : "Should have removed entry";
 
       assert caches.get(1).get("k1") == null : "expected null but received " + caches.get(1).get("k1");
-      assertOnAllCachesAndOwnership("k1", null);
+      assertRemovedOnAllCaches("k1");
    }
 
    public void testReplaceFromNonOwner() {
@@ -181,7 +181,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       retval = getFirstNonOwner("k1").replace("k1", "value2");
       if (testRetVals) assert retval == null;
 
-      assertOnAllCachesAndOwnership("k1", null);
+      assertRemovedOnAllCaches("k1");
    }
 
    public void testConditionalReplaceFromNonOwner() {
