@@ -407,8 +407,12 @@
          <id>jboss-public-repository</id>
          <name>JBoss Public Repository and Proxy for third party repositories</name>
          <url>https://repository.jboss.org/nexus/content/groups/public</url>
-         <snapshots>true</snapshots>
-         <releases>true</releases>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+         <releases>
+            <enabled>true</enabled>
+         </releases>
       </repository>
    </repositories>
 
