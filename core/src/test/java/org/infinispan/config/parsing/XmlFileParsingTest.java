@@ -264,7 +264,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert csConf.isIgnoreModifications();
       assert csConf.isPurgeOnStartup();
       assert csConf.getLocation().equals("/tmp/FileCacheStore-Location");
-      assert csConf.getFsyncMode() == FileCacheStoreConfig.FsyncMode.PER_WRITE;
+      assert csConf.getFsyncMode() == FileCacheStoreConfig.FsyncMode.PERIODIC;
       assert csConf.getFsyncInterval() == 2000;
       assert csConf.getSingletonStoreConfig().getPushStateTimeout() == 20000;
       assert csConf.getSingletonStoreConfig().isPushStateWhenCoordinator();
