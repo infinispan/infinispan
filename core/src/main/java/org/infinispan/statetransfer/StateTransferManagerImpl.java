@@ -24,7 +24,6 @@ package org.infinispan.statetransfer;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
@@ -43,7 +42,6 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.DistributedSync;
@@ -60,7 +58,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -89,7 +86,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
    boolean transientState, persistentState, alwaysProvideTransientState;
    int maxNonProgressingLogWrites;
    long flushTimeout;
-   volatile boolean needToUnblockRPC = false;
    volatile Address stateSender;
 
    @Inject
@@ -135,15 +131,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
             long duration = System.currentTimeMillis() - startTime;
             log.debugf("State transfer process completed in %s", Util.prettyPrintTime(duration));
          }
-      }
-   }
-
-   @Start(priority = 1000)
-   // needs to be the last thing that happens on this cache
-   public void releaseRPCBlock() throws Exception {
-      if (needToUnblockRPC) {
-         if (trace) log.trace("Stopping RPC block");
-         mimicPartialFlushViaRPC(stateSender, false);
       }
    }
 
@@ -252,57 +239,33 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
       processCommitLog(oi);
       stateSender = rpcManager.getCurrentStateTransferSource();
-      mimicPartialFlushViaRPC(stateSender, true);
-      needToUnblockRPC = true;
+      
+      if (trace)
+         log.trace("Retrieving/Applying post-flush commits");
+      processCommitLog(oi);
 
-      try {
-         if (trace)
-            log.trace("Retrieving/Applying post-flush commits");
-         processCommitLog(oi);
+      if (trace)
+         log.trace("Retrieving/Applying pending prepares");
+      Object object = marshaller.objectFromObjectStream(oi);
+      while (object instanceof PrepareCommand) {
+         PrepareCommand command = (PrepareCommand) object;
 
-         if (trace)
-            log.trace("Retrieving/Applying pending prepares");
-         Object object = marshaller.objectFromObjectStream(oi);
-         while (object instanceof PrepareCommand) {
-            PrepareCommand command = (PrepareCommand) object;
-
-            if (!transactionLog.hasPendingPrepare(command)) {
-               if (trace) log.tracef("Applying pending prepare %s", command);
-               commandsFactory.initializeReplicableCommand(command, false);
-               RemoteTxInvocationContext ctx = invocationContextContainer.createRemoteTxInvocationContext(null /* No idea if this right PLM */);
-               RemoteTransaction transaction = txTable.createRemoteTransaction(command.getGlobalTransaction(), command.getModifications());
-               ctx.setRemoteTransaction(transaction);
-               ctx.setFlags(CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
-               interceptorChain.invoke(ctx, command);
-            } else {
-               if (trace) log.tracef("Prepare %s not in tx log; not applying", command);
-            }
-            object = marshaller.objectFromObjectStream(oi);
+         if (!transactionLog.hasPendingPrepare(command)) {
+            if (trace) log.tracef("Applying pending prepare %s", command);
+            commandsFactory.initializeReplicableCommand(command, false);
+            RemoteTxInvocationContext ctx = invocationContextContainer.createRemoteTxInvocationContext(null /* No idea if this right PLM */);
+            RemoteTransaction transaction = txTable.createRemoteTransaction(command.getGlobalTransaction(), command.getModifications());
+            ctx.setRemoteTransaction(transaction);
+            ctx.setFlags(CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
+            interceptorChain.invoke(ctx, command);
+         } else {
+            if (trace) log.tracef("Prepare %s not in tx log; not applying", command);
          }
-         assertDelimited(object);
-      } catch (Exception e) {
-         if (trace) log.trace("Stopping RPC block");
-         mimicPartialFlushViaRPC(stateSender, false);
-         needToUnblockRPC = false;
-         throw e;
+         object = marshaller.objectFromObjectStream(oi);
       }
+      assertDelimited(object);      
    }
-
-   /**
-    * Mimics a partial flush between the current instance and the address to flush, by opening and closing the necessary
-    * latches on both ends.
-    *
-    * @param addressToFlush address to flush in addition to the current address
-    * @param block          if true, mimics setting a flush.  Otherwise, mimics un-setting a flush.
-    * @throws Exception if there are issues
-    */
-   private void mimicPartialFlushViaRPC(Address addressToFlush, boolean block) throws Exception {
-      StateTransferControlCommand cmd = commandsFactory.buildStateTransferControlCommand(block);
-      if (!block) rpcManager.getTransport().getDistributedSync().releaseSync();
-      rpcManager.invokeRemotely(Collections.singletonList(addressToFlush), cmd, ResponseMode.SYNCHRONOUS, configuration.getStateRetrievalTimeout(), true);
-      if (block) rpcManager.getTransport().getDistributedSync().acquireSync();
-   }
-
+   
    public void applyState(InputStream in) throws StateTransferException {
       if (log.isDebugEnabled()) log.debug("Applying state");
       ObjectInput oi = null;
