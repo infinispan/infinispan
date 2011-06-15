@@ -67,11 +67,11 @@
    <!-- ================ -->
 
    <category name="org.infinispan">
-      <priority value="TRACE"/>
+      <priority value="DEBUG"/>
    </category>
 
    <category name="org.infinispan.distribution">
-      <priority value="TRACE"/>
+      <priority value="DEBUG"/>
    </category>
 
    <category name="org.infinispan.profiling">
@@ -99,7 +99,7 @@
    </category>
 
    <category name="org.jgroups">
-      <priority value="DEBUG"/>
+      <priority value="WARN"/>
    </category>
 
    <!-- ======================= -->
