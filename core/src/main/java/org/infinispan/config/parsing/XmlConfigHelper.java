@@ -414,9 +414,9 @@ public class XmlConfigHelper {
       for (Map.Entry entry : attribs.entrySet()) {
          String propName = (String) entry.getKey();
          String setter = BeanUtils.setterName(propName);
-         Method method;
 
          try {
+            Method method;
             if (isXmlAttribs) {
                method = objectClass.getMethod(setter, Element.class);
                method.invoke(target, entry.getValue());
