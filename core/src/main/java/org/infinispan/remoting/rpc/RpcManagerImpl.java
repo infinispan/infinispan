@@ -25,6 +25,7 @@ package org.infinispan.remoting.rpc;
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.factories.KnownComponentNames;
@@ -182,15 +183,20 @@ public class RpcManagerImpl implements RpcManager {
                      try {
                         if (log.isInfoEnabled()) log.tryingToFetchState(member);
                         currentStateTransferSource = member;
+                        mimicPartialFlushViaRPC(currentStateTransferSource, true);
                         if (t.retrieveState(cacheName, member, timeout)) {
                            if (log.isInfoEnabled())
                               log.successfullyAppliedState(member);
                            success = true;
                            break outer;
                         }
-                     } catch (StateTransferException e) {
-                        if (log.isDebugEnabled()) log.debug("Error while fetching state from member " + member, e);
-                     } finally {
+                     } catch (Exception ex){
+                        if (log.isDebugEnabled()) log.debug("Error while fetching state from member " + member, ex);
+                     }
+                     finally {                        
+                        try {
+                           mimicPartialFlushViaRPC(currentStateTransferSource, false);
+                        } catch (Exception ignored) {}
                         currentStateTransferSource = null;
                      }
                   }
@@ -321,6 +327,26 @@ public class RpcManagerImpl implements RpcManager {
             }
          }
       }
+   }
+   
+   /**
+    * Mimics a partial flush between the current instance and the address to flush, by opening and closing the necessary
+    * latches on both ends.
+    *
+    * @param addressToFlush address to flush in addition to the current address
+    * @param block          if true, mimics setting a flush.  Otherwise, mimics un-setting a flush.
+    * @throws Exception if there are issues
+    */
+   private void mimicPartialFlushViaRPC(Address addressToFlush, boolean block) {
+      StateTransferControlCommand cmd = cf.buildStateTransferControlCommand(block);
+      if (!block)
+         getTransport().getDistributedSync().releaseSync();
+      
+      invokeRemotely(Collections.singletonList(addressToFlush), cmd, ResponseMode.SYNCHRONOUS,
+               configuration.getStateRetrievalTimeout(), true);
+      
+      if (block)
+         getTransport().getDistributedSync().acquireSync();
    }
 
    // -------------------------------------------- JMX information -----------------------------------------------
