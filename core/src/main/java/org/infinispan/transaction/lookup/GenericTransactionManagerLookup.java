@@ -189,7 +189,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
          tm = (TransactionManager) method.invoke(null, args);
       }
       catch (Exception ex) {
-         log.unableToInvokeWebsphereStaticGetTmMethod(ex);
+         log.unableToInvokeWebsphereStaticGetTmMethod(ex, clazz.getName());
       }
    }
 
