@@ -36,7 +36,7 @@ import static org.infinispan.config.Configuration.CacheMode.REPL_ASYNC;
  * @author Sanne Grinovero
  * @since 4.0
  */
-@Test(groups = "functional", testName = "config.ConfigurationValidationTest")
+@Test(groups = "functional", testName = "config.ConfigurationValidation2Test")
 public class ConfigurationValidation2Test extends SingleCacheManagerTest {
 
    public void testWrongCacheModeConfiguration() {

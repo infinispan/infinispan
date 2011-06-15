@@ -51,7 +51,7 @@ import static org.testng.Assert.assertEquals;
  * @author Dan Berindei <dberinde@redhat.com>
  * @since 5.0
  */
-@Test(testName = "distribution.VNodesCHPerfTest", groups = "manual")
+@Test(testName = "topologyaware.VNodesTachPerfTest", groups = "manual")
 public class VNodesTachPerfTest extends AbstractInfinispanTest {
 
    private Set<Address> createAddresses(int numNodes) {
