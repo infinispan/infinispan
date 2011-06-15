@@ -178,6 +178,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
       c = new Configuration();
       c.setEvictionStrategy(EvictionStrategy.LRU);
+      c.setEvictionMaxEntries(1);
       Configuration lazyLru = cm.defineConfiguration("lazyDeserializationWithLRU", "storeAsBinary", c);
       assert lazyLru.isUseLazyDeserialization();
       assert lazyLru.getEvictionStrategy() == EvictionStrategy.LRU;
