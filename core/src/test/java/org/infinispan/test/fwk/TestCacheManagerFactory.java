@@ -75,7 +75,6 @@ public class TestCacheManagerFactory {
       InfinispanConfiguration parser = InfinispanConfiguration.newInfinispanConfiguration(
             xmlFile,
             InfinispanConfiguration.resolveSchemaPath(),
-            new ConfigurationValidatingVisitor(),
             Thread.currentThread().getContextClassLoader());
       return fromConfigFileParser(parser, allowDupeDomains);
    }
@@ -90,8 +89,7 @@ public class TestCacheManagerFactory {
 
    public static EmbeddedCacheManager fromStream(InputStream is, boolean allowDupeDomains) throws IOException {
       InfinispanConfiguration parser = InfinispanConfiguration.newInfinispanConfiguration(
-            is, InfinispanConfiguration.findSchemaInputStream(),
-            new ConfigurationValidatingVisitor());
+            is, InfinispanConfiguration.findSchemaInputStream());
       return fromConfigFileParser(parser, allowDupeDomains);
    }
 

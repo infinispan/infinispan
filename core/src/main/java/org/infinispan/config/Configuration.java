@@ -198,12 +198,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return name;
    }
 
-   @SuppressWarnings("unused")
-   @Inject
-   private void injectGlobalConfiguration(GlobalConfiguration globalConfiguration) {
-      this.globalConfiguration = globalConfiguration;
-   }
-   
    public ClassLoader getClassLoader() {
       if (cl != null)
          // The classloader has been set for this configuration
@@ -1422,7 +1416,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             dolly.clustering = clustering.clone();
             dolly.clustering.setConfiguration(dolly);
          }
-         if (globalConfiguration != null) dolly.globalConfiguration = globalConfiguration.clone();
+         // The globalConfiguration reference is shared, shouldn't clone it
+         //if (globalConfiguration != null) dolly.globalConfiguration = globalConfiguration.clone();
          if (locking != null) {
             dolly.locking = (LockingType) locking.clone();
             dolly.locking.setConfiguration(dolly);
@@ -2824,7 +2819,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @Dynamic
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setStateRetrievalTimeout")
-      protected Long timeout = 10000L;
+      protected Long timeout = 240000L;
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setStateRetrievalInitialRetryWaitTime")
       protected Long initialRetryWaitTime = 500L;
