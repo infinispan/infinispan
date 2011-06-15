@@ -72,12 +72,12 @@ public class KeyTypeTest extends SingleCacheManagerTest {
    public void testPrimitiveAndStringKeys(){
       String key1 = "key1";
       int key2 = 2;
-      byte key3 = (byte) 3;
-      float key4 = (float) 4;
-      long key5 = (long) 5;
-      short key6 = (short) 6;
+      byte key3 = 3;
+      float key4 = 4;
+      long key5 = 5;
+      short key6 = 6;
       boolean key7 = true;
-      double key8 = (double) 8;
+      double key8 = 8;
       char key9 = '9';
 
 

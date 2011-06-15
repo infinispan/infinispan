@@ -243,7 +243,7 @@ public class QueryInterceptor extends CommandInterceptor {
       if (locked) {
          Set<Class> existingClasses = knownClasses.keySet();
          int index = existingClasses.size();
-         Class[] all = (Class[]) existingClasses.toArray(new Class[existingClasses.size()+toAdd.size()]);
+         Class[] all = existingClasses.toArray(new Class[existingClasses.size()+toAdd.size()]);
          for (Class toAddClass : toAdd) {
             all[index++] = toAddClass;
          }
