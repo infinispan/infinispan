@@ -43,7 +43,7 @@ import static org.infinispan.config.Configuration.CacheMode.LOCAL;
 @Test(testName = "query.blackbox.SearchFactoryShutdownTest", groups = "functional")
 public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
    
-   public void testCorrectShutdown() throws NoSuchFieldException, IllegalAccessException {
+   public void testCorrectShutdown() {
       CacheContainer cc = null;
 
       try {
