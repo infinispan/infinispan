@@ -38,7 +38,7 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 
 
-@Test(testName = "lock.APITest", groups = "functional")
+@Test(testName = "lock.APIDistTest", groups = "functional")
 @CleanupAfterMethod
 public class APIDistTest extends MultipleCacheManagersTest {
    EmbeddedCacheManager cm1, cm2;

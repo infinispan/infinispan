@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(testName="topologyaware.VNodesDistSyncUnsafeFuncTest", groups = "functional")
+@Test(testName="topologyaware.VNodesTachDistSyncUnsafeFuncTest", groups = "functional")
 public class VNodesTachDistSyncUnsafeFuncTest extends DistSyncUnsafeFuncTest {
 
    public VNodesTachDistSyncUnsafeFuncTest() {

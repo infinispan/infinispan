@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test (groups = "functional", testName = "topologyaware.VNodesChFunctionalTest")
+@Test (groups = "functional", testName = "topologyaware.VNodesTachFunctionalTest")
 public class VNodesTachFunctionalTest extends DistSyncFuncTest {
 
    public VNodesTachFunctionalTest() {

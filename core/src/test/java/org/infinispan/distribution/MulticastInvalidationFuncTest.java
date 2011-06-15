@@ -31,7 +31,7 @@ import org.infinispan.test.ReplListener;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "distribution.DistSyncFuncTest")
+@Test(groups = "functional", testName = "distribution.MulticastInvalidationFuncTest")
 public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest {
 	
 	public static final String KEY1 = "k1";

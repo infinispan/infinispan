@@ -48,7 +48,7 @@ import static org.testng.Assert.assertEquals;
  * @author Dan Berindei <dberinde@redhat.com>
  * @since 5.0
  */
-@Test(groups = "unit", testName = "distribution.VNodesTopologyAwareConsistentHashTest")
+@Test(groups = "unit", testName = "topologyaware.VNodesTopologyAwareConsistentHashTest")
 public class VNodesTopologyAwareConsistentHashTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(VNodesTopologyAwareConsistentHashTest.class);
 

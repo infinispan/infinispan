@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  * @author Galder Zamarreño
  * @since 4.2
  */
-@Test(groups = "functional", testName = "marshall.VersionAwareMarshallerTest")
+@Test(groups = "functional", testName = "profiling.CacheCreationStressTest")
 public class CacheCreationStressTest extends AbstractInfinispanTest {
 
    public void testCreateCachesFromSameContainer() {
