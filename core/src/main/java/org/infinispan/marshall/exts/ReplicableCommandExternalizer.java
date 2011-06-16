@@ -77,6 +77,14 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
 
    @Override
    public void writeObject(ObjectOutput output, ReplicableCommand command) throws IOException {
+      Collection<Class<? extends ReplicableCommand>> moduleCommands = getModuleCommands();
+      // Write an indexer to separate commands defined external to the
+      // infinispan core module from the ones defined via module commands
+      if (moduleCommands.contains(command.getClass()))
+         output.writeByte(1);
+      else
+         output.writeByte(0);
+
       output.writeShort(command.getCommandId());
       Object[] args = command.getParameters();
       int numArgs = (args == null ? 0 : args.length);
@@ -96,6 +104,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
 
    @Override
    public ReplicableCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      byte type = input.readByte();
       short methodId = input.readShort();
       int numArgs = UnsignedNumeric.readUnsignedInt(input);
       Object[] args = null;
@@ -106,7 +115,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
          // Instead, merge in PutKeyValueCommand.perform
          for (int i = 0; i < numArgs; i++) args[i] = input.readObject();
       }
-      return cmdFactory.fromStream((byte) methodId, args);
+      return cmdFactory.fromStream((byte) methodId, args, type);
    }
 
    @Override
@@ -129,8 +138,12 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             RemoveCommand.class, ReplaceCommand.class,
             RemoveCacheCommand.class, RemoveRecoveryInfoCommand.class, GetInDoubtTransactionsCommand.class,
             GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class);
-      Collection<Class<? extends ReplicableCommand>> moduleCommands = ModuleProperties.moduleCommands(null);
+      Collection<Class<? extends ReplicableCommand>> moduleCommands = getModuleCommands();
       if (moduleCommands != null && !moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);
       return coreCommands;
+   }
+
+   private Collection<Class<? extends ReplicableCommand>> getModuleCommands() {
+      return ModuleProperties.moduleCommands(null);
    }
 }
