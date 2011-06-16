@@ -51,32 +51,32 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
 
    def testDistributedPutWithTopologyChanges(m: Method) {
       var resp = clients.head.ping(3, 0)
-      assertStatus(resp.status, Success)
+      assertStatus(resp, Success)
       var expectedHashIds = generateExpectedHashIds
       assertHashTopologyReceived(resp.topologyResponse.get, servers, expectedHashIds)
 
       resp = clients.head.put(k(m) , 0, 0, v(m), 1, 0)
-      assertStatus(resp.status, Success)
+      assertStatus(resp, Success)
       assertEquals(resp.topologyResponse, None)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m))
       resp = clients.head.put(k(m) , 0, 0, v(m, "v1-"), 2, 0)
-      assertStatus(resp.status, Success)
+      assertStatus(resp, Success)
       assertTopologyReceived(resp.topologyResponse.get, servers)
       resp = clients.tail.head.put(k(m) , 0, 0, v(m, "v2-"), 2, 1)
-      assertStatus(resp.status, Success)
+      assertStatus(resp, Success)
       assertTopologyReceived(resp.topologyResponse.get, servers)
       resp = clients.head.put(k(m) , 0, 0, v(m, "v3-"), 2, 2)
-      assertStatus(resp.status, Success)
+      assertStatus(resp, Success)
       assertEquals(resp.topologyResponse, None)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v3-"))
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v4-"), 3, 0)
-      assertStatus(resp.status, Success)
+      assertStatus(resp, Success)
       expectedHashIds = generateExpectedHashIds
       assertHashTopologyReceived(resp.topologyResponse.get, servers, expectedHashIds)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v4-"))
       resp = clients.tail.head.put(k(m) , 0, 0, v(m, "v5-"), 3, 1)
-      assertStatus(resp.status, Success)
+      assertStatus(resp, Success)
       expectedHashIds = generateExpectedHashIds
       assertHashTopologyReceived(resp.topologyResponse.get, servers, expectedHashIds)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v5-"))
@@ -89,7 +89,7 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
          log.trace("New client started, modify key to be v6-*")
          resp = newClient.put(k(m) , 0, 0, v(m, "v6-"), 3, 2)
          // resp = clients.tail.head.put(k(m) , 0, 0, v(m, "v6-"), 3, 2)
-         assertStatus(resp.status, Success)
+         assertStatus(resp, Success)
          val hashTopologyResp = resp.topologyResponse.get.asInstanceOf[HashDistAwareResponse]
          assertEquals(hashTopologyResp.view.topologyId, 3)
          assertEquals(hashTopologyResp.view.members.size, 3)
@@ -112,7 +112,7 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
       }
 
       resp = clients.tail.head.put(k(m) , 0, 0, v(m, "v7-"), 3, 3)
-      assertStatus(resp.status, Success)
+      assertStatus(resp, Success)
       val hashTopologyResp = resp.topologyResponse.get.asInstanceOf[HashDistAwareResponse]
       assertEquals(hashTopologyResp.view.topologyId, 4)
       assertEquals(hashTopologyResp.view.members.size, 2)

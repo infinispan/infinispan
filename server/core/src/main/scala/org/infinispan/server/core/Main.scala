@@ -58,6 +58,7 @@ object Main extends Log {
    val PROP_KEY_TOPOLOGY_LOCK_TIMEOUT = "infinispan.server.topology.lock_timeout"
    val PROP_KEY_TOPOLOGY_REPL_TIMEOUT = "infinispan.server.topology.repl_timeout"
    val PROP_KEY_TOPOLOGY_STATE_TRANSFER = "infinispan.server.topology.state_transfer"
+   val PROP_KEY_TOPOLOGY_UPDATE_TIMEOUT = "infinispan.server.topology.update_timeout"
    val PROP_KEY_CACHE_MANAGER_CLASS = "infinispan.server.cache_manager_class"
    val HOST_DEFAULT = "127.0.0.1"
    val WORKER_THREADS_DEFAULT = 20 * Runtime.getRuntime.availableProcessors()
@@ -67,6 +68,7 @@ object Main extends Log {
    val RECV_BUF_SIZE_DEFAULT = 0
    val TOPO_LOCK_TIMEOUT_DEFAULT = 10000L
    val TOPO_REPL_TIMEOUT_DEFAULT = 10000L
+   val TOPO_UPDATE_TIMEOUT_DEFAULT = 30000L
    val TOPO_STATE_TRANSFER_DEFAULT = true
 
    /**
@@ -181,7 +183,7 @@ object Main extends Log {
    }
 
    private def processCommandLine(args: Array[String]) {
-      val sopts = "-:hD:Vp:l:m:t:c:r:i:n:s:e:o:x:k:u:a:f:"
+      val sopts = "-:hD:Vp:l:m:t:c:r:i:n:s:e:o:x:k:u:a:f:d:"
       val lopts = Array(
          new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
          new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'V'),
@@ -199,6 +201,7 @@ object Main extends Log {
          new LongOpt("topo_lock_timeout", LongOpt.REQUIRED_ARGUMENT, null, 'k'),
          new LongOpt("topo_repl_timeout", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
          new LongOpt("topo_state_transfer", LongOpt.REQUIRED_ARGUMENT, null, 'a'),
+         new LongOpt("topo_update_time", LongOpt.REQUIRED_ARGUMENT, null, 'd'),
          new LongOpt("cache_manager_class", LongOpt.REQUIRED_ARGUMENT, null, 'f')
          )
       val getopt = new Getopt("startServer", args, sopts, lopts)
@@ -227,6 +230,7 @@ object Main extends Log {
             case 'k' => props.setProperty(PROP_KEY_TOPOLOGY_LOCK_TIMEOUT, getopt.getOptarg)
             case 'u' => props.setProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, getopt.getOptarg)
             case 'a' => props.setProperty(PROP_KEY_TOPOLOGY_STATE_TRANSFER, getopt.getOptarg)
+            case 'd' => props.setProperty(PROP_KEY_TOPOLOGY_UPDATE_TIMEOUT, getopt.getOptarg)
             case 'f' => props.setProperty(PROP_KEY_CACHE_MANAGER_CLASS, getopt.getOptarg)
             case 'D' => {
                val arg = getopt.getOptarg
@@ -300,9 +304,13 @@ object Main extends Log {
       println("                                       If state transfer is enabled, this setting also controls the topology cache state transfer timeout.")
       println("                                       If state transfer is disabled, it controls the amount of time to wait for this topology data")
       println("                                       to be lazily loaded from a different node when not present locally.")
+      println("                                       This value should be set higher than 'topo_lock_timeout' to allow remote locks to be acquired within the time allocated to replicate the topology.")
       println
       println("    -a, --topo_state_trasfer=          Enabling topology information state transfer means that when a server starts it retrieves this information from a different node.")
       println("          [true|false]                 Otherwise, if set to false, the topology information is lazily loaded if not available locally.")
+      println
+      println("    -d, --topo_update_timeout=<num>    Sets the maximum time (in milliseconds) to wait for topology information to be updated.")
+      println("                                       This value should be set higher than 'topo_repl_timeout' to allow retries to happen if a replication timeout is encountered.")
       println
       println("    -f, --cache_manager_class=<clazz>  Cache manager class name to be used instead of the default one (it has to extend org.infinispan.manager.EmbeddedCacheManager).")
       println

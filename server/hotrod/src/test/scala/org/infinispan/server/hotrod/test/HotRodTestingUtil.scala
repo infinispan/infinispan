@@ -138,14 +138,23 @@ object HotRodTestingUtil extends Log {
 
    def v(m: Method): Array[Byte] = v(m, "v-")
 
-   def assertStatus(status: OperationStatus, expected: OperationStatus): Boolean = {
+   def assertStatus(resp: TestResponse, expected: OperationStatus): Boolean = {
+      val status = resp.status
       val isSuccess = status == expected
-      assertTrue(isSuccess, "Status should have been '" + expected + "' but instead was: " + status)
+      resp match {
+         case e: TestErrorResponse =>
+            assertTrue(isSuccess,
+               "Status should have been '%s' but instead was: '%s', and the error message was: %s"
+               .format(expected, status, e.msg))
+         case _ => assertTrue(isSuccess,
+               "Status should have been '%s' but instead was: '%s'"
+               .format(expected, status))
+      }
       isSuccess
    }
 
    def assertSuccess(resp: TestGetResponse, expected: Array[Byte]): Boolean = {
-      assertStatus(resp.status, Success)
+      assertStatus(resp, Success)
       val isArrayEquals = Arrays.equals(expected, resp.data.get)
       assertTrue(isArrayEquals, "Retrieved data should have contained " + Util.printArray(expected, true)
             + " (" + new String(expected) + "), but instead we received " + Util.printArray(resp.data.get, true) + " (" +  new String(resp.data.get) +")")
@@ -158,7 +167,7 @@ object HotRodTestingUtil extends Log {
    }
 
    def assertSuccess(resp: TestResponseWithPrevious, expected: Array[Byte]): Boolean = {
-      assertStatus(resp.status, Success)
+      assertStatus(resp, Success)
       val isSuccess = Arrays.equals(expected, resp.previous.get)
       assertTrue(isSuccess)
       isSuccess

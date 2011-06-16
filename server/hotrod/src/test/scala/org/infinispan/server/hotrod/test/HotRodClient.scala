@@ -82,8 +82,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       execute(0xA0, 0x01, defaultCacheName, k, lifespan, maxIdle, v, 0, clientIntelligence, topologyId)
 
    def assertPut(m: Method) {
-      val status = put(k(m) , 0, 0, v(m)).status
-      assertStatus(status, Success)
+      assertStatus(put(k(m) , 0, 0, v(m)), Success)
    }
 
    def assertPutFail(m: Method) {
@@ -95,13 +94,11 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
    }
 
    def assertPut(m: Method, kPrefix: String, vPrefix: String) {
-      val status = put(k(m, kPrefix) , 0, 0, v(m, vPrefix)).status
-      assertStatus(status, Success)
+      assertStatus(put(k(m, kPrefix) , 0, 0, v(m, vPrefix)), Success)
    }
 
    def assertPut(m: Method, lifespan: Int, maxIdle: Int) {
-      val status = put(k(m) , lifespan, maxIdle, v(m)).status
-      assertStatus(status, Success)
+      assertStatus(put(k(m) , lifespan, maxIdle, v(m)), Success)
    }
 
    def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): TestResponse =
