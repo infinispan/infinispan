@@ -33,6 +33,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -78,7 +79,7 @@ public class QueryInterceptor extends CommandInterceptor {
    }
 
    protected boolean shouldModifyIndexes(InvocationContext ctx) {
-      return true;
+      return ! ctx.hasFlag(Flag.SKIP_INDEXING);
    }
 
    @Override
