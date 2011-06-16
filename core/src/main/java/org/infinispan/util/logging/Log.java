@@ -535,7 +535,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Found WebSphere TransactionManager factory class [%s], but" +
          " couldn't invoke its static 'getTransactionManager' method", id = 106)
-   void unableToInvokeWebsphereStaticGetTmMethod(@Cause Exception ex);
+   void unableToInvokeWebsphereStaticGetTmMethod(@Cause Exception ex, String className);
 
    @LogMessage(level = INFO)
    @Message(value = "Retrieving transaction manager %s", id = 107)
@@ -669,7 +669,7 @@ public interface Log extends BasicLogger {
    void failedInvalidatingRemoteCache(@Cause Exception e);
 
    @LogMessage(level = INFO)
-   @Message(value = "Could not register object with name: %s (%s)", id = 138)
+   @Message(value = "Could not register object with name: %s", id = 138)
    void couldNotRegisterObjectName(ObjectName objectName, @Cause InstanceAlreadyExistsException e);
 
    @LogMessage(level = WARN)
