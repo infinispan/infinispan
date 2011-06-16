@@ -34,6 +34,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
@@ -188,6 +189,12 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
        */
       try {
          return defaultMarshaller.objectFromObjectStream(in);
+      } catch (EOFException e) {
+         IOException ee = new EOFException(
+            "The stream ended unexpectedly.  Please check whether the source of " +
+               "the stream encountered any issues generating the stream.");
+         ee.initCause(e);
+         throw ee;
       } catch (IOException ioe) {
          if (trace) log.trace("Log exception reported", ioe); 
          if (ioe.getCause() instanceof InterruptedException)
