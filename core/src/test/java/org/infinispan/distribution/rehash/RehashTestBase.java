@@ -83,7 +83,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       for (Cache<Object, String> c : caches) c.put(keys.get(i++), "v" + i);
 
       i = 0;
-      for (MagicKey key : keys) assertOnAllCachesAndOwnership(key, "v" + ++i);
+      for (MagicKey key : keys) assertOwnershipAndNonOwnership(key, false);
 
       log.infof("Initialized with keys %s", keys);
       return keys;
@@ -161,20 +161,19 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
       //only check for these values if tx was not rolled back
       if (!rollback.get()) {
-         // lets first see what the value of k1 is on c1 ...
+         //ownership can only be verified after the rehashing has completed
+         RehashWaiter.waitForRehashToComplete(new ArrayList<Cache>(caches));
+         // the ownership of k1 might change during the tx and a cache might end up with it in L1
+         assertOwnershipAndNonOwnership(keys.get(0), true);
+         assertOwnershipAndNonOwnership(keys.get(1), l1OnRehash);
+         assertOwnershipAndNonOwnership(keys.get(2), l1OnRehash);
+         assertOwnershipAndNonOwnership(keys.get(3), l1OnRehash);
 
+         // checking the values will bring the keys to L1, so we want to do it after checking ownership
          assertOnAllCaches(keys.get(0), "transactionally_replaced");
          assertOnAllCaches(keys.get(1), "v" + 2);
          assertOnAllCaches(keys.get(2), "v" + 3);
          assertOnAllCaches(keys.get(3), "v" + 4);
-
-         //ownership can only be verified after the rehashing has completed
-         if (!mergedViewListener.merged) {
-            RehashWaiter.waitForRehashToComplete(new ArrayList<Cache>(caches));
-            assertOwnershipAndNonOwnership(keys.get(0));
-            assertOwnershipAndNonOwnership(keys.get(1));
-            assertOwnershipAndNonOwnership(keys.get(3));
-         }
 
          assertProperConsistentHashOnAllCaches();
       }

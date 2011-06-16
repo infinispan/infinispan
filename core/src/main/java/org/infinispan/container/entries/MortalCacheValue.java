@@ -107,9 +107,10 @@ public class MortalCacheValue extends ImmortalCacheValue {
    @Override
    public String toString() {
       return "MortalCacheValue{" +
-            "created=" + created +
+            "value=" + value +
             ", lifespan=" + lifespan +
-            "} " + super.toString();
+            ", created=" + created +
+            "}";
    }
 
    @Override

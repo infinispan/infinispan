@@ -33,7 +33,7 @@ This roughly works as follows:
 - For every key K, N computes the list of existing servers (S-old) and new servers (S-new)
 - If S-old == S-new, K is skipped (no rebalancing or invalidation has to be done)
 - Then N determines whether it is the current owner of K. This is done by iterating through S-old and returning the
-  first server that's also in S-new. For example, if we have S-old={A,B} and S-new={A,B,C}, the current owner is A. If
+  last server that's also in S-new. For example, if we have S-old={A,B} and S-new={A,B,C}, the current owner is B. If
   we have S-old={A,B} and S-new={B,C,D}, then the owner is B. If we have S-old={A,B} and S-new={C,D}, the owner is null.
   (In this last case, there is no rebalancing as all the data has been lost !)
 - If N is the owner of K, it pushes K to all servers in S-new which are *not* in S-old.

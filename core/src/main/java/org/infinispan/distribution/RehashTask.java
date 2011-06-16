@@ -33,10 +33,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A task that handles the rehashing of data in the cache system wheh nodes join or leave the cluster.  This abstract
@@ -52,7 +48,6 @@ public abstract class RehashTask implements Callable<Void> {
    protected CommandsFactory cf;
    protected DataContainer dataContainer;
    protected final Address self;
-   private final AtomicInteger counter = new AtomicInteger(0);
    protected final Log log = LogFactory.getLog(getClass());
    protected final boolean trace = log.isTraceEnabled();
 

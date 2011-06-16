@@ -118,7 +118,9 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
 
    @Override
    public CloneableConfigurationComponent clone() throws CloneNotSupportedException {
-      return (AbstractConfigurationBean) super.clone();
+      AbstractConfigurationBean dolly = (AbstractConfigurationBean) super.clone();
+      dolly.overriddenConfigurationElements = new HashSet<String>(this.overriddenConfigurationElements);
+      return dolly;
    }
 
    @Override

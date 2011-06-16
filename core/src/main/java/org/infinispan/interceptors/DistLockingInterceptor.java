@@ -41,9 +41,10 @@ public class DistLockingInterceptor extends LockingInterceptor {
       this.dm = dm;
    }
 
-   protected void commitEntry(CacheEntry entry, boolean force_commit) {
+   protected void commitEntry(CacheEntry entry, boolean skipOwnershipCheck) {
       boolean doCommit = true;
-      if (!force_commit && !dm.getLocality(entry.getKey()).isLocal()) {
+      // ignore locality for removals, even if skipOwnershipCheck is not true
+      if (!skipOwnershipCheck && !entry.isRemoved() && !dm.getLocality(entry.getKey()).isLocal()) {
          if (configuration.isL1CacheEnabled()) {
             dm.transformForL1(entry);
          } else {

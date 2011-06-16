@@ -85,7 +85,7 @@ public class DisabledL1WithRetValsTest extends BaseDistFunctionalTest {
       Object retval = nonOwner.remove("k1");
 
       assert "value".equals(retval);
-      assertOnAllCachesAndOwnership("k1", null);
+      assertRemovedOnAllCaches("k1");
    }
 
    public void testConditionalRemoveFromNonOwner() {
@@ -100,7 +100,7 @@ public class DisabledL1WithRetValsTest extends BaseDistFunctionalTest {
       removed = nonOwner.remove("k1", "value");
       assert removed;
 
-      assertOnAllCachesAndOwnership("k1", null);
+      assertRemovedOnAllCaches("k1");
    }
 
    public void testPutIfAbsentFromNonOwner() {

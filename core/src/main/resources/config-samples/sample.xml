@@ -253,7 +253,7 @@
             Defines whether to retrieve state on startup.  This is only valud for 'replication' mode.
          -->
          <stateRetrieval
-            timeout="20000"
+            timeout="240000"
             fetchInMemoryState="false"
             alwaysProvideInMemoryState="false"
          />

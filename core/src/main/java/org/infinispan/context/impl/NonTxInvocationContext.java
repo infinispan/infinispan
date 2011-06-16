@@ -52,9 +52,9 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
       lookedUpEntries.put(key, e);
    }
 
-   public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
+   public void putLookedUpEntries(Map<Object, CacheEntry> newLookedUpEntries) {
       initLookedUpEntries();
-      for (Map.Entry<Object, CacheEntry> ce: lookedUpEntries.entrySet()) {
+      for (Map.Entry<Object, CacheEntry> ce: newLookedUpEntries.entrySet()) {
          lookedUpEntries.put(ce.getKey(), ce.getValue());
       }
    }
