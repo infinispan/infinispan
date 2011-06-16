@@ -52,8 +52,7 @@ class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
    }
 
    def testPutGet(m: Method) {
-      val putSt = hotRodClient.put(k(m) , 0, 0, v(m)).status
-      assertStatus(putSt, Success)
+      assertStatus(hotRodClient.put(k(m) , 0, 0, v(m)), Success)
       assertSuccess(hotRodClient.get(k(m), 0), v(m))
    }
 

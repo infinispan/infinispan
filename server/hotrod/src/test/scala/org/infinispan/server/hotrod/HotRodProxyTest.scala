@@ -60,7 +60,7 @@ class HotRodProxyTest extends HotRodMultiNodeTest {
 
    def testTopologyWithProxiesReturned {
       val resp = clients.head.ping(2, 0)
-      assertStatus(resp.status, Success)
+      assertStatus(resp, Success)
       val topoResp = resp.topologyResponse.get
       assertEquals(topoResp.view.topologyId, 2)
       assertEquals(topoResp.view.members.size, 2)
