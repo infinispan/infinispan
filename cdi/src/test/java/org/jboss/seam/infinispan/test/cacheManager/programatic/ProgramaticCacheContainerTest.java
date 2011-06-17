@@ -33,7 +33,7 @@ public class ProgramaticCacheContainerTest extends Arquillian {
    @Inject
    SmallCacheObservers observers;
 
-   @Test
+   @Test(groups = "functional")
    public void testSmallCache() {
       assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 7);
       assertEquals(observers.getCacheStartedEventCount(), 1);

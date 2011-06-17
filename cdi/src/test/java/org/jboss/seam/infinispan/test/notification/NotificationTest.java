@@ -45,7 +45,7 @@ public class NotificationTest extends Arquillian {
    @Inject
    private Cache2Observers observers2;
 
-   @Test
+   @Test(groups = "functional")
    public void testSmallCache() {
       // Put something into the cache, ensure it is started
       cache1.put("pete", "Edinburgh");
@@ -73,7 +73,6 @@ public class NotificationTest extends Arquillian {
       cache1.stop();
       assertEquals(observers1.getCacheStoppedEventCount(), 1);
       assertEquals(observers1.getCacheStoppedEvent().getCacheName(), "cache1");
-
    }
 
 }

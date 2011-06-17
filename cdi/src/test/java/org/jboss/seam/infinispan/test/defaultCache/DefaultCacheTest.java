@@ -34,7 +34,7 @@ public class DefaultCacheTest extends Arquillian {
    @Inject
    private AdvancedCache<String, String> advancedCache;
 
-   @Test
+   @Test(groups = "functional")
    public void testDefaultCache() {
       // Simple test to make sure the default cache works
       cache.put("pete", "British");

@@ -34,12 +34,12 @@ public class ExternalCacheContainerTest extends Arquillian {
    @Quick
    private AdvancedCache<?, ?> quickCache;
 
-   @Test
+   @Test(groups = "functional")
    public void testLargeCache() {
       assertEquals(largeCache.getConfiguration().getEvictionMaxEntries(), 100);
    }
 
-   @Test
+   @Test(groups = "functional")
    public void testQuickCache() {
       assertEquals(quickCache.getConfiguration().getEvictionWakeUpInterval(), 1);
    }
