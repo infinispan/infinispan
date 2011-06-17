@@ -151,7 +151,17 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    }
    
    @Override
-    public Stats getStats() {
-        return cache.getStats();
-    }
+   public Stats getStats() {
+       return cache.getStats();
+   }
+   
+   @Override
+   public ClassLoader getClassLoader() {
+      return cache.getClassLoader();
+   }
+   
+   @Override
+   public AdvancedCache<K, V> with(ClassLoader classLoader) {
+      return cache.with(classLoader);
+   }
 }

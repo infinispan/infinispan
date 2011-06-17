@@ -170,4 +170,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    XAResource getXAResource();
    
    ClassLoader getClassLoader();
+   
+   AdvancedCache<K, V> with(ClassLoader classLoader);
 }

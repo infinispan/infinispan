@@ -731,9 +731,12 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
 
    @Override
    public ClassLoader getClassLoader() {
-      // TODO Make this overriable
       return config.getClassLoader();
    }
-   
+
+   @Override
+   public AdvancedCache<K, V> with(ClassLoader classLoader) {
+      return new ClassLoaderSpecfiedCache<K, V>(this, classLoader);
+   }
    
 }
