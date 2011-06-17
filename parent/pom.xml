@@ -101,7 +101,7 @@
 
       <!-- Versions for dependencies -->
       <version.apacheds.jdbm>1.5.7</version.apacheds.jdbm>
-      <version.arquillian>1.0.0.Alpha5</version.arquillian>
+      <version.arquillian>1.0.0.CR1</version.arquillian>
       <version.bdbje>4.0.92</version.bdbje>
       <version.c3p0>0.9.1.2</version.c3p0>
       <version.cassandra>0.8.0</version.cassandra>
@@ -128,12 +128,14 @@
       <version.osgi>4.3.0</version.osgi>
       <version.jboss.logging>3.0.0.GA</version.jboss.logging>
       <version.jboss.logging.processor>1.0.0.Beta7</version.jboss.logging.processor>
+      <version.jboss.spec>1.0.0.Final</version.jboss.spec>
       <version.jcipannotations>1.0</version.jcipannotations>
       <version.jclouds>1.0-beta-9b</version.jclouds>
       <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
       <version.jgroups>2.12.1.1.Final</version.jgroups>
       <version.json>20090211</version.json>
+      <version.jsr107>0.2.20110718.jboss</version.jsr107>
       <version.jstl>1.2</version.jstl>
       <version.jta>1.0.1.GA</version.jta>
       <version.log4j>1.2.16</version.log4j>
@@ -150,6 +152,7 @@
       <version.rhq.plugingen>3.0.1</version.rhq.plugingen>
       <version.rhq>3.0.0</version.rhq>
       <version.scala>2.8.1</version.scala>
+      <version.shrinkwrap>1.0.0-beta-3</version.shrinkwrap>
       <version.slf4j>1.6.1</version.slf4j>
       <version.solder>3.0.0.Final</version.solder>
       <version.spymemcached>2.5</version.spymemcached>
