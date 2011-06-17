@@ -23,7 +23,7 @@
 package org.infinispan.interceptors.base;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
@@ -42,7 +42,7 @@ import org.infinispan.util.logging.LogFactory;
  * This is the base class for all interceptors to extend, and implements the {@link Visitor} interface allowing it to
  * intercept invocations on {@link VisitableCommand}s.
  * <p/>
- * Commands are either created by the {@link CacheDelegate} (for invocations on the {@link Cache} public interface), or
+ * Commands are either created by the {@link CacheImpl} (for invocations on the {@link Cache} public interface), or
  * by the {@link InboundInvocationHandler} for remotely originating invocations, and are passed up the interceptor chain
  * by using the {@link InterceptorChain} helper class.
  * <p/>

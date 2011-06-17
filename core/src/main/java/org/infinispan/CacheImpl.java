@@ -108,8 +108,8 @@ import static org.infinispan.context.Flag.*;
  * @since 4.0
  */
 @SurvivesRestarts
-@MBean(objectName = CacheDelegate.OBJECT_NAME, description = "Component that represents an individual cache instance.")
-public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCache<K, V> {
+@MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
+public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<K, V> {
    public static final String OBJECT_NAME = "Cache";
    protected InvocationContextContainer icc;
    protected CommandsFactory commandsFactory;
@@ -124,7 +124,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    private final String name;
    private EvictionManager evictionManager;
    private DataContainer dataContainer;
-   private static final Log log = LogFactory.getLog(CacheDelegate.class);
+   private static final Log log = LogFactory.getLog(CacheImpl.class);
    private EmbeddedCacheManager cacheManager;
    // this is never used here but should be injected - this is a hack to make sure the StateTransferManager is properly constructed if needed.
    private StateTransferManager stateTransferManager;
@@ -143,7 +143,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       }
    };
 
-   public CacheDelegate(String name) {
+   public CacheImpl(String name) {
       this.name = name;
    }
 

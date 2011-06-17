@@ -23,7 +23,7 @@
 package org.infinispan.loaders.jdbc.mixed;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
@@ -53,7 +53,7 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
       binaryTm.setTableNamePrefix("BINARY_TABLE");
       JdbcMixedCacheStoreConfig cacheStoreConfig = new JdbcMixedCacheStoreConfig(connectionFactoryConfig, binaryTm, stringsTm);
       JdbcMixedCacheStore store = new JdbcMixedCacheStore();
-      store.init(cacheStoreConfig, new CacheDelegate("aName"), getMarshaller());
+      store.init(cacheStoreConfig, new CacheImpl("aName"), getMarshaller());
       store.start();
       assert store.getConnectionFactory() instanceof ManagedConnectionFactory;
       return store;

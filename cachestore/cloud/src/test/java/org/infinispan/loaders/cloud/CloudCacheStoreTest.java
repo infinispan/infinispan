@@ -22,7 +22,7 @@
  */
 package org.infinispan.loaders.cloud;
 
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
@@ -67,7 +67,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
       // TODO remove compress = false once ISPN-409 is closed.
       cfg.setCompress(false);
       cfg.setPurgeSynchronously(true); // for more accurate unit testing
-      cs.init(cfg, new CacheDelegate("aName"), getMarshaller());
+      cs.init(cfg, new CacheImpl("aName"), getMarshaller());
       return cs;
    }
 

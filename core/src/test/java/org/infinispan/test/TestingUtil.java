@@ -25,7 +25,7 @@ package org.infinispan.test;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.container.DataContainer;
@@ -712,8 +712,8 @@ public class TestingUtil {
     *
     * @return remote delegate, or null if the cacge is not configured for replication.
     */
-   public static CacheDelegate getInvocationDelegate(Cache cache) {
-      return (CacheDelegate) cache;
+   public static CacheImpl getInvocationDelegate(Cache cache) {
+      return (CacheImpl) cache;
    }
 
    /**
