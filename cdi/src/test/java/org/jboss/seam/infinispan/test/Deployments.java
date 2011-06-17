@@ -1,5 +1,6 @@
-package org.jboss.seam.infinispan;
+package org.jboss.seam.infinispan.test;
 
+import org.jboss.seam.infinispan.Infinispan;
 import org.jboss.seam.infinispan.event.cache.CacheEventBridge;
 import org.jboss.seam.infinispan.event.cachemanager.CacheManagerEventBridge;
 import org.jboss.shrinkwrap.api.ShrinkWrap;

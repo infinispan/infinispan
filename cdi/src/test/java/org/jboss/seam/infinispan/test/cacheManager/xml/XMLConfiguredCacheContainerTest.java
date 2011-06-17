@@ -1,6 +1,6 @@
 package org.jboss.seam.infinispan.test.cacheManager.xml;
 
-import static org.jboss.seam.infinispan.Deployments.baseDeployment;
+import static org.jboss.seam.infinispan.test.Deployments.baseDeployment;
 import static org.testng.Assert.assertEquals;
 
 import javax.inject.Inject;
