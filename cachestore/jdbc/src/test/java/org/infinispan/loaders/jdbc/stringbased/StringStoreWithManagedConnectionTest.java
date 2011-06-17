@@ -23,7 +23,7 @@
 package org.infinispan.loaders.jdbc.stringbased;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
@@ -50,7 +50,7 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
-      stringBasedCacheStore.init(config, new CacheDelegate("aName"), getMarshaller());
+      stringBasedCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
       stringBasedCacheStore.start();
       return stringBasedCacheStore;
    }

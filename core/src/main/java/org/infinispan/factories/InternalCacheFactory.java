@@ -24,7 +24,7 @@ package org.infinispan.factories;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.jmx.CacheJmxRegistration;
@@ -75,7 +75,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
    protected AdvancedCache<K, V> createAndWire(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
                                                String cacheName, ReflectionCache reflectionCache) throws Exception {
-      AdvancedCache<K, V> cache = new CacheDelegate<K, V>(cacheName);
+      AdvancedCache<K, V> cache = new CacheImpl<K, V>(cacheName);
       bootstrap(cacheName, cache, configuration, globalComponentRegistry, reflectionCache);
       return cache;
    }

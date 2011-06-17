@@ -24,7 +24,7 @@ package org.infinispan.loaders.jdbc.binary;
 
 import static org.easymock.classextension.EasyMock.*;
 
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
@@ -52,7 +52,7 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();
-      jdbcBucketCacheStore.init(config, new CacheDelegate("aName"), getMarshaller());
+      jdbcBucketCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
       jdbcBucketCacheStore.start();
       assert jdbcBucketCacheStore.getConnectionFactory() != null;
       return jdbcBucketCacheStore;
@@ -62,7 +62,7 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
       JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(false);
       config.setCreateTableOnStart(false);
-      jdbcBucketCacheStore.init(config, new CacheDelegate("aName"), new TestObjectStreamMarshaller());
+      jdbcBucketCacheStore.init(config, new CacheImpl("aName"), new TestObjectStreamMarshaller());
       jdbcBucketCacheStore.start();
       assert jdbcBucketCacheStore.getConnectionFactory() == null;
 
