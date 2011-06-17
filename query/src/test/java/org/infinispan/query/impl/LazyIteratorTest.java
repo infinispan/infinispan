@@ -22,7 +22,6 @@
  */
 package org.infinispan.query.impl;
 
-import org.apache.lucene.queryParser.ParseException;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.hibernate.search.query.engine.impl.EntityInfoImpl;
@@ -43,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.easymock.EasyMock.*;
-
 
 /**
  * @author Navin Surtani
@@ -77,7 +75,7 @@ public class LazyIteratorTest {
    }
 
    @BeforeMethod
-   public void setUp() throws ParseException, IOException {
+   public void setUp() throws IOException {
 
       // Setting up the cache mock instance
       cache = createMock(Cache.class);

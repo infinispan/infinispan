@@ -139,6 +139,11 @@ public enum Flag {
    SKIP_REMOTE_LOOKUP,
 
    /**
+    * Used by the Query module only, it will prevent the indexes to be updated as a result of the current operations.
+    */
+   SKIP_INDEXING,
+
+   /**
     * Flags the invocation as a {@link Cache#putForExternalRead(Object, Object)} call, as opposed to a regular
     * {@link Cache#put(Object, Object)}.
     */

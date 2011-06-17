@@ -278,7 +278,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       assert cacheQuery.getResultSize() == 1;
    }
 
-   public void testClear() throws ParseException {
+   public void testClear() {
       loadTestingData();
 
       // Create a term that will return me everyone called Navin.

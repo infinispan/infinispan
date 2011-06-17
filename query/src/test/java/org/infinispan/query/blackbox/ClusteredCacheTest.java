@@ -34,8 +34,6 @@ import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -49,8 +47,6 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.*;
 @Test(groups = "functional")
 public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
-   private static final Log log = LogFactory.getLog(Person.class);
-   
    Cache<String, Person> cache1, cache2;
    Person person1;
    Person person2;

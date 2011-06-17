@@ -39,8 +39,8 @@ public class Country {
    
    Long id;
    
-   @Field String countryName;
+   public @Field String countryName;
    
-   @IndexedEmbedded Set<City> cities = new HashSet<City>();
+   public final @IndexedEmbedded Set<City> cities = new HashSet<City>();
 
 }
