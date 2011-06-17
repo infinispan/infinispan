@@ -22,19 +22,23 @@
  */
 package org.infinispan.query.impl;
 
-import org.easymock.EasyMock;
-import static org.easymock.EasyMock.*;
-import org.easymock.IAnswer;
-import org.infinispan.Cache;
-import org.infinispan.query.QueryIterator;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.getCurrentArguments;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.easymock.EasyMock;
+import org.easymock.IAnswer;
+import org.infinispan.AdvancedCache;
+import org.infinispan.query.QueryIterator;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * @author Navin Surtani
@@ -48,7 +52,7 @@ public class EagerIteratorTest {
    Map<String, String> dummyResults;
    QueryIterator iterator;
    int fetchSize = 1;
-   Cache<String, String> cache;
+   AdvancedCache<String, String> cache;
 
    @BeforeMethod
    public void setUp() throws Exception {
@@ -65,7 +69,7 @@ public class EagerIteratorTest {
       }
 
       // create the instance of the iterator.
-      cache = createMock(Cache.class);
+      cache = createMock(AdvancedCache.class);
 
       expect(cache.get(anyObject())).andAnswer(new IAnswer<String>() {
          public String answer() throws Throwable {
@@ -74,7 +78,7 @@ public class EagerIteratorTest {
          }
       }).anyTimes();
 
-      iterator = new EagerIterator(keys, cache.getAdvancedCache(), fetchSize);
+      iterator = new EagerIterator(keys, cache, fetchSize);
       EasyMock.replay(cache);
    }
 
