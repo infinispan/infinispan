@@ -22,7 +22,7 @@
  */
 package org.infinispan.loaders.jdbc.mixed;
 
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
@@ -76,7 +76,7 @@ public class JdbcMixedCacheStoreTest {
 
       cacheStoreConfig.setKey2StringMapperClass(DefaultTwoWayKey2StringMapper.class.getName());
       cacheStore = new JdbcMixedCacheStore();
-      cacheStore.init(cacheStoreConfig, new CacheDelegate("aName"), getMarshaller());
+      cacheStore.init(cacheStoreConfig, new CacheImpl("aName"), getMarshaller());
       cacheStore.start();
    }
 

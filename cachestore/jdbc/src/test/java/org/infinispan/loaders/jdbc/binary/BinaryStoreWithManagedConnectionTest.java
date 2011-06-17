@@ -23,7 +23,7 @@
 package org.infinispan.loaders.jdbc.binary;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheDelegate;
+import org.infinispan.CacheImpl;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
@@ -49,7 +49,7 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcBinaryCacheStore jdbcBinaryCacheStore = new JdbcBinaryCacheStore();
-      jdbcBinaryCacheStore.init(config, new CacheDelegate("aName"), getMarshaller());
+      jdbcBinaryCacheStore.init(config, new CacheImpl("aName"), getMarshaller());
       jdbcBinaryCacheStore.start();
       assert jdbcBinaryCacheStore.getConnectionFactory() instanceof ManagedConnectionFactory;
       return jdbcBinaryCacheStore;
