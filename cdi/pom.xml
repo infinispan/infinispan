@@ -35,12 +35,16 @@
    </parent>
 
    <artifactId>infinispan-cdi</artifactId>
-   <packaging>bundle</packaging>
+   <packaging>${packaging}</packaging>
    <name>Infinispan CDI support</name>
    <description>Infinispan CDI support module</description>
 
    <properties>
        <version.jsr107>0.1-SNAPSHOT</version.jsr107>
+       <version.jboss.spec>1.0.0.Final</version.jboss.spec>
+
+       <!-- version of slf4j needed by Weld -->
+       <version.slf4j>1.5.10</version.slf4j>
    </properties>
 
    <dependencies>
@@ -66,12 +70,19 @@
       </dependency>
       
       <!-- Test dependencies -->
-      <dependency>
-         <groupId>org.jboss.arquillian</groupId>
-         <artifactId>arquillian-testng</artifactId>
-         <version>${version.arquillian}</version>
-         <scope>test</scope>
-    </dependency>
+       <dependency>
+           <groupId>org.infinispan</groupId>
+           <artifactId>infinispan-core</artifactId>
+           <version>${project.version}</version>
+           <classifier>tests</classifier>
+           <scope>test</scope>
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.arquillian</groupId>
+           <artifactId>arquillian-testng</artifactId>
+           <version>${version.arquillian}</version>
+           <scope>test</scope>
+       </dependency>
    </dependencies>
    <build>
       <plugins>
@@ -84,35 +95,6 @@
               </configuration>
           </plugin>
       </plugins>
-      <pluginManagement>
-        <plugins>
-            <plugin>
-                <!-- This plugin's configuration is used in m2e only. -->
-                <groupId>org.eclipse.m2e</groupId>
-                <artifactId>lifecycle-mapping</artifactId>
-                <version>1.0.0</version>
-                <configuration>
-                    <lifecycleMappingMetadata>
-                        <pluginExecutions>
-                            <pluginExecution>
-                                <pluginExecutionFilter>
-                                    <groupId>org.codehaus.mojo</groupId>
-                                    <artifactId>exec-maven-plugin</artifactId>
-                                    <versionRange>[1.0.2,)</versionRange>
-                                    <goals>
-                                        <goal>java</goal>
-                                    </goals>
-                                </pluginExecutionFilter>
-                                <action>
-                                    <ignore></ignore>
-                                </action>
-                            </pluginExecution>
-                        </pluginExecutions>
-                    </lifecycleMappingMetadata>
-                </configuration>
-            </plugin>
-        </plugins>
-      </pluginManagement>
    </build>
    
    <profiles>
@@ -128,54 +110,23 @@
                <version>${version.arquillian}</version>
                <scope>test</scope>
             </dependency>
-
-            <dependency>
-               <groupId>org.jboss.spec.javax.ejb</groupId>
-               <artifactId>jboss-ejb-api_3.1_spec</artifactId>
-               <version>1.0.0.Beta1</version>
-               <scope>test</scope>
-            </dependency>
-
-            <dependency>
-               <groupId>javax.validation</groupId>
-               <artifactId>validation-api</artifactId>
-               <scope>test</scope>
-               <version>1.0.0.GA</version>
-            </dependency>
-
-            <dependency>
-               <groupId>javax.servlet</groupId>
-               <artifactId>servlet-api</artifactId>
-               <version>2.5</version>
-               <scope>test</scope>
-            </dependency>
-
             <dependency>
                <groupId>org.jboss.weld</groupId>
                <artifactId>weld-core</artifactId>
                <version>${version.weld}</version>
                <scope>test</scope>
             </dependency>
-            
+            <dependency>
+                <groupId>org.jboss.spec</groupId>
+                <artifactId>jboss-javaee-6.0</artifactId>
+                <version>${version.jboss.spec}</version>
+                <type>pom</type>
+                <scope>test</scope>
+            </dependency>
             <dependency>
                <groupId>org.slf4j</groupId>
                <artifactId>slf4j-jdk14</artifactId>
-               <!-- version of slf4j needed by Weld -->
-               <version>1.5.10</version>
-               <scope>test</scope>
-            </dependency>
-            
-            <dependency>
-               <groupId>javax.el</groupId>
-               <artifactId>el-api</artifactId>
-               <version>2.2</version>
-            </dependency>
-            
-            <dependency>
-               <groupId>org.infinispan</groupId>
-               <artifactId>infinispan-core</artifactId>
-               <version>${project.version}</version>
-               <classifier>tests</classifier>
+               <version>${version.slf4j}</version>
                <scope>test</scope>
             </dependency>
          </dependencies>
