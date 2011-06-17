@@ -28,7 +28,7 @@ import org.hibernate.search.query.engine.impl.EntityInfoImpl;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.HSQuery;
-import org.infinispan.Cache;
+import org.infinispan.AdvancedCache;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -43,12 +43,13 @@ import java.util.Map;
 
 import static org.easymock.EasyMock.*;
 
+
 /**
  * @author Navin Surtani
  */
 @Test(groups = "functional")
 public class LazyIteratorTest {
-   Cache<String, Person> cache;
+   AdvancedCache<String, Person> cache;
    LazyIterator iterator = null;
    int fetchSize = 1;
    StringBuilder builder;
@@ -78,7 +79,7 @@ public class LazyIteratorTest {
    public void setUp() throws IOException {
 
       // Setting up the cache mock instance
-      cache = createMock(Cache.class);
+      cache = createMock(AdvancedCache.class);
 
       expect(cache.get(anyObject())).andAnswer(new IAnswer<Person>() {
 
@@ -87,6 +88,8 @@ public class LazyIteratorTest {
             return dummyDataMap.get(key);
          }
       }).anyTimes();
+      
+      expect(cache.getClassLoader()).andReturn(Thread.currentThread().getContextClassLoader()).anyTimes();
 
       extractor = createStrictMock(DocumentExtractor.class);
       HSQuery hsQuery = createMock(HSQuery.class);
@@ -103,7 +106,7 @@ public class LazyIteratorTest {
       extractor.close();
       expectLastCall().once();
       EasyMock.replay(cache, extractor, hsQuery);
-      iterator = new LazyIterator(hsQuery, cache.getAdvancedCache(), fetchSize);
+      iterator = new LazyIterator(hsQuery, cache, fetchSize);
    }
 
    @AfterMethod(alwaysRun = false)
