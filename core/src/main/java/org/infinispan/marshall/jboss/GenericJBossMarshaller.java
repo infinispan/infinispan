@@ -29,7 +29,6 @@ import org.infinispan.marshall.AbstractMarshaller;
 import org.infinispan.util.ConcurrentWeakKeyHashMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.marshalling.ContextClassResolver;
 import org.jboss.marshalling.ExceptionListener;
 import org.jboss.marshalling.MarshallerFactory;
 import org.jboss.marshalling.Marshalling;
