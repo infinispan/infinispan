@@ -39,16 +39,25 @@
    <name>Infinispan CDI support</name>
    <description>Infinispan CDI support module</description>
 
+   <properties>
+       <version.jsr107>0.1-SNAPSHOT</version.jsr107>
+   </properties>
+
    <dependencies>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <version>${project.version}</version>
-      </dependency>
+       <dependency>
+           <groupId>javax.cache</groupId>
+           <artifactId>jsr107-api</artifactId>
+           <version>${version.jsr107}</version>
+       </dependency>
       <dependency>
          <groupId>javax.enterprise</groupId>
          <artifactId>cdi-api</artifactId>
          <version>${version.cdi}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <version>${project.version}</version>
       </dependency>
       <dependency>
          <groupId>org.jboss.seam.solder</groupId>
