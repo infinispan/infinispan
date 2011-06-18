@@ -140,7 +140,6 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       //TODO move this to cacheStopped event (won't work right now as the ComponentRegistry is half empty at that point: ISPN-1006)
       SearchFactoryIntegrator searchFactoryImplementor = cr.getComponent(SearchFactoryIntegrator.class);
       if (searchFactoryImplementor != null) {
-         cr.registerComponent(NoOpSearchFactory.INSTANCE, SearchFactoryIntegrator.class);
          searchFactoriesToShutdown.put(cacheName, searchFactoryImplementor);
       }
    }
