@@ -216,7 +216,7 @@ def upload_javadocs(base_dir, version):
   os.rename("apidocs", "%s/apidocs" % version_short)
   
   ## rsync this stuff to filemgmt.jboss.org
-  uploader.upload_rsync(version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan", flags = ['-rv', '--protocol=28'])
+  uploader.upload_rsync(version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan")
   os.chdir(base_dir)
 
 def upload_schema(base_dir, version):
@@ -224,7 +224,7 @@ def upload_schema(base_dir, version):
   os.chdir("%s/target/distribution/infinispan-%s/etc/schema" % (base_dir, version))
   
   ## rsync this stuff to filemgmt.jboss.org
-  uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan/schemas", flags = ['-rv', '--protocol=28'])
+  uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan/schemas")
   os.chdir(base_dir)
 
 def do_task(target, args, async_processes):

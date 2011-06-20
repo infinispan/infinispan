@@ -322,11 +322,11 @@ class Git(object):
 
 class DryRun(object):
   location_root = "%s/%s" % (os.getenv("HOME"), "infinispan_release_dry_run")
-  flags = "-r"
+  flags = "-r --protocol=28"
   
   def __init__(self):
     if settings['verbose']:
-      self.flags = "-rv"
+      self.flags = "-rv --protocol=28"
   
   def find_version(self, url):
     return os.path.split(url)[1]
@@ -343,16 +343,16 @@ class Uploader(object):
   def __init__(self):
     if settings['verbose']:
       self.scp_cmd = ['scp', '-rv']
-      self.rsync_cmd = ['rsync', '-rv']
+      self.rsync_cmd = ['rsync', '-rv', '--protocol=28']
     else:
       self.scp_cmd = ['scp', '-r']
-      self.rsync_cmd = ['rsync', '-r']
+      self.rsync_cmd = ['rsync', '-r', '--protocol=28']
       
   def upload_scp(self, fr, to, flags = []):
-    self.upload(fr, to, flags, self.scp_cmd)
+    self.upload(fr, to, flags, list(self.scp_cmd))
   
   def upload_rsync(self, fr, to, flags = []):
-    self.upload(fr, to, flags, self.rsync_cmd)    
+    self.upload(fr, to, flags, list(self.rsync_cmd))    
   
   def upload(self, fr, to, flags, cmd):
     for e in flags:
