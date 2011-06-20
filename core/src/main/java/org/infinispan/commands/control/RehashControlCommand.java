@@ -128,7 +128,7 @@ public class RehashControlCommand extends BaseRpcCommand {
    public Object perform(InvocationContext ctx) throws Throwable {
       switch (type) {
          case APPLY_STATE:
-            distributionManager.applyState(newCH, state, sender);
+            distributionManager.applyState(newCH, state, sender, viewId);
             return null;
          case NODE_PUSH_COMPLETED:
             distributionManager.markNodePushCompleted(viewId, sender);

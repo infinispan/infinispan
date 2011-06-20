@@ -27,10 +27,10 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -42,8 +42,6 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.util.Arrays.asList;
@@ -86,36 +84,50 @@ public class TransactionLoggerImpl implements TransactionLogger {
       this.cf = cf;
    }
 
+   @Override
    public void enable() {
       loggingEnabled = true;
    }
 
+   @Override
    public List<WriteCommand> drain() {
       List<WriteCommand> list = new LinkedList<WriteCommand>();
       commandQueue.drainTo(list);
       return list;
    }
 
+   @Override
    public List<WriteCommand> drainAndLock() throws InterruptedException {
       blockNewTransactions();
       return drain();
    }
 
+   @Override
    public void unlockAndDisable() {
       loggingEnabled = false;
       uncommittedPrepares.clear();
       unblockNewTransactions();
    }
 
-   public void afterCommand(WriteCommand command) throws InterruptedException {
-      txLock.readLock().unlock();
+   @Override
+   public void afterCommand(InvocationContext ctx, WriteCommand command) throws InterruptedException {
+      // for transactions the real work starts with the prepare command, so don't log anything here
+      if (ctx.isInTxScope())
+         return;
+
+      if (!ctx.hasFlag(Flag.SKIP_LOCKING))
+         txLock.readLock().unlock();
+
       if (loggingEnabled && command.isSuccessful()) {
          commandQueue.put(command);
       }
    }
 
-   public void afterCommand(PrepareCommand command) throws InterruptedException {
-      txLock.readLock().unlock();
+   @Override
+   public void afterCommand(TxInvocationContext ctx, PrepareCommand command) throws InterruptedException {
+      if (!ctx.hasFlag(Flag.SKIP_LOCKING))
+         txLock.readLock().unlock();
+
       if (loggingEnabled) {
          if (command.isOnePhaseCommit())
             logModificationsInTransaction(command);
@@ -124,19 +136,25 @@ public class TransactionLoggerImpl implements TransactionLogger {
       }
    }
 
-   public void afterCommand(CommitCommand command, TxInvocationContext context) throws InterruptedException {
-      txLock.readLock().unlock();
+   @Override
+   public void afterCommand(TxInvocationContext ctx, CommitCommand command) throws InterruptedException {
+      if (!ctx.hasFlag(Flag.SKIP_LOCKING))
+         txLock.readLock().unlock();
+
       if (loggingEnabled) {
          PrepareCommand pc = uncommittedPrepares.remove(command.getGlobalTransaction());
          if (pc == null)
-            logModifications(context.getModifications());
+            logModifications(ctx.getModifications());
          else
             logModificationsInTransaction(pc);
       }
    }
 
-   public void afterCommand(RollbackCommand command) {
-      txLock.readLock().unlock();
+   @Override
+   public void afterCommand(TxInvocationContext ctx, RollbackCommand command) {
+      if (!ctx.hasFlag(Flag.SKIP_LOCKING))
+         txLock.readLock().unlock();
+
       if (loggingEnabled) {
          uncommittedPrepares.remove(command.getGlobalTransaction());
       }
@@ -152,37 +170,51 @@ public class TransactionLoggerImpl implements TransactionLogger {
       }
    }
 
-   public void beforeCommand(WriteCommand command) throws InterruptedException {
-      txLock.readLock().lock();
+   @Override
+   public void beforeCommand(InvocationContext ctx, WriteCommand command) throws InterruptedException {
+      // for transactions the real work starts with the prepare command, so don't block here
+      if (ctx.isInTxScope())
+         return;
+
+      if (!ctx.hasFlag(Flag.SKIP_LOCKING))
+         txLock.readLock().lock();
    }
 
-   public void beforeCommand(PrepareCommand command) throws InterruptedException {
-      txLock.readLock().lock();
+   @Override
+   public void beforeCommand(TxInvocationContext ctx, PrepareCommand command) throws InterruptedException {
+      if (!ctx.hasFlag(Flag.SKIP_LOCKING))
+         txLock.readLock().lock();
    }
 
-   public void beforeCommand(CommitCommand command, TxInvocationContext context) throws InterruptedException {
-      txLock.readLock().lock();
+   @Override
+   public void beforeCommand(TxInvocationContext ctx, CommitCommand command) throws InterruptedException {
+      if (!ctx.hasFlag(Flag.SKIP_LOCKING))
+         txLock.readLock().lock();
 
       // if the prepare command wasn't logged, do it here instead
       if (loggingEnabled) {
          GlobalTransaction gtx;
-         if (!uncommittedPrepares.containsKey(gtx = context.getGlobalTransaction()))
-            uncommittedPrepares.put(gtx, cf.buildPrepareCommand(gtx, context.getModifications(), false));
+         if (!uncommittedPrepares.containsKey(gtx = ctx.getGlobalTransaction()))
+            uncommittedPrepares.put(gtx, cf.buildPrepareCommand(gtx, ctx.getModifications(), false));
       }
    }
 
-   public void beforeCommand(RollbackCommand command) throws InterruptedException {
-      txLock.readLock().lock();
+   @Override
+   public void beforeCommand(TxInvocationContext ctx, RollbackCommand command) throws InterruptedException {
+      if (!ctx.hasFlag(Flag.SKIP_LOCKING))
+         txLock.readLock().lock();
    }
 
    private int size() {
       return loggingEnabled ? commandQueue.size() : 0;
    }
 
+   @Override
    public boolean isEnabled() {
       return loggingEnabled;
    }
 
+   @Override
    public boolean shouldDrainWithoutLock() {
       if (loggingEnabled) {
          int sz = size();
@@ -197,18 +229,21 @@ public class TransactionLoggerImpl implements TransactionLogger {
       } else return false;
    }
 
+   @Override
    public Collection<PrepareCommand> getPendingPrepares() {
       Collection<PrepareCommand> commands = new HashSet<PrepareCommand>(uncommittedPrepares.values());
       uncommittedPrepares.clear();
       return commands;
    }
 
+   @Override
    public void blockNewTransactions() throws InterruptedException {
       if (trace) log.debug("Blocking new transactions");
       // we just want to ensure that all the modifications that passed through the tx gate have ended
       txLock.writeLock().lockInterruptibly();
    }
 
+   @Override
    public void unblockNewTransactions() {
       if (trace) log.debug("Unblocking new transactions");
       txLock.writeLock().unlock();

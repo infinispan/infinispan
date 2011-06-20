@@ -106,7 +106,16 @@ public class TransactionTable {
 
    @Start
    private void start() {
-      lockBreakingService = Executors.newFixedThreadPool(1);
+      ThreadFactory tf = new ThreadFactory() {
+         public Thread newThread(Runnable r) {
+            Thread th = new Thread(r, "LockBreakingService," + configuration.getGlobalConfiguration().getClusterName()
+                  + "," + rpcManager.getTransport().getAddress());
+            th.setDaemon(true);
+            return th;
+         }
+      };
+      lockBreakingService = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>(), tf,
+                                              new ThreadPoolExecutor.CallerRunsPolicy());
       cm.addListener(listener);
       notifier.addListener(listener);
    }
