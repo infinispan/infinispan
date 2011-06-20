@@ -24,47 +24,47 @@ public class CacheEventBridge extends AbstractEventBridge<Event> {
          Listenable listenable) {
       Annotation[] qualifiers = qualifierSet
             .toArray(new Annotation[qualifierSet.size()]);
-      if (hasObservers(CacheEntryActivatedAdapter.EMTPTY, qualifiers)) {
+      if (hasObservers(CacheEntryActivatedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new CacheEntryActivatedAdapter(getBaseEvent()
                .select(CacheEntryActivatedEvent.class, qualifiers)));
       }
-      if (hasObservers(CacheEntryCreatedAdapter.EMTPTY, qualifiers)) {
+      if (hasObservers(CacheEntryCreatedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new CacheEntryCreatedAdapter(getBaseEvent()
                .select(CacheEntryCreatedEvent.class, qualifiers)));
       }
-      if (hasObservers(CacheEntryEvictedAdapter.EMTPTY, qualifiers)) {
+      if (hasObservers(CacheEntryEvictedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new CacheEntryEvictedAdapter(getBaseEvent()
                .select(CacheEntryEvictedEvent.class, qualifiers)));
       }
-      if (hasObservers(CacheEntryInvalidatedAdapter.EMTPTY, qualifiers)) {
+      if (hasObservers(CacheEntryInvalidatedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new CacheEntryInvalidatedAdapter(getBaseEvent()
                .select(CacheEntryInvalidatedEvent.class, qualifiers)));
       }
-      if (hasObservers(CacheEntryLoadedAdapter.EMTPTY, qualifiers)) {
+      if (hasObservers(CacheEntryLoadedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new CacheEntryLoadedAdapter(getBaseEvent()
                .select(CacheEntryLoadedEvent.class, qualifiers)));
       }
-      if (hasObservers(CacheEntryModifiedAdapter.EMTPTY, qualifiers)) {
+      if (hasObservers(CacheEntryModifiedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new CacheEntryModifiedAdapter(getBaseEvent()
                .select(CacheEntryModifiedEvent.class, qualifiers)));
       }
-      if (hasObservers(CacheEntryPassivatedAdapter.EMTPTY, qualifiers)) {
+      if (hasObservers(CacheEntryPassivatedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new CacheEntryPassivatedAdapter(getBaseEvent()
                .select(CacheEntryPassivatedEvent.class, qualifiers)));
       }
-      if (hasObservers(CacheEntryRemovedAdapter.EMTPTY, qualifiers)) {
+      if (hasObservers(CacheEntryRemovedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new CacheEntryRemovedAdapter(getBaseEvent()
                .select(CacheEntryRemovedEvent.class, qualifiers)));
       }
-      if (hasObservers(CacheEntryVisitedAdapter.EMTPTY, qualifiers)) {
+      if (hasObservers(CacheEntryVisitedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new CacheEntryVisitedAdapter(getBaseEvent()
                .select(CacheEntryVisitedEvent.class, qualifiers)));
       }
-      if (hasObservers(TransactionCompletedAdapter.EMTPTY, qualifiers)) {
+      if (hasObservers(TransactionCompletedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new TransactionCompletedAdapter(getBaseEvent()
                .select(TransactionCompletedEvent.class, qualifiers)));
       }
-      if (hasObservers(TransactionRegisteredAdapter.EMTPTY, qualifiers)) {
+      if (hasObservers(TransactionRegisteredAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new TransactionRegisteredAdapter(getBaseEvent()
                .select(TransactionRegisteredEvent.class, qualifiers)));
       }

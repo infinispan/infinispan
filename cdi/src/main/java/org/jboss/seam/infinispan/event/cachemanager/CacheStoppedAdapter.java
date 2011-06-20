@@ -10,7 +10,7 @@ import javax.enterprise.event.Event;
 @Listener
 public class CacheStoppedAdapter extends AbstractAdapter<CacheStoppedEvent> {
 
-   public static final CacheStoppedEvent EMTPTY = new CacheStoppedEvent() {
+   public static final CacheStoppedEvent EMPTY = new CacheStoppedEvent() {
 
       public Type getType() {
          return null;

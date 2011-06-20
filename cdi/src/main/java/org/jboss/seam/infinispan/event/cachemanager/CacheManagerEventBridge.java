@@ -16,15 +16,15 @@ public class CacheManagerEventBridge extends AbstractEventBridge<Event> {
          String cacheName, Listenable listenable) {
       Annotation[] qualifiers = qualifierSet
             .toArray(new Annotation[qualifierSet.size()]);
-      if (hasObservers(CacheStartedAdapter.EMTPTY, qualifiers)) {
+      if (hasObservers(CacheStartedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new CacheStartedAdapter(getBaseEvent().select(
                CacheStartedEvent.class, qualifiers), cacheName));
       }
-      if (hasObservers(CacheStoppedAdapter.EMTPTY, qualifiers)) {
+      if (hasObservers(CacheStoppedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new CacheStoppedAdapter(getBaseEvent().select(
                CacheStoppedEvent.class, qualifiers), cacheName));
       }
-      if (hasObservers(ViewChangedAdapter.EMTPTY, qualifiers)) {
+      if (hasObservers(ViewChangedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new ViewChangedAdapter(getBaseEvent().select(
                ViewChangedEvent.class, qualifiers)));
       }

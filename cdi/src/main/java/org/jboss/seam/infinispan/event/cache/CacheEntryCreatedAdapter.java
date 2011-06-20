@@ -12,7 +12,7 @@ import javax.enterprise.event.Event;
 public class CacheEntryCreatedAdapter extends
       AbstractAdapter<CacheEntryCreatedEvent> {
 
-   public static final CacheEntryCreatedEvent EMTPTY = new CacheEntryCreatedEvent() {
+   public static final CacheEntryCreatedEvent EMPTY = new CacheEntryCreatedEvent() {
 
       public Type getType() {
          return null;

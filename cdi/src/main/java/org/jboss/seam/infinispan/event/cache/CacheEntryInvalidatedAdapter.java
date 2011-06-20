@@ -12,7 +12,7 @@ import javax.enterprise.event.Event;
 public class CacheEntryInvalidatedAdapter extends
       AbstractAdapter<CacheEntryInvalidatedEvent> {
 
-   public static final CacheEntryInvalidatedEvent EMTPTY = new CacheEntryInvalidatedEvent() {
+   public static final CacheEntryInvalidatedEvent EMPTY = new CacheEntryInvalidatedEvent() {
 
       public Type getType() {
          return null;

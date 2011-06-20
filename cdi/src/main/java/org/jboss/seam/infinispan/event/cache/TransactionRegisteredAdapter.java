@@ -12,7 +12,7 @@ import javax.enterprise.event.Event;
 public class TransactionRegisteredAdapter extends
       AbstractAdapter<TransactionRegisteredEvent> {
 
-   public static final TransactionRegisteredEvent EMTPTY = new TransactionRegisteredEvent() {
+   public static final TransactionRegisteredEvent EMPTY = new TransactionRegisteredEvent() {
 
       public Type getType() {
          return null;

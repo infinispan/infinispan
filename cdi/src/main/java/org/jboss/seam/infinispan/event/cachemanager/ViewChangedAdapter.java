@@ -12,7 +12,7 @@ import java.util.List;
 @Listener
 public class ViewChangedAdapter extends AbstractAdapter<ViewChangedEvent> {
 
-   public static final ViewChangedEvent EMTPTY = new ViewChangedEvent() {
+   public static final ViewChangedEvent EMPTY = new ViewChangedEvent() {
 
       public Type getType() {
          return null;
