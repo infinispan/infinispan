@@ -1,6 +1,6 @@
 package org.jboss.seam.infinispan.test.configured;
 
-import static org.jboss.seam.infinispan.test.Deployments.baseDeployment;
+import static org.jboss.seam.infinispan.test.testutil.Deployments.baseDeployment;
 import static org.testng.Assert.assertEquals;
 
 import javax.inject.Inject;
