@@ -38,7 +38,7 @@ public class CacheEntryEvictedAdapter extends
       public Cache<?, ?> getCache() {
          return null;
       }
-      
+
       public Object getValue() {
          return null;
       }

@@ -13,16 +13,16 @@ import org.testng.annotations.Test;
 
 /**
  * Tests that the simple form of configuration works
- * 
+ *
  * @author Pete Muir
  * @see Config
- * 
  */
 public class NotificationTest extends Arquillian {
 
    @Deployment
    public static Archive<?> deployment() {
-      return baseDeployment().addPackage(NotificationTest.class.getPackage());
+      return baseDeployment()
+            .addPackage(NotificationTest.class.getPackage());
    }
 
    /**
@@ -66,7 +66,7 @@ public class NotificationTest extends Arquillian {
       assertEquals(observers1.getCacheEntryRemovedEventCount(), 1);
       assertEquals(observers1.getCacheEntryRemovedEvent().getKey(), "pete");
       assertEquals(observers1.getCacheEntryRemovedEvent().getValue(),
-            "Edinburgh");
+                   "Edinburgh");
 
       // Manually stop cache1 to check that we are notified :-)
       assertEquals(observers1.getCacheStoppedEventCount(), 0);

@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 
 /**
  * Tests for a cache container defined by some external mechanism
- * 
+ *
  * @author Pete Muir
  * @see Config
  */
@@ -22,8 +22,8 @@ public class ExternalCacheContainerTest extends Arquillian {
 
    @Deployment
    public static Archive<?> deployment() {
-      return baseDeployment().addPackage(
-            ExternalCacheContainerTest.class.getPackage());
+      return baseDeployment()
+            .addPackage(ExternalCacheContainerTest.class.getPackage());
    }
 
    @Inject

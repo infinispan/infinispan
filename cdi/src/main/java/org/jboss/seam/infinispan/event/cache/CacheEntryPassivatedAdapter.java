@@ -38,7 +38,7 @@ public class CacheEntryPassivatedAdapter extends
       public Cache<?, ?> getCache() {
          return null;
       }
-      
+
       @Override
       public Object getValue() {
          return null;

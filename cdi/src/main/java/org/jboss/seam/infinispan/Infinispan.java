@@ -32,9 +32,9 @@ import org.jboss.seam.solder.bean.generic.GenericType;
 /**
  * Configure an Infinispan Cache. By default, Seam will use the
  * {@link CacheContainer}
- * 
+ *
  * @author Pete Muir
- * 
+ *
  */
 
 @Retention(RUNTIME)

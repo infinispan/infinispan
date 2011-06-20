@@ -38,7 +38,7 @@ public class CacheEntryVisitedAdapter extends
       public Cache<?, ?> getCache() {
          return null;
       }
-      
+
       public Object getValue() {
          return null;
       }

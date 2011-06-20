@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 
 /**
  * Tests for a cache container defined programatically
- * 
+ *
  * @author Pete Muir
  * @see Config
  */
@@ -22,8 +22,8 @@ public class ProgramaticCacheContainerTest extends Arquillian {
 
    @Deployment
    public static Archive<?> deployment() {
-      return baseDeployment().addPackage(
-            ProgramaticCacheContainerTest.class.getPackage());
+      return baseDeployment()
+            .addPackage(ProgramaticCacheContainerTest.class.getPackage());
    }
 
    @Inject

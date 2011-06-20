@@ -17,7 +17,7 @@ public class ExternalCacheContainerManager extends CacheContainerManager {
 
    /**
     * Create the Cache Container from XML,
-    * 
+    *
     * @param xml
     * @return
     * @throws IOException
@@ -36,10 +36,10 @@ public class ExternalCacheContainerManager extends CacheContainerManager {
       Configuration quickVeryLargeConfiguration = cacheManager
             .getDefaultConfiguration().clone();
       quickVeryLargeConfiguration.fluent()
-			  .eviction()
-			  .wakeUpInterval( 1l );
+            .eviction()
+            .wakeUpInterval(1l);
       cacheManager.defineConfiguration("quick-very-large",
-            quickVeryLargeConfiguration);
+                                       quickVeryLargeConfiguration);
       return cacheManager;
    }
 
@@ -48,8 +48,7 @@ public class ExternalCacheContainerManager extends CacheContainerManager {
    }
 
    @Inject
-   public ExternalCacheContainerManager(
-         @Resource("infinispan.xml") InputStream xml) throws IOException {
+   public ExternalCacheContainerManager(@Resource("infinispan.xml") InputStream xml) throws IOException {
       super(createCacheContainer(xml));
    }
 

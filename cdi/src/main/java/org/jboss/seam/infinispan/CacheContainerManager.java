@@ -19,7 +19,7 @@ import org.jboss.seam.infinispan.event.cachemanager.CacheManagerEventBridge;
  * Manages the CacheContainer, by default creating a {@link DefaultCacheManager}
  * using configuration defaults.
  * </p>
- * 
+ *
  * <p>
  * If you want to use a different {@link CacheContainer} implementation or
  * configuration with your caches, then you can specialize this class.
@@ -27,15 +27,15 @@ import org.jboss.seam.infinispan.event.cachemanager.CacheManagerEventBridge;
  * configurations and Infinispan notification to be bridged to the CDI event
  * bus.
  * </p>
- * 
+ *
  * <p>
  * If you want to use a different {@link CacheContainer} for an individual
  * cache, provide a bean that has the type {@link CacheContainer} and the
  * qualifiers of the cache.
  * </p>
- * 
+ *
  * @author Pete Muir
- * 
+ *
  */
 @ApplicationScoped
 public class CacheContainerManager {
@@ -43,7 +43,7 @@ public class CacheContainerManager {
    /**
     * Registers scanned configurations (if not already in existence) with
     * Infinispan
-    * 
+    *
     * @param cacheContainer
     *           the {@link EmbeddedCacheManager} with which to register the
     *           configurations
@@ -72,7 +72,7 @@ public class CacheContainerManager {
 
    /**
     * Sets up Infinispan notification to CDI Event Bus bridging.
-    * 
+    *
     * @param cacheContainer
     *           the {@link EmbeddedCacheManager} with which to register the
     *           observers
@@ -105,7 +105,7 @@ public class CacheContainerManager {
    /**
     * Instantiate a new {@link CacheContainerManager} instance. Normally called
     * by the CDI container or a specializing class.
-    * 
+    *
     * @param extension
     *           the {@link InfinispanExtension}
     * @param beanManager
@@ -123,7 +123,7 @@ public class CacheContainerManager {
 
    /**
     * Instantiate a new cache container.
-    * 
+    *
     * @param cacheContainer
     *           the cache container to expose.
     */

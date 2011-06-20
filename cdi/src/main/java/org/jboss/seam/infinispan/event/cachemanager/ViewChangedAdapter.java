@@ -42,7 +42,7 @@ public class ViewChangedAdapter extends AbstractAdapter<ViewChangedEvent> {
       public int getViewId() {
          return 0;
       }
-      
+
       @Override
       public boolean isMergeView() {
          return false;

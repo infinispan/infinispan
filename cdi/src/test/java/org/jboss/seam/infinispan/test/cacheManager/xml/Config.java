@@ -10,8 +10,7 @@ import org.jboss.seam.infinispan.Infinispan;
 public class Config {
 
    /**
-    * Associate the "very-large" cache (configured below) with the qualifier
-    * {@link VeryLarge}.
+    * Associate the "very-large" cache (configured below) with the qualifier {@link VeryLarge}.
     */
    @Produces
    @Infinispan("very-large")
@@ -19,8 +18,7 @@ public class Config {
    Configuration veryLargeCacheContainer;
 
    /**
-    * Associate the "quick-very-large" cache (configured below) with the
-    * qualifier {@link Quick}.
+    * Associate the "quick-very-large" cache (configured below) with the qualifier {@link Quick}.
     */
    @Produces
    @Infinispan("quick-very-large")

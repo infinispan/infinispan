@@ -16,19 +16,19 @@ public class ExternalCacheContainerManager extends CacheContainerManager {
    static {
       EmbeddedCacheManager cacheManager = new DefaultCacheManager();
 
-	  // define large configuration
-	  Configuration largeConfiguration = new Configuration();
-	  largeConfiguration.fluent()
-			  .eviction()
-			  .maxEntries( 100 );
+      // define large configuration
+      Configuration largeConfiguration = new Configuration();
+      largeConfiguration.fluent()
+            .eviction()
+            .maxEntries(100);
 
       cacheManager.defineConfiguration("large", largeConfiguration);
 
-	  // define quick configuration
+      // define quick configuration
       Configuration quickConfiguration = new Configuration();
       quickConfiguration.fluent()
-			  .eviction()
-			  .wakeUpInterval( 1l );
+            .eviction()
+            .wakeUpInterval(1l);
 
       cacheManager.defineConfiguration("quick", quickConfiguration);
 

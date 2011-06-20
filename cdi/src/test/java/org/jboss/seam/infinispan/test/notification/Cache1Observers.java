@@ -33,7 +33,6 @@ public class Cache1Observers {
 
    /**
     * Observe the cache stopped event for the cache associated with @Cache1
-    * 
     */
    void observeCacheStopped(@Observes @Cache1 CacheStoppedEvent event) {
       this.cacheStoppedEventCount++;
@@ -42,7 +41,7 @@ public class Cache1Observers {
 
    /**
     * Observe the cache entry created event for the cache associated with @Cache1
-    * 
+    * <p/>
     * Get's called once (before) with pre false, once (after) with pre true
     */
    void observeCacheEntryCreated(@Observes @Cache1 CacheEntryCreatedEvent event) {

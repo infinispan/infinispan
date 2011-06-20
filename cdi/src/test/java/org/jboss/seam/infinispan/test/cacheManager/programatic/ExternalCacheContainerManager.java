@@ -18,8 +18,8 @@ public class ExternalCacheContainerManager extends CacheContainerManager {
    static {
       Configuration defaultConfiguration = new Configuration();
       defaultConfiguration.fluent()
-			  .eviction()
-			  .maxEntries( 7 );
+            .eviction()
+            .maxEntries(7);
 
       CACHE_CONTAINER = new DefaultCacheManager(defaultConfiguration);
    }
@@ -29,8 +29,7 @@ public class ExternalCacheContainerManager extends CacheContainerManager {
    }
 
    @Inject
-   public ExternalCacheContainerManager(InfinispanExtension extension,
-         CacheManagerEventBridge eventBridge) {
+   public ExternalCacheContainerManager(InfinispanExtension extension, CacheManagerEventBridge eventBridge) {
       super(registerObservers(CACHE_CONTAINER, extension, eventBridge));
    }
 }

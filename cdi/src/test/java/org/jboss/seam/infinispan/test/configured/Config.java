@@ -8,9 +8,8 @@ import org.jboss.seam.infinispan.Infinispan;
 public class Config {
 
    /**
-    * Configure a "tiny" cache (with a very low number of entries), and
-    * associate it with the qualifier {@link Tiny}.
-    * 
+    * Configure a "tiny" cache (with a very low number of entries), and associate it with the qualifier {@link Tiny}.
+    * <p/>
     * This will use the default cache container.
     */
    @Produces
@@ -19,16 +18,16 @@ public class Config {
    public Configuration getTinyConfiguration() {
       Configuration configuration = new Configuration();
       configuration.fluent()
-			  .eviction()
-			  .maxEntries( 1 );
+            .eviction()
+            .maxEntries(1);
 
       return configuration;
    }
 
    /**
-    * Configure a "small" cache (with a pretty low number of entries), and
-    * associate it with the qualifier {@link Small}.
-    * 
+    * Configure a "small" cache (with a pretty low number of entries), and associate it with the qualifier {@link
+    * Small}.
+    * <p/>
     * This will use the default cache container.
     */
    @Produces
@@ -37,8 +36,8 @@ public class Config {
    public Configuration getSmallConfiguration() {
       Configuration configuration = new Configuration();
       configuration.fluent()
-			  .eviction()
-			  .maxEntries( 10 );
+            .eviction()
+            .maxEntries(10);
 
       return configuration;
    }

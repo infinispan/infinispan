@@ -14,15 +14,15 @@ import org.testng.annotations.Test;
 
 /**
  * Tests that the default cache is available
- * 
+ *
  * @author Pete Muir
- * 
  */
 public class DefaultCacheTest extends Arquillian {
 
    @Deployment
    public static Archive<?> deployment() {
-      return baseDeployment().addPackage(DefaultCacheTest.class.getPackage());
+      return baseDeployment()
+            .addPackage(DefaultCacheTest.class.getPackage());
    }
 
    /**

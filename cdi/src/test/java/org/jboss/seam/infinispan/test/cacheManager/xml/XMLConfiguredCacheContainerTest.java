@@ -22,19 +22,17 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 /**
- * Test that a cache configured in XML is available, and that it can be
- * overridden
- * 
- * @see Config
+ * Test that a cache configured in XML is available, and that it can be overridden
+ *
  * @author Pete Muir
- * 
+ * @see Config
  */
 public class XMLConfiguredCacheContainerTest extends Arquillian {
 
    @Deployment
    public static Archive<?> deployment() {
-	  return Deployments.baseDeployment()
-			 	.addPackage(XMLConfiguredCacheContainerTest.class.getPackage());
+      return Deployments.baseDeployment()
+            .addPackage(XMLConfiguredCacheContainerTest.class.getPackage());
    }
 
    @Inject
@@ -52,7 +50,7 @@ public class XMLConfiguredCacheContainerTest extends Arquillian {
 
    @Test(groups = "functional")
    public void testQuickCache() {
-      assertEquals( quickCache.getConfiguration().getEvictionMaxEntries(), 1000 );
+      assertEquals(quickCache.getConfiguration().getEvictionMaxEntries(), 1000);
       assertEquals(quickCache.getConfiguration().getEvictionWakeUpInterval(), 1);
    }
 

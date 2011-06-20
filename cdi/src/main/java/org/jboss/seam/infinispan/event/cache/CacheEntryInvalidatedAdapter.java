@@ -38,11 +38,11 @@ public class CacheEntryInvalidatedAdapter extends
       public Cache<?, ?> getCache() {
          return null;
       }
-      
+
       public Object getValue() {
          return null;
       }
-      
+
    };
 
    public CacheEntryInvalidatedAdapter(Event<CacheEntryInvalidatedEvent> event) {

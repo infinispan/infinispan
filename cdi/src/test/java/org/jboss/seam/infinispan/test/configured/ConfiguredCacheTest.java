@@ -13,10 +13,9 @@ import org.testng.annotations.Test;
 
 /**
  * Tests that the simple form of configuration works
- * 
+ *
  * @author Pete Muir
  * @see Config
- * 
  */
 public class ConfiguredCacheTest extends Arquillian {
 

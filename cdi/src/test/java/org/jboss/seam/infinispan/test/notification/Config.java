@@ -6,9 +6,7 @@ import org.infinispan.config.Configuration;
 import org.jboss.seam.infinispan.Infinispan;
 
 /**
- * Configure two default caches - we will use both caches to check that events
- * for one don't spill over to the other.
- * 
+ * Configure two default caches - we will use both caches to check that events for one don't spill over to the other.
  */
 public class Config {
 
