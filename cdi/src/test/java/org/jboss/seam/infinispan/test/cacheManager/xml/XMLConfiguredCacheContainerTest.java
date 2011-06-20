@@ -1,23 +1,13 @@
 package org.jboss.seam.infinispan.test.cacheManager.xml;
 
-import javax.inject.Inject;
-
 import org.infinispan.AdvancedCache;
 import org.jboss.arquillian.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.seam.infinispan.Infinispan;
-import org.jboss.seam.infinispan.event.cache.CacheEventBridge;
-import org.jboss.seam.infinispan.event.cachemanager.CacheManagerEventBridge;
 import org.jboss.seam.infinispan.test.testutil.Deployments;
-import org.jboss.seam.solder.resourceLoader.ResourceProvider;
 import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.GenericArchive;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 import org.testng.annotations.Test;
+
+import javax.inject.Inject;
 
 import static org.testng.Assert.assertEquals;
 

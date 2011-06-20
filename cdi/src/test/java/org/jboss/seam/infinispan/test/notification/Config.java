@@ -1,9 +1,9 @@
 package org.jboss.seam.infinispan.test.notification;
 
-import javax.enterprise.inject.Produces;
-
 import org.infinispan.config.Configuration;
 import org.jboss.seam.infinispan.Infinispan;
+
+import javax.enterprise.inject.Produces;
 
 /**
  * Configure two default caches - we will use both caches to check that events for one don't spill over to the other.

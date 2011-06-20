@@ -1,12 +1,12 @@
 package org.jboss.seam.infinispan.event.cache;
 
-import javax.enterprise.event.Event;
-
 import org.infinispan.Cache;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TransactionCompleted;
 import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
 import org.infinispan.transaction.xa.GlobalTransaction;
+
+import javax.enterprise.event.Event;
 
 @Listener
 public class TransactionCompletedAdapter extends

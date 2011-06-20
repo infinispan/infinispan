@@ -1,10 +1,9 @@
 package org.jboss.seam.infinispan.event;
 
-import java.lang.annotation.Annotation;
-
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
+import java.lang.annotation.Annotation;
 
 public class AbstractEventBridge<T> {
 

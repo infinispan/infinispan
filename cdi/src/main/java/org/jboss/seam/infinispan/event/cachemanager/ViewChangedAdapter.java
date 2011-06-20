@@ -1,14 +1,13 @@
 package org.jboss.seam.infinispan.event.cachemanager;
 
-import java.util.List;
-
-import javax.enterprise.event.Event;
-
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
+
+import javax.enterprise.event.Event;
+import java.util.List;
 
 @Listener
 public class ViewChangedAdapter extends AbstractAdapter<ViewChangedEvent> {

@@ -1,10 +1,10 @@
 package org.jboss.seam.infinispan.test.cacheManager.xml;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
-
 import org.infinispan.config.Configuration;
 import org.jboss.seam.infinispan.Infinispan;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Produces;
 
 @ApplicationScoped
 public class Config {

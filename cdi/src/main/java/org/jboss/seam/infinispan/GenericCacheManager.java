@@ -1,6 +1,11 @@
 package org.jboss.seam.infinispan;
 
-import static org.jboss.seam.solder.bean.Beans.getQualifiers;
+import org.infinispan.AdvancedCache;
+import org.infinispan.manager.CacheContainer;
+import org.jboss.seam.infinispan.event.cache.CacheEventBridge;
+import org.jboss.seam.solder.bean.generic.ApplyScope;
+import org.jboss.seam.solder.bean.generic.Generic;
+import org.jboss.seam.solder.bean.generic.GenericConfiguration;
 
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
@@ -8,13 +13,7 @@ import javax.enterprise.inject.spi.AnnotatedMember;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.manager.CacheContainer;
-import org.jboss.seam.infinispan.event.cache.CacheEventBridge;
-import org.jboss.seam.solder.bean.Beans;
-import org.jboss.seam.solder.bean.generic.ApplyScope;
-import org.jboss.seam.solder.bean.generic.Generic;
-import org.jboss.seam.solder.bean.generic.GenericConfiguration;
+import static org.jboss.seam.solder.bean.Beans.getQualifiers;
 
 @GenericConfiguration(Infinispan.class)
 public class GenericCacheManager<K, V> {

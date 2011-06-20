@@ -1,16 +1,16 @@
 package org.jboss.seam.infinispan.test.defaultCache;
 
-import static org.jboss.seam.infinispan.test.testutil.Deployments.baseDeployment;
-import static org.testng.Assert.assertEquals;
-
-import javax.inject.Inject;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.jboss.arquillian.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Test;
+
+import javax.inject.Inject;
+
+import static org.jboss.seam.infinispan.test.testutil.Deployments.baseDeployment;
+import static org.testng.Assert.assertEquals;
 
 /**
  * Tests that the default cache is available

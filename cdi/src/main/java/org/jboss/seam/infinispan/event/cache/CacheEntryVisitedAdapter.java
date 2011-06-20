@@ -1,12 +1,12 @@
 package org.jboss.seam.infinispan.event.cache;
 
-import javax.enterprise.event.Event;
-
 import org.infinispan.Cache;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.infinispan.transaction.xa.GlobalTransaction;
+
+import javax.enterprise.event.Event;
 
 @Listener
 public class CacheEntryVisitedAdapter extends

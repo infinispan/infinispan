@@ -1,12 +1,12 @@
 package org.jboss.seam.infinispan.test.cacheManager.external;
 
-import javax.enterprise.inject.Specializes;
-
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.seam.infinispan.CacheContainerManager;
+
+import javax.enterprise.inject.Specializes;
 
 @Specializes
 public class ExternalCacheContainerManager extends CacheContainerManager {

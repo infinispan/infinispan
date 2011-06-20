@@ -1,14 +1,14 @@
 package org.jboss.seam.infinispan.event.cachemanager;
 
-import java.lang.annotation.Annotation;
-import java.util.Set;
-
 import org.infinispan.notifications.Listenable;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.jboss.seam.infinispan.event.AbstractEventBridge;
+
+import java.lang.annotation.Annotation;
+import java.util.Set;
 
 public class CacheManagerEventBridge extends AbstractEventBridge<Event> {
 

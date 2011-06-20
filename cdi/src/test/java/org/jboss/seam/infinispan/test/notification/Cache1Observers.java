@@ -1,12 +1,12 @@
 package org.jboss.seam.infinispan.test.notification;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
-
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
 
 @ApplicationScoped
 public class Cache1Observers {

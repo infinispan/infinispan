@@ -1,11 +1,11 @@
 package org.jboss.seam.infinispan.event.cachemanager;
 
-import javax.enterprise.event.Event;
-
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
+
+import javax.enterprise.event.Event;
 
 @Listener
 public class CacheStoppedAdapter extends AbstractAdapter<CacheStoppedEvent> {

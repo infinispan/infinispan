@@ -16,18 +16,18 @@
  */
 package org.jboss.seam.infinispan;
 
+import org.infinispan.config.Configuration;
+import org.infinispan.manager.CacheContainer;
+import org.jboss.seam.solder.bean.generic.GenericType;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-
-import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheContainer;
-import org.jboss.seam.solder.bean.generic.GenericType;
 
 /**
  * Configure an Infinispan Cache. By default, Seam will use the

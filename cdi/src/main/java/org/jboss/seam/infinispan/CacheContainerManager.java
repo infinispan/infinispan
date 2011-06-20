@@ -1,18 +1,18 @@
 package org.jboss.seam.infinispan;
 
-import javax.annotation.PreDestroy;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Inject;
-
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.seam.infinispan.InfinispanExtension.ConfigurationHolder;
 import org.jboss.seam.infinispan.event.cachemanager.CacheManagerEventBridge;
+
+import javax.annotation.PreDestroy;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.inject.Inject;
 
 /**
  * <p>

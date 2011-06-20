@@ -1,9 +1,10 @@
 package org.jboss.seam.infinispan;
 
-import java.lang.annotation.Annotation;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import org.infinispan.config.Configuration;
+import org.infinispan.manager.CacheContainer;
+import org.jboss.seam.solder.bean.Beans;
+import org.jboss.seam.solder.literal.GenericTypeLiteral;
+import org.jboss.seam.solder.reflection.annotated.AnnotatedTypeBuilder;
 
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.AnnotatedMember;
@@ -13,12 +14,10 @@ import javax.enterprise.inject.spi.BeforeBeanDiscovery;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.ProcessProducer;
 import javax.enterprise.inject.spi.Producer;
-
-import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheContainer;
-import org.jboss.seam.solder.bean.Beans;
-import org.jboss.seam.solder.literal.GenericTypeLiteral;
-import org.jboss.seam.solder.reflection.annotated.AnnotatedTypeBuilder;
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class InfinispanExtension implements Extension {
 

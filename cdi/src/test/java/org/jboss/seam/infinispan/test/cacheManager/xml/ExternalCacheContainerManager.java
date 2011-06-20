@@ -1,16 +1,16 @@
 package org.jboss.seam.infinispan.test.cacheManager.xml;
 
-import java.io.IOException;
-import java.io.InputStream;
-import javax.enterprise.inject.Specializes;
-import javax.inject.Inject;
-
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.seam.infinispan.CacheContainerManager;
 import org.jboss.seam.solder.resourceLoader.Resource;
+
+import javax.enterprise.inject.Specializes;
+import javax.inject.Inject;
+import java.io.IOException;
+import java.io.InputStream;
 
 @Specializes
 public class ExternalCacheContainerManager extends CacheContainerManager {

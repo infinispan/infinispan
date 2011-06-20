@@ -1,9 +1,9 @@
 package org.jboss.seam.infinispan;
 
+import org.infinispan.config.Configuration;
+
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
-
-import org.infinispan.config.Configuration;
 
 public class DefaultCacheProducer {
 

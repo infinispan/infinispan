@@ -1,8 +1,5 @@
 package org.jboss.seam.infinispan.event.cache;
 
-import java.lang.annotation.Annotation;
-import java.util.Set;
-
 import org.infinispan.notifications.Listenable;
 import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
@@ -17,6 +14,9 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
 import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
 import org.jboss.seam.infinispan.event.AbstractEventBridge;
+
+import java.lang.annotation.Annotation;
+import java.util.Set;
 
 public class CacheEventBridge extends AbstractEventBridge<Event> {
 

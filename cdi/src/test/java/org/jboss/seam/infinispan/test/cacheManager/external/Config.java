@@ -1,9 +1,9 @@
 package org.jboss.seam.infinispan.test.cacheManager.external;
 
-import javax.enterprise.inject.Produces;
-
 import org.infinispan.config.Configuration;
 import org.jboss.seam.infinispan.Infinispan;
+
+import javax.enterprise.inject.Produces;
 
 /**
  * Creates a number of caches, based on come external mechanism as de
