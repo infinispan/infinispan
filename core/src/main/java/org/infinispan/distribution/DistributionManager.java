@@ -180,11 +180,11 @@ public interface DistributionManager {
     */
    void applyRemoteTxLog(List<WriteCommand> modifications);
 
-   void applyState(ConsistentHash newConsistentHash, Map<Object,InternalCacheValue> state, Address sender, int viewId);
+   void applyState(ConsistentHash newConsistentHash, Map<Object,InternalCacheValue> state, Address sender, int viewId) throws InterruptedException;
 
-   void markRehashCompleted(int viewId);
+   void markRehashCompleted(int viewId) throws InterruptedException;
 
-   void markNodePushCompleted(int viewId, Address node);
+   void markNodePushCompleted(int viewId, Address node) throws InterruptedException;
 
    public void notifyCoordinatorPushCompleted(int viewId) throws InterruptedException;
 

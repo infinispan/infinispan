@@ -270,15 +270,8 @@ public class DistributionManagerImpl implements DistributionManager {
    /**
     * Hold up operations on incoming threads until the starting thread has finished initializing the consistent hash
     */
-   private void waitForJoinToStart() {
-      try {
-         joinStartedLatch.await();
-      } catch (InterruptedException e) {
-         // TODO We're setting the interrupted flag so the caller can still check if the thread was interrupted, but it would be better to throw InterruptedException instead
-         // The only problem is that would require a lot of method signature changes
-         Thread.currentThread().interrupt();
-         throw new IllegalStateException("Thread interrupted", e);
-      }
+   private void waitForJoinToStart() throws InterruptedException {
+      joinStartedLatch.await();
    }
 
    public Map<Object, List<Address>> locateAll(Collection<Object> keys) {
@@ -369,7 +362,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Override
    public void applyState(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state,
-                          Address sender, int viewId) {
+                          Address sender, int viewId) throws InterruptedException {
       waitForJoinToStart();
 
       // use the sender's CH if his view is newer
@@ -394,7 +387,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @Override
-   public void markRehashCompleted(int viewId) {
+   public void markRehashCompleted(int viewId) throws InterruptedException {
       waitForJoinToStart();
 
       if (viewId < lastViewId) {
@@ -416,7 +409,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @Override
-   public void markNodePushCompleted(int viewId, Address node) {
+   public void markNodePushCompleted(int viewId, Address node) throws InterruptedException {
       waitForJoinToStart();
 
       if (trace)
@@ -465,7 +458,7 @@ public class DistributionManagerImpl implements DistributionManager {
       }
    }
 
-   public void notifyCoordinatorPushCompleted(int viewId) {
+   public void notifyCoordinatorPushCompleted(int viewId) throws InterruptedException {
       Transport t = rpcManager.getTransport();
 
       if (t.isCoordinator()) {
