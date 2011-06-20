@@ -18,7 +18,10 @@ public class Config {
    @Tiny
    public Configuration getTinyConfiguration() {
       Configuration configuration = new Configuration();
-      configuration.setEvictionMaxEntries(1);
+      configuration.fluent()
+			  .eviction()
+			  .maxEntries( 1 );
+
       return configuration;
    }
 
@@ -33,7 +36,10 @@ public class Config {
    @Small
    public Configuration getSmallConfiguration() {
       Configuration configuration = new Configuration();
-      configuration.setEvictionMaxEntries(10);
+      configuration.fluent()
+			  .eviction()
+			  .maxEntries( 10 );
+
       return configuration;
    }
 

@@ -36,7 +36,9 @@ public class ExternalCacheContainerManager extends CacheContainerManager {
 
       Configuration quickVeryLargeConfiguration = cacheManager
             .getDefaultConfiguration().clone();
-      quickVeryLargeConfiguration.setEvictionWakeUpInterval(1);
+      quickVeryLargeConfiguration.fluent()
+			  .eviction()
+			  .wakeUpInterval( 1l );
       cacheManager.defineConfiguration("quick-very-large",
             quickVeryLargeConfiguration);
       return cacheManager;

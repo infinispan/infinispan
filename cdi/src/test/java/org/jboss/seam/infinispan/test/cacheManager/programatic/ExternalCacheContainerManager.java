@@ -17,7 +17,10 @@ public class ExternalCacheContainerManager extends CacheContainerManager {
 
    static {
       Configuration defaultConfiguration = new Configuration();
-      defaultConfiguration.setEvictionMaxEntries(7);
+      defaultConfiguration.fluent()
+			  .eviction()
+			  .maxEntries( 7 );
+
       CACHE_CONTAINER = new DefaultCacheManager(defaultConfiguration);
    }
 
