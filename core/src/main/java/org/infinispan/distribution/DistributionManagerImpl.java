@@ -112,12 +112,13 @@ public class DistributionManagerImpl implements DistributionManager {
     * Set if the cluster is in rehash mode, i.e. not all the nodes have applied the new state.
     */
    private volatile boolean rehashInProgress = false;
+   private final Object rehashInProgressMonitor = new Object();
+
    private volatile int lastViewId = -1;
 
    // these fields are only used on the coordinator
    private int lastViewIdFromPushConfirmation = -1;
    private final Map<Address, Integer> pushConfirmations = new HashMap<Address, Integer>(1);
-   private final Object pushConfirmationsLock = new Object();
 
    @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
    @Metric(displayName = "Is join completed?", dataType = DataType.TRAIT)
@@ -134,8 +135,8 @@ public class DistributionManagerImpl implements DistributionManager {
          public Thread newThread(Runnable r) {
             Thread t = new Thread(r);
             t.setDaemon(true);
-            t.setPriority(Thread.MIN_PRIORITY);
-            t.setName("Rehasher-" + rpcManager.getTransport().getAddress());
+            t.setName("Rehasher," + configuration.getGlobalConfiguration().getClusterName()
+                  + "," + rpcManager.getTransport().getAddress());
             return t;
          }
       };
@@ -162,11 +163,28 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    // needs to be AFTER the RpcManager
+   // The DMI is cache-scoped, so it will always start after the RMI, which is global-scoped
    @Start(priority = 20)
-   public void start() throws Exception {
+   private void join() throws Exception {
       if (trace) log.trace("starting distribution manager on " + getMyAddress());
       notifier.addListener(listener);
-      join();
+
+      Transport t = rpcManager.getTransport();
+      List<Address> members = t.getMembers();
+      self = t.getAddress();
+      lastViewId = t.getViewId();
+      consistentHash = ConsistentHashHelper.createConsistentHash(configuration, members);
+
+      // in case we are/become the coordinator, make sure we're in the push confirmations map before anyone else
+      synchronized (pushConfirmations) {
+         pushConfirmations.put(t.getAddress(), -1);
+      }
+
+      // allow incoming requests
+      joinStartedLatch.countDown();
+
+      // nothing to push, but we need to inform the coordinator that we have finished our push
+      notifyCoordinatorPushCompleted(t.getViewId());
    }
 
    private int getReplCount() {
@@ -189,29 +207,12 @@ public class DistributionManagerImpl implements DistributionManager {
       joinComplete = true;
    }
 
-   private void join() throws Exception {
-      Transport t = rpcManager.getTransport();
-      List<Address> members = t.getMembers();
-      self = t.getAddress();
-      lastViewId = t.getViewId();
-      consistentHash = ConsistentHashHelper.createConsistentHash(configuration, members);
-
-      // allow incoming requests
-      joinStartedLatch.countDown();
-
-      // nothing to push, but we need to inform the coordinator that we have finished our push
-      if (t.isCoordinator()) {
-         markNodePushCompleted(t.getViewId(), t.getAddress());
-      } else {
-         final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED, self, t.getViewId());
-
-         rpcManager.invokeRemotely(Collections.singleton(rpcManager.getTransport().getCoordinator()), cmd, true);
-      }
-   }
-
    @Stop(priority = 20)
    public void stop() {
       notifier.removeListener(listener);
+      synchronized (rehashInProgressMonitor) {
+         rehashInProgressMonitor.notifyAll();
+      }
       rehashExecutor.shutdownNow();
       joinStartedLatch.countDown();
       joinCompletedLatch.countDown();
@@ -244,6 +245,26 @@ public class DistributionManagerImpl implements DistributionManager {
 
    public List<Address> locate(Object key) {
       return getConsistentHash().locate(key, getReplCount());
+   }
+
+   public boolean waitForRehashToComplete(int viewId) throws InterruptedException, TimeoutException {
+      long endTime = System.currentTimeMillis() + configuration.getRehashRpcTimeout();
+      synchronized (rehashInProgressMonitor) {
+         while (rehashInProgress && lastViewId == viewId && System.currentTimeMillis() < endTime) {
+            rehashInProgressMonitor.wait(configuration.getRehashRpcTimeout());
+         }
+      }
+      if (rehashInProgress) {
+         if (lastViewId != viewId) {
+            log.debug("Received a new view while waiting for cluster-wide rehash to finish");
+            return false;
+         } else {
+            throw new TimeoutException("Timeout waiting for cluster-wide rehash to finish");
+         }
+      } else {
+         log.debug("Cluster-wide rehash finished successfully.");
+      }
+      return true;
    }
 
    /**
@@ -293,22 +314,11 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public Address getSelf() {
-      if (self == null) {
-         waitForJoinToStart();
-      }
-      // after the waitForJoinToStart call we must see the value of self set before joinStartedLatch.countDown()
       return self;
    }
 
    public ConsistentHash getConsistentHash() {
-      // avoid a duplicate volatile read in the common case
-      ConsistentHash ch = consistentHash;
-      if (ch == null) {
-         waitForJoinToStart();
-         // after the waitForJoinToStart call we must see the value of consistentHash set before joinStartedLatch.countDown()
-         ch = consistentHash;
-      }
-      return ch;
+      return consistentHash;
    }
 
    public void setConsistentHash(ConsistentHash consistentHash) {
@@ -329,7 +339,6 @@ public class DistributionManagerImpl implements DistributionManager {
 
    private Map<Object, InternalCacheValue> applyStateMap(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state, boolean withRetry) {
       Map<Object, InternalCacheValue> retry = withRetry ? new HashMap<Object, InternalCacheValue>() : null;
-      waitForJoinToStart();
 
       for (Map.Entry<Object, InternalCacheValue> e : state.entrySet()) {
          if (consistentHash.locate(e.getKey(), configuration.getNumOwners()).contains(getSelf())) {
@@ -358,23 +367,36 @@ public class DistributionManagerImpl implements DistributionManager {
       return retry;
    }
 
+   @Override
    public void applyState(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state,
-                          Address sender) {
+                          Address sender, int viewId) {
+      waitForJoinToStart();
+
+      // use the sender's CH if his view is newer
+      // an use our CH if the our view is newer
+      ConsistentHash latestCH = consistentHash;
+      if (viewId < lastViewId) {
+         log.debugf("Rejecting state pushed by node %s for old rehash %d (last view id is %d)", sender, viewId, lastViewId);
+         latestCH = getConsistentHash();
+      }
+
       if (trace) log.tracef("Applying new state from %s: received %d keys", sender, state.size());
       int retryCount = 3; // in case we have issues applying state.
       Map<Object, InternalCacheValue> pendingApplications = state;
       for (int i = 0; i < retryCount; i++) {
-         pendingApplications = applyStateMap(consistentHash, pendingApplications, true);
+         pendingApplications = applyStateMap(latestCH, pendingApplications, true);
          if (pendingApplications.isEmpty()) break;
       }
       // one last go
-      if (!pendingApplications.isEmpty()) applyStateMap(consistentHash, pendingApplications, false);
+      if (!pendingApplications.isEmpty()) applyStateMap(latestCH, pendingApplications, false);
 
       if(trace) log.tracef("After applying state data container has %d keys", dataContainer.size());
    }
 
    @Override
    public void markRehashCompleted(int viewId) {
+      waitForJoinToStart();
+
       if (viewId < lastViewId) {
          if (trace)
             log.tracef("Ignoring old rehash completed confirmation for view %d, last view is %d", viewId, lastViewId);
@@ -387,11 +409,16 @@ public class DistributionManagerImpl implements DistributionManager {
 
       if (trace) log.tracef("Rehash completed on node %s, data container has %d keys", getSelf(), dataContainer.size());
       rehashInProgress = false;
+      synchronized (rehashInProgressMonitor) {
+         rehashInProgressMonitor.notifyAll();
+      }
       joinCompletedLatch.countDown();
    }
 
    @Override
    public void markNodePushCompleted(int viewId, Address node) {
+      waitForJoinToStart();
+
       if (trace)
          log.tracef("Coordinator: received push completed notification for %s, view id %s", node, viewId);
 
@@ -402,7 +429,7 @@ public class DistributionManagerImpl implements DistributionManager {
          return;
       }
 
-      synchronized (pushConfirmationsLock) {
+      synchronized (pushConfirmations) {
          if (viewId < lastViewIdFromPushConfirmation) {
             if (trace)
                log.tracef("Coordinator: Ignoring old push completed confirmation for view %d, last confirmed view is %d", viewId, lastViewIdFromPushConfirmation);
@@ -438,6 +465,18 @@ public class DistributionManagerImpl implements DistributionManager {
       }
    }
 
+   public void notifyCoordinatorPushCompleted(int viewId) {
+      Transport t = rpcManager.getTransport();
+
+      if (t.isCoordinator()) {
+         markNodePushCompleted(viewId, self);
+      } else {
+         final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED, self, viewId);
+
+         rpcManager.invokeRemotely(Collections.singleton(rpcManager.getTransport().getCoordinator()), cmd, true);
+      }
+   }
+
    @Listener
    public class ViewChangeListener {
       @Merged @ViewChanged
@@ -446,27 +485,32 @@ public class DistributionManagerImpl implements DistributionManager {
             log.tracef("New view received: %d, type=%s, members: %s. Starting the RebalanceTask", e.getViewId(), e.getType(), e.getNewMembers());
 
          rehashInProgress = true;
+         synchronized (rehashInProgressMonitor) {
+            rehashInProgressMonitor.notifyAll();
+         }
          lastViewId = e.getViewId();
 
          // make sure the pushConfirmations map has one entry for each cluster member
-         // must do it on all members because we might get a node push confirmation before we know we're the coordinator
-         synchronized (pushConfirmationsLock) {
-            for (Address newNode : e.getNewMembers()) {
-               if (!pushConfirmations.containsKey(newNode)) {
-                  if (trace)
-                     log.tracef("Coordinator: adding new node %s", newNode);
-                  pushConfirmations.put(newNode, -1);
+         // we will always have
+         if (DistributionManagerImpl.this.getRpcManager().getTransport().isCoordinator()) {
+            synchronized (pushConfirmations) {
+               for (Address newNode : e.getNewMembers()) {
+                  if (!pushConfirmations.containsKey(newNode)) {
+                     if (trace)
+                        log.tracef("Coordinator: adding new node %s", newNode);
+                     pushConfirmations.put(newNode, -1);
+                  }
                }
-            }
-            for (Address oldNode : e.getOldMembers()) {
-               if (!e.getNewMembers().contains(oldNode)) {
-                  if (trace)
-                     log.tracef("Coordinator: removing node %s", oldNode);
-                  pushConfirmations.remove(oldNode);
+               for (Address oldNode : e.getOldMembers()) {
+                  if (!e.getNewMembers().contains(oldNode)) {
+                     if (trace)
+                        log.tracef("Coordinator: removing node %s", oldNode);
+                     pushConfirmations.remove(oldNode);
+                  }
                }
+               if (trace)
+                  log.tracef("Coordinator: push confirmations list updated: %s", pushConfirmations);
             }
-            if (trace)
-               log.tracef("Coordinator: push confirmations list updated: %s", pushConfirmations);
          }
 
          RebalanceTask rebalanceTask = new RebalanceTask(rpcManager, cf, configuration, dataContainer,

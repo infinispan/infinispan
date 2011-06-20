@@ -77,81 +77,81 @@ public class DistTxInterceptor extends TxInterceptor {
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand cmd) throws Throwable {
-      dm.getTransactionLogger().beforeCommand(cmd);
+      dm.getTransactionLogger().beforeCommand(ctx, cmd);
       try {
          return super.visitPrepareCommand(ctx, cmd);
       } finally {
-         dm.getTransactionLogger().afterCommand(cmd);
+         dm.getTransactionLogger().afterCommand(ctx, cmd);
       }
    }
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand cmd) throws Throwable {
-      dm.getTransactionLogger().beforeCommand(cmd);
+      dm.getTransactionLogger().beforeCommand(ctx, cmd);
       try {
          return super.visitRollbackCommand(ctx, cmd);
       } finally {
-         dm.getTransactionLogger().afterCommand(cmd);
+         dm.getTransactionLogger().afterCommand(ctx, cmd);
       }
    }
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand cmd) throws Throwable {
-      dm.getTransactionLogger().beforeCommand(cmd, ctx);
+      dm.getTransactionLogger().beforeCommand(ctx, cmd);
       try {
          return super.visitCommitCommand(ctx, cmd);
       } finally {
-         dm.getTransactionLogger().afterCommand(cmd, ctx);
+         dm.getTransactionLogger().afterCommand(ctx, cmd);
       }
    }
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      if (!ctx.isInTxScope()) dm.getTransactionLogger().beforeCommand(command);
+      dm.getTransactionLogger().beforeCommand(ctx, command);
       try {
          return super.visitPutKeyValueCommand(ctx, command);
       } finally {
-         if (!ctx.isInTxScope()) dm.getTransactionLogger().afterCommand(command);
+         dm.getTransactionLogger().afterCommand(ctx, command);
       }
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      if (!ctx.isInTxScope()) dm.getTransactionLogger().beforeCommand(command);
+      dm.getTransactionLogger().beforeCommand(ctx, command);
       try {
          return super.visitRemoveCommand(ctx, command);
       } finally {
-         if (!ctx.isInTxScope()) dm.getTransactionLogger().afterCommand(command);
+         dm.getTransactionLogger().afterCommand(ctx, command);
       }
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      if (!ctx.isInTxScope()) dm.getTransactionLogger().beforeCommand(command);
+      dm.getTransactionLogger().beforeCommand(ctx, command);
       try {
          return super.visitReplaceCommand(ctx, command);
       } finally {
-         if (!ctx.isInTxScope()) dm.getTransactionLogger().afterCommand(command);
+         dm.getTransactionLogger().afterCommand(ctx, command);
       }
    }
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      if (!ctx.isInTxScope()) dm.getTransactionLogger().beforeCommand(command);
+      dm.getTransactionLogger().beforeCommand(ctx, command);
       try {
          return super.visitClearCommand(ctx, command);
       } finally {
-         if (!ctx.isInTxScope()) dm.getTransactionLogger().afterCommand(command);
+         dm.getTransactionLogger().afterCommand(ctx, command);
       }
    }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      if (!ctx.isInTxScope()) dm.getTransactionLogger().beforeCommand(command);
+      dm.getTransactionLogger().beforeCommand(ctx, command);
       try {
          return super.visitPutMapCommand(ctx, command);
       } finally {
-         if (!ctx.isInTxScope()) dm.getTransactionLogger().afterCommand(command);
+         dm.getTransactionLogger().afterCommand(ctx, command);
       }
    }
 

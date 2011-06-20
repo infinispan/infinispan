@@ -26,6 +26,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -75,25 +76,25 @@ public interface TransactionLogger extends RemoteTransactionLogger {
     *
     * @param command command to log
     */
-   void afterCommand(WriteCommand command) throws InterruptedException;
+   void afterCommand(InvocationContext ctx, WriteCommand command) throws InterruptedException;
 
    /**
     * Logs a PrepareCommand if needed.
     * @param command PrepoareCommand to log
     */
-   void afterCommand(PrepareCommand command) throws InterruptedException;
+   void afterCommand(TxInvocationContext ctx, PrepareCommand command) throws InterruptedException;
 
    /**
     * Logs a CommitCommand if needed.
     * @param command CommitCommand to log
     */
-   void afterCommand(CommitCommand command, TxInvocationContext context) throws InterruptedException;
+   void afterCommand(TxInvocationContext ctx, CommitCommand command) throws InterruptedException;
 
    /**
     * Logs a RollbackCommand if needed.
     * @param command RollbackCommand to log
     */
-   void afterCommand(RollbackCommand command) throws InterruptedException;
+   void afterCommand(TxInvocationContext ctx, RollbackCommand command) throws InterruptedException;
 
    /**
     * Checks whether transaction logging is enabled
@@ -104,24 +105,24 @@ public interface TransactionLogger extends RemoteTransactionLogger {
    /**
     * Notify the transaction logger before a write command, potentially blocking.
     */
-   void beforeCommand(WriteCommand command) throws InterruptedException;
+   void beforeCommand(InvocationContext ctx, WriteCommand command) throws InterruptedException;
 
    /**
     * Notify the transaction logger before a prepare command, potentially blocking.
     */
-   void beforeCommand(PrepareCommand command) throws InterruptedException;
+   void beforeCommand(TxInvocationContext ctx, PrepareCommand command) throws InterruptedException;
 
    /**
     * Notify the transaction logger before a commit command, potentially blocking.
     * If transaction logging was not enabled during the prepare command, use the
     * context to extract the list of modifications.
     */
-   void beforeCommand(CommitCommand command, TxInvocationContext context) throws InterruptedException;
+   void beforeCommand(TxInvocationContext ctx, CommitCommand command) throws InterruptedException;
 
    /**
     * Notify the transaction logger before a rollback command, potentially blocking.
     */
-   void beforeCommand(RollbackCommand command) throws InterruptedException;
+   void beforeCommand(TxInvocationContext ctx, RollbackCommand command) throws InterruptedException;
 
    /**
     * Causes new transactions to block when calling <code>beforeCommand()</code>.

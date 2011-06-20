@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 
 /**
  * A component that manages the distribution of elements across a cache cluster
@@ -179,10 +180,19 @@ public interface DistributionManager {
     */
    void applyRemoteTxLog(List<WriteCommand> modifications);
 
-   void applyState(ConsistentHash newConsistentHash, Map<Object,InternalCacheValue> state, Address sender);
+   void applyState(ConsistentHash newConsistentHash, Map<Object,InternalCacheValue> state, Address sender, int viewId);
 
    void markRehashCompleted(int viewId);
 
    void markNodePushCompleted(int viewId, Address node);
+
+   public void notifyCoordinatorPushCompleted(int viewId) throws InterruptedException;
+
+   /**
+    * Wait until the cluster-wide rehash for view <code>viewId</code> has finished.
+    *
+    * @return true if there is another rehash pending.
+    */
+   public boolean waitForRehashToComplete(int viewId) throws InterruptedException, TimeoutException;
 }
 

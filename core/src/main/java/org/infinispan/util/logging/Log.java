@@ -708,14 +708,14 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Error invalidating keys from L1 after rehash", id = 147)
-   void failedToInvalidateKeys(@Cause Throwable t);
+   void failedToInvalidateKeys(@Cause Exception e);
 
    @LogMessage(level = WARN)
    @Message(value = "Invalid %s value of %s. It can not be higher than %s which is %s", id = 148)
    void invalidTimeoutValue(Object configName1, Object value1, Object configName2, Object value2);
 
    @LogMessage(level = WARN)
-   @Message(value = "Fetch persistent state and purge on startup are both disabled, cache may contain stale entries on startup")
+   @Message(value = "Fetch persistent state and purge on startup are both disabled, cache may contain stale entries on startup", id = 149)
    void staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
 
    @LogMessage(level = FATAL)
