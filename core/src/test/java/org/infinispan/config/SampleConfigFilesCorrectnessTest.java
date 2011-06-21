@@ -96,7 +96,8 @@ public class SampleConfigFilesCorrectnessTest {
       }
       return file.list(new FilenameFilter() {
          public boolean accept(File dir, String name) {
-            return name.endsWith(".xml") && !name.startsWith("jgroups");
+            // Exclude JGroups config files as well as all EC2 configurations (as these won't have proper credentials set)
+            return name.endsWith(".xml") && !name.startsWith("jgroups") && !name.contains("ec2");
          }
       });
    }
