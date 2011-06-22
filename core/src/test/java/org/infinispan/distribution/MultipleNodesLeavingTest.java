@@ -80,8 +80,8 @@ public class MultipleNodesLeavingTest extends MultipleCacheManagersTest {
 
       System.out.println("MultipleNodesLeavingTest.testMultipleLeaves");
 
-      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(0));
       TestingUtil.blockUntilViewsReceived(60000, cache(0));
+      TestingUtil.waitForRehashToComplete(cache(0));
       Set<Address> caches = advancedCache(0).getDistributionManager().getConsistentHash().getCaches();
       System.out.println("caches = " + caches);
       int size = caches.size();

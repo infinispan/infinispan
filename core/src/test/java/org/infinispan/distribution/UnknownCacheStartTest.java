@@ -27,6 +27,7 @@ import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.TestException;
 import org.testng.annotations.AfterTest;
@@ -81,7 +82,7 @@ public class UnknownCacheStartTest extends AbstractInfinispanTest {
          assert "v".equals(c2.get("k"));
          assert "v".equals(c2_new.get("k"));
 
-         BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(c2, c2_new);
+         TestingUtil.waitForRehashToComplete(c2, c2_new);
 
          assert false : "Should have thrown an exception!";
       } catch (CacheException expected) {

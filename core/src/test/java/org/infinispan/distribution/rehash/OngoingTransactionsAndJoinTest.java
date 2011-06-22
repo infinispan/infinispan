@@ -29,7 +29,6 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.interceptors.DistTxInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -51,10 +50,8 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Timer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -145,7 +142,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
 
       for (Thread t : threads) t.join();
 
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(1));
+      TestingUtil.waitForInitRehashToComplete(cache(1));
 
       for (int i = 0; i < 10; i++) {
          Object key = "OLD" + i;

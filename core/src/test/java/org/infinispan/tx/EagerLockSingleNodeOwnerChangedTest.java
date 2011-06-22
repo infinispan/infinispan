@@ -169,7 +169,6 @@ public class EagerLockSingleNodeOwnerChangedTest extends MultipleCacheManagersTe
    private void addNewClusterMember() {
       //now add the new cache
       addClusterEnabledCacheManager(c, true);
-      cache(2);
       waitForClusterToForm();
    }
 }

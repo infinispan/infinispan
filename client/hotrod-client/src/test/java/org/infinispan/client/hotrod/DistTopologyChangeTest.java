@@ -24,7 +24,7 @@ package org.infinispan.client.hotrod;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.distribution.BaseDistFunctionalTest;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -38,15 +38,5 @@ import java.util.List;
 public class DistTopologyChangeTest extends ReplTopologyChangeTest {
    protected Configuration.CacheMode getCacheMode() {
       return Configuration.CacheMode.DIST_SYNC;
-   }
-
-   @Override
-   protected void waitForClusterToForm(int memberCount) {
-      super.waitForClusterToForm(memberCount);
-      List<Cache> caches = new ArrayList<Cache>();
-      for (int i = 0; i < memberCount; i++) {
-         caches.add(manager(i).getCache());
-      }
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(caches);
    }
 }

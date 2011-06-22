@@ -52,7 +52,7 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
       updatedSiteInfo(manager(1), "s1", "r1", "m1");
       updatedSiteInfo(manager(2), "s2", "r2", "m2");
       log.info("Here it starts");
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0), cache(1), cache(2));
+      waitForClusterToForm();
       log.info("Here it ends");
    }
 
@@ -90,7 +90,7 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
    @Test(dependsOnMethods = "testIsReplicated")
    public void testNodeLeaves() {
       TestingUtil.killCacheManagers(manager(1));
-      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(0), cache(2));
+      TestingUtil.waitForRehashToComplete(cache(0), cache(2));
 
       DistributionManagerImpl dmi = (DistributionManagerImpl) advancedCache(0).getDistributionManager();
       assertTopologyInfo2Nodes(dmi.getConsistentHash().getCaches());

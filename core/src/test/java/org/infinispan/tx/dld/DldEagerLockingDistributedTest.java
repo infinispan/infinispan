@@ -26,7 +26,6 @@ import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
-import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -54,8 +53,7 @@ public class DldEagerLockingDistributedTest extends BaseDldEagerLockingTest {
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(config, true);
       registerCacheManager(cm1);
       registerCacheManager(cm2);
-      TestingUtil.blockUntilViewsReceived(10000, cache(0), cache(1));
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0), cache(1));
+      waitForClusterToForm();
 
       cas = KeyAffinityServiceFactory.newKeyAffinityService(cache(0), new Executor() {
          public void execute(Runnable command) {

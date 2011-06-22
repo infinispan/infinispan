@@ -29,6 +29,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -93,7 +94,7 @@ public class RehashWithSharedCacheStore extends BaseDistCacheStoreTest {
       primaryOwner.getCacheManager().stop();
 
 
-      RehashWaiter.waitForRehashToComplete(caches.toArray(new Cache[INIT_CLUSTER_SIZE - 1]));
+      TestingUtil.waitForRehashToComplete(caches);
 
 
 

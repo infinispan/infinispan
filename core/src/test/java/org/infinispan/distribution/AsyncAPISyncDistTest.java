@@ -26,6 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 import org.infinispan.replication.AsyncAPISyncReplTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Key;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
@@ -47,7 +48,7 @@ public class AsyncAPISyncDistTest extends AsyncAPISyncReplTest {
       c2 = l.get(1);
 
       // wait for any rehashing to complete
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(c1, c2);
+      waitForClusterToForm();
    }
 
    @Override
