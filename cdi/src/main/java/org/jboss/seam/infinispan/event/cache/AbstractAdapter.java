@@ -2,7 +2,7 @@ package org.jboss.seam.infinispan.event.cache;
 
 import javax.enterprise.event.Event;
 
-public abstract class AbstractAdapter<T extends org.infinispan.notifications.cachelistener.event.Event> {
+public abstract class AbstractAdapter<T extends org.infinispan.notifications.cachelistener.event.Event<?, ?>> {
 
    private final Event<T> event;
 

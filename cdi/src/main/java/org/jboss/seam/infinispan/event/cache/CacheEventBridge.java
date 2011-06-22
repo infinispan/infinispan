@@ -1,7 +1,9 @@
 package org.jboss.seam.infinispan.event.cache;
 
+import java.lang.annotation.Annotation;
+import java.util.Set;
+
 import org.infinispan.notifications.Listenable;
-import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvictedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent;
@@ -15,10 +17,7 @@ import org.infinispan.notifications.cachelistener.event.TransactionCompletedEven
 import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
 import org.jboss.seam.infinispan.event.AbstractEventBridge;
 
-import java.lang.annotation.Annotation;
-import java.util.Set;
-
-public class CacheEventBridge extends AbstractEventBridge<Event> {
+public class CacheEventBridge extends AbstractEventBridge<Event<?, ?>> {
 
    public void registerObservers(Set<Annotation> qualifierSet,
          Listenable listenable) {
@@ -26,7 +25,7 @@ public class CacheEventBridge extends AbstractEventBridge<Event> {
             .toArray(new Annotation[qualifierSet.size()]);
       if (hasObservers(CacheEntryActivatedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new CacheEntryActivatedAdapter(getBaseEvent()
-               .select(CacheEntryActivatedEvent.class, qualifiers)));
+               .select(CacheEntryActivatedAdapter.WILDCARD_TYPE, qualifiers)));
       }
       if (hasObservers(CacheEntryCreatedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new CacheEntryCreatedAdapter(getBaseEvent()
