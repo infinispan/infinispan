@@ -1,0 +1,10 @@
+<beans xmlns="http://java.sun.com/xml/ns/javaee"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
+
+   <interceptors>
+      <class>org.jboss.seam.infinispan.interceptors.CacheResultInterceptor</class>
+      <class>org.jboss.seam.infinispan.interceptors.CacheRemoveEntryInterceptor</class>
+      <!-- class>org.jboss.seam.infinispan.interceptors.CacheRemoveAllInterceptor</class -->
+   </interceptors>
+</beans>
