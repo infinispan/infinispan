@@ -115,6 +115,10 @@ public class RehashControlCommand extends BaseRpcCommand {
 
    public void init(DistributionManager distributionManager, Configuration configuration, DataContainer dataContainer,
                     CommandsFactory commandsFactory) {
+      if (!configuration.getCacheMode().isDistributed()) {
+         log.rehashCommandReceivedOnNonDistributedCache();
+         throw new IllegalStateException("Rehash command received on non-distributed cache");
+      }
       this.distributionManager = distributionManager;
       this.configuration = configuration;
       this.dataContainer = dataContainer;

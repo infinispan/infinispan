@@ -717,4 +717,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Fetch persistent state and purge on startup are both disabled, cache may contain stale entries on startup")
    void staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
+
+   @LogMessage(level = FATAL)
+   @Message(value = "Rehash command received on non-distributed cache. All the nodes in the cluster should be using the same configuration.", id = 150)
+   void rehashCommandReceivedOnNonDistributedCache();
 }

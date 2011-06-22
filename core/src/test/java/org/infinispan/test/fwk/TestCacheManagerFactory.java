@@ -100,6 +100,7 @@ public class TestCacheManagerFactory {
       Configuration c = parser.parseDefaultConfiguration();
 
       minimizeThreads(gc);
+      amendTransport(gc);
 
       EmbeddedCacheManager cm = newDefaultCacheManager(true, gc, c, false);
       for (Map.Entry<String, Configuration> e : named.entrySet()) cm.defineConfiguration(e.getKey(), e.getValue());
@@ -242,7 +243,7 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(true, configuration, defaultCfg, false);
    }
 
-   private static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean transactional, boolean keepJmxDomainName) {
+   public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean transactional, boolean keepJmxDomainName) {
       return createCacheManager(configuration, defaultCfg, transactional, keepJmxDomainName, false);
    }
 
