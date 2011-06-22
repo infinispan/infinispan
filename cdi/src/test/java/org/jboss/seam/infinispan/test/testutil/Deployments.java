@@ -20,7 +20,8 @@ public class Deployments {
             .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml")
             .addAsLibraries(
                   DependencyResolvers.use(MavenDependencyResolver.class)
-                        .artifact("org.jboss.seam.solder:seam-solder:3.0.0.Final")
+                  		.loadReposFromPom("pom.xml")
+                        .artifact("org.jboss.seam.solder:seam-solder")
                         .resolveAs(GenericArchive.class)
             );
    }
