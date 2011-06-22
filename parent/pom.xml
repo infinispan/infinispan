@@ -128,12 +128,14 @@
       <version.org.jboss.logging>3.0.0.Beta5</version.org.jboss.logging>
       <version.jboss.logging>3.0.0.Beta5</version.jboss.logging>
       <version.jboss.logging.processor>1.0.0.Beta6</version.jboss.logging.processor>
+      <version.jboss.spec>1.0.0.Final</version.jboss.spec>
       <version.jcipannotations>1.0</version.jcipannotations>
       <version.jclouds>1.0-beta-9b</version.jclouds>
       <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
       <version.jgroups>2.12.0.Final</version.jgroups>
       <version.json>20090211</version.json>
+      <version.jsr107>0.1-SNAPSHOT</version.jsr107>
       <version.jstl>1.2</version.jstl>
       <version.jta>1.0.1.GA</version.jta>
       <version.log4j>1.2.16</version.log4j>
