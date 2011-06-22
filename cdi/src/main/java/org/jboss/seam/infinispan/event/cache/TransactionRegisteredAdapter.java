@@ -7,12 +7,13 @@ import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEve
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.enterprise.event.Event;
+import javax.enterprise.util.TypeLiteral;
 
 @Listener
-public class TransactionRegisteredAdapter extends
-      AbstractAdapter<TransactionRegisteredEvent> {
+public class TransactionRegisteredAdapter<K,V> extends
+      AbstractAdapter<TransactionRegisteredEvent<K,V>> {
 
-   public static final TransactionRegisteredEvent EMPTY = new TransactionRegisteredEvent() {
+   public static final TransactionRegisteredEvent<?, ?>  EMPTY = new TransactionRegisteredEvent<Object, Object>() {
 
       public Type getType() {
          return null;
@@ -31,18 +32,21 @@ public class TransactionRegisteredAdapter extends
          return false;
       }
 
-      public Cache<?, ?> getCache() {
+      public Cache<Object, Object> getCache() {
          return null;
       }
 
    };
 
-   public TransactionRegisteredAdapter(Event<TransactionRegisteredEvent> event) {
+   @SuppressWarnings("serial")
+   public static final TypeLiteral<TransactionRegisteredEvent<?,?>> WILDCARD_TYPE = new TypeLiteral<TransactionRegisteredEvent<?,?>>() {};
+
+   public TransactionRegisteredAdapter(Event<TransactionRegisteredEvent<K,V>> event) {
       super(event);
    }
 
    @TransactionRegistered
-   public void fire(TransactionRegisteredEvent payload) {
+   public void fire(TransactionRegisteredEvent<K,V> payload) {
       super.fire(payload);
    }
 

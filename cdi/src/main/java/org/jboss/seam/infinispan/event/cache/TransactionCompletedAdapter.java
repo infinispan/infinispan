@@ -7,12 +7,13 @@ import org.infinispan.notifications.cachelistener.event.TransactionCompletedEven
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.enterprise.event.Event;
+import javax.enterprise.util.TypeLiteral;
 
 @Listener
-public class TransactionCompletedAdapter extends
-      AbstractAdapter<TransactionCompletedEvent> {
+public class TransactionCompletedAdapter<K,V> extends
+      AbstractAdapter<TransactionCompletedEvent<K,V>> {
 
-   public static final TransactionCompletedEvent EMPTY = new TransactionCompletedEvent() {
+   public static final TransactionCompletedEvent<?, ?>  EMPTY = new TransactionCompletedEvent<Object, Object>() {
 
       public Type getType() {
          return null;
@@ -31,7 +32,7 @@ public class TransactionCompletedAdapter extends
          return false;
       }
 
-      public Cache<?, ?> getCache() {
+      public Cache<Object, Object> getCache() {
          return null;
       }
 
@@ -41,12 +42,15 @@ public class TransactionCompletedAdapter extends
 
    };
 
-   public TransactionCompletedAdapter(Event<TransactionCompletedEvent> event) {
+   @SuppressWarnings("serial")
+   public static final TypeLiteral<TransactionCompletedEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<TransactionCompletedEvent<?,?>>() {};
+
+   public TransactionCompletedAdapter(Event<TransactionCompletedEvent<K,V>> event) {
       super(event);
    }
 
    @TransactionCompleted
-   public void fire(TransactionCompletedEvent payload) {
+   public void fire(TransactionCompletedEvent<K,V> payload) {
       super.fire(payload);
    }
 

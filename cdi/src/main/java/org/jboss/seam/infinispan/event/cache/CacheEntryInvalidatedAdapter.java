@@ -7,12 +7,13 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEve
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.enterprise.event.Event;
+import javax.enterprise.util.TypeLiteral;
 
 @Listener
-public class CacheEntryInvalidatedAdapter extends
-      AbstractAdapter<CacheEntryInvalidatedEvent> {
+public class CacheEntryInvalidatedAdapter<K,V> extends
+      AbstractAdapter<CacheEntryInvalidatedEvent<K,V>> {
 
-   public static final CacheEntryInvalidatedEvent EMPTY = new CacheEntryInvalidatedEvent() {
+   public static final CacheEntryInvalidatedEvent<?,?> EMPTY = new CacheEntryInvalidatedEvent<Object, Object>() {
 
       public Type getType() {
          return null;
@@ -35,7 +36,7 @@ public class CacheEntryInvalidatedAdapter extends
          return false;
       }
 
-      public Cache<?, ?> getCache() {
+      public Cache<Object, Object> getCache() {
          return null;
       }
 
@@ -45,12 +46,15 @@ public class CacheEntryInvalidatedAdapter extends
 
    };
 
-   public CacheEntryInvalidatedAdapter(Event<CacheEntryInvalidatedEvent> event) {
+   @SuppressWarnings("serial")
+   public static final TypeLiteral<CacheEntryInvalidatedEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<CacheEntryInvalidatedEvent<?,?>>() {};
+
+   public CacheEntryInvalidatedAdapter(Event<CacheEntryInvalidatedEvent<K,V>> event) {
       super(event);
    }
 
    @CacheEntryInvalidated
-   public void fire(CacheEntryInvalidatedEvent payload) {
+   public void fire(CacheEntryInvalidatedEvent<K,V> payload) {
       super.fire(payload);
    }
 

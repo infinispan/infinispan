@@ -7,12 +7,13 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.enterprise.event.Event;
+import javax.enterprise.util.TypeLiteral;
 
 @Listener
-public class CacheEntryModifiedAdapter extends
-      AbstractAdapter<CacheEntryModifiedEvent> {
+public class CacheEntryModifiedAdapter<K,V> extends
+      AbstractAdapter<CacheEntryModifiedEvent<K,V>> {
 
-   public static final CacheEntryModifiedEvent EMPTY = new CacheEntryModifiedEvent() {
+   public static final CacheEntryModifiedEvent<?,?> EMPTY = new CacheEntryModifiedEvent<Object, Object>() {
 
       public Type getType() {
          return null;
@@ -35,7 +36,7 @@ public class CacheEntryModifiedAdapter extends
          return false;
       }
 
-      public Cache<?, ?> getCache() {
+      public Cache<Object, Object> getCache() {
          return null;
       }
 
@@ -45,12 +46,15 @@ public class CacheEntryModifiedAdapter extends
 
    };
 
-   public CacheEntryModifiedAdapter(Event<CacheEntryModifiedEvent> event) {
+   @SuppressWarnings("serial")
+   public static final TypeLiteral<CacheEntryModifiedEvent<?,?>> WILDCARD_TYPE = new TypeLiteral<CacheEntryModifiedEvent<?,?>>() {};
+
+   public CacheEntryModifiedAdapter(Event<CacheEntryModifiedEvent<K,V>> event) {
       super(event);
    }
 
    @CacheEntryModified
-   public void fire(CacheEntryModifiedEvent payload) {
+   public void fire(CacheEntryModifiedEvent<K,V> payload) {
       super.fire(payload);
    }
 
