@@ -31,6 +31,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlTransient;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -199,7 +201,7 @@ public class CacheLoaderManagerConfig extends AbstractFluentConfigurationBean im
    }
 
    // JAXB method
-   @XmlElement(name = "loader")
+   @XmlTransient
    private LoadersConfig setCacheLoaders(List<CacheLoaderConfig> configs) {
       testImmutability("cacheLoaderConfigs");
       this.cacheLoaderConfigs = configs == null ? new LinkedList<CacheLoaderConfig>() : configs;
@@ -211,6 +213,7 @@ public class CacheLoaderManagerConfig extends AbstractFluentConfigurationBean im
     * XMLElement definition is likely to move to the getCacheLoaderConfigs().
     */
    @Deprecated
+   @XmlElement(name = "loader")
    public LoadersConfig setCacheLoaderConfigs(List<CacheLoaderConfig> configs) {
       testImmutability("cacheLoaderConfigs");
       this.cacheLoaderConfigs = configs == null ? new LinkedList<CacheLoaderConfig>() : configs;
