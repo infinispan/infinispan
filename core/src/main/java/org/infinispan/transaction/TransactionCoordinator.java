@@ -106,7 +106,8 @@ public class TransactionCoordinator {
          //rollback transaction before throwing the exception as there's no guarantee the TM calls XAResource.rollback
          //after prepare failed.
          rollback(localTransaction);
-         throw new XAException(XAException.XAER_RMERR);
+         // XA_RBROLLBACK tells the TM that we've rolled back already: the TM shouldn't call rollback after this.
+         throw new XAException(XAException.XA_RBROLLBACK);
       }
    }
 
