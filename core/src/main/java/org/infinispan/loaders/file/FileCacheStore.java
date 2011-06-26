@@ -493,7 +493,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       public void flush(File f) throws IOException {
          FileChannel channel = streams.get(f.getPath());
          if (channel != null)
-            channel.force(true);
+            channel.force(false);
       }
 
       @Override
