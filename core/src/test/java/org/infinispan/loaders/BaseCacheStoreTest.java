@@ -115,7 +115,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       return new TestObjectStreamMarshaller(false);
    }
 
-   public void testLoadAndStoreImmortal() throws InterruptedException, CacheLoaderException {
+   public void testLoadAndStoreImmortal() throws CacheLoaderException {
       assert !cs.containsKey("k");
       InternalCacheEntry se = InternalEntryFactory.create("k", "v");
       cs.store(se);
