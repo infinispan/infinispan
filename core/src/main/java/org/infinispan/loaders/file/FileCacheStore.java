@@ -482,7 +482,6 @@ public class FileCacheStore extends BucketBasedCacheStore {
          FileChannel channel = streams.get(f.getPath());
          if (channel != null)
             channel.force(true);
-
       }
 
       @Override
@@ -507,8 +506,14 @@ public class FileCacheStore extends BucketBasedCacheStore {
 
       @Override
       public void stop() {
-         for (FileChannel channel : streams.values())
+         for (FileChannel channel : streams.values()) {
+            try {
+               channel.force(true);
+            } catch (IOException e) {
+               log.errorFlushingToFileChannel(channel, e);
+            }
             Util.close(channel);
+         }
 
          streams.clear();
       }
