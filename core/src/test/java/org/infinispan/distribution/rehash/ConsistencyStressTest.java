@@ -141,7 +141,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
       Thread.sleep(25000);
 
       // lets make sure any rehashing work has completed
-      RehashTestBase.RehashWaiter.waitForRehashToComplete(cacheMap.values().toArray(new Cache[NUM_NODES - 1]));
+      TestingUtil.waitForRehashToComplete(cacheMap.values());
       AbstractWheelConsistentHash hash = (AbstractWheelConsistentHash) cache(1).getAdvancedCache().getDistributionManager().getConsistentHash();
 
       for (int i = 0; i < NUM_NODES; i++) {

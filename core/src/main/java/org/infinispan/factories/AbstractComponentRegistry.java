@@ -706,7 +706,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       // fire all START methods according to priority
 
 
-      for (PrioritizedMethod em : startMethods) em.invoke();
+      for (PrioritizedMethod em : startMethods) {
+         if (getLog().isTraceEnabled()) getLog().tracef("Invoking stop method %s on component %s", em.method, em.component.getName());
+         em.invoke();
+      }
 
       addShutdownHook();
 
@@ -735,7 +738,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       Collections.sort(stopMethods);
 
       // fire all STOP methods according to priority
-      for (PrioritizedMethod em : stopMethods) em.invoke();
+      for (PrioritizedMethod em : stopMethods) {
+         if (getLog().isTraceEnabled()) getLog().tracef("Invoking stop method %s on component %s", em.method, em.component.getName());
+         em.invoke();
+      }
 
       destroy();
    }

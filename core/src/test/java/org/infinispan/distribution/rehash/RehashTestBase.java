@@ -162,7 +162,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       //only check for these values if tx was not rolled back
       if (!rollback.get()) {
          //ownership can only be verified after the rehashing has completed
-         RehashWaiter.waitForRehashToComplete(new ArrayList<Cache>(caches));
+         TestingUtil.waitForRehashToComplete(caches);
          // the ownership of k1 might change during the tx and a cache might end up with it in L1
          assertOwnershipAndNonOwnership(keys.get(0), true);
          assertOwnershipAndNonOwnership(keys.get(1), l1OnRehash);

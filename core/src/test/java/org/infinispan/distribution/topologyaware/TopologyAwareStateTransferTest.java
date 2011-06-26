@@ -56,7 +56,6 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       log.debug("defaultConfig = " + defaultConfig.getNumOwners());
       defaultConfig.setL1CacheEnabled(false);
       createClusteredCaches(5, defaultConfig);
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0), cache(1), cache(2), cache(3), cache(4));
 
       TopologyAwareConsistentHash hash =
             (TopologyAwareConsistentHash) cache(0).getAdvancedCache().getDistributionManager().getConsistentHash();
@@ -101,7 +100,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       log.info("Here is where ST starts");
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
-      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(addresses[0]), cache(addresses[1]), cache(addresses[2]), cache(addresses[3]));
+      TestingUtil.waitForRehashToComplete(cache(addresses[0]), cache(addresses[1]), cache(addresses[2]), cache(addresses[3]));
       log.info("Here is where ST ends");
       Set<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getCaches();
       log.debug("After shutting down " + addresses[4] + " caches are " +  addressList);
@@ -123,7 +122,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm = cache(addresses[2]).getCacheManager();
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
-      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(addresses[0]), cache(addresses[1]), cache(addresses[3]));
+      TestingUtil.waitForRehashToComplete(cache(addresses[0]), cache(addresses[1]), cache(addresses[3]));
       Set<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getCaches();
       log.debug("After shutting down " + addresses[2] + " caches are " +  addressList);
 
@@ -143,7 +142,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm = cache(addresses[1]).getCacheManager();
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
-      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(addresses[0]), cache(addresses[3]));
+      TestingUtil.waitForRehashToComplete(cache(addresses[0]), cache(addresses[3]));
       Set<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getCaches();
       log.debug("After shutting down " + addresses[1] + " caches are " +  addressList);
 

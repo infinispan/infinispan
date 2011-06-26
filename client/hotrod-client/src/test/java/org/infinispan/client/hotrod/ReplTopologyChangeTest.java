@@ -91,10 +91,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       hotRodServer1 = TestHelper.startHotRodServer(manager(0));
       hotRodServer2 = TestHelper.startHotRodServer(manager(1));
 
-      manager(0).getCache();
-      manager(1).getCache();
-
-      waitForClusterToForm(2);
+      waitForClusterToForm();
 
       manager(0).getCache().put("k_test", "v");
       manager(0).getCache().get("k_test").equals("v");
@@ -127,7 +124,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       hotRodServer3 = TestHelper.startHotRodServer(manager(2));
       manager(2).getCache();
 
-      waitForClusterToForm(3);
+      waitForClusterToForm();
 
       try {
          expectTopologyChange(new InetSocketAddress("localhost", hotRodServer3.getPort()), true);
@@ -171,13 +168,6 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       assertEquals(server1Address + " not found in " + addresses, added, addresses.contains(server1Address));
    }
    
-   protected void waitForClusterToForm(int memberCount) {
-      TestingUtil.blockUntilViewReceived(manager(0).getCache(), memberCount, 30000);
-      for (int i = 0; i < memberCount; i++) {
-         TestingUtil.blockUntilCacheStatusAchieved(manager(i).getCache(), ComponentStatus.RUNNING, 30000);
-      }
-   }
-
    protected void waitForServerToDie(int memberCount) {
       TestingUtil.blockUntilViewReceived(manager(0).getCache(), memberCount, 30000, false);
    }

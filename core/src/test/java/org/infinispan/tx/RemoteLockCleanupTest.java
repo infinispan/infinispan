@@ -27,7 +27,6 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.interceptors.DistributionInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -46,7 +45,6 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
       super.createClusteredCaches(2, config);
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0), cache(1));
    }
 
    public void testLockCleanup() throws Exception {
@@ -74,7 +72,7 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
       });
 
       TestingUtil.killCacheManagers(manager(1));
-      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(0));
+      TestingUtil.waitForRehashToComplete(cache(0));
 
       eventually(new Condition() {
          @Override

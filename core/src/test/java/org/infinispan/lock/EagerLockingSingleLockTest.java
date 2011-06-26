@@ -69,8 +69,6 @@ public class EagerLockingSingleLockTest extends MultipleCacheManagersTest {
       config.setUseEagerLocking(true);
       config.setL1CacheEnabled(false);
       createClusteredCaches(4, config);
-      TestingUtil.blockUntilViewReceived(cache(0), 4, 10000);
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0), cache(1), cache(2), cache(3));
       poolExecutor = new ThreadPoolExecutor(1, 1, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(10));
       kaf = KeyAffinityServiceFactory.newKeyAffinityService(cache(0), poolExecutor, new RndKeyGenerator(), 10, true);
    }
@@ -174,7 +172,7 @@ public class EagerLockingSingleLockTest extends MultipleCacheManagersTest {
 
       manager(3).stop();
       TestingUtil.blockUntilViewReceived(cache(0), 3, 10000, false);
-      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(cache(0), cache(1), cache(2));
+      TestingUtil.waitForRehashToComplete(cache(0), cache(1), cache(2));
 
       try {
          log.trace("here it begins");

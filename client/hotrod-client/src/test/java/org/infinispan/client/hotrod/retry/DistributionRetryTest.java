@@ -30,7 +30,6 @@ import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.config.Configuration;
-import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.jboss.JBossMarshaller;
 import org.infinispan.remoting.transport.Address;
@@ -56,12 +55,6 @@ public class DistributionRetryTest extends AbstractRetryTest {
       Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
       config.setNumOwners(1);
       return config;
-   }
-
-   @Override
-   protected void waitForClusterToForm() {
-      super.waitForClusterToForm();
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0), cache(1), cache(2));
    }
 
    public void testGet() throws Exception {

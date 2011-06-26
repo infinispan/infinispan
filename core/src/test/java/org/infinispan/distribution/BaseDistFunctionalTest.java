@@ -35,26 +35,18 @@ import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.UnionConsistentHash;
 import org.infinispan.distribution.group.Grouper;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -115,9 +107,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
          EmbeddedCacheManager cacheManager = cache.getCacheManager();
          cacheAddresses.add(cacheManager.getAddress());
       }
-
-      RehashWaiter.waitForInitRehashToComplete(caches.toArray(new Cache[INIT_CLUSTER_SIZE]));
-
    }
 
    protected static ConsistentHash createNewConsistentHash(Collection<Address> servers) {
@@ -132,68 +121,14 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       }
    }
 
-   /**
-    * This is a separate class because some tools try and run this method as a test 
-    */
-   public static class RehashWaiter {
-      private static final Log log = LogFactory.getLog(RehashWaiter.class);
-      public static void waitForInitRehashToComplete(Cache... caches) {
-         int gracetime = 60000; // 60 seconds?
-         long giveup = System.currentTimeMillis() + gracetime;
-         for (Cache c : caches) {
-            DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
-            while (!dmi.isJoinComplete()) {
-               if (System.currentTimeMillis() > giveup) {
-                  String message = "Timed out waiting for initial join sequence to complete on node " + dmi.getRpcManager().getAddress() + " !";
-                  log.error(message);
-                  throw new RuntimeException(message);
-               }
-               LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
-            }
-            log.trace("Node " + dmi.getRpcManager().getAddress() + " finished rehash task.");
-         }
-      }
-
-      public static void waitForRehashToComplete(Cache... caches) {
-         int gracetime = 120000; // 120 seconds?
-         long giveup = System.currentTimeMillis() + gracetime;
-         for (Cache c : caches) {
-            DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
-            while (dmi.isRehashInProgress()) {
-               if (System.currentTimeMillis() > giveup) {
-                  String message = "Timed out waiting for rehash to complete on node " + dmi.getRpcManager().getAddress() + " !";
-                  log.error(message);
-                  throw new RuntimeException(message);
-               }
-               LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
-            }
-            log.trace("Node " + dmi.getRpcManager().getAddress() + " finished rehash task.");
-         }
-      }
-
-      public static void waitForInitRehashToComplete(Collection<Cache> caches) {
-         Set<Cache> cachesSet = new HashSet<Cache>();
-         cachesSet.addAll(caches);
-         waitForInitRehashToComplete(cachesSet.toArray(new Cache[cachesSet.size()]));
-      }
-
-      public static void waitForRehashToComplete(Collection<Cache> caches) {
-         Set<Cache> cachesSet = new HashSet<Cache>();
-         cachesSet.addAll(caches);
-         waitForRehashToComplete(cachesSet.toArray(new Cache[cachesSet.size()]));
-      }
-
-   }
-
    // only used if the CH impl does not order the hash ring based on the order of the view.
    // in the case of the DefaultConsistentHash, the order is based on a has code of the addres modded by
    // the hash space.  So this will not adhere to the positions in the view, but it is deterministic.
    // so this function orders things such that the test can predict where keys get mapped to.
    private void reorderBasedOnCHPositions() {
       // wait for all joiners to join
-      List<Cache> clist = new ArrayList<Cache>(caches);
-      assert clist.size() == INIT_CLUSTER_SIZE;
-      waitForJoinTasksToComplete(SECONDS.toMillis(480), clist.toArray(new Cache[clist.size()]));
+      assert caches.size() == INIT_CLUSTER_SIZE;
+      TestingUtil.waitForRehashToComplete(caches);
 
       // seed this with an initial cache.  Any one will do.
       Cache seed = caches.get(0);

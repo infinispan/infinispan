@@ -32,6 +32,8 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.DistributionManagerImpl;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
@@ -68,6 +70,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import static java.io.File.separator;
 
@@ -139,6 +143,52 @@ public class TestingUtil {
          if (interceptorToFind.isInstance(i)) return interceptorToFind.cast(i);
       }
       return null;
+   }
+
+   public static void waitForRehashToComplete(Cache... caches) {
+      int gracetime = 120000; // 120 seconds?
+      long giveup = System.currentTimeMillis() + gracetime;
+      for (Cache c : caches) {
+         DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
+         while (dmi.isRehashInProgress()) {
+            if (System.currentTimeMillis() > giveup) {
+               String message = "Timed out waiting for rehash to complete on node " + dmi.getRpcManager().getAddress() + " !";
+               log.error(message);
+               throw new RuntimeException(message);
+            }
+            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
+         }
+         log.trace("Node " + dmi.getRpcManager().getAddress() + " finished rehash task.");
+      }
+   }
+
+   public static void waitForRehashToComplete(Collection<? extends Cache> caches) {
+      Set<Cache> cachesSet = new HashSet<Cache>();
+      cachesSet.addAll(caches);
+      waitForRehashToComplete(cachesSet.toArray(new Cache[cachesSet.size()]));
+   }
+
+   public static void waitForInitRehashToComplete(Cache... caches) {
+      int gracetime = 30000; // 30 seconds?
+      long giveup = System.currentTimeMillis() + gracetime;
+      for (Cache c : caches) {
+         DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
+         while (!dmi.isJoinComplete()) {
+            if (System.currentTimeMillis() > giveup) {
+               String message = "Timed out waiting for join to complete on node " + dmi.getRpcManager().getAddress() + " !";
+               log.error(message);
+               throw new RuntimeException(message);
+            }
+            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
+         }
+         log.trace("Node " + dmi.getRpcManager().getAddress() + " finished join task.");
+      }
+   }
+
+   public static void waitForInitRehashToComplete(Collection<? extends Cache> caches) {
+      Set<Cache> cachesSet = new HashSet<Cache>();
+      cachesSet.addAll(caches);
+      waitForInitRehashToComplete(cachesSet.toArray(new Cache[cachesSet.size()]));
    }
 
    /**
@@ -502,9 +552,9 @@ public class TestingUtil {
          if (!cacheContainer.getStatus().allowInvocations()) return;
 
          for (Cache cache : runningCaches) {
-            removeInMemoryData(cache);
-            clearCacheLoader(cache);
             clearReplicationQueues(cache);
+            clearCacheLoader(cache);
+            removeInMemoryData(cache);
             ((AdvancedCache) cache).getInvocationContextContainer().createInvocationContext();
          }
       }

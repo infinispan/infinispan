@@ -82,10 +82,6 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
       hotRodServer3 = TestHelper.startHotRodServer(manager(2));
       hrServ2CacheManager.put(getAddress(hotRodServer3), cm3);
 
-      manager(0).getCache();
-      manager(1).getCache();
-      manager(2).getCache();
-
       waitForClusterToForm();
 
       Properties clientConfig = new Properties();
@@ -104,11 +100,4 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    }
 
    protected abstract Configuration getCacheConfig();
-
-   protected void waitForClusterToForm() {
-      TestingUtil.blockUntilViewReceived(manager(0).getCache(), 3, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(2).getCache(), ComponentStatus.RUNNING, 10000);
-   }
 }

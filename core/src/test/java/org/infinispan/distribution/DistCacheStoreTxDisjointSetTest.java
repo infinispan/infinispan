@@ -28,13 +28,13 @@ import org.infinispan.config.Configuration;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import static java.lang.String.format;
-import static org.infinispan.distribution.BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete;
 import static org.infinispan.distribution.DistributionTestHelper.addressOf;
 import static org.infinispan.distribution.DistributionTestHelper.isOwner;
 
@@ -59,10 +59,7 @@ public class DistCacheStoreTxDisjointSetTest extends MultipleCacheManagersTest {
       c.setCacheLoaderManagerConfig(new CacheLoaderManagerConfig(new DummyInMemoryCacheStore.Cfg("DistCacheStoreTxDisjointSetTest2")));
       addClusterEnabledCacheManager(c, true);
 
-      waitForInitRehashToComplete(cache(0),
-                                  cache(1),
-                                  cache(2)
-      );
+      waitForClusterToForm();
    }
 
    public void testDisjointSetTransaction() throws Exception {

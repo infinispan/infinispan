@@ -24,7 +24,6 @@ package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -67,8 +66,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
       c1 = cache(1);
       c2 = cache(2);
       c3 = cache(3);
-      TestingUtil.blockUntilViewsReceived(10000, c0, c1, c2, c3);
-      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(c0, c1, c2, c3);
+      waitForClusterToForm();
       log.info("Rehash is complete!");
       cache = new HashMap<Integer, BigObject>();
    }

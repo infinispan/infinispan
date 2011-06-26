@@ -28,7 +28,8 @@ import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
-import org.infinispan.distribution.BaseDistFunctionalTest;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.DistributionManagerImpl;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -43,10 +44,15 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * Base class for tests that operates on clusters of caches. The way tests extending this class operates is:
@@ -219,16 +225,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   protected void waitForClusterToForm(String cacheName) {
-      List<Cache> caches;
-      caches = getCaches(cacheName);
-      Cache<Object, Object> cache = caches.get(0);
-      TestingUtil.blockUntilViewsReceived(10000, caches);
-      if (cache.getConfiguration().getCacheMode().isDistributed()) {
-         BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(caches);
-      }
-   }
-
    private List<Cache> getCaches(String cacheName) {
       List<Cache> caches;
       caches = new ArrayList<Cache>();
@@ -236,6 +232,16 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          caches.add(cacheName == null ? cm.getCache() : cm.getCache(cacheName));
       }
       return caches;
+   }
+
+   protected void waitForClusterToForm(String cacheName) {
+      List<Cache> caches;
+      caches = getCaches(cacheName);
+      Cache<Object, Object> cache = caches.get(0);
+      TestingUtil.blockUntilViewsReceived(10000, caches);
+      if (cache.getConfiguration().getCacheMode().isDistributed()) {
+         TestingUtil.waitForInitRehashToComplete(caches);
+      }
    }
 
    protected void waitForClusterToForm() {
@@ -271,7 +277,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          Cache<K, V> cache = cm.getCache(cacheName);
          caches.add(cache);
       }
-      TestingUtil.blockUntilViewsReceived(30000, caches);
+      waitForClusterToForm();
       return caches;
    }
 
@@ -282,7 +288,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          Cache<K, V> cache = cm.getCache();
          caches.add(cache);
       }
-      TestingUtil.blockUntilViewsReceived(10000, caches);
+      waitForClusterToForm();
       return caches;
    }
 

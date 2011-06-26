@@ -82,7 +82,9 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       assert owner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).get(key) == null;
       assert nonOwner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).get(key) == null;
       assert value.equals(nonOwner.get(key));
-      assertOnAllCachesAndOwnership(key, value);
+      // need to do the get() on all the owners first to load the values, otherwise assertOwnershipAndNonOwnership might fail
+      assertOnAllCaches(key, value);
+      assertOwnershipAndNonOwnership(key, true);
    }
    
    public void testPutFromNonOwnerWithFlags() throws Exception {
@@ -313,7 +315,7 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       prepareClearTest();
       c1.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
       for (Cache<Object, String> c : caches) {
-         assert c.isEmpty();
+         assert c.isEmpty() : "Data container " + c + " should be empty, instead it contains keys " + c.keySet();
          CacheStore store = TestingUtil.extractComponent(c, CacheLoaderManager.class).getCacheStore();
          for (int i = 0; i < 5; i++) {
             String key = "k" + i;
@@ -336,7 +338,7 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
    }
    
    private void prepareClearTest() throws CacheLoaderException {
-      for (Cache<Object, String> c : caches) assert c.isEmpty();
+      for (Cache<Object, String> c : caches) assert c.isEmpty() : "Data container " + c + " should be empty, instead it contains keys " + c.keySet();
       for (int i = 0; i < 5; i++) {
          getOwners("k" + i)[0].put("k" + i, "value" + i);
       }
@@ -348,7 +350,7 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
          for (int i = 0; i < 5; i++) {
             String key = "k" + i;
             if (isOwner(c, key)) {
-               assert store.containsKey(key);
+               assert store.containsKey(key) : "Cache store " + c + " does not contain key " + key;
             }
          }
       }

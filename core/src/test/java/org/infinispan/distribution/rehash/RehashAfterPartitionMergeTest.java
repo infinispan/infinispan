@@ -94,7 +94,7 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
       // wait till we see the view change
       while (ai.get() < 2) TestingUtil.sleepThread(500);
 
-      BaseDistFunctionalTest.RehashWaiter.waitForRehashToComplete(c1, c2);
+      TestingUtil.waitForRehashToComplete(c1, c2);
 
       c1.put("5", "value");
       c2.put("6", "value");
