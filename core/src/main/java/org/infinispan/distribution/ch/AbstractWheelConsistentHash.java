@@ -98,7 +98,6 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       if (newCaches.size() == 0 || newCaches.contains(null))
          throw new IllegalArgumentException("Invalid cache list for consistent hash: " + newCaches);
 
-      if (trace) log.tracef("Adding %d nodes to cluster", newCaches.size());
       if (newCaches.size() * numVirtualNodes > HASH_SPACE)
          throw new IllegalArgumentException("Too many nodes: " + newCaches.size() + " * " + numVirtualNodes
                                                   + " exceeds the available hash space");
@@ -108,13 +107,11 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       // so we add the virtual nodes (if any) only after we have added all the "real" nodes
       TreeMap<Integer, Address> positions = new TreeMap<Integer, Address>();
       for (Address a : newCaches) {
-         if (trace) log.tracef("Adding node %s", a);
          addNode(positions, a, getNormalizedHash(a));
       }
 
       if (isVirtualNodesEnabled()) {
          for (Address a : newCaches) {
-            if (trace) log.tracef("Adding %d virtual nodes for real node %s", numVirtualNodes - 1, a);
             for (int i = 1; i < numVirtualNodes; i++) {
                // we get the normalized hash from the VirtualAddress, but we store the real address in the positions map
                Address va = new VirtualAddress(a, i);
@@ -134,6 +131,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          positionValues[i] = position.getValue();
          i++;
       }
+      log.tracef("Consistent hash initialized: %s", this);
    }
 
    private void addNode(TreeMap<Integer, Address> positions, Address a, int positionIndex) {
@@ -141,7 +139,6 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       while (positions.containsKey(positionIndex))
          positionIndex = (positionIndex + 1) % HASH_SPACE;
       positions.put(positionIndex, a);
-      if (trace) log.tracef("Added node %s", a);
    }
 
    @Override
@@ -231,6 +228,9 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       StringBuilder sb = new StringBuilder(getClass().getSimpleName());
       sb.append(" {");
       for (int i = 0; i < positionKeys.length; i++) {
+         if (i > 0) {
+            sb.append(", ");
+         }
          sb.append(positionKeys[i]).append(": ").append(positionValues[i]);
       }
       sb.append("}");

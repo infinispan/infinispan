@@ -42,8 +42,8 @@
       <param name="Threshold" value="TRACE"/>
 
       <layout class="org.apache.log4j.PatternLayout">
-         <!-- The default pattern: Date Priority [Category] Message\n -->
-         <param name="ConversionPattern" value="%d %-5p [%c] (%t) %m%n"/>
+         <!-- The default pattern: Date Priority (Thread) [Category] Message\n -->
+         <param name="ConversionPattern" value="%d %-5p (%t) [%c] %m%n"/>
 
          <!-- The full pattern: Date MS Priority [Category] (Thread:NDC) Message\n
         <param name="ConversionPattern" value="%d %-5r %-5p [%c] (%t:%x) %m%n"/>

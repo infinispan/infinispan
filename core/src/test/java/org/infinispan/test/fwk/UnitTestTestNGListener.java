@@ -79,7 +79,9 @@ public class UnitTestTestNGListener implements ITestListener {
    }
 
    public void onStart(ITestContext arg0) {
-      TestCacheManagerFactory.testStarted(arg0.getName());
+      String fullName = arg0.getName();
+      String simpleName = fullName.substring(fullName.lastIndexOf('.') + 1);
+      TestCacheManagerFactory.testStarted(simpleName);
    }
 
    public void onFinish(ITestContext arg0) {
