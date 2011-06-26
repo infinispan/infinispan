@@ -59,6 +59,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.nio.channels.FileChannel;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -721,4 +722,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = FATAL)
    @Message(value = "Rehash command received on non-distributed cache. All the nodes in the cluster should be using the same configuration.", id = 150)
    void rehashCommandReceivedOnNonDistributedCache();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error flushing to file: %s", id = 151)
+   void errorFlushingToFileChannel(FileChannel f, @Cause Exception e);
+
 }
