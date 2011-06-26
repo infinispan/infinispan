@@ -584,7 +584,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
 
       if (getLog().isTraceEnabled())
-         getLog().tracef("Reset volatile components.  Registry now contains %s", componentLookup.keySet());
+         getLog().tracef("Reset volatile components. Registry now contains %s", componentLookup.keySet());
    }
 
    // ------------------------------ START: Publicly available lifecycle methods -----------------------------
@@ -705,9 +705,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
       // fire all START methods according to priority
 
-
+      boolean traceEnabled = getLog().isTraceEnabled();
       for (PrioritizedMethod em : startMethods) {
-         if (getLog().isTraceEnabled()) getLog().tracef("Invoking stop method %s on component %s", em.method, em.component.getName());
+         if (traceEnabled) getLog().tracef("Invoking stop method %s on component %s", em.method, em.component.getName());
          em.invoke();
       }
 
@@ -738,8 +738,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       Collections.sort(stopMethods);
 
       // fire all STOP methods according to priority
+      boolean traceEnabled = getLog().isTraceEnabled();
       for (PrioritizedMethod em : stopMethods) {
-         if (getLog().isTraceEnabled()) getLog().tracef("Invoking stop method %s on component %s", em.method, em.component.getName());
+         if (traceEnabled) getLog().tracef("Invoking stop method %s on component %s", em.method, em.component.getName());
          em.invoke();
       }
 
