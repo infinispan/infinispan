@@ -53,6 +53,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @author <a href="http://gleamynode.net/">Trustin Lee</a>
  * @author Galder Zamarreño
+ * @author Sanne Grinovero
  * @since 4.0
  */
 @CacheLoaderMetadata(configurationClass = FileCacheStoreConfig.class)
@@ -463,12 +464,23 @@ public class FileCacheStore extends BucketBasedCacheStore {
          FileChannel channel = streams.get(path);
          if (channel == null) {
             channel = createChannel(f);
-            streams.putIfAbsent(path, channel);
+            FileChannel existingChannel = streams.putIfAbsent(path, channel);
+            if (existingChannel != null) {
+               Util.close(channel);
+               channel = existingChannel;
+            }
          } else if (!f.exists()) {
             f.createNewFile();
             FileChannel oldChannel = channel;
             channel = createChannel(f);
-            streams.replace(path, oldChannel, channel);
+            boolean replaced = streams.replace(path, oldChannel, channel);
+            if (replaced) {
+               Util.close(oldChannel);
+            }
+            else {
+               Util.close(channel);
+               channel = streams.get(path);
+            }
          }
          channel.write(ByteBuffer.wrap(bytes));
       }
