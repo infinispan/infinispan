@@ -491,6 +491,15 @@ public class FileCacheStore extends BucketBasedCacheStore {
          // cos any cached file channel write won't change the file's exists
          // status. So, clear the file rather than delete it.
          FileChannel channel = streams.get(f.getPath());
+         if (channel == null) {
+            channel = createChannel(f);
+            String path = f.getPath();
+            FileChannel existingChannel = streams.putIfAbsent(path, channel);
+            if (existingChannel != null) {
+               Util.close(channel);
+               channel = existingChannel;
+            }
+         }
          channel.truncate(0);
          // Apart from truncating, it's necessary to reset the position!
          channel.position(0);

@@ -122,6 +122,22 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
       checkBucketExists(b);
    }
 
+   public void testCacheStoreRebootable() throws Exception {
+      String key = "testCacheStoreRebootable";
+      InternalCacheEntry se = InternalEntryFactory.create(key, "initialValue");
+      fcs.store(se);
+      Bucket b = fcs.loadBucketContainingKey(key);
+
+      //stop and restart it:
+      fcs.stop();
+      fcs.start();
+
+      InternalCacheEntry entry = b.getEntry(key);
+      entry.setValue("updatedValue");
+      fcs.updateBucket(b);
+      "updatedValue".equals(fcs.load(key).getValue());
+   }
+
    protected void checkBucketExists(Bucket b) {
       File file = new File(fcs.root, b.getBucketIdAsString());
       assert file.exists();
