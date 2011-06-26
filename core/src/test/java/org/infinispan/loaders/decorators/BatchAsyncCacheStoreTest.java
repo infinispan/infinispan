@@ -49,7 +49,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.1
  */
-@Test(groups = "functional", testName = "loaders.AsyncCacheStoreTest")
+@Test(groups = "functional", testName = "loaders.BatchAsyncCacheStoreTest")
 public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
 
    private final HashMap cacheCopy = new HashMap();
@@ -110,7 +110,7 @@ public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
          Object expected = cacheCopy.get(key);
          Object actual = cache.get(key);
          if (!expected.equals(actual)) {
-            System.out.println("Failure on key '" + key.toString() + "' expected value: '" + expected + "' actual value: '" + actual + "'");
+            log.errorf("Failure on key '%s' expected value: '%s' actual value: '%s'", key.toString(), expected, actual);
             failed = true;
          }
       }
