@@ -552,9 +552,9 @@ public class TestingUtil {
          if (!cacheContainer.getStatus().allowInvocations()) return;
 
          for (Cache cache : runningCaches) {
-            removeInMemoryData(cache);
-            clearCacheLoader(cache);
             clearReplicationQueues(cache);
+            clearCacheLoader(cache);
+            removeInMemoryData(cache);
             ((AdvancedCache) cache).getInvocationContextContainer().createInvocationContext();
          }
       }
