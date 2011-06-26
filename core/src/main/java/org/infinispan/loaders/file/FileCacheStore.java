@@ -299,9 +299,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
       if (f.exists()) {
          if (!purgeFile(f)) {
             log.problemsRemovingFile(f);
+         } else if (trace) {
+            log.tracef("Successfully deleted file: '%s'", f.getName());
          }
-      } else if (trace) {
-         log.tracef("Successfully deleted file: '%s'", f.getName());
       }
 
       if (!b.getEntries().isEmpty()) {
