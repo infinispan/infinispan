@@ -316,7 +316,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
    public interface EvictionListener<K, V> {
       void onEntryEviction(Map<K, V> evicted);
-      void passivate(V internalCacheEntry);
+      void onEntryChosenForEviction(V internalCacheEntry);
    }
 
    static final class NullEvictionListener<K, V> implements EvictionListener<K, V> {
@@ -325,7 +325,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          // Do nothing.
       }
       @Override
-      public void passivate(V internalCacheEntry) {
+      public void onEntryChosenForEviction(V internalCacheEntry) {
          // Do nothing.
       }
    }
@@ -470,7 +470,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             }
             while (isOverflow()) {
                HashEntry<K, V> first = lruQueue.getLast();
-               segment.evictionListener.passivate(first.value);
+               segment.evictionListener.onEntryChosenForEviction(first.value);
                segment.remove(first.key, first.hash, null);
                evicted.add(first);
             }
@@ -650,7 +650,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
       private void removeFromSegment(Set<HashEntry<K, V>> evicted) {
          for (HashEntry<K, V> e : evicted) {
-            segment.evictionListener.passivate(e.value);
+            segment.evictionListener.onEntryChosenForEviction(e.value);
             segment.remove(e.key, e.hash, null);
          }
       }
