@@ -20,31 +20,25 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.seam.infinispan.util;
+package org.jboss.seam.infinispan.test.util;
+
+import org.jboss.seam.infinispan.util.Contracts;
+import org.testng.annotations.Test;
 
 /**
- * An helper class providing useful assertion methods.
- *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public final class Contracts {
+public class ContractsTest {
 
-   /**
-    * Disable instantiation.
-    */
-   private Contracts() {
+   @Test(groups = "unit",
+         expectedExceptions = NullPointerException.class,
+         expectedExceptionsMessageRegExp = "This parameter cannot be null")
+   public void testAssertNotNullOnNullParameter() {
+      Contracts.assertNotNull(null, "This parameter cannot be null");
    }
 
-   /**
-    * Asserts that the given parameter is not {@code null}. If the given parameter is {@code null} a {@link
-    * NullPointerException} is thrown.
-    *
-    * @param param   The parameter to check.
-    * @param message The exception message used if the parameter to check is {@code null}.
-    */
-   public static void assertNotNull(Object param, String message) {
-      if (param == null) {
-         throw new NullPointerException(message);
-      }
+   @Test(groups = "unit")
+   public void testAssertNotNullOnNotNullParameter() {
+      Contracts.assertNotNull("not null", "This parameter cannot be null");
    }
 }

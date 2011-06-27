@@ -44,7 +44,7 @@ public final class CacheHelper {
     * Returns the default cache name associated to the given method according to JSR-107 specification.
     *
     * @param method The method.
-    * @return the default method cache name.
+    * @return The default cache name for the given method.
     */
    public static String getDefaultMethodCacheName(Method method) {
       Contracts.assertNotNull(method, "method parameter cannot be null");
