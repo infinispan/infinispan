@@ -204,7 +204,7 @@ public class DefaultDataContainer implements DataContainer {
       }
 
       @Override
-      public void passivate(InternalCacheEntry internalCacheEntry) {
+      public void onEntryChosenForEviction(InternalCacheEntry internalCacheEntry) {
          passivator.passivate(internalCacheEntry);
       }
    }

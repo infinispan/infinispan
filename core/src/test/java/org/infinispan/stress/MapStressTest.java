@@ -28,15 +28,19 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Map.Entry;
-import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
-import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
-
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
+import org.infinispan.Cache;
+import org.infinispan.config.Configuration;
+import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
+import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -53,9 +57,10 @@ public class MapStressTest {
     final float MAP_LOAD_FACTOR = 0.75f;
     final int CONCURRENCY = 32;
     
-    final int RUN_TIME_MILLIS = 5 * 1000; // 10 sec
-    final int NUM_KEYS = 50000;
-    final int LOOP_FACTOR=5;
+    final int NUM_KEYS = 50 * 1000;
+    final int LOOP_FACTOR = 20;
+    
+    final long RUNNING_TIME = 30 * 1000;
     
     private List<Integer> readOps = new ArrayList<Integer>(NUM_KEYS*LOOP_FACTOR);
     private List<Integer> writeOps = new ArrayList<Integer>(NUM_KEYS*LOOP_FACTOR);
@@ -75,7 +80,7 @@ public class MapStressTest {
     }
     
     public void testConcurrentHashMap() throws Exception {
-        doTest(new BoundedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, CONCURRENCY));
+        doTest(new ConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, CONCURRENCY));
     }
    
     public void testBufferedConcurrentHashMapLRU() throws Exception {
@@ -91,11 +96,28 @@ public class MapStressTest {
     }
 
     private void doTest(final Map<Integer, Integer> map) throws Exception {
-        doTest(map, 48, 6, 4, true);
+        //total threads = 27+3+2=32=CONCURRENCY
+        doTest(map, 27, 3, 2, RUNNING_TIME);
+    }
+    
+    public void testCache() throws Exception {
+       doTest(configureAndBuildCache());
+    }
+    
+    private Cache<Integer,Integer> configureAndBuildCache(){
+       Configuration config = new Configuration().fluent().eviction().maxEntries(MAP_CAPACITY).strategy(EvictionStrategy.LRU)
+         .wakeUpInterval(5000L)
+         .expiration()
+         .maxIdle(120000L)
+         .build();
+       
+       DefaultCacheManager cm = new DefaultCacheManager(GlobalConfiguration.getNonClusteredDefault(),config); 
+       cm.start();
+       return cm.getCache();
     }
 
     private void doTest(final Map<Integer, Integer> map, int numReaders, int numWriters,
-                    int numRemovers, boolean warmup) throws Exception {
+                    int numRemovers, final long runningTimeout) throws Exception {
 
         latch = new CountDownLatch(1);
         final Map<String, String> perf = new ConcurrentSkipListMap<String, String>();
@@ -105,14 +127,19 @@ public class MapStressTest {
             Thread getter = new Thread() {
                 public void run() {
                     waitForStart();
-                    long start = System.nanoTime();
+                    long startMilis = System.currentTimeMillis();
                     int runs = 0;
-                    while (runs < readOps.size()) {
+                    int totalRuns = 0;
+                    while ((System.currentTimeMillis() - startMilis) <= runningTimeout) {
                         map.get(readOps.get(runs));
                         runs++;
+                        totalRuns ++;
+                        if(runs >= readOps.size()){
+                           runs = 0;
+                        }
                     }
-                    perf.put("GET" + Thread.currentThread().getId(), opsPerMS(System.nanoTime()
-                                    - start, runs));
+                    perf.put("GET" + Thread.currentThread().getId(), opsPerMS(System.currentTimeMillis()
+                                    - startMilis, totalRuns));
                 }
             };
             threads.add(getter);
@@ -122,14 +149,19 @@ public class MapStressTest {
             Thread putter = new Thread() {
                 public void run() {
                     waitForStart();
-                    long start = System.nanoTime();
                     int runs = 0;
-                    while (runs < writeOps.size()) {
-                        map.put(writeOps.get(runs),runs);
+                    int totalRuns = 0;
+                    long startMilis = System.currentTimeMillis();
+                    while ((System.currentTimeMillis() - startMilis) <= runningTimeout) {
+                        map.put(writeOps.get(runs),runs);                        
                         runs++;
+                        totalRuns ++;
+                        if(runs >= writeOps.size()){
+                           runs = 0;
+                        }                        
                     }
-                    perf.put("PUT" + Thread.currentThread().getId(), opsPerMS(System.nanoTime()
-                                    - start, runs));
+                    perf.put("PUT" + Thread.currentThread().getId(), opsPerMS(System.currentTimeMillis()
+                                    - startMilis, totalRuns));
                 }
             };
             threads.add(putter);
@@ -139,14 +171,19 @@ public class MapStressTest {
             Thread remover = new Thread() {
                 public void run() {
                     waitForStart();
-                    long start = System.nanoTime();
                     int runs = 0;
-                    while (runs < removeOps.size()) {
+                    int totalRuns = 0;
+                    long startMilis = System.currentTimeMillis();
+                    while ((System.currentTimeMillis() - startMilis) <= runningTimeout) {
                         map.remove(removeOps.get(runs));
                         runs++;
+                        totalRuns ++;
+                        if(runs >= removeOps.size()){
+                           runs = 0;
+                        }
                     }
-                    perf.put("REM" + Thread.currentThread().getId(), opsPerMS(System.nanoTime()
-                                    - start, runs));
+                    perf.put("REM" + Thread.currentThread().getId(), opsPerMS(System.currentTimeMillis()
+                                    - startMilis, totalRuns));
                 }
             };
             threads.add(remover);
@@ -156,12 +193,10 @@ public class MapStressTest {
             t.start();
         latch.countDown();
 
-        // wait some time
-        Thread.sleep(RUN_TIME_MILLIS);
         for (Thread t : threads)
             t.join();
         
-        System.out.println("Size = " + map.size());
+        
 
         int puts = 0, gets = 0, removes = 0;
         for (Entry<String, String> p : perf.entrySet()) {
@@ -180,6 +215,7 @@ public class MapStressTest {
         System.out.println("Average get ops/ms " + (gets / numReaders));
         System.out.println("Average put ops/ms " + (puts / numWriters));
         System.out.println("Average remove ops/ms " + (removes / numRemovers));
+        System.out.println("Size = " + map.size());
     }
 
     private void waitForStart() {
@@ -190,8 +226,7 @@ public class MapStressTest {
         }
     }
 
-    private String opsPerMS(long nanos, int ops) {
-        long totalMillis = TimeUnit.NANOSECONDS.toMillis(nanos);
+    private String opsPerMS(long totalMillis, int ops) {
         if (totalMillis > 0)
             return "" + ops / totalMillis;
         else
