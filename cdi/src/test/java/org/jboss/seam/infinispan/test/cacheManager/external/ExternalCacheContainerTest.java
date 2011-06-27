@@ -20,7 +20,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.seam.infinispan.test.cacheManager.external;
+package org.jboss.seam.infinispan.test.cachemanager.external;
 
 import org.infinispan.AdvancedCache;
 import org.jboss.arquillian.api.Deployment;
