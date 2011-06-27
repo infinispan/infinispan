@@ -53,6 +53,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @author <a href="http://gleamynode.net/">Trustin Lee</a>
  * @author Galder Zamarreño
+ * @author Sanne Grinovero
  * @since 4.0
  */
 @CacheLoaderMetadata(configurationClass = FileCacheStoreConfig.class)
@@ -299,9 +300,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
       if (f.exists()) {
          if (!purgeFile(f)) {
             log.problemsRemovingFile(f);
+         } else if (trace) {
+            log.tracef("Successfully deleted file: '%s'", f.getName());
          }
-      } else if (trace) {
-         log.tracef("Successfully deleted file: '%s'", f.getName());
       }
 
       if (!b.getEntries().isEmpty()) {
@@ -463,12 +464,23 @@ public class FileCacheStore extends BucketBasedCacheStore {
          FileChannel channel = streams.get(path);
          if (channel == null) {
             channel = createChannel(f);
-            streams.putIfAbsent(path, channel);
+            FileChannel existingChannel = streams.putIfAbsent(path, channel);
+            if (existingChannel != null) {
+               Util.close(channel);
+               channel = existingChannel;
+            }
          } else if (!f.exists()) {
             f.createNewFile();
             FileChannel oldChannel = channel;
             channel = createChannel(f);
-            streams.replace(path, oldChannel, channel);
+            boolean replaced = streams.replace(path, oldChannel, channel);
+            if (replaced) {
+               Util.close(oldChannel);
+            }
+            else {
+               Util.close(channel);
+               channel = streams.get(path);
+            }
          }
          channel.write(ByteBuffer.wrap(bytes));
       }
@@ -481,8 +493,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       public void flush(File f) throws IOException {
          FileChannel channel = streams.get(f.getPath());
          if (channel != null)
-            channel.force(true);
-
+            channel.force(false);
       }
 
       @Override
@@ -491,6 +502,15 @@ public class FileCacheStore extends BucketBasedCacheStore {
          // cos any cached file channel write won't change the file's exists
          // status. So, clear the file rather than delete it.
          FileChannel channel = streams.get(f.getPath());
+         if (channel == null) {
+            channel = createChannel(f);
+            String path = f.getPath();
+            FileChannel existingChannel = streams.putIfAbsent(path, channel);
+            if (existingChannel != null) {
+               Util.close(channel);
+               channel = existingChannel;
+            }
+         }
          channel.truncate(0);
          // Apart from truncating, it's necessary to reset the position!
          channel.position(0);
@@ -498,8 +518,14 @@ public class FileCacheStore extends BucketBasedCacheStore {
 
       @Override
       public void stop() {
-         for (FileChannel channel : streams.values())
+         for (FileChannel channel : streams.values()) {
+            try {
+               channel.force(true);
+            } catch (IOException e) {
+               log.errorFlushingToFileChannel(channel, e);
+            }
             Util.close(channel);
+         }
 
          streams.clear();
       }
