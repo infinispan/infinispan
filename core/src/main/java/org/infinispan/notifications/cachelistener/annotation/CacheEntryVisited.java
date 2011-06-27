@@ -35,7 +35,9 @@ import java.lang.annotation.Target;
  * org.infinispan.notifications.IncorrectListenerException} will be thrown when registering your listener.
  *  <p/>
  *  Locking: notification is performed WITHOUT locks on the given key (unless {@link org.infinispan.context.Flag#FORCE_WRITE_LOCK} is used for this call).
-
+ * <p/>
+ * Any exceptions thrown by the listener will abort the call. Any other listeners not yet called will not be called,
+ * and any transactions in progress will be rolled back.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @see org.infinispan.notifications.Listener

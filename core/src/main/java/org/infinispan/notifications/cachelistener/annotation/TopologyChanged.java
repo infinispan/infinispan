@@ -42,6 +42,7 @@ import java.lang.annotation.Target;
  * Note that methods marked with this annotation will be fired <i>before</i> and <i>after</i> the updated {@link ConsistentHash}
  * is installed, i.e., your method will be called twice, with {@link Event#isPre()} being set to <tt>true</tt> as well
  * as <tt>false</tt>.
+ * <p/>
  *
  * @author Manik Surtani
  * @see org.infinispan.notifications.Listener

@@ -31,6 +31,8 @@ import java.lang.annotation.Target;
  * org.infinispan.notifications.cachelistener.event.CacheEntryEvictedEvent} otherwise an {@link
  * org.infinispan.notifications.IncorrectListenerException} will be thrown when registering your cache listener.
  * <p/>
+ * Any exceptions thrown by the listener will abort the call. Any other listeners not yet called will not be called,
+ * and any transactions in progress will be rolled back.
  *
  * @author Manik Surtani
  * @author Galder Zamarreño

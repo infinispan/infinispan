@@ -34,6 +34,9 @@ import java.lang.annotation.Target;
  * Methods annotated with this annotation should accept a single parameter, a {@link
  * org.infinispan.notifications.cachemanagerlistener.event.MergedEvent} otherwise a {@link
  * org.infinispan.notifications.IncorrectListenerException} will be thrown when registering your listener.
+ * <p/>
+ * Any exceptions thrown by the listener will abort the call. Any other listeners not yet called will not be called,
+ * and any transactions in progress will be rolled back.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @see org.infinispan.notifications.Listener
