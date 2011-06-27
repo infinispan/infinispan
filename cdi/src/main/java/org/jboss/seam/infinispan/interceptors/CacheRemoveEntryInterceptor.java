@@ -23,7 +23,6 @@
 package org.jboss.seam.infinispan.interceptors;
 
 import org.infinispan.Cache;
-import org.jboss.seam.infinispan.InfinispanCacheResolver;
 
 import javax.cache.interceptor.CacheKey;
 import javax.cache.interceptor.CacheRemoveEntry;
