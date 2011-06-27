@@ -3,7 +3,7 @@ package org.infinispan.cdi.test.interceptors.service;
 import org.infinispan.cdi.test.interceptors.service.generator.CustomCacheKeyGenerator;
 
 import javax.cache.interceptor.CacheResult;
-import javax.faces.bean.ApplicationScoped;
+import javax.enterprise.context.ApplicationScoped;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
