@@ -22,22 +22,30 @@
  */
 package org.jboss.seam.infinispan;
 
-import org.infinispan.config.Configuration;
+import org.infinispan.Cache;
+import org.infinispan.manager.CacheContainer;
 
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+import java.lang.reflect.Method;
+
+import static org.jboss.seam.infinispan.util.CacheHelper.getDefaultMethodCacheName;
 
 /**
- * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class DefaultCacheProducer {
-   /**
-    * Allows the default cache to be injected
-    */
-   @Produces
-   @Infinispan
-   @Default
-   Configuration getDefaultConfiguration() {
-      return new Configuration();
+public class InfinispanCacheResolver {
+
+   private final CacheContainer cacheContainer;
+
+   @Inject
+   public InfinispanCacheResolver(CacheContainer cacheContainer) {
+      this.cacheContainer = cacheContainer;
+   }
+
+   public <K, V> Cache<K, V> resolveCache(String cacheName, Method method) {
+      if (cacheName.isEmpty()) {
+         return cacheContainer.getCache(getDefaultMethodCacheName(method));
+      }
+      return cacheContainer.getCache(cacheName);
    }
 }

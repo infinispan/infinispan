@@ -22,20 +22,50 @@
  */
 package org.jboss.seam.infinispan.interceptors;
 
+import org.infinispan.Cache;
+import org.jboss.seam.infinispan.InfinispanCacheResolver;
+
+import javax.cache.interceptor.CacheKey;
 import javax.cache.interceptor.CacheRemoveEntry;
+import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
+import java.lang.reflect.Method;
+
+import static org.jboss.seam.infinispan.util.CacheHelper.generateCacheKey;
 
 /**
- * @author Kevin Pollet - SERLI - (kevin.pollet@serli.com)
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @Interceptor
 @CacheRemoveEntry
 public class CacheRemoveEntryInterceptor {
 
+   private final InfinispanCacheResolver cacheResolver;
+
+   @Inject
+   public CacheRemoveEntryInterceptor(InfinispanCacheResolver cacheResolver) {
+      this.cacheResolver = cacheResolver;
+   }
+
    @AroundInvoke
    public Object cacheRemoveEntry(InvocationContext context) throws Exception {
-      return context.proceed();
+      final Method method = context.getMethod();
+      final CacheRemoveEntry cacheRemoveEntry = method.getAnnotation(CacheRemoveEntry.class);
+      final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheRemoveEntry.cacheName(), method);
+      final CacheKey cacheKey = generateCacheKey(cacheRemoveEntry.cacheKeyGenerator(), context);
+
+      if (!cacheRemoveEntry.afterInvocation()) {
+         cache.remove(cacheKey);
+      }
+
+      final Object result = context.proceed();
+
+      if (cacheRemoveEntry.afterInvocation()) {
+         cache.remove(cacheKey);
+      }
+
+      return result;
    }
 }

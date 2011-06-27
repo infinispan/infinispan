@@ -20,24 +20,22 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.seam.infinispan;
+package org.jboss.seam.infinispan.test.interceptors.service;
 
 import org.infinispan.config.Configuration;
+import org.jboss.seam.infinispan.Infinispan;
 
-import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 
 /**
- * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class DefaultCacheProducer {
-   /**
-    * Allows the default cache to be injected
-    */
+public class Config {
+
    @Produces
-   @Infinispan
-   @Default
-   Configuration getDefaultConfiguration() {
+   @Infinispan("custom")
+   @Custom
+   public Configuration getConfiguration() {
       return new Configuration();
    }
 }

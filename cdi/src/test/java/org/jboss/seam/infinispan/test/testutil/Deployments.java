@@ -23,14 +23,14 @@
 package org.jboss.seam.infinispan.test.testutil;
 
 import org.jboss.seam.infinispan.Infinispan;
-import org.jboss.seam.infinispan.event.cache.CacheEventBridge;
 import org.jboss.seam.infinispan.event.cachemanager.CacheManagerEventBridge;
+import org.jboss.seam.infinispan.interceptors.CacheResultInterceptor;
 import org.jboss.shrinkwrap.api.GenericArchive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
+import org.jboss.seam.infinispan.event.cache.CacheEventBridge;
 
 public class Deployments {
 
@@ -39,7 +39,8 @@ public class Deployments {
             .addPackage(Infinispan.class.getPackage())
             .addPackage(CacheEventBridge.class.getPackage())
             .addPackage(CacheManagerEventBridge.class.getPackage())
-            .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml")
+            .addPackage(CacheResultInterceptor.class.getPackage())
+            .addAsManifestResource(Deployments.class.getResource("/META-INF/beans.xml"), "beans.xml")
             .addAsLibraries(
                   DependencyResolvers.use(MavenDependencyResolver.class)
                   		.loadReposFromPom("pom.xml")

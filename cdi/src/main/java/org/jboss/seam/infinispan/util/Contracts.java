@@ -20,24 +20,31 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.seam.infinispan;
-
-import org.infinispan.config.Configuration;
-
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Produces;
+package org.jboss.seam.infinispan.util;
 
 /**
- * @author Pete Muir
+ * An helper class providing useful assertion methods.
+ *
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class DefaultCacheProducer {
+public final class Contracts {
+
    /**
-    * Allows the default cache to be injected
+    * Disable instantiation.
     */
-   @Produces
-   @Infinispan
-   @Default
-   Configuration getDefaultConfiguration() {
-      return new Configuration();
+   private Contracts() {
+   }
+
+   /**
+    * Asserts that the given parameter cannot be null. If the parameter is {@code null} a {@link NullPointerException}
+    * is thrown.
+    *
+    * @param parameter The parameter to check.
+    * @param message   The exception message if parameter id {@code null}.
+    */
+   public static void assertNotNull(Object parameter, String message) {
+      if (parameter == null) {
+         throw new NullPointerException(message);
+      }
    }
 }

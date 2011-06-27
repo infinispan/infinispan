@@ -43,6 +43,42 @@ import java.util.Set;
 
 public class InfinispanExtension implements Extension {
 
+   private final Collection<ConfigurationHolder> configurations;
+
+   InfinispanExtension() {
+      this.configurations = new HashSet<InfinispanExtension.ConfigurationHolder>();
+   }
+
+   Collection<ConfigurationHolder> getConfigurations() {
+      return configurations;
+   }
+
+   void registerConfiguration(@Observes BeforeBeanDiscovery event) {
+      event.addAnnotatedType(makeGeneric(Configuration.class));
+      event.addAnnotatedType(makeGeneric(CacheContainer.class));
+   }
+
+   void observeConfigurationProducer(@Observes ProcessProducer<?, Configuration> event, BeanManager beanManager) {
+      Infinispan annotation = event.getAnnotatedMember().getAnnotation(Infinispan.class);
+      if (annotation != null) {
+         // This is generic configuration, so auto-register it
+         String name = annotation.value();
+         configurations.add(new ConfigurationHolder(
+               event.getProducer(),
+               name,
+               event.getAnnotatedMember(),
+               beanManager
+         ));
+      }
+   }
+
+   private <X> AnnotatedType<X> makeGeneric(Class<X> clazz) {
+      return new AnnotatedTypeBuilder<X>()
+            .readFromType(clazz)
+            .addToClass(new GenericTypeLiteral(Infinispan.class))
+            .create();
+   }
+
    static class ConfigurationHolder {
 
       private final Producer<Configuration> producer;
@@ -70,40 +106,4 @@ public class InfinispanExtension implements Extension {
       }
 
    }
-
-   private final Collection<ConfigurationHolder> configurations;
-
-   InfinispanExtension() {
-      this.configurations = new HashSet<InfinispanExtension.ConfigurationHolder>();
-   }
-
-   void registerConfiguration(@Observes BeforeBeanDiscovery event,
-         BeanManager beanManager) {
-      event.addAnnotatedType(makeGeneric(Configuration.class));
-      event.addAnnotatedType(makeGeneric(CacheContainer.class));
-   }
-
-   private <X> AnnotatedType<X> makeGeneric(Class<X> clazz) {
-      AnnotatedTypeBuilder<X> builder = new AnnotatedTypeBuilder<X>()
-            .readFromType(clazz);
-      builder.addToClass(new GenericTypeLiteral(Infinispan.class));
-      return builder.create();
-   }
-
-   void observeConfigurationProducer(
-         @Observes ProcessProducer<?, Configuration> event,
-         BeanManager beanManager) {
-      if (event.getAnnotatedMember().isAnnotationPresent(Infinispan.class)) {
-         // This is generic configuration, so auto-register it
-         String name = event.getAnnotatedMember()
-               .getAnnotation(Infinispan.class).value();
-         configurations.add(new ConfigurationHolder(event.getProducer(), name,
-               event.getAnnotatedMember(), beanManager));
-      }
-   }
-
-   Collection<ConfigurationHolder> getConfigurations() {
-      return configurations;
-   }
-
 }

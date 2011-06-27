@@ -22,20 +22,53 @@
  */
 package org.jboss.seam.infinispan.interceptors;
 
+import org.infinispan.Cache;
+import org.jboss.seam.infinispan.InfinispanCacheResolver;
+
+import javax.cache.interceptor.CacheKey;
 import javax.cache.interceptor.CacheResult;
+import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
+import java.lang.reflect.Method;
+
+import static org.jboss.seam.infinispan.util.CacheHelper.generateCacheKey;
 
 /**
- * @author Kevin Pollet - SERLI - (kevin.pollet@serli.com)
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @Interceptor
 @CacheResult
 public class CacheResultInterceptor {
 
+   private final InfinispanCacheResolver cacheResolver;
+
+   @Inject
+   public CacheResultInterceptor(InfinispanCacheResolver cacheResolver) {
+      this.cacheResolver = cacheResolver;
+   }
+
    @AroundInvoke
    public Object cacheResult(InvocationContext context) throws Exception {
-      return context.proceed();
+      final Method method = context.getMethod();
+      final CacheResult cacheResult = method.getAnnotation(CacheResult.class);
+      final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheResult.cacheName(), method);
+      final CacheKey cacheKey = generateCacheKey(cacheResult.cacheKeyGenerator(), context);
+
+      Object methodResult = null;
+
+      if (!cacheResult.skipGet()) {
+         methodResult = cache.get(cacheKey);
+      }
+
+      if (methodResult == null) {
+         methodResult = context.proceed();
+         if (methodResult != null) {
+            cache.put(cacheKey, methodResult);
+         }
+      }
+
+      return methodResult;
    }
 }

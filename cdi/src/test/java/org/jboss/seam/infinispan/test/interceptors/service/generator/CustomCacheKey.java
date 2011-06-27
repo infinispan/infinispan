@@ -20,49 +20,41 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.seam.infinispan.interceptors;
-
-import org.infinispan.Cache;
-import org.jboss.seam.infinispan.InfinispanCacheResolver;
+package org.jboss.seam.infinispan.test.interceptors.service.generator;
 
 import javax.cache.interceptor.CacheKey;
-import javax.cache.interceptor.CacheRemoveAll;
-import javax.inject.Inject;
-import javax.interceptor.AroundInvoke;
-import javax.interceptor.Interceptor;
-import javax.interceptor.InvocationContext;
 import java.lang.reflect.Method;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-@Interceptor
-@CacheRemoveAll
-public class CacheRemoveAllInterceptor {
+public class CustomCacheKey implements CacheKey {
+   private final Method method;
+   private final Object firstParameter;
 
-   private final InfinispanCacheResolver cacheResolver;
-
-   @Inject
-   public CacheRemoveAllInterceptor(InfinispanCacheResolver cacheResolver) {
-      this.cacheResolver = cacheResolver;
+   public CustomCacheKey(Method method, Object firstParameterValue) {
+      this.method = method;
+      this.firstParameter = firstParameterValue;
    }
 
-   @AroundInvoke
-   public Object cacheRemoveAll(InvocationContext context) throws Exception {
-      final Method method = context.getMethod();
-      final CacheRemoveAll cacheRemoveEntry = method.getAnnotation(CacheRemoveAll.class);
-      final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheRemoveEntry.cacheName(), method);
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
 
-      if (!cacheRemoveEntry.afterInvocation()) {
-         cache.clear();
-      }
+      CustomCacheKey that = (CustomCacheKey) o;
 
-      final Object result = context.proceed();
+      if (firstParameter != null ? !firstParameter.equals(that.firstParameter) : that.firstParameter != null)
+         return false;
+      if (method != null ? !method.equals(that.method) : that.method != null) return false;
 
-      if (cacheRemoveEntry.afterInvocation()) {
-         cache.clear();
-      }
+      return true;
+   }
 
+   @Override
+   public int hashCode() {
+      int result = method != null ? method.hashCode() : 0;
+      result = 31 * result + (firstParameter != null ? firstParameter.hashCode() : 0);
       return result;
    }
 }

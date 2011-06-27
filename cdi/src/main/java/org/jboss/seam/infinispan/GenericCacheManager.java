@@ -23,6 +23,7 @@
 package org.jboss.seam.infinispan;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 import org.jboss.seam.infinispan.event.cache.CacheEventBridge;
 import org.jboss.seam.solder.bean.generic.ApplyScope;
@@ -37,6 +38,10 @@ import javax.inject.Inject;
 
 import static org.jboss.seam.solder.bean.Beans.getQualifiers;
 
+/**
+ * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ */
 @GenericConfiguration(Infinispan.class)
 public class GenericCacheManager<K, V> {
 
@@ -69,14 +74,20 @@ public class GenericCacheManager<K, V> {
    @Produces
    @ApplyScope
    public AdvancedCache<K, V> getAdvancedCache(BeanManager beanManager) {
-      String name = infinispan.value();
-      AdvancedCache<K, V> cache = getCacheContainer().<K, V> getCache(name)
-            .getAdvancedCache();
-      cacheEventBridge
-            .registerObservers(
-                  getQualifiers(beanManager, annotatedMember.getAnnotations()),
-                  cache);
-      return cache;
-   }
+      final String name = infinispan.value();
+      Cache<K, V> cache;
 
+      if (name.isEmpty()) {
+         cache = getCacheContainer().getCache();
+      } else {
+         cache = getCacheContainer().getCache(name);
+      }
+
+      cacheEventBridge.registerObservers(
+            getQualifiers(beanManager, annotatedMember.getAnnotations()),
+            cache
+      );
+
+      return cache.getAdvancedCache();
+   }
 }

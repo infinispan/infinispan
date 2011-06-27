@@ -5,6 +5,6 @@
    <interceptors>
       <class>org.jboss.seam.infinispan.interceptors.CacheResultInterceptor</class>
       <class>org.jboss.seam.infinispan.interceptors.CacheRemoveEntryInterceptor</class>
-      <!-- class>org.jboss.seam.infinispan.interceptors.CacheRemoveAllInterceptor</class -->
+      <class>org.jboss.seam.infinispan.interceptors.CacheRemoveAllInterceptor</class>
    </interceptors>
 </beans>

@@ -20,49 +20,52 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.seam.infinispan.interceptors;
+package org.jboss.seam.infinispan.test.interceptors.service;
 
-import org.infinispan.Cache;
-import org.jboss.seam.infinispan.InfinispanCacheResolver;
 
-import javax.cache.interceptor.CacheKey;
+import org.jboss.seam.infinispan.test.interceptors.service.generator.CustomCacheKeyGenerator;
+
 import javax.cache.interceptor.CacheRemoveAll;
-import javax.inject.Inject;
-import javax.interceptor.AroundInvoke;
-import javax.interceptor.Interceptor;
-import javax.interceptor.InvocationContext;
-import java.lang.reflect.Method;
+import javax.cache.interceptor.CacheRemoveEntry;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-@Interceptor
-@CacheRemoveAll
-public class CacheRemoveAllInterceptor {
+public class AdminService {
 
-   private final InfinispanCacheResolver cacheResolver;
-
-   @Inject
-   public CacheRemoveAllInterceptor(InfinispanCacheResolver cacheResolver) {
-      this.cacheResolver = cacheResolver;
+   @CacheRemoveEntry
+   public void removeUser(String login) {
+      if (login == null) {
+         throw new IllegalArgumentException("login parameter cannot be null");
+      }
    }
 
-   @AroundInvoke
-   public Object cacheRemoveAll(InvocationContext context) throws Exception {
-      final Method method = context.getMethod();
-      final CacheRemoveAll cacheRemoveEntry = method.getAnnotation(CacheRemoveAll.class);
-      final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheRemoveEntry.cacheName(), method);
+   @CacheRemoveEntry(afterInvocation = false)
+   public void removeUserBeforeInvocation(String login) {
+      removeUser(login);
+   }
 
-      if (!cacheRemoveEntry.afterInvocation()) {
-         cache.clear();
-      }
+   @CacheRemoveEntry(cacheKeyGenerator = CustomCacheKeyGenerator.class)
+   public void removeUserWithCustomCacheKeyGenerator(String login) {
+      removeUser(login);
+   }
 
-      final Object result = context.proceed();
+   @CacheRemoveEntry(cacheName = "custom")
+   public void removeUserWithCacheName(String login) {
+      removeUser(login);
+   }
 
-      if (cacheRemoveEntry.afterInvocation()) {
-         cache.clear();
-      }
+   @CacheRemoveAll
+   public void removeAllUser() {
+   }
 
-      return result;
+   @CacheRemoveAll(afterInvocation = false)
+   public void removeAllUserBeforeInvocation(String login) {
+      throw new IllegalArgumentException();
+   }
+
+   @CacheRemoveAll(cacheName = "custom")
+   public void removeAllUserWithCacheName(String login) {
+      removeUser(login);
    }
 }
