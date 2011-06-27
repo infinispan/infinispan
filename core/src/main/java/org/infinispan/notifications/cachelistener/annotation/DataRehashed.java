@@ -38,6 +38,9 @@ import java.lang.annotation.Target;
  * <p/>
  * Note that methods marked with this annotation will be fired <i>before</i> and <i>after</i> rehashing takes place,
  * i.e., your method will be called twice, with {@link Event#isPre()} being set to <tt>true</tt> as well as <tt>false</tt>.
+ * <p/>
+ * Any exceptions thrown by the listener will abort the call. Any other listeners not yet called will not be called,
+ * and any transactions in progress will be rolled back.
  *
  * @author Manik Surtani
  * @see org.infinispan.notifications.Listener
