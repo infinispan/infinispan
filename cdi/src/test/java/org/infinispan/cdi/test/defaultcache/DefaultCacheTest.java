@@ -24,7 +24,7 @@ package org.infinispan.cdi.test.defaultcache;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.jboss.arquillian.api.Deployment;
+import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Test;

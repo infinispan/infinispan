@@ -23,6 +23,7 @@
 package org.infinispan.cdi.test.testutil;
 
 import org.infinispan.cdi.Infinispan;
+import org.infinispan.cdi.event.cache.CacheEventBridge;
 import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.cdi.interceptors.CacheResultInterceptor;
 import org.jboss.shrinkwrap.api.GenericArchive;
@@ -30,7 +31,6 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
-import org.infinispan.cdi.event.cache.CacheEventBridge;
 
 public class Deployments {
 

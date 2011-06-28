@@ -7,7 +7,7 @@ import org.infinispan.cdi.test.interceptors.service.GreetingService;
 import org.infinispan.cdi.test.interceptors.service.generator.CustomCacheKey;
 import org.infinispan.cdi.test.interceptors.service.generator.CustomCacheKeyGenerator;
 import org.infinispan.manager.CacheContainer;
-import org.jboss.arquillian.api.Deployment;
+import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.BeforeMethod;

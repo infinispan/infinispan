@@ -24,10 +24,10 @@ package org.infinispan.cdi.test.cachemanager.programatic;
 
 import org.infinispan.cdi.CacheContainerManager;
 import org.infinispan.cdi.InfinispanExtension;
+import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 
 import javax.enterprise.inject.Specializes;
 import javax.inject.Inject;
