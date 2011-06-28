@@ -496,6 +496,19 @@
          </releases>
       </repository>
    </repositories>
+   <pluginRepositories>
+      <pluginRepository>
+         <id>jboss-public-plugin-repository</id>
+         <name>JBoss Public Plugin Repository and Proxy for third party plugin repositories</name>
+         <url>https://repository.jboss.org/nexus/content/groups/public</url>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+         <releases>
+            <enabled>true</enabled>
+         </releases>
+      </pluginRepository>
+   </pluginRepositories>
 
    <profiles>
       <profile>
