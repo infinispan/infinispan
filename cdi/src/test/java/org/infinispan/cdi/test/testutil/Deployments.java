@@ -23,9 +23,11 @@
 package org.infinispan.cdi.test.testutil;
 
 import org.infinispan.cdi.Infinispan;
+import org.infinispan.cdi.event.AbstractEventBridge;
 import org.infinispan.cdi.event.cache.CacheEventBridge;
 import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.cdi.interceptors.CacheResultInterceptor;
+import org.infinispan.cdi.util.CacheHelper;
 import org.jboss.shrinkwrap.api.GenericArchive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -37,13 +39,16 @@ public class Deployments {
    public static WebArchive baseDeployment() {
       return ShrinkWrap.create(WebArchive.class, "test.war")
             .addPackage(Infinispan.class.getPackage())
+            .addPackage(AbstractEventBridge.class.getPackage())
             .addPackage(CacheEventBridge.class.getPackage())
             .addPackage(CacheManagerEventBridge.class.getPackage())
             .addPackage(CacheResultInterceptor.class.getPackage())
+            .addPackage(CacheHelper.class.getPackage())
             .addAsManifestResource(Deployments.class.getResource("/META-INF/beans.xml"), "beans.xml")
+            .addAsManifestResource(Deployments.class.getResource("/META-INF/services/javax.enterprise.inject.spi.Extension"), "services/javax.enterprise.inject.spi.Extension")
             .addAsLibraries(
                   DependencyResolvers.use(MavenDependencyResolver.class)
-                  		.loadReposFromPom("pom.xml")
+                        .loadReposFromPom("pom.xml")
                         .artifact("org.jboss.seam.solder:seam-solder")
                         .resolveAs(GenericArchive.class)
             );
