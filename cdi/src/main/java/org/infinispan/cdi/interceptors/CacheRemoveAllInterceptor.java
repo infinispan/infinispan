@@ -27,7 +27,6 @@ import org.infinispan.Cache;
 import javax.cache.CacheException;
 import javax.cache.interceptor.CacheKey;
 import javax.cache.interceptor.CacheRemoveAll;
-import javax.cache.interceptor.CacheResult;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
