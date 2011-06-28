@@ -20,33 +20,45 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.cachemanager.programatic;
+package org.infinispan.cdi.test.cachemanager.programmatic;
 
-import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
+import org.infinispan.AdvancedCache;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.Archive;
+import org.testng.annotations.Test;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
+import javax.inject.Inject;
 
-@ApplicationScoped
-public class SmallCacheObservers {
+import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
+import static org.testng.Assert.assertEquals;
 
-   private CacheStartedEvent cacheStartedEvent;
-   private int cacheStartedEventCount;
 
-   /**
-    * Observe the cache started event for the cache associated with @Cache1
-    */
-   void observeCacheStarted(@Observes @Small CacheStartedEvent event) {
-      this.cacheStartedEventCount++;
-      this.cacheStartedEvent = event;
+/**
+ * Tests for a cache container defined programatically
+ *
+ * @author Pete Muir
+ * @see Config
+ */
+public class ProgramaticCacheContainerTest extends Arquillian {
+
+   @Deployment
+   public static Archive<?> deployment() {
+      return baseDeployment()
+            .addPackage(ProgramaticCacheContainerTest.class.getPackage());
    }
 
-   public CacheStartedEvent getCacheStartedEvent() {
-      return cacheStartedEvent;
-   }
+   @Inject
+   @Small
+   private AdvancedCache<?, ?> smallCache;
 
-   public int getCacheStartedEventCount() {
-      return cacheStartedEventCount;
+   @Inject
+   SmallCacheObservers observers;
+
+   @Test(groups = "functional")
+   public void testSmallCache() {
+      assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 7);
+      assertEquals(observers.getCacheStartedEventCount(), 1);
    }
 
 }

@@ -20,45 +20,27 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.cachemanager.programatic;
+package org.infinispan.cdi.test.cachemanager.programmatic;
 
-import org.infinispan.AdvancedCache;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.Archive;
-import org.testng.annotations.Test;
+import org.infinispan.cdi.Infinispan;
+import org.infinispan.config.Configuration;
 
-import javax.inject.Inject;
-
-import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
-import static org.testng.Assert.assertEquals;
-
+import javax.enterprise.inject.Produces;
 
 /**
- * Tests for a cache container defined programatically
+ * Creates caches programatically.
  *
- * @author Pete Muir
- * @see Config
+ * @author pmuir
  */
-public class ProgramaticCacheContainerTest extends Arquillian {
+public class Config {
 
-   @Deployment
-   public static Archive<?> deployment() {
-      return baseDeployment()
-            .addPackage(ProgramaticCacheContainerTest.class.getPackage());
-   }
-
-   @Inject
+   /**
+    * Associates the "small" cache with the qualifier {@link Small}. Here we test that we can still register the event
+    * bridge for the cache when it isn't created by Seam.
+    */
+   @Produces
+   @Infinispan("small")
    @Small
-   private AdvancedCache<?, ?> smallCache;
-
-   @Inject
-   SmallCacheObservers observers;
-
-   @Test(groups = "functional")
-   public void testSmallCache() {
-      assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 7);
-      assertEquals(observers.getCacheStartedEventCount(), 1);
-   }
+   Configuration configuration;
 
 }

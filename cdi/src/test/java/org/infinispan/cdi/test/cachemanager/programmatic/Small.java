@@ -20,27 +20,23 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.cachemanager.programatic;
+package org.infinispan.cdi.test.cachemanager.programmatic;
 
-import org.infinispan.cdi.Infinispan;
-import org.infinispan.config.Configuration;
+import javax.inject.Qualifier;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-import javax.enterprise.inject.Produces;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-/**
- * Creates caches programatically.
- *
- * @author pmuir
- */
-public class Config {
-
-   /**
-    * Associates the "small" cache with the qualifier {@link Small}. Here we test that we can still register the event
-    * bridge for the cache when it isn't created by Seam.
-    */
-   @Produces
-   @Infinispan("small")
-   @Small
-   Configuration configuration;
+@Qualifier
+@Target({TYPE, METHOD, PARAMETER, FIELD})
+@Retention(RUNTIME)
+@Documented
+public @interface Small {
 
 }

@@ -20,7 +20,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.cachemanager.programatic;
+package org.infinispan.cdi.test.cachemanager.programmatic;
 
 import org.infinispan.cdi.CacheContainerManager;
 import org.infinispan.cdi.InfinispanExtension;
