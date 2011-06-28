@@ -63,6 +63,7 @@ import java.util.Set;
 public class MarshalledValue {
    volatile protected Object instance;
    volatile protected byte[] raw;
+   volatile protected int serialisedSize = 128; //size of serialized representation: initial value is a guess
    volatile private int cachedHashCode = 0;
    // by default equals() will test on the instance rather than the byte array if conversion is required.
    private transient volatile boolean equalityPreferenceForInstance = true;
@@ -84,6 +85,7 @@ public class MarshalledValue {
    private void init(byte[] raw, int cachedHashCode) {
       // for unmarshalling
       this.raw = raw;
+      this.serialisedSize = raw.length;
       this.cachedHashCode = cachedHashCode;
    }
 
@@ -100,7 +102,7 @@ public class MarshalledValue {
          try {
             // Do NOT set instance to null over here, since it may be used elsewhere (e.g., in a cache listener).
             // this will be compacted by the MarshalledValueInterceptor when the call returns.
-            ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(128);
+            ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(this.serialisedSize);
             ObjectOutput out = marshaller.startObjectOutput(baos, true);
             try {
                marshaller.objectToObjectStream(instance, out);
@@ -110,10 +112,11 @@ public class MarshalledValue {
             final byte[] buf = baos.getRawBuffer();
             final int length = baos.size();
             if (buf.length == length) {
-               // in this unlikely case we can avoid duplicating the buffer
+               // in this case we can avoid duplicating the buffer
                rawValue = buf;
             }
             else {
+               serialisedSize = length;
                rawValue = new byte[length];
                System.arraycopy(buf, 0, rawValue, 0, length);
             }
@@ -311,7 +314,7 @@ public class MarshalledValue {
          byte[] raw = mv.getRaw();
          UnsignedNumeric.writeUnsignedInt(output, raw.length);
          output.write(raw);
-         output.writeInt(mv.hashCode());      
+         output.writeInt(mv.hashCode());
       }
 
       @Override
