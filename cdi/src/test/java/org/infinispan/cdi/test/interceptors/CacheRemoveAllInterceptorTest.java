@@ -23,24 +23,24 @@
 package org.infinispan.cdi.test.interceptors;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.CacheContainer;
-import org.jboss.arquillian.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
 import org.infinispan.cdi.test.interceptors.service.CacheRemoveService;
 import org.infinispan.cdi.test.interceptors.service.Custom;
 import org.infinispan.cdi.test.interceptors.service.GreetingService;
 import org.infinispan.cdi.test.interceptors.service.generator.CustomCacheKeyGenerator;
+import org.jboss.arquillian.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.cache.CacheException;
 import javax.cache.interceptor.CacheKey;
 import javax.cache.interceptor.DefaultCacheKey;
 import javax.inject.Inject;
-import java.lang.reflect.Method;
 
 import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
-import static org.infinispan.cdi.util.CacheHelper.getDefaultMethodCacheName;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
@@ -57,20 +57,20 @@ public class CacheRemoveAllInterceptorTest extends Arquillian {
    }
 
    @Inject
-   private CacheContainer cacheContainer;
-
-   @Inject
    private CacheRemoveService adminService;
 
    @Inject
    @Custom
-   private Cache<CacheKey, String> customCache;
+   private Cache<CacheKey, String> cache;
 
-   @Test(groups = "functional")
-   public void testDefaultCacheRemoveAll() throws NoSuchMethodException {
-      Method method = CacheRemoveService.class.getMethod("removeAll");
-      Cache<CacheKey, String> cache = cacheContainer.getCache(getDefaultMethodCacheName(method));
+   @BeforeMethod(groups = "functional")
+   public void setUp() {
+      cache.clear();
+      assertTrue(cache.isEmpty());
+   }
 
+   @Test(groups = "functional", expectedExceptions = CacheException.class)
+   public void testDefaultCacheRemoveAll() {
       cache.put(new DefaultCacheKey(new Object[]{"Kevin"}), "Hi Kevin");
       cache.put(new DefaultCacheKey(new Object[]{"Pete"}), "Hi Pete");
       assertEquals(cache.size(), 2);
@@ -80,10 +80,17 @@ public class CacheRemoveAllInterceptorTest extends Arquillian {
    }
 
    @Test(groups = "functional")
-   public void testCacheRemoveAllAfterInvocationWithException() throws NoSuchMethodException {
-      Method method = CacheRemoveService.class.getMethod("removeAllAfterInvocationWithException");
-      Cache<CacheKey, String> cache = cacheContainer.getCache(getDefaultMethodCacheName(method));
+   public void testCacheRemoveAllWithCacheName() {
+      cache.put(new DefaultCacheKey(new Object[]{"Kevin"}), "Hi Kevin");
+      cache.put(new DefaultCacheKey(new Object[]{"Pete"}), "Hi Pete");
+      assertEquals(cache.size(), 2);
 
+      adminService.removeAllWithCacheName();
+      assertEquals(cache.size(), 0);
+   }
+
+   @Test(groups = "functional")
+   public void testCacheRemoveAllAfterInvocationWithException() {
       cache.put(new DefaultCacheKey(new Object[]{"Kevin"}), "Hi Kevin");
       cache.put(new DefaultCacheKey(new Object[]{"Pete"}), "Hi Pete");
       assertEquals(cache.size(), 2);
@@ -98,10 +105,7 @@ public class CacheRemoveAllInterceptorTest extends Arquillian {
    }
 
    @Test(groups = "functional")
-   public void testCacheRemoveAllBeforeInvocationWithException() throws NoSuchMethodException {
-      Method method = CacheRemoveService.class.getMethod("removeAllBeforeInvocationWithException");
-      Cache<CacheKey, String> cache = cacheContainer.getCache(getDefaultMethodCacheName(method));
-
+   public void testCacheRemoveAllBeforeInvocationWithException() {
       cache.put(new DefaultCacheKey(new Object[]{"Kevin"}), "Hi Kevin");
       cache.put(new DefaultCacheKey(new Object[]{"Pete"}), "Hi Pete");
       assertEquals(cache.size(), 2);
@@ -113,15 +117,5 @@ public class CacheRemoveAllInterceptorTest extends Arquillian {
       } catch (IllegalArgumentException e) {
          assertEquals(cache.size(), 0);
       }
-   }
-
-   @Test(groups = "functional")
-   public void testCacheRemoveAllWithCacheName() {
-      customCache.put(new DefaultCacheKey(new Object[]{"Kevin"}), "Hi Kevin");
-      customCache.put(new DefaultCacheKey(new Object[]{"Pete"}), "Hi Pete");
-      assertEquals(customCache.size(), 2);
-
-      adminService.removeAllWithCacheName();
-      assertEquals(customCache.size(), 0);
    }
 }

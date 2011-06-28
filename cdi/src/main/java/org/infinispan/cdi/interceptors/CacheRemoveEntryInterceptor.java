@@ -24,6 +24,7 @@ package org.infinispan.cdi.interceptors;
 
 import org.infinispan.Cache;
 
+import javax.cache.CacheException;
 import javax.cache.interceptor.CacheKey;
 import javax.cache.interceptor.CacheRemoveEntry;
 import javax.inject.Inject;
@@ -51,20 +52,32 @@ public class CacheRemoveEntryInterceptor {
    @AroundInvoke
    public Object cacheRemoveEntry(InvocationContext context) throws Exception {
       final Method method = context.getMethod();
-      final CacheRemoveEntry cacheRemoveEntry = method.getAnnotation(CacheRemoveEntry.class);
-      final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheRemoveEntry.cacheName(), method);
-      final CacheKey cacheKey = generateCacheKey(cacheRemoveEntry.cacheKeyGenerator(), context);
 
-      if (!cacheRemoveEntry.afterInvocation()) {
-         cache.remove(cacheKey);
+      // CacheRemoveEntry annotation has to be present on annotated method
+      if (method.isAnnotationPresent(CacheRemoveEntry.class)) {
+         final CacheRemoveEntry cacheRemoveEntry = method.getAnnotation(CacheRemoveEntry.class);
+         final String cacheName = cacheRemoveEntry.cacheName();
+
+         if (cacheName.isEmpty()) {
+            throw new CacheException("CacheRemoveEntry annotation on method '" + method.getName() + "' doesn't specify a cache name");
+         }
+
+         final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheName, method);
+         final CacheKey cacheKey = generateCacheKey(cacheRemoveEntry.cacheKeyGenerator(), context);
+
+         if (!cacheRemoveEntry.afterInvocation()) {
+            cache.remove(cacheKey);
+         }
+
+         final Object result = context.proceed();
+
+         if (cacheRemoveEntry.afterInvocation()) {
+            cache.remove(cacheKey);
+         }
+
+         return result;
       }
 
-      final Object result = context.proceed();
-
-      if (cacheRemoveEntry.afterInvocation()) {
-         cache.remove(cacheKey);
-      }
-
-      return result;
+      return context.proceed();
    }
 }

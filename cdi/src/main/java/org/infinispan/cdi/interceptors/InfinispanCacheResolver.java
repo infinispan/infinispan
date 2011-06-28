@@ -43,9 +43,7 @@ public class InfinispanCacheResolver {
    }
 
    public <K, V> Cache<K, V> resolveCache(String cacheName, Method method) {
-      if (cacheName.isEmpty()) {
-         return cacheContainer.getCache(getDefaultMethodCacheName(method));
-      }
-      return cacheContainer.getCache(cacheName);
+      String name = cacheName.isEmpty() ? getDefaultMethodCacheName(method) : cacheName;
+      return cacheContainer.getCache(name);
    }
 }
