@@ -23,7 +23,6 @@ package org.infinispan.query.clustered.commandworkers;
 
 import org.apache.lucene.search.TopDocs;
 import org.hibernate.search.engine.SearchFactoryImplementor;
-import org.hibernate.search.query.engine.impl.QueryHits;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.infinispan.query.clustered.QueryBox;
 import org.infinispan.query.clustered.QueryResponse;
@@ -40,26 +39,17 @@ public class CQCreateLazyQuery extends ClusteredQueryCommandWorker {
 
    @Override
    public Object perform() {
-      query.setSearchFactoryImplementor((SearchFactoryImplementor) getSearchFactory());
-      QueryHits queryHits = query.getQueryHits();
-      DocumentExtractor extractor = query.queryDocumentExtractor(queryHits);
+      query.afterDeserialise((SearchFactoryImplementor) getSearchFactory());
+      DocumentExtractor extractor = query.queryDocumentExtractor();
       int resultSize = query.queryResultSize();
 
       QueryBox box = getQueryBox();
       box.put(lazyQueryId, extractor);
-
-      TopDocs topDocs = queryHits.getTopDocs();
+      TopDocs topDocs = extractor.getTopDocs();
 
       QueryResponse queryResponse = new QueryResponse(topDocs, box.getMyId(), resultSize);
       queryResponse.setAddress(cache.getAdvancedCache().getRpcManager().getAddress());
       return queryResponse;
    }
-
-   // private void getAllKeys(QueryResponse queryResponse) {
-   // List<Object> keys = getQueryBox().getKeys(lazyQueryId, queryResponse.getTopDocs().scoreDocs);
-   // queryResponse.setKeys(keys);
-   // }
-
-   // fixme max results = 50
 
 }

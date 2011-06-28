@@ -23,11 +23,11 @@ package org.infinispan.query.clustered;
 
 import java.util.UUID;
 
+import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.query.ISPNQuery;
 import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker;
 
 /**
@@ -40,11 +40,9 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
 
    public static final byte COMMAND_ID = 33;
 
-   private String cacheName;
-
    private ClusteredQueryCommandType commandType;
 
-   private ISPNQuery query;
+   private HSQuery query;
 
    // local instance (set only when command arrives on target node)
    private Cache cache;
@@ -72,9 +70,8 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
       this.cacheName = cacheName;
    }
 
-   public static ClusteredQueryCommand createLazyIterator(ISPNQuery query, Cache cache, UUID id) {
-      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(
-               ClusteredQueryCommandType.CREATE_LAZY_ITERATOR, cache.getName());
+   public static ClusteredQueryCommand createLazyIterator(HSQuery query, Cache cache, UUID id) {
+      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.CREATE_LAZY_ITERATOR, cache.getName());
       clQuery.query = query;
       clQuery.lazyQueryId = id;
       return clQuery;
@@ -117,8 +114,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    }
 
    public Object perform(Cache cache) {
-      ClusteredQueryCommandWorker worker = commandType.getCommand(cache, query, lazyQueryId,
-               docIndex);
+      ClusteredQueryCommandWorker worker = commandType.getCommand(cache, query, lazyQueryId, docIndex);
       return worker.perform();
    }
 
@@ -133,7 +129,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    public void setParameters(int commandId, Object[] args) {
       cacheName = (String) args[0];
       commandType = (ClusteredQueryCommandType) args[1];
-      query = (ISPNQuery) args[2];
+      query = (HSQuery) args[2];
       lazyQueryId = (UUID) args[3];
       docIndex = (Integer) args[4];
    }

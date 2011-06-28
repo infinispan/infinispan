@@ -29,11 +29,9 @@ import java.util.UUID;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.SearchException;
-import org.hibernate.search.engine.SearchFactoryImplementor;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
-import org.infinispan.query.ISPNQuery;
 import org.infinispan.query.QueryIterator;
 import org.infinispan.query.impl.CacheQueryImpl;
 import org.infinispan.util.logging.Log;
@@ -56,10 +54,9 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
    public ClusteredCacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory,
             AdvancedCache cache, Class<?>... classes) {
       super(luceneQuery, searchFactory, cache, classes);
-      hSearchQuery = new ISPNQuery((SearchFactoryImplementor) searchFactory);
-      hSearchQuery.luceneQuery(luceneQuery)
-      // .timeoutExceptionFactory( exceptionFactory ) Make one if needed
-               .targetedEntities(Arrays.asList(classes));
+      hSearchQuery = searchFactory.createHSQuery()
+            .luceneQuery(luceneQuery)
+            .targetedEntities(Arrays.asList(classes));
    }
 
    @Override
@@ -87,7 +84,7 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
       UUID lazyItId = UUID.randomUUID();
 
       ClusteredQueryCommand command = ClusteredQueryCommand.createLazyIterator(
-               (ISPNQuery) hSearchQuery, cache, lazyItId);
+               hSearchQuery, cache, lazyItId);
 
       ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache);
 
