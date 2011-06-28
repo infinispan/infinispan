@@ -23,10 +23,10 @@ package org.infinispan.query.clustered.commandworkers;
 
 import java.util.UUID;
 
+import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.query.ISPNQuery;
 import org.infinispan.query.clustered.QueryBox;
 
 /**
@@ -47,11 +47,11 @@ public abstract class ClusteredQueryCommandWorker {
    private SearchFactoryIntegrator searchFactory;
 
    // the query
-   protected ISPNQuery query;
+   protected HSQuery query;
    protected UUID lazyQueryId;
    protected int docIndex;
 
-   public void init(Cache cache, ISPNQuery query, UUID lazyQueryId, int docIndex) {
+   public void init(Cache cache, HSQuery query, UUID lazyQueryId, int docIndex) {
       this.cache = cache;
       this.query = query;
       this.lazyQueryId = lazyQueryId;
