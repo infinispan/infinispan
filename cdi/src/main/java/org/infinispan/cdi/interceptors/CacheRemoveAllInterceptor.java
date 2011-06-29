@@ -40,10 +40,10 @@ import java.lang.reflect.Method;
 @CacheRemoveAll
 public class CacheRemoveAllInterceptor {
 
-   private final InfinispanCacheResolver cacheResolver;
+   private final CacheResolver cacheResolver;
 
    @Inject
-   public CacheRemoveAllInterceptor(InfinispanCacheResolver cacheResolver) {
+   public CacheRemoveAllInterceptor(CacheResolver cacheResolver) {
       this.cacheResolver = cacheResolver;
    }
 

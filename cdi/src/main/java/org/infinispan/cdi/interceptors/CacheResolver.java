@@ -23,27 +23,23 @@
 package org.infinispan.cdi.interceptors;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.CacheContainer;
 
-import javax.inject.Inject;
 import java.lang.reflect.Method;
-
-import static org.infinispan.cdi.util.CacheHelper.getDefaultMethodCacheName;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class InfinispanCacheResolver {
-
-   private final CacheContainer cacheContainer;
-
-   @Inject
-   public InfinispanCacheResolver(CacheContainer cacheContainer) {
-      this.cacheContainer = cacheContainer;
-   }
-
-   public <K, V> Cache<K, V> resolveCache(String cacheName, Method method) {
-      String name = cacheName.isEmpty() ? getDefaultMethodCacheName(method) : cacheName;
-      return cacheContainer.getCache(name);
-   }
+public interface CacheResolver {
+   /**
+    * Resolves a cache in function of it's name and of the annotated method (see {@link
+    * javax.cache.interceptor.CacheResult}, {@link javax.cache.interceptor.CacheRemoveEntry} and {@link
+    * javax.cache.interceptor.CacheRemoveAll}).
+    *
+    * @param cacheName The cache name to resolve.
+    * @param method    The method annotated with a cache annotation.
+    * @param <K>       The cache key type.
+    * @param <V>       The cache value type.
+    * @return The resolved cache.
+    */
+   <K, V> Cache<K, V> resolveCache(String cacheName, Method method);
 }

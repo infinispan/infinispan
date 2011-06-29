@@ -42,10 +42,10 @@ import static org.infinispan.cdi.util.CacheHelper.generateCacheKey;
 @CacheRemoveEntry
 public class CacheRemoveEntryInterceptor {
 
-   private final InfinispanCacheResolver cacheResolver;
+   private final CacheResolver cacheResolver;
 
    @Inject
-   public CacheRemoveEntryInterceptor(InfinispanCacheResolver cacheResolver) {
+   public CacheRemoveEntryInterceptor(CacheResolver cacheResolver) {
       this.cacheResolver = cacheResolver;
    }
 
