@@ -57,11 +57,6 @@ public class CacheRemoveEntryInterceptor {
       if (method.isAnnotationPresent(CacheRemoveEntry.class)) {
          final CacheRemoveEntry cacheRemoveEntry = method.getAnnotation(CacheRemoveEntry.class);
          final String cacheName = cacheRemoveEntry.cacheName();
-
-         if (cacheName.isEmpty()) {
-            throw new CacheException("CacheRemoveEntry annotation on method '" + method.getName() + "' doesn't specify a cache name");
-         }
-
          final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheName, method);
          final CacheKey cacheKey = generateCacheKey(cacheRemoveEntry.cacheKeyGenerator(), context);
 

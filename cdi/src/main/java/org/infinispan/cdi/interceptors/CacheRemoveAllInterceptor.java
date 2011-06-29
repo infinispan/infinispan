@@ -55,11 +55,6 @@ public class CacheRemoveAllInterceptor {
       if (method.isAnnotationPresent(CacheRemoveAll.class)) {
          final CacheRemoveAll cacheRemoveAll = method.getAnnotation(CacheRemoveAll.class);
          final String cacheName = cacheRemoveAll.cacheName();
-
-         if (cacheName.isEmpty()) {
-            throw new CacheException("CacheRemoveAll annotation on method '" + method.getName() + "' doesn't specify a cache name");
-         }
-
          final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheName, method);
 
          if (!cacheRemoveAll.afterInvocation()) {

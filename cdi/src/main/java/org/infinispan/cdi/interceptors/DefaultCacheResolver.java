@@ -26,6 +26,9 @@ import org.infinispan.Cache;
 import org.infinispan.cdi.util.Contracts;
 import org.infinispan.manager.CacheContainer;
 
+import javax.cache.CacheException;
+import javax.cache.interceptor.CacheRemoveAll;
+import javax.cache.interceptor.CacheRemoveEntry;
 import javax.inject.Inject;
 import java.lang.reflect.Method;
 
@@ -34,8 +37,9 @@ import static org.infinispan.cdi.util.CacheHelper.getDefaultMethodCacheName;
 /**
  * <p>This is the default cache resolver implementation.</p>
  * <p>This resolver uses the algorithm defined by JSR-107. If
- * the given cacheName is empty the default cacheName used for resolution is the fully qualified name of the annotated
- * method.</p>
+ * the given cache name is not specified the default cache name used for resolution is the fully qualified name of the
+ * annotated method. If method is annotated with {@link CacheRemoveAll} or {@link CacheRemoveEntry} and the cache name
+ * is not specified a {@link CacheException} is thrown.</p>
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
@@ -52,6 +56,16 @@ public class DefaultCacheResolver implements CacheResolver {
    public <K, V> Cache<K, V> resolveCache(String cacheName, Method method) {
       Contracts.assertNotNull(cacheName, "cacheName parameter cannot be null");
       Contracts.assertNotNull(method, "method parameter cannot be null");
+
+      // TODO KP: Not sure if an exception has to be thrown?
+      // The spec says: How interpret this Unlike @CacheResult, @CacheEntryRemove there are not automatic cache names
+      // for remove cache.
+      if (cacheName.isEmpty() &&
+            (method.isAnnotationPresent(CacheRemoveAll.class) || method.isAnnotationPresent(CacheRemoveEntry.class))) {
+
+         throw new CacheException("Method named '" + method.getName() + "' annotated with CacheRemoveAll or " +
+                                        "CacheRemoveEntry doesn't specify a cache name");
+      }
 
       String name = cacheName.isEmpty() ? getDefaultMethodCacheName(method) : cacheName;
       return cacheContainer.getCache(name);
