@@ -95,6 +95,9 @@ object HotRodTestingUtil extends Log {
       props.setProperty(PROP_KEY_HOST, host)
       props.setProperty(PROP_KEY_PORT, port.toString)
       server.start(props, manager)
+
+
+
       server
    }
 
