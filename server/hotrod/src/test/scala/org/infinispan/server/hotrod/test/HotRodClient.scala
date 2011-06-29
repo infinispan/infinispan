@@ -160,7 +160,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
 
    private def execute(op: Op, expectedResponseMessageId: Long): TestResponse = {
       writeOp(op)
-      var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
       handler.getResponse(expectedResponseMessageId)
    }
 

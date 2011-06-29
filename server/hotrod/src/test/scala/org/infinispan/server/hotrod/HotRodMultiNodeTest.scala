@@ -22,12 +22,12 @@
  */
 package org.infinispan.server.hotrod
 
-import org.infinispan.test.MultipleCacheManagersTest
 import org.infinispan.config.Configuration
 import org.testng.annotations.{AfterMethod, AfterClass, Test}
 import test.HotRodClient
 import test.HotRodTestingUtil._
 import org.infinispan.manager.EmbeddedCacheManager
+import org.infinispan.test.{TestingUtil, MultipleCacheManagersTest}
 
 /**
  * Base test class for multi node or clustered Hot Rod tests.
@@ -55,6 +55,28 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    protected def startTestHotRodServer(cacheManager: EmbeddedCacheManager) = startHotRodServer(cacheManager)
 
    protected def startTestHotRodServer(cacheManager: EmbeddedCacheManager, port: Int) = startHotRodServer(cacheManager, port)
+
+   protected def startClusteredServer(port: Int): HotRodServer =
+      startClusteredServer(port, false)
+
+   protected def startClusteredServer(port: Int, doCrash: Boolean): HotRodServer = {
+      val cm = addClusterEnabledCacheManager()
+      cm.defineConfiguration(cacheName, createCacheConfig)
+      val newServer =
+         if (doCrash) startHotRodServer(cm, port)
+         else startCrashingHotRodServer(cm, port)
+
+      TestingUtil.blockUntilViewsReceived(
+         50000, true, cm, manager(0), manager(1))
+      newServer
+   }
+
+   protected def stopClusteredServer(server: HotRodServer) {
+      server.stop
+      server.getCacheManager.stop
+      TestingUtil.blockUntilViewsReceived(
+         50000, true, manager(0), manager(1))
+   }
 
    @AfterClass(alwaysRun = true)
    override def destroy {
