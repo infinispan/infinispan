@@ -63,8 +63,8 @@ class HotRodConfigurationTest {
       props.setProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, "43000")
       withClusteredServer(props) { cfg =>
          assertEquals(cfg.getSyncReplTimeout, 43000)
-         assertFalse(cfg.isStateTransferEnabled)
-         val clcfg = cfg.getCacheLoaderManagerConfig.getFirstCacheLoaderConfig
+         assertTrue(cfg.isStateTransferEnabled)
+         val clcfg = cfg.getCacheLoaders.get(0)
          assertNotNull(clcfg)
          assertEquals(clcfg.getCacheLoaderClassName, classOf[ClusterCacheLoader].getName)
          assertEquals(clcfg.asInstanceOf[ClusterCacheLoaderConfig].getRemoteCallTimeout, 43000)

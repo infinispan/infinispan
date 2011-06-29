@@ -28,7 +28,6 @@ import test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.Assert._
 import org.testng.annotations.Test
-import org.infinispan.test.TestingUtil
 import org.infinispan.test.AbstractCacheTest._
 
 /**
@@ -111,10 +110,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       assertEquals(resp.topologyResponse, None)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v3-"))
 
-      var cm = addClusterEnabledCacheManager()
-      cm.defineConfiguration(cacheName, createCacheConfig)
-      val newServer = startHotRodServer(cm, servers.tail.head.getPort + 25)
-
+      val newServer = startClusteredServer(servers.tail.head.getPort + 25)
       try {
          val resp = clients.head.put(k(m) , 0, 0, v(m, "v4-"), 2, 2)
          assertStatus(resp, Success)
@@ -125,8 +121,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
          assertAddressEquals(resp.topologyResponse.get.view.members.tail.tail.head, newServer.getAddress)
          assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v4-"))
       } finally {
-         newServer.stop
-         cm.stop
+         stopClusteredServer(newServer)
       }
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v5-"), 2, 3)
@@ -137,10 +132,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       assertAddressEquals(resp.topologyResponse.get.view.members.tail.head, servers.tail.head.getAddress)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v5-"))
 
-      cm = addClusterEnabledCacheManager()
-      cm.defineConfiguration(cacheName, createCacheConfig)
-      val crashingServer = startCrashingHotRodServer(cm, servers.tail.head.getPort + 11)
-
+      val crashingServer = startClusteredServer(servers.tail.head.getPort + 25, true)
       try {
          val resp = clients.head.put(k(m) , 0, 0, v(m, "v6-"), 2, 4)
          assertStatus(resp, Success)
@@ -151,11 +143,8 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
          assertAddressEquals(resp.topologyResponse.get.view.members.tail.tail.head, crashingServer.getAddress)
          assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v6-"))
       } finally {
-         crashingServer.stop
-         cm.stop
+         stopClusteredServer(crashingServer)
       }
-
-      TestingUtil.blockUntilViewsReceived(10000, true, manager(0), manager(1))
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v7-"), 2, 5)
       assertStatus(resp, Success)
