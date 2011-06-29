@@ -102,7 +102,7 @@ class IntegrationTest {
       assertEquals(<hey>ho</hey>.toString, get.getResponseBodyAsString)
 
       val removeAll = new DeleteMethod(fullPath);
-      Client.call(removeAll)
+      assertEquals(HttpServletResponse.SC_OK, Client.call(removeAll).getStatusCode)
 
       Client.call(get)
       assertEquals(HttpServletResponse.SC_NOT_FOUND, get.getStatusCode)
@@ -263,23 +263,21 @@ class IntegrationTest {
       assertNotImplemented(post)
    }
 
-   def testDeleteEntryPreconditionUnimplemented(m: Method) = {
-      testDeletePreconditionalUnimplemented(m, fullPath + "/" + m.getName)
-   }
-   
-   def testDeleteCachePreconditionUnimplemented(m: Method) = {
-      testDeletePreconditionalUnimplemented(m, fullPath)
-   }
-   
-   private def testDeletePreconditionalUnimplemented(m: Method, fullPathKey: String): Unit = {
-     testDeletePreconditionalUnimplemented(m, fullPathKey, "If-Match")
-     testDeletePreconditionalUnimplemented(m, fullPathKey, "If-None-Match")
-     testDeletePreconditionalUnimplemented(m, fullPathKey, "If-Modified-Since")
-     testDeletePreconditionalUnimplemented(m, fullPathKey, "If-Unmodified-Since")
+   def testDeleteEntryPreconditionUnimplemented(m: Method) =
+      testDeletePreconditionalUnimplemented(fullPath + "/" + m.getName)
+
+   def testDeleteCachePreconditionUnimplemented(m: Method) =
+      testDeletePreconditionalUnimplemented(fullPath)
+
+   private def testDeletePreconditionalUnimplemented(fullPathKey: String) {
+     testDeletePreconditionalUnimplemented(fullPathKey, "If-Match")
+     testDeletePreconditionalUnimplemented(fullPathKey, "If-None-Match")
+     testDeletePreconditionalUnimplemented(fullPathKey, "If-Modified-Since")
+     testDeletePreconditionalUnimplemented(fullPathKey, "If-Unmodified-Since")
    }
    
    private def testDeletePreconditionalUnimplemented(
-         m: Method, fullPathKey: String, preconditionalHeaderName: String) = {
+         fullPathKey: String, preconditionalHeaderName: String) = {
       val delete = new DeleteMethod(fullPathKey)
       delete.setRequestHeader(preconditionalHeaderName, "*");
       Client.call(delete)
