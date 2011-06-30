@@ -37,10 +37,11 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.BidirectionalMap;
-import org.infinispan.util.Immutables;
+
+import static org.infinispan.util.Immutables.immutableInternalCacheEntry;
 
 /**
- * EntrySetCommand.
+ * Command implementation for {@link java.util.Map#entrySet()} functionality.
  *
  * @author Galder Zamarreño
  * @author <a href="http://gleamynode.net/">Trustin Lee</a>
@@ -62,7 +63,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
    public Set<InternalCacheEntry> perform(InvocationContext ctx) throws Throwable {
       Set<InternalCacheEntry> entries = container.entrySet();
       if (noTxModifications(ctx)) {
-         return Immutables.immutableSetWrap(entries);
+         return new ExpiredFilteredEntrySet(entries);
       }
 
       return new FilteredEntrySet(entries, ctx.getLookedUpEntries());
@@ -87,6 +88,12 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
       @Override
       public int size() {
          int size = entrySet.size();
+         // First, removed any expired ones
+         for (InternalCacheEntry e: entrySet) {
+            if (e.isExpired())
+               size--;
+         }
+         // Update according to entries added or removed in tx
          for (CacheEntry e: lookedUpEntries.values()) {
             if (e.isCreated()) {
                size ++;
@@ -168,7 +175,8 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
                while (it1.hasNext()) {
                   CacheEntry e = it1.next();
                   if (e.isCreated()) {
-                     next = InternalEntryFactory.create(e.getKey(), e.getValue());
+                     next = immutableInternalCacheEntry(
+                        InternalEntryFactory.create(e.getKey(), e.getValue()));
                      found = true;
                      break;
                   }
@@ -191,11 +199,12 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
                      break;
                   }
                   if (e.isChanged()) {
-                     next = InternalEntryFactory.create(key, e.getValue());
+                     next = immutableInternalCacheEntry(
+                           InternalEntryFactory.create(key, e.getValue()));
                      found = true;
                      break;
                   }
-                  if (e.isRemoved()) {
+                  if (e.isRemoved() || ice.isExpired()) {
                      continue;
                   }
                }
@@ -235,4 +244,115 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
          }
       }
    }
+
+   /**
+    * An immutable entry set that filters out expired entries. The reason for
+    * making it immutable is to avoid having to do further wrapping with an
+    * immutable delegate.
+    */
+   private static class ExpiredFilteredEntrySet extends AbstractSet<InternalCacheEntry> {
+
+      final Set<InternalCacheEntry> entrySet;
+
+      public ExpiredFilteredEntrySet(Set<InternalCacheEntry> entrySet) {
+         this.entrySet = entrySet;
+      }
+
+      @Override
+      public Iterator<InternalCacheEntry> iterator() {
+         return new Itr();
+      }
+
+      @Override
+      public int size() {
+         // Size cannot be cached because even if the set is immutable,
+         // over time, the expired entries could grow hence reducing the size
+         int s = entrySet.size();
+         for (InternalCacheEntry e: entrySet) {
+            if (e.isExpired())
+               s--;
+         }
+         return s;
+      }
+
+      @Override
+      public boolean add(InternalCacheEntry e) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean addAll(Collection<? extends InternalCacheEntry> c) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean retainAll(Collection<?> c) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void clear() {
+         throw new UnsupportedOperationException();
+      }
+
+      private class Itr implements Iterator<InternalCacheEntry> {
+
+         private final Iterator<InternalCacheEntry> it = entrySet.iterator();
+         private InternalCacheEntry next;
+
+         private Itr() {
+            fetchNext();
+         }
+
+         private void fetchNext() {
+            while (it.hasNext()) {
+               InternalCacheEntry e = it.next();
+               if (e.isExpired()) {
+                  continue;
+               } else {
+                  next = e;
+                  break;
+               }
+            }
+         }
+
+         @Override
+         public boolean hasNext() {
+            if (next == null)
+               fetchNext();
+
+            return next != null;
+         }
+
+         @Override
+         public InternalCacheEntry next() {
+            if (next == null)
+               fetchNext();
+
+            if (next == null)
+               throw new NoSuchElementException();
+
+            InternalCacheEntry ret = next;
+            next = null;
+            return ret;
+         }
+
+         @Override
+         public void remove() {
+            throw new UnsupportedOperationException();
+         }
+
+      }
+   }
+
 }

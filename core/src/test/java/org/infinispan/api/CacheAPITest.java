@@ -22,6 +22,7 @@
  */
 package org.infinispan.api;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ import java.util.Set;
 
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
@@ -43,6 +45,9 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ObjectDuplicator;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
+
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests the {@link org.infinispan.Cache} public API at a high level
@@ -296,6 +301,33 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       assert cache.values().contains(value);
    }
 
+   public void testEntrySetEqualityInTx(Method m) throws Exception {
+      Map dataIn = new HashMap();
+      dataIn.put(1, v(m, 1));
+      dataIn.put(2, v(m, 2));
+
+      cache.putAll(dataIn);
+
+      TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
+      tm.begin();
+      try {
+         Map txDataIn = new HashMap();
+         txDataIn.put(3, v(m, 3));
+         Map allEntriesIn = new HashMap(dataIn);
+
+         // Modify expectations to include data to be included
+         allEntriesIn.putAll(txDataIn);
+
+         // Add an entry within tx
+         cache.putAll(txDataIn);
+
+         Set entries = cache.entrySet();
+         assertEquals(allEntriesIn.entrySet(), entries);
+      } finally {
+         tm.commit();
+      }
+   }
+
    public void testConcurrentMapMethods() {
 
       assert cache.putIfAbsent("A", "B") == null;
@@ -436,6 +468,9 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
             col.add(newObj);
             assert false : "Should have thrown a UnsupportedOperationException";
          } catch (UnsupportedOperationException uoe) {
+         } catch (ClassCastException e) {
+            // Ignore class cast in expired filtered set because
+            // you cannot really add an Object type instance.
          }
          try {
             col.addAll(newObjCol);
