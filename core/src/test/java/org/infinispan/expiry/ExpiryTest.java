@@ -23,6 +23,7 @@
 package org.infinispan.expiry;
 
 import org.infinispan.Cache;
+import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.CacheContainer;
@@ -33,11 +34,18 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.testng.Assert.assertEquals;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "expiry.ExpiryTest")
 public class ExpiryTest extends AbstractInfinispanTest {
@@ -231,5 +239,258 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
       Thread.sleep(idleTime + 100);
       assert cache.get("k") == null;
+   }
+
+   public void testEntrySetAfterExpiryInPut(Method m) throws Exception {
+      doTestEntrySetAfterExpiryInPut(m, cm);
+   }
+
+   public void testEntrySetAfterExpiryInTransaction(Method m) throws Exception {
+      CacheContainer cc = createTransactionalCacheContainer();
+      try {
+         doEntrySetAfterExpiryInTransaction(m, cc);
+      } finally {
+         cc.stop();
+      }
+   }
+
+   private CacheContainer createTransactionalCacheContainer() {
+      return TestCacheManagerFactory.createCacheManager(new Configuration(), true);
+   }
+
+   private void doTestEntrySetAfterExpiryInPut(Method m, CacheContainer cc) throws Exception {
+      Cache<Integer, String> cache = cc.getCache();
+      Set<Map.Entry<Integer, String>> entries;
+      Map dataIn = new HashMap();
+      dataIn.put(1, v(m, 1));
+      dataIn.put(2, v(m, 2));
+      Set entriesIn = dataIn.entrySet();
+
+      final long startTime = System.currentTimeMillis();
+      final long lifespan = 5000;
+      cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
+
+      entries = Collections.emptySet();
+      // Stop checking 10ms before expiration to prevent races
+      while (System.currentTimeMillis() < startTime + lifespan - 10) {
+         entries = cache.entrySet();
+         assertEquals(entriesIn, entries);
+         Thread.sleep(100);
+      }
+
+      // Make sure that in the next 20 secs data is removed
+      while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+         entries = cache.entrySet();
+         if (entries.size() == 0) return;
+      }
+
+      assert entries.size() == 0;
+   }
+
+   private void doEntrySetAfterExpiryInTransaction(Method m, CacheContainer cc) throws Exception {
+      Cache<Integer, String> cache = cc.getCache();
+      Set<Map.Entry<Integer, String>> entries;
+      Map dataIn = new HashMap();
+      dataIn.put(1, v(m, 1));
+      dataIn.put(2, v(m, 2));
+
+      final long startTime = System.currentTimeMillis();
+      final long lifespan = 5000;
+      cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
+
+      cache.getAdvancedCache().getTransactionManager().begin();
+      try {
+         Map txDataIn = new HashMap();
+         txDataIn.put(3, v(m, 3));
+         Map allEntriesIn = new HashMap(dataIn);
+         // Update expectations
+         allEntriesIn.putAll(txDataIn);
+         // Add an entry within tx
+         cache.putAll(txDataIn);
+
+         entries = Collections.emptySet();
+         // Stop checking 10ms before expiration to prevent races
+         while (System.currentTimeMillis() < startTime + lifespan - 10) {
+            entries = cache.entrySet();
+            assertEquals(allEntriesIn.entrySet(), entries);
+            Thread.sleep(100);
+         }
+
+         // Make sure that in the next 20 secs data is removed
+         while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+            entries = cache.entrySet();
+            if (entries.size() == 1) return;
+         }
+      } finally {
+         cache.getAdvancedCache().getTransactionManager().commit();
+      }
+
+      assert entries.size() == 1;
+   }
+
+   public void testKeySetAfterExpiryInPut(Method m) throws Exception {
+      Cache<Integer, String> cache = cm.getCache();
+      Set<Integer> keys;
+      Map dataIn = new HashMap();
+      dataIn.put(1, v(m, 1));
+      dataIn.put(2, v(m, 2));
+      Set keysIn = dataIn.keySet();
+
+      final long startTime = System.currentTimeMillis();
+      final long lifespan = 5000;
+      cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
+
+      keys = Collections.emptySet();
+      // Stop checking 10ms before expiration to prevent races
+      while (System.currentTimeMillis() < startTime + lifespan - 10) {
+         keys = cache.keySet();
+         assertEquals(keysIn, keys);
+         Thread.sleep(100);
+      }
+
+      // Make sure that in the next 20 secs data is removed
+      while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+         keys = cache.keySet();
+         if (keys.size() == 0) return;
+      }
+
+      assert keys.size() == 0;
+   }
+
+   public void testKeySetAfterExpiryInTransaction(Method m) throws Exception {
+      CacheContainer cc = createTransactionalCacheContainer();
+      try {
+         doKeySetAfterExpiryInTransaction(m, cc);
+      } finally {
+         cc.stop();
+      }
+   }
+
+   private void doKeySetAfterExpiryInTransaction(Method m, CacheContainer cc) throws Exception {
+      Cache<Integer, String> cache = cc.getCache();
+      Set<Integer> keys;
+      Map dataIn = new HashMap();
+      dataIn.put(1, v(m, 1));
+      dataIn.put(2, v(m, 2));
+
+      final long startTime = System.currentTimeMillis();
+      final long lifespan = 5000;
+      cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
+
+      cache.getAdvancedCache().getTransactionManager().begin();
+      try {
+         Map txDataIn = new HashMap();
+         txDataIn.put(3, v(m, 3));
+         Map allEntriesIn = new HashMap(dataIn);
+         // Update expectations
+         allEntriesIn.putAll(txDataIn);
+         // Add an entry within tx
+         cache.putAll(txDataIn);
+
+         keys = Collections.emptySet();
+         // Stop checking 10ms before expiration to prevent races
+         while (System.currentTimeMillis() < startTime + lifespan - 10) {
+            keys = cache.keySet();
+            assertEquals(allEntriesIn.keySet(), keys);
+            Thread.sleep(100);
+         }
+
+         // Make sure that in the next 20 secs data is removed
+         while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+            keys = cache.keySet();
+            if (keys.size() == 1) return;
+         }
+      } finally {
+         cache.getAdvancedCache().getTransactionManager().commit();
+      }
+
+      assert keys.size() == 1;
+   }
+
+   // TODO: Test values
+
+   public void testValuesAfterExpiryInPut(Method m) throws Exception {
+      Cache<Integer, String> cache = cm.getCache();
+      // Values come as a Collection, but comparison of HashMap#Values is done
+      // by reference equality, so wrap the collection around to set to make
+      // testing easier, given that we know that there are dup values.
+      Set<String> values;
+      Map dataIn = new HashMap();
+      dataIn.put(1, v(m, 1));
+      dataIn.put(2, v(m, 2));
+      Set valuesIn = new HashSet(dataIn.values());
+
+      final long startTime = System.currentTimeMillis();
+      final long lifespan = 5000;
+      cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
+
+      values = Collections.emptySet();
+      // Stop checking 10ms before expiration to prevent races
+      while (System.currentTimeMillis() < startTime + lifespan - 10) {
+         values = new HashSet(cache.values());
+         assertEquals(valuesIn, values);
+         Thread.sleep(100);
+      }
+
+      // Make sure that in the next 20 secs data is removed
+      while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+         values = new HashSet(cache.values());
+         if (values.size() == 0) return;
+      }
+
+      assert values.size() == 0;
+   }
+
+   public void testValuesAfterExpiryInTransaction(Method m) throws Exception {
+      CacheContainer cc = createTransactionalCacheContainer();
+      try {
+         doValuesAfterExpiryInTransaction(m, cc);
+      } finally {
+         cc.stop();
+      }
+   }
+
+   private void doValuesAfterExpiryInTransaction(Method m, CacheContainer cc) throws Exception {
+      Cache<Integer, String> cache = cc.getCache();
+      // Values come as a Collection, but comparison of HashMap#Values is done
+      // by reference equality, so wrap the collection around to set to make
+      // testing easier, given that we know that there are dup values.
+      Set<String> values;
+      Map dataIn = new HashMap();
+      dataIn.put(1, v(m, 1));
+      dataIn.put(2, v(m, 2));
+
+      final long startTime = System.currentTimeMillis();
+      final long lifespan = 5000;
+      cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
+
+      cache.getAdvancedCache().getTransactionManager().begin();
+      try {
+         Map txDataIn = new HashMap();
+         txDataIn.put(3, v(m, 3));
+         Set allValuesIn = new HashSet(dataIn.values());
+         allValuesIn.addAll(txDataIn.values());
+
+         // Add an entry within tx
+         cache.putAll(txDataIn);
+
+         values = Collections.emptySet();
+         // Stop checking 10ms before expiration to prevent races
+         while (System.currentTimeMillis() < startTime + lifespan - 10) {
+            values = new HashSet(cache.values());
+            assertEquals(allValuesIn, values);
+            Thread.sleep(100);
+         }
+
+         // Make sure that in the next 20 secs data is removed
+         while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+            values = new HashSet(cache.values());
+            if (values.size() == 1) return;
+         }
+      } finally {
+         cache.getAdvancedCache().getTransactionManager().commit();
+      }
+
+      assert values.size() == 1;
    }
 }

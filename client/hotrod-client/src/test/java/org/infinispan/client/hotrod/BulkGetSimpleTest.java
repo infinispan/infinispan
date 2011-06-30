@@ -26,15 +26,19 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
+ * Tests functionality related to getting multiple entries from a HotRod server
+ * in bulk.
+ *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
@@ -55,14 +59,7 @@ public class BulkGetSimpleTest extends SingleCacheManagerTest {
       hotrodClientConf.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer.getPort());
       remoteCacheManager = new RemoteCacheManager(hotrodClientConf);
       remoteCache = remoteCacheManager.getCache();
-      populateCacheManager();
       return cacheManager;
-   }
-
-   @AfterMethod
-   @Override
-   protected void clearContent() {
-      
    }
 
    private void populateCacheManager() {
@@ -72,6 +69,7 @@ public class BulkGetSimpleTest extends SingleCacheManagerTest {
    }
 
    public void testBulkGet() {
+      populateCacheManager();
       Map<Object,Object> map = remoteCache.getBulk();
       assert map.size() == 100;
       for (int i = 0; i < 100; i++) {
@@ -80,6 +78,7 @@ public class BulkGetSimpleTest extends SingleCacheManagerTest {
    }
 
    public void testBulkGetWithSize() {
+      populateCacheManager();
       Map<Object,Object> map = remoteCache.getBulk(50);
       assertEquals(50, map.size());
       for (int i = 0; i < 100; i++) {
@@ -89,4 +88,31 @@ public class BulkGetSimpleTest extends SingleCacheManagerTest {
          }
       }
    }
+
+   public void testBulkGetAfterLifespanExpire() throws InterruptedException {
+      Map dataIn = new HashMap();
+      dataIn.put("aKey", "aValue");
+      dataIn.put("bKey", "bValue");
+      final long startTime = System.currentTimeMillis();
+      final long lifespan = 10000;
+      remoteCache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
+
+      Map dataOut = new HashMap();
+      // Stop checking 10ms before expiration to prevent races
+      while (System.currentTimeMillis() < startTime + lifespan - 10) {
+         dataOut = remoteCache.getBulk();
+         dataOut.equals(dataIn);
+         Thread.sleep(100);
+      }
+
+      // Make sure that in the next 30 secs data is removed
+      while (System.currentTimeMillis() < startTime + lifespan + 30000) {
+         dataOut = remoteCache.getBulk();
+         if (dataOut.size() == 0) return;
+      }
+
+      assert dataOut.size() == 0 :
+         String.format("Data not empty, it contains: %s elements", dataOut.size());
+   }
+
 }

@@ -80,7 +80,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends OneToOneEncoder 
             if (isTrace) trace("About to respond to bulk get request")
             if (g.status == Success) {
                val cache: Cache[ByteArrayKey, CacheValue] = getCacheInstance(g.cacheName, cacheManager)
-               var iterator = asIterator(cache.entrySet.iterator)
+               var iterator = asScalaIterator(cache.entrySet.iterator)
                if (g.count != 0) {
                   if (isTrace) trace("About to write (max) %d messages to the client", g.count)
                   iterator = iterator.take(g.count)

@@ -38,7 +38,7 @@ import org.infinispan.util.BidirectionalMap;
 import org.infinispan.util.Immutables;
 
 /**
- * ValuesCommand.
+ * Command implementation for {@link java.util.Map#values()} functionality.
  *
  * @author Galder Zamarreño
  * @author Mircea.Markus@jboss.com
@@ -60,7 +60,7 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
    @Override
    public Collection<Object> perform(InvocationContext ctx) throws Throwable {
       if (noTxModifications(ctx)) {
-         return Immutables.immutableCollectionWrap(container.values());
+         return new ExpiredFilteredValues(container.entrySet());
       }
 
       return new FilteredValues(container, ctx.getLookedUpEntries());
@@ -87,6 +87,12 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
       @Override
       public int size() {
          int size = entrySet.size();
+         // First, removed any expired ones
+         for (InternalCacheEntry e: entrySet) {
+            if (e.isExpired())
+               size--;
+         }
+         // Update according to entries added or removed in tx
          for (CacheEntry e: lookedUpEntries.values()) {
             if (e.isCreated()) {
                size ++;
@@ -181,6 +187,9 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
                   InternalCacheEntry ice = it2.next();
                   Object key = ice.getKey();
                   CacheEntry e = lookedUpEntries.get(key);
+                  if (ice.isExpired())
+                     continue;
+
                   if (e == null) {
                      next = ice.getValue();
                      found = true;
@@ -231,4 +240,107 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
          }
       }
    }
+
+   public static class ExpiredFilteredValues extends AbstractCollection<Object> {
+      final Set<InternalCacheEntry> entrySet;
+
+      public ExpiredFilteredValues(Set<InternalCacheEntry> entrySet) {
+         this.entrySet = entrySet;
+      }
+
+      @Override
+      public Iterator<Object> iterator() {
+         return new Itr();
+      }
+
+      @Override
+      public boolean add(Object e) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean addAll(Collection<? extends Object> c) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean retainAll(Collection<?> c) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void clear() {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public int size() {
+         // Use entry set as a way to calculate the number of values.
+         int s = entrySet.size();
+         for (InternalCacheEntry e: entrySet) {
+            if (e.isExpired())
+               s--;
+         }
+         return s;
+      }
+
+      private class Itr implements Iterator<Object> {
+
+         private final Iterator<InternalCacheEntry> it = entrySet.iterator();
+         private Object next;
+
+         private Itr() {
+            fetchNext();
+         }
+
+         private void fetchNext() {
+            while (it.hasNext()) {
+               InternalCacheEntry e = it.next();
+               if (e.isExpired()) {
+                  continue;
+               } else {
+                  next = e.getValue();
+                  break;
+               }
+            }
+         }
+
+         @Override
+         public boolean hasNext() {
+            if (next == null)
+               fetchNext();
+
+            return next != null;
+         }
+
+         @Override
+         public Object next() {
+            if (next == null)
+               fetchNext();
+
+            if (next == null)
+               throw new NoSuchElementException();
+
+            Object ret = next;
+            next = null;
+            return ret;
+         }
+
+         @Override
+         public void remove() {
+            throw new UnsupportedOperationException();
+         }
+      }
+   }
+
 }

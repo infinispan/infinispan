@@ -34,10 +34,9 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.BidirectionalMap;
-import org.infinispan.util.Immutables;
 
 /**
- * KeySetCommand.
+ * Command implementation for {@link java.util.Map#keySet()} functionality.
  *
  * @author Galder Zamarreño
  * @author Mircea.Markus@jboss.com
@@ -60,10 +59,10 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
    public Set<Object> perform(InvocationContext ctx) throws Throwable {
       Set<Object> objects = container.keySet();
       if (noTxModifications(ctx)) {
-         return Immutables.immutableSetWrap(objects);
+         return new ExpiredFilteredKeySet(objects, container);
       }
 
-      return new FilteredKeySet(objects, ctx.getLookedUpEntries());
+      return new FilteredKeySet(objects, ctx.getLookedUpEntries(), container);
    }
 
    @Override
@@ -76,15 +75,24 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
    private static class FilteredKeySet extends AbstractSet<Object> {
       final Set<Object> keySet;
       final BidirectionalMap<Object, CacheEntry> lookedUpEntries;
+      final DataContainer container;
 
-      FilteredKeySet(Set<Object> keySet, BidirectionalMap<Object, CacheEntry> lookedUpEntries) {
+      FilteredKeySet(Set<Object> keySet, BidirectionalMap<Object, CacheEntry> lookedUpEntries, DataContainer container) {
          this.keySet = keySet;
          this.lookedUpEntries = lookedUpEntries;
+         this.container = container;
       }
 
       @Override
       public int size() {
          int size = keySet.size();
+         // First, removed any expired keys
+         for (Object k : keySet) {
+            // Given the key set, a key won't be contained if it's expired
+            if (!container.containsKey(k))
+               size--;
+         }
+         // Update according to keys added or removed in tx
          for (CacheEntry e: lookedUpEntries.values()) {
             if (e.isCreated()) {
                size ++;
@@ -179,6 +187,11 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
                      found = true;
                      break;
                   }
+
+                  // Skip keys that would have been expired
+                  if (!container.containsKey(k)) {
+                     continue;
+                  }
                }
 
                if (!found) {
@@ -204,6 +217,112 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
             if (next == null) {
                throw new NoSuchElementException();
             }
+
+            Object ret = next;
+            next = null;
+            return ret;
+         }
+
+         @Override
+         public void remove() {
+            throw new UnsupportedOperationException();
+         }
+      }
+   }
+
+   public static class ExpiredFilteredKeySet extends AbstractSet<Object> {
+      final Set<Object> keySet;
+      final DataContainer container;
+
+      public ExpiredFilteredKeySet(Set<Object> keySet, DataContainer container) {
+         this.keySet = keySet;
+         this.container = container;
+      }
+
+      @Override
+      public boolean add(Object e) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean addAll(Collection<? extends Object> c) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean retainAll(Collection<?> c) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void clear() {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public Iterator<Object> iterator() {
+         return new Itr();
+      }
+
+      @Override
+      public int size() {
+         // Size cannot be cached because even if the set is immutable,
+         // over time, the expired entries could grow hence reducing the size
+         int s = keySet.size();
+         for (Object k : keySet) {
+            // Given the key set, a key won't be contained if it's expired
+            if (!container.containsKey(k))
+               s--;
+         }
+         return s;
+      }
+
+      private class Itr implements Iterator<Object> {
+
+         private final Iterator<Object> it = keySet.iterator();
+         private Object next;
+
+         private Itr() {
+            fetchNext();
+         }
+
+         private void fetchNext() {
+            while (it.hasNext()) {
+               Object k = it.next();
+               if (!container.containsKey(k)) {
+                  continue;
+               } else {
+                  next = k;
+                  break;
+               }
+            }
+         }
+
+         @Override
+         public boolean hasNext() {
+            if (next == null)
+               fetchNext();
+
+            return next != null;
+         }
+
+         @Override
+         public Object next() {
+            if (next == null)
+               fetchNext();
+
+            if (next == null)
+               throw new NoSuchElementException();
 
             Object ret = next;
             next = null;
