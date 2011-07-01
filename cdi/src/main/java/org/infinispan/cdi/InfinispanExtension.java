@@ -23,16 +23,11 @@
 package org.infinispan.cdi;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheContainer;
 import org.jboss.seam.solder.bean.Beans;
-import org.jboss.seam.solder.literal.GenericTypeLiteral;
-import org.jboss.seam.solder.reflection.annotated.AnnotatedTypeBuilder;
 
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.AnnotatedMember;
-import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.BeforeBeanDiscovery;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.ProcessProducer;
 import javax.enterprise.inject.spi.Producer;
@@ -59,11 +54,6 @@ public class InfinispanExtension implements Extension {
       return configurations;
    }
 
-   void registerConfiguration(@Observes BeforeBeanDiscovery event) {
-      event.addAnnotatedType(makeGeneric(Configuration.class));
-      event.addAnnotatedType(makeGeneric(CacheContainer.class));
-   }
-
    void observeConfigurationProducer(@Observes ProcessProducer<?, Configuration> event, BeanManager beanManager) {
       Infinispan annotation = event.getAnnotatedMember().getAnnotation(Infinispan.class);
       if (annotation != null) {
@@ -76,13 +66,6 @@ public class InfinispanExtension implements Extension {
                beanManager
          ));
       }
-   }
-
-   private <X> AnnotatedType<X> makeGeneric(Class<X> clazz) {
-      return new AnnotatedTypeBuilder<X>()
-            .readFromType(clazz)
-            .addToClass(new GenericTypeLiteral(Infinispan.class))
-            .create();
    }
 
    static class ConfigurationHolder {

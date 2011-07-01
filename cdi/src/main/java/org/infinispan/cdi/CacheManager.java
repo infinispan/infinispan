@@ -24,8 +24,8 @@ package org.infinispan.cdi;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.cdi.event.cache.CacheEventBridge;
+import org.infinispan.manager.CacheContainer;
 import org.jboss.seam.solder.bean.generic.ApplyScope;
 import org.jboss.seam.solder.bean.generic.Generic;
 import org.jboss.seam.solder.bean.generic.GenericConfiguration;

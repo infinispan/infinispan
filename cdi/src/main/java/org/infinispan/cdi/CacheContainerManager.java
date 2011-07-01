@@ -22,11 +22,11 @@
  */
 package org.infinispan.cdi;
 
+import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;

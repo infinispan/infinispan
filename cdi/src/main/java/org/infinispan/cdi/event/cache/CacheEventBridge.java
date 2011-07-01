@@ -22,9 +22,9 @@
  */
 package org.infinispan.cdi.event.cache;
 
+import org.infinispan.cdi.event.AbstractEventBridge;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.notifications.cachelistener.event.Event;
-import org.infinispan.cdi.event.AbstractEventBridge;
 
 import java.lang.annotation.Annotation;
 import java.util.Set;
