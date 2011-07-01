@@ -47,7 +47,7 @@
    <dependencies>
       <dependency>
          <groupId>javax.cache</groupId>
-         <artifactId>jsr107-api</artifactId>
+         <artifactId>cache-api</artifactId>
          <version>${version.jsr107}</version>
       </dependency>
       <dependency>
