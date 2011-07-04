@@ -278,6 +278,13 @@ pageTracker._trackPageview();
                   <artifactId>maven-javadoc-plugin</artifactId>
                   <configuration>
                      <doclet>org.infinispan.tools.doclet.config.ConfigDoclet</doclet>
+                     <!-- To debug config generation, simply uncomment this line
+                     and when the build hangs in the config generation while
+                     building the distribution, add a remote debugger for port 8000.
+
+                     <additionalJOption>-J-Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=y</additionalJOption>
+
+                     -->
                      <docletArtifact>
                         <groupId>org.infinispan</groupId>
                         <artifactId>infinispan-tools</artifactId>

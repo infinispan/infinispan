@@ -201,7 +201,7 @@ public class CacheLoaderManagerConfig extends AbstractFluentConfigurationBean im
    }
 
    // JAXB method
-   @XmlTransient
+   @XmlElement(name = "loader")
    private LoadersConfig setCacheLoaders(List<CacheLoaderConfig> configs) {
       testImmutability("cacheLoaderConfigs");
       this.cacheLoaderConfigs = configs == null ? new LinkedList<CacheLoaderConfig>() : configs;
@@ -213,7 +213,7 @@ public class CacheLoaderManagerConfig extends AbstractFluentConfigurationBean im
     * XMLElement definition is likely to move to the getCacheLoaderConfigs().
     */
    @Deprecated
-   @XmlElement(name = "loader")
+   @XmlTransient // Avoid JAXB finding this method
    public LoadersConfig setCacheLoaderConfigs(List<CacheLoaderConfig> configs) {
       testImmutability("cacheLoaderConfigs");
       this.cacheLoaderConfigs = configs == null ? new LinkedList<CacheLoaderConfig>() : configs;
