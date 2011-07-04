@@ -23,8 +23,8 @@
 package org.infinispan.query.backend;
 
 import org.hibernate.search.backend.TransactionContext;
-import org.hibernate.search.backend.Work;
-import org.hibernate.search.backend.WorkType;
+import org.hibernate.search.backend.spi.Work;
+import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.hibernate.search.store.DirectoryProvider;
 import org.infinispan.commands.write.ClearCommand;

@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
 
-import org.hibernate.search.cfg.SearchConfiguration;
+import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.spi.SearchFactoryBuilder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;

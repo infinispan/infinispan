@@ -22,7 +22,7 @@
 package org.infinispan.query.clustered.commandworkers;
 
 import org.apache.lucene.search.TopDocs;
-import org.hibernate.search.engine.SearchFactoryImplementor;
+import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.infinispan.query.clustered.QueryBox;
 import org.infinispan.query.clustered.QueryResponse;
