@@ -86,13 +86,17 @@ public interface ConsistentHash {
    boolean isKeyLocalToAddress(Address a, Object key, int replCount);
 
    /**
-    * Returns the value between 0 and the hash space limit, or hash id, for a particular address. If there's no such
-    * value for an address, this method will return -1.
+    * Returns a list of values between 0 and the hash space limit, or hash id,
+    * for a particular address. If virtual nodes are disabled, the list will
+    * only contain a single element, whereas if virtual nodes are enabled, this
+    * list's size will be the number of virtual nodes configured. If there are
+    * no hash ids for that address, it returns an empty list.
     *
-    * @return An int between 0 and hash space if the address is present in the hash wheel, otherwise it returns -1.
-    * @throws IllegalStateException If virtual nodes are enabled.
+    * @return A list of N size where N is the configured number of virtual
+    *         nodes, or an empty list if there're no hash ids associated with
+    *         the address.
     */
-   int getHashId(Address a);
+   List<Integer> getHashIds(Address a);
 
    /**
     * Returns the hash space constant for this consistent hash algorithm class. This integer is often used as modulus

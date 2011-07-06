@@ -37,6 +37,7 @@ import org.infinispan.server.hotrod.OperationResponse._
 import collection.mutable
 import collection.immutable
 import java.lang.reflect.Method
+import mutable.ListBuffer
 import test.HotRodTestingUtil._
 import java.util.concurrent.{ConcurrentHashMap, Executors}
 import java.util.concurrent.atomic.{AtomicLong}
@@ -319,15 +320,39 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
                val numOwners = readUnsignedShort(buf)
                val hashFunction = buf.readByte
                val hashSpace = readUnsignedInt(buf)
-               val numberClusterMembers = readUnsignedInt(buf)
-               val viewArray = new Array[TopologyAddress](numberClusterMembers)
-               for (i <- 0 until numberClusterMembers) {
-                  val host = readString(buf)
-                  val port = readUnsignedShort(buf)
+               val numServersInTopo = readUnsignedInt(buf)
+               // The exact number of topology addresses in the list is unknown
+               // until we loop through the entire list and we figure out how
+               // hash ids are per HotRod server (i.e. num virtual nodes > 1)
+               val members = new ListBuffer[TopologyAddress]()
+               val hashIds = new ListBuffer[Int]()
+               var prevNode: ServerNode = null
+               for (i <- 1 to numServersInTopo) {
+                  val node = new ServerNode(readString(buf), readUnsignedShort(buf))
                   val hashId = buf.readInt
-                  viewArray(i) = TopologyAddress(host, port, Map(op.cacheName -> hashId), null)
+                  if (prevNode == null || node == prevNode) {
+                     // First time node has been seen, so cache it
+                     if (prevNode == null)
+                        prevNode = node
+
+                     // Add current hash id to list
+                     hashIds += hashId
+                  } else {
+                     // A new node has been detected, so create the topology
+                     // address and store it in the view
+                     members += TopologyAddress(prevNode.host, prevNode.port,
+                           Map(op.cacheName -> hashIds.toSeq), null)
+                     prevNode = node 
+                     hashIds.clear
+                     hashIds += hashId
+                  }
+                  // Check for last server hash in which case just add it
+                  if (i == numServersInTopo)
+                    members += TopologyAddress(prevNode.host, prevNode.port,
+                           Map(op.cacheName -> hashIds.toSeq), null)
+
                }
-               Some(HashDistAwareResponse(TopologyView(topologyId, viewArray.toList), numOwners, hashFunction, hashSpace))
+               Some(HashDistAwareResponse(TopologyView(topologyId, members.toList), numOwners, hashFunction, hashSpace))
             } else {
                None // Is it possible?
             }
@@ -535,3 +560,5 @@ class TestBulkGetResponse(override val messageId: Long, override val cacheName: 
                           override val clientIntel: Short, val bulkData: Map[ByteArrayKey, Array[Byte]],
                           override val topologyId: Int, override val topologyResponse: Option[AbstractTopologyResponse])
       extends TestResponse(messageId, cacheName, clientIntel, BulkGetResponse, Success, topologyId, topologyResponse)
+
+case class ServerNode(val host: String, val port: Int)

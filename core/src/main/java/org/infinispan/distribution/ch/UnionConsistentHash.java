@@ -74,7 +74,7 @@ public class UnionConsistentHash extends AbstractConsistentHash {
    }
 
    @Override
-   public int getHashId(Address a) {
+   public List<Integer> getHashIds(Address a) {
       throw new UnsupportedOperationException("Unsupported!");
    }
 

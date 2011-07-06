@@ -159,8 +159,8 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       val hashTopologyResp = resp.topologyResponse.get.asInstanceOf[HashDistAwareResponse]
       assertEquals(hashTopologyResp.view.topologyId, 6)
       assertEquals(hashTopologyResp.view.members.size, 2)
-      assertAddressEquals(hashTopologyResp.view.members.head, servers.head.getAddress, Map(cacheName -> 0))
-      assertAddressEquals(hashTopologyResp.view.members.tail.head, servers.tail.head.getAddress, Map(cacheName -> 0))
+      assertAddressEquals(hashTopologyResp.view.members.head, servers.head.getAddress, Map(cacheName -> List(0)))
+      assertAddressEquals(hashTopologyResp.view.members.tail.head, servers.tail.head.getAddress, Map(cacheName -> List(0)))
       assertEquals(hashTopologyResp.numOwners, 0)
       assertEquals(hashTopologyResp.hashFunction, 0)
       assertEquals(hashTopologyResp.hashSpace, 0)

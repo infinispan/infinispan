@@ -181,12 +181,21 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends OneToOneEncoder 
       writeUnsignedShort(h.numOwners, buffer) // Num key owners
       buffer.writeByte(h.hashFunction) // Hash function
       writeUnsignedInt(h.hashSpace, buffer) // Hash space
-      writeUnsignedInt(h.view.members.size, buffer)
-      h.view.members.foreach{address =>
-         writeString(address.host, buffer)
-         writeUnsignedShort(address.port, buffer)
-         val hashId = address.hashIds.get(r.cacheName).get
-         buffer.writeInt(hashId) // Address' hash id
+      val numVNodes = getCacheInstance(r.cacheName, cacheManager).getConfiguration.getNumVirtualNodes
+      // If virtual nodes are enabled, we need to send as many hashes as
+      // cluster members * num virtual nodes. Otherwise, rely on the default
+      // when virtual nodes is disabled which is '1'.
+      writeUnsignedInt(h.view.members.size * numVNodes, buffer)
+      h.view.members.foreach {address =>
+         // Take hash ids associated with the cache
+         val cacheHashIds = address.hashIds.get(r.cacheName).get
+         // For each of the hash ids associated with this address and cache
+         // (i.e. in case of virtual nodes), write an entry back the client.
+         cacheHashIds.foreach { hashId =>
+            writeString(address.host, buffer)
+            writeUnsignedShort(address.port, buffer)
+            buffer.writeInt(hashId)
+         }
       }
    }
 

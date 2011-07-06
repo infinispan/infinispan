@@ -195,7 +195,7 @@ object HotRodTestingUtil extends Log {
       assertEquals(actual.port, expected.port)
    }
 
-   def assertHashTopologyReceived(topoResp: AbstractTopologyResponse, servers: List[HotRodServer], hashIds: List[Map[String, Int]]) {
+   def assertHashTopologyReceived(topoResp: AbstractTopologyResponse, servers: List[HotRodServer], hashIds: List[Map[String, Seq[Int]]]) {
       val hashTopologyResp = topoResp.asInstanceOf[HashDistAwareResponse]
       assertEquals(hashTopologyResp.view.topologyId, 2)
       assertEquals(hashTopologyResp.view.members.size, 2)
@@ -206,7 +206,7 @@ object HotRodTestingUtil extends Log {
       assertEquals(hashTopologyResp.hashSpace, 10240)
    }
 
-   def assertNoHashTopologyReceived(topoResp: AbstractTopologyResponse, servers: List[HotRodServer], hashIds: List[Map[String, Int]]) {
+   def assertNoHashTopologyReceived(topoResp: AbstractTopologyResponse, servers: List[HotRodServer], hashIds: List[Map[String, Seq[Int]]]) {
       val hashTopologyResp = topoResp.asInstanceOf[HashDistAwareResponse]
       assertEquals(hashTopologyResp.view.topologyId, 2)
       assertEquals(hashTopologyResp.view.members.size, 2)
@@ -217,7 +217,7 @@ object HotRodTestingUtil extends Log {
       assertEquals(hashTopologyResp.hashSpace, 0)
    }
 
-   def assertAddressEquals(actual: TopologyAddress, expected: TopologyAddress, expectedHashIds: Map[String, Int]) {
+   def assertAddressEquals(actual: TopologyAddress, expected: TopologyAddress, expectedHashIds: Map[String, Seq[Int]]) {
       assertEquals(actual.host, expected.host)
       assertEquals(actual.port, expected.port)
       assertEquals(actual.hashIds, expectedHashIds)
