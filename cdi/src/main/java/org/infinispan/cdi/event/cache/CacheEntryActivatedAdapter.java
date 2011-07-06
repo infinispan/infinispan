@@ -31,9 +31,11 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.TypeLiteral;
 
+/**
+ * @author Pete Muir
+ */
 @Listener
-public class CacheEntryActivatedAdapter<K, V> extends
-      AbstractAdapter<CacheEntryActivatedEvent<K,V>> {
+public class CacheEntryActivatedAdapter<K, V> extends AbstractAdapter<CacheEntryActivatedEvent<K, V>> {
 
    public static final CacheEntryActivatedEvent<?, ?> EMPTY = new CacheEntryActivatedEvent<Object, Object>() {
 
@@ -50,7 +52,6 @@ public class CacheEntryActivatedAdapter<K, V> extends
       }
 
       public boolean isOriginLocal() {
-         // TODO Auto-generated method stub
          return false;
       }
 
@@ -67,9 +68,10 @@ public class CacheEntryActivatedAdapter<K, V> extends
       }
 
    };
-   
+
    @SuppressWarnings("serial")
-   public static final TypeLiteral<CacheEntryActivatedEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<CacheEntryActivatedEvent<?,?>>() {}; 
+   public static final TypeLiteral<CacheEntryActivatedEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<CacheEntryActivatedEvent<?, ?>>() {
+   };
 
    public CacheEntryActivatedAdapter(Event<CacheEntryActivatedEvent<K, V>> event) {
       super(event);
@@ -79,5 +81,4 @@ public class CacheEntryActivatedAdapter<K, V> extends
    public void fire(CacheEntryActivatedEvent<K, V> payload) {
       super.fire(payload);
    }
-
 }

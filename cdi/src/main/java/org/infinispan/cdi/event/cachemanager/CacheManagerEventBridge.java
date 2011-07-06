@@ -32,10 +32,13 @@ import org.infinispan.cdi.event.AbstractEventBridge;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 
+/**
+ * @author Pete Muir
+ */
 public class CacheManagerEventBridge extends AbstractEventBridge<Event> {
 
    public void registerObservers(Set<Annotation> qualifierSet,
-         String cacheName, Listenable listenable) {
+                                 String cacheName, Listenable listenable) {
       Annotation[] qualifiers = qualifierSet
             .toArray(new Annotation[qualifierSet.size()]);
       if (hasObservers(CacheStartedAdapter.EMPTY, qualifiers)) {
@@ -51,5 +54,4 @@ public class CacheManagerEventBridge extends AbstractEventBridge<Event> {
                ViewChangedEvent.class, qualifiers)));
       }
    }
-
 }

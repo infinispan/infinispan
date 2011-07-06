@@ -43,7 +43,7 @@ public final class CacheHelper {
    /**
     * Returns the default cache name associated to the given method according to JSR-107 specification.
     *
-    * @param method The method.
+    * @param method the method.
     * @return The default cache name for the given method.
     */
    public static String getDefaultMethodCacheName(Method method) {
@@ -75,8 +75,8 @@ public final class CacheHelper {
     * Generates a {@link CacheKey} for the given {@link InvocationContext} by using the given {@link CacheKeyGenerator}
     * class.
     *
-    * @param cacheKeyGeneratorClass The cache key generator class.
-    * @param context                The invocation context.
+    * @param cacheKeyGeneratorClass the cache key generator class.
+    * @param context                the invocation context.
     * @return An instance of {@code CacheKey} for the given {@code InvocationContext}.
     */
    public static CacheKey generateCacheKey(Class<? extends CacheKeyGenerator> cacheKeyGeneratorClass, InvocationContext context) {

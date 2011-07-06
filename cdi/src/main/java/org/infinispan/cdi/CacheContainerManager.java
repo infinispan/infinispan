@@ -37,41 +37,29 @@ import javax.inject.Inject;
 
 /**
  * <p>
- * Manages the CacheContainer, by default creating a {@link DefaultCacheManager}
- * using configuration defaults.
+ * Manages the CacheContainer, by default creating a {@link DefaultCacheManager} using configuration defaults.
  * </p>
- *
  * <p>
- * If you want to use a different {@link CacheContainer} implementation or
- * configuration with your caches, then you can specialize this class.
- * {@link #defineScannedConfigurations()} should be called if you want scanned
- * configurations and Infinispan notification to be bridged to the CDI event
- * bus.
+ * If you want to use a different {@link CacheContainer} implementation or configuration with your caches, then you can
+ * specialize this class. {@link #defineScannedConfigurations()} should be called if you want scanned configurations and
+ * Infinispan notification to be bridged to the CDI event bus.
  * </p>
- *
  * <p>
- * If you want to use a different {@link CacheContainer} for an individual
- * cache, provide a bean that has the type {@link CacheContainer} and the
- * qualifiers of the cache.
+ * If you want to use a different {@link CacheContainer} for an individual cache, provide a bean that has the type
+ * {@link CacheContainer} and the qualifiers of the cache.
  * </p>
  *
  * @author Pete Muir
- *
  */
 @ApplicationScoped
 public class CacheContainerManager {
 
    /**
-    * Registers scanned configurations (if not already in existence) with
-    * Infinispan
+    * Registers scanned configurations (if not already in existence) with Infinispan
     *
-    * @param cacheContainer
-    *           the {@link EmbeddedCacheManager} with which to register the
-    *           configurations
-    * @param extension
-    *           the {@link InfinispanExtension} instance for this module
-    * @param beanManager
-    *           the beanManager for this module
+    * @param cacheContainer the {@link EmbeddedCacheManager} with which to register the configurations
+    * @param extension      the {@link InfinispanExtension} instance for this module
+    * @param beanManager    the beanManager for this module
     */
    protected static EmbeddedCacheManager defineScannedConfigurations(
          EmbeddedCacheManager cacheContainer, InfinispanExtension extension,
@@ -85,7 +73,7 @@ public class CacheContainerManager {
          if (!cacheContainer.getCacheNames().contains(
                configurationHolder.getName())) {
             cacheContainer.defineConfiguration(configurationHolder.getName(),
-                  configuration);
+                                               configuration);
          }
       }
       return cacheContainer;
@@ -94,13 +82,9 @@ public class CacheContainerManager {
    /**
     * Sets up Infinispan notification to CDI Event Bus bridging.
     *
-    * @param cacheContainer
-    *           the {@link EmbeddedCacheManager} with which to register the
-    *           observers
-    * @param extension
-    *           the {@link InfinispanExtension} instance for this module
-    * @param eventBridge
-    *           the {@link CacheManagerEventBridge} instance for this module
+    * @param cacheContainer the {@link EmbeddedCacheManager} with which to register the observers
+    * @param extension      the {@link InfinispanExtension} instance for this module
+    * @param eventBridge    the {@link CacheManagerEventBridge} instance for this module
     */
    protected static EmbeddedCacheManager registerObservers(
          EmbeddedCacheManager cacheContainer, InfinispanExtension extension,
@@ -109,7 +93,7 @@ public class CacheContainerManager {
             .getConfigurations()) {
          // Register any listeners
          eventBridge.registerObservers(configurationHolder.getQualifiers(),
-               configurationHolder.getName(), cacheContainer);
+                                       configurationHolder.getName(), cacheContainer);
       }
       return cacheContainer;
    }
@@ -124,29 +108,25 @@ public class CacheContainerManager {
    }
 
    /**
-    * Instantiate a new {@link CacheContainerManager} instance. Normally called
-    * by the CDI container or a specializing class.
+    * Instantiate a new {@link CacheContainerManager} instance. Normally called by the CDI container or a specializing
+    * class.
     *
-    * @param extension
-    *           the {@link InfinispanExtension}
-    * @param beanManager
-    *           the {@link BeanManager}
-    * @param eventBridge
-    *           the {@link CacheManagerEventBridge}
+    * @param extension   the {@link InfinispanExtension}
+    * @param beanManager the {@link BeanManager}
+    * @param eventBridge the {@link CacheManagerEventBridge}
     */
    @Inject
    public CacheContainerManager(InfinispanExtension extension,
-         BeanManager beanManager, CacheManagerEventBridge eventBridge) {
+                                BeanManager beanManager, CacheManagerEventBridge eventBridge) {
       this(registerObservers(
             defineScannedConfigurations(new DefaultCacheManager(), extension,
-                  beanManager), extension, eventBridge));
+                                        beanManager), extension, eventBridge));
    }
 
    /**
     * Instantiate a new cache container.
     *
-    * @param cacheContainer
-    *           the cache container to expose.
+    * @param cacheContainer the cache container to expose.
     */
    protected CacheContainerManager(CacheContainer cacheContainer) {
       this.cacheContainer = cacheContainer;
@@ -161,5 +141,4 @@ public class CacheContainerManager {
    void cleanup() {
       cacheContainer.stop();
    }
-
 }

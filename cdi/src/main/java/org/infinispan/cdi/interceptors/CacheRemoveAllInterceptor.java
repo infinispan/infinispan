@@ -24,7 +24,6 @@ package org.infinispan.cdi.interceptors;
 
 import org.infinispan.Cache;
 
-import javax.cache.CacheException;
 import javax.cache.interceptor.CacheKey;
 import javax.cache.interceptor.CacheRemoveAll;
 import javax.inject.Inject;
@@ -34,6 +33,13 @@ import javax.interceptor.InvocationContext;
 import java.lang.reflect.Method;
 
 /**
+ * <p>Implementation class of the {@link CacheRemoveAll} interceptor. This interceptor uses the following algorithm
+ * describes in JSR-107.</p>
+ * <p> The interceptor that intercepts method annotated with {@code @CacheRemoveAll} must do the following, remove all
+ * entries associated with the cache. The removeAll occurs after the method body is executed. This can be overridden by
+ * specifying a afterInvocation attribute value of false. If afterInvocation is true and the annotated method throws an
+ * exception, the removeAll will not happen.</p>
+ *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @Interceptor

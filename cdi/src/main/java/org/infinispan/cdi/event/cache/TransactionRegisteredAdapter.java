@@ -31,11 +31,13 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.TypeLiteral;
 
+/**
+ * @author Pete Muir
+ */
 @Listener
-public class TransactionRegisteredAdapter<K,V> extends
-      AbstractAdapter<TransactionRegisteredEvent<K,V>> {
+public class TransactionRegisteredAdapter<K, V> extends AbstractAdapter<TransactionRegisteredEvent<K, V>> {
 
-   public static final TransactionRegisteredEvent<?, ?>  EMPTY = new TransactionRegisteredEvent<Object, Object>() {
+   public static final TransactionRegisteredEvent<?, ?> EMPTY = new TransactionRegisteredEvent<Object, Object>() {
 
       public Type getType() {
          return null;
@@ -61,15 +63,15 @@ public class TransactionRegisteredAdapter<K,V> extends
    };
 
    @SuppressWarnings("serial")
-   public static final TypeLiteral<TransactionRegisteredEvent<?,?>> WILDCARD_TYPE = new TypeLiteral<TransactionRegisteredEvent<?,?>>() {};
+   public static final TypeLiteral<TransactionRegisteredEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<TransactionRegisteredEvent<?, ?>>() {
+   };
 
-   public TransactionRegisteredAdapter(Event<TransactionRegisteredEvent<K,V>> event) {
+   public TransactionRegisteredAdapter(Event<TransactionRegisteredEvent<K, V>> event) {
       super(event);
    }
 
    @TransactionRegistered
-   public void fire(TransactionRegisteredEvent<K,V> payload) {
+   public void fire(TransactionRegisteredEvent<K, V> payload) {
       super.fire(payload);
    }
-
 }

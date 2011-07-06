@@ -27,6 +27,9 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;
 
+/**
+ * @author Pete Muir
+ */
 public class AbstractEventBridge<T> {
 
    @Inject
@@ -42,5 +45,4 @@ public class AbstractEventBridge<T> {
    protected boolean hasObservers(T event, Annotation[] qualifiers) {
       return !beanManager.resolveObserverMethods(event, qualifiers).isEmpty();
    }
-
 }

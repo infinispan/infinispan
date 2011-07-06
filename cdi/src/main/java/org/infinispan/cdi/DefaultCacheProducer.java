@@ -28,11 +28,13 @@ import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 
 /**
+ * The default cache configuration producer.
+ *
  * @author Pete Muir
  */
 public class DefaultCacheProducer {
    /**
-    * Allows the default cache to be injected
+    * Allows the default cache to be injected.
     */
    @Produces
    @Infinispan

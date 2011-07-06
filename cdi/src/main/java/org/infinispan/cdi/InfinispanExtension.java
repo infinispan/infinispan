@@ -41,6 +41,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * The CDI extension class.
+ *
+ * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ */
 public class InfinispanExtension implements Extension {
 
    private final Collection<ConfigurationHolder> configurations;
@@ -85,12 +91,10 @@ public class InfinispanExtension implements Extension {
       private final Set<Annotation> qualifiers;
       private final String name;
 
-      ConfigurationHolder(Producer<Configuration> producer, String name,
-            AnnotatedMember<?> annotatedMember, BeanManager beanManager) {
+      ConfigurationHolder(Producer<Configuration> producer, String name, AnnotatedMember<?> annotatedMember, BeanManager beanManager) {
          this.producer = producer;
          this.name = name;
-         this.qualifiers = Beans.getQualifiers(beanManager,
-               annotatedMember.getAnnotations());
+         this.qualifiers = Beans.getQualifiers(beanManager, annotatedMember.getAnnotations());
       }
 
       Producer<Configuration> getProducer() {
@@ -104,6 +108,5 @@ public class InfinispanExtension implements Extension {
       public Set<Annotation> getQualifiers() {
          return qualifiers;
       }
-
    }
 }

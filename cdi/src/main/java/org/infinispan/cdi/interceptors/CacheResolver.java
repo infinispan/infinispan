@@ -27,13 +27,16 @@ import org.infinispan.Cache;
 import java.lang.reflect.Method;
 
 /**
+ * This cache resolver contract used by interceptors to resolve a cache in function of it's name and the annotated
+ * method.
+ *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public interface CacheResolver {
    /**
-    * Resolves a cache in function of it's name and of the annotated method (see {@link
-    * javax.cache.interceptor.CacheResult}, {@link javax.cache.interceptor.CacheRemoveEntry} and {@link
-    * javax.cache.interceptor.CacheRemoveAll}).
+    * Resolves a cache in function of it's name and the annotated method (see {@linkplain
+    * javax.cache.interceptor.CacheResult CacheResult}, {@linkplain javax.cache.interceptor.CacheRemoveEntry
+    * CacheRemoveEntry} and {@linkplain javax.cache.interceptor.CacheRemoveAll CacheRemoveAll}).
     *
     * @param cacheName The cache name to resolve.
     * @param method    The method annotated with a cache annotation.

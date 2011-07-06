@@ -39,8 +39,8 @@ public final class Contracts {
     * Asserts that the given parameter is not {@code null}. If the given parameter is {@code null} a {@link
     * NullPointerException} is thrown.
     *
-    * @param param   The parameter to check.
-    * @param message The exception message used if the parameter to check is {@code null}.
+    * @param param   the parameter to check.
+    * @param message the exception message used if the parameter to check is {@code null}.
     */
    public static void assertNotNull(Object param, String message) {
       if (param == null) {

@@ -31,11 +31,13 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.TypeLiteral;
 
+/**
+ * @author Pete Muir
+ */
 @Listener
-public class CacheEntryCreatedAdapter<K,V> extends
-      AbstractAdapter<CacheEntryCreatedEvent<K,V>> {
+public class CacheEntryCreatedAdapter<K, V> extends AbstractAdapter<CacheEntryCreatedEvent<K, V>> {
 
-   public static final CacheEntryCreatedEvent<?,?>  EMPTY = new CacheEntryCreatedEvent<Object, Object>() {
+   public static final CacheEntryCreatedEvent<?, ?> EMPTY = new CacheEntryCreatedEvent<Object, Object>() {
 
       public Type getType() {
          return null;
@@ -50,7 +52,6 @@ public class CacheEntryCreatedAdapter<K,V> extends
       }
 
       public boolean isOriginLocal() {
-         // TODO Auto-generated method stub
          return false;
       }
 
@@ -64,15 +65,15 @@ public class CacheEntryCreatedAdapter<K,V> extends
    };
 
    @SuppressWarnings("serial")
-   public static final TypeLiteral<CacheEntryCreatedEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<CacheEntryCreatedEvent<?,?>>() {};
+   public static final TypeLiteral<CacheEntryCreatedEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<CacheEntryCreatedEvent<?, ?>>() {
+   };
 
-   public CacheEntryCreatedAdapter(Event<CacheEntryCreatedEvent<K,V>> event) {
+   public CacheEntryCreatedAdapter(Event<CacheEntryCreatedEvent<K, V>> event) {
       super(event);
    }
 
    @CacheEntryCreated
-   public void fire(CacheEntryCreatedEvent<K,V> payload) {
+   public void fire(CacheEntryCreatedEvent<K, V> payload) {
       super.fire(payload);
    }
-
 }

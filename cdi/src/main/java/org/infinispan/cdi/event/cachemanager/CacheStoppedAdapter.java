@@ -29,6 +29,9 @@ import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent
 
 import javax.enterprise.event.Event;
 
+/**
+ * @author Pete Muir
+ */
 @Listener
 public class CacheStoppedAdapter extends AbstractAdapter<CacheStoppedEvent> {
 
@@ -60,5 +63,4 @@ public class CacheStoppedAdapter extends AbstractAdapter<CacheStoppedEvent> {
          super.fire(payload);
       }
    }
-
 }

@@ -24,7 +24,6 @@ package org.infinispan.cdi.interceptors;
 
 import org.infinispan.Cache;
 
-import javax.cache.CacheException;
 import javax.cache.interceptor.CacheKey;
 import javax.cache.interceptor.CacheRemoveEntry;
 import javax.inject.Inject;
@@ -36,6 +35,14 @@ import java.lang.reflect.Method;
 import static org.infinispan.cdi.util.CacheHelper.generateCacheKey;
 
 /**
+ * <p>Implementation class of the {@link CacheRemoveEntry} interceptor.This interceptor uses the following algorithm
+ * describes in JSR-107.</p>
+ * <p> The interceptor that intercepts method annotated with {@code @CacheRemoveEntry} must do the following, generate a key
+ * based on InvocationContext using the specified {@linkplain javax.cache.interceptor.CacheKeyGenerator CacheKeyGenerator}
+ * , use this key to remove the entry in the cache. The remove occurs after the method body is executed. This can be
+ * overridden by specifying a afterInvocation attribute value of false. If afterInvocation is true and the annotated
+ * method throws an exception the remove will not happen.</p>
+ *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @Interceptor

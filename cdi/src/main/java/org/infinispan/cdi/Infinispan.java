@@ -23,7 +23,6 @@
 package org.infinispan.cdi;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheContainer;
 import org.jboss.seam.solder.bean.generic.GenericType;
 
 import java.lang.annotation.Retention;
@@ -36,22 +35,18 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Configure an Infinispan Cache. By default, Seam will use the
- * {@link CacheContainer}
+ * This annotation is used to define a specific cache {@link Configuration}. This configuration will be registered in
+ * the default {@linkplain org.infinispan.manager.CacheContainer CacheContainer} implementation provided by the {@link
+ * CacheContainerManager}.
  *
  * @author Pete Muir
- *
  */
-
 @Retention(RUNTIME)
-@Target({ METHOD, FIELD, PARAMETER, TYPE })
+@Target({METHOD, FIELD, PARAMETER, TYPE})
 @GenericType(Configuration.class)
 public @interface Infinispan {
-
    /**
-    * The name of the cache. If no name is specified the default cache will be
-    * used.
+    * The configuration name.
     */
    String value() default "";
-
 }

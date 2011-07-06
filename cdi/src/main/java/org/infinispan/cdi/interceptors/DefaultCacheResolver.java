@@ -36,10 +36,10 @@ import static org.infinispan.cdi.util.CacheHelper.getDefaultMethodCacheName;
 
 /**
  * <p>This is the default cache resolver implementation.</p>
- * <p>This resolver uses the algorithm defined by JSR-107. If
- * the given cache name is not specified the default cache name used for resolution is the fully qualified name of the
- * annotated method. If method is annotated with {@link CacheRemoveAll} or {@link CacheRemoveEntry} and the cache name
- * is not specified a {@link CacheException} is thrown.</p>
+ * <p>This resolver uses the algorithm defined by JSR-107. If the given cache name is not specified the default cache
+ * name used for resolution is the fully qualified name of the annotated method. If method is annotated with
+ * {@link CacheRemoveAll} or {@link CacheRemoveEntry} and the cache name is not specified a {@link CacheException}
+ * is thrown.</p>
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */

@@ -31,6 +31,9 @@ import org.infinispan.remoting.transport.Address;
 import javax.enterprise.event.Event;
 import java.util.List;
 
+/**
+ * @author Pete Muir
+ */
 @Listener
 public class ViewChangedAdapter extends AbstractAdapter<ViewChangedEvent> {
 
@@ -78,5 +81,4 @@ public class ViewChangedAdapter extends AbstractAdapter<ViewChangedEvent> {
    public void fire(ViewChangedEvent payload) {
       super.fire(payload);
    }
-
 }
