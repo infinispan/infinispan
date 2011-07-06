@@ -43,7 +43,8 @@ object TopologyView {
    class Externalizer extends AbstractExternalizer[TopologyView] {
       override def writeObject(output: ObjectOutput, topologyView: TopologyView) {
          output.writeInt(topologyView.topologyId)
-         output.writeObject(topologyView.members.toArray) // Write arrays instead since writing Lists causes issues
+         // Write arrays instead since writing Lists causes issues
+         output.writeObject(topologyView.members.toArray)
       }
 
       override def readObject(input: ObjectInput): TopologyView = {

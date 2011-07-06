@@ -200,15 +200,32 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
 
 
    @Override
-   public int getHashId(Address a) {
-      if (isVirtualNodesEnabled())
-         throw new IllegalStateException("With virtual nodes enabled each address has more than one hash id");
+   public List<Integer> getHashIds(Address a) {
+      // Not the most efficient way of doing this but it's usage it's so far
+      // limited to the HotRod server and it does it only on once on startup,
+      // so there's no urgency in finding a better way to implement this.
+
+      // If virtual nodes are enabled, the list should be as long as
+      // the number of virtual nodes, otherwise it's only one element.
+      List<Integer> hashIds = null;
+      boolean vNodesEnabled = isVirtualNodesEnabled();
 
       for (int i = 0; i < positionValues.length; i++) {
-         if (positionValues[i].equals(a))
-            return positionKeys[i];
+         if (positionValues[i].equals(a)) {
+            if (vNodesEnabled && hashIds == null)
+               hashIds = new ArrayList(numVirtualNodes);
+
+            if (vNodesEnabled)
+               hashIds.add(positionKeys[i]);
+            else
+               return Collections.singletonList(positionKeys[i]);
+         }
       }
-      return -1;
+
+      if (hashIds == null)
+         return Collections.emptyList();
+      else
+         return hashIds;
    }
 
    public int getNormalizedHash(Object key) {

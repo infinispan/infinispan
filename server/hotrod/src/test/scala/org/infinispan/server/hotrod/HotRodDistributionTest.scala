@@ -34,6 +34,7 @@ import org.infinispan.test.TestingUtil
 import org.infinispan.distribution.ch.UnionConsistentHash
 import collection.mutable.ListBuffer
 import org.infinispan.test.AbstractCacheTest._ // Do not remove, otherwise getDefaultClusteredConfig is not found
+import scala.collection.JavaConversions._
 
 /**
  * Tests Hot Rod logic when interacting with distributed caches, particularly logic to do with
@@ -92,12 +93,19 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
          assertEquals(hashTopologyResp.view.topologyId, 3)
          assertEquals(hashTopologyResp.view.members.size, 3)
          val consistentHash = cacheManagers.get(2).getCache(cacheName).getAdvancedCache.getDistributionManager.getConsistentHash
+
+         var ids = consistentHash.getHashIds(servers.head.getAddress.clusterAddress)
          assertAddressEquals(hashTopologyResp.view.members.head, servers.head.getAddress,
-            Map(cacheName -> consistentHash.getHashId(servers.head.getAddress.clusterAddress)))
+            Map(cacheName -> asScalaBuffer(ids.asInstanceOf[java.util.List[Int]]).toSeq))
+
+         ids = consistentHash.getHashIds(servers.tail.head.getAddress.clusterAddress)
          assertAddressEquals(hashTopologyResp.view.members.tail.head, servers.tail.head.getAddress,
-            Map(cacheName -> consistentHash.getHashId(servers.tail.head.getAddress.clusterAddress)))
+            Map(cacheName -> asScalaBuffer(ids.asInstanceOf[java.util.List[Int]]).toSeq))
+
+         ids = consistentHash.getHashIds(newServer.getAddress.clusterAddress)
          assertAddressEquals(hashTopologyResp.view.members.tail.tail.head, newServer.getAddress,
-            Map(cacheName -> consistentHash.getHashId(newServer.getAddress.clusterAddress)))
+            Map(cacheName -> asScalaBuffer(ids.asInstanceOf[java.util.List[Int]]).toSeq))
+
          assertEquals(hashTopologyResp.numOwners, 2)
          assertEquals(hashTopologyResp.hashFunction, EXPECTED_HASH_FUNCTION_VERSION)
          assertEquals(hashTopologyResp.hashSpace, 10240)
@@ -114,26 +122,33 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
       assertEquals(hashTopologyResp.view.topologyId, 4)
       assertEquals(hashTopologyResp.view.members.size, 2)
       val consistentHash = cacheManagers.get(1).getCache(cacheName).getAdvancedCache.getDistributionManager.getConsistentHash
+
+      var ids = consistentHash.getHashIds(servers.head.getAddress.clusterAddress)
       assertAddressEquals(hashTopologyResp.view.members.head, servers.head.getAddress,
-         Map(cacheName -> consistentHash.getHashId(servers.head.getAddress.clusterAddress)))
+         Map(cacheName -> asScalaBuffer(ids.asInstanceOf[java.util.List[Int]]).toSeq))
+
+      ids = consistentHash.getHashIds(servers.tail.head.getAddress.clusterAddress)
       assertAddressEquals(hashTopologyResp.view.members.tail.head, servers.tail.head.getAddress,
-         Map(cacheName -> consistentHash.getHashId(servers.tail.head.getAddress.clusterAddress)))
+         Map(cacheName -> asScalaBuffer(ids.asInstanceOf[java.util.List[Int]]).toSeq))
+
       assertEquals(hashTopologyResp.numOwners, 2)
       assertEquals(hashTopologyResp.hashFunction, EXPECTED_HASH_FUNCTION_VERSION)
       assertEquals(hashTopologyResp.hashSpace, 10240)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v7-"))
    }
 
-   private def generateExpectedHashIds: List[Map[String, Int]] = {
-      val listBuffer = new ListBuffer[Map[String, Int]]
+   private def generateExpectedHashIds: List[Map[String, Seq[Int]]] = {
+      val listBuffer = new ListBuffer[Map[String, Seq[Int]]]
       val consistentHash = cacheManagers.get(0).getCache(cacheName).getAdvancedCache.getDistributionManager.getConsistentHash
       var i = 0
       while (consistentHash.isInstanceOf[UnionConsistentHash] && i < 10) {
          TestingUtil.sleepThread(1000)
          i += 1
       }
-      listBuffer += Map(cacheName -> consistentHash.getHashId(servers.head.getAddress.clusterAddress))
-      listBuffer += Map(cacheName -> consistentHash.getHashId(servers.tail.head.getAddress.clusterAddress))
+      var ids = consistentHash.getHashIds(servers.head.getAddress.clusterAddress)
+      listBuffer += Map(cacheName -> asScalaBuffer(ids.asInstanceOf[java.util.List[Int]]).toSeq)
+      ids = consistentHash.getHashIds(servers.tail.head.getAddress.clusterAddress)
+      listBuffer += Map(cacheName -> asScalaBuffer(ids.asInstanceOf[java.util.List[Int]]).toSeq)
       listBuffer.toList
    }
 }

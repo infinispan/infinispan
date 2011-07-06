@@ -146,7 +146,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    private def createTopologyAddress(host: String, port: Int): TopologyAddress = {
-      val hashIds = mutable.Map.empty[String, Int]
+      val hashIds = mutable.Map.empty[String, Seq[Int]]
 
       // Default cache hash id
      updateHashIds(hashIds, cacheManager.getCache(), "")
@@ -156,10 +156,11 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
          updateHashIds(hashIds, cacheManager.getCache(cacheName), cacheName)
       }
 
-      TopologyAddress(host, port, immutable.Map[String, Int]() ++ hashIds, cacheManager.getAddress)
+      TopologyAddress(host, port, immutable.Map[String, Seq[Int]]() ++ hashIds,
+                      cacheManager.getAddress)
    }
 
-   private def updateHashIds(hashIds: mutable.Map[String, Int], cache: Cache[ByteArrayKey, CacheValue], hashIdKey: String) {
+   private def updateHashIds(hashIds: mutable.Map[String, Seq[Int]], cache: Cache[ByteArrayKey, CacheValue], hashIdKey: String) {
       val clusterAddress: Address = cacheManager.getAddress
       val cacheDm = cache.getAdvancedCache.getDistributionManager
       // TODO The following could be a bit more elegant
@@ -173,7 +174,9 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
          var hashIdRetrieved = false
          do {
             try {
-               hashIds += (hashIdKey -> cacheDm.getConsistentHash.getHashId(clusterAddress))
+               val distHashIds = cacheDm.getConsistentHash.getHashIds(clusterAddress)
+               // Once hash ids retrieved, make them immutable and update the topology address
+               hashIds += (hashIdKey -> asScalaBuffer(distHashIds.asInstanceOf[java.util.List[Int]]).toList)
                hashIdRetrieved = true
             } catch {
                case u: UnsupportedOperationException => {

@@ -26,33 +26,47 @@ import java.io.{ObjectInput, ObjectOutput}
 import org.infinispan.remoting.transport.Address
 import org.infinispan.marshall.AbstractExternalizer
 import scala.collection.JavaConversions._
+import collection.{immutable, mutable}
 
 /**
  * A Hot Rod topology address represents a Hot Rod endpoint that belongs to a Hot Rod cluster. It contains host/port
  * information where the Hot Rod endpoint is listening. To be able to detect crashed members in the cluster and update
  * the Hot Rod topology accordingly, it also contains the corresponding cluster address. Finally, since each cache
- * could potentially be configured with a different hash algorithm, a topology address also contains per cache hash id.
+ * could potentially be configured with a different hash algorithm, a topology address also contains a collection of
+ * per cache hash ids. If virtual nodes are disabled, this collection will have a single hash id element. If virtual
+ * nodes are disabled, the collection will have the number of configured virtual nodes as size.
  * 
  * @author Galder Zamarreño
  * @since 4.1
  */
-case class TopologyAddress(val host: String, val port: Int, val hashIds: Map[String, Int], val clusterAddress: Address)
+case class TopologyAddress(val host: String, val port: Int, val hashIds: Map[String, Seq[Int]], val clusterAddress: Address)
 
 object TopologyAddress {
    class Externalizer extends AbstractExternalizer[TopologyAddress] {
       override def writeObject(output: ObjectOutput, topologyAddress: TopologyAddress) {
          output.writeObject(topologyAddress.host)
          output.writeInt(topologyAddress.port)
-         output.writeObject(topologyAddress.hashIds)
+         output.writeInt(topologyAddress.hashIds.size)
+         topologyAddress.hashIds.foreach { case (cacheName, cacheHashIds) =>
+            output.writeObject(cacheName)
+            // Write arrays instead since writing Lists causes issues
+            output.writeObject(cacheHashIds.toArray)
+         }
          output.writeObject(topologyAddress.clusterAddress)
       }
 
       override def readObject(input: ObjectInput): TopologyAddress = {
          val host = input.readObject.asInstanceOf[String]
          val port = input.readInt
-         val hashIds = input.readObject.asInstanceOf[Map[String, Int]]
+         val size = input.readInt
+         val hashIds = mutable.Map.empty[String, Seq[Int]]
+         for (i <- 0 until size) {
+            val cacheName = input.readObject().asInstanceOf[String]
+            val cacheHashIds = input.readObject.asInstanceOf[Array[Int]]
+            hashIds += (cacheName -> cacheHashIds.toList)
+         }
          val clusterAddress = input.readObject.asInstanceOf[Address]
-         TopologyAddress(host, port, hashIds, clusterAddress)
+         TopologyAddress(host, port, immutable.Map[String, Seq[Int]]() ++ hashIds, clusterAddress)
       }
 
       override def getTypeClasses =

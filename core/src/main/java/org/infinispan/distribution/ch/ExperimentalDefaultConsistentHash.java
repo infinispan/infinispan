@@ -305,7 +305,7 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
    }
 
    @Override
-   public int getHashId(Address a) {
+   public List<Integer> getHashIds(Address a) {
       throw new RuntimeException("Not yet implemented");
    }
 

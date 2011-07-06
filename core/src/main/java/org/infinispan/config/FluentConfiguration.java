@@ -673,6 +673,9 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * Get's the current groupers in use
        */
       List<Grouper<?>> getGroupers();
+
+      @Override // Override definition so that Scala classes can see it.
+      Configuration build();
    }
 
    /**
