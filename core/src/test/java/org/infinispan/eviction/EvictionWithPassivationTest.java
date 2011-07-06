@@ -43,7 +43,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       cfg.getCacheLoaderManagerConfig().setPassivation(true);
       cfg.setEvictionStrategy(strategy);
       cfg.setEvictionThreadPolicy(threadPolicy);
-      cfg.setEvictionMaxEntries(1);
+      cfg.setEvictionMaxEntries(2);
       cfg.setInvocationBatchingEnabled(true);
       return cfg;
    }
