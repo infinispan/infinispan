@@ -20,30 +20,33 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.notification;
+package org.infinispan.cdi.test.event;
 
-import org.infinispan.cdi.Infinispan;
-import org.infinispan.config.Configuration;
+import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 
-import javax.enterprise.inject.Produces;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
 
-/**
- * Configure two default caches - we will use both caches to check that events for one don't spill over to the other.
- */
-public class Config {
+@ApplicationScoped
+public class Cache2Observers {
 
-   @Produces
-   @Infinispan("cache1")
-   @Cache1
-   public Configuration getTinyConfiguration() {
-      return new Configuration();
+   private CacheStartedEvent cacheStartedEvent;
+   private int cacheStartedEventCount;
+
+   /**
+    * Observe the cache started event for the cache associated with @Cache2
+    */
+   public void observeCacheStarted(@Observes @Cache2 CacheStartedEvent event) {
+      this.cacheStartedEventCount++;
+      this.cacheStartedEvent = event;
    }
 
-   @Produces
-   @Infinispan("cache2")
-   @Cache2
-   public Configuration getSmallConfiguration() {
-      return new Configuration();
+   public CacheStartedEvent getCacheStartedEvent() {
+      return cacheStartedEvent;
+   }
+
+   public int getCacheStartedEventCount() {
+      return cacheStartedEventCount;
    }
 
 }

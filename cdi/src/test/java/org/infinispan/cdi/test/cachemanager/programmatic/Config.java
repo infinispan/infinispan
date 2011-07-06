@@ -42,5 +42,4 @@ public class Config {
    @Infinispan("small")
    @Small
    Configuration configuration;
-
 }

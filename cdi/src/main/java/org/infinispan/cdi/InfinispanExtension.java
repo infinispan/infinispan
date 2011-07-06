@@ -22,42 +22,46 @@
  */
 package org.infinispan.cdi;
 
+import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.config.Configuration;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.seam.solder.bean.Beans;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.spi.AfterDeploymentValidation;
 import javax.enterprise.inject.spi.AnnotatedMember;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.ProcessProducer;
 import javax.enterprise.inject.spi.Producer;
+import javax.enterprise.util.AnnotationLiteral;
 import java.lang.annotation.Annotation;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * The CDI extension class.
+ * <p>The Infinspan CDI extension class.</p>
  *
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
+@ApplicationScoped
 public class InfinispanExtension implements Extension {
 
-   private final Collection<ConfigurationHolder> configurations;
+   private final Set<ConfigurationHolder> configurations;
 
    InfinispanExtension() {
       this.configurations = new HashSet<InfinispanExtension.ConfigurationHolder>();
    }
 
-   Collection<ConfigurationHolder> getConfigurations() {
-      return configurations;
-   }
-
-   void observeConfigurationProducer(@Observes ProcessProducer<?, Configuration> event, BeanManager beanManager) {
+   void saveCacheConfigurations(@Observes ProcessProducer<?, Configuration> event, BeanManager beanManager) {
       Infinispan annotation = event.getAnnotatedMember().getAnnotation(Infinispan.class);
       if (annotation != null) {
-         // This is generic configuration, so auto-register it
          String name = annotation.value();
          configurations.add(new ConfigurationHolder(
                event.getProducer(),
@@ -68,8 +72,32 @@ public class InfinispanExtension implements Extension {
       }
    }
 
-   static class ConfigurationHolder {
+   void registerCacheConfigurations(@Observes AfterDeploymentValidation event, CacheManagerEventBridge eventBridge, @Any Instance<EmbeddedCacheManager> cacheContainers, BeanManager beanManager) {
+      CreationalContext<Configuration> ctx = beanManager.createCreationalContext(null);
+      Instance<EmbeddedCacheManager> defaultCacheManager = cacheContainers.select(new AnnotationLiteral<Default>() {});
 
+      for (ConfigurationHolder oneConfigurationHolder : configurations) {
+         String cacheName = oneConfigurationHolder.getName();
+         Configuration configuration = oneConfigurationHolder.getProducer().produce(ctx);
+         Set<Annotation> qualifiers = oneConfigurationHolder.getQualifiers();
+
+         Instance<EmbeddedCacheManager> cacheManager = cacheContainers.select(qualifiers.toArray(new Annotation[qualifiers.size()]));
+         if (cacheManager.isUnsatisfied()) {
+            cacheManager = defaultCacheManager;
+         }
+
+         // if the cache name is empty this is the default configuration. This configuration is registered
+         // by default in the default cache manager.
+         if (!cacheName.isEmpty() && configuration != null) {
+            cacheManager.get().defineConfiguration(cacheName, configuration);
+         }
+
+         // register cache manager observers
+         eventBridge.registerObservers(qualifiers, cacheName, cacheManager.get());
+      }
+   }
+
+   static class ConfigurationHolder {
       private final Producer<Configuration> producer;
       private final Set<Annotation> qualifiers;
       private final String name;

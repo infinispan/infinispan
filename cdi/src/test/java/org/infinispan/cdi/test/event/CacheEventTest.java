@@ -20,7 +20,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.notification;
+package org.infinispan.cdi.test.event;
 
 import org.infinispan.AdvancedCache;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -39,12 +39,12 @@ import static org.testng.Assert.assertEquals;
  * @author Pete Muir
  * @see Config
  */
-public class NotificationTest extends Arquillian {
+public class CacheEventTest extends Arquillian {
 
    @Deployment
    public static Archive<?> deployment() {
       return baseDeployment()
-            .addPackage(NotificationTest.class.getPackage());
+            .addPackage(CacheEventTest.class.getPackage());
    }
 
    /**

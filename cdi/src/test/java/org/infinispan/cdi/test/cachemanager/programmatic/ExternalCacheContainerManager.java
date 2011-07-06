@@ -22,36 +22,26 @@
  */
 package org.infinispan.cdi.test.cachemanager.programmatic;
 
-import org.infinispan.cdi.CacheContainerManager;
-import org.infinispan.cdi.InfinispanExtension;
-import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
+import org.infinispan.cdi.DefaultCacheManagerProducer;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 
+import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Specializes;
-import javax.inject.Inject;
 
+/**
+ * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ */
 @Specializes
-public class ExternalCacheContainerManager extends CacheContainerManager {
+public class ExternalCacheContainerManager extends DefaultCacheManagerProducer {
 
-   private static final EmbeddedCacheManager CACHE_CONTAINER;
-
-   static {
-      Configuration defaultConfiguration = new Configuration();
+   @Override
+   public EmbeddedCacheManager getDefaultCacheManager(@Default Configuration defaultConfiguration) {
       defaultConfiguration.fluent()
             .eviction()
             .maxEntries(7);
 
-      CACHE_CONTAINER = new DefaultCacheManager(defaultConfiguration);
-   }
-
-   // Constructor for proxies only
-   protected ExternalCacheContainerManager() {
-   }
-
-   @Inject
-   public ExternalCacheContainerManager(InfinispanExtension extension, CacheManagerEventBridge eventBridge) {
-      super(registerObservers(CACHE_CONTAINER, extension, eventBridge));
+      return super.getDefaultCacheManager(defaultConfiguration);
    }
 }

@@ -20,9 +20,8 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.defaultcache;
+package org.infinispan.cdi.test.cache.cachemanager;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -31,46 +30,36 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
+import static junit.framework.Assert.assertEquals;
 import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
-import static org.testng.Assert.assertEquals;
+import static org.infinispan.eviction.EvictionStrategy.NONE;
+import static org.infinispan.eviction.EvictionStrategy.UNORDERED;
 
 /**
- * Tests that the default cache is available
- *
- * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class DefaultCacheTest extends Arquillian {
+public class SpecificCacheManagerTest extends Arquillian {
 
    @Deployment
    public static Archive<?> deployment() {
       return baseDeployment()
-            .addPackage(DefaultCacheTest.class.getPackage());
+            .addPackage(SpecificCacheManagerTest.class.getPackage());
    }
 
-   /**
-    * The default cache can be injected with no configuration
-    */
    @Inject
+   private Cache<String, String> defaultCache;
+
+   @Inject
+   @Large
    private Cache<String, String> cache;
 
-   @Inject
-   private AdvancedCache<String, String> advancedCache;
-
    @Test(groups = "functional")
-   public void testDefaultCache() {
-      // Simple test to make sure the default cache works
-      cache.put("pete", "British");
-      cache.put("manik", "Sri Lankan");
-      assertEquals(cache.get("pete"), "British");
-      assertEquals(cache.get("manik"), "Sri Lankan");
-      /*
-       * Check that the advanced cache contains the same data as the simple
-       * cache. As we can inject either Cache or AdvancedCache, this is double
-       * checking that they both refer to the same underlying impl and Seam
-       * Clouds isn't returning the wrong thing.
-       */
-      assertEquals(advancedCache.get("pete"), "British");
-      assertEquals(advancedCache.get("manik"), "Sri Lankan");
-   }
+   public void testSpecificCacheManager() throws Exception {
+      assertEquals(cache.getConfiguration().getEvictionMaxEntries(), 200);
+      assertEquals(cache.getConfiguration().getEvictionStrategy(), UNORDERED);
 
+      // check that default cache has not been modified
+      assertEquals(defaultCache.getConfiguration().getEvictionStrategy(), NONE);
+      assertEquals(defaultCache.getConfiguration().getEvictionMaxEntries(), -1);
+   }
 }

@@ -37,7 +37,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * This annotation is used to define a specific cache {@link Configuration}. This configuration will be registered in
  * the default {@linkplain org.infinispan.manager.CacheContainer CacheContainer} implementation provided by the {@link
- * CacheContainerManager}.
+ * DefaultCacheManagerProducer}.
  *
  * @author Pete Muir
  */

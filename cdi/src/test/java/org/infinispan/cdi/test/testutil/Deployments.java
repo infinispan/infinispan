@@ -44,7 +44,7 @@ public class Deployments {
             .addPackage(CacheManagerEventBridge.class.getPackage())
             .addPackage(CacheResultInterceptor.class.getPackage())
             .addPackage(CacheHelper.class.getPackage())
-            .addAsManifestResource(Deployments.class.getResource("/META-INF/beans.xml"), "beans.xml")
+            .addAsWebInfResource(Deployments.class.getResource("/beans.xml"), "beans.xml")
             .addAsManifestResource(Deployments.class.getResource("/META-INF/services/javax.enterprise.inject.spi.Extension"), "services/javax.enterprise.inject.spi.Extension")
             .addAsLibraries(
                   DependencyResolvers.use(MavenDependencyResolver.class)

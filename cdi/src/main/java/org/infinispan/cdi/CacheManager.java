@@ -39,6 +39,10 @@ import javax.inject.Inject;
 import static org.jboss.seam.solder.bean.Beans.getQualifiers;
 
 /**
+ * <p>This class is responsible to do the {@link Cache} and {@link AdvancedCache} injections. This class used the
+ * <a href="http://docs.jboss.org/seam/3/solder/latest/reference/en-US/html_single/#genericbeans">Generic Beans</a>
+ * mechanism provided by Seam Solder.</p>
+ *
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
@@ -73,7 +77,7 @@ public class CacheManager {
 
    @Produces
    @ApplyScope
-   public <K,V> AdvancedCache<K, V> getAdvancedCache(BeanManager beanManager) {
+   public <K, V> AdvancedCache<K, V> getAdvancedCache(BeanManager beanManager) {
       final String name = infinispan.value();
       Cache<K, V> cache;
 

@@ -20,7 +20,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.configured;
+package org.infinispan.cdi.test.cache.configured;
 
 import org.infinispan.AdvancedCache;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -72,5 +72,4 @@ public class ConfiguredCacheTest extends Arquillian {
       // Check that we have the correctly configured cache
       assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 10);
    }
-
 }

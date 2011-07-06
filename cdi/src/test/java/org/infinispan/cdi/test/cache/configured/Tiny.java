@@ -20,7 +20,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.configured;
+package org.infinispan.cdi.test.cache.configured;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.Documented;
@@ -37,6 +37,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({TYPE, METHOD, PARAMETER, FIELD})
 @Retention(RUNTIME)
 @Documented
-public @interface Small {
+public @interface Tiny {
 
 }

@@ -20,33 +20,36 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.cachemanager.external;
+package org.infinispan.cdi;
 
-import org.infinispan.cdi.Infinispan;
 import org.infinispan.config.Configuration;
 
+import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 
 /**
- * Creates a number of caches, based on come external mechanism as de
+ * <p>This producer is responsible to produce the default configuration used by the default cache manager.</p>
+ * <p>If you want to provide a specific default configuration for the default cache manager follow this steps:
+ * <ol>
+ *    <li>Extend this bean</li>
+ *    <li>Add {@linkplain javax.enterprise.inject.Specializes @Specializes} annotation on your class</li>
+ *    <li>Override the {@link DefaultCacheConfigurationProducer#getDefaultCacheConfiguration()} method.</li>
+ * </ol></p>
  *
  * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class Config {
-
+public class DefaultCacheConfigurationProducer {
    /**
-    * Associate the externally defined "large" cache with the qualifier {@link Large}
+    * <p>This producer is responsible to produce the default configuration used by the default cache manager produced
+    * by the {@link DefaultCacheManagerProducer}.</p>
+    *
+    * @return The default configuration used by the default cache manager.
     */
+   @Default
+   @Infinispan
    @Produces
-   @Infinispan("large")
-   @Large
-   Configuration largeconfiguration;
-
-   /**
-    * Associate the externally defined "quick" cache with the qualifier {@link Quick}
-    */
-   @Produces
-   @Infinispan("quick")
-   @Quick
-   Configuration configuration;
+   public Configuration getDefaultCacheConfiguration() {
+      return new Configuration();
+   }
 }

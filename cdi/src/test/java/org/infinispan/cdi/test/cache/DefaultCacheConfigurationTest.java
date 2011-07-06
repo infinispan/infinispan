@@ -20,44 +20,58 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.cachemanager.programmatic;
+package org.infinispan.cdi.test.cache;
 
-import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.cdi.DefaultCacheConfigurationProducer;
+import org.infinispan.config.Configuration;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Test;
 
+import javax.enterprise.inject.Specializes;
 import javax.inject.Inject;
 
+import static junit.framework.Assert.assertEquals;
 import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
-import static org.testng.Assert.assertEquals;
-
+import static org.infinispan.manager.CacheContainer.DEFAULT_CACHE_NAME;
 
 /**
- * Tests for a cache container defined programatically
+ * Tests that the default cache configuration can be overridden
  *
- * @author Pete Muir
- * @see Config
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class ProgramaticCacheContainerTest extends Arquillian {
+public class DefaultCacheConfigurationTest extends Arquillian {
 
    @Deployment
    public static Archive<?> deployment() {
       return baseDeployment()
-            .addPackage(ProgramaticCacheContainerTest.class.getPackage());
+            .addClass(DefaultCacheConfigurationTest.class);
    }
 
    @Inject
-   @Small
-   private AdvancedCache<?, ?> smallCache;
-
-   @Inject
-   SmallCacheObservers observers;
+   private Cache<String, String> defaultCache;
 
    @Test(groups = "functional")
-   public void testSmallCache() {
-      assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 7);
-      assertEquals(observers.getCacheStartedEventCount(), 1);
+   public void testCustomDefaultCacheConfiguration() {
+      assertEquals(defaultCache.getConfiguration().getEvictionMaxEntries(), 10);
+      assertEquals(defaultCache.getName(), DEFAULT_CACHE_NAME);
+   }
+
+   /**
+    * Use a custom default cache configuration.
+    */
+   @Specializes
+   public static class CustomDefaultCacheConfiguration extends DefaultCacheConfigurationProducer {
+      @Override
+      public Configuration getDefaultCacheConfiguration() {
+         Configuration defaultConfiguration = super.getDefaultCacheConfiguration();
+         defaultConfiguration.fluent()
+               .eviction()
+               .maxEntries(10);
+
+         return defaultConfiguration;
+      }
    }
 }

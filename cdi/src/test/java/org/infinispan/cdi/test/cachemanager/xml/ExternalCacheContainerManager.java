@@ -22,56 +22,47 @@
  */
 package org.infinispan.cdi.test.cachemanager.xml;
 
-import org.infinispan.cdi.CacheContainerManager;
+import org.infinispan.cdi.DefaultCacheManagerProducer;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.seam.solder.resourceLoader.Resource;
 
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Specializes;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 
 @Specializes
-public class ExternalCacheContainerManager extends CacheContainerManager {
+@ApplicationScoped
+public class ExternalCacheContainerManager extends DefaultCacheManagerProducer {
 
-   /**
-    * Create the Cache Container from XML,
-    *
-    * @param xml
-    * @return
-    * @throws IOException
-    */
-   public static CacheContainer createCacheContainer(InputStream xml)
-         throws IOException {
-      // Create the cache container from the XML config, and associate with the
-      // producer fields
-      EmbeddedCacheManager cacheManager = new DefaultCacheManager(xml);
+   @Inject
+   @Resource("infinispan.xml")
+   private InputStream xml;
 
-      // Define the very-large and quick-very-large configuration, based on the
-      // defaults
-      cacheManager.defineConfiguration("very-large", cacheManager
+   private EmbeddedCacheManager externalCacheContainerManager;
+
+   @PostConstruct
+   private void construct() throws IOException {
+      externalCacheContainerManager = new DefaultCacheManager(xml);
+   }
+
+   @Override
+   public EmbeddedCacheManager getDefaultCacheManager(@Default Configuration defaultConfiguration) {
+      // Define the very-large and quick-very-large configuration, based on the defaults
+      externalCacheContainerManager.defineConfiguration("very-large", externalCacheContainerManager
             .getDefaultConfiguration().clone());
 
-      Configuration quickVeryLargeConfiguration = cacheManager
-            .getDefaultConfiguration().clone();
+      Configuration quickVeryLargeConfiguration = externalCacheContainerManager.getDefaultConfiguration().clone();
       quickVeryLargeConfiguration.fluent()
             .eviction()
             .wakeUpInterval(1l);
-      cacheManager.defineConfiguration("quick-very-large",
-                                       quickVeryLargeConfiguration);
-      return cacheManager;
-   }
+      externalCacheContainerManager.defineConfiguration("quick-very-large", quickVeryLargeConfiguration);
 
-   // Constructor for proxies only
-   protected ExternalCacheContainerManager() {
+      return externalCacheContainerManager;
    }
-
-   @Inject
-   public ExternalCacheContainerManager(@Resource("infinispan.xml") InputStream xml) throws IOException {
-      super(createCacheContainer(xml));
-   }
-
 }

@@ -22,21 +22,23 @@
  */
 package org.infinispan.cdi.test.cachemanager.external;
 
-import org.infinispan.cdi.CacheContainerManager;
+import org.infinispan.cdi.DefaultCacheManagerProducer;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 
+import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Specializes;
 
+/**
+ * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ */
 @Specializes
-public class ExternalCacheContainerManager extends CacheContainerManager {
+public class ExternalCacheContainerManager extends DefaultCacheManagerProducer {
 
-   private static final CacheContainer CACHE_CONTAINER;
-
-   static {
-      EmbeddedCacheManager cacheManager = new DefaultCacheManager();
+   @Override
+   public EmbeddedCacheManager getDefaultCacheManager(@Default Configuration defaultConfiguration) {
+      EmbeddedCacheManager externalCacheContainerManager = super.getDefaultCacheManager(defaultConfiguration);
 
       // define large configuration
       Configuration largeConfiguration = new Configuration();
@@ -44,7 +46,7 @@ public class ExternalCacheContainerManager extends CacheContainerManager {
             .eviction()
             .maxEntries(100);
 
-      cacheManager.defineConfiguration("large", largeConfiguration);
+      externalCacheContainerManager.defineConfiguration("large", largeConfiguration);
 
       // define quick configuration
       Configuration quickConfiguration = new Configuration();
@@ -52,12 +54,8 @@ public class ExternalCacheContainerManager extends CacheContainerManager {
             .eviction()
             .wakeUpInterval(1l);
 
-      cacheManager.defineConfiguration("quick", quickConfiguration);
+      externalCacheContainerManager.defineConfiguration("quick", quickConfiguration);
 
-      CACHE_CONTAINER = cacheManager;
-   }
-
-   public ExternalCacheContainerManager() {
-      super(CACHE_CONTAINER);
+      return externalCacheContainerManager;
    }
 }

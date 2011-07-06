@@ -20,26 +20,47 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi;
+package org.infinispan.cdi.test.cache.configured;
 
+import org.infinispan.cdi.Infinispan;
 import org.infinispan.config.Configuration;
 
-import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 
-/**
- * The default cache configuration producer.
- *
- * @author Pete Muir
- */
-public class DefaultCacheProducer {
+public class Config {
+
    /**
-    * Allows the default cache to be injected.
+    * Configure a "tiny" cache (with a very low number of entries), and associate it with the qualifier {@link Tiny}.
+    * <p/>
+    * This will use the default cache container.
     */
    @Produces
-   @Infinispan
-   @Default
-   Configuration getDefaultConfiguration() {
-      return new Configuration();
+   @Infinispan("tiny")
+   @Tiny
+   public Configuration getTinyConfiguration() {
+      Configuration configuration = new Configuration();
+      configuration.fluent()
+            .eviction()
+            .maxEntries(1);
+
+      return configuration;
+   }
+
+   /**
+    * Configure a "small" cache (with a pretty low number of entries), and associate it with the qualifier {@link
+    * Small}.
+    * <p/>
+    * This will use the default cache container.
+    */
+   @Produces
+   @Infinispan("small")
+   @Small
+   public Configuration getSmallConfiguration() {
+      Configuration configuration = new Configuration();
+      configuration.fluent()
+            .eviction()
+            .maxEntries(10);
+
+      return configuration;
    }
 }

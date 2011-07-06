@@ -20,7 +20,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.cachemanager.external;
+package org.infinispan.cdi.test.event;
 
 import org.infinispan.cdi.Infinispan;
 import org.infinispan.config.Configuration;
@@ -28,25 +28,21 @@ import org.infinispan.config.Configuration;
 import javax.enterprise.inject.Produces;
 
 /**
- * Creates a number of caches, based on come external mechanism as de
- *
- * @author Pete Muir
+ * Configure two default caches - we will use both caches to check that events for one don't spill over to the other.
  */
 public class Config {
 
-   /**
-    * Associate the externally defined "large" cache with the qualifier {@link Large}
-    */
    @Produces
-   @Infinispan("large")
-   @Large
-   Configuration largeconfiguration;
+   @Infinispan("cache1")
+   @Cache1
+   public Configuration getTinyConfiguration() {
+      return new Configuration();
+   }
 
-   /**
-    * Associate the externally defined "quick" cache with the qualifier {@link Quick}
-    */
    @Produces
-   @Infinispan("quick")
-   @Quick
-   Configuration configuration;
+   @Infinispan("cache2")
+   @Cache2
+   public Configuration getSmallConfiguration() {
+      return new Configuration();
+   }
 }

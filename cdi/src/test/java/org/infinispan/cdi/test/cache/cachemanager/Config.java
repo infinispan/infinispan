@@ -20,48 +20,41 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.configured;
+package org.infinispan.cdi.test.cache.cachemanager;
 
 import org.infinispan.cdi.Infinispan;
 import org.infinispan.config.Configuration;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
+
+import static org.infinispan.eviction.EvictionStrategy.UNORDERED;
 
 public class Config {
 
-   /**
-    * Configure a "tiny" cache (with a very low number of entries), and associate it with the qualifier {@link Tiny}.
-    * <p/>
-    * This will use the default cache container.
-    */
+   @Large
+   @Infinispan("large")
    @Produces
-   @Infinispan("tiny")
-   @Tiny
-   public Configuration getTinyConfiguration() {
-      Configuration configuration = new Configuration();
-      configuration.fluent()
+   public Configuration largeConfiguration() {
+      Configuration largeConfiguration = new Configuration();
+      largeConfiguration.fluent()
             .eviction()
-            .maxEntries(1);
+            .strategy(UNORDERED);
 
-      return configuration;
+      return largeConfiguration;
    }
 
-   /**
-    * Configure a "small" cache (with a pretty low number of entries), and associate it with the qualifier {@link
-    * Small}.
-    * <p/>
-    * This will use the default cache container.
-    */
+   @Large
    @Produces
-   @Infinispan("small")
-   @Small
-   public Configuration getSmallConfiguration() {
-      Configuration configuration = new Configuration();
-      configuration.fluent()
+   @ApplicationScoped
+   public EmbeddedCacheManager largeCacheManager() {
+      Configuration defaultConfiguration = new Configuration();
+      defaultConfiguration.fluent()
             .eviction()
-            .maxEntries(10);
+            .maxEntries(200);
 
-      return configuration;
+      return new DefaultCacheManager(defaultConfiguration);
    }
-
 }
