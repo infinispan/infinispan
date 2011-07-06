@@ -26,13 +26,13 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
 import java.util.*;
-import static java.lang.Math.*;
 import java.util.concurrent.TimeUnit;
+
+import static java.lang.Math.*;
 
 /**
  * Tests the uniformity of the distribution hash algo.
@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  * @author Manik Surtani
  * @since 4.0
  */
-@Test(testName = "distribution.ConsistentHashPerfTest", groups = "manual")
+@Test(testName = "distribution.ConsistentHashPerfTest", groups = "manual", description = "Disabled until we can configure Surefire to skip manual tests")
 public class ConsistentHashPerfTest extends AbstractInfinispanTest {
 
    private Set<Address> createAddresses(int numNodes) {
