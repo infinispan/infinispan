@@ -23,41 +23,47 @@
 package org.infinispan.cdi.interceptors;
 
 import org.infinispan.Cache;
-import org.infinispan.cdi.util.Contracts;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 import javax.cache.CacheException;
 import javax.cache.interceptor.CacheRemoveAll;
 import javax.cache.interceptor.CacheRemoveEntry;
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Instance;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import java.lang.reflect.Method;
 
 import static org.infinispan.cdi.util.CacheHelper.getDefaultMethodCacheName;
+import static org.infinispan.cdi.util.Contracts.assertNotNull;
 
 /**
- * <p>This is the default cache resolver implementation.</p>
- * <p>This resolver uses the algorithm defined by JSR-107. If the given cache name is not specified the default cache
- * name used for resolution is the fully qualified name of the annotated method. If method is annotated with
- * {@link CacheRemoveAll} or {@link CacheRemoveEntry} and the cache name is not specified a {@link CacheException}
- * is thrown.</p>
+ * <p>This is the default cache resolver implementation.</p> <p>This resolver uses the algorithm defined by JSR-107. If
+ * the given cache name is not specified the default cache name used for resolution is the fully qualified name of the
+ * annotated method. If method is annotated with {@link CacheRemoveAll} or {@link CacheRemoveEntry} and the cache name
+ * is not specified a {@link CacheException} is thrown.</p>
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class DefaultCacheResolver implements CacheResolver {
 
-   private final CacheContainer cacheContainer;
+   private final EmbeddedCacheManager defaultCacheManager;
+   private final Instance<EmbeddedCacheManager> cacheManagers;
 
    @Inject
-   public DefaultCacheResolver(CacheContainer cacheContainer) {
-      this.cacheContainer = cacheContainer;
+   public DefaultCacheResolver(@Any Instance<EmbeddedCacheManager> cacheManagers) {
+      this.cacheManagers = cacheManagers;
+      this.defaultCacheManager = cacheManagers.select(new AnnotationLiteral<Default>(){}).get();
    }
 
    @Override
    public <K, V> Cache<K, V> resolveCache(String cacheName, Method method) {
-      Contracts.assertNotNull(cacheName, "cacheName parameter cannot be null");
-      Contracts.assertNotNull(method, "method parameter cannot be null");
+      assertNotNull(cacheName, "cacheName parameter cannot be null");
+      assertNotNull(method, "method parameter cannot be null");
 
       // TODO KP: Not sure if an exception has to be thrown?
+      // TODO KP: Maybe this check can be done at deployment?
       // The spec says: How interpret this Unlike @CacheResult, @CacheEntryRemove there are not automatic cache names
       // for remove cache.
       if (cacheName.isEmpty() &&
@@ -67,7 +73,19 @@ public class DefaultCacheResolver implements CacheResolver {
                                         "CacheRemoveEntry doesn't specify a cache name");
       }
 
+
       String name = cacheName.isEmpty() ? getDefaultMethodCacheName(method) : cacheName;
-      return cacheContainer.getCache(name);
+
+      // here we need to iterate on all cache managers because the cache used by the interceptor could use a specific
+      // cache manager.
+      for (EmbeddedCacheManager oneCacheManager : cacheManagers) {
+         if (oneCacheManager.getCacheNames().contains(name)) {
+            return oneCacheManager.getCache(name);
+         }
+      }
+
+      // by default, if the cache has not been defined in the default cache manager or in a specific one a new cache is
+      // created in the default cache manager with the default configuration.
+      return defaultCacheManager.getCache(name);
    }
 }

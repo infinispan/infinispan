@@ -15,12 +15,14 @@ public class GreetingService {
    private int sayHelloCount;
    private int sayHeyCount;
    private int sayHiCount;
+   private int sayBonjourCount;
 
    public GreetingService() {
       this.sayMorningCount = 0;
       this.sayHelloCount = 0;
       this.sayHeyCount = 0;
       this.sayHiCount = 0;
+      this.sayBonjourCount = 0;
    }
 
    @CacheResult
@@ -47,6 +49,12 @@ public class GreetingService {
       return "Hi " + user;
    }
 
+   @CacheResult(cacheName = "small")
+   public String sayBonjour(String user) {
+      sayBonjourCount++;
+      return "Bonjour " + user;
+   }
+
    public int getSayHelloCount() {
       return sayHelloCount;
    }
@@ -61,5 +69,9 @@ public class GreetingService {
 
    public int getSayMorningCount() {
       return sayMorningCount;
+   }
+
+   public int getSayBonjourCount() {
+      return sayBonjourCount;
    }
 }

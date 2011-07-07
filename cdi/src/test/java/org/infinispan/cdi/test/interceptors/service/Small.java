@@ -22,38 +22,23 @@
  */
 package org.infinispan.cdi.test.interceptors.service;
 
-import org.infinispan.cdi.Infinispan;
-import org.infinispan.config.Configuration;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
+import javax.inject.Qualifier;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Produces;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class Config {
-
-   @Custom
-   @Infinispan("custom")
-   @Produces
-   Configuration getCustomConfiguration;
-
-   @Small
-   @Infinispan("small")
-   @Produces
-   Configuration getSmallConfiguration;
-
-   @Small
-   @Produces
-   @ApplicationScoped
-   EmbeddedCacheManager getSmallCacheManager(@Default Configuration defaultConfiguration) {
-      defaultConfiguration.fluent()
-            .eviction()
-            .maxEntries(4);
-
-      return new DefaultCacheManager(defaultConfiguration);
-   }
+@Qualifier
+@Target({TYPE, METHOD, PARAMETER, FIELD})
+@Retention(RUNTIME)
+@Documented
+public @interface Small {
 }

@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.cdi.test.interceptors.service.ComputationService;
 import org.infinispan.cdi.test.interceptors.service.Custom;
 import org.infinispan.cdi.test.interceptors.service.GreetingService;
+import org.infinispan.cdi.test.interceptors.service.Small;
 import org.infinispan.cdi.test.interceptors.service.generator.CustomCacheKey;
 import org.infinispan.cdi.test.interceptors.service.generator.CustomCacheKeyGenerator;
 import org.infinispan.manager.CacheContainer;
@@ -50,6 +51,10 @@ public class CacheResultInterceptorTest extends Arquillian {
    @Inject
    @Custom
    private Cache<CacheKey, String> customCache;
+
+   @Inject
+   @Small
+   private Cache<CacheKey, String> smallCache;
 
    @BeforeMethod(groups = "functional")
    public void setUp() {
@@ -123,6 +128,24 @@ public class CacheResultInterceptorTest extends Arquillian {
       assertEquals(cache.size(), 1);
 
       assertEquals(greetingService.getSayHeyCount(), 2);
+   }
+
+   @Test(groups = "functional")
+   public void testCacheResultWithSpecificCacheManager() {
+      String message = greetingService.sayBonjour("Pete");
+
+      assertNotNull(message);
+      assertEquals("Bonjour Pete", message);
+      assertEquals(smallCache.size(), 1);
+
+      message = greetingService.sayBonjour("Pete");
+      assertNotNull(message);
+      assertEquals("Bonjour Pete", message);
+      assertEquals(smallCache.size(), 1);
+
+      assertEquals(greetingService.getSayBonjourCount(), 1);
+      assertEquals(smallCache.size(), 1);
+      assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 4);
    }
 
    @Test(groups = "functional")
