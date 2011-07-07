@@ -46,7 +46,7 @@ import javax.enterprise.inject.Produces;
  */
 public class DefaultCacheManagerProducer {
    /**
-    * <p>Produces the default cache manager used.<p>
+    * <p>Produces the default cache manager.<p>
     * <p>Note: there is only one instance of the default cache manager per application.</p>
     *
     * @param defaultConfiguration the default cache configuration produced by the {@link DefaultCacheConfigurationProducer}.

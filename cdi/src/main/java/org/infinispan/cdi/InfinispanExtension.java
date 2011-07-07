@@ -45,7 +45,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * <p>The Infinspan CDI extension class.</p>
+ * <p>The Infinispan CDI extension class.</p>
  *
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI

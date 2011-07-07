@@ -39,7 +39,7 @@ import javax.inject.Inject;
 import static org.jboss.seam.solder.bean.Beans.getQualifiers;
 
 /**
- * <p>This class is responsible to do the {@link Cache} and {@link AdvancedCache} injections. This class used the
+ * <p>This class is responsible to produce the {@link Cache} and {@link AdvancedCache}. This class use the
  * <a href="http://docs.jboss.org/seam/3/solder/latest/reference/en-US/html_single/#genericbeans">Generic Beans</a>
  * mechanism provided by Seam Solder.</p>
  *
