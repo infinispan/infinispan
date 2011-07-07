@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+   <version>1-SNAPSHOT</version>
+   <modelVersion>4.0.0</modelVersion>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-license</artifactId>
+   <name>Infinispan License Bundle</name>
+   
+   <properties>
+      <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
+      <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
+   </properties>
+
+   <build>
+      <plugins>
+         <plugin>
+            <artifactId>maven-remote-resources-plugin</artifactId>
+            <version>1.1</version>
+            <executions>
+               <execution>
+                  <id>generate-license-bundle</id>
+                  <goals>
+                     <goal>bundle</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
+   
+   <!-- SCM and Distribution Management -->
+
+   <scm>
+      <connection>scm:git:git://github.com/infinispan/infinispan.git</connection>
+      <developerConnection>scm:git:git://github.com/infinispan/infinispan.git</developerConnection>
+      <url>scm:git:git://github.com/infinispan/infinispan.git</url>
+   </scm>
+
+   <distributionManagement>
+      <repository>
+         <id>jboss-releases-repository</id>
+         <name>JBoss Releases Repository</name>
+         <url>${jboss.releases.repo.url}</url>
+      </repository>
+      <snapshotRepository>
+         <id>jboss-snapshots-repository</id>
+         <name>JBoss Snapshots Repository</name>
+         <url>${jboss.snapshots.repo.url}</url>
+      </snapshotRepository>
+   </distributionManagement>
+   
+
+</project>
