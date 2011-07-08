@@ -42,15 +42,28 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    private static final Log log = LogFactory.getLog(DummyInMemoryCacheStore.class);
    private static final boolean trace = log.isTraceEnabled();
    static final ConcurrentMap<String, Map<Object, InternalCacheEntry>> stores = new ConcurrentHashMap<String, Map<Object, InternalCacheEntry>>();
-   static final ConcurrentMap<String, Map<String, Integer>> storeStats = new ConcurrentHashMap<String, Map<String, Integer>>();
+   static final ConcurrentMap<String, ConcurrentMap<String, Integer>> storeStats =
+         new ConcurrentHashMap<String, ConcurrentMap<String, Integer>>();
    String storeName;
    Map<Object, InternalCacheEntry> store;
-   Map<String, Integer> stats;
+   // When a store is 'shared', multiple nodes could be trying to update it concurrently.
+   ConcurrentMap<String, Integer> stats;
    Cfg config;
 
    private void record(String method) {
-      int i = stats.get(method);
-      stats.put(method, i + 1);
+      boolean replaced;
+      long end = System.currentTimeMillis() + 5000;
+      do {
+         int i = stats.get(method);
+         replaced = stats.replace(method, i, i + 1);
+         if (!replaced) {
+            try {
+               Thread.sleep(200);
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+            }
+         }
+      } while (!replaced && end < System.currentTimeMillis());
    }
 
    @Override
@@ -210,7 +223,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
             log.debugf("Creating new in-memory cache store %s", storeName);
          }
 
-         Map<String, Integer> existingStats = storeStats.putIfAbsent(storeName, stats);
+         ConcurrentMap<String, Integer> existingStats = storeStats.putIfAbsent(storeName, stats);
          if (existing != null) {
             stats = existingStats;
          }
@@ -220,8 +233,8 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       record("start");
    }
 
-   private Map<String, Integer> newStatsMap() {
-      Map<String, Integer> m = new ConcurrentHashMap<String, Integer>();
+   private ConcurrentMap<String, Integer> newStatsMap() {
+      ConcurrentMap<String, Integer> m = new ConcurrentHashMap<String, Integer>();
       for (Method method: CacheStore.class.getMethods()) {
          m.put(method.getName(), 0);
       }

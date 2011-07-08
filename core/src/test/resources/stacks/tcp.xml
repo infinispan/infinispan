@@ -25,7 +25,7 @@
         xsi:schemaLocation="urn:org:jgroups file:schema/JGroups-2.8.xsd">
    <TCP bind_port="7800"
         loopback="true"
-        port_range="30"
+        port_range="60"
         recv_buf_size="20000000"
         send_buf_size="640000"
         discard_incompatible_packets="true"
@@ -52,12 +52,14 @@
         oob_thread_pool.queue_max_size="100"
         oob_thread_pool.rejection_policy="Run"/>
 
+   <org.infinispan.test.fwk.TEST_PING timeout="250" ergonomics="false" testName=""/>
+
    <!-- Ergonomics, new in JGroups 2.11, are disabled by default until JGRP-1253 is resolved -->
-   <TCPPING timeout="3000"
-            initial_hosts="localhost[7800]"
-            port_range="3"
-            ergonomics="false"
-	/>
+   <!--<TCPPING timeout="3000"-->
+            <!--initial_hosts="localhost[7800]"-->
+            <!--port_range="3"-->
+            <!--ergonomics="false"-->
+	<!--/>-->
 
    <!--<MPING bind_addr="127.0.0.1" break_on_coord_rsp="true"-->
    <!--mcast_addr="230.8.8.8" mcast_port="17890" ip_ttl="2"-->
