@@ -30,12 +30,16 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
-import static junit.framework.Assert.assertEquals;
 import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
+import static org.infinispan.eviction.EvictionStrategy.FIFO;
 import static org.infinispan.eviction.EvictionStrategy.NONE;
-import static org.infinispan.eviction.EvictionStrategy.UNORDERED;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 /**
+ * Tests that a specific cache manager can be used for one or more caches.
+ *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class SpecificCacheManagerTest extends Arquillian {
@@ -51,15 +55,29 @@ public class SpecificCacheManagerTest extends Arquillian {
 
    @Inject
    @Large
-   private Cache<String, String> cache;
+   private Cache<String, String> largeCache;
+
+   @Inject
+   @Small
+   private Cache<String, String> smallCache;
 
    @Test(groups = "functional")
    public void testSpecificCacheManager() throws Exception {
-      assertEquals(cache.getConfiguration().getEvictionMaxEntries(), 200);
-      assertEquals(cache.getConfiguration().getEvictionStrategy(), UNORDERED);
+      assertEquals(largeCache.getConfiguration().getEvictionMaxEntries(), 2000);
+      assertEquals(largeCache.getConfiguration().getEvictionStrategy(), FIFO);
+      assertEquals(largeCache.getCacheManager().getDefaultConfiguration().getEvictionStrategy(), FIFO);
 
-      // check that default cache has not been modified
+      assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 20);
+      assertEquals(smallCache.getConfiguration().getEvictionStrategy(), FIFO);
+      assertEquals(smallCache.getCacheManager().getDefaultConfiguration().getEvictionStrategy(), FIFO);
+
+      // asserts that the small and large cache are defined in the same cache manager
+      assertTrue(smallCache.getCacheManager().equals(largeCache.getCacheManager()));
+      assertFalse(smallCache.getCacheManager().equals(defaultCache.getCacheManager()));
+
+      // check that default cache configuration has not been modified
       assertEquals(defaultCache.getConfiguration().getEvictionStrategy(), NONE);
       assertEquals(defaultCache.getConfiguration().getEvictionMaxEntries(), -1);
+      assertEquals(defaultCache.getCacheManager().getDefaultConfiguration().getEvictionStrategy(), NONE);
    }
 }

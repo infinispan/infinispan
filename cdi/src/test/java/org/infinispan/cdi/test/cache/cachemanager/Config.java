@@ -30,30 +30,43 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 
-import static org.infinispan.eviction.EvictionStrategy.UNORDERED;
+import static org.infinispan.eviction.EvictionStrategy.FIFO;
 
 public class Config {
 
    @Large
    @Infinispan("large")
    @Produces
-   public Configuration largeConfiguration() {
+   Configuration largeConfiguration() {
       Configuration largeConfiguration = new Configuration();
       largeConfiguration.fluent()
             .eviction()
-            .strategy(UNORDERED);
+            .maxEntries(2000);
+
+      return largeConfiguration;
+   }
+
+   @Small
+   @Infinispan("small")
+   @Produces
+   Configuration smallConfiguration() {
+      Configuration largeConfiguration = new Configuration();
+      largeConfiguration.fluent()
+            .eviction()
+            .maxEntries(20);
 
       return largeConfiguration;
    }
 
    @Large
+   @Small
    @Produces
    @ApplicationScoped
-   public EmbeddedCacheManager largeCacheManager() {
+   EmbeddedCacheManager specificCacheManager() {
       Configuration defaultConfiguration = new Configuration();
       defaultConfiguration.fluent()
             .eviction()
-            .maxEntries(200);
+            .strategy(FIFO);
 
       return new DefaultCacheManager(defaultConfiguration);
    }
