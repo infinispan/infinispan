@@ -29,6 +29,8 @@ import javax.cache.interceptor.CacheKeyGenerator;
 import javax.interceptor.InvocationContext;
 import java.lang.reflect.Method;
 
+import static org.infinispan.cdi.util.Contracts.assertNotNull;
+
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
@@ -47,7 +49,7 @@ public final class CacheHelper {
     * @return The default cache name for the given method.
     */
    public static String getDefaultMethodCacheName(Method method) {
-      Contracts.assertNotNull(method, "method parameter cannot be null");
+      assertNotNull(method, "method parameter cannot be null");
 
       int i = 0;
       int nbParameters = method.getParameterTypes().length;
@@ -80,8 +82,8 @@ public final class CacheHelper {
     * @return An instance of {@code CacheKey} for the given {@code InvocationContext}.
     */
    public static CacheKey generateCacheKey(Class<? extends CacheKeyGenerator> cacheKeyGeneratorClass, InvocationContext context) {
-      Contracts.assertNotNull(cacheKeyGeneratorClass, "cacheKeyGeneratorClass parameter cannot be null");
-      Contracts.assertNotNull(context, "context parameter cannot be null");
+      assertNotNull(cacheKeyGeneratorClass, "cacheKeyGeneratorClass parameter cannot be null");
+      assertNotNull(context, "context parameter cannot be null");
 
       try {
 
