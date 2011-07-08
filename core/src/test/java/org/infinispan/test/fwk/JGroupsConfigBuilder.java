@@ -87,6 +87,7 @@ public class JGroupsConfigBuilder {
    private static final Pattern TCP_INITIAL_HOST = Pattern.compile("initial_hosts=[^;]*");
    private static final Pattern UDP_MCAST_ADDRESS = Pattern.compile("mcast_addr=[^;]*");
    private static final Pattern UDP_MCAST_PORT = Pattern.compile("mcast_port=[^;]*");
+   private static final Pattern TEST_NAME = Pattern.compile("testName=[^;]*");
 
    static {
       JGROUPS_STACK = LegacyKeySupportSystemProperties.getProperty("infinispan.test.jgroups.protocol", "protocol.stack", "tcp");
@@ -98,19 +99,33 @@ public class JGroupsConfigBuilder {
       }
    }
 
-   public static String getJGroupsConfig() {
-      if (JGROUPS_STACK.equalsIgnoreCase("tcp")) return getTcpConfig();
-      if (JGROUPS_STACK.equalsIgnoreCase("udp")) return getUdpConfig();
+   public static String getJGroupsConfig(String fullTestName) {
+      if (JGROUPS_STACK.equalsIgnoreCase("tcp")) return getTcpConfig(fullTestName);
+      if (JGROUPS_STACK.equalsIgnoreCase("udp")) return getUdpConfig(fullTestName);
       throw new IllegalStateException("Unknown protocol stack : " + JGROUPS_STACK);
    }
 
-   public static String getTcpConfig() {
+   public static String getTcpConfig(String fullTestName) {
       loadTcp();
 
       if (tcpConfig.contains("TCPPING")) {
          return getTcpConfigWithTCPPINGDiscovery();
+      } if (tcpConfig.contains("TEST_PING")) {
+         if (fullTestName == null)
+            return tcpConfig; // IDE run of test
+         else
+            return getTestPingDiscovery(fullTestName, tcpConfig); // Cmd line test run
       } else {
          return replaceMCastAddressAndPort(tcpConfig);
+      }
+   }
+
+   private static String getTestPingDiscovery(String fullTestName, String transportCfg) {
+      Matcher m = TEST_NAME.matcher(transportCfg);
+      if (m.find()) {
+         return m.replaceFirst("testName=" + fullTestName);
+      } else {
+         throw new IllegalStateException();
       }
    }
 
@@ -138,10 +153,16 @@ public class JGroupsConfigBuilder {
       return result;
    }
 
-   public static String getUdpConfig() {
+   public static String getUdpConfig(String fullTestName) {
       loadUdp();
       // replace mcast_addr
       String config = udpConfig;
+
+      if (config.contains("TEST_PING")) {
+         if (fullTestName != null)
+            config = getTestPingDiscovery(fullTestName, config); // Cmd line test run
+      }
+
       return replaceMCastAddressAndPort(config);
    }
 

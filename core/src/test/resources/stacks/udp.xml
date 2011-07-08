@@ -57,7 +57,9 @@
          oob_thread_pool.queue_max_size="100"
          oob_thread_pool.rejection_policy="Run"/>
 
-   <PING timeout="3000" num_initial_members="3"/>
+   <org.infinispan.test.fwk.TEST_PING timeout="250" ergonomics="false" testName=""/>
+
+   <!--<PING timeout="3000" num_initial_members="3"/>-->
    <MERGE2 max_interval="30000" min_interval="10000"/>
    <FD_SOCK/>
    <FD_ALL/>   
