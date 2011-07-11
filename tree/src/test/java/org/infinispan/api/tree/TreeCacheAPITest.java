@@ -30,7 +30,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TransactionSetup;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
 import org.infinispan.tree.NodeKey;
@@ -38,14 +37,13 @@ import org.infinispan.tree.TreeCache;
 import org.infinispan.tree.TreeCacheImpl;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import static org.testng.AssertJUnit.*;
-
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.testng.AssertJUnit.*;
 
 /**
  * Tests the {@link TreeCache} public API at a high level
@@ -71,6 +69,20 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
 
       tm = TestingUtil.getTransactionManager(flatcache);
       return cm;
+   }
+
+   public void testGetData() {
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key1","TRADE1");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key2","TRADE2");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key3","TRADE3");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key4","TRADE4");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key5","TRADE5");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key6","TRADE6");
+      cache.put(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key7","TRADE7");
+      Object object = cache.get(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")),"key7");
+      assertNotNull(object);
+      Map<String, String> data = cache.getData(Fqn.fromRelativeFqn(Fqn.fromString("STATUS"), Fqn.fromString("TRADE")));
+      assertNotNull(data);
    }
 
    public void testConvenienceMethods() {
