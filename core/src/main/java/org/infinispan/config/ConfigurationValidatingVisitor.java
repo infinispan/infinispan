@@ -39,6 +39,7 @@ import java.util.Set;
  */
 public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVisitor {
    private TransportType tt = null;
+   private boolean evictionEnabled = false;
 
    @Override
    public void visitSingletonStoreConfig(SingletonStoreConfig ssc) {
@@ -98,6 +99,9 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
 
    @Override
    public void visitCacheLoaderManagerConfig(CacheLoaderManagerConfig cacheLoaderManagerConfig) {
+      if (!evictionEnabled && cacheLoaderManagerConfig.isPassivation())
+         throw new ConfigurationException("Passivation configured without a valid eviction policy.  This would mean that the cache store will never get used.");
+
       boolean shared = cacheLoaderManagerConfig.isShared();
       if (!shared) {
          for (CacheLoaderConfig loaderConfig : cacheLoaderManagerConfig.getCacheLoaderConfigs()) {
@@ -114,6 +118,7 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
    }
 
    public void visitEvictionType(EvictionType et) {
+      evictionEnabled = et.strategy.isEnabled();
       if (et.strategy.isEnabled() && et.maxEntries <= 0)
          throw new ConfigurationException("Eviction maxEntries value cannot be less than or equal to zero if eviction is enabled");
    }
