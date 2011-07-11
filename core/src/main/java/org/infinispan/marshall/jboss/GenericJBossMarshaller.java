@@ -73,6 +73,9 @@ public class GenericJBossMarshaller extends AbstractMarshaller {
 
    public GenericJBossMarshaller() {
       factory = Marshalling.getMarshallerFactory("river", Marshalling.class.getClassLoader());
+      if (factory == null)
+         throw new IllegalStateException(
+            "River marshaller factory not found.  Verify that the JBoss Marshalling River jar archive is in the classpath.");
 
       configuration = new MarshallingConfiguration();
       configuration.setCreator(new SunReflectiveCreator());
