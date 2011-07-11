@@ -241,13 +241,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
             Flag.FAIL_SILENTLY, Flag.ZERO_LOCK_ACQUISITION_TIMEOUT)
                  .replace("view", currentView, newView)
 
-         val replaced = topologyCache.replace("view", currentView, newView)
-         if (isDebug && !replaced) {
-            debug("Attempt to update topology view failed due to a concurrent modification. " +
-                  "Ignoring since logic to deal with crashed members will deal with it.")
-         } else if (isDebug) {
-            debug("Removed %s from topology view, new view is %s", address, newView)
-         }
+         if (isDebug)
+            debug("Attempted to update topology view (%s) on best-effort", newView)
       }
    }
 
