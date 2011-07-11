@@ -138,14 +138,18 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    @Override
    public Object handle(Message req) {
       if (isValid(req)) {
+         ReplicableCommand cmd = null;
          try {
-            ReplicableCommand cmd = (ReplicableCommand) req_marshaller.objectFromByteBuffer(req.getBuffer(), req.getOffset(), req.getLength());
+            cmd = (ReplicableCommand) req_marshaller.objectFromByteBuffer(req.getBuffer(), req.getOffset(), req.getLength());
             if (cmd instanceof CacheRpcCommand)
                return executeCommand((CacheRpcCommand) cmd, req);
             else
                return cmd.perform(null);
          } catch (Throwable x) {
-            if (trace) log.trace("Problems invoking command.", x);
+            if (cmd == null)
+               log.warnf(x, "Problems unmarshalling remote command from byte buffer");
+            else
+               log.warnf(x, "Problems invoking command %s", cmd);
             return new ExceptionResponse(new CacheException("Problems invoking command.", x));
          }
       } else {
