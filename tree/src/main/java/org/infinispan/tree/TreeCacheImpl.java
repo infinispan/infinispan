@@ -371,7 +371,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       startAtomic();
       try {
          Node<K, V> node = getNode(fqn);
-         if (node != null)
+         if (node == null)
             return null;
          else
             return node.getKeys();
