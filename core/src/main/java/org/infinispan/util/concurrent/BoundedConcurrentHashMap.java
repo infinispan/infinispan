@@ -304,6 +304,12 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             return new LRU<K, V>(s,capacity,lf,capacity*10,lf);
          }
       },
+      LRU_OLD {
+         @Override
+         public <K, V> EvictionPolicy<K, V> make(Segment<K, V> s, int capacity, float lf) {
+            return new LRUOld<K, V>(s,capacity,lf,capacity*10,lf);
+         }
+      },
       LIRS {
          @Override
          public <K, V> EvictionPolicy<K, V> make(Segment<K, V> s, int capacity, float lf) {
@@ -439,7 +445,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       }
    }
 
-   static final class LRU<K, V> implements EvictionPolicy<K, V> {
+   static final class LRUOld<K, V> implements EvictionPolicy<K, V> {
       private final ConcurrentLinkedQueue<HashEntry<K, V>> accessQueue;
       private final Segment<K,V> segment;
       private final LinkedList<HashEntry<K, V>> lruQueue;
@@ -447,7 +453,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       private final int trimDownSize;
       private final float batchThresholdFactor;
 
-      public LRU(Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
+      public LRUOld(Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
          this.segment = s;
          this.trimDownSize = (int) (capacity * lf);
          this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
@@ -524,7 +530,109 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
       @Override
       public Eviction strategy() {
+         return Eviction.LRU_OLD;
+      }
+   }
+   
+   static final class LRU<K, V> extends LinkedHashMap<HashEntry<K,V>, V> implements EvictionPolicy<K, V> {
+      
+      /** The serialVersionUID */
+      private static final long serialVersionUID = -7645068174197717838L;
+      
+      private final ConcurrentLinkedQueue<HashEntry<K, V>> accessQueue;
+      private final Segment<K,V> segment;
+      private final int maxBatchQueueSize;
+      private final int trimDownSize;
+      private final float batchThresholdFactor;
+      private final Set<HashEntry<K, V>> evicted;
+
+      public LRU(Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
+         super(capacity/2);
+         this.segment = s;
+         this.trimDownSize = (int)(capacity*lf);
+         this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
+         this.batchThresholdFactor = batchThresholdFactor;
+         this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
+         this.evicted = new HashSet<HashEntry<K, V>>();
+      }
+
+      @Override
+      public Set<HashEntry<K, V>> execute() {
+         Set<HashEntry<K, V>> evictedCopy = new HashSet<HashEntry<K, V>>();
+         for (HashEntry<K, V> e : accessQueue) {
+            put(e, e.value);
+         }
+         evictedCopy.addAll(evicted);
+         accessQueue.clear();
+         evicted.clear();
+         return evictedCopy;
+      }
+
+      
+
+      @Override
+      public Set<HashEntry<K, V>> onEntryMiss(HashEntry<K, V> e) {
+         put(e, e.value);
+         if (!evicted.isEmpty()) {
+            Set<HashEntry<K, V>> evictedCopy = new HashSet<HashEntry<K, V>>();
+            evictedCopy.addAll(evicted);
+            evicted.clear();
+            return evictedCopy;
+         } else {
+            return Collections.emptySet();
+         }
+      }
+
+      /*
+       * Invoked without holding a lock on Segment
+       */
+      @Override
+      public boolean onEntryHit(HashEntry<K, V> e) {
+         accessQueue.add(e);
+         return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
+      }
+
+      /*
+       * Invoked without holding a lock on Segment
+       */
+      @Override
+      public boolean thresholdExpired() {
+         return accessQueue.size() >= maxBatchQueueSize;
+      }
+
+      @Override
+      public void onEntryRemove(HashEntry<K, V> e) {
+         remove(e);
+         // we could have multiple instances of e in accessQueue; remove them all
+         while (accessQueue.remove(e)) {
+            continue;
+         }
+      }
+
+      @Override
+      public void clear() {    
+         super.clear();
+         accessQueue.clear();
+      }
+
+      @Override
+      public Eviction strategy() {
          return Eviction.LRU;
+      }
+      
+      protected boolean isAboveThreshold(){
+         return size() > trimDownSize;
+      }
+      
+      protected boolean removeEldestEntry(Entry<HashEntry<K,V>,V> eldest){        
+         boolean aboveThreshold = isAboveThreshold();
+         if(aboveThreshold){
+            HashEntry<K, V> evictedEntry = eldest.getKey();         
+            segment.evictionListener.onEntryChosenForEviction(evictedEntry.value);
+            segment.remove(evictedEntry.key, evictedEntry.hash, null);
+            evicted.add(evictedEntry);
+         }
+         return aboveThreshold;
       }
    }
 

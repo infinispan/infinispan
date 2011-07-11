@@ -42,6 +42,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -50,186 +51,202 @@ import org.testng.annotations.Test;
  * @author Manik Surtani
  * @since 4.0
  */
-@Test(testName = "stress.MapStressTest", groups = "stress", enabled = false, description = "Disabled by default, designed to be run manually.")
+@Test(testName = "stress.MapStressTest", groups = "stress", enabled = false, description = "Run manually")
 public class MapStressTest {
-    volatile CountDownLatch latch;
-    final int MAP_CAPACITY = 512;
-    final float MAP_LOAD_FACTOR = 0.75f;
-    final int CONCURRENCY = 32;
-    
-    final int NUM_KEYS = 50 * 1000;
-    final int LOOP_FACTOR = 20;
-    
-    final long RUNNING_TIME = 30 * 1000;
-    
-    private List<Integer> readOps = new ArrayList<Integer>(NUM_KEYS*LOOP_FACTOR);
-    private List<Integer> writeOps = new ArrayList<Integer>(NUM_KEYS*LOOP_FACTOR);
-    private List<Integer> removeOps = new ArrayList<Integer>(NUM_KEYS*LOOP_FACTOR);
-    
-    private static final Random RANDOM_READ = new Random(12345);
-    private static final Random RANDOM_WRITE = new Random(34567);
-    private static final Random RANDOM_REMOVE = new Random(56789);
+   volatile CountDownLatch latch;
+   final int CONCURRENCY = 512;
+   final int NUM_KEYS = 1200000; // 1.2 milion entries
+   final long RUNNING_TIME = 1 * 60 * 1000; // 1 minute
 
-    @BeforeClass
-    private void generateArraysForOps() {
-        for(int i = 0;i<NUM_KEYS*LOOP_FACTOR;i++) {
-            readOps.add(RANDOM_READ.nextInt(NUM_KEYS));
-            writeOps.add(RANDOM_WRITE.nextInt(NUM_KEYS));
-            removeOps.add(RANDOM_REMOVE.nextInt(NUM_KEYS));
-        }
-    }
-    
-    public void testConcurrentHashMap() throws Exception {
-        doTest(new ConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, CONCURRENCY));
-    }
-   
-    public void testBufferedConcurrentHashMapLRU() throws Exception {
-        doTest(new BoundedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, CONCURRENCY, Eviction.LRU));
-    }
-    
-    public void testBufferedConcurrentHashMapLIRS() throws Exception {
-        doTest(new BoundedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, CONCURRENCY, Eviction.LIRS));
-    }
+   private List<Integer> readOps = new ArrayList<Integer>(NUM_KEYS);
+   private List<Integer> writeOps = new ArrayList<Integer>(NUM_KEYS);
+   private List<Integer> removeOps = new ArrayList<Integer>(NUM_KEYS);
 
-    public void testHashMap() throws Exception {
-        doTest(Collections.synchronizedMap(new HashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR)));
-    }
+   private static final Random RANDOM_READ = new Random(12345);
+   private static final Random RANDOM_WRITE = new Random(34567);
+   private static final Random RANDOM_REMOVE = new Random(56789);
 
-    private void doTest(final Map<Integer, Integer> map) throws Exception {
-        //total threads = 27+3+2=32=CONCURRENCY
-        doTest(map, 27, 3, 2, RUNNING_TIME);
-    }
-    
-    public void testCache() throws Exception {
-       doTest(configureAndBuildCache());
-    }
-    
-    private Cache<Integer,Integer> configureAndBuildCache(){
-       Configuration config = new Configuration().fluent().eviction().maxEntries(MAP_CAPACITY).strategy(EvictionStrategy.LRU)
-         .wakeUpInterval(5000L)
-         .expiration()
-         .maxIdle(120000L)
-         .build();
-       
-       DefaultCacheManager cm = new DefaultCacheManager(GlobalConfiguration.getNonClusteredDefault(),config); 
-       cm.start();
-       return cm.getCache();
-    }
+   @BeforeClass
+   @SuppressWarnings("unused")
+   private void generateArraysForOps() {
+      for (int i = 0; i < NUM_KEYS; i++) {
+         readOps.add(RANDOM_READ.nextInt(NUM_KEYS));
+         writeOps.add(RANDOM_WRITE.nextInt(NUM_KEYS));
+         removeOps.add(RANDOM_REMOVE.nextInt(NUM_KEYS));
+      }
+   }
 
-    private void doTest(final Map<Integer, Integer> map, int numReaders, int numWriters,
-                    int numRemovers, final long runningTimeout) throws Exception {
+   @DataProvider(name = "capacities")
+   public Object[][] capacities() {
+      return new Object[][] { new Object[] { new Integer(131072) },
+               // new Object[]{ new Integer(524288)},
+               new Object[] { new Integer(1048576) } };
+   }
 
-        latch = new CountDownLatch(1);
-        final Map<String, String> perf = new ConcurrentSkipListMap<String, String>();
-        List<Thread> threads = new LinkedList<Thread>();
+   @Test(dataProvider = "capacities")
+   public void testConcurrentHashMap(int mapCapacity) throws Exception {
+      doTest(new ConcurrentHashMap<Integer, Integer>(mapCapacity, CONCURRENCY), mapCapacity);
+   }
 
-        for (int i = 0; i < numReaders; i++) {
-            Thread getter = new Thread() {
-                public void run() {
-                    waitForStart();
-                    long startMilis = System.currentTimeMillis();
-                    int runs = 0;
-                    int totalRuns = 0;
-                    while ((System.currentTimeMillis() - startMilis) <= runningTimeout) {
-                        map.get(readOps.get(runs));
-                        runs++;
-                        totalRuns ++;
-                        if(runs >= readOps.size()){
-                           runs = 0;
-                        }
-                    }
-                    perf.put("GET" + Thread.currentThread().getId(), opsPerMS(System.currentTimeMillis()
-                                    - startMilis, totalRuns));
-                }
-            };
-            threads.add(getter);
-        }
+   @Test(dataProvider = "capacities")
+   public void testBufferedConcurrentHashMapLRU(int mapCapacity) throws Exception {
+      doTest(new BoundedConcurrentHashMap<Integer, Integer>(mapCapacity, CONCURRENCY, Eviction.LRU),
+               mapCapacity);
+   }
 
-        for (int i = 0; i < numWriters; i++) {
-            Thread putter = new Thread() {
-                public void run() {
-                    waitForStart();
-                    int runs = 0;
-                    int totalRuns = 0;
-                    long startMilis = System.currentTimeMillis();
-                    while ((System.currentTimeMillis() - startMilis) <= runningTimeout) {
-                        map.put(writeOps.get(runs),runs);                        
-                        runs++;
-                        totalRuns ++;
-                        if(runs >= writeOps.size()){
-                           runs = 0;
-                        }                        
-                    }
-                    perf.put("PUT" + Thread.currentThread().getId(), opsPerMS(System.currentTimeMillis()
-                                    - startMilis, totalRuns));
-                }
-            };
-            threads.add(putter);
-        }
+   @Test(dataProvider = "capacities")
+   public void testBufferedConcurrentHashMapLRUOld(int mapCapacity) throws Exception {
+      doTest(new BoundedConcurrentHashMap<Integer, Integer>(mapCapacity, CONCURRENCY,
+               Eviction.LRU_OLD), mapCapacity);
+   }
 
-        for (int i = 0; i < numRemovers; i++) {
-            Thread remover = new Thread() {
-                public void run() {
-                    waitForStart();
-                    int runs = 0;
-                    int totalRuns = 0;
-                    long startMilis = System.currentTimeMillis();
-                    while ((System.currentTimeMillis() - startMilis) <= runningTimeout) {
-                        map.remove(removeOps.get(runs));
-                        runs++;
-                        totalRuns ++;
-                        if(runs >= removeOps.size()){
-                           runs = 0;
-                        }
-                    }
-                    perf.put("REM" + Thread.currentThread().getId(), opsPerMS(System.currentTimeMillis()
-                                    - startMilis, totalRuns));
-                }
-            };
-            threads.add(remover);
-        }
+   @Test(dataProvider = "capacities")
+   public void testBufferedConcurrentHashMapLIRS(int mapCapacity) throws Exception {
+      doTest(new BoundedConcurrentHashMap<Integer, Integer>(mapCapacity, CONCURRENCY, Eviction.LIRS),
+               mapCapacity);
+   }
 
-        for (Thread t : threads)
-            t.start();
-        latch.countDown();
+   @Test(dataProvider = "capacities")
+   public void testHashMap(int mapCapacity) throws Exception {
+      doTest(Collections.synchronizedMap(new HashMap<Integer, Integer>(mapCapacity)), mapCapacity);
+   }
 
-        for (Thread t : threads)
-            t.join();
-        
-        
+   @Test(dataProvider = "capacities")
+   public void testCache(int mapCapacity) throws Exception {
+      doTest(configureAndBuildCache(mapCapacity), mapCapacity);
+   }
 
-        int puts = 0, gets = 0, removes = 0;
-        for (Entry<String, String> p : perf.entrySet()) {
-            if (p.getKey().startsWith("PUT")) {
-                puts += Integer.valueOf(p.getValue());
+   private void doTest(final Map<Integer, Integer> map, int maxCapacity) throws Exception {
+      doTest(map, 8, 2, 1, maxCapacity, RUNNING_TIME);
+      doTest(map, 32, 4, 2, maxCapacity, RUNNING_TIME);
+      doTest(map, 64, 8, 3, maxCapacity, RUNNING_TIME);
+   }
+
+   private Cache<Integer, Integer> configureAndBuildCache(int mapCapacity) {
+      Configuration config = new Configuration().fluent().eviction().maxEntries(mapCapacity)
+               .strategy(EvictionStrategy.LRU).wakeUpInterval(5000L).expiration().maxIdle(120000L)
+               .locking().concurrencyLevel(CONCURRENCY).build();
+
+      DefaultCacheManager cm = new DefaultCacheManager(
+               GlobalConfiguration.getNonClusteredDefault(), config);
+      cm.start();
+      return cm.getCache();
+   }
+
+   private void doTest(final Map<Integer, Integer> map, int numReaders, int numWriters,
+            int numRemovers, int maxCapacity, final long runningTimeout) throws Exception {
+
+      latch = new CountDownLatch(1);
+      final Map<String, String> perf = new ConcurrentSkipListMap<String, String>();
+      List<Thread> threads = new LinkedList<Thread>();
+
+      for (int i = 0; i < numReaders; i++) {
+         Thread getter = new Thread() {
+            public void run() {
+               waitForStart();
+               long startMilis = System.currentTimeMillis();
+               int runs = 0;
+               int totalRuns = 0;
+               while ((System.currentTimeMillis() - startMilis) <= runningTimeout) {
+                  map.get(readOps.get(runs));
+                  runs++;
+                  totalRuns++;
+                  if (runs >= readOps.size()) {
+                     runs = 0;
+                  }
+               }
+               perf.put("GET" + Thread.currentThread().getId(),
+                        opsPerMS(System.currentTimeMillis() - startMilis, totalRuns));
             }
-            if (p.getKey().startsWith("GET")) {
-                gets += Integer.valueOf(p.getValue());
+         };
+         threads.add(getter);
+      }
+
+      for (int i = 0; i < numWriters; i++) {
+         Thread putter = new Thread() {
+            public void run() {
+               waitForStart();
+               int runs = 0;
+               int totalRuns = 0;
+               long startMilis = System.currentTimeMillis();
+               while ((System.currentTimeMillis() - startMilis) <= runningTimeout) {
+                  map.put(writeOps.get(runs), runs);
+                  runs++;
+                  totalRuns++;
+                  if (runs >= writeOps.size()) {
+                     runs = 0;
+                  }
+               }
+               perf.put("PUT" + Thread.currentThread().getId(),
+                        opsPerMS(System.currentTimeMillis() - startMilis, totalRuns));
             }
-            if (p.getKey().startsWith("REM")) {
-                removes += Integer.valueOf(p.getValue());
+         };
+         threads.add(putter);
+      }
+
+      for (int i = 0; i < numRemovers; i++) {
+         Thread remover = new Thread() {
+            public void run() {
+               waitForStart();
+               int runs = 0;
+               int totalRuns = 0;
+               long startMilis = System.currentTimeMillis();
+               while ((System.currentTimeMillis() - startMilis) <= runningTimeout) {
+                  map.remove(removeOps.get(runs));
+                  runs++;
+                  totalRuns++;
+                  if (runs >= removeOps.size()) {
+                     runs = 0;
+                  }
+               }
+               perf.put("REM" + Thread.currentThread().getId(),
+                        opsPerMS(System.currentTimeMillis() - startMilis, totalRuns));
             }
+         };
+         threads.add(remover);
+      }
 
-        }        
-        System.out.println("Performance for container " + map.getClass().getSimpleName());
-        System.out.println("Average get ops/ms " + (gets / numReaders));
-        System.out.println("Average put ops/ms " + (puts / numWriters));
-        System.out.println("Average remove ops/ms " + (removes / numRemovers));
-        System.out.println("Size = " + map.size());
-    }
+      for (Thread t : threads)
+         t.start();
+      latch.countDown();
 
-    private void waitForStart() {
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
+      for (Thread t : threads)
+         t.join();
 
-    private String opsPerMS(long totalMillis, int ops) {
-        if (totalMillis > 0)
-            return "" + ops / totalMillis;
-        else
-            return "NAN ops/ms";
-    }
+      int puts = 0, gets = 0, removes = 0;
+      for (Entry<String, String> p : perf.entrySet()) {
+         if (p.getKey().startsWith("PUT")) {
+            puts += Integer.valueOf(p.getValue());
+         }
+         if (p.getKey().startsWith("GET")) {
+            gets += Integer.valueOf(p.getValue());
+         }
+         if (p.getKey().startsWith("REM")) {
+            removes += Integer.valueOf(p.getValue());
+         }
+
+      }
+      System.out.println("Performance for container " + map.getClass().getSimpleName()
+               + " max capacity is " + maxCapacity + "[numReaders,numWriters,numRemovers]=["
+               + numReaders + "," + numWriters + "," + numRemovers + "]");
+      System.out.println("Average get ops/ms " + (gets / numReaders));
+      System.out.println("Average put ops/ms " + (puts / numWriters));
+      System.out.println("Average remove ops/ms " + (removes / numRemovers));
+      System.out.println("Size = " + map.size());
+   }
+
+   private void waitForStart() {
+      try {
+         latch.await();
+      } catch (InterruptedException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
+   private String opsPerMS(long totalMillis, int ops) {
+      if (totalMillis > 0)
+         return "" + ops / totalMillis;
+      else
+         return "NAN ops/ms";
+   }
 }
