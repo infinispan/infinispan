@@ -143,7 +143,11 @@ public class TestCacheManagerFactory {
     * Creates an cache manager that does support clustering.
     */
    public static EmbeddedCacheManager createClusteredCacheManager() {
-      return createClusteredCacheManager(new Configuration());
+      return createClusteredCacheManager(false);
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManager(boolean withFD) {
+      return createClusteredCacheManager(withFD, new Configuration(), false);
    }
 
    /**
@@ -154,10 +158,15 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig, boolean transactional) {
+      return createClusteredCacheManager(false, defaultCacheConfig, transactional);
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManager(
+         boolean withFD, Configuration defaultCacheConfig, boolean transactional) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
-      amendTransport(globalConfiguration);
+      amendTransport(globalConfiguration, withFD);
       if (transactional) amendJTA(defaultCacheConfig);
       return newDefaultCacheManager(true, globalConfiguration, defaultCacheConfig, false);
    }
@@ -302,8 +311,11 @@ public class TestCacheManagerFactory {
       return c;
    }
 
+   private static void amendTransport(GlobalConfiguration cfg) {
+      amendTransport(cfg, false);
+   }
 
-   private static void amendTransport(GlobalConfiguration configuration) {
+   private static void amendTransport(GlobalConfiguration configuration, boolean withFD) {
       if (configuration.getTransportClass() != null) { //this is local
          Properties newTransportProps = new Properties();
          Properties previousSettings = configuration.getTransportProperties();
@@ -311,7 +323,7 @@ public class TestCacheManagerFactory {
             newTransportProps.putAll(previousSettings);
          }
          newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING,
-            getJGroupsConfig(perThreadCacheManagers.get().fullTestName));
+            getJGroupsConfig(perThreadCacheManagers.get().fullTestName, withFD));
          configuration.setTransportProperties(newTransportProps);
          configuration.setTransportNodeName(perThreadCacheManagers.get().getNextCacheName());
       }

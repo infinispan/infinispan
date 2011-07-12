@@ -88,6 +88,10 @@ public class JGroupsConfigBuilder {
    private static final Pattern UDP_MCAST_ADDRESS = Pattern.compile("mcast_addr=[^;]*");
    private static final Pattern UDP_MCAST_PORT = Pattern.compile("mcast_port=[^;]*");
    private static final Pattern TEST_NAME = Pattern.compile("testName=[^;]*");
+   private static final Pattern FD_PROT = Pattern.compile(":FD\\(max_tries=[0-9]+;timeout=[0-9]+\\)");
+   private static final Pattern FD_SOCK_PROT = Pattern.compile(":FD_SOCK");
+   private static final Pattern VER_SUSPECT_PROT = Pattern.compile(":VERIFY_SUSPECT\\(timeout=[0-9]+\\)");
+   private static final Pattern FD_ALL_PROT = Pattern.compile(":FD_ALL");
 
    static {
       JGROUPS_STACK = LegacyKeySupportSystemProperties.getProperty("infinispan.test.jgroups.protocol", "protocol.stack", "tcp");
@@ -99,14 +103,17 @@ public class JGroupsConfigBuilder {
       }
    }
 
-   public static String getJGroupsConfig(String fullTestName) {
-      if (JGROUPS_STACK.equalsIgnoreCase("tcp")) return getTcpConfig(fullTestName);
-      if (JGROUPS_STACK.equalsIgnoreCase("udp")) return getUdpConfig(fullTestName);
+   public static String getJGroupsConfig(String fullTestName, boolean withFD) {
+      if (JGROUPS_STACK.equalsIgnoreCase("tcp")) return getTcpConfig(fullTestName, withFD);
+      if (JGROUPS_STACK.equalsIgnoreCase("udp")) return getUdpConfig(fullTestName, withFD);
       throw new IllegalStateException("Unknown protocol stack : " + JGROUPS_STACK);
    }
 
-   public static String getTcpConfig(String fullTestName) {
+   public static String getTcpConfig(String fullTestName, boolean withFD) {
       loadTcp();
+
+      if (!withFD)
+         tcpConfig = removeFailureDetectionTcp(tcpConfig);
 
       if (tcpConfig.contains("TCPPING")) {
          return getTcpConfigWithTCPPINGDiscovery();
@@ -118,6 +125,20 @@ public class JGroupsConfigBuilder {
       } else {
          return replaceMCastAddressAndPort(tcpConfig);
       }
+   }
+
+   /**
+    * Remove all failure detection related
+    * protocols from the given JGroups TCP stack.
+    */
+   private static String removeFailureDetectionTcp(String transportCfg) {
+      return removePattern(FD_PROT.matcher(
+               removePattern(FD_SOCK_PROT.matcher(
+                  removePattern(VER_SUSPECT_PROT.matcher(transportCfg))))));
+   }
+
+   private static String removePattern(Matcher m) {
+      return m.replaceFirst("");
    }
 
    private static String getTestPingDiscovery(String fullTestName, String transportCfg) {
@@ -153,10 +174,13 @@ public class JGroupsConfigBuilder {
       return result;
    }
 
-   public static String getUdpConfig(String fullTestName) {
+   public static String getUdpConfig(String fullTestName, boolean withFD) {
       loadUdp();
       // replace mcast_addr
       String config = udpConfig;
+
+      if (!withFD)
+         config = removeFailureDetectionUdp(config);
 
       if (config.contains("TEST_PING")) {
          if (fullTestName != null)
@@ -164,6 +188,11 @@ public class JGroupsConfigBuilder {
       }
 
       return replaceMCastAddressAndPort(config);
+   }
+
+   private static String removeFailureDetectionUdp(String transportCfg) {
+      return removePattern(FD_SOCK_PROT.matcher(
+               removePattern(FD_ALL_PROT.matcher(transportCfg))));
    }
 
    private static String replaceMCastAddressAndPort(String config) {
