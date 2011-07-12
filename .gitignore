@@ -22,8 +22,10 @@ classes
 *.log
 # vim files
 *.swp
+# testsuite generated files/folders
 PutObjectStoreDirHere
 /query/person
+ObjectStore
 # generated rhq plugin xml
 rhq-plugin.xml
 # generated schema

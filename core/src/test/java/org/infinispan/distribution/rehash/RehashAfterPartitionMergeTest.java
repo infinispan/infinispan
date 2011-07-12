@@ -45,7 +45,8 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      caches = createClusteredCaches(2, "test", getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC));
+      caches = createClusteredCaches(2, "test",
+         getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC), true);
 
       c1 = caches.get(0);
       c2 = caches.get(1);
@@ -62,15 +63,12 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
          assert "value".equals(c.get("2"));
          assert manager(c).getMembers().size() == 2;
       }
-      AtomicInteger ai = new AtomicInteger(0);
-      manager(c1).addListener(new ViewChangeListener(ai));
-      manager(c2).addListener(new ViewChangeListener(ai));
 
       d1.setDiscardAll(true);
       d2.setDiscardAll(true);
 
-      // Wait till *both* instances have seen the view change.
-      while (ai.get() < 2) TestingUtil.sleepThread(500);
+      // Wait until c1 and c2 have a view of 1 member each
+      TestingUtil.blockUntilViewsChanged(45000, 1, c1, c2);
 
       // we should see a network partition
       for (Cache<Object, Object> c: caches) assert manager(c).getMembers().size() == 1;
@@ -84,14 +82,12 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
       assert "value".equals(c2.get("4"));
       assert null == c1.get("4");
 
-      ai.set(0);
-
       // lets "heal" the partition
       d1.setDiscardAll(false);
       d2.setDiscardAll(false);
 
-      // wait till we see the view change
-      while (ai.get() < 2) TestingUtil.sleepThread(500);
+      // Wait until c1 and c2 have a view of 2 members each
+      TestingUtil.blockUntilViewsChanged(45000, 2, c1, c2);
 
       TestingUtil.waitForRehashToComplete(c1, c2);
 
@@ -104,17 +100,4 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
       }      
    }
 
-   @Listener
-   public static class ViewChangeListener {
-      AtomicInteger ai;
-
-      private ViewChangeListener(AtomicInteger ai) {
-         this.ai = ai;
-      }
-
-      @ViewChanged @Merged
-      public void handle(ViewChangedEvent e) {
-         ai.getAndIncrement();
-      }
-   }
 }

@@ -41,8 +41,8 @@ public class VNodesTachDistAsyncFuncTest extends DistAsyncFuncTest {
    }
 
    @Override
-   protected EmbeddedCacheManager addClusterEnabledCacheManager() {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(boolean withFD) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(withFD);
       int index = cacheManagers.size();
       String rack;
       String machine;

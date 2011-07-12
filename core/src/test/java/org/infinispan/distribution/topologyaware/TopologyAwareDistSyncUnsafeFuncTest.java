@@ -36,8 +36,8 @@ import org.testng.annotations.Test;
 public class TopologyAwareDistSyncUnsafeFuncTest extends DistSyncUnsafeFuncTest {
 
    @Override
-   protected EmbeddedCacheManager addClusterEnabledCacheManager() {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(boolean withFD) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(withFD);
       int index = cacheManagers.size();
       String rack;
       String machine;

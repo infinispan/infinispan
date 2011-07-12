@@ -154,7 +154,20 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @return the new CacheManager
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager() {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
+      return addClusterEnabledCacheManager(false);
+   }
+
+   /**
+    * Creates a new cache manager, starts it, and adds it to the list of known
+    * cache managers on the current thread. Uses a default clustered cache
+    * manager global config.
+    *
+    * @param withFD boolean indicating whether the JGroups stack should be
+    *               configured with failure detection.
+    * @return the new CacheManager
+    */
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(boolean withFD) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(withFD);
       cacheManagers.add(cm);
       return cm;
    }
@@ -262,10 +275,16 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, String cacheName, Configuration c) {
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(
+         int numMembersInCluster, String cacheName, Configuration c) {
+      return createClusteredCaches(numMembersInCluster, cacheName, c, false);
+   }
+
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(
+         int numMembersInCluster, String cacheName, Configuration c, boolean withFD) {
       List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
-         EmbeddedCacheManager cm = addClusterEnabledCacheManager();
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(withFD);
          cm.defineConfiguration(cacheName, c);
          Cache<K, V> cache = cm.getCache(cacheName);
          caches.add(cache);
@@ -273,6 +292,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       waitForClusterToForm();
       return caches;
    }
+
 
    protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, Configuration defaultConfig) {
       List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
