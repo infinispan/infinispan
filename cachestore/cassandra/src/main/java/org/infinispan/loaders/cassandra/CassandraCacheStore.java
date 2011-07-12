@@ -379,11 +379,18 @@ public class CassandraCacheStore extends AbstractCacheStore {
    public boolean remove(Object key) throws CacheLoaderException {
       if (trace)
          log.tracef("remove(\"%s\") ", key);
+      String hashKey = hashKey(key);
       Cassandra.Client cassandraClient = null;
       try {
          cassandraClient = dataSource.getConnection();
+         // Check if the key exists before attempting to remove it
+         try {
+        	 cassandraClient.get(ByteBufferUtil.bytes(hashKey), entryColumnPath, readConsistencyLevel);
+         } catch (NotFoundException e) {
+        	 return false;
+         }
          Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
-         remove0(ByteBufferUtil.bytes(hashKey(key)), mutationMap);
+         remove0(ByteBufferUtil.bytes(hashKey), mutationMap);
          cassandraClient.batch_mutate(mutationMap, writeConsistencyLevel);
          return true;
       } catch (Exception e) {
