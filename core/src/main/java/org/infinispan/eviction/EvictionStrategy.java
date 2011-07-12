@@ -33,6 +33,7 @@ public enum EvictionStrategy {
    UNORDERED,
    FIFO,
    LRU,
+   LRU_OLD,
    LIRS;
    
    public boolean isEnabled() {
