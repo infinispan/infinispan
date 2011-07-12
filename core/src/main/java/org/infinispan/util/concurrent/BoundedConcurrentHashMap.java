@@ -33,20 +33,7 @@
 package org.infinispan.util.concurrent;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.AbstractCollection;
-import java.util.AbstractMap;
-import java.util.AbstractSet;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.Map;
-import java.util.Collection;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -58,7 +45,7 @@ import static java.util.Collections.unmodifiableMap;
 /**
  * A hash table supporting full concurrency of retrievals and
  * adjustable expected concurrency for updates. This class obeys the
- * same functional specification as {@link java.util.Hashtable}, and
+ * same functional specification as {@link Hashtable}, and
  * includes versions of methods corresponding to each method of
  * <tt>Hashtable</tt>. However, even though all operations are
  * thread-safe, retrieval operations do <em>not</em> entail locking,
@@ -304,6 +291,12 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             return new LRU<K, V>(s,capacity,lf,capacity*10,lf);
          }
       },
+      LRU_OLD {
+         @Override
+         public <K, V> EvictionPolicy<K, V> make(Segment<K, V> s, int capacity, float lf) {
+            return new LRUOld<K, V>(s,capacity,lf,capacity*10,lf);
+         }
+      },
       LIRS {
          @Override
          public <K, V> EvictionPolicy<K, V> make(Segment<K, V> s, int capacity, float lf) {
@@ -439,7 +432,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       }
    }
 
-   static final class LRU<K, V> implements EvictionPolicy<K, V> {
+   static final class LRUOld<K, V> implements EvictionPolicy<K, V> {
       private final ConcurrentLinkedQueue<HashEntry<K, V>> accessQueue;
       private final Segment<K,V> segment;
       private final LinkedList<HashEntry<K, V>> lruQueue;
@@ -447,9 +440,9 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       private final int trimDownSize;
       private final float batchThresholdFactor;
 
-      public LRU(Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
+      public LRUOld(Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
          this.segment = s;
-         this.trimDownSize = (int) (capacity * lf);
+         this.trimDownSize = capacity;
          this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
          this.batchThresholdFactor = batchThresholdFactor;
          this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
@@ -524,7 +517,107 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
       @Override
       public Eviction strategy() {
+         return Eviction.LRU_OLD;
+      }
+   }
+
+   static final class LRU<K, V> extends LinkedHashMap<HashEntry<K,V>, V> implements EvictionPolicy<K, V> {
+
+      /** The serialVersionUID */
+      private static final long serialVersionUID = -7645068174197717838L;
+
+      private final ConcurrentLinkedQueue<HashEntry<K, V>> accessQueue;
+      private final Segment<K,V> segment;
+      private final int maxBatchQueueSize;
+      private final int trimDownSize;
+      private final float batchThresholdFactor;
+      private final Set<HashEntry<K, V>> evicted;
+
+      public LRU(Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
+         super(capacity, lf, true);
+         this.segment = s;
+         this.trimDownSize = capacity;
+         this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
+         this.batchThresholdFactor = batchThresholdFactor;
+         this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
+         this.evicted = new HashSet<HashEntry<K, V>>();
+      }
+
+      @Override
+      public Set<HashEntry<K, V>> execute() {
+         Set<HashEntry<K, V>> evictedCopy = new HashSet<HashEntry<K, V>>();
+         for (HashEntry<K, V> e : accessQueue) {
+            put(e, e.value);
+         }
+         evictedCopy.addAll(evicted);
+         accessQueue.clear();
+         evicted.clear();
+         return evictedCopy;
+      }
+
+      @Override
+      public Set<HashEntry<K, V>> onEntryMiss(HashEntry<K, V> e) {
+         put(e, e.value);
+         if (!evicted.isEmpty()) {
+            Set<HashEntry<K, V>> evictedCopy = new HashSet<HashEntry<K, V>>();
+            evictedCopy.addAll(evicted);
+            evicted.clear();
+            return evictedCopy;
+         } else {
+            return Collections.emptySet();
+         }
+      }
+
+      /*
+       * Invoked without holding a lock on Segment
+       */
+      @Override
+      public boolean onEntryHit(HashEntry<K, V> e) {
+         accessQueue.add(e);
+         return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
+      }
+
+      /*
+       * Invoked without holding a lock on Segment
+       */
+      @Override
+      public boolean thresholdExpired() {
+         return accessQueue.size() >= maxBatchQueueSize;
+      }
+
+      @Override
+      public void onEntryRemove(HashEntry<K, V> e) {
+         remove(e);
+         // we could have multiple instances of e in accessQueue; remove them all
+         while (accessQueue.remove(e)) {
+            continue;
+         }
+      }
+
+      @Override
+      public void clear() {
+         super.clear();
+         accessQueue.clear();
+      }
+
+      @Override
+      public Eviction strategy() {
          return Eviction.LRU;
+      }
+
+      protected boolean isAboveThreshold(){
+         return size() > trimDownSize;
+      }
+
+      protected boolean removeEldestEntry(Map.Entry<HashEntry<K,V>,V> eldest){
+         boolean aboveThreshold = isAboveThreshold();
+         if(aboveThreshold){
+            HashEntry<K, V> evictedEntry = eldest.getKey();
+            segment.evictionListener.onEntryChosenForEviction(evictedEntry.value);
+            segment.remove(evictedEntry.key, evictedEntry.hash, null);
+            evicted.add(evictedEntry);
+         }
+         return aboveThreshold;
       }
    }
 
@@ -579,12 +672,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       }
 
       private void handleHIRHit(HashEntry<K, V> e, Set<HashEntry<K, V>> evicted) {
-         boolean inStack = stack.containsKey(e.key);
-         if (inStack) {
-            stack.remove(e.key);
-         }
-
          // first put on top of the stack
+         boolean inStack = stack.remove(e.key) != null;
          stack.put(e.key, e);
 
          if (inStack) {
@@ -797,13 +886,16 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        */
       final float loadFactor;
 
+      final int evictCap;
+
       transient final EvictionPolicy<K, V> eviction;
 
       transient final EvictionListener<K, V> evictionListener;
 
-      Segment(int cap, float lf, Eviction es, EvictionListener<K, V> listener) {
+      Segment(int cap, int evictCap, float lf, Eviction es, EvictionListener<K, V> listener) {
          loadFactor = lf;
-         eviction = es.make(this, cap, lf);
+         this.evictCap = evictCap;
+         eviction = es.make(this, evictCap, lf);
          evictionListener = listener;
          setTable(HashEntry.<K, V> newArray(cap));
       }
@@ -990,7 +1082,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                ++modCount;
                count = c; // write-volatile
                if (eviction.strategy() != Eviction.NONE) {
-                  if (c > tab.length) {
+                  if (c > evictCap) {
                      // remove entries;lower count
                      evicted = eviction.execute();
                      // re-read first
@@ -1112,6 +1204,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
                   HashEntry<K, V> newFirst = e.next;
                   for (HashEntry<K, V> p = first; p != e; p = p.next) {
+                     // TODO A remove operation makes the map behave like all the other keys in the bucket were just added???
                      // allow p to be GC-ed
                      eviction.onEntryRemove(p);
                      newFirst = new HashEntry<K, V>(p.key, p.hash, newFirst, p.value);
@@ -1155,7 +1248,9 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          }
          if (obtainedLock) {
             try {
-               evicted = eviction.execute();
+               if (eviction.thresholdExpired()) {
+                  evicted = eviction.execute();
+               }
             } finally {
                if (!lockedAlready) {
                   unlock();
@@ -1250,12 +1345,12 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          ++c;
       }
       int cap = 1;
-      while (cap < c) {
+      while (cap < c / DEFAULT_LOAD_FACTOR) {
          cap <<= 1;
       }
 
       for (int i = 0; i < this.segments.length; ++i) {
-         this.segments[i] = new Segment<K, V>(cap, DEFAULT_LOAD_FACTOR, evictionStrategy, evictionListener);
+         this.segments[i] = new Segment<K, V>(cap, c, DEFAULT_LOAD_FACTOR, evictionStrategy, evictionListener);
       }
    }
 
@@ -1525,7 +1620,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     * Legacy method testing if some key maps into the specified value
     * in this table.  This method is identical in functionality to
     * {@link #containsValue}, and exists solely to ensure
-    * full compatibility with class {@link java.util.Hashtable},
+    * full compatibility with class {@link Hashtable},
     * which supported this method prior to introduction of the
     * Java Collections framework.
 
