@@ -61,14 +61,6 @@ import static org.testng.Assert.assertEquals;
 @Test(groups = "functional", testName = "config.ProgrammaticConfigurationTest")
 public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
 
-   public void testDefiningConfigurationOverridingConsistentHashClass() {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
-      Configuration c = new Configuration();
-      c.setConsistentHashClass("org.infinispan.distribution.DefaultConsistentHash");
-      Configuration oneCacheConfiguration = cm.defineConfiguration("oneCache", c);
-      assert oneCacheConfiguration.equalsIgnoreName(c);
-   }
-
    public void testGlobalConfiguration() {
       GlobalConfiguration gc = new GlobalConfiguration().fluent()
          .transport()

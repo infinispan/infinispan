@@ -3989,6 +3989,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @Override
       public CustomInterceptorPosition add(CommandInterceptor interceptor) {
+         testImmutability("customInterceptors");
          return new CustomInterceptorPositionType(interceptor, this);
       }
 
