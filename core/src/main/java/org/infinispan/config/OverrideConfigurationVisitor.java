@@ -59,6 +59,7 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
    private QueryConfigurationBean indexingType = null;
    private RecoveryType recoveryType = null;
    private StoreAsBinary storeAsBinary = null;
+   private DataContainerType dataContainerType;
 
    public void override(OverrideConfigurationVisitor override) {
       
@@ -91,6 +92,7 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
       overrideFields(indexingType, override.indexingType);
       overrideFields(customInterceptorsType, override.customInterceptorsType);
       overrideFields(storeAsBinary, override.storeAsBinary);
+      overrideFields(dataContainerType, override.dataContainerType);
    }
 
    private void overrideFields(AbstractConfigurationBean bean, AbstractConfigurationBean overrides) {
@@ -199,4 +201,10 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
    public void visitStoreAsBinaryType(StoreAsBinary config) {
       this.storeAsBinary = config;
    }
+
+   @Override
+   public void visitDataContainerType(DataContainerType bean) {
+      this.dataContainerType = bean;
+   }
+
 }
