@@ -118,10 +118,11 @@ public class JGroupsConfigBuilder {
       if (tcpConfig.contains("TCPPING")) {
          return getTcpConfigWithTCPPINGDiscovery();
       } if (tcpConfig.contains("TEST_PING")) {
+         String cfg = replaceTcpStartPort(tcpConfig, threadTcpStartPort.get());
          if (fullTestName == null)
-            return tcpConfig; // IDE run of test
+            return cfg; // IDE run of test
          else
-            return getTestPingDiscovery(fullTestName, tcpConfig); // Cmd line test run
+            return getTestPingDiscovery(fullTestName, cfg); // Cmd line test run
       } else {
          return replaceMCastAddressAndPort(tcpConfig);
       }
@@ -151,27 +152,29 @@ public class JGroupsConfigBuilder {
    }
 
    private static String getTcpConfigWithTCPPINGDiscovery() {
-      // replace mcast_addr
-      Matcher m = TCP_START_PORT.matcher(tcpConfig);
-      String result;
-      String newStartPort;
+      String newStartPort = threadTcpStartPort.get();
+      String cfg = replaceTcpStartPort(tcpConfig, newStartPort);
+      if (cfg.indexOf("TCPGOSSIP") < 0) // onluy adjust for TCPPING
+      {
+         Matcher m = TCP_INITIAL_HOST.matcher(cfg);
+         if (m.find()) {
+            cfg = m.replaceFirst("initial_hosts=" + bind_addr + "[" + newStartPort + "]");
+         }
+      }
+      return cfg;
+   }
+
+   private static String replaceTcpStartPort(String transportCfg, String newStartPort) {
+      // replace tcp start port
+      Matcher m = TCP_START_PORT.matcher(transportCfg);
       if (m.find()) {
          newStartPort = threadTcpStartPort.get();
-         result = m.replaceFirst("bind_port=" + newStartPort);
+         return m.replaceFirst("bind_port=" + newStartPort);
       } else {
          System.out.println("Config is:" + tcpConfig);
          Thread.dumpStack();
          throw new IllegalStateException();
       }
-
-      if (result.indexOf("TCPGOSSIP") < 0) // onluy adjust for TCPPING
-      {
-         m = TCP_INITIAL_HOST.matcher(result);
-         if (m.find()) {
-            result = m.replaceFirst("initial_hosts=" + bind_addr + "[" + newStartPort + "]");
-         }
-      }
-      return result;
    }
 
    public static String getUdpConfig(String fullTestName, boolean withFD) {
@@ -192,7 +195,7 @@ public class JGroupsConfigBuilder {
 
    private static String removeFailureDetectionUdp(String transportCfg) {
       return removePattern(FD_SOCK_PROT.matcher(
-               removePattern(FD_ALL_PROT.matcher(transportCfg))));
+            removePattern(FD_ALL_PROT.matcher(transportCfg))));
    }
 
    private static String replaceMCastAddressAndPort(String config) {

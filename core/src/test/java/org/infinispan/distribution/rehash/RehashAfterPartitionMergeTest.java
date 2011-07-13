@@ -68,7 +68,7 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
       d2.setDiscardAll(true);
 
       // Wait until c1 and c2 have a view of 1 member each
-      TestingUtil.blockUntilViewsChanged(45000, 1, c1, c2);
+      TestingUtil.blockUntilViewsChanged(60000, 1, c1, c2);
 
       // we should see a network partition
       for (Cache<Object, Object> c: caches) assert manager(c).getMembers().size() == 1;
