@@ -54,6 +54,7 @@ import org.jgroups.util.RspList;
 import org.jgroups.util.TopologyUUID;
 
 import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
@@ -162,7 +163,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
             // when first cache starts, so it's safer to do it here.
             globalStatsEnabled = configuration.isExposeGlobalJmxStatistics();
             if (globalStatsEnabled) {
-               String groupName = String.format("type=channel,cluster=%s", clusterName);
+               String groupName = String.format("type=channel,cluster=%s", ObjectName.quote(clusterName));
                mbeanServer = JmxUtil.lookupMBeanServer(configuration);
                domain = JmxUtil.buildJmxDomain(configuration, mbeanServer, groupName);
                JmxConfigurator.registerChannel((JChannel) channel, mbeanServer, domain, clusterName, true);

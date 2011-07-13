@@ -727,4 +727,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Error flushing to file: %s", id = 151)
    void errorFlushingToFileChannel(FileChannel f, @Cause Exception e);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Passivation configured without a valid eviction policy.  " +
+      "This could mean that the cache store will never get used unless code calls Cache.evict() manually.", id = 152)
+   void passivationWithoutEviction();
+
 }
