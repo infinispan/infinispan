@@ -27,7 +27,7 @@
         bind_addr="${jgroups.tcp.address:127.0.0.1}"
         bind_port="${jgroups.tcp.port:7800}"
         loopback="true"
-        port_range="60"
+        port_range="30"
         recv_buf_size="20000000"
         send_buf_size="640000"
         discard_incompatible_packets="true"
