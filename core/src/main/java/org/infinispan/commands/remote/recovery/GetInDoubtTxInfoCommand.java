@@ -24,7 +24,6 @@
 package org.infinispan.commands.remote.recovery;
 
 import org.infinispan.context.InvocationContext;
-import org.infinispan.marshall.Ids;
 
 /**
  * Command used by the recovery tooling for obtaining the list of in-doubt transactions from a node.

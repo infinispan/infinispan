@@ -23,7 +23,6 @@
 package org.infinispan.notifications;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;

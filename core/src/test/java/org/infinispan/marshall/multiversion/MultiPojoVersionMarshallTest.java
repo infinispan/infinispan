@@ -27,7 +27,6 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.CtMethod;
-import javassist.NotFoundException;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.marshall.Externalizer;

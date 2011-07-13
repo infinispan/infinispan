@@ -23,8 +23,6 @@
 package org.infinispan.loaders.decorators;
 
 import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.HashMap;
 
 import org.infinispan.AdvancedCache;
@@ -83,7 +81,7 @@ public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void sequantialOvewritingInBatches() throws IOException, ClassNotFoundException, SQLException, InterruptedException {
+   public void sequantialOvewritingInBatches() {
       cache = cacheManager.getCache();
       AdvancedCache<Object,Object> advancedCache = cache.getAdvancedCache();
       for (int i = 0; i < 2000;) {
@@ -104,7 +102,7 @@ public class BatchAsyncCacheStoreTest extends SingleCacheManagerTest {
    }
 
    @Test(dependsOnMethods = "sequantialOvewritingInBatches")
-   public void indexWasStored() throws IOException {
+   public void indexWasStored() {
       cache = cacheManager.getCache();
       assert cache.isEmpty();
       boolean failed = false;

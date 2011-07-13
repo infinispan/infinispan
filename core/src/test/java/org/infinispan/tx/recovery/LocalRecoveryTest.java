@@ -32,9 +32,6 @@ import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.testng.annotations.Test;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-
 import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
 import static org.testng.Assert.assertEquals;
 
@@ -102,7 +99,7 @@ public class LocalRecoveryTest extends SingleCacheManagerTest {
       assertEquals(0, TestingUtil.getTransactionTable(cache).getLocalTxCount());
    }
 
-   private DummyTransaction beginTx() throws NotSupportedException, SystemException {
+   private DummyTransaction beginTx() {
       return beginAndSuspendTx(cache);
    }
 

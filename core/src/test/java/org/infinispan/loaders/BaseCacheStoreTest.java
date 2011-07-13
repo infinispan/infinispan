@@ -527,7 +527,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert !s.contains("k3");
    }
 
-   public void testStreamingAPI() throws IOException, ClassNotFoundException, CacheLoaderException {
+   public void testStreamingAPI() throws IOException, CacheLoaderException {
       cs.store(InternalEntryFactory.create("k1", "v1"));
       cs.store(InternalEntryFactory.create("k2", "v2"));
       cs.store(InternalEntryFactory.create("k3", "v3"));
@@ -562,7 +562,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert expected.isEmpty();
    }
 
-   public void testStreamingAPIReusingStreams() throws IOException, ClassNotFoundException, CacheLoaderException {
+   public void testStreamingAPIReusingStreams() throws IOException, CacheLoaderException {
       cs.store(InternalEntryFactory.create("k1", "v1"));
       cs.store(InternalEntryFactory.create("k2", "v2"));
       cs.store(InternalEntryFactory.create("k3", "v3"));

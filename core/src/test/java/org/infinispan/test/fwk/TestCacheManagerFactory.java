@@ -23,7 +23,6 @@
 package org.infinispan.test.fwk;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.config.ConfigurationValidatingVisitor;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;

@@ -45,7 +45,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**

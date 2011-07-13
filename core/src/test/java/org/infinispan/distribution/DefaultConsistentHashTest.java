@@ -23,25 +23,18 @@
 package org.infinispan.distribution;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.hash.MurmurHash3;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
-
 import static org.testng.Assert.assertEquals;
 
 @Test(groups = "unit", testName = "distribution.DefaultConsistentHashTest")

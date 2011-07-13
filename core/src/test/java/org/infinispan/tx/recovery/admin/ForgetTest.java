@@ -111,7 +111,7 @@ public class ForgetTest extends AbstractRecoveryTest {
    }
 
 
-   private void forgetWithXid(int nodeIndex) throws XAException {
+   private void forgetWithXid(int nodeIndex) {
       DummyXid xid = tx.getXid();
       recoveryOps(nodeIndex).forget(xid.getFormatId(), xid.getGlobalTransactionId(), xid.getBranchQualifier());
       assertEquals(tt(1).getRemoteTxCount(), 0);//make sure tx has been removed

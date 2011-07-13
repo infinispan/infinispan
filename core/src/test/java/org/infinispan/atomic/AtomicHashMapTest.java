@@ -26,11 +26,9 @@ package org.infinispan.atomic;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-
 @Test(groups = "unit", testName = "atomic.AtomicHashMapTest")
 public class AtomicHashMapTest extends AbstractInfinispanTest {
-   public void testDeltasWithEmptyMap() throws IOException {
+   public void testDeltasWithEmptyMap() {
       AtomicHashMap m = new AtomicHashMap();
       Delta d = m.delta();
       assert d instanceof NullDelta;
@@ -46,7 +44,7 @@ public class AtomicHashMapTest extends AbstractInfinispanTest {
       assert newMap.isEmpty();
    }
 
-   public void testDeltasWithNoChanges() throws IOException {
+   public void testDeltasWithNoChanges() {
       AtomicHashMap m = new AtomicHashMap();
       m.initForWriting();
       m.put("k1", "v1");

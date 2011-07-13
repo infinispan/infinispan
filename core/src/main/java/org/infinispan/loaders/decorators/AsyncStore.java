@@ -182,7 +182,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       enqueueModificationsList(list);
    }
    
-   protected void enqueueModificationsList(List<? extends Modification> mods) throws CacheLoaderException {
+   protected void enqueueModificationsList(List<? extends Modification> mods) {
       if (mods != null && !mods.isEmpty()) {
          enqueue(new ModificationsList(mods));
       }

@@ -24,15 +24,7 @@ package org.infinispan.distribution.ch;
 
 import static org.infinispan.util.Util.formatString;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
 
 /**
  * Virtual addresses are used internally by the consistent hashes in order to provide virtual nodes.

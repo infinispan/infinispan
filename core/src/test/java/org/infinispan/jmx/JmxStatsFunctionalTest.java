@@ -34,7 +34,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 import java.lang.reflect.Method;

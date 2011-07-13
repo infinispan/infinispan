@@ -35,7 +35,6 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
 
 import javax.transaction.InvalidTransactionException;
-import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
@@ -60,7 +59,7 @@ public class StaleLockAfterTxAbortTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(c, true);
    }
 
-   public void doTest() throws InterruptedException, SystemException, NotSupportedException, InvalidTransactionException {
+   public void doTest() throws InterruptedException, SystemException, InvalidTransactionException {
       cache.put(k, "value"); // init value
 
       assertNotLocked(cache, k);

@@ -30,8 +30,6 @@ import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 

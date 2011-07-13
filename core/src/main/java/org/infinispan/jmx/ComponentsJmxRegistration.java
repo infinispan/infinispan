@@ -28,7 +28,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.util.ArrayList;

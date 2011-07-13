@@ -193,7 +193,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert def.getIsolationLevel() == IsolationLevel.REPEATABLE_READ;
    }
 
-   private void testNamedCacheFile(XmlConfigurationParser parser) throws IOException {
+   private void testNamedCacheFile(XmlConfigurationParser parser) {
 
       GlobalConfiguration gc = parser.parseGlobalConfiguration();
 
@@ -354,7 +354,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       return c;
    }
 
-   private void testConfigurationMerging(XmlConfigurationParser parser) throws IOException {
+   private void testConfigurationMerging(XmlConfigurationParser parser) {
 
       Configuration defaultCfg = parser.parseDefaultConfiguration();
       Map<String, Configuration> namedCaches = parser.parseNamedConfigurations();

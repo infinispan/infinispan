@@ -24,10 +24,8 @@ package org.infinispan.loaders;
 
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.CloneableConfigurationComponent;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -40,7 +38,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;

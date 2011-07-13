@@ -57,7 +57,6 @@ import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
-import javax.transaction.RollbackException;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -219,7 +218,7 @@ public class TxInterceptor extends CommandInterceptor {
       return rv;
    }
 
-   public LocalTransaction enlist(InvocationContext ctx) throws SystemException, RollbackException {
+   public LocalTransaction enlist(InvocationContext ctx) throws SystemException {
       Transaction transaction = ((TxInvocationContext) ctx).getTransaction();
       if (transaction == null) throw new IllegalStateException("This should only be called in an tx scope");
       int status = transaction.getStatus();

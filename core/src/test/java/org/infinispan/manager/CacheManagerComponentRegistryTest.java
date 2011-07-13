@@ -54,7 +54,7 @@ public class CacheManagerComponentRegistryTest extends AbstractInfinispanTest {
       cm = null;
    }
 
-   public void testForceSharedComponents() throws NamedCacheNotFoundException {
+   public void testForceSharedComponents() {
       Configuration defaultCfg = new Configuration();
       defaultCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
       defaultCfg.setFetchInMemoryState(false);
@@ -81,7 +81,7 @@ public class CacheManagerComponentRegistryTest extends AbstractInfinispanTest {
       assert TestingUtil.extractComponent(c, Transport.class) == TestingUtil.extractComponent(transactional, Transport.class);
    }
 
-   public void testForceUnsharedComponents() throws NamedCacheNotFoundException {
+   public void testForceUnsharedComponents() {
       Configuration defaultCfg = new Configuration();
       defaultCfg.setFetchInMemoryState(false);
       defaultCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
@@ -103,7 +103,7 @@ public class CacheManagerComponentRegistryTest extends AbstractInfinispanTest {
       assert TestingUtil.extractComponent(c, EvictionManager.class) != TestingUtil.extractComponent(transactional, EvictionManager.class);
    }
 
-   public void testOverridingComponents() throws NamedCacheNotFoundException {
+   public void testOverridingComponents() {
       Configuration defaultCfg = new Configuration();
       cm = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), defaultCfg);
 

@@ -568,7 +568,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          this.f = future;
       }
       
-      private V retrieveResult(Object response) throws InterruptedException, ExecutionException {
+      private V retrieveResult(Object response) throws ExecutionException {
          if (response instanceof Exception) {
             throw new ExecutionException((Exception) response);
          }

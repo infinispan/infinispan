@@ -28,7 +28,6 @@ import org.infinispan.marshall.Marshaller;
 
 import javax.naming.Context;
 import java.io.Closeable;
-import java.io.InputStream;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.lang.management.LockInfo;

@@ -79,7 +79,7 @@ public class FilteredKeyAffinityService extends BaseFilterKeyAffinityServiceTest
    }
 
    @Test (dependsOnMethods = "testRemoveServers")
-   public void testShutdownOwnManager() throws InterruptedException {
+   public void testShutdownOwnManager() {
       super.testShutdownOwnManager();
    }   
 }

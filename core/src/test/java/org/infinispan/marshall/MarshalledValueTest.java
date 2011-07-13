@@ -211,7 +211,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       assertSerialized(mv);
    }
 
-   public void testReleaseObjectKeyReferences() throws IOException, ClassNotFoundException {
+   public void testReleaseObjectKeyReferences() {
       Cache cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
       Pojo key = new Pojo();
@@ -409,7 +409,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
     * Run this as last method as it creates and stops cache loaders, which might affect other tests.
     */
    @Test(dependsOnMethods = "org.infinispan.marshall.MarshalledValueTest.test(?!CacheLoaders)[a-zA-Z]*")
-   public void testCacheLoaders() throws CloneNotSupportedException {
+   public void testCacheLoaders() {
       Cache cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
       tearDown();

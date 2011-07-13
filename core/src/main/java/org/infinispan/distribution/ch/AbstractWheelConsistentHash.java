@@ -27,7 +27,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
 
-import org.infinispan.config.Configuration;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;

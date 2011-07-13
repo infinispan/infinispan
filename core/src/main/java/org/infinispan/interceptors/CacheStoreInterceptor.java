@@ -23,7 +23,6 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.AbstractVisitor;
-import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;

@@ -24,12 +24,8 @@ package org.infinispan.tx.recovery;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.JBossTransactionManagerLookup;
-import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
 
 /**
  * @author Mircea.Markus@jboss.com

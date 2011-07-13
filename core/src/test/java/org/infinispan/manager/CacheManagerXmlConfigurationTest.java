@@ -89,7 +89,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
       assert TestingUtil.extractComponent(c, RpcManager.class) != null : "This should not be null, since a shared RPC manager should be present";
    }
 
-   public void testNamedCacheXMLClashingNames() throws IOException {
+   public void testNamedCacheXMLClashingNames() {
       String xml = INFINISPAN_START_TAG +
             "\n" +
             "    <default>\n" +

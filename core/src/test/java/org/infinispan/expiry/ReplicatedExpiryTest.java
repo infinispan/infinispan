@@ -41,7 +41,7 @@ public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
       createClusteredCaches(2, "cache", cfg);      
    }
 
-   public void testLifespanExpiryReplicates() throws InterruptedException {
+   public void testLifespanExpiryReplicates() {
       Cache c1 = cache(0,"cache");
       Cache c2 = cache(1,"cache");
       long lifespan = 3000;
@@ -53,7 +53,7 @@ public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
       assert ice.getMaxIdle() == -1;
    }
 
-   public void testIdleExpiryReplicates() throws InterruptedException {
+   public void testIdleExpiryReplicates() {
       Cache c1 = cache(0,"cache");
       Cache c2 = cache(1,"cache");
       long idle = 3000;
@@ -65,7 +65,7 @@ public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
       assert ice.getLifespan() == -1;
    }
 
-   public void testBothExpiryReplicates() throws InterruptedException {
+   public void testBothExpiryReplicates() {
       Cache c1 = cache(0,"cache");
       Cache c2 = cache(1,"cache");
       long lifespan = 10000;

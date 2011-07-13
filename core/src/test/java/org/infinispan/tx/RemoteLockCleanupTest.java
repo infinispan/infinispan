@@ -26,7 +26,6 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;

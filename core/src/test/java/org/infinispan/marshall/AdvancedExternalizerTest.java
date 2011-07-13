@@ -39,9 +39,6 @@ import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Set;
 
-import static org.infinispan.test.TestingUtil.k;
-import static org.testng.AssertJUnit.assertEquals;
-
 /**
  * Tests configuration of user defined {@link AdvancedExternalizer} implementations
  *
