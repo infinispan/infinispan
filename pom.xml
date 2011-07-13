@@ -154,7 +154,7 @@ pageTracker._trackPageview();
                         <descriptor>src/main/resources/assemblies/src.xml</descriptor>
                          <descriptor>src/main/resources/assemblies/rest-server.xml</descriptor>
                      </descriptors>
-                     <finalName>${artifactId}-${project.version}</finalName>
+                     <finalName>${project.artifactId}-${project.version}</finalName>
                      <outputDirectory>target/distribution</outputDirectory>
                      <workDirectory>target/assembly/work</workDirectory>
 
@@ -205,7 +205,7 @@ pageTracker._trackPageview();
                      <descriptors>
                         <descriptor>src/main/resources/assemblies/all.xml</descriptor>
                      </descriptors>
-                     <finalName>${artifactId}-${project.version}</finalName>
+                     <finalName>${project.artifactId}-${project.version}</finalName>
                      <outputDirectory>target/distribution</outputDirectory>
                      <workDirectory>target/assembly/work</workDirectory>
                   </configuration>

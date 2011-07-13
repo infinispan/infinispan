@@ -518,6 +518,21 @@
       <finalName>${project.artifactId}</finalName>
       <pluginManagement>
          <plugins>
+            <plugin>
+               <groupId>org.scala-tools</groupId>
+               <artifactId>maven-scala-plugin</artifactId>
+               <version>2.15.2</version>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-javadoc-plugin</artifactId>
+               <version>2.8</version>
+            </plugin>
+            <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>ideauidesigner-maven-plugin</artifactId>
+               <version>1.0-beta-1</version>
+            </plugin>
             <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
             <plugin>
                <groupId>org.eclipse.m2e</groupId>
@@ -563,9 +578,7 @@
                         <pluginExecution>
                            <pluginExecutionFilter>
                               <groupId>org.scala-tools</groupId>
-                              <artifactId>
-                                 maven-scala-plugin
-                              </artifactId>
+                              <artifactId>maven-scala-plugin</artifactId>
                               <versionRange>[2.15.2,)</versionRange>
                               <goals>
                                  <goal>testCompile</goal>
