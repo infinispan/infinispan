@@ -38,11 +38,15 @@ import org.infinispan.remoting.transport.Address;
  * clustering capabilities.
  * This class parses the user input and drives the actions implemented in DemoActions.
  * 
+ * As always when running JGroups to run a demo cluster of multiple applications running
+ * on the same host, set these JVM options:
+ * -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1
+ * 
  * @author Sanne Grinovero
  * @since 4.0
  */
 public class DemoDriver implements Runnable {
-   
+
    private final DemoActions actions;
 
    public DemoDriver(InfinispanDirectory infinispanDirectory, Cache cache) {

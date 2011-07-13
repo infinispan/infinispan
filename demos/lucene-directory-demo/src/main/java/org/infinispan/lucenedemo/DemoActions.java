@@ -62,12 +62,12 @@ public class DemoActions {
    private static final String MAIN_FIELD = "myField";
 
    /** The Analyzer used in all methods **/
-   private static final Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_29);
+   private static final Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_33);
 
    private InfinispanDirectory index;
 
    private final Cache cache;
-   
+
    public DemoActions(InfinispanDirectory index, Cache cache) {
       this.index = index;
       this.cache = cache;
@@ -94,7 +94,7 @@ public class DemoActions {
          return emptyList();
       }
    }
-   
+
    /**
     * Returns a list of the values of all stored fields
     * @throws IOException 
@@ -129,7 +129,7 @@ public class DemoActions {
     * @throws ParseException 
     */
    public Query parseQuery(String queryLine) throws ParseException {
-      QueryParser parser = new QueryParser(Version.LUCENE_29, MAIN_FIELD, analyzer);
+      QueryParser parser = new QueryParser(Version.LUCENE_33, MAIN_FIELD, analyzer);
       return parser.parse(queryLine);
    }
 
@@ -137,7 +137,7 @@ public class DemoActions {
     * Returns a list of Addresses of all members in the cluster 
     */
    public List<Address> listAllMembers() {
-      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+      EmbeddedCacheManager cacheManager = cache.getCacheManager();
       return cacheManager.getMembers();
    }
 
