@@ -23,19 +23,12 @@
 package org.infinispan.config.parsing;
 
 import org.infinispan.Version;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.ConfigurationBeanVisitor;
-import org.infinispan.config.ConfigurationValidatingVisitor;
-import org.infinispan.config.AdvancedExternalizerConfig;
-import org.infinispan.config.DelegatingConfigurationVisitor;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.config.*;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
-import org.infinispan.config.InfinispanConfiguration;
-import org.infinispan.config.TimeoutConfigurationValidatingVisitor;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -140,6 +133,51 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert named.isEmpty();
    }
 
+   public void testStoreAsBinary() throws IOException {
+      String xml = INFINISPAN_START_TAG_NO_SCHEMA +
+            "<default>" +
+               "<storeAsBinary storeKeysAsBinary=\"true\" storeValuesAsBinary=\"false\" enabled=\"true\" />" +
+            "</default>" +
+            INFINISPAN_END_TAG;
+
+      InputStream is = new ByteArrayInputStream(xml.getBytes());
+      InfinispanConfiguration c = InfinispanConfiguration.newInfinispanConfiguration(is);
+      GlobalConfiguration gc = c.parseGlobalConfiguration();
+      Configuration defaultCfg = c.parseDefaultConfiguration();
+      assert defaultCfg.isStoreAsBinary();
+      assert defaultCfg.isStoreKeysAsBinary();
+      assert !defaultCfg.isStoreValuesAsBinary();
+   }
+
+   public void testCustomInterceptorsInNamedCache() throws IOException {
+      String xml = INFINISPAN_START_TAG_NO_SCHEMA +
+            "<default />" +
+            "<namedCache name=\"x\">" +
+            "<customInterceptors>\n" +
+            "         <interceptor position=\"first\" class=\""+CustomInterceptor1.class.getName()+"\" />" +
+            "         <interceptor" +
+            "            position=\"last\"" +
+            "            class=\""+CustomInterceptor2.class.getName()+"\"" +
+            "         />" +
+            "</customInterceptors>" +
+            "</namedCache>" +
+            INFINISPAN_END_TAG;
+
+      InputStream is = new ByteArrayInputStream(xml.getBytes());
+      InfinispanConfiguration c = InfinispanConfiguration.newInfinispanConfiguration(is);
+      GlobalConfiguration gc = c.parseGlobalConfiguration();
+      Map<String, Configuration> named = c.parseNamedConfigurations();
+      Configuration cfg = named.get("x");
+      List<CustomInterceptorConfig> ci = cfg.getCustomInterceptors();
+      assert ci.size() == 2;
+      assert ci.get(0).isFirst();
+      assert ci.get(0).getClassName().equals(CustomInterceptor1.class.getName());
+      assert ci.get(1).isLast();
+      assert ci.get(1).getClassName().equals(CustomInterceptor2.class.getName());
+   }
+
+   public static final class CustomInterceptor1 extends CommandInterceptor {}
+   public static final class CustomInterceptor2 extends CommandInterceptor {}
 
    public void testNoSchemaWithStuff() throws IOException {
       String xml = INFINISPAN_START_TAG_NO_SCHEMA +
