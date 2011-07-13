@@ -24,6 +24,7 @@ package org.infinispan.query.clustered;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import org.apache.lucene.search.FieldDoc;
 import org.apache.lucene.search.SortField;
@@ -56,7 +57,16 @@ class ISPNPriorityQueueFactory {
       String className = "org.apache.lucene.search.FieldDocSortedHitQueue";
 
       PriorityQueue<FieldDoc> queue = createPriorityHitQueue(size, className);
-      ReflectionUtil.setValue(queue, "fields", sort);
+      Method[] methods = queue.getClass().getDeclaredMethods();
+      
+      for(Method method : methods){
+    	  if(method.getName().equals("setFields")){
+    		  Object[] parameters = new Object[1];
+    		  parameters[0] = sort;
+    		  ReflectionUtil.invokeAccessibly(queue, method, parameters);
+    	  }
+      }
+      
       return queue;
    }
 
