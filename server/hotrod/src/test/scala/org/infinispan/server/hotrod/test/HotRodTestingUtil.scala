@@ -29,11 +29,11 @@ import org.testng.Assert._
 import org.infinispan.server.hotrod._
 import logging.Log
 import org.infinispan.config.Configuration.CacheMode
-import org.infinispan.config.Configuration
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.Main._
 import java.util.{Properties, Arrays}
 import org.infinispan.util.{TypedProperties, Util}
+import org.infinispan.config.{GlobalConfiguration, Configuration}
 
 /**
  * Test utils for Hot Rod tests.
@@ -82,11 +82,11 @@ object HotRodTestingUtil extends Log {
 
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, delay: Long, props: Properties): HotRodServer = {
       val server = new HotRodServer {
-         override protected def createTopologyCacheConfig(typedProps: TypedProperties): Configuration = {
+         override protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): Configuration = {
             if (delay > 0)
                Thread.sleep(delay)
 
-            val cfg = super.createTopologyCacheConfig(typedProps)
+            val cfg = super.createTopologyCacheConfig(typedProps, distSyncTimeout)
             cfg.setSyncCommitPhase(true) // Only for testing, so that asserts work fine.
             cfg.setSyncRollbackPhase(true) // Only for testing, so that asserts work fine.
             cfg
@@ -113,8 +113,8 @@ object HotRodTestingUtil extends Log {
 
    def startCrashingHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer = {
       val server = new HotRodServer {
-         override protected def createTopologyCacheConfig(typedProps: TypedProperties): Configuration = {
-            val cfg = super.createTopologyCacheConfig(typedProps)
+         override protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): Configuration = {
+            val cfg = super.createTopologyCacheConfig(typedProps, distSyncTimeout)
             cfg.setSyncCommitPhase(true) // Only for testing, so that asserts work fine.
             cfg.setSyncRollbackPhase(true) // Only for testing, so that asserts work fine.
             cfg

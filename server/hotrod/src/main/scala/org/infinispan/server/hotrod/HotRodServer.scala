@@ -37,13 +37,13 @@ import org.infinispan.server.core.{CacheValue, AbstractProtocolServer}
 import org.infinispan.eviction.EvictionStrategy
 import org.infinispan.util.{TypedProperties, ByteArrayKey, Util};
 import org.infinispan.server.core.Main._
-import org.infinispan.config.{CacheLoaderManagerConfig, Configuration}
 import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig
 import collection.mutable
 import collection.immutable
 import org.infinispan.util.concurrent.TimeoutException
 import org.infinispan.remoting.transport.jgroups.SuspectException
 import org.infinispan.context.Flag
+import org.infinispan.config.{GlobalConfiguration, CacheLoaderManagerConfig, Configuration}
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -247,10 +247,12 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager, typedProps: TypedProperties) {
-      cacheManager.defineConfiguration(TopologyCacheName, createTopologyCacheConfig(typedProps))
+      cacheManager.defineConfiguration(TopologyCacheName,
+         createTopologyCacheConfig(typedProps,
+            cacheManager.getGlobalConfiguration.getDistributedSyncTimeout))
    }
 
-   protected def createTopologyCacheConfig(typedProps: TypedProperties): Configuration = {
+   protected def createTopologyCacheConfig(typedProps: TypedProperties, distSyncTimeout: Long): Configuration = {
       val lockTimeout = typedProps.getLongProperty(PROP_KEY_TOPOLOGY_LOCK_TIMEOUT, TOPO_LOCK_TIMEOUT_DEFAULT, true)
       val replTimeout = typedProps.getLongProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, TOPO_REPL_TIMEOUT_DEFAULT, true)
       val doStateTransfer = typedProps.getBooleanProperty(PROP_KEY_TOPOLOGY_STATE_TRANSFER, TOPO_STATE_TRANSFER_DEFAULT, true)
@@ -266,7 +268,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       topologyCacheConfig.setExpirationMaxIdle(-1); // No maximum idle time
       if (doStateTransfer) {
          topologyCacheConfig.setFetchInMemoryState(true) // State transfer required
-         topologyCacheConfig.setStateRetrievalTimeout(replTimeout)
+         // State transfer timeout should be bigger than the distributed lock timeout
+         topologyCacheConfig.setStateRetrievalTimeout(distSyncTimeout + replTimeout)
       } else {
          // Otherwise configure a cluster cache loader
          val loaderConfigs = new CacheLoaderManagerConfig
