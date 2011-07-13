@@ -24,7 +24,6 @@ package org.infinispan.distribution.topologyaware;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.DistributionManagerImpl;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;

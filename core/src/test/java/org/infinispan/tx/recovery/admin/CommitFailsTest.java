@@ -33,8 +33,6 @@ import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
 import javax.transaction.xa.XAException;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -97,7 +95,7 @@ public class CommitFailsTest extends AbstractRecoveryTest {
 
    }
 
-   protected Object getKey() throws NotSupportedException, SystemException {
+   protected Object getKey() {
       KeyAffinityService kaf = KeyAffinityServiceFactory
             .newKeyAffinityService(this.cache(2), Executors.newSingleThreadExecutor(), new RndKeyGenerator(), 1000);
       Object key = kaf.getKeyForAddress(address(2));

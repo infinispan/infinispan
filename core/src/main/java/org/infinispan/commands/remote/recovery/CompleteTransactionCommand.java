@@ -24,8 +24,6 @@
 package org.infinispan.commands.remote.recovery;
 
 import org.infinispan.context.InvocationContext;
-import org.infinispan.marshall.Ids;
-
 import javax.transaction.xa.Xid;
 
 /**

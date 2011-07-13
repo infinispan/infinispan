@@ -29,8 +29,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.Test;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -84,12 +82,12 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
       assertUnaffected();
    }
 
-   protected void testShutdownOwnManager() throws InterruptedException {
+   protected void testShutdownOwnManager() {
       log.info("**** here it starts");
       caches.get(0).getCacheManager().stop();
       caches.remove(0);
       Assert.assertEquals(1, caches.size());
-      TestingUtil.blockUntilViewsReceived(10000, false, (Cache[]) caches.toArray(new Cache[0]));
+      TestingUtil.blockUntilViewsReceived(10000, false, caches.toArray(new Cache[0]));
       Assert.assertEquals(1, topology().size());
 
       eventually(new Condition() {

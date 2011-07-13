@@ -23,7 +23,6 @@
 package org.infinispan.notifications.cachemanagerlistener;
 
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.AbstractListenerImpl;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;

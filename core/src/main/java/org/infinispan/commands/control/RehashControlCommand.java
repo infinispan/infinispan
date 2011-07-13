@@ -24,25 +24,18 @@ package org.infinispan.commands.control;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.RemoteTransactionLogDetails;
-import org.infinispan.distribution.TransactionLogger;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 /**

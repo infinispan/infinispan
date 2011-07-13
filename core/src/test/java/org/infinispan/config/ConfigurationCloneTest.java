@@ -23,8 +23,6 @@
 package org.infinispan.config;
 
 import java.lang.reflect.Method;
-import java.util.Properties;
-
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;

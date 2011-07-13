@@ -26,7 +26,6 @@ import org.infinispan.Cache;
 import org.jgroups.logging.Log;
 import org.jgroups.logging.LogFactory;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -46,7 +45,7 @@ public class GridInputStream extends InputStream {
    byte[] current_buffer = null;
    boolean end_reached = false;
 
-   GridInputStream(GridFile file, Cache<String, byte[]> cache, int chunk_size) throws FileNotFoundException {
+   GridInputStream(GridFile file, Cache<String, byte[]> cache, int chunk_size) {
       this.file = file;
       this.name = file.getPath();
       this.cache = cache;

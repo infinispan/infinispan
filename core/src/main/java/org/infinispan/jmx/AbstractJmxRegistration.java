@@ -25,13 +25,8 @@ package org.infinispan.jmx;
 import java.util.Set;
 
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-
-import org.infinispan.CacheException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
-import org.infinispan.util.Util;
 
 /**
  * Parent class for top level JMX component registration.

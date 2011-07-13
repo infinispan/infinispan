@@ -24,8 +24,6 @@ package org.infinispan.test;
 
 import org.testng.annotations.AfterTest;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Set;
 

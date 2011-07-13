@@ -27,7 +27,6 @@ import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
-import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;

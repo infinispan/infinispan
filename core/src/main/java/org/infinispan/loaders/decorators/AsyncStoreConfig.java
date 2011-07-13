@@ -22,15 +22,10 @@
  */
 package org.infinispan.loaders.decorators;
 
-import org.infinispan.config.AbstractNamedCacheConfigurationBean;
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationDoc;
 import org.infinispan.config.ConfigurationDocRef;
 import org.infinispan.config.Dynamic;
-import org.infinispan.loaders.AbstractCacheStoreConfig;
-import org.infinispan.loaders.CacheLoaderConfig;
-import org.infinispan.loaders.CacheStoreConfig;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;

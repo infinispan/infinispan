@@ -72,7 +72,7 @@ public class WorkDuringJoinTest extends BaseDistFunctionalTest {
       return manager(joiner).getAddress();
    }
 
-   public void testJoinAndGet() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+   public void testJoinAndGet() {
       List<MagicKey> keys = init();
       ConsistentHash chOld = getConsistentHash(c1);
       Address joinerAddress = startNewMember();

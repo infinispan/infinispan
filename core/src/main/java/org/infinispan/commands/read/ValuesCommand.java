@@ -35,7 +35,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.BidirectionalMap;
-import org.infinispan.util.Immutables;
 
 /**
  * Command implementation for {@link java.util.Map#values()} functionality.

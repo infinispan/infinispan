@@ -22,27 +22,8 @@
  */
 package org.infinispan.remoting;
 
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
-import org.infinispan.config.Configuration;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.lifecycle.Lifecycle;
-import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Periodically (or when certain size is exceeded) takes elements and replicates them.

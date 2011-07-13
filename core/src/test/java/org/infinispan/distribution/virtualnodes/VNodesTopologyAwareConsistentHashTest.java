@@ -26,7 +26,6 @@ package org.infinispan.distribution.virtualnodes;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.TestTopologyAwareAddress;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
-import org.infinispan.distribution.topologyaware.TopologyAwareConsistentHashTest;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.test.AbstractInfinispanTest;

@@ -24,7 +24,6 @@ package org.infinispan.eviction;
 
 import java.io.Externalizable;
 import java.io.IOException;
-import java.io.NotSerializableException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
@@ -116,8 +115,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       }
 
       @Override
-      protected MarshalledValue createMarshalledValue(Object toWrap, InvocationContext ctx)
-               throws NotSerializableException {
+      protected MarshalledValue createMarshalledValue(Object toWrap, InvocationContext ctx) {
          marshalledValueCreated = true;
          return super.createMarshalledValue(toWrap, ctx);
       }

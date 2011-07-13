@@ -232,7 +232,7 @@ public class DummyTransaction implements Transaction {
 
    }
 
-   protected boolean notifyBeforeCompletion() throws SystemException {
+   protected boolean notifyBeforeCompletion() {
       boolean retval = true;
       if (syncs == null) return true;
       for (Synchronization s : syncs) {

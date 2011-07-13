@@ -32,7 +32,6 @@ import org.infinispan.atomic.RemoveOperation;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.config.AdvancedExternalizerConfig;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.config.AdvancedExternalizerConfig;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;

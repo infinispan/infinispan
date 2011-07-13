@@ -23,8 +23,6 @@
 package org.infinispan.tx.dld;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.testng.annotations.Test;
 

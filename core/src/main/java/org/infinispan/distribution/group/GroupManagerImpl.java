@@ -3,7 +3,6 @@ package org.infinispan.distribution.group;
 import static org.infinispan.util.ReflectionUtil.invokeAccessibly;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;

@@ -103,7 +103,7 @@ public class DataContainerTest {
    }
    
    @Test
-   public void testCustomDataContainer() throws IOException {
+   public void testCustomDataContainer() {
 
    	Configuration configuration = new Configuration();
    	configuration.fluent().dataContainer().dataContainer(new QueryableDataContainer());

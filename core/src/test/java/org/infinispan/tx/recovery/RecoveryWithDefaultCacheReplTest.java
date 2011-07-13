@@ -25,7 +25,6 @@ package org.infinispan.tx.recovery;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.testng.annotations.Test;
 
 /**

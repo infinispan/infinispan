@@ -22,7 +22,6 @@
  */
 package org.infinispan.distribution.rehash;
 
-import org.infinispan.Cache;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 

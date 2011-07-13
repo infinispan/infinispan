@@ -22,11 +22,8 @@
  */
 package org.infinispan.factories;
 
-import java.lang.reflect.InvocationTargetException;
-
 import javax.transaction.TransactionManager;
 
-import org.infinispan.config.Configuration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;

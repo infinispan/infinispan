@@ -36,9 +36,6 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-
 import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
 import static org.testng.Assert.assertEquals;
 
@@ -73,7 +70,7 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
       test(false);
    }
 
-   private void test(boolean commit) throws NotSupportedException, SystemException {
+   private void test(boolean commit) {
       assert recoveryOps(0).showInDoubtTransactions().isEmpty();
       TransactionTable tt0 = cache(0).getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
 

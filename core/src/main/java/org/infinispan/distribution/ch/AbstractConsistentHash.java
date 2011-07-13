@@ -25,14 +25,10 @@ package org.infinispan.distribution.ch;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.remoting.transport.Address;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * An abstract consistent hash implementation that handles common implementations of certain methods.  In particular,

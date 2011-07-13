@@ -32,8 +32,6 @@ import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;

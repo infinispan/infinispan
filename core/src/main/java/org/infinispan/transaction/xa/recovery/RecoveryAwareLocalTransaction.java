@@ -22,7 +22,6 @@
  */
 package org.infinispan.transaction.xa.recovery;
 
-import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 

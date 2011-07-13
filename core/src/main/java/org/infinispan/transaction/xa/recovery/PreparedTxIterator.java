@@ -23,8 +23,6 @@
 package org.infinispan.transaction.xa.recovery;
 
 import javax.transaction.xa.Xid;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 

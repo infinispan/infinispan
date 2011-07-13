@@ -22,22 +22,17 @@
  */
 package org.infinispan.distribution.ch;
 
-import static java.util.Collections.emptyList;
-
 import org.infinispan.config.Configuration;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 import org.infinispan.util.hash.Hash;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.distribution.group.GroupManagerImpl;
-import org.infinispan.distribution.group.Grouper;
 
 /**
  * A helper class that handles the construction of consistent hash instances based on configuration.

@@ -60,7 +60,7 @@ public class CustomMBeanServerPropertiesTest extends AbstractInfinispanTest {
       }
    }
 
-   public void testProgrammaticCustomMBeanServerLookupProperties() throws IOException {
+   public void testProgrammaticCustomMBeanServerLookupProperties() {
       CacheContainer cc = null;
       try {
          GlobalConfiguration gc = new GlobalConfiguration();
