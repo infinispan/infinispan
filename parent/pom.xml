@@ -621,6 +621,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-pmd-plugin</artifactId>
+            <version>1.9</version>
             <configuration>
                <minimumTokens>100</minimumTokens>
                <targetJdk>1.6</targetJdk>
