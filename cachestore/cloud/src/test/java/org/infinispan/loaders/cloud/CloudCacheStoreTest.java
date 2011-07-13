@@ -113,7 +113,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
    @SuppressWarnings("unchecked")
    @Override
    @Test(enabled = false, description = "Disabled until JClouds gains a proper streaming API")
-   public void testStreamingAPI() throws IOException, ClassNotFoundException, CacheLoaderException {
+   public void testStreamingAPI() throws CacheLoaderException, IOException {
       cs.store(InternalEntryFactory.create("k1", "v1", -1, -1));
       cs.store(InternalEntryFactory.create("k2", "v2", -1, -1));
       cs.store(InternalEntryFactory.create("k3", "v3", -1, -1));
@@ -183,7 +183,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
    @SuppressWarnings("unchecked")
    @Override
    @Test(enabled = false, description = "Disabled until JClouds gains a proper streaming API")
-   public void testStreamingAPIReusingStreams() throws IOException, ClassNotFoundException, CacheLoaderException {
+   public void testStreamingAPIReusingStreams() throws CacheLoaderException, IOException {
       cs.store(InternalEntryFactory.create("k1", "v1", -1, -1));
       cs.store(InternalEntryFactory.create("k2", "v2", -1, -1));
       cs.store(InternalEntryFactory.create("k3", "v3", -1, -1));
