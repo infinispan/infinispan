@@ -79,17 +79,16 @@
       </dependency>
 
       <dependency>
-         <groupId>org.jboss</groupId>
-         <artifactId>jboss-common-core</artifactId>
-         <scope>test</scope>
-         <version>${version.jboss.common.core}</version>
-      </dependency>
-
-      <dependency>
          <groupId>org.jboss.naming</groupId>
          <artifactId>jnp-client</artifactId>
          <scope>test</scope>
          <version>${version.org.jboss.naming}</version>
+         <exclusions>
+            <exclusion>
+                <groupId>org.jboss.logging</groupId>
+                <artifactId>jboss-logging-spi</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
 
       <dependency>
@@ -97,6 +96,12 @@
          <artifactId>jnpserver</artifactId>
          <scope>test</scope>
          <version>${version.org.jboss.naming}</version>
+         <exclusions>
+            <exclusion>
+                <groupId>org.jboss.logging</groupId>
+                <artifactId>jboss-logging-spi</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
 
       <dependency>

@@ -1,6 +1,0 @@
-<factorypath>
-    <factorypathentry kind="PLUGIN" id="org.eclipse.jst.ws.annotations.core" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="VARJAR" id="M2_REPO/org/jboss/logging/jboss-logging-processor/1.0.0.Beta6/jboss-logging-processor-1.0.0.Beta6.jar" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="VARJAR" id="M2_REPO/org/jboss/logging/jboss-logging-generator/1.0.0.Beta6/jboss-logging-generator-1.0.0.Beta6.jar" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="VARJAR" id="M2_REPO/org/jboss/logging/jboss-logging/3.0.0.Beta5/jboss-logging-3.0.0.Beta5.jar" enabled="true" runInBatchMode="false"/>
-</factorypath>
