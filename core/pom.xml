@@ -70,16 +70,6 @@
       <dependency>
          <groupId>org.rhq.helpers</groupId>
          <artifactId>rhq-pluginAnnotations</artifactId>
-         <version>${version.rhq.pluginAnnotations}</version>
-      </dependency>
-
-      <!-- dependency needed by jbosstm. If not added an older version of the logger is
-      used (imported through jboss-common-core) which causes runtime exception -->
-      <dependency>
-         <groupId>org.jboss.logging</groupId>
-         <artifactId>jboss-logging</artifactId>
-         <scope>test</scope>
-         <version>${version.org.jboss.logging}</version>
       </dependency>
 
       <dependency>
