@@ -67,7 +67,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       return c.isStoreAsBinary() && (c.isStoreKeysAsBinary() || c.isStoreValuesAsBinary());
    }
 
-   public InterceptorChain buildInterceptorChain() throws IllegalAccessException, InstantiationException, ClassNotFoundException {
+   public InterceptorChain buildInterceptorChain() {
       boolean invocationBatching = configuration.isInvocationBatchingEnabled();
       // load the icInterceptor first
 

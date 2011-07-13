@@ -22,7 +22,6 @@
  */
 package org.infinispan.loaders;
 
-import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.parsing.XmlConfigHelper;

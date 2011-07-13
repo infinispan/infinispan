@@ -59,7 +59,7 @@ public class UnsignedNumeric {
       return i;
    }
    
-   public static int readUnsignedInt(java.nio.ByteBuffer in) throws IOException {
+   public static int readUnsignedInt(java.nio.ByteBuffer in) {
       int b = in.get();
       int i = b & 0x7F;
       for (int shift = 7; (b & 0x80) != 0; shift += 7) {
@@ -91,7 +91,7 @@ public class UnsignedNumeric {
       out.write((byte) i);
    }
    
-   public static void writeUnsignedInt(java.nio.ByteBuffer out, int i) throws IOException {
+   public static void writeUnsignedInt(java.nio.ByteBuffer out, int i) {
       while ((i & ~0x7F) != 0) {
          out.put((byte) ((i & 0x7f) | 0x80));
          i >>>= 7;
@@ -123,7 +123,7 @@ public class UnsignedNumeric {
       }
       return i;
    }
-   public static long readUnsignedLong(java.nio.ByteBuffer in) throws IOException {
+   public static long readUnsignedLong(java.nio.ByteBuffer in) {
       int b = in.get();
       long i = b & 0x7F;
       for (int shift = 7; (b & 0x80) != 0; shift += 7) {
@@ -155,7 +155,7 @@ public class UnsignedNumeric {
       out.write((byte) i);
    }
 
-   public static void writeUnsignedLong(java.nio.ByteBuffer out, long i) throws IOException {
+   public static void writeUnsignedLong(java.nio.ByteBuffer out, long i) {
       while ((i & ~0x7F) != 0) {
          out.put((byte) ((i & 0x7f) | 0x80));
          i >>>= 7;
@@ -167,7 +167,7 @@ public class UnsignedNumeric {
     * Reads an int stored in variable-length format.  Reads between one and five bytes.  Smaller values take fewer
     * bytes.  Negative numbers are not supported.
     */
-   public static int readUnsignedInt(byte[] bytes, int offset) throws IOException {
+   public static int readUnsignedInt(byte[] bytes, int offset) {
       byte b = bytes[offset++];
       int i = b & 0x7F;
       for (int shift = 7; (b & 0x80) != 0; shift += 7) {
@@ -183,7 +183,7 @@ public class UnsignedNumeric {
     *
     * @param i int to write
     */
-   public static void writeUnsignedInt(byte[] bytes, int offset, int i) throws IOException {
+   public static void writeUnsignedInt(byte[] bytes, int offset, int i) {
       while ((i & ~0x7F) != 0) {
          bytes[offset++] = (byte) ((i & 0x7f) | 0x80);
          i >>>= 7;
@@ -196,7 +196,7 @@ public class UnsignedNumeric {
     * Reads an int stored in variable-length format.  Reads between one and nine bytes.  Smaller values take fewer
     * bytes.  Negative numbers are not supported.
     */
-   public static long readUnsignedLong(byte[] bytes, int offset) throws IOException {
+   public static long readUnsignedLong(byte[] bytes, int offset) {
       byte b = bytes[offset++];
       long i = b & 0x7F;
       for (int shift = 7; (b & 0x80) != 0; shift += 7) {
@@ -212,7 +212,7 @@ public class UnsignedNumeric {
     *
     * @param i int to write
     */
-   public static void writeUnsignedLong(byte[] bytes, int offset, long i) throws IOException {
+   public static void writeUnsignedLong(byte[] bytes, int offset, long i) {
       while ((i & ~0x7F) != 0) {
          bytes[offset++] = (byte) ((i & 0x7f) | 0x80);
          i >>>= 7;

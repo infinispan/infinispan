@@ -25,8 +25,6 @@ package org.infinispan.affinity;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractCacheTest;

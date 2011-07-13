@@ -35,8 +35,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.easymock.EasyMock.*;
-import static org.easymock.EasyMock.anyLong;
-import static org.easymock.EasyMock.verify;
 
 @Test(testName = "replication.ReplQueueRestartTest", groups = "unit")
 public class ReplQueueRestartTest extends AbstractInfinispanTest {

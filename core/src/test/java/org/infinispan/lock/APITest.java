@@ -71,7 +71,7 @@ public class APITest extends MultipleCacheManagersTest {
       cache1.put("k", "v");
       tm(1).begin();
       cache2.put("k", "v2");
-      Transaction t = tm(1).suspend();
+      tm(1).suspend();
 
       tm(0).begin();
       cache1.getAdvancedCache().lock("k");
@@ -84,7 +84,7 @@ public class APITest extends MultipleCacheManagersTest {
       cache1.put("k", "v");
       tm(1).begin();
       cache2.put("k", "v2");
-      Transaction t = tm(1).suspend();
+      tm(1).suspend();
 
       tm(0).begin();
       assert !cache1.getAdvancedCache().withFlags(FAIL_SILENTLY).lock("k");
@@ -113,7 +113,7 @@ public class APITest extends MultipleCacheManagersTest {
 
       tm(1).begin();
       cache2.put("k3", "v2");
-      Transaction t = tm(1).suspend();
+      tm(1).suspend();
 
       tm(0).begin();
       cache1.getAdvancedCache().lock(Arrays.asList("k1", "k2", "k3"));

@@ -31,7 +31,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Status;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Extends {@link org.infinispan.transaction.RemoteTransaction} and adds recovery related information and functionality.

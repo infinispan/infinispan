@@ -78,7 +78,7 @@ public class APIDistTest extends MultipleCacheManagersTest {
       tm(0).rollback();
    }
 
-   public void testLockAndGetAndPut() throws SystemException, NotSupportedException, RollbackException, HeuristicRollbackException, HeuristicMixedException, InterruptedException {
+   public void testLockAndGetAndPut() throws SystemException, NotSupportedException, RollbackException, HeuristicRollbackException, HeuristicMixedException {
       Cache<MagicKey, String> cache1 = cache(0), cache2 = cache(1);
 
       cache1.put(key, "v");
@@ -98,7 +98,7 @@ public class APIDistTest extends MultipleCacheManagersTest {
       assert "new_value".equals(val = cache2.get(key)) : "Could not find key " + key + " on cache2: expected new_value, was " + val;
    }
 
-   public void testLockAndPutRetval() throws SystemException, NotSupportedException, RollbackException, HeuristicRollbackException, HeuristicMixedException, InterruptedException {
+   public void testLockAndPutRetval() throws SystemException, NotSupportedException, RollbackException, HeuristicRollbackException, HeuristicMixedException {
       Cache<MagicKey, String> cache1 = cache(0), cache2 = cache(1);
 
       cache1.put(key, "v");
@@ -117,7 +117,7 @@ public class APIDistTest extends MultipleCacheManagersTest {
       assert "new_value".equals(val = cache2.get(key)) : "Could not find key " + key + " on cache2: expected new_value, was " + val;
    }
 
-   public void testLockAndRemoveRetval() throws SystemException, NotSupportedException, RollbackException, HeuristicRollbackException, HeuristicMixedException, InterruptedException {
+   public void testLockAndRemoveRetval() throws SystemException, NotSupportedException, RollbackException, HeuristicRollbackException, HeuristicMixedException {
       Cache<MagicKey, String> cache1 = cache(0), cache2 = cache(1);
 
       cache1.put(key, "v");

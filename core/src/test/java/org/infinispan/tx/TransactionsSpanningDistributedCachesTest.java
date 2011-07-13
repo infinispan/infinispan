@@ -23,24 +23,8 @@
 
 package org.infinispan.tx;
 
-import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * @author Mircea Markus

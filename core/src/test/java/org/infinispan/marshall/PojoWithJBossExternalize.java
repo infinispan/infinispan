@@ -23,18 +23,12 @@
 
 package org.infinispan.marshall;
 
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
-import org.infinispan.test.data.Key;
 import org.jboss.marshalling.Creator;
 import org.jboss.marshalling.Externalize;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.UUID;
-
-import static org.infinispan.test.TestingUtil.k;
 
 /**
  * A test pojo that is marshalled using JBoss Marshalling's

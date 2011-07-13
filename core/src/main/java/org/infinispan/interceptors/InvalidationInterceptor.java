@@ -51,9 +51,7 @@ import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
-import javax.transaction.SystemException;
 import javax.transaction.Transaction;
-import java.sql.ResultSet;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;

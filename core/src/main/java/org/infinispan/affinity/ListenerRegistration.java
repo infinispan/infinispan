@@ -26,9 +26,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 
 /**
 * Used for registering various cache notifications.

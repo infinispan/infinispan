@@ -102,8 +102,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    public RspList invokeRemoteCommands(Vector<Address> dests, ReplicableCommand command, int mode, long timeout,
                                        boolean anycasting, boolean oob, RspFilter filter, boolean supportReplay, boolean asyncMarshalling,
-                                       boolean broadcast)
-         throws NotSerializableException, ExecutionException, InterruptedException {
+                                       boolean broadcast) {
 
       ReplicationTask task = new ReplicationTask(command, oob, dests, mode, timeout, anycasting, filter, supportReplay, broadcast);
 

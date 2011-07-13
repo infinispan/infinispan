@@ -23,26 +23,16 @@
 package org.infinispan.distribution.virtualnodes;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.distribution.DefaultConsistentHashTest;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import static org.testng.Assert.assertEquals;
 
 @Test(groups = "unit", testName = "distribution.VNodesDefaultConsistentHashTest", enabled = true)

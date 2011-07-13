@@ -27,7 +27,6 @@ import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.TestException;
 import org.testng.annotations.AfterTest;

@@ -26,9 +26,6 @@ package org.infinispan.tx.recovery.admin;
 import org.infinispan.config.Configuration;
 import org.testng.annotations.Test;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-
 /**
  * @author Mircea Markus
  * @since 5.0
@@ -38,7 +35,7 @@ public class CommitFailsReplicatedTest extends CommitFailsTest {
 
 
    @Override
-   protected Object getKey() throws NotSupportedException, SystemException {
+   protected Object getKey() {
       return "aKey";
    }
 

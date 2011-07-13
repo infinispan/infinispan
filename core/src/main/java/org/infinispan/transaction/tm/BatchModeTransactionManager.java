@@ -22,9 +22,6 @@
  */
 package org.infinispan.transaction.tm;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 /**
  * Not really a transaction manager in the truest sense of the word.  Only used to batch up operations.  Proper
  * transactional semantics of rollbacks and recovery are NOT used here.

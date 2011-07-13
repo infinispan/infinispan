@@ -22,7 +22,6 @@
  */
 package org.infinispan.distribution;
 
-import org.infinispan.distribution.ch.AbstractWheelConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
 /**

@@ -24,8 +24,6 @@ package org.infinispan.distribution;
 
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Collection;
 import java.util.List;
 

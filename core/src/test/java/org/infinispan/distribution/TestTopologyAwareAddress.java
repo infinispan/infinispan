@@ -19,7 +19,6 @@
 
 package org.infinispan.distribution;
 
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 
 /**

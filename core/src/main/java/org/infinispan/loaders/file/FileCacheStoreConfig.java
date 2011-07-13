@@ -22,10 +22,7 @@
  */
 package org.infinispan.loaders.file;
 
-import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
-import org.infinispan.loaders.decorators.AsyncStoreConfig;
-
 import java.beans.PropertyEditorSupport;
 
 /**

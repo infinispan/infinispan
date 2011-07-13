@@ -249,7 +249,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       }
    }
 
-   private StateTransferManager getStateTransferManager(String cacheName) throws StateTransferException {
+   private StateTransferManager getStateTransferManager(String cacheName) {
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
       if (cr == null)
          return null;

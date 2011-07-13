@@ -22,7 +22,6 @@
  */
 package org.infinispan.replication;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;

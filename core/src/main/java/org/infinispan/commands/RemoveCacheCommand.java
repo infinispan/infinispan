@@ -25,11 +25,8 @@ package org.infinispan.commands;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 

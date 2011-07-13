@@ -32,8 +32,6 @@ import org.infinispan.transaction.xa.recovery.RecoveryInfoKey;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-
 import static org.infinispan.tx.recovery.RecoveryTestUtil.rm;
 import static org.testng.Assert.assertEquals;
 
@@ -49,7 +47,7 @@ public class RecoveryConfigTest extends SingleCacheManagerTest {
       return new DefaultCacheManager("configs/recovery-enabled-config.xml");
    }
 
-   public void testRecoveryAndAsyncCaches() throws IOException {
+   public void testRecoveryAndAsyncCaches() {
       try {
          cacheManager.getCache("withRecoveryAndAsync");
          assert false;

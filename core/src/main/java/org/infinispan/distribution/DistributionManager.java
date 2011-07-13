@@ -32,12 +32,9 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.TopologyAwareAddress;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 /**

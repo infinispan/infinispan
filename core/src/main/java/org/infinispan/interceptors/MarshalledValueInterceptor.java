@@ -43,8 +43,6 @@ import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.Immutables;
 
-import java.io.IOException;
-import java.io.NotSerializableException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -297,8 +295,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       }
    }
 
-   private Object compactAndProcessRetVal(Set<MarshalledValue> marshalledValues, Object retVal, InvocationContext ctx)
-         throws IOException, ClassNotFoundException {
+   private Object compactAndProcessRetVal(Set<MarshalledValue> marshalledValues, Object retVal, InvocationContext ctx) {
       if (trace) log.trace("Compacting MarshalledValues created");
       for (MarshalledValue mv : marshalledValues) compact(mv);
       return processRetVal(retVal, ctx);
@@ -309,7 +306,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       mv.compact(false, false);
    }
 
-   private Object processRetVal(Object retVal, InvocationContext ctx) throws IOException, ClassNotFoundException {
+   private Object processRetVal(Object retVal, InvocationContext ctx) {
       if (retVal instanceof MarshalledValue) {
          if (ctx.isOriginLocal()) {
             if (trace) log.tracef("Return is a marshall value, so extract instance from: %s", retVal);
@@ -320,7 +317,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    }
 
    @SuppressWarnings("unchecked")
-   protected Map wrapMap(Map<Object, Object> m, Set<MarshalledValue> marshalledValues, InvocationContext ctx) throws NotSerializableException {
+   protected Map wrapMap(Map<Object, Object> m, Set<MarshalledValue> marshalledValues, InvocationContext ctx) {
       if (m == null) {
          if (trace) log.trace("Map is nul; returning an empty map.");
          return Collections.emptyMap();
@@ -339,7 +336,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       return copy;
    }
 
-   protected MarshalledValue createMarshalledValue(Object toWrap, InvocationContext ctx) throws NotSerializableException {
+   protected MarshalledValue createMarshalledValue(Object toWrap, InvocationContext ctx) {
       return new MarshalledValue(toWrap, ctx.isOriginLocal(), marshaller);
    }
 }

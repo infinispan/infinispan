@@ -26,7 +26,6 @@ import org.infinispan.Cache;
 import org.jgroups.logging.Log;
 import org.jgroups.logging.LogFactory;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -45,7 +44,7 @@ public class GridOutputStream extends OutputStream {
    static final Log log = LogFactory.getLog(GridOutputStream.class);
 
 
-   GridOutputStream(GridFile file, boolean append, Cache<String, byte[]> cache, int chunk_size) throws FileNotFoundException {
+   GridOutputStream(GridFile file, boolean append, Cache<String, byte[]> cache, int chunk_size) {
       this.file = file;
       this.name = file.getPath();
       this.cache = cache;

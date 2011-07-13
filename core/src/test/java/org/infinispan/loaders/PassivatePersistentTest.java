@@ -23,7 +23,6 @@
 package org.infinispan.loaders;
 
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.CacheContainer;

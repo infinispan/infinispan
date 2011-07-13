@@ -263,7 +263,7 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
    }
 
 
-   public void testPropagatingStreams() throws IOException, ClassNotFoundException, CacheLoaderException {
+   public void testPropagatingStreams() throws IOException, CacheLoaderException {
       store2.store(InternalEntryFactory.create("k1", "v1"));
       store2.store(InternalEntryFactory.create("k2", "v2", lifespan));
 

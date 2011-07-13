@@ -22,9 +22,6 @@
  */
 package org.infinispan.tx.dld;
 
-import org.infinispan.Cache;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.PerCacheExecutorThread;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
