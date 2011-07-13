@@ -120,7 +120,6 @@
       <version.jackson>1.6.1</version.jackson>
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
-      <version.jboss.common.core>2.2.17.GA</version.jboss.common.core>
       <version.jboss.marshalling>1.3.0.GA</version.jboss.marshalling>
       <version.jbossjta>4.15.1.Final</version.jbossjta>
       <version.org.jboss.logging>3.0.0.GA</version.org.jboss.logging>
@@ -138,7 +137,7 @@
       <version.lucene>3.3.0</version.lucene>
       <version.mysql.driver>5.1.9</version.mysql.driver>
       <version.netty>3.2.3.Final</version.netty>
-      <version.org.jboss.naming>5.0.3.GA</version.org.jboss.naming>
+      <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.resteasy>2.0-beta-2</version.resteasy>
 <!--
       <version.rhq.pluginAnnotations>4.0.0-SNAPSHOT</version.rhq.pluginAnnotations>
