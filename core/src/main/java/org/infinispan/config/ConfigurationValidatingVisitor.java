@@ -100,7 +100,7 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
    @Override
    public void visitCacheLoaderManagerConfig(CacheLoaderManagerConfig cacheLoaderManagerConfig) {
       if (!evictionEnabled && cacheLoaderManagerConfig.isPassivation())
-         throw new ConfigurationException("Passivation configured without a valid eviction policy.  This would mean that the cache store will never get used.");
+         log.passivationWithoutEviction();
 
       boolean shared = cacheLoaderManagerConfig.isShared();
       if (!shared) {

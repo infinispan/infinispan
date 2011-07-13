@@ -1006,7 +1006,7 @@ public class TestingUtil {
    }
 
    public static ObjectName getJGroupsChannelObjectName(String jmxDomain, String clusterName) throws Exception {
-      return new ObjectName(String.format("%s:type=channel,cluster=%s", jmxDomain, clusterName));
+      return new ObjectName(String.format("%s:type=channel,cluster=%s", jmxDomain, ObjectName.quote(clusterName)));
    }
 
    public static String generateRandomString(int numberOfChars) {
