@@ -49,6 +49,11 @@
          <artifactId>getopt</artifactId>
          <version>${version.gnu.getopt}</version>
       </dependency>
+
+      <dependency>
+         <groupId>org.rhq.helpers</groupId>
+         <artifactId>rhq-pluginAnnotations</artifactId>
+      </dependency>
    </dependencies>
 
    <build>
