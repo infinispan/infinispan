@@ -201,6 +201,7 @@
       </clustering>
       <jmxStatistics enabled="false"/>
       <deadlockDetection enabled="true" spinDuration="1221"/>
+      <eviction maxEntries="1000" strategy="LIRS" />
       <loaders passivation="true" shared="true" preload="true"> 
       	<loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
                         ignoreModifications="true" purgeOnStartup="true"> 

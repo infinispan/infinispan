@@ -23,6 +23,7 @@
 package org.infinispan.config;
 
 import org.infinispan.CacheException;
+import org.infinispan.config.FluentConfiguration.*;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -32,7 +33,6 @@ import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -47,9 +47,14 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.hash.Hash;
 import org.infinispan.util.hash.MurmurHash3;
-import org.infinispan.config.FluentConfiguration.*;
 
-import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
@@ -3579,8 +3584,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public static class StoreAsBinary extends BooleanAttributeType implements StoreAsBinaryConfig {
 
       @ConfigurationDoc(desc = "If enabled, keys are stored as binary, in their serialized form.  If false, keys are stored as object references.")
+      @XmlAttribute
       private Boolean storeKeysAsBinary = true;
       @ConfigurationDoc(desc = "If enabled, values are stored as binary, in their serialized form.  If false, values are stored as object references.")
+      @XmlAttribute
       private Boolean storeValuesAsBinary = true;
       /**
        * The serialVersionUID
@@ -3623,12 +3630,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return this;
       }
 
-      @XmlAttribute
       public Boolean isStoreKeysAsBinary() {
          return this.storeKeysAsBinary;
       }
 
-      @XmlAttribute
       public Boolean isStoreValuesAsBinary() {
          return this.storeValuesAsBinary;
       }
@@ -4033,14 +4038,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @Override
       public CustomInterceptorsConfig after(Class<? extends CommandInterceptor> interceptorClass) {
-         CustomInterceptorConfig cfg = new CustomInterceptorConfig(interceptor, false, false, -1, interceptorClass, null);
+         CustomInterceptorConfig cfg = new CustomInterceptorConfig(interceptor, false, false, -1, interceptorClass.getName(), null);
          type.getCustomInterceptors().add(cfg);
          return type;
       }
 
       @Override
       public CustomInterceptorsConfig before(Class<? extends CommandInterceptor> interceptorClass) {
-         CustomInterceptorConfig cfg = new CustomInterceptorConfig(interceptor, false, false, -1, null, interceptorClass);
+         CustomInterceptorConfig cfg = new CustomInterceptorConfig(interceptor, false, false, -1, null, interceptorClass.getName());
          type.getCustomInterceptors().add(cfg);
          return type;
       }
