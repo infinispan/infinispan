@@ -48,11 +48,11 @@ class HotRodConfigurationTest {
       val props = new Properties
       props.setProperty(PROP_KEY_TOPOLOGY_LOCK_TIMEOUT, "26000")
       props.setProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, "31000")
-      withClusteredServer(props) { cfg =>
+      withClusteredServer(props) { (cfg, distSyncTimeout) =>
          assertEquals(cfg.getLockAcquisitionTimeout, 26000)
          assertEquals(cfg.getSyncReplTimeout, 31000)
          assertTrue(cfg.isStateTransferEnabled)
-         assertEquals(cfg.getStateRetrievalTimeout, 31000)
+         assertEquals(cfg.getStateRetrievalTimeout, 31000 + distSyncTimeout)
          assertNull(cfg.getCacheLoaderManagerConfig.getFirstCacheLoaderConfig)
       }
    }
@@ -61,7 +61,7 @@ class HotRodConfigurationTest {
       val props = new Properties
       props.setProperty(PROP_KEY_TOPOLOGY_STATE_TRANSFER, "false")
       props.setProperty(PROP_KEY_TOPOLOGY_REPL_TIMEOUT, "43000")
-      withClusteredServer(props) { cfg =>
+      withClusteredServer(props) { (cfg, distSyncTimeout) =>
          assertEquals(cfg.getSyncReplTimeout, 43000)
          assertTrue(cfg.isStateTransferEnabled)
          val clcfg = cfg.getCacheLoaders.get(0)
@@ -71,12 +71,12 @@ class HotRodConfigurationTest {
       }
    }
 
-   private def withClusteredServer(props: Properties) (assert: Configuration => Unit) {
+   private def withClusteredServer(props: Properties) (assert: (Configuration, Long) => Unit) {
       val cacheManager = TestCacheManagerFactory.createClusteredCacheManager
       val server = startHotRodServer(cacheManager, UniquePortThreadLocal.get.intValue, props)
       try {
          val cfg = cacheManager.getCache(TopologyCacheName).getConfiguration
-         assert(cfg)
+         assert(cfg, cacheManager.getGlobalConfiguration.getDistributedSyncTimeout)
       } finally {
          server.stop
          cacheManager.stop
