@@ -63,7 +63,7 @@
          <groupId>org.jclouds</groupId>
          <artifactId>jclouds-allblobstore</artifactId>
          <version>${version.jclouds}</version>
-         <scope>optional</scope>
+         <optional>true</optional>
       </dependency>
 
       <!-- =========================================================== -->
