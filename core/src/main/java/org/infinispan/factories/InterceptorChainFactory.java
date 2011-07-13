@@ -49,18 +49,21 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       CommandInterceptor chainedInterceptor = componentRegistry.getComponent(clazz);
       if (chainedInterceptor == null) {
          chainedInterceptor = Util.getInstance(clazz);
-         try {
-            componentRegistry.registerComponent(chainedInterceptor, clazz);
-         }
-         catch (RuntimeException e) {
-            log.warn("Problems creating interceptor " + clazz);
-            throw e;
-         }
+         register(clazz, chainedInterceptor);
       } else {
          // wipe next/last chaining!!
          chainedInterceptor.setNext(null);
       }
       return chainedInterceptor;
+   }
+
+   private void register(Class<? extends CommandInterceptor> clazz, CommandInterceptor chainedInterceptor) {
+      try {
+         componentRegistry.registerComponent(chainedInterceptor, clazz);
+      } catch (RuntimeException e) {
+         log.warn("Problems creating interceptor " + clazz);
+         throw e;
+      }
    }
 
    private boolean isUsingMarshalledValues(Configuration c) {
@@ -97,7 +100,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       else
          interceptorChain.appendInterceptor(createInterceptor(TxInterceptor.class));
 
-      if(configuration.isUseEagerLocking())
+      if (configuration.isUseEagerLocking())
          interceptorChain.appendInterceptor(createInterceptor(ImplicitEagerLockingInterceptor.class));
 
       if (isUsingMarshalledValues(configuration))
@@ -164,8 +167,12 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    }
 
    private CommandInterceptor getOrCreateCustomInterceptor(CustomInterceptorConfig cfg) {
-      if (cfg.getInterceptor() != null) return cfg.getInterceptor();
-      return (CommandInterceptor) Util.getInstance(cfg.getClassName(), configuration.getClassLoader());
+      CommandInterceptor result = cfg.getInterceptor();
+      if (result == null) {
+         result = Util.getInstance(cfg.getClassName(), configuration.getClassLoader());
+      }
+      register(result.getClass(), result);
+      return result;
    }
 
    private void buildCustomInterceptors(InterceptorChain interceptorChain, List<CustomInterceptorConfig> customInterceptors) {
@@ -181,20 +188,19 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             List<CommandInterceptor> withClassName = interceptorChain.getInterceptorsWithClassName(config.getAfter());
             if (withClassName.isEmpty()) {
                throw new ConfigurationException("Cannot add after class: " + config.getAfter()
-                     + " as no such interceptor exists in the default chain");
+                                                      + " as no such interceptor exists in the default chain");
             }
             interceptorChain.addInterceptorAfter(getOrCreateCustomInterceptor(config), withClassName.get(0).getClass());
-         }
-         else if (config.getBefore() != null) {
+         } else if (config.getBefore() != null) {
             List<CommandInterceptor> withClassName = interceptorChain.getInterceptorsWithClassName(config.getBefore());
             if (withClassName.isEmpty()) {
                throw new ConfigurationException("Cannot add before class: " + config.getAfter()
-                     + " as no such interceptor exists in the default chain");
+                                                      + " as no such interceptor exists in the default chain");
             }
             interceptorChain.addInterceptorBefore(getOrCreateCustomInterceptor(config), withClassName.get(0).getClass());
          }
       }
-      
+
    }
 
    private boolean hasAsyncStore() {
@@ -215,8 +221,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          return componentType.cast(buildInterceptorChain());
       } catch (CacheException ce) {
          throw ce;
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new ConfigurationException("Unable to build interceptor chain", e);
       }
    }
