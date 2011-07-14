@@ -438,11 +438,11 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Class [%s] cannot be cast to JGroupsChannelLookup!  Not using a channel lookup.", id = 83)
-   void wrongTypeForJGroupsChannelLookup(String channelLookupClassName);
+   void wrongTypeForJGroupsChannelLookup(String channelLookupClassName, @Cause Exception e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Errors instantiating [%s]!  Not using a channel lookup.", id = 84)
-   void errorInstantiatingJGroupsChannelLookup(String channelLookupClassName);
+   void errorInstantiatingJGroupsChannelLookup(String channelLookupClassName, @Cause Exception e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Error while trying to create a channel using config files: %s", id = 85)
