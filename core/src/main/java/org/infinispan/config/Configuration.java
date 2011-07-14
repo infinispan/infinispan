@@ -1283,11 +1283,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
    
    public boolean isGroupsEnabled() {
-      return clustering.hash.groupsEnabled;
+      clustering.hash.groups.setConfiguration(this);
+      return clustering.hash.groups.enabled;
    }
    
    public List<Grouper<?>> getGroupers() {
-      return clustering.hash.groupers; 
+      clustering.hash.groups.setConfiguration(this);
+      return clustering.hash.groups.groupers; 
    }
 
    public boolean isRehashEnabled() {
@@ -3150,13 +3152,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(bean = HashConfig.class, targetElement = "numVirtualNodes")
       protected Integer numVirtualNodes = 1;
       
-      @XmlTransient
-      protected Boolean groupsEnabled = false;
-      
-      @XmlTransient
-      protected List<Grouper<?>> groupers = new ArrayList<Grouper<?>>();
+      @ConfigurationDocRef(bean = HashConfig.class, targetElement = "groups")
+      protected GroupsConfiguration groups = new GroupsConfiguration();
 
       public void accept(ConfigurationBeanVisitor v) {
+         groups.accept(v);
          v.visitHashType(this);
       }
 
@@ -3305,23 +3305,20 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return this;
       }
       
-      @Override
-      public HashConfig groupers(List<Grouper<?>> groupers) {
-         testImmutability("groupers");
-         this.groupers = groupers;
-         return this;
+      public GroupsConfiguration groups() {
+         groups.setConfiguration(config);
+         return groups;
       }
       
-      @Override
-      public HashConfig groupsEnabled(Boolean groupsEnabled) {
-         testImmutability("groupsEnabled");
-         this.groupsEnabled = groupsEnabled;
-         return this;
+      @XmlElement
+      public void setGroups(GroupsConfiguration groups) {
+         testImmutability("groups");
+         this.groups = groups;
       }
       
-      @Override
-      public List<Grouper<?>> getGroupers() {
-         return groupers;
+      
+      public GroupsConfiguration getGroups() {
+         return groups();
       }
 
       @Override
@@ -3337,8 +3334,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             return false;
          if (numOwners != null ? !numOwners.equals(hashType.numOwners) : hashType.numOwners != null) return false;
          if (numVirtualNodes != null ? !numVirtualNodes.equals(hashType.numVirtualNodes) : hashType.numVirtualNodes != null) return false;
-         if (groupsEnabled != null ? !groupsEnabled.equals(hashType.groupsEnabled) : hashType.groupsEnabled != null) return false;
-         if (groupers != null ? !groupers.equals(hashType.groupers) : hashType.groupers != null) return false;
+         if (groups != null ? !groups.equals(hashType.groups) : hashType.groups != null) return false;
          if (rehashRpcTimeout != null ? !rehashRpcTimeout.equals(hashType.rehashRpcTimeout) : hashType.rehashRpcTimeout != null)
             return false;
          if (rehashWait != null ? !rehashWait.equals(hashType.rehashWait) : hashType.rehashWait != null) return false;
@@ -3353,12 +3349,25 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          result = 31 * result + (hashFunctionClass != null ? hashFunctionClass.hashCode() : 0);
          result = 31 * result + (numOwners != null ? numOwners.hashCode() : 0);
          result = 31 * result + (numVirtualNodes != null ? numVirtualNodes.hashCode() : 0);
-         result = 31 * result + (groupsEnabled != null ? groupsEnabled.hashCode() : 0);
-         result = 31 * result + (groupers != null ? groupers.hashCode() : 0);
+         result = 31 * result + (groups != null ? groups.hashCode() : 0);
          result = 31 * result + (rehashWait != null ? rehashWait.hashCode() : 0);
          result = 31 * result + (rehashRpcTimeout != null ? rehashRpcTimeout.hashCode() : 0);
          result = 31 * result + (rehashEnabled ? 0 : 1);
          return result;
+      }
+      
+      @Override
+      public HashType clone() throws CloneNotSupportedException {
+         HashType dolly = (HashType) super.clone();
+         dolly.consistentHashClass = consistentHashClass;
+         dolly.hashFunctionClass = hashFunctionClass;
+         dolly.numOwners = numOwners;
+         dolly.numVirtualNodes = numVirtualNodes;
+         dolly.rehashEnabled = rehashEnabled;
+         dolly.rehashRpcTimeout = rehashRpcTimeout;
+         dolly.rehashWait = rehashWait;
+         dolly.groups = (GroupsConfiguration) groups.clone();
+         return dolly;
       }
    }
 

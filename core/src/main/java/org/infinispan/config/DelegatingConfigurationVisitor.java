@@ -179,6 +179,13 @@ public class DelegatingConfigurationVisitor implements ConfigurationBeanVisitor 
          delegate.visitExpirationType(bean);
       }
    }
+   
+   @Override
+   public void visitGroupConfig(GroupsConfiguration bean) {
+      for (ConfigurationBeanVisitor delegate : delegates) {
+         delegate.visitGroupConfig(bean);
+      }
+   }
 
    @Override
    public void visitHashType(HashType bean) {

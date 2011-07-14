@@ -169,6 +169,16 @@
       </clustering>
    </namedCache>
    
+   <namedCache name="groups">
+      <clustering mode="distribution">
+         <hash>
+            <groups enabled="true">
+               <grouper class="org.infinispan.distribution.groups.KXGrouper" />
+            </groups>
+         </hash>
+      </clustering>
+   </namedCache>
+   
    <!-- Note that any of the elements appearing in a namedCache section can also appear in the default section as a template. -->
    <namedCache name="evictionCache">
 

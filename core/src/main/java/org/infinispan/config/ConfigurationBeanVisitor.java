@@ -38,6 +38,7 @@ import org.infinispan.config.Configuration.StateRetrievalType;
 import org.infinispan.config.Configuration.SyncType;
 import org.infinispan.config.Configuration.TransactionType;
 import org.infinispan.config.Configuration.UnsafeType;
+import org.infinispan.config.FluentConfiguration.GroupsConfig;
 import org.infinispan.config.GlobalConfiguration.AdvancedExternalizersType;
 import org.infinispan.config.GlobalConfiguration.FactoryClassWithPropertiesType;
 import org.infinispan.config.GlobalConfiguration.GlobalJmxStatisticsType;
@@ -96,6 +97,8 @@ public interface ConfigurationBeanVisitor {
    void visitEvictionType(EvictionType bean);
    
    void visitExpirationType(ExpirationType bean);
+   
+   void visitGroupConfig(GroupsConfiguration bean);
    
    void visitHashType(HashType bean);
    
