@@ -63,12 +63,12 @@ public class InfinispanDirectoryIOTest {
    public void prepareCacheManager() {
       cacheManager = CacheTestSupport.createTestCacheManager();
    }
-   
-   @AfterTest
+
+   @AfterTest(alwaysRun=true)
    public void killCacheManager() {
-      cacheManager.stop();
+      TestingUtil.killCacheManagers(cacheManager);
    }
-   
+
    @AfterMethod(alwaysRun=true)
    public void clearCache() {
       cacheManager.getCache().clear();
