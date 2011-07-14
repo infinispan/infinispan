@@ -5,8 +5,10 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class GrouperConfiguration {
+@ConfigurationDoc(name="grouper",desc="Grouper definition. See The Grouping API for more details")
+public class GrouperConfiguration extends AbstractNamedCacheConfigurationBean{
 
+   @ConfigurationDocRef(name = "class", targetElement = "setClazz", bean = GrouperConfiguration.class)
    String clazz;
    
    public GrouperConfiguration() {
@@ -21,7 +23,12 @@ public class GrouperConfiguration {
       return clazz;
    }
    
-   @XmlAttribute(name="class")
+   /**
+    * FIXME Comment this
+    * 
+    * @param clazz
+    */
+   @XmlAttribute(name="class")   
    public void setClazz(String clazz) {
       this.clazz = clazz;
    }

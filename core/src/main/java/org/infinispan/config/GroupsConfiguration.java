@@ -14,10 +14,13 @@ import org.infinispan.distribution.group.Grouper;
 import org.infinispan.util.Util;
 
 @XmlAccessorType(XmlAccessType.PROPERTY)
+@ConfigurationDoc(name="groups",desc="Configuration for various grouper definitions. See The Grouping API for more details")
 public class GroupsConfiguration extends AbstractFluentConfigurationBean implements GroupsConfig {
+   
    
    List<Grouper<?>> groupers = new LinkedList<Grouper<?>>();
    
+   @ConfigurationDocRef(targetElement = "enabled", bean = GroupsConfiguration.class)
    Boolean enabled = false;
    
    public void accept(ConfigurationBeanVisitor v) {
@@ -83,6 +86,10 @@ public class GroupsConfiguration extends AbstractFluentConfigurationBean impleme
       enabled(enabled);
    }
 
+   /**
+    *
+    *FIXME Comment this
+    */
    @Override
    public GroupsConfig enabled(Boolean enabled) {
       this.enabled = enabled;
