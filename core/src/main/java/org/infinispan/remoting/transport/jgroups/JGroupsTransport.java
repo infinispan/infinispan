@@ -275,9 +275,11 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
                startChannel = lookup.shouldStartAndConnect();
                stopChannel = lookup.shouldStopAndDisconnect();
             } catch (ClassCastException e) {
-               log.wrongTypeForJGroupsChannelLookup(channelLookupClassName);
+               log.wrongTypeForJGroupsChannelLookup(channelLookupClassName, e);
+               throw new CacheException(e);
             } catch (Exception e) {
-               log.errorInstantiatingJGroupsChannelLookup(channelLookupClassName);
+               log.errorInstantiatingJGroupsChannelLookup(channelLookupClassName, e);
+               throw new CacheException(e);
             }
          }
 
