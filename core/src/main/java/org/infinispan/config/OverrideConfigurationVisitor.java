@@ -49,6 +49,7 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
    private DeadlockDetectionType deadlockDetectionType = null;
    private EvictionType evictionType = null;
    private ExpirationType expirationType = null;
+   private GroupsConfiguration groupsConfiguration = null;
    private HashType hashType = null;
    private L1Type l1Type = null;
    private LockingType lockingType = null;
@@ -81,6 +82,7 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
       overrideFields(deadlockDetectionType, override.deadlockDetectionType);
       overrideFields(evictionType, override.evictionType);
       overrideFields(expirationType, override.expirationType);
+      overrideFields(groupsConfiguration, override.groupsConfiguration);
       overrideFields(hashType, override.hashType);
       overrideFields(l1Type, override.l1Type);
       overrideFields(lockingType, override.lockingType);
@@ -150,6 +152,11 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
    @Override
    public void visitExpirationType(ExpirationType bean) {
       expirationType = bean;
+   }
+   
+   @Override
+   public void visitGroupConfig(GroupsConfiguration bean) {
+      groupsConfiguration = bean;
    }
 
    @Override

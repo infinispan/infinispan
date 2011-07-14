@@ -88,8 +88,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       configuration.setL1CacheEnabled(l1CacheEnabled);
       configuration.fluent().clustering().hash().numVirtualNodes(numVirtualNodes);
       if (groupsEnabled) {
-          configuration.fluent().hash().groupsEnabled(true); 
-          configuration.fluent().hash().groupers(groupers);
+          configuration.fluent().hash().groups().enabled(true); 
+          configuration.fluent().hash().groups().groupers(groupers);
       }
       if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);
       if (l1CacheEnabled) configuration.setL1InvalidationThreshold(l1Threshold);

@@ -655,27 +655,39 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        */
       HashConfig numVirtualNodes(Integer numVirtualNodes);
       
+      GroupsConfig groups();
+    
+
+      @Override // Override definition so that Scala classes can see it.
+      Configuration build();
+   }
+   
+   public interface GroupsConfig extends FluentTypes {
+      
       /**
        * Enable grouping support, such that {@link Group} annotations are honoured and any configured
        * groupers will be invoked
+       * 
+       * @param enabled
+       * @return
        */
-      HashConfig groupsEnabled(Boolean groupsEnabled);
+      GroupsConfig enabled(Boolean enabled);
+      
+      Boolean isEnabled();
       
       /**
-       * Controls the groupers used in distribution
-       * 
-       * @param groupers the groupers to use
-       * @see #getGroupers()
+       * Set the groupers currently in use
        */
-      HashConfig groupers(List<Grouper<?>> groupers);
+      GroupsConfig groupers(List<Grouper<?>> groupers);
       
       /**
        * Get's the current groupers in use
        */
       List<Grouper<?>> getGroupers();
-
+      
       @Override // Override definition so that Scala classes can see it.
-      Configuration build();
+      public Configuration build();
+      
    }
 
    /**
