@@ -47,8 +47,8 @@ public class JGroupsConfigBuilder {
    public static final String JGROUPS_STACK;
 
    private static String bind_addr = "127.0.0.1";
-   private static String tcpConfig;
-   private static String udpConfig;
+   private static String tcpConfig = loadTcp();
+   private static String udpConfig = loadUdp();
 
    private static final ThreadLocal<String> threadTcpStartPort = new ThreadLocal<String>() {
       private final AtomicInteger uniqueAddr = new AtomicInteger(7900);
@@ -110,21 +110,22 @@ public class JGroupsConfigBuilder {
    }
 
    public static String getTcpConfig(String fullTestName, boolean withFD) {
-      loadTcp();
+      // Make a safe local copy to avoid modifying the shared base TCP config
+      String config = new String(tcpConfig);
 
       if (!withFD)
-         tcpConfig = removeFailureDetectionTcp(tcpConfig);
+         config = removeFailureDetectionTcp(config);
 
-      if (tcpConfig.contains("TCPPING")) {
-         return getTcpConfigWithTCPPINGDiscovery();
-      } if (tcpConfig.contains("TEST_PING")) {
-         String cfg = replaceTcpStartPort(tcpConfig, threadTcpStartPort.get());
+      if (config.contains("TCPPING")) {
+         return getTcpConfigWithTCPPINGDiscovery(config);
+      } if (config.contains("TEST_PING")) {
+         String cfg = replaceTcpStartPort(config, threadTcpStartPort.get());
          if (fullTestName == null)
             return cfg; // IDE run of test
          else
             return getTestPingDiscovery(fullTestName, cfg); // Cmd line test run
       } else {
-         return replaceMCastAddressAndPort(tcpConfig);
+         return replaceMCastAddressAndPort(config);
       }
    }
 
@@ -151,9 +152,9 @@ public class JGroupsConfigBuilder {
       }
    }
 
-   private static String getTcpConfigWithTCPPINGDiscovery() {
+   private static String getTcpConfigWithTCPPINGDiscovery(String config) {
       String newStartPort = threadTcpStartPort.get();
-      String cfg = replaceTcpStartPort(tcpConfig, newStartPort);
+      String cfg = replaceTcpStartPort(config, newStartPort);
       if (cfg.indexOf("TCPGOSSIP") < 0) // onluy adjust for TCPPING
       {
          Matcher m = TCP_INITIAL_HOST.matcher(cfg);
@@ -171,16 +172,15 @@ public class JGroupsConfigBuilder {
          newStartPort = threadTcpStartPort.get();
          return m.replaceFirst("bind_port=" + newStartPort);
       } else {
-         System.out.println("Config is:" + tcpConfig);
+         System.out.println("Config is:" + transportCfg);
          Thread.dumpStack();
          throw new IllegalStateException();
       }
    }
 
    public static String getUdpConfig(String fullTestName, boolean withFD) {
-      loadUdp();
-      // replace mcast_addr
-      String config = udpConfig;
+      // Make a safe local copy to avoid modifying the shared base UDP config
+      String config = new String(udpConfig);
 
       if (!withFD)
          config = removeFailureDetectionUdp(config);
@@ -218,16 +218,14 @@ public class JGroupsConfigBuilder {
       return result;
    }
 
-   private static void loadTcp() {
-      if (tcpConfig != null) return;
+   private static String loadTcp() {
       String xmlString = readFile("stacks/tcp.xml");
-      tcpConfig = getJgroupsConfig(xmlString);
+      return getJgroupsConfig(xmlString);
    }
 
-   private static void loadUdp() {
-      if (udpConfig != null) return;
+   private static String loadUdp() {
       String xmlString = readFile("stacks/udp.xml");
-      udpConfig = getJgroupsConfig(xmlString);
+      return getJgroupsConfig(xmlString);
    }
 
    private static String getJgroupsConfig(String xmlString) {

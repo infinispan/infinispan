@@ -96,8 +96,6 @@ public class TEST_PING extends Discovery {
             discoveries = ret;
       }
 
-      Message msg = createGetMbrsReqMsg(clusterName, returnViewsOnly);
-
       if (!discoveries.containsKey(local_addr)) {
          discoveries.put(local_addr, this);
 
@@ -110,6 +108,7 @@ public class TEST_PING extends Discovery {
       // Only send message if DISCARD is not used, or if DISCARD is
       // configured but it's not discarding messages.
       if (discard == null || !discard.isDiscardAll()) {
+         Message msg = createGetMbrsReqMsg(clusterName, returnViewsOnly);
          if (!discoveries.isEmpty()) {
             for (Discovery discovery : discoveries.values()) {
                // Avoid sending to self! Since there are single instances of
@@ -121,7 +120,11 @@ public class TEST_PING extends Discovery {
                   discovery.up(new Event(Event.MSG, msg));
                }
             }
+         } else {
+            log.debug("No other nodes yet, so skip sending get-members request");
          }
+      } else if (discard != null && discard.isDiscardAll()) {
+         log.debug("Not sending discovery because DISCARD is on");
       }
    }
 
