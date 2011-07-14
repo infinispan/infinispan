@@ -28,6 +28,7 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.remoting.transport.Address;
@@ -134,6 +135,11 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
 
    public boolean shouldInvoke(InvocationContext ctx) {
       return true;
+   }
+
+   @Override
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
    }
 
    public boolean equals(Object o) {

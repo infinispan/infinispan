@@ -22,7 +22,10 @@
  */
 package org.infinispan.commands;
 
+import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.lifecycle.ComponentStatus;
 
 
 /**
@@ -46,5 +49,13 @@ public interface VisitableCommand extends ReplicableCommand {
     * Used by the InboundInvocationHandler to determine whether the command should be invoked or not.
     * @return true if the command should be invoked, false otherwise.
     */
-   boolean shouldInvoke(InvocationContext ctx);   
+   boolean shouldInvoke(InvocationContext ctx);
+
+   /**
+    * Similar to {@link #shouldInvoke(InvocationContext)} but evaluated by {@link InvocationContextInterceptor}.
+    * Commands can opt to be discarded in case the cache status is not suited (as {@link InvalidateCommand})
+    * @return true if the command should NOT be invoked.
+    */
+   boolean ignoreCommandOnStatus(ComponentStatus status);
+
 }

@@ -25,6 +25,7 @@ package org.infinispan.commands.read;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.lifecycle.ComponentStatus;
 
 /**
  * Abstract class
@@ -54,5 +55,9 @@ public class AbstractLocalCommand implements LocalCommand {
 
    protected boolean noTxModifications(InvocationContext ctx) {
       return !ctx.isInTxScope() || !((TxInvocationContext)ctx).hasModifications();
+   }
+
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
    }
 }

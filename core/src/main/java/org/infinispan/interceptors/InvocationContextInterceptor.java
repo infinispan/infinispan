@@ -74,6 +74,11 @@ public class InvocationContextInterceptor extends CommandInterceptor {
       boolean suppressExceptions = false;
 
       ComponentStatus status = componentRegistry.getStatus();
+      if (command.ignoreCommandOnStatus(status)) {
+         log.debugv("Status: %s : Ignoring %s command", status, command);
+         return null;
+      }
+
       if (status.isTerminated()) {
          throw new IllegalStateException(String.format(
                "%s is in 'TERMINATED' state and so it does not accept new invocations. " +

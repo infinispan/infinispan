@@ -26,6 +26,7 @@ import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.lifecycle.ComponentStatus;
 
 import java.util.Set;
 
@@ -69,7 +70,12 @@ public abstract class AbstractDataCommand implements DataCommand, FlagAffectedCo
    public boolean shouldInvoke(InvocationContext ctx) {
       return true;
    }
-   
+
+   @Override
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
+   }
+
    @Override
    public boolean equals(Object obj) {
       if (this == obj)
