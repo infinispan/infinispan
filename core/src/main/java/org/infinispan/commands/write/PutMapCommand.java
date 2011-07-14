@@ -26,6 +26,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.Map;
@@ -172,5 +173,10 @@ public class PutMapCommand implements WriteCommand {
    @Override
    public void setFlags(Set<Flag> flags) {
       this.flags = flags;
+   }
+
+   @Override
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
    }
 }

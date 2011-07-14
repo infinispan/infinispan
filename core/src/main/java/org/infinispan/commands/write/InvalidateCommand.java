@@ -24,6 +24,7 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -137,6 +138,19 @@ public class InvalidateCommand extends RemoveCommand {
 
    public Object[] getKeys() {
       return keys;
+   }
+
+   @Override
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      switch (status) {
+         case FAILED:
+         case INITIALIZING:
+         case STOPPING:
+         case TERMINATED:
+            return true;
+         default:
+            return false;
+         }
    }
 
    @Override

@@ -27,6 +27,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.Collections;
@@ -121,4 +122,10 @@ public class ClearCommand implements WriteCommand {
    public void setFlags(Set<Flag> flags) {
       this.flags = flags;
    }
+
+   @Override
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
+   }
+
 }

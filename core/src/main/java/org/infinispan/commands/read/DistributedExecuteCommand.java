@@ -32,6 +32,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.lifecycle.ComponentStatus;
 
 /**
  * DistributedExecuteCommand is used to migrate Callable and execute it in remote JVM.
@@ -143,4 +144,10 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
       result = 31 * result + (keys != null ? keys.hashCode() : 0);
       return result;
    }
+
+   @Override
+   public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
+   }
+
 }
