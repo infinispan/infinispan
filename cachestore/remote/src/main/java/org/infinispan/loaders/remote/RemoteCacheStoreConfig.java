@@ -26,6 +26,7 @@ import org.infinispan.CacheException;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.FileLookup;
+import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
@@ -83,7 +84,7 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
    }
 
    public void setHotRodClientPropertiesFile(String hotRodClientProperties) {
-      FileLookup fileLookup = new FileLookup();
+      FileLookup fileLookup = FileLookupFactory.newInstance();
       InputStream inputStream = fileLookup.lookupFile(hotRodClientProperties, getClassLoader());
       try {
          this.hotRodClientProperties.load(inputStream);

@@ -77,6 +77,13 @@
          <artifactId>jboss-logging</artifactId>
          <version>${version.jboss.logging}</version>
       </dependency>
+      
+      <dependency>
+         <groupId>org.osgi</groupId>
+         <artifactId>org.osgi.core</artifactId>
+         <version>${version.osgi}</version>
+         <optional>true</optional>
+      </dependency>
 
       <dependency>
          <groupId>org.jboss.naming</groupId>

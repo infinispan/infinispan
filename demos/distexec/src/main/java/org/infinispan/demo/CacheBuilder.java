@@ -22,6 +22,7 @@ package org.infinispan.demo;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.FileLookup;
+import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
@@ -43,7 +44,7 @@ public class CacheBuilder {
    }
 
    private String findConfigFile(String configFile) {
-      FileLookup fl = new FileLookup();
+      FileLookup fl = FileLookupFactory.newInstance();
       if (configFile != null) {
          InputStream inputStream = fl.lookupFile(configFile, Thread.currentThread().getContextClassLoader());
          try {

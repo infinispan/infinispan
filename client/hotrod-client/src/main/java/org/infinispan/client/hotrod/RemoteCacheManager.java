@@ -33,7 +33,7 @@ import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.util.FileLookup;
+import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.LogFactory;
 
@@ -261,7 +261,7 @@ public class RemoteCacheManager implements CacheContainer {
     */
    public RemoteCacheManager(boolean start) {
 	  this.classLoader = Thread.currentThread().getContextClassLoader();
-      InputStream stream = new FileLookup().lookupFile(HOTROD_CLIENT_PROPERTIES, classLoader);
+      InputStream stream = FileLookupFactory.newInstance().lookupFile(HOTROD_CLIENT_PROPERTIES, classLoader);
       if (stream == null) {
          log.couldNotFindPropertiesFile(HOTROD_CLIENT_PROPERTIES);
          config = new ConfigurationProperties();
