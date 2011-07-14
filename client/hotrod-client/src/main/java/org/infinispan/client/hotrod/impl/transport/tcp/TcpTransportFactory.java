@@ -270,7 +270,7 @@ public class TcpTransportFactory implements TransportFactory {
       }
       synchronized (lock) {
          if (connectionPool.getMaxActive() > 0) {
-            return connectionPool.getMaxActive() * servers.size();
+            return Math.max(connectionPool.getMaxActive() * servers.size(), connectionPool.getMaxActive()); //to avoid int overflow when maxActive is very high!
          } else {
             return 10 * servers.size();
          }
