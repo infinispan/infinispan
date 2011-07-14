@@ -36,7 +36,7 @@ import org.infinispan.remoting.transport.AbstractTransport;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.statetransfer.StateTransferException;
-import org.infinispan.util.FileLookup;
+import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -286,7 +286,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
             cfg = props.getProperty(CONFIGURATION_FILE);
             try {
-               channel = new JChannel(new FileLookup().lookupFileLocation(cfg, configuration.getClassLoader()));
+               channel = new JChannel(FileLookupFactory.newInstance().lookupFileLocation(cfg, configuration.getClassLoader()));
             } catch (Exception e) {
                log.errorCreatingChannelFromConfigFile(cfg);
                throw new CacheException(e);
@@ -317,7 +317,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       if (channel == null) {
          log.unableToUseJGroupsPropertiesProvided(props);
          try {
-            channel = new JChannel(new FileLookup().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.getClassLoader()));
+            channel = new JChannel(FileLookupFactory.newInstance().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.getClassLoader()));
          } catch (ChannelException e) {
             throw new CacheException("Unable to start JGroups channel", e);
          }

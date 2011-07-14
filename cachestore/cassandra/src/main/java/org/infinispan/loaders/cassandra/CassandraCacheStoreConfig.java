@@ -31,7 +31,7 @@ import net.dataforte.cassandra.pool.PoolProperties;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
 import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
-import org.infinispan.util.FileLookup;
+import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Util;
 
 /**
@@ -208,7 +208,7 @@ public class CassandraCacheStoreConfig extends LockSupportCacheStoreConfig {
    private void readConfigurationProperties() throws CacheLoaderException {
       if (configurationPropertiesFile == null || configurationPropertiesFile.trim().length() == 0)
          return;
-      InputStream i = new FileLookup().lookupFile(configurationPropertiesFile, getClassLoader());
+      InputStream i = FileLookupFactory.newInstance().lookupFile(configurationPropertiesFile, getClassLoader());
       if (i != null) {
          Properties p = new Properties();
          try {

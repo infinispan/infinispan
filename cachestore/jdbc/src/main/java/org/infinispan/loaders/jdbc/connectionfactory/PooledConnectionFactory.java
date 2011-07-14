@@ -27,7 +27,7 @@ import com.mchange.v2.c3p0.DataSources;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.JdbcUtil;
 import org.infinispan.loaders.jdbc.logging.Log;
-import org.infinispan.util.FileLookup;
+import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.logging.LogFactory;
 
 import java.beans.PropertyVetoException;
@@ -71,8 +71,8 @@ public class PooledConnectionFactory extends ConnectionFactory {
    }
 
    private void logFileOverride(ClassLoader classLoader) {
-      URL propsUrl = new FileLookup().lookupFileLocation("c3p0.properties", classLoader);
-      URL xmlUrl = new FileLookup().lookupFileLocation("c3p0-config.xml", classLoader);
+      URL propsUrl = FileLookupFactory.newInstance().lookupFileLocation("c3p0.properties", classLoader);
+      URL xmlUrl = FileLookupFactory.newInstance().lookupFileLocation("c3p0-config.xml", classLoader);
       if (log.isDebugEnabled() && propsUrl != null) {
          log.debugf("Found 'c3p0.properties' in classpath: %s", propsUrl);
       }

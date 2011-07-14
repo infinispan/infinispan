@@ -26,6 +26,7 @@ import org.infinispan.Version;
 import org.infinispan.config.parsing.NamespaceFilter;
 import org.infinispan.config.parsing.XmlConfigurationParser;
 import org.infinispan.util.FileLookup;
+import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.StringPropertyReplacer;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -360,7 +361,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
          return null;
 
       //1. resolve given path
-      FileLookup fileLookup = new FileLookup();
+      FileLookup fileLookup = FileLookupFactory.newInstance();
       InputStream is = null;
       if (localPathToSchema != null) {
          // Schema's are always stored in Infinispan
@@ -430,7 +431,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    private static InputStream findInputStream(String fileName, ClassLoader cl) throws FileNotFoundException {
       if (fileName == null)
          throw new NullPointerException("File name cannot be null!");
-      FileLookup fileLookup = new FileLookup();
+      FileLookup fileLookup = FileLookupFactory.newInstance();
       InputStream is = fileLookup.lookupFile(fileName, cl);
       if (is == null)
          throw new FileNotFoundException("File " + fileName

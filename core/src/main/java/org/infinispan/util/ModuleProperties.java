@@ -72,7 +72,7 @@ public class ModuleProperties extends Properties {
 
     public static ModuleProperties loadModuleProperties(String moduleName, ClassLoader cl) throws IOException {
 
-        Collection<URL> resources = new FileLookup().lookupFileLocations(MODULE_PROPERTIES_FILENAME, cl);
+        Collection<URL> resources = FileLookupFactory.newInstance().lookupFileLocations(MODULE_PROPERTIES_FILENAME, cl);
         if (resources == null)
             throw new IOException("Could not find " + MODULE_PROPERTIES_FILENAME
                             + " files on classpath for module " + moduleName);
@@ -96,7 +96,7 @@ public class ModuleProperties extends Properties {
 
    private static Map<String, ModuleProperties> loadModuleProperties(ClassLoader cl) throws IOException {
       Map<String, ModuleProperties> map = new HashMap<String, ModuleProperties>();
-      Collection<URL> resources = new FileLookup().lookupFileLocations(MODULE_PROPERTIES_FILENAME, cl);
+      Collection<URL> resources = FileLookupFactory.newInstance().lookupFileLocations(MODULE_PROPERTIES_FILENAME, cl);
       for (URL url : resources)
       {
          try {

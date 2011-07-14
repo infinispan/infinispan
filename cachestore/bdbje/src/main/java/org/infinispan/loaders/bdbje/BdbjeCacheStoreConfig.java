@@ -24,7 +24,7 @@ package org.infinispan.loaders.bdbje;
 
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.util.FileLookup;
+import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
@@ -155,7 +155,7 @@ public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
 
    public Properties readEnvironmentProperties() throws CacheLoaderException {
       if (environmentPropertiesFile == null || environmentPropertiesFile.trim().length() == 0) return null;
-      InputStream i = new FileLookup().lookupFile(environmentPropertiesFile, getClassLoader());
+      InputStream i = FileLookupFactory.newInstance().lookupFile(environmentPropertiesFile, getClassLoader());
       if (i != null) {
          Properties p = new Properties();
          try {
