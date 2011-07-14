@@ -71,14 +71,19 @@ public class TEST_PING extends Discovery {
       super.stop();
       DiscoveryKey key = new DiscoveryKey(testName, clusterName);
       Map<Address, Discovery> discoveries = all.get(key);
-      discoveries.remove(local_addr);
-      if (discoveries.isEmpty()) {
-         boolean removed = all.remove(key, discoveries);
-         if (!removed && all.containsKey(key)) {
-            throw new IllegalStateException(String.format(
-               "Concurrent discovery removal for test=%s but not removed??",
-               testName));
+      if (discoveries != null) {
+         discoveries.remove(local_addr);
+         if (discoveries.isEmpty()) {
+            boolean removed = all.remove(key, discoveries);
+            if (!removed && all.containsKey(key)) {
+               throw new IllegalStateException(String.format(
+                  "Concurrent discovery removal for test=%s but not removed??",
+                  testName));
+            }
          }
+      } else {
+         log.debug(String.format(
+            "Test (%s) started but not registered discovery", key));
       }
    }
 
@@ -222,6 +227,14 @@ public class TEST_PING extends Discovery {
          result = 31 * result +
                (clusterName != null ? clusterName.hashCode() : 0);
          return result;
+      }
+
+      @Override
+      public String toString() {
+         return "DiscoveryKey{" +
+               "clusterName='" + clusterName + '\'' +
+               ", testName='" + testName + '\'' +
+               '}';
       }
    }
 
