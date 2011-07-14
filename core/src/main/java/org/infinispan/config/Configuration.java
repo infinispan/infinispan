@@ -3940,6 +3940,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @XmlElement(name = "interceptor")
       private List<CustomInterceptorConfig> customInterceptors = new ArrayList<CustomInterceptorConfig>();
+      
+      public CustomInterceptorsType() {
+         testImmutability("customInterceptors");
+      }
 
       @Override
       public CustomInterceptorsType clone() throws CloneNotSupportedException {

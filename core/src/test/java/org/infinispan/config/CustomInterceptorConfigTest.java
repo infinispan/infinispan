@@ -52,14 +52,32 @@ public class CustomInterceptorConfigTest extends AbstractInfinispanTest {
             "      xmlns=\"urn:infinispan:config:4.0\">" +
             "<default><customInterceptors> \n" +
             "<interceptor after=\""+ InvocationContextInterceptor.class.getName()+"\" class=\""+DummyInterceptor.class.getName()+"\"/> \n" +
-            "</customInterceptors> </default></infinispan>";
+            "</customInterceptors> </default>" +
+            "<namedCache name=\"x\">" +
+            "<customInterceptors>\n" +
+            "         <interceptor position=\"first\" class=\""+CustomInterceptor1.class.getName()+"\" />" +
+            "         <interceptor" +
+            "            position=\"last\"" +
+            "            class=\""+CustomInterceptor2.class.getName()+"\"" +
+            "         />" +
+            "</customInterceptors>" +
+            "</namedCache>" +
+            "</infinispan>";
 
       InputStream stream = new ByteArrayInputStream(xml.getBytes());
       cm = TestCacheManagerFactory.fromStream(stream);
       c = cm.getCache();
       DummyInterceptor i = TestingUtil.findInterceptor(c, DummyInterceptor.class);
       assert i != null;
+      
+      Cache<Object, Object> namedCacheX = cm.getCache("x");
+      assert TestingUtil.findInterceptor(namedCacheX, CustomInterceptor1.class) != null;
+      assert TestingUtil.findInterceptor(namedCacheX, CustomInterceptor2.class) != null;     
    }
+   
+   public static final class CustomInterceptor1 extends CommandInterceptor {}
+   public static final class CustomInterceptor2 extends CommandInterceptor {}
+
 
    public void testCustomInterceptorsProgramatically() {
       Configuration cfg = new Configuration();
