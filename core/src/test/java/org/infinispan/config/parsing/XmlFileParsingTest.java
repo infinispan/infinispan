@@ -26,6 +26,7 @@ import org.infinispan.Version;
 import org.infinispan.config.*;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
+import org.infinispan.distribution.groups.KXGrouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -34,6 +35,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -330,6 +332,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getConsistentHashClass().equals(TopologyAwareConsistentHash.class.getName());
       assert c.getNumOwners() == 3;
       assert c.isL1CacheEnabled();
+      
+      c = getNamedCacheConfig(namedCaches, "groups");
+      Assert.assertTrue(c.isGroupsEnabled());
+      Assert.assertEquals(c.getGroupers().size(), 1);
+      Assert.assertEquals(c.getGroupers().get(0).getKeyType(), String.class);
 
       c = getNamedCacheConfig(namedCaches, "cacheWithCustomInterceptors");
       assert !c.getCustomInterceptors().isEmpty();
