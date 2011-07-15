@@ -23,10 +23,13 @@
 
 package org.infinispan.util;
 
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -51,9 +54,20 @@ public class ClusterIdGenerator {
    private final AtomicLong versionPrefix = new AtomicLong();
    private RankCalculator rankCalculator = new RankCalculator();
 
+   public ClusterIdGenerator(EmbeddedCacheManager cm, RpcManager rpcManager) {
+      if (cm != null)
+         cm.addListener(rankCalculator);
+
+      if (rpcManager != null) {
+         Transport transport = rpcManager.getTransport();
+         calculateRank(rpcManager.getAddress(),
+                       transport.getMembers(), transport.getViewId());
+      }
+   }
+
    public long newVersion(boolean isClustered) {
       if (isClustered && versionPrefix.get() == 0)
-         throw new IllegalStateException("If clustered, Version prefix cannot be 0. Rank calculator probably not in use.");
+         throw new IllegalStateException("If clustered, version prefix cannot be 0. Rank calculator probably not in use.");
       long counter = versionCounter.incrementAndGet();
       // Version counter occupies the least significant 4 bytes of the version
       if (isClustered) {
@@ -61,10 +75,6 @@ public class ClusterIdGenerator {
       } else {
          return counter;
       }
-   }
-
-   public RankCalculator getRankCalculatorListener() {
-      return rankCalculator;
    }
 
    void resetCounter() {
@@ -76,23 +86,26 @@ public class ClusterIdGenerator {
       else return findAddressRank(address, members.subList(1, members.size()), rank + 1);
    }
 
+   protected long calculateRank(Address address, List<Address> members, long viewId) {
+      long rank = findAddressRank(address, members, 1);
+      // Version is composed of: <view id (2 bytes)><rank (2 bytes)><version counter (4 bytes)>
+      // View id and rank form the prefix which is updated on a view change.
+      long newVersionPrefix = (viewId << 48) | (rank << 32);
+      // TODO: Deal with compareAndSet failures?
+      versionPrefix.compareAndSet(versionPrefix.get(), newVersionPrefix);
+      return versionPrefix.get();
+   }
+
    @Listener
    public class RankCalculator {
 
       @ViewChanged
       public void calculateRank(ViewChangedEvent e) {
-         long rank = calculateRank(e.getLocalAddress(), e.getNewMembers(), e.getViewId());
-         if (log.isTraceEnabled()) log.tracef("Calculated rank based on view %s and result was %d", e, rank);
+         long rank = ClusterIdGenerator.this
+            .calculateRank(e.getLocalAddress(), e.getNewMembers(), e.getViewId());
+         if (log.isTraceEnabled())
+            log.tracef("Calculated rank based on view %s and result was %d", e, rank);
       }
 
-      public long calculateRank(Address address, List<Address> members, long viewId) {
-         long rank = findAddressRank(address, members, 1);
-         // Version is composed of: <view id (2 bytes)><rank (2 bytes)><version counter (4 bytes)>
-         // View id and rank form the prefix which is updated on a view change.
-         long newVersionPrefix = (viewId << 48) | (rank << 32);
-         // TODO: Deal with compareAndSet failures?
-         versionPrefix.compareAndSet(versionPrefix.get(), newVersionPrefix);
-         return versionPrefix.get();
-      }
    }
 }
