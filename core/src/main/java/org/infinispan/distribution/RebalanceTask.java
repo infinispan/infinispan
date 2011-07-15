@@ -43,7 +43,12 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
@@ -184,7 +189,7 @@ public class RebalanceTask extends RehashTask {
 
    private void pushState(ConsistentHash chOld, ConsistentHash chNew, Map<Address, Map<Object, InternalCacheValue>> states) throws InterruptedException, ExecutionException {
       NotifyingNotifiableFuture<Object> stateTransferFuture = new AggregatingNotifyingFutureImpl(null, states.size());
-
+      log.debugf("Size of states map %d.", states.size());
       for (Map.Entry<Address, Map<Object, InternalCacheValue>> entry : states.entrySet()) {
          final Address target = entry.getKey();
          Map<Object, InternalCacheValue> state = entry.getValue();
@@ -192,7 +197,7 @@ public class RebalanceTask extends RehashTask {
             log.tracef("%s pushing to %s keys %s", self, target, state.keySet());
 
          final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.APPLY_STATE, self,
-               newViewId, state, chOld, chNew);
+                                                                       newViewId, state, chOld, chNew);
 
          rpcManager.invokeRemotelyInFuture(Collections.singleton(target), cmd,
                                            false, stateTransferFuture, configuration.getRehashRpcTimeout());
@@ -206,7 +211,7 @@ public class RebalanceTask extends RehashTask {
          log.errorTransferringState(e);
          throw e;
       }
-      log.debugf("Node finished pushing data for rehash %d", newViewId);
+      log.debugf("Node finished pushing data for rehash %d.", newViewId);
    }
 
 
@@ -215,13 +220,13 @@ public class RebalanceTask extends RehashTask {
     * if K should be pushed to other servers. Adds K to the <code>keysToRemove</code> list if this node is no longer an
     * owner for K.
     *
-    * @param key         The key
-    * @param value       The value; <code>null</code> if the value is not in the data container
-    * @param numOwners   The number of owners (grabbed from the configuration)
-    * @param chOld       The old (current) consistent hash
-    * @param chNew       The new consistent hash
-    * @param cacheStore  If the value is <code>null</code>, try to load it from this cache store
-    * @param states      The result hashmap. Keys are servers, values are states (hashmaps) to be pushed to them
+    * @param key          The key
+    * @param value        The value; <code>null</code> if the value is not in the data container
+    * @param numOwners    The number of owners (grabbed from the configuration)
+    * @param chOld        The old (current) consistent hash
+    * @param chNew        The new consistent hash
+    * @param cacheStore   If the value is <code>null</code>, try to load it from this cache store
+    * @param states       The result hashmap. Keys are servers, values are states (hashmaps) to be pushed to them
     * @param keysToRemove A list that the keys that we need to remove will be added to
     */
    protected void rebalance(Object key, InternalCacheEntry value, int numOwners, ConsistentHash chOld, ConsistentHash chNew,
@@ -239,11 +244,16 @@ public class RebalanceTask extends RehashTask {
       // 3. The pushing server is the last node in the old owner list that's also in the new owner list
       // It will only be null if all the old owners left the cluster
       Address pushingOwner = null;
-      for (int i = oldOwners.size() - 1; i >= 0; i--) {
-         Address server = oldOwners.get(i);
-         if (newOwners.contains(server)) {
-            pushingOwner = server;
-            break;
+      if (oldOwners.size() == 1) {
+         // This could happen if numOwners == 1!  See ISPN-1244
+         pushingOwner = oldOwners.get(0);
+      } else {
+         for (int i = oldOwners.size() - 1; i >= 0; i--) {
+            Address server = oldOwners.get(i);
+            if (newOwners.contains(server)) {
+               pushingOwner = server;
+               break;
+            }
          }
       }
 
