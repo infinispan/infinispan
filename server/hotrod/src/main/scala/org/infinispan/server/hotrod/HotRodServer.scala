@@ -238,7 +238,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
          // important cos once the JGroups transport is closed, the coordinator
          // will think the member crashed and will update the topology view.
          topologyCache.getAdvancedCache.withFlags(
-            Flag.FAIL_SILENTLY, Flag.ZERO_LOCK_ACQUISITION_TIMEOUT)
+            Flag.FAIL_SILENTLY, Flag.ZERO_LOCK_ACQUISITION_TIMEOUT,
+            Flag.FORCE_ASYNCHRONOUS)
                  .replace("view", currentView, newView)
 
          if (isDebug)
