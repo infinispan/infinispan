@@ -52,17 +52,14 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
 import static org.infinispan.context.Flag.SKIP_SHARED_CACHE_STORE;
 
 public class StateTransferManagerImpl implements StateTransferManager {
@@ -277,7 +274,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             boolean canProvideState = (Boolean) marshaller.objectFromObjectStream(oi);
             if (canProvideState) {
                assertDelimited(oi);
-               if (transientState) applyInMemoryState(oi);
+               if (transientState) applyInMemoryState(oi, persistentState && !configuration.isCacheLoaderPassivation());
                assertDelimited(oi);
                if (persistentState) applyPersistentState(oi);
                assertDelimited(oi);
@@ -300,12 +297,17 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @SuppressWarnings("unchecked")
-   private void applyInMemoryState(ObjectInput i) throws StateTransferException {
+   private void applyInMemoryState(ObjectInput i, boolean skipCacheStore) throws StateTransferException {
       dataContainer.clear();
+      // if the persistent state is transferred separately, we don't want to write to the cache store here
+      // if not, we want to write to the cache store unless it's shared
+      Flag[] flags = skipCacheStore
+            ? new Flag[]{ CACHE_MODE_LOCAL, SKIP_CACHE_STORE }
+            : new Flag[]{ CACHE_MODE_LOCAL, SKIP_SHARED_CACHE_STORE};
       try {
          Set<InternalCacheEntry> set = (Set<InternalCacheEntry>) marshaller.objectFromObjectStream(i);
          for (InternalCacheEntry se : set)
-            cache.withFlags(CACHE_MODE_LOCAL, SKIP_SHARED_CACHE_STORE).put(se.getKey(), se.getValue(), se.getLifespan(), MILLISECONDS, se.getMaxIdle(), MILLISECONDS);
+            cache.withFlags(flags).put(se.getKey(), se.getValue(), se.getLifespan(), MILLISECONDS, se.getMaxIdle(), MILLISECONDS);
       } catch (Exception e) {
          dataContainer.clear();
          throw new StateTransferException(e);
