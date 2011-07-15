@@ -24,7 +24,7 @@ public class GrouperConfiguration extends AbstractNamedCacheConfigurationBean{
    }
    
    /**
-    * FIXME Comment this
+    * The grouper class
     * 
     * @param clazz
     */

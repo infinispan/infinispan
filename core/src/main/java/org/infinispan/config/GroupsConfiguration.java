@@ -14,7 +14,7 @@ import org.infinispan.distribution.group.Grouper;
 import org.infinispan.util.Util;
 
 @XmlAccessorType(XmlAccessType.PROPERTY)
-@ConfigurationDoc(name="groups",desc="Configuration for various grouper definitions. See The Grouping API for more details")
+@ConfigurationDoc(name="groups",desc="Configuration for various grouper definitions. See the user guide for more information")
 public class GroupsConfiguration extends AbstractFluentConfigurationBean implements GroupsConfig {
    
    
@@ -87,8 +87,8 @@ public class GroupsConfiguration extends AbstractFluentConfigurationBean impleme
    }
 
    /**
-    *
-    *FIXME Comment this
+    * Enable grouping support
+    * 
     */
    @Override
    public GroupsConfig enabled(Boolean enabled) {
