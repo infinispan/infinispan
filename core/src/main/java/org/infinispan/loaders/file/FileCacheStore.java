@@ -22,16 +22,6 @@
  */
 package org.infinispan.loaders.file;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.Cache;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.io.ExposedByteArrayOutputStream;
@@ -44,6 +34,12 @@ import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.Map;
+import java.util.concurrent.*;
 
 /**
  * A filesystem-based implementation of a {@link org.infinispan.loaders.bucket.BucketBasedCacheStore}.  This file store
@@ -401,7 +397,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
             bytes.write(buf, 0, bytesRead);
          }
          is = new ByteArrayInputStream(bytes.getRawBuffer(), 0, bytes.size());
-         ObjectInput unmarshaller = marshaller.startObjectInput(is, true);
+         ObjectInput unmarshaller = marshaller.startObjectInput(is, false);
          try {
             o = marshaller.objectFromObjectStream(unmarshaller);
          } finally {
