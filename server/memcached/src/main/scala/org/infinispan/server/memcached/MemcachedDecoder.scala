@@ -433,12 +433,13 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
                   null // no-op, only log
                }
                case i: IOException => {
-                  logExceptionReported(i)
-                  sb.append(m.getMessage).append(CRLF)
+                  logAndCreateErrorMessage(sb, m)
                }
                case n: NumberFormatException => {
-                  logExceptionReported(n)
-                  sb.append(m.getMessage).append(CRLF)
+                  logAndCreateErrorMessage(sb, m)
+               }
+               case i: IllegalStateException => {
+                  logAndCreateErrorMessage(sb, m)
                }
                case _ => sb.append(m.getMessage).append(CRLF)
             }
@@ -449,6 +450,11 @@ class MemcachedDecoder(memcachedCache: Cache[String, MemcachedValue], scheduler:
          }
          case _ => sb.append(SERVER_ERROR).append(t.getMessage).append(CRLF)
       }
+   }
+
+   private def logAndCreateErrorMessage(sb: StringBuilder, m: MemcachedException): StringBuilder = {
+      logExceptionReported(m.getCause)
+      sb.append(m.getMessage).append(CRLF)
    }
 
    override protected def createServerException(e: Exception, b: ChannelBuffer): (MemcachedException, Boolean) = {
