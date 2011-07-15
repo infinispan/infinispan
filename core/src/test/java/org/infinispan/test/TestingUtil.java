@@ -43,6 +43,7 @@ import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -58,6 +59,7 @@ import org.jgroups.protocols.TP;
 import org.jgroups.stack.ProtocolStack;
 
 import javax.management.ObjectName;
+import javax.swing.*;
 import javax.transaction.TransactionManager;
 import java.io.File;
 import java.lang.reflect.Field;
@@ -211,7 +213,18 @@ public class TestingUtil {
          }
       }
 
-      throw new RuntimeException("timed out before caches had complete views");
+      viewsTimedOut(caches);
+   }
+
+   private static void viewsTimedOut(Cache[] caches) {
+      int length = caches.length;
+      List<List<Address>> allViews = new ArrayList<List<Address>>(length);
+      for (int i = 0; i < length; i++)
+         allViews.add(caches[i].getCacheManager().getMembers());
+
+      throw new RuntimeException(String.format(
+         "Timed out before caches had complete views.  Expected %d members in each view.  Views are as follows: %s",
+         caches.length, allViews));
    }
 
    public static void blockUntilViewsReceivedInt(Cache[] caches, long timeout) throws InterruptedException {
@@ -224,7 +237,7 @@ public class TestingUtil {
          }
       }
 
-      throw new RuntimeException("timed out before caches had complete views");
+      viewsTimedOut(caches);
    }
 
 
@@ -271,7 +284,11 @@ public class TestingUtil {
          }
       }
 
-      throw new RuntimeException("timed out before caches had complete views");
+      Cache[] caches = new Cache[cacheContainers.length];
+      for (int i = 0; i < cacheContainers.length; i++)
+         caches[i] = cacheContainers[i].getCache();
+
+      viewsTimedOut(caches);
    }
 
    /**
@@ -317,7 +334,7 @@ public class TestingUtil {
          }
       }
 
-      throw new RuntimeException("timed out before caches had complete views");
+      viewsTimedOut(caches);
    }
 
    /**
@@ -345,7 +362,9 @@ public class TestingUtil {
          }
       }
 
-      throw new RuntimeException("timed out before caches had complete views");
+      throw new RuntimeException(String.format(
+         "Timed out before cache had %d members.  View is %s",
+         groupSize, cache.getCacheManager().getMembers()));
    }
 
    /**
