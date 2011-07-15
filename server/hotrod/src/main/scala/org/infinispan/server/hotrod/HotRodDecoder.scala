@@ -190,6 +190,11 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
                   "%s: %s".format(r.getMessage, r.getCause.toString)
             (new HotRodException(new ErrorResponse(r.messageId, "", 1, ParseError, 0, msg), e), true)
          }
+         case i: IllegalStateException => {
+            // Some internal server code could throw this, so make sure it's logged
+            logExceptionReported(i)
+            (new HotRodException(header.decoder.createErrorResponse(header, i), e), false)
+         }
          case t: Throwable => (new HotRodException(header.decoder.createErrorResponse(header, t), e), false)
       }
    }

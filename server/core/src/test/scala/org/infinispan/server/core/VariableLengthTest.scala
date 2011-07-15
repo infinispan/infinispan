@@ -104,6 +104,14 @@ class VariableLengthTest {
       writeReadLong(9223372036854775807L, 9)
    }
 
+   @Test(expectedExceptions = Array(classOf[IllegalStateException]))
+   def testTooLongInt {
+      val buffer = ChannelBuffers.directBuffer(1024)
+      assert(buffer.writerIndex == 0)
+      writeUnsignedLong(9223372036854775807L, buffer)
+      readUnsignedInt(buffer)
+   }
+
 //   def test2pow63() {
 //      writeReadLong(9223372036854775808L, 10)
 //   }
@@ -124,14 +132,4 @@ class VariableLengthTest {
       assertEquals(readUnsignedLong(buffer), num)
    }
 
-//   def testEquals128Old() {
-//      val baos = new ByteArrayOutputStream(1024);
-//      val oos = new ObjectOutputStream(baos);
-//      UnsignedNumeric.writeUnsignedInt(oos, 128);
-//      oos.flush();
-//      assertEquals(baos.size() - 6, 2);
-//      val bais = new ByteArrayInputStream(baos.toByteArray());
-//      val ois = new ObjectInputStream(bais);
-//      assertEquals(UnsignedNumeric.readUnsignedInt(ois), 128);
-//   }
 }

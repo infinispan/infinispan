@@ -23,6 +23,8 @@
 package org.infinispan.server.core.transport
 
 import org.jboss.netty.buffer.ChannelBuffer
+import java.io.StreamCorruptedException
+import java.lang.IllegalStateException
 
 /**
  * Reads and writes unsigned variable length integer values. Even though it's deprecated, do not
@@ -44,14 +46,18 @@ object VInt {
 
    def read(in: ChannelBuffer): Int = {
       val b = in.readByte
-      read(in, b, 7, b & 0x7F)
+      read(in, b, 7, b & 0x7F, 1)
    }
 
-   private def read(in: ChannelBuffer, b: Byte, shift: Int, i: Int): Int = {
+   private def read(in: ChannelBuffer, b: Byte, shift: Int, i: Int, count: Int): Int = {
       if ((b & 0x80) == 0) i
       else {
+         if (count > 5)
+            throw new IllegalStateException(
+               "Stream corrupted.  A variable length integer cannot be longer than 5 bytes.")
+
          val bb = in.readByte
-         read(in, bb, shift + 7, i | ((bb & 0x7FL) << shift).toInt)
+         read(in, bb, shift + 7, i | ((bb & 0x7FL) << shift).toInt, count + 1)
       }
    }
 }

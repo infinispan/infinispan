@@ -44,14 +44,18 @@ object VLong {
 
    def read(in: ChannelBuffer): Long = {
       val b = in.readByte
-      read(in, b, 7, b & 0x7F)
+      read(in, b, 7, b & 0x7F, 1)
    }
 
-   private def read(in: ChannelBuffer, b: Byte, shift: Int, i: Long): Long = {
+   private def read(in: ChannelBuffer, b: Byte, shift: Int, i: Long, count: Int): Long = {
       if ((b & 0x80) == 0) i
       else {
+         if (count > 9)
+            throw new IllegalStateException(
+               "Stream corrupted.  A variable length long cannot be longer than 9 bytes.")
+
          val bb = in.readByte
-         read(in, bb, shift + 7, i | (bb & 0x7FL) << shift)
+         read(in, bb, shift + 7, i | (bb & 0x7FL) << shift, count + 1)
       }
    }
 }
