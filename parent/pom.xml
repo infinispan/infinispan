@@ -100,7 +100,7 @@
       <packaging>jar</packaging>
 
       <!-- Versions for dependencies -->
-      <version.apacheds.jdbm>1.5.4</version.apacheds.jdbm>
+      <version.apacheds.jdbm>1.5.7</version.apacheds.jdbm>
       <version.bdbje>4.0.92</version.bdbje>
       <version.c3p0>0.9.1.2</version.c3p0>
       <version.cassandra>0.8.0</version.cassandra>

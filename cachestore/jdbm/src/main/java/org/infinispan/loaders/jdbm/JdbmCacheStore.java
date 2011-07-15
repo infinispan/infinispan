@@ -277,9 +277,11 @@ public class JdbmCacheStore extends AbstractCacheStore {
       if (trace)
          log.tracef("remove() %s", key);
       try {
+         // Not the most efficient way but JDBM offers no other API
+         boolean ret = tree.get(key) != null;
          tree.remove(key);
          // If the key does not exist, HTree ignores the operation, so always return true
-         return true;
+         return ret;
       } catch (IOException e) {
          // can happen during normal operation
          return false;
