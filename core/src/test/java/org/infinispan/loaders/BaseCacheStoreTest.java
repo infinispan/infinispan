@@ -683,11 +683,33 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    }
 
    public void testReplaceExpiredEntry() throws Exception {
-      cs.store(InternalEntryFactory.create("k1", "v1", 100));
-      Thread.sleep(200);
+      final long startTime = System.currentTimeMillis();
+      final long lifespan = 3000;
+      cs.store(InternalEntryFactory.create("k1", "v1", lifespan));
+      while (System.currentTimeMillis() < startTime + lifespan - 10) {
+         assert cs.load("k1").getValue().equals("v1");
+         Thread.sleep(100);
+      }
+
+      // Make sure that in the next 20 secs data is removed
+      while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+         if (cs.load("k1") == null) break;
+      }
+
       assert null == cs.load("k1");
+
       // Increased lifespan to accommodate slower cache stores
-      cs.store(InternalEntryFactory.create("k1", "v2", 4000));
-      assert cs.load("k1").getValue().equals("v2");
+      cs.store(InternalEntryFactory.create("k1", "v2", lifespan));
+      while (System.currentTimeMillis() < startTime + lifespan - 10) {
+         assert cs.load("k1").getValue().equals("v2");
+         Thread.sleep(100);
+      }
+
+      // Make sure that in the next 20 secs data is removed
+      while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+         if (cs.load("k1") == null) break;
+      }
+
+      assert null == cs.load("k1");
    }
 }
