@@ -38,8 +38,8 @@ import javax.transaction.TransactionManager;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(testName = "tx.exception.ReplicationExceptionTest")
-public class ReplicationExceptionTest extends MultipleCacheManagersTest {
+@Test(testName = "tx.exception.ReplicationTxExceptionTest")
+public class ReplicationTxExceptionTest extends MultipleCacheManagersTest {
    private ControlledRpcManager controlledRpcManager;
 
    @Override

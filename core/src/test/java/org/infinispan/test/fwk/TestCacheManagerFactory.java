@@ -41,6 +41,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.getJGroupsConfig;
+
 /**
  * CacheManagers in unit tests should be created with this factory, in order to avoid resource clashes. See
  * http://community.jboss.org/wiki/ParallelTestSuite for more details.
@@ -141,7 +143,11 @@ public class TestCacheManagerFactory {
     * Creates an cache manager that does support clustering.
     */
    public static EmbeddedCacheManager createClusteredCacheManager() {
-      return createClusteredCacheManager(new Configuration());
+      return createClusteredCacheManager(false);
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManager(boolean withFD) {
+      return createClusteredCacheManager(withFD, new Configuration(), false);
    }
 
    /**
@@ -152,10 +158,15 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig, boolean transactional) {
+      return createClusteredCacheManager(false, defaultCacheConfig, transactional);
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManager(
+         boolean withFD, Configuration defaultCacheConfig, boolean transactional) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
-      amendTransport(globalConfiguration);
+      amendTransport(globalConfiguration, withFD);
       if (transactional) amendJTA(defaultCacheConfig);
       return newDefaultCacheManager(true, globalConfiguration, defaultCacheConfig, false);
    }
@@ -300,15 +311,19 @@ public class TestCacheManagerFactory {
       return c;
    }
 
+   private static void amendTransport(GlobalConfiguration cfg) {
+      amendTransport(cfg, false);
+   }
 
-   private static void amendTransport(GlobalConfiguration configuration) {
+   private static void amendTransport(GlobalConfiguration configuration, boolean withFD) {
       if (configuration.getTransportClass() != null) { //this is local
          Properties newTransportProps = new Properties();
          Properties previousSettings = configuration.getTransportProperties();
          if (previousSettings != null) {
             newTransportProps.putAll(previousSettings);
          }
-         newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
+         newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING,
+            getJGroupsConfig(perThreadCacheManagers.get().fullTestName, withFD));
          configuration.setTransportProperties(newTransportProps);
          configuration.setTransportNodeName(perThreadCacheManagers.get().getNextCacheName());
       }
@@ -352,8 +367,8 @@ public class TestCacheManagerFactory {
       return null;
    }
 
-   static void testStarted(String testName) {
-      perThreadCacheManagers.get().setTestName(testName);
+   static void testStarted(String testName, String fullName) {
+      perThreadCacheManagers.get().setTestName(testName, fullName);
    }
 
    static void testFinished(String testName) {
@@ -365,6 +380,7 @@ public class TestCacheManagerFactory {
       String testName = null;
       private String oldThreadName;
       HashMap<EmbeddedCacheManager, String> cacheManagers = new HashMap<EmbeddedCacheManager, String>();
+      String fullTestName;
 
       public void checkManagersClosed(String testName) {
          for (Map.Entry<EmbeddedCacheManager, String> cmEntry : cacheManagers.entrySet()) {
@@ -393,8 +409,9 @@ public class TestCacheManagerFactory {
          cacheManagers.put(cm, methodName);
       }
 
-      public void setTestName(String testName) {
+      public void setTestName(String testName, String fullTestName) {
          this.testName = testName;
+         this.fullTestName = fullTestName;
          this.oldThreadName = Thread.currentThread().getName();
          Thread.currentThread().setName("testng-" + testName);
       }

@@ -93,7 +93,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       }
       if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);
       if (l1CacheEnabled) configuration.setL1InvalidationThreshold(l1Threshold);
-      caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration);
+      // Create clustered caches with failure detection protocols on
+      caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration, true);
 
       reorderBasedOnCHPositions();
 

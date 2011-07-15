@@ -457,6 +457,60 @@ public class TestingUtil {
       return true;
    }
 
+   /**
+    * This method blocks until the given caches have a view of whose size
+    * matches the desired value. This method is particularly useful for
+    * discovering that members have been split, or that they have joined back
+    * again.
+    *
+    * @param timeout max number of milliseconds to block for
+    * @param finalViewSize desired final view size
+    * @param caches caches representing current, or expected members in the cluster.
+    */
+   public static void blockUntilViewsChanged(long timeout, int finalViewSize, Cache... caches) {
+      blockUntilViewsChanged(caches, timeout, finalViewSize);
+   }
+
+   private static void blockUntilViewsChanged(Cache[] caches, long timeout, int finalViewSize) {
+      long failTime = System.currentTimeMillis() + timeout;
+
+      while (System.currentTimeMillis() < failTime) {
+         sleepThread(100);
+         if (areCacheViewsChanged(caches, finalViewSize)) {
+            return;
+         }
+      }
+
+      List<List<Address>> allViews = new ArrayList<List<Address>>(caches.length);
+      for (int i = 0; i < caches.length; i++) {
+         allViews.add(caches[i].getCacheManager().getMembers());
+      }
+
+      throw new RuntimeException(String.format(
+            "Timed out before caches had changed views (%s) to contain %d members",
+            allViews, finalViewSize));
+   }
+
+   private static boolean areCacheViewsChanged(Cache[] caches, int finalViewSize) {
+      int memberCount = caches.length;
+
+      for (int i = 0; i < memberCount; i++) {
+         EmbeddedCacheManager cacheManager = caches[i].getCacheManager();
+         if (!isCacheViewChanged(cacheManager.getMembers(), finalViewSize)) {
+            return false;
+         }
+      }
+
+      return true;
+   }
+
+   private static boolean isCacheViewChanged(List members, int finalViewSize) {
+      if (members == null || finalViewSize != members.size())
+         return false;
+      else
+         return true;
+   }
+
 
    /**
     * Puts the current thread to sleep for the desired number of ms, suppressing any exceptions.
