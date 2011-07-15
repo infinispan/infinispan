@@ -25,13 +25,12 @@ package org.infinispan.server.core
 import java.net.InetSocketAddress
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.Main._
-import java.util.Properties
 import transport.NettyTransport
-import org.infinispan.util.{ClusterIdGenerator, TypedProperties, Util, FileLookup}
+import org.infinispan.util.{ClusterIdGenerator, TypedProperties, FileLookup}
 import logging.Log
 import org.infinispan.jmx.{JmxUtil, ResourceDMBean}
-import org.infinispan.config.GlobalConfiguration
 import javax.management.{ObjectName, MBeanServer}
+import java.util.Properties
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -90,12 +89,13 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
                   "idleTimeout=%d, tcpNoDelay=%b, sendBufSize=%d, recvBufSize=%d", host, port,
                   masterThreads, workerThreads, idleTimeout, tcpNoDelay, sendBufSize, recvBufSize)
          }
-         this.versionGenerator = new ClusterIdGenerator()
 
-         // Register rank calculator before starting any cache so that we can capture all view changes
-         cacheManager.addListener(this.versionGenerator.getRankCalculatorListener)
          // Start default cache
          startDefaultCache
+
+         this.versionGenerator = new ClusterIdGenerator(
+            cacheManager, cacheManager.getCache().getAdvancedCache.getRpcManager)
+
          startTransport(idleTimeout, tcpNoDelay, sendBufSize, recvBufSize, typedProps)
       }
    }

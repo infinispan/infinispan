@@ -35,13 +35,13 @@ import static org.testng.AssertJUnit.assertEquals;
    public class ClusterIdGeneratorTest {
 
    public void testGenerateVersion() {
-      ClusterIdGenerator vg = new ClusterIdGenerator();
+      ClusterIdGenerator vg = new ClusterIdGenerator(null, null);
       vg.resetCounter();
       TestAddress addr1 = new TestAddress(1);
       TestAddress addr2 = new TestAddress(2);
       TestAddress addr3 = new TestAddress(1);
       List<Address> members = Arrays.asList((Address)addr1, addr2, addr3);
-      vg.getRankCalculatorListener().calculateRank(addr2, members, 1);
+      vg.calculateRank(addr2, members, 1);
 
 
       assertEquals(vg.newVersion(true), (Object)0x1000200000001L);
