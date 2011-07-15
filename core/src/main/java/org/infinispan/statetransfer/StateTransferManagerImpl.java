@@ -140,7 +140,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       try {
          boolean canProvideState = (txLogActivated = transactionLog.activate());
          if (log.isDebugEnabled()) log.debugf("Generating state.  Can provide? %s", canProvideState);
-         oo = marshaller.startObjectOutput(out, false);
+         oo = marshaller.startObjectOutput(out, true);
 
          // If we can generate state, we've started up 
          marshaller.objectToObjectStream(true, oo);
@@ -270,7 +270,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       if (log.isDebugEnabled()) log.debug("Applying state");
       ObjectInput oi = null;
       try {
-         oi = marshaller.startObjectInput(in, false);
+         oi = marshaller.startObjectInput(in, true);
          // Started flag controls whether remote cache was started and hence provided state
          boolean started = (Boolean) marshaller.objectFromObjectStream(oi);
          if (started) {
