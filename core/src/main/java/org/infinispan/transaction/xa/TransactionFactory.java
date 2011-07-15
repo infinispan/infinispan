@@ -287,13 +287,7 @@ public class TransactionFactory {
       init(dldEnabled, recoveryEnabled, xa);
       isClustered = configuration.getCacheMode().isClustered();
       if (recoveryEnabled) {
-         clusterIdGenerator = new ClusterIdGenerator();
-         ClusterIdGenerator.RankCalculator rcl = clusterIdGenerator.getRankCalculatorListener();
-         cm.addListener(rcl);
-         if (rpcManager != null) {
-            Transport transport = rpcManager.getTransport();
-            rcl.calculateRank(rpcManager.getAddress(), transport.getMembers(), transport.getViewId());
-         }
+         clusterIdGenerator = new ClusterIdGenerator(cm, rpcManager);
       }
    }
 
