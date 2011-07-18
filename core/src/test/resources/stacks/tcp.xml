@@ -52,7 +52,7 @@
         oob_thread_pool.queue_max_size="100"
         oob_thread_pool.rejection_policy="Run"/>
 
-   <org.infinispan.test.fwk.TEST_PING timeout="250" ergonomics="false" testName=""/>
+   <org.infinispan.test.fwk.TEST_PING timeout="1000" ergonomics="false" testName=""/>
 
    <!-- Ergonomics, new in JGroups 2.11, are disabled by default until JGRP-1253 is resolved -->
    <!--<TCPPING timeout="3000"-->
