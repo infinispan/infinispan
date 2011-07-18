@@ -1,12 +1,12 @@
-package org.infinispan.cdi.test.interceptors;
+package org.infinispan.cdi.test.interceptor;
 
 import org.infinispan.Cache;
-import org.infinispan.cdi.test.interceptors.service.ComputationService;
-import org.infinispan.cdi.test.interceptors.service.Custom;
-import org.infinispan.cdi.test.interceptors.service.GreetingService;
-import org.infinispan.cdi.test.interceptors.service.Small;
-import org.infinispan.cdi.test.interceptors.service.generator.CustomCacheKey;
-import org.infinispan.cdi.test.interceptors.service.generator.CustomCacheKeyGenerator;
+import org.infinispan.cdi.test.interceptor.service.ComputationService;
+import org.infinispan.cdi.test.interceptor.service.Custom;
+import org.infinispan.cdi.test.interceptor.service.GreetingService;
+import org.infinispan.cdi.test.interceptor.service.Small;
+import org.infinispan.cdi.test.interceptor.service.generator.CustomCacheKey;
+import org.infinispan.cdi.test.interceptor.service.generator.CustomCacheKeyGenerator;
 import org.infinispan.manager.CacheContainer;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;

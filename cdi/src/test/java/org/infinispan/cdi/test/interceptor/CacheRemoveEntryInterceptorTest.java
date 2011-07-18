@@ -20,14 +20,14 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.interceptors;
+package org.infinispan.cdi.test.interceptor;
 
 import org.infinispan.Cache;
-import org.infinispan.cdi.test.interceptors.service.CacheRemoveService;
-import org.infinispan.cdi.test.interceptors.service.Custom;
-import org.infinispan.cdi.test.interceptors.service.GreetingService;
-import org.infinispan.cdi.test.interceptors.service.generator.CustomCacheKey;
-import org.infinispan.cdi.test.interceptors.service.generator.CustomCacheKeyGenerator;
+import org.infinispan.cdi.test.interceptor.service.CacheRemoveService;
+import org.infinispan.cdi.test.interceptor.service.Custom;
+import org.infinispan.cdi.test.interceptor.service.GreetingService;
+import org.infinispan.cdi.test.interceptor.service.generator.CustomCacheKey;
+import org.infinispan.cdi.test.interceptor.service.generator.CustomCacheKeyGenerator;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;

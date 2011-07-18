@@ -3,8 +3,8 @@
        xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
 
    <interceptors>
-      <class>org.infinispan.cdi.interceptors.CacheResultInterceptor</class>
-      <class>org.infinispan.cdi.interceptors.CacheRemoveEntryInterceptor</class>
-      <class>org.infinispan.cdi.interceptors.CacheRemoveAllInterceptor</class>
+      <class>org.infinispan.cdi.interceptor.CacheResultInterceptor</class>
+      <class>org.infinispan.cdi.interceptor.CacheRemoveEntryInterceptor</class>
+      <class>org.infinispan.cdi.interceptor.CacheRemoveAllInterceptor</class>
    </interceptors>
 </beans>

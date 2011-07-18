@@ -20,29 +20,19 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.interceptors;
+package org.infinispan.cdi.test.interceptor.service.generator;
 
-import org.infinispan.Cache;
-
-import java.lang.reflect.Method;
+import javax.cache.interceptor.CacheKey;
+import javax.cache.interceptor.CacheKeyGenerator;
+import javax.interceptor.InvocationContext;
 
 /**
- * This cache resolver contract used by interceptors to resolve a cache in function of it's name and the annotated
- * method.
- *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public interface CacheResolver {
-   /**
-    * Resolves a cache in function of it's name and the annotated method (see {@linkplain
-    * javax.cache.interceptor.CacheResult CacheResult}, {@linkplain javax.cache.interceptor.CacheRemoveEntry
-    * CacheRemoveEntry} and {@linkplain javax.cache.interceptor.CacheRemoveAll CacheRemoveAll}).
-    *
-    * @param cacheName The cache name to resolve.
-    * @param method    The method annotated with a cache annotation.
-    * @param <K>       The cache key type.
-    * @param <V>       The cache value type.
-    * @return The resolved cache.
-    */
-   <K, V> Cache<K, V> resolveCache(String cacheName, Method method);
+public class CustomCacheKeyGenerator implements CacheKeyGenerator {
+
+   @Override
+   public CacheKey generateCacheKey(InvocationContext invocationContext) {
+      return new CustomCacheKey(invocationContext.getMethod(), invocationContext.getParameters()[0]);
+   }
 }

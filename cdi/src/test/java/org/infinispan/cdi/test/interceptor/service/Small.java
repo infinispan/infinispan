@@ -20,21 +20,25 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.interceptors.service;
+package org.infinispan.cdi.test.interceptor.service;
 
-import javax.cache.interceptor.CacheResult;
+import javax.inject.Qualifier;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-@CacheResult(cacheName = "custom")
-public class ComputationService {
-
-   public int sum(int a, int b) {
-      return a + b;
-   }
-
-   public int sum(int a, int b, int c) {
-      return a + b + c;
-   }
+@Qualifier
+@Target({TYPE, METHOD, PARAMETER, FIELD})
+@Retention(RUNTIME)
+@Documented
+public @interface Small {
 }

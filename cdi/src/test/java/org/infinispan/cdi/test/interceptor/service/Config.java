@@ -20,41 +20,40 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.interceptors.service.generator;
+package org.infinispan.cdi.test.interceptor.service;
 
-import javax.cache.interceptor.CacheKey;
-import java.lang.reflect.Method;
+import org.infinispan.cdi.Infinispan;
+import org.infinispan.config.Configuration;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Produces;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class CustomCacheKey implements CacheKey {
-   private final Method method;
-   private final Object firstParameter;
+public class Config {
 
-   public CustomCacheKey(Method method, Object firstParameterValue) {
-      this.method = method;
-      this.firstParameter = firstParameterValue;
-   }
+   @Custom
+   @Infinispan("custom")
+   @Produces
+   Configuration getCustomConfiguration;
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+   @Small
+   @Infinispan("small")
+   @Produces
+   Configuration getSmallConfiguration;
 
-      CustomCacheKey that = (CustomCacheKey) o;
+   @Small
+   @Produces
+   @ApplicationScoped
+   EmbeddedCacheManager getSmallCacheManager(@Default Configuration defaultConfiguration) {
+      defaultConfiguration.fluent()
+            .eviction()
+            .maxEntries(4);
 
-      if (firstParameter != null ? !firstParameter.equals(that.firstParameter) : that.firstParameter != null)
-         return false;
-      if (method != null ? !method.equals(that.method) : that.method != null) return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = method != null ? method.hashCode() : 0;
-      result = 31 * result + (firstParameter != null ? firstParameter.hashCode() : 0);
-      return result;
+      return new DefaultCacheManager(defaultConfiguration);
    }
 }

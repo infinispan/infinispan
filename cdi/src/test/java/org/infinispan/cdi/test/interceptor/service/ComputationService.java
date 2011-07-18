@@ -20,40 +20,21 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.interceptors.service;
+package org.infinispan.cdi.test.interceptor.service;
 
-import org.infinispan.cdi.Infinispan;
-import org.infinispan.config.Configuration;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Produces;
+import javax.cache.interceptor.CacheResult;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class Config {
+@CacheResult(cacheName = "custom")
+public class ComputationService {
 
-   @Custom
-   @Infinispan("custom")
-   @Produces
-   Configuration getCustomConfiguration;
+   public int sum(int a, int b) {
+      return a + b;
+   }
 
-   @Small
-   @Infinispan("small")
-   @Produces
-   Configuration getSmallConfiguration;
-
-   @Small
-   @Produces
-   @ApplicationScoped
-   EmbeddedCacheManager getSmallCacheManager(@Default Configuration defaultConfiguration) {
-      defaultConfiguration.fluent()
-            .eviction()
-            .maxEntries(4);
-
-      return new DefaultCacheManager(defaultConfiguration);
+   public int sum(int a, int b, int c) {
+      return a + b + c;
    }
 }

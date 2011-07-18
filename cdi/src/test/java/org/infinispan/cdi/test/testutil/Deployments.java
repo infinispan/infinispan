@@ -26,7 +26,7 @@ import org.infinispan.cdi.Infinispan;
 import org.infinispan.cdi.event.AbstractEventBridge;
 import org.infinispan.cdi.event.cache.CacheEventBridge;
 import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
-import org.infinispan.cdi.interceptors.CacheResultInterceptor;
+import org.infinispan.cdi.interceptor.CacheResultInterceptor;
 import org.infinispan.cdi.util.CacheHelper;
 import org.jboss.shrinkwrap.api.GenericArchive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;

@@ -20,10 +20,10 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.interceptors.service;
+package org.infinispan.cdi.test.interceptor.service;
 
-
-import org.infinispan.cdi.test.interceptors.service.generator.CustomCacheKeyGenerator;
+import org.infinispan.cdi.test.interceptor.service.generator.CustomCacheKeyGenerator;
+import org.infinispan.cdi.util.Contracts;
 
 import javax.cache.interceptor.CacheRemoveAll;
 import javax.cache.interceptor.CacheRemoveEntry;
@@ -31,41 +31,43 @@ import javax.cache.interceptor.CacheRemoveEntry;
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class AdminService {
+public class CacheRemoveService {
 
    @CacheRemoveEntry
    public void removeUser(String login) {
-      if (login == null) {
-         throw new IllegalArgumentException("login parameter cannot be null");
-      }
-   }
-
-   @CacheRemoveEntry(afterInvocation = false)
-   public void removeUserBeforeInvocation(String login) {
-      removeUser(login);
-   }
-
-   @CacheRemoveEntry(cacheKeyGenerator = CustomCacheKeyGenerator.class)
-   public void removeUserWithCustomCacheKeyGenerator(String login) {
-      removeUser(login);
+      Contracts.assertNotNull(login, "login parameter cannot be null");
    }
 
    @CacheRemoveEntry(cacheName = "custom")
    public void removeUserWithCacheName(String login) {
-      removeUser(login);
+      Contracts.assertNotNull(login, "login parameter cannot be null");
+   }
+
+   @CacheRemoveEntry(cacheName = "custom", afterInvocation = false)
+   public void removeUserBeforeInvocationWithException(String login) {
+      Contracts.assertNotNull(login, "login parameter cannot be null");
+   }
+
+   @CacheRemoveEntry(cacheName = "custom", cacheKeyGenerator = CustomCacheKeyGenerator.class)
+   public void removeUserWithCustomCacheKeyGenerator(String login) {
+      Contracts.assertNotNull(login, "login parameter cannot be null");
    }
 
    @CacheRemoveAll
-   public void removeAllUser() {
-   }
-
-   @CacheRemoveAll(afterInvocation = false)
-   public void removeAllUserBeforeInvocation(String login) {
-      throw new IllegalArgumentException();
+   public void removeAll() {
    }
 
    @CacheRemoveAll(cacheName = "custom")
-   public void removeAllUserWithCacheName(String login) {
-      removeUser(login);
+   public void removeAllWithCacheName() {
+   }
+
+   @CacheRemoveAll(cacheName = "custom")
+   public void removeAllAfterInvocationWithException() {
+      throw new IllegalArgumentException();
+   }
+
+   @CacheRemoveAll(cacheName = "custom", afterInvocation = false)
+   public void removeAllBeforeInvocationWithException() {
+      throw new IllegalArgumentException();
    }
 }
