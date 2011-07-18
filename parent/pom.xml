@@ -135,7 +135,7 @@
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
       <version.jgroups>2.12.0.Final</version.jgroups>
       <version.json>20090211</version.json>
-      <version.jsr107>0.1-SNAPSHOT</version.jsr107>
+      <version.jsr107>0.2-SNAPSHOT</version.jsr107>
       <version.jstl>1.2</version.jstl>
       <version.jta>1.0.1.GA</version.jta>
       <version.log4j>1.2.16</version.log4j>
