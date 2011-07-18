@@ -44,6 +44,21 @@
       <version.slf4j>1.5.10</version.slf4j>
    </properties>
 
+   <developers>
+      <developer>
+         <name>Pete Muir</name>
+         <email>pete DOT muir AT jboss DOT org</email>
+         <organization>Red Hat, Inc.</organization>
+         <url>http://in.relation.to/Bloggers/Pete</url>
+      </developer>
+      <developer>
+         <name>Kevin Pollet</name>
+         <email>kevin DOT pollet AT serli DOT com</email>
+         <organization>SERLI</organization>
+         <url>http://www.serli.com</url>
+      </developer>
+   </developers>
+
    <dependencies>
       <dependency>
          <groupId>javax.cache</groupId>
