@@ -101,7 +101,7 @@ public class TEST_PING extends Discovery {
             discoveries = ret;
       }
       if (log.isTraceEnabled())
-         log.trace(String.format("Discoveries for %s are : ", key, discoveries));
+         log.trace(String.format("Discoveries for %s are : %s", key, discoveries));
 
       if (!discoveries.containsKey(local_addr)) {
          discoveries.put(local_addr, this);

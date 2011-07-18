@@ -59,7 +59,6 @@ import org.jgroups.protocols.TP;
 import org.jgroups.stack.ProtocolStack;
 
 import javax.management.ObjectName;
-import javax.swing.*;
 import javax.transaction.TransactionManager;
 import java.io.File;
 import java.lang.reflect.Field;
