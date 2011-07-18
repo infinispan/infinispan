@@ -55,26 +55,20 @@ public class CacheRemoveAllInterceptor {
    @AroundInvoke
    public Object cacheRemoveAll(InvocationContext context) throws Exception {
       final Method method = context.getMethod();
+      final CacheRemoveAll cacheRemoveAll = method.getAnnotation(CacheRemoveAll.class);
+      final String cacheName = cacheRemoveAll.cacheName();
+      final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheName, method);
 
-      // CacheRemoveAll annotation has to be present on annotated method
-      if (method.isAnnotationPresent(CacheRemoveAll.class)) {
-         final CacheRemoveAll cacheRemoveAll = method.getAnnotation(CacheRemoveAll.class);
-         final String cacheName = cacheRemoveAll.cacheName();
-         final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheName, method);
-
-         if (!cacheRemoveAll.afterInvocation()) {
-            cache.clear();
-         }
-
-         final Object result = context.proceed();
-
-         if (cacheRemoveAll.afterInvocation()) {
-            cache.clear();
-         }
-
-         return result;
+      if (!cacheRemoveAll.afterInvocation()) {
+         cache.clear();
       }
 
-      return context.proceed();
+      final Object result = context.proceed();
+
+      if (cacheRemoveAll.afterInvocation()) {
+         cache.clear();
+      }
+
+      return result;
    }
 }

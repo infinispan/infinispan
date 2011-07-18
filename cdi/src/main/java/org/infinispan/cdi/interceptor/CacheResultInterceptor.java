@@ -65,7 +65,8 @@ public class CacheResultInterceptor {
 
    @AroundInvoke
    public Object cacheResult(InvocationContext context) throws Exception {
-      final CacheResult cacheResult = retrieveCacheResultAnnotation(context);
+      final Method method = context.getMethod();
+      final CacheResult cacheResult = method.getAnnotation(CacheResult.class);
       final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheResult.cacheName(), context.getMethod());
       final CacheKey cacheKey = generateCacheKey(cacheResult.cacheKeyGenerator(), context);
 
@@ -83,15 +84,5 @@ public class CacheResultInterceptor {
       }
 
       return methodResult;
-   }
-
-   private CacheResult retrieveCacheResultAnnotation(InvocationContext context) {
-      final Method method = context.getMethod();
-      final Class<?> declaringClass = method.getDeclaringClass();
-
-      if (method.isAnnotationPresent(CacheResult.class)) {
-         return method.getAnnotation(CacheResult.class);
-      }
-      return declaringClass.getAnnotation(CacheResult.class);
    }
 }

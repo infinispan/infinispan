@@ -1,7 +1,6 @@
 package org.infinispan.cdi.test.interceptor;
 
 import org.infinispan.Cache;
-import org.infinispan.cdi.test.interceptor.service.ComputationService;
 import org.infinispan.cdi.test.interceptor.service.Custom;
 import org.infinispan.cdi.test.interceptor.service.GreetingService;
 import org.infinispan.cdi.test.interceptor.service.Small;
@@ -15,7 +14,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.cache.interceptor.CacheKey;
-import javax.cache.interceptor.DefaultCacheKey;
 import javax.inject.Inject;
 import java.lang.reflect.Method;
 
@@ -44,9 +42,6 @@ public class CacheResultInterceptorTest extends Arquillian {
 
    @Inject
    private GreetingService greetingService;
-
-   @Inject
-   private ComputationService computationService;
 
    @Inject
    @Custom
@@ -146,16 +141,5 @@ public class CacheResultInterceptorTest extends Arquillian {
       assertEquals(greetingService.getSayBonjourCount(), 1);
       assertEquals(smallCache.size(), 1);
       assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 4);
-   }
-
-   @Test(groups = "functional")
-   public void testCacheResultAtClassLevel() {
-      computationService.sum(1, 2);
-      assertTrue(customCache.containsKey(new DefaultCacheKey(new Integer[]{1, 2})));
-      assertEquals(customCache.size(), 1);
-
-      computationService.sum(1, 2, 3);
-      assertTrue(customCache.containsKey(new DefaultCacheKey(new Integer[]{1, 2, 3})));
-      assertEquals(customCache.size(), 2);
    }
 }
