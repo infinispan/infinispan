@@ -22,24 +22,18 @@
  */
 package org.infinispan.test.jndi;
 
-import javax.naming.Context;
-import javax.naming.Name;
-import javax.naming.NameClassPair;
-import javax.naming.NameParser;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.Binding;
-import java.util.Hashtable;
-import java.util.HashMap;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectInputStream;
+import javax.naming.*;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Hashtable;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DummyContext implements Context {
 
 
-   HashMap<String, Object> bindings = new HashMap<String, Object>();
+   ConcurrentHashMap<String, Object> bindings = new ConcurrentHashMap<String, Object>();
    boolean serializing;
 
    public DummyContext() {
@@ -561,11 +555,11 @@ public class DummyContext implements Context {
    private void deserialize() {
       if (serializing) {
          if (bytes == null)
-            bindings = new HashMap<String, Object>();
+            bindings = new ConcurrentHashMap<String, Object>();
          else {
             try {
                ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
-               bindings = (HashMap<String, Object>) ois.readObject();
+               bindings = (ConcurrentHashMap<String, Object>) ois.readObject();
                ois.close();
                bytes = null;
             }
