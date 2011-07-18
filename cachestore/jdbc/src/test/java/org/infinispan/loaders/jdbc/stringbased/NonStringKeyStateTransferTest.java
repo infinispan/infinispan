@@ -42,10 +42,10 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
    public void testReplicatedStateTransfer() {
       EmbeddedCacheManager cm1 = null, cm2 = null;
       try {
-         Configuration conf = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(), false, true);
-         conf.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+         Configuration conf1 = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(), false, true);
+         conf1.setCacheMode(Configuration.CacheMode.REPL_SYNC);
 
-         cm1 = TestCacheManagerFactory.createClusteredCacheManager(conf);
+         cm1 = TestCacheManagerFactory.createClusteredCacheManager(conf1);
          Cache<Person, String> c1 = cm1.getCache();
          Person mircea = new Person("markus", "mircea", 30);
          Person mircea2 = new Person("markus2", "mircea2", 30);
@@ -53,7 +53,10 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
          c1.put(mircea, "mircea");
          c1.put(mircea2, "mircea2");
 
-         cm2 = TestCacheManagerFactory.createClusteredCacheManager(conf);
+         Configuration conf2 = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(), false, true);
+         conf2.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+
+         cm2 = TestCacheManagerFactory.createClusteredCacheManager(conf2);
          Cache c2 = cm2.getCache();
          assertEquals("mircea", c2.get(mircea));
          assertEquals("mircea2", c2.get(mircea2));
