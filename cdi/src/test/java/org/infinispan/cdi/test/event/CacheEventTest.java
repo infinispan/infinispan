@@ -67,7 +67,8 @@ public class CacheEventTest extends Arquillian {
    @Inject
    private Cache2Observers observers2;
 
-   @Test(groups = "functional")
+   // This test is disabled due to a bug with parameterized events in Weld.
+   @Test(groups = "functional", enabled = false)
    public void testSmallCache() {
       // Put something into the cache, ensure it is started
       cache1.put("pete", "Edinburgh");
