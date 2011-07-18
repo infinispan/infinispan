@@ -46,7 +46,6 @@ import static org.infinispan.cdi.util.CacheHelper.generateCacheKey;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @Interceptor
-@CacheRemoveEntry
 public class CacheRemoveEntryInterceptor {
 
    private final CacheResolver cacheResolver;

@@ -106,9 +106,9 @@ The first step is to declare the JSR-107 interceptors in your `beans.xml` file l
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
         <interceptors>
-          <class>org.infinispan.cdi.interceptors.CacheResultInterceptor</class>
-          <class>org.infinispan.cdi.interceptors.CacheRemoveEntryInterceptor</class>
-          <class>org.infinispan.cdi.interceptors.CacheRemoveAllInterceptor</class>
+          <class>org.infinispan.cdi.interceptor.CacheResultInterceptor</class>
+          <class>org.infinispan.cdi.interceptor.CacheRemoveEntryInterceptor</class>
+          <class>org.infinispan.cdi.interceptor.CacheRemoveAllInterceptor</class>
        </interceptors>
     </beans>
 

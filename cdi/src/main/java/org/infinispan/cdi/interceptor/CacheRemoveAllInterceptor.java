@@ -43,7 +43,6 @@ import java.lang.reflect.Method;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @Interceptor
-@CacheRemoveAll
 public class CacheRemoveAllInterceptor {
 
    private final CacheResolver cacheResolver;
