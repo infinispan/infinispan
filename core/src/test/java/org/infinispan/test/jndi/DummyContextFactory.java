@@ -28,7 +28,7 @@ import javax.naming.spi.InitialContextFactory;
 import java.util.Hashtable;
 
 public class DummyContextFactory implements InitialContextFactory {
-   static Context instance = null;
+   static Context instance = new DummyContext();
 
    /**
     * Creates an Initial Context for beginning name resolution. Special requirements of this context are supplied using
@@ -43,8 +43,6 @@ public class DummyContextFactory implements InitialContextFactory {
     * @throws javax.naming.NamingException If cannot create an initial context.
     */
    public Context getInitialContext(Hashtable environment) throws NamingException {
-      if (instance == null)
-         instance = new DummyContext();
       return instance;
    }
 }
