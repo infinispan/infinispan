@@ -322,10 +322,31 @@ public class TestCacheManagerFactory {
          if (previousSettings != null) {
             newTransportProps.putAll(previousSettings);
          }
+
+         String fullTestName = perThreadCacheManagers.get().fullTestName;
+         String nextCacheName = perThreadCacheManagers.get().getNextCacheName();
+         if (fullTestName == null) {
+            // Either we're running from within the IDE or it's a
+            // @Test(timeOut=nnn) test. We rely here on some specific TestNG
+            // thread naming convention which can break, but TestNG offers no
+            // other alternative. It does not offer any callbacks within the
+            // thread that runs the test that can timeout.
+            String threadName = Thread.currentThread().getName();
+            String pattern = "TestNGInvoker-";
+            if (threadName.startsWith(pattern)) {
+               // This is a timeout test, so for the moment rely on the test
+               // method name that comes in the thread name.
+               fullTestName = threadName;
+               nextCacheName = threadName.substring(
+                     threadName.indexOf("-") + 1, threadName.indexOf('('));
+            } // else, test is being run from IDE
+         }
+
          newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING,
-            getJGroupsConfig(perThreadCacheManagers.get().fullTestName, withFD));
+            getJGroupsConfig(fullTestName, withFD));
+
          configuration.setTransportProperties(newTransportProps);
-         configuration.setTransportNodeName(perThreadCacheManagers.get().getNextCacheName());
+         configuration.setTransportNodeName(nextCacheName);
       }
    }
 
