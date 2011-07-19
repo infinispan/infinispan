@@ -66,6 +66,9 @@ public abstract class RehashTask implements Callable<Void> {
       try {
          performRehash();
       }
+      catch (InterruptedException e) {
+         log.debugf("Rehash was interrupted because the cache is shutting down");
+      }
       catch (Throwable th) {
          // there is no one else to handle the exception below us
          log.errorDuringRehash(th);

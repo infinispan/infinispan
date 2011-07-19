@@ -144,6 +144,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                return executeCommand((CacheRpcCommand) cmd, req);
             else
                return cmd.perform(null);
+         } catch (InterruptedException e) {
+            log.warnf("Shutdown while handling command %s", cmd);
+            return new ExceptionResponse(new CacheException("Cache is shutting down"));
          } catch (Throwable x) {
             if (cmd == null)
                log.warnf(x, "Problems unmarshalling remote command from byte buffer");

@@ -43,7 +43,6 @@ import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -63,14 +62,7 @@ import javax.transaction.TransactionManager;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
@@ -588,30 +580,47 @@ public class TestingUtil {
    }
 
    public static void killCacheManagers(CacheContainer... cacheContainers) {
-      EmbeddedCacheManager[] ecms = new EmbeddedCacheManager[cacheContainers.length];
-      int i = 0;
-      for (CacheContainer cc : cacheContainers) ecms[i++] = (EmbeddedCacheManager) cc;
-      killCacheManagers(ecms);
+      EmbeddedCacheManager[] cms = new EmbeddedCacheManager[cacheContainers.length];
+      for (int i = 0; i < cacheContainers.length; i++) cms[i] = (EmbeddedCacheManager) cacheContainers[i];
+      killCacheManagers(cms);
    }
 
-   public static void killCacheManagers(EmbeddedCacheManager... cacheContainers) {
-      if (cacheContainers != null) {
-         for (EmbeddedCacheManager cm : cacheContainers) {
-            try {
-               try {
-                  clearContent(cm);
-               } finally {
-                  if (cm != null) cm.stop();
-               }
-            } catch (Throwable e) {
-               log.warn("Problems killing cache manager " + cm, e);
-            }
+   public static void killCacheManagers(List<? extends CacheContainer> cacheContainers) {
+      EmbeddedCacheManager[] cms = new EmbeddedCacheManager[cacheContainers.size()];
+      for (int i = 0; i < cacheContainers.size(); i++) cms[i] = (EmbeddedCacheManager) cacheContainers.get(i);
+      killCacheManagers(cms);
+   }
+
+   public static void killCacheManagers(EmbeddedCacheManager... cacheManagers) {
+      // stop the caches first so that stopping the cache managers doesn't trigger a rehash
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         try {
+            killCaches(getRunningCaches(cm));
+         } catch (Throwable e) {
+            log.warn("Problems stopping cache manager " + cm, e);
+         }
+      }
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         try {
+            if (cm != null) cm.stop();
+         } catch (Throwable e) {
+            log.warn("Problems killing cache manager " + cm, e);
          }
       }
    }
 
-   public static void killCacheManagers(Collection<? extends EmbeddedCacheManager> cacheManagers) {
-      killCacheManagers(cacheManagers.toArray(new EmbeddedCacheManager[cacheManagers.size()]));
+   public static void clearContent(EmbeddedCacheManager... cacheManagers) {
+      clearContent(Arrays.asList(cacheManagers));
+   }
+
+   public static void clearContent(List<? extends EmbeddedCacheManager> cacheManagers) {
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         try {
+            clearContent(cm);
+         } catch (Throwable e) {
+            log.warn("Problems clearing cache manager " + cm, e);
+         }
+      }
    }
 
    public static void clearContent(EmbeddedCacheManager cacheContainer) {
@@ -634,6 +643,9 @@ public class TestingUtil {
 
    protected static Set<Cache> getRunningCaches(EmbeddedCacheManager cacheContainer) {
       Set<Cache> running = new HashSet<Cache>();
+      if (cacheContainer == null || !cacheContainer.getStatus().allowInvocations())
+         return running;
+
       for (String cacheName : cacheContainer.getCacheNames()) {
          if (cacheContainer.isRunning(cacheName)) {
             Cache c = cacheContainer.getCache(cacheName);
@@ -697,6 +709,13 @@ public class TestingUtil {
     * Kills a cache - stops it, clears any data in any cache loaders, and rolls back any associated txs
     */
    public static void killCaches(Cache... caches) {
+      killCaches(Arrays.asList(caches));
+   }
+
+   /**
+    * Kills a cache - stops it and rolls back any associated txs
+    */
+   public static void killCaches(Collection<Cache> caches) {
       for (Cache c : caches) {
          try {
             if (c != null && c.getStatus() == ComponentStatus.RUNNING) {
@@ -709,6 +728,7 @@ public class TestingUtil {
                      // don't care
                   }
                }
+               log.tracef("Cache contents before stopping: %s", c.entrySet());
                c.stop();
             }
          }
