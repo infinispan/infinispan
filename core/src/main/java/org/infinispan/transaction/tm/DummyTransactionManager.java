@@ -22,16 +22,10 @@
  */
 package org.infinispan.transaction.tm;
 
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import javax.naming.NoInitialContextException;
 import javax.transaction.xa.XAResource;
-import java.util.Properties;
 
 /**
  * Simple transaction manager implementation that maintains transaction state in memory only.
@@ -55,19 +49,6 @@ public class DummyTransactionManager extends DummyBaseTransactionManager {
             if (instance == null) {
                instance = new DummyTransactionManager();
                utx = new DummyUserTransaction(instance);
-               Properties p = new Properties();
-               Context ctx = null;
-               try {
-                  ctx = new InitialContext(p);
-                  ctx.bind("java:/TransactionManager", instance);
-                  ctx.bind("UserTransaction", utx);
-               } catch (NoInitialContextException nie) {
-                  log.debug(nie.getMessage());
-               } catch (NamingException e) {
-                  log.debug("binding of DummyTransactionManager failed", e);
-               } finally {
-                  Util.close(ctx);
-               }
             }
          }
       }
@@ -82,18 +63,6 @@ public class DummyTransactionManager extends DummyBaseTransactionManager {
    public static void destroy() {
       if (instance == null)
          return;
-      Properties p = new Properties();
-      Context ctx = null;
-      try {
-         ctx = new InitialContext(p);
-         ctx.unbind("java:/TransactionManager");
-         ctx.unbind("UserTransaction");
-      }
-      catch (NamingException e) {
-         log.unbindingDummyTmFailed(e);
-      } finally {
-         Util.close(ctx);
-      }
       instance.setTransaction(null);
       instance = null;
    }
