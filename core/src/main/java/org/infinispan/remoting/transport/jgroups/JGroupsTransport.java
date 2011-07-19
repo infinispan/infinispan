@@ -535,11 +535,11 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          Notify n = null;
          if (newView instanceof MergeView) {
             if (log.isInfoEnabled())
-               if (log.isInfoEnabled()) log.receivedMergedView(newView);
+               log.receivedMergedView(newView);
             n = new NotifyMerge();
          } else {
             if (log.isInfoEnabled())
-               if (log.isInfoEnabled()) log.receivedClusterView(newView);
+               log.receivedClusterView(newView);
             n = new NotifyViewChange();
          }
 

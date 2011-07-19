@@ -116,12 +116,6 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       final CountDownLatch l = new CountDownLatch(1);
       final AtomicBoolean rollback = new AtomicBoolean(false);
 
-      StateTransferFunctionalTest.MergedViewListener mergedViewListener = new StateTransferFunctionalTest.MergedViewListener();
-      cacheManagers.get(0).addListener(mergedViewListener);
-      cacheManagers.get(1).addListener(mergedViewListener);
-      cacheManagers.get(2).addListener(mergedViewListener);
-      cacheManagers.get(3).addListener(mergedViewListener);
-
       Thread th = new Thread("Updater") {
          @Override
          public void run() {

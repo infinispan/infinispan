@@ -27,7 +27,9 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
+import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
+import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
@@ -40,6 +42,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest", enabled = true)
 public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
@@ -164,17 +168,10 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache1 = cm1.getCache(cacheName);
       writeInitialData(cache1);
 
-      EmbeddedCacheManager cm2 = createCacheManager();
-      MergedViewListener mv2 = new MergedViewListener();
-      cm2.addListener(mv2);
-      cache2 = cm2.getCache(cacheName);
-
-      // Pause to give caches time to see each other
-      TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
-
-      if (!mv2.merged) {
-         verifyInitialData(cache2);
-      }
+      JoiningNode node = new JoiningNode();
+      cache2 = node.getCache(cacheName);
+      node.waitForJoin(60000, cache1, cache2);
+      node.verifyStateTransfer(cache2);
 
       logTestEnd(m);
    }
@@ -186,11 +183,11 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cacheManager1 = createCacheManager();
       cache1 = cacheManager1.getCache(cacheName);
       writeInitialData(cache1);
-      cache2 = createCacheManager().getCache(cacheName);
 
-      // Pause to give caches time to see each other
-      TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
-      verifyInitialData(cache2);
+      JoiningNode node = new JoiningNode();
+      cache2 = node.getCache(cacheName);
+      node.waitForJoin(60000, cache1, cache2);
+      node.verifyStateTransfer(cache2);
 
       cacheManager1.defineConfiguration("otherCache", config.clone());
       cacheManager1.getCache("otherCache");
@@ -204,24 +201,20 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache1 = createCacheManager().getCache(cacheName);
       writeInitialData(cache1);
 
-      cache2 = createCacheManager().getCache(cacheName);
+      JoiningNode node2 = new JoiningNode();
+      cache2 = node2.getCache(cacheName);
 
       cache1.put("delay", new StateTransferFunctionalTest.DelayTransfer());
 
-      // Pause to give caches time to see each other
-      TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
-      verifyInitialData(cache2);
+      node2.waitForJoin(60000, cache1, cache2);
+      node2.verifyStateTransfer(cache2);
 
-      final EmbeddedCacheManager cm3 = createCacheManager();
-      MergedViewListener l3 = new MergedViewListener();
-      cm3.addListener(l3);
-      final EmbeddedCacheManager cm4 = createCacheManager();
-      MergedViewListener l4 = new MergedViewListener();
-      cm4.addListener(l4);
+      final JoiningNode node3 = new JoiningNode();
+      final JoiningNode node4 = new JoiningNode();
 
       Thread t1 = new Thread(new Runnable() {
          public void run() {
-            cm3.getCache(cacheName);
+            node3.getCache(cacheName);
          }
       });
       t1.setName("CacheStarter-Cache3");
@@ -229,7 +222,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       Thread t2 = new Thread(new Runnable() {
          public void run() {
-            cm4.getCache(cacheName);
+            node4.getCache(cacheName);
          }
       });
       t2.setName("CacheStarter-Cache4");
@@ -238,17 +231,15 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       t1.join();
       t2.join();
 
-      cache3 = cm3.getCache(cacheName);
-      cache4 = cm4.getCache(cacheName);
+      cache3 = node3.getCache(cacheName);
+      cache4 = node4.getCache(cacheName);
 
-      TestingUtil.blockUntilViewsReceived(120000, cache1, cache2, cache3, cache4);
-      //in the case of merges no state transfer happens so no point in verifying whether state was actually migrated
-      if (!l3.merged) {
-         verifyInitialData(cache3);
-      }
-      if (!l4.merged) {
-         verifyInitialData(cache4);
-      }
+      node3.waitForJoin(120000, cache1, cache2, cache3, cache4);
+      node4.waitForJoin(120000, cache1, cache2, cache3, cache4);
+
+      node3.verifyStateTransfer(cache3);
+      node4.verifyStateTransfer(cache4);
+
       logTestEnd(m);
    }
 
@@ -289,12 +280,10 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache1 = createCacheManager().getCache(cacheName);
       writeInitialData(cache1);
 
-      cache2 = createCacheManager().getCache(cacheName);
-
-      // Pause to give caches time to see each other
-      TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
-
-      verifyInitialData(cache2);
+      JoiningNode node2 = new JoiningNode();
+      cache2 = node2.getCache(cacheName);
+      node2.waitForJoin(60000, cache1, cache2);
+      node2.verifyStateTransfer(cache2);
 
       cache2.stop();
       cache2.start();
@@ -329,15 +318,15 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       WritingThread writerThread = new WritingThread(cache3, tx);
       writerThread.start();
 
-      cache2 = createCacheManager().getCache(cacheName);
+      JoiningNode node2 = new JoiningNode();
+      cache2 = node2.getCache(cacheName);
 
-      // Pause to give caches time to see each other
-      TestingUtil.blockUntilViewsReceived(60000, cache1, cache2, cache3);
+      node2.waitForJoin(60000, cache1, cache2, cache3);
 
       writerThread.stopThread();
       writerThread.join();
 
-      verifyInitialData(cache2);
+      node2.verifyStateTransfer(cache2);
 
       int count = writerThread.result();
 
@@ -372,17 +361,16 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       WritingThread writerThread = new WritingThread(cache1, tx);
       writerThread.start();
       verifyInitialData(cache1);
-      cache2 = createCacheManager().getCache(cacheName);
 
-      // Pause to give caches time to see each other
-      // Make sure any interruption for test timing out is propagated
-      TestingUtil.blockUntilViewsReceivedInt(60000, cache1, cache2);
+      JoiningNode node2 = new JoiningNode();
+      cache2 = node2.getCache(cacheName);
+      node2.waitForJoin(60000, cache1, cache2);
 
       writerThread.stopThread();
       writerThread.join();
 
       verifyInitialData(cache1);
-      verifyInitialData(cache2);
+      node2.verifyStateTransfer(cache2);
 
       int count = writerThread.result();
 
@@ -391,14 +379,66 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    @Listener
-   public static class MergedViewListener {
+   public static class MergeOrViewChangeListener {
+      // The latch provides the visibility guarantees
+      public boolean merged;
+      // The latch provides the visibility guarantees
+      public boolean viewChanged;
+      private final CountDownLatch latch;
 
-      public volatile boolean merged;
+      public MergeOrViewChangeListener(CountDownLatch latch) {
+         this.latch = latch;
+      }
 
       @Merged
       public void mergedView(MergeEvent me) {
          log.infof("View merged received %s", me);
          merged = true;
+         latch.countDown();
       }
+
+      @ViewChanged
+      public void viewChanged(ViewChangedEvent e) {
+         log.infof("View change received %s", e);
+         viewChanged = true;
+         latch.countDown();
+      }
+
    }
+
+   private class JoiningNode {
+
+      private final EmbeddedCacheManager cm;
+      private final CountDownLatch latch;
+      private final MergeOrViewChangeListener listener;
+
+      private JoiningNode() {
+         cm = createCacheManager();
+         latch = new CountDownLatch(1);
+         listener = new MergeOrViewChangeListener(latch);
+         cm.addListener(listener);
+      }
+
+      Cache getCache(String cacheName) {
+         return cm.getCache(cacheName);
+      }
+
+      void waitForJoin(long timeout, Cache... caches) throws InterruptedException {
+         // Pause to give caches time to see each other
+         TestingUtil.blockUntilViewsReceived(timeout, caches);
+         // Wait for either a merge or view change to happen
+         latch.await(timeout, TimeUnit.MILLISECONDS);
+      }
+
+      private boolean isStateTransferred() {
+         return !listener.merged;
+      }
+
+      void verifyStateTransfer(Cache cache) {
+         if (isStateTransferred())
+            StateTransferFunctionalTest.this.verifyInitialData(cache);
+      }
+
+   }
+
 }
