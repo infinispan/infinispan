@@ -105,6 +105,8 @@ public class DistributionManagerImpl implements DistributionManager {
    // joinStartedLatch has been signaled by the starting thread
    // we don't have a getSelf() that waits on joinS
    private volatile ConsistentHash consistentHash;
+   // the previous consistent hash is only updated when a rehash has finished in the entire cluster
+   private volatile ConsistentHash lastSuccessfulCH;
    private Address self;
    private final CountDownLatch joinStartedLatch = new CountDownLatch(1);
 
@@ -174,6 +176,7 @@ public class DistributionManagerImpl implements DistributionManager {
       self = t.getAddress();
       lastViewId = t.getViewId();
       consistentHash = ConsistentHashHelper.createConsistentHash(configuration, members);
+      lastSuccessfulCH = ConsistentHashHelper.createConsistentHash(configuration, members);
 
       // in case we are/become the coordinator, make sure we're in the push confirmations map before anyone else
       synchronized (pushConfirmations) {
@@ -314,9 +317,12 @@ public class DistributionManagerImpl implements DistributionManager {
       return consistentHash;
    }
 
-   public void setConsistentHash(ConsistentHash consistentHash) {
+   public ConsistentHash setConsistentHash(ConsistentHash consistentHash) {
       if (trace) log.tracef("Installing new consistent hash %s", consistentHash);
+      cacheNotifier.notifyTopologyChanged(lastSuccessfulCH, consistentHash, true);
       this.consistentHash = consistentHash;
+      cacheNotifier.notifyTopologyChanged(lastSuccessfulCH, consistentHash, false);
+      return lastSuccessfulCH;
    }
 
 
@@ -373,7 +379,8 @@ public class DistributionManagerImpl implements DistributionManager {
          latestCH = getConsistentHash();
       }
 
-      if (trace) log.tracef("Applying new state from %s: received %d keys", sender, state.size());
+      log.debugf("Applying new state from %s: received %d keys", sender, state.size());
+      if (trace) log.tracef("Received keys: %s", state.keySet());
       int retryCount = 3; // in case we have issues applying state.
       Map<Object, InternalCacheValue> pendingApplications = state;
       for (int i = 0; i < retryCount; i++) {
@@ -403,6 +410,9 @@ public class DistributionManagerImpl implements DistributionManager {
       if (trace) log.tracef("Rehash completed on node %s, data container has %d keys", getSelf(), dataContainer.size());
       rehashInProgress = false;
       synchronized (rehashInProgressMonitor) {
+         // we know for sure the rehash task is waiting for this confirmation, so the CH hasn't been replaced
+         if (trace) log.tracef("Updating last rehashed CH to %s", this.lastSuccessfulCH);
+         lastSuccessfulCH = this.consistentHash;
          rehashInProgressMonitor.notifyAll();
       }
       joinCompletedLatch.countDown();
@@ -462,11 +472,14 @@ public class DistributionManagerImpl implements DistributionManager {
       Transport t = rpcManager.getTransport();
 
       if (t.isCoordinator()) {
+         if (trace) log.tracef("Node %s is the coordinator, marking push for %d as complete directly", self, viewId);
          markNodePushCompleted(viewId, self);
       } else {
          final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED, self, viewId);
+         Address coordinator = rpcManager.getTransport().getCoordinator();
 
-         rpcManager.invokeRemotely(Collections.singleton(rpcManager.getTransport().getCoordinator()), cmd, true);
+         if (trace) log.tracef("Node %s is not the coordinator, sending request to mark push for %d as complete to %s", self, viewId, coordinator);
+         rpcManager.invokeRemotely(Collections.singleton(coordinator), cmd, true);
       }
    }
 
@@ -477,11 +490,12 @@ public class DistributionManagerImpl implements DistributionManager {
          if(trace)
             log.tracef("New view received: %d, type=%s, members: %s. Starting the RebalanceTask", e.getViewId(), e.getType(), e.getNewMembers());
 
-         rehashInProgress = true;
+         boolean rehashInterrupted = rehashInProgress;
          synchronized (rehashInProgressMonitor) {
+            rehashInProgress = true;
+            lastViewId = e.getViewId();
             rehashInProgressMonitor.notifyAll();
          }
-         lastViewId = e.getViewId();
 
          // make sure the pushConfirmations map has one entry for each cluster member
          // we will always have
@@ -507,7 +521,7 @@ public class DistributionManagerImpl implements DistributionManager {
          }
 
          RebalanceTask rebalanceTask = new RebalanceTask(rpcManager, cf, configuration, dataContainer,
-                                                         DistributionManagerImpl.this, icc, cacheNotifier, interceptorChain, e.getViewId());
+               DistributionManagerImpl.this, icc, cacheNotifier, interceptorChain, e.getViewId(), rehashInterrupted);
          rehashExecutor.submit(rebalanceTask);
       }
    }
