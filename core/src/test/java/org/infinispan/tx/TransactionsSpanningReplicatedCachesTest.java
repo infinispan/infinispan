@@ -36,12 +36,12 @@ import java.util.Arrays;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
-@Test(groups = "functional", sequential = true, testName = "tx.TransactionsSpanningReplicatedCaches")
-public class TransactionsSpanningReplicatedCaches extends MultipleCacheManagersTest {
+@Test(groups = "functional", sequential=true, testName = "tx.TransactionsSpanningReplicatedCachesTest")
+public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManagersTest {
 
    CacheContainer cm1, cm2;
 
-   public TransactionsSpanningReplicatedCaches() {
+   public TransactionsSpanningReplicatedCachesTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
