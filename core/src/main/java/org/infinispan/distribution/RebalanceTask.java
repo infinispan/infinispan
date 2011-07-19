@@ -76,41 +76,45 @@ public class RebalanceTask extends RehashTask {
    private final InvocationContextContainer icc;
    private final CacheNotifier notifier;
    private final InterceptorChain interceptorChain;
-   private int newViewId;
+   private final int newViewId;
+   private final boolean rehashInterrupted;
 
    public RebalanceTask(RpcManager rpcManager, CommandsFactory commandsFactory, Configuration conf,
                         DataContainer dataContainer, DistributionManagerImpl dmi,
                         InvocationContextContainer icc, CacheNotifier notifier,
-                        InterceptorChain interceptorChain, int newViewId) {
+                        InterceptorChain interceptorChain, int newViewId, boolean rehashInterrupted) {
       super(dmi, rpcManager, conf, commandsFactory, dataContainer);
       this.icc = icc;
       this.notifier = notifier;
       this.interceptorChain = interceptorChain;
       this.newViewId = newViewId;
+      this.rehashInterrupted = rehashInterrupted;
    }
 
 
    protected void performRehash() throws Exception {
       long start = System.currentTimeMillis();
       if (log.isDebugEnabled())
-         log.debugf("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s", getMyAddress(), distributionManager.isJoinComplete());
+         log.debugf("Commencing rehash on node: %s. Before start, data container had %d entries",
+               getMyAddress(), dataContainer.size());
       ConsistentHash chOld, chNew;
       try {
          // Don't need to log anything, all transactions will be blocked
          //distributionManager.getTransactionLogger().enable();
-         distributionManager.getTransactionLogger().blockNewTransactions();
+         if (rehashInterrupted) {
+            log.tracef("Rehash is still in progress, not blocking transactions as they should already be blocked");
+         } else {
+            // if the previous rehash was interrupted by the arrival of a new view
+            // then the transactions are still blocked, we don't need to block them again
+            distributionManager.getTransactionLogger().blockNewTransactions();
+         }
 
-         // 1.  Get the old CH
-         chOld = distributionManager.getConsistentHash();
-
-         // 2. Create the new CH:
+         // Create the new CH:
          List<Address> newMembers = rpcManager.getTransport().getMembers();
          chNew = createConsistentHash(configuration, newMembers);
-         notifier.notifyTopologyChanged(chOld, chNew, true);
-         distributionManager.setConsistentHash(chNew);
-         notifier.notifyTopologyChanged(chOld, chNew, false);
+         chOld = distributionManager.setConsistentHash(chNew);
 
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Rebalancing\nchOld = %s\nchNew = %s", chOld, chNew);
          }
 
@@ -152,20 +156,26 @@ public class RebalanceTask extends RehashTask {
             if (trace) log.trace("Rehash not enabled, so not pushing state");
          }
       } finally {
+         boolean pendingRehash = false;
          try {
             // now we can inform the coordinator that we have finished our push
             distributionManager.notifyCoordinatorPushCompleted(newViewId);
 
             // wait to unblock transactions until
-            distributionManager.waitForRehashToComplete(newViewId);
+            pendingRehash = !distributionManager.waitForRehashToComplete(newViewId);
          } finally {
-            try {
-               distributionManager.getTransactionLogger().unblockNewTransactions();
-            } catch (Exception e) {
-               log.debug("Unblocking transactions failed", e);
+            if (pendingRehash) {
+               log.debugf("Another rehash is pending, keeping the transactions blocked");
+            } else {
+               try {
+                  distributionManager.getTransactionLogger().unblockNewTransactions();
+               } catch (Exception e) {
+                  log.debug("Unblocking transactions failed", e);
+               }
             }
          }
-         log.debugf("Node %s completed join rehash in %s!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
+         log.debugf("Node %s completed rehash for view %d in %s!", self, newViewId,
+               Util.prettyPrintTime(System.currentTimeMillis() - start));
       }
    }
 
@@ -189,12 +199,11 @@ public class RebalanceTask extends RehashTask {
 
    private void pushState(ConsistentHash chOld, ConsistentHash chNew, Map<Address, Map<Object, InternalCacheValue>> states) throws InterruptedException, ExecutionException {
       NotifyingNotifiableFuture<Object> stateTransferFuture = new AggregatingNotifyingFutureImpl(null, states.size());
-      log.debugf("Size of states map %d.", states.size());
       for (Map.Entry<Address, Map<Object, InternalCacheValue>> entry : states.entrySet()) {
          final Address target = entry.getKey();
          Map<Object, InternalCacheValue> state = entry.getValue();
-         if (trace)
-            log.tracef("%s pushing to %s keys %s", self, target, state.keySet());
+         log.debugf("%s pushing to %s %d keys", self, target, state.size());
+         if (trace) log.tracef("Pushed keys %s", self, target, state.keySet());
 
          final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.APPLY_STATE, self,
                                                                        newViewId, state, chOld, chNew);
@@ -239,8 +248,6 @@ public class RebalanceTask extends RehashTask {
       if (oldOwners.equals(newOwners))
          return;
 
-      if (trace) log.tracef("Rebalancing key %s from %s to %s", key, oldOwners, newOwners);
-
       // 3. The pushing server is the last node in the old owner list that's also in the new owner list
       // It will only be null if all the old owners left the cluster
       Address pushingOwner = null;
@@ -256,6 +263,9 @@ public class RebalanceTask extends RehashTask {
             }
          }
       }
+
+      if (trace) log.tracef("Rebalancing key %s from %s to %s, pushing owner is %s",
+            key, oldOwners, newOwners, pushingOwner);
 
       // 4. Push K to all the new servers which are *not* in the old servers list
       if (self.equals(pushingOwner)) {

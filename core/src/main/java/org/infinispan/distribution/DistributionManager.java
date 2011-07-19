@@ -114,9 +114,8 @@ public interface DistributionManager {
    InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx) throws Exception;
 
    /**
-    * Retrieves the consistent hash instance currently in use, which may be an instance of the configured ConsistentHash
-    * instance (which defaults to {@link org.infinispan.distribution.ch.DefaultConsistentHash}, or an instance of
-    * {@link org.infinispan.distribution.ch.UnionConsistentHash} if a rehash is in progress.
+    * Retrieves the consistent hash instance currently in use, an instance of the configured ConsistentHash
+    * class (which defaults to {@link org.infinispan.distribution.ch.DefaultConsistentHash}.
     *
     * @return a ConsistentHash instance
     */
@@ -125,8 +124,9 @@ public interface DistributionManager {
    /**
     * Sets the consistent hash implementation in use.
     * @param consistentHash consistent hash to set to
+    * @return previous consistent hash, the last one for which rehash completed
     */
-   void setConsistentHash(ConsistentHash consistentHash);
+   ConsistentHash setConsistentHash(ConsistentHash consistentHash);
 
    /**
     * Tests whether a given key is affected by a rehash that may be in progress.  If no rehash is in progress, this method
@@ -188,7 +188,7 @@ public interface DistributionManager {
    /**
     * Wait until the cluster-wide rehash for view <code>viewId</code> has finished.
     *
-    * @return true if there is another rehash pending.
+    * @return true if the rehashed finished successfully, false if there is another rehash pending.
     */
    public boolean waitForRehashToComplete(int viewId) throws InterruptedException, TimeoutException;
 }
