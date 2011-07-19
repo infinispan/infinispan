@@ -88,7 +88,6 @@ public enum ComponentStatus {
          case TERMINATED:
          case STOPPING:
          case INITIALIZING:
-            log.debugf("Ignoring call to stop() as current state is %s", this);
             return false;
          default:
             return true;

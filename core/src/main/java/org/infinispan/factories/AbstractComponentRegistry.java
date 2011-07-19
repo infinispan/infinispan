@@ -622,6 +622,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    public void stop() {
       if (!state.stopAllowed()) {
+         getLog().debugf("Ignoring call to stop() as current state is %s", this);
          return;
       }
 
@@ -652,7 +653,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    private void destroy() {
       try {
-         stop();
+         if (state.stopAllowed())
+            stop();
       }
       catch (CacheException e) {
          getLog().stopBeforeDestroyFailed(e);
