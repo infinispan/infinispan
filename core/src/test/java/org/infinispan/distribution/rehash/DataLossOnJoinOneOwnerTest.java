@@ -54,6 +54,7 @@ public class DataLossOnJoinOneOwnerTest extends AbstractInfinispanTest {
          c1.put(KEY, VALUE);
          hasKey(c1);
          cm2 = newCM();
+         TestingUtil.blockUntilViewsReceived(45000, cm1, cm2);
          sleep();
          Cache<String, String> c2 = cm2.getCache();
          sleep();
