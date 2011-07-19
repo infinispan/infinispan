@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  * @since 5.0
  */
 @Test(groups = "functional", testName = "tx.TransactionsSpanningDistributedCachesTest ")
-public class TransactionsSpanningDistributedCachesTest extends TransactionsSpanningReplicatedCaches {
+public class TransactionsSpanningDistributedCachesTest extends TransactionsSpanningReplicatedCachesTest {
 
    @Override
    protected Configuration getConfiguration() {
