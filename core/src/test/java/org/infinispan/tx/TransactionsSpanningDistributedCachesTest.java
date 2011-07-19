@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.0
  */
-@Test(groups = "functional", testName = "tx.TransactionsSpanningDistributedCachesTest ")
+@Test(groups = "functional", testName = "tx.TransactionsSpanningDistributedCachesTest")
 public class TransactionsSpanningDistributedCachesTest extends TransactionsSpanningReplicatedCachesTest {
 
    @Override
