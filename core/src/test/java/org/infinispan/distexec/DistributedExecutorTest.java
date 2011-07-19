@@ -165,22 +165,12 @@ public class DistributedExecutorTest extends BaseDistFunctionalTest {
       }
    }
 
+   @Test(expectedExceptions = CancellationException.class)
    public void testTaskCancellation() throws Exception {
-
       DistributedExecutorService des = new DefaultExecutorService(c2);
-
       Future<Integer> future = des.submit(new SimpleCallable());
       future.cancel(true);
-      int exceptionCount = 0;
-      try {
-         future.get();
-         throw new IllegalStateException("Should not have reached this code");
-      } catch (Exception e) {
-         exceptionCount ++;
-         assert e instanceof CancellationException;
-      }
-      
-      assert exceptionCount ==1;
+      future.get();
    }
 
    public void testBasicDistributedCallable() throws Exception {
