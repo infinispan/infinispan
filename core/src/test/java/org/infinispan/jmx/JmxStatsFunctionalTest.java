@@ -28,18 +28,19 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import static org.infinispan.test.TestingUtil.*;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
 
 /**
  * Functional test for checking jmx statistics exposure.
@@ -59,16 +60,16 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
    @AfterMethod(alwaysRun = true)
    public void destroyCacheManager() {
       TestingUtil.killCacheManagers(cm, cm2, cm3);
-      cm = null;
-      cm2 = null;
-      cm3 = null;
-      server = null;
       if (cm != null)
          assert !existsDomains(cm.getGlobalConfiguration().getJmxDomain());
       if (cm2 != null)
          assert !existsDomains(cm2.getGlobalConfiguration().getJmxDomain());
       if (cm3 != null)
          assert !existsDomains(cm3.getGlobalConfiguration().getJmxDomain());
+      cm = null;
+      cm2 = null;
+      cm3 = null;
+      server = null;
    }
 
    /**
