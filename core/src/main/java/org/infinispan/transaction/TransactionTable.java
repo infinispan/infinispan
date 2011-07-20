@@ -192,7 +192,10 @@ public class TransactionTable {
    }
 
    public void failureCompletingTransaction(Transaction tx) {
-      removeLocalTransaction(localTransactions.get(tx));
+      final LocalTransaction localTransaction = localTransactions.get(tx);
+      if (localTransaction != null) {
+         removeLocalTransaction(localTransaction);
+      }
    }
 
    /**
