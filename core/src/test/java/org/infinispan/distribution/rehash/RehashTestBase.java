@@ -45,7 +45,6 @@ import static org.testng.Assert.assertEquals;
 /**
  * A base test for all rehashing tests
  */
-@Test
 public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
    protected RehashTestBase() {
@@ -92,6 +91,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
    /**
     * Simple test.  Put some state, trigger event, test results
     */
+   @Test
    public void testNonTransactional() {
       List<MagicKey> keys = init();
 
@@ -111,6 +111,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
     * More complex - init some state.  Start a new transaction, and midway trigger a rehash.  Then complete transaction
     * and test results.
     */
+   @Test
    public void testTransactional() throws Exception {
       final List<MagicKey> keys = init();
       final CountDownLatch l = new CountDownLatch(1);
@@ -131,6 +132,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
                      try {
                         l.await();
                      } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                      }
                      return XAResource.XA_OK;
                   }
