@@ -148,7 +148,8 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public String toString() {
       return "ImmortalCacheEntry{" +
-            "cacheValue=" + cacheValue +
-            "} " + super.toString();
+            "key=" + key +
+            ", value=" + cacheValue +
+            "}";
    }
 }

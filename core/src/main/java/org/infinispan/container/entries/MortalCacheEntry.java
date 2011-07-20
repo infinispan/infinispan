@@ -164,7 +164,8 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public String toString() {
       return "MortalCacheEntry{" +
-            "cacheValue=" + cacheValue +
-            "} " + super.toString();
+            "key=" + key +
+            ", value=" + cacheValue +
+            "}";
    }
 }

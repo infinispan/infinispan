@@ -166,7 +166,8 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public String toString() {
       return "TransientCacheEntry{" +
-            "cacheValue=" + cacheValue +
-            "} " + super.toString();
+            "key=" + key +
+            ", value=" + cacheValue +
+            "}";
    }
 }
