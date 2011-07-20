@@ -249,8 +249,8 @@
             <configuration>
                <instructions>
                   <Export-Package>
-                     ${project.groupId}.query.*;version=${project.version};-split-package:=error
-                                    </Export-Package>
+                     ${project.groupId}.spring.*;version=${project.version};-split-package:=error
+                  </Export-Package>
                </instructions>
             </configuration>
          </plugin>
