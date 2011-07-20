@@ -36,6 +36,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
 
 import java.util.Collection;
@@ -157,8 +158,12 @@ public class TransactionCoordinator {
          txTable.removeLocalTransaction(localTransaction);
       } catch (Throwable e) {
          log.errorRollingBack(e);
-         txTable.failureCompletingTransaction(ctx.getTransaction());
-         throw new XAException(XAException.XA_HEURHAZ);
+         final Transaction transaction = ctx.getTransaction();
+         //this might be possible if the cache has stopped and TM still holds a reference to the XAResource
+         if (transaction != null) {
+            txTable.failureCompletingTransaction(transaction);
+         }
+         throw new XAException(XAException.XAER_RMERR);
       } finally {
          icc.suspend();
       }
