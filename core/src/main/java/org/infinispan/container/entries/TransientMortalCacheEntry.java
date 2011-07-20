@@ -152,8 +152,9 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public String toString() {
       return getClass().getSimpleName() + "{" +
-            "cacheValue=" + cacheValue +
-            "} " + super.toString();
+            "key=" + key +
+            ", value=" + cacheValue +
+            "}";
    }
 
    public static class Externalizer extends AbstractExternalizer<TransientMortalCacheEntry> {

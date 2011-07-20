@@ -226,7 +226,8 @@ public class AsyncStore extends AbstractDelegatingStore {
       stopped.set(true);
       try {
          changesDeque.put(QUIT_SIGNAL);
-         executor.awaitTermination(shutdownTimeout, TimeUnit.MILLISECONDS);
+         boolean finished = executor.awaitTermination(shutdownTimeout, TimeUnit.MILLISECONDS);
+         if (!finished) log.error("Async store executor did not stop properly");
       } catch (InterruptedException e) {
          log.interruptedWaitingAsyncStorePush(e);
          Thread.currentThread().interrupt();

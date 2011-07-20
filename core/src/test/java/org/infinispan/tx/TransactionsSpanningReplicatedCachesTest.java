@@ -48,8 +48,7 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
    protected void createCacheManagers() throws Exception {
       Configuration c = getConfiguration();
       cm1 = addClusterEnabledCacheManager(c);
-      cm2 = addClusterEnabledCacheManager();
-
+      cm2 = addClusterEnabledCacheManager(c);
 
       defineConfigurationOnAllManagers("c1", c);
       defineConfigurationOnAllManagers("c2", c);
