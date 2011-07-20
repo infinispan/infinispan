@@ -72,7 +72,7 @@ class HotRodConcurrentStartTest extends MultipleCacheManagersTest {
       val initialPort = UniquePortThreadLocal.get.intValue
       // Start servers in paralell using Scala's futures
       // Start first server with delay so that cache not found issue can be replicated
-      val hotRodServer1 = future(startHotRodServerWithDelay(getCacheManagers().get(0), initialPort, 5000))
+      val hotRodServer1 = future(startHotRodServerWithDelay(getCacheManagers().get(0), initialPort, 10000))
       val hotRodServer2 = future(startHotRodServer(getCacheManagers().get(1), initialPort + 10))
 
       hotRodServers = hotRodServers ::: List(hotRodServer1.apply)
