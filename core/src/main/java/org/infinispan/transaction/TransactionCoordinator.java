@@ -156,8 +156,8 @@ public class TransactionCoordinator {
          invoker.invoke(ctx, rollbackCommand);
          txTable.removeLocalTransaction(localTransaction);
       } catch (Throwable e) {
-         txTable.failureCompletingTransaction(ctx.getTransaction());
          log.errorRollingBack(e);
+         txTable.failureCompletingTransaction(ctx.getTransaction());
          throw new XAException(XAException.XA_HEURHAZ);
       } finally {
          icc.suspend();
