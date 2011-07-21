@@ -21,56 +21,25 @@
  */
 package org.infinispan.query.clustered;
 
-import java.io.Serializable;
-import java.util.UUID;
-
 import org.apache.lucene.search.TopDocs;
-import org.infinispan.remoting.transport.Address;
 
 /**
- * QueryResponse.
+ * ISPNEagerTopDocs.
  * 
- * A response of a request to create a new distributed lazy iterator
+ * A TopDocs with an array with keys of each result.
  * 
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class QueryResponse implements Serializable {
+public class ISPNEagerTopDocs extends TopDocs{
+	
+	private static final long serialVersionUID = 3236786895259278399L;
+	
+	public Object[] keys;
 
-   private static final long serialVersionUID = -2113889511877165954L;
-
-   private final UUID nodeUUID;
-
-   private TopDocs topDocs;
-
-   private Address address;
-
-   private Integer resultSize;
-   
-   public TopDocs getTopDocs() {
-      return topDocs;
-   }
-
-   public QueryResponse(TopDocs topDocs, UUID nodeUUid, int resultSize) {
-      this.nodeUUID = nodeUUid;
-      this.topDocs = topDocs;
-      this.resultSize = resultSize;
-   }
-
-   public int getResultSize() {
-      return resultSize;
-   }
-
-   public UUID getNodeUUID() {
-      return nodeUUID;
-   }
-
-   public void setAddress(Address address) {
-      this.address = address;
-   }
-
-   public Address getAddress() {
-      return address;
-   }
-
+	public ISPNEagerTopDocs(TopDocs topDocs,Object[] keys) {
+		super(topDocs.totalHits,topDocs.scoreDocs,topDocs.getMaxScore());
+		this.keys = keys;
+	}
+	
 }

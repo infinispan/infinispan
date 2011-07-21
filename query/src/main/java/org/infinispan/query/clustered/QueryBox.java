@@ -30,6 +30,7 @@ import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.clustered.commandworkers.QueryExtractorUtil;
 
 /**
  * Each node in the cluster has a QueryBox instance. The QueryBox keep the active lazy iterators on
@@ -67,17 +68,8 @@ public class QueryBox {
          throw new IllegalStateException("Query not found!");
       }
 
-      String bufferDocumentId;
-      try {
-         bufferDocumentId = (String) extractor.extract(docIndex).getId();
-      } catch (IOException e) {
-         // FIXME
-         log.error("Error", e);
-         return null;
-      }
-      Object value = cache.get(KeyTransformationHandler.stringToKey(bufferDocumentId, cache.getClassLoader()));
-
-      return value;
+      Object key = QueryExtractorUtil.extractKey(extractor, cache, docIndex);
+      return cache.get(key);
    }
 
    private void touch(UUID id) {
