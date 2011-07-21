@@ -55,7 +55,11 @@ public class ClusteredTopDocs {
 
    public boolean hasNext() {
       return !(currentIndex >= topDocs.scoreDocs.length);
-   } 
+   }
+   
+   public TopDocs getTopDocs(){
+	   return topDocs;
+   }
 
    public ClusteredFieldDoc getNext() {
       if (currentIndex >= topDocs.scoreDocs.length)

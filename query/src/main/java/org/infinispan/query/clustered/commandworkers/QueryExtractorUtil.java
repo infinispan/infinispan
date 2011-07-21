@@ -19,58 +19,43 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.query.clustered;
+package org.infinispan.query.clustered.commandworkers;
 
-import java.io.Serializable;
-import java.util.UUID;
+import java.io.IOException;
 
-import org.apache.lucene.search.TopDocs;
-import org.infinispan.remoting.transport.Address;
+import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.infinispan.Cache;
+import org.infinispan.query.backend.KeyTransformationHandler;
 
 /**
- * QueryResponse.
+ * QueryExtractorUtil.
  * 
- * A response of a request to create a new distributed lazy iterator
+ * Utility to extract the cache key of a DocumentExtractor.
  * 
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class QueryResponse implements Serializable {
+public class QueryExtractorUtil {
 
-   private static final long serialVersionUID = -2113889511877165954L;
+	public static org.infinispan.util.logging.Log log;
 
-   private final UUID nodeUUID;
+	private QueryExtractorUtil() {
 
-   private TopDocs topDocs;
+	}
 
-   private Address address;
-
-   private Integer resultSize;
-   
-   public TopDocs getTopDocs() {
-      return topDocs;
-   }
-
-   public QueryResponse(TopDocs topDocs, UUID nodeUUid, int resultSize) {
-      this.nodeUUID = nodeUUid;
-      this.topDocs = topDocs;
-      this.resultSize = resultSize;
-   }
-
-   public int getResultSize() {
-      return resultSize;
-   }
-
-   public UUID getNodeUUID() {
-      return nodeUUID;
-   }
-
-   public void setAddress(Address address) {
-      this.address = address;
-   }
-
-   public Address getAddress() {
-      return address;
-   }
+	public static Object extractKey(DocumentExtractor extractor, Cache cache,
+			int docIndex) {
+		String bufferDocumentId;
+		try {
+			bufferDocumentId = (String) extractor.extract(docIndex).getId();
+		} catch (IOException e) {
+			log.error("Error while extracting key...", e);
+			return null;
+		}
+		
+		Object key = KeyTransformationHandler.stringToKey(bufferDocumentId,
+				cache.getAdvancedCache().getClassLoader());
+		return key;
+	}
 
 }

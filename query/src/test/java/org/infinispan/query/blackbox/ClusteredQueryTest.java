@@ -112,7 +112,76 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       cache1.put("newOne", person4);
    }
 
-   public void testOrdered() throws ParseException {
+   public void testLazyOrdered() throws ParseException {
+      populateCache();
+
+      // applying sort
+      SortField sortField = new SortField("age", SortField.INT);
+      Sort sort = new Sort(sortField);
+      cacheQuery.sort(sort);
+
+      QueryIterator iterator = cacheQuery.lazyIterator();
+      assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
+
+      int previousAge = 0;
+      while (iterator.hasNext()) {
+         Person person = (Person) iterator.next();
+         assert person.getAge() > previousAge;
+         previousAge = person.getAge();
+      }
+
+      iterator.close();
+   }
+
+   public void testLazyNonOrdered() throws ParseException {
+      populateCache();
+
+      QueryIterator iterator = cacheQuery.lazyIterator();
+      assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
+      iterator.close();
+   }
+
+   public void testEagerOrdered() throws ParseException {
+      populateCache();
+
+      // applying sort
+      SortField sortField = new SortField("age", SortField.INT);
+      Sort sort = new Sort(sortField);
+      cacheQuery.sort(sort);
+
+      QueryIterator iterator = cacheQuery.iterator();
+      assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
+
+      int previousAge = 0;
+      while (iterator.hasNext()) {
+         Person person = (Person) iterator.next();
+         assert person.getAge() > previousAge;
+         previousAge = person.getAge();
+      }
+
+      iterator.close();
+   }
+
+   public void testList() throws ParseException {
+      populateCache();
+
+      // applying sort
+      SortField sortField = new SortField("age", SortField.INT);
+      Sort sort = new Sort(sortField);
+      cacheQuery.sort(sort);
+
+      List<Object> results = cacheQuery.list();
+      assert results.size() == 4 : cacheQuery.getResultSize();
+
+      int previousAge = 0;
+      for (Object result : results) {
+         Person person = (Person) result;
+         assert person.getAge() > previousAge;
+         previousAge = person.getAge();
+      }
+   }
+
+   private void populateCache() throws ParseException {
       prepareTestData();
       Query[] queries = new Query[2];
       queryParser = createQueryParser("blurb");
@@ -125,24 +194,6 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
       luceneQuery = luceneQuery.combine(queries);
       cacheQuery = Search.getSearchManager(cache1).getClusteredQuery(luceneQuery);
-
-      // applying sort
-      SortField sortField = new SortField("age", SortField.INT);
-      Sort sort = new Sort(sortField);
-      cacheQuery.sort(sort);
-
-      QueryIterator iterator = cacheQuery.lazyIterator();
-      assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
-
-      // testing the sort. Still does not work..
-      int previousAge = 0;
-      while (iterator.hasNext()) {
-         Person person = (Person) iterator.next();
-         assert person.getAge() > previousAge;
-         previousAge = person.getAge();
-      }
-
-      iterator.close();
    }
 
 }

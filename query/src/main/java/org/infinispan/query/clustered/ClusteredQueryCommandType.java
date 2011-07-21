@@ -25,6 +25,7 @@ import java.util.UUID;
 
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.Cache;
+import org.infinispan.query.clustered.commandworkers.CQCreateEagerQuery;
 import org.infinispan.query.clustered.commandworkers.CQCreateLazyQuery;
 import org.infinispan.query.clustered.commandworkers.CQKillLazyIterator;
 import org.infinispan.query.clustered.commandworkers.CQLazyFetcher;
@@ -45,6 +46,12 @@ public enum ClusteredQueryCommandType {
          return new CQCreateLazyQuery();
       }
    },
+   CREATE_EAGER_ITERATOR() {
+	      @Override
+	      public ClusteredQueryCommandWorker getNewInstance() {
+	         return new CQCreateEagerQuery();
+	      }
+	   },
    DESTROY_LAZY_ITERATOR() {
       @Override
       public ClusteredQueryCommandWorker getNewInstance() {

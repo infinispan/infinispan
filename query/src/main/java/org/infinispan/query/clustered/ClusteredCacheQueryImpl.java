@@ -21,6 +21,7 @@
  */
 package org.infinispan.query.clustered;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -75,8 +76,14 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
    @Override
    public QueryIterator iterator(int fetchSize) throws SearchException {
-      // TODO
-      return null;
+      ClusteredQueryCommand command = ClusteredQueryCommand
+               .createEagerIterator(hSearchQuery, cache);
+
+      HashMap<UUID, ClusteredTopDocs> topDocsResponses = treatIteratorResponses(command);
+      DistributedIterator it = new DistributedIterator(sort, fetchSize, this.resultSize,
+               topDocsResponses, cache);
+
+      return it;
    }
 
    @Override
@@ -86,6 +93,14 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
       ClusteredQueryCommand command = ClusteredQueryCommand.createLazyIterator(
                hSearchQuery, cache, lazyItId);
 
+      HashMap<UUID, ClusteredTopDocs> topDocsResponses = treatIteratorResponses(command);
+      DistributedLazyIterator it = new DistributedLazyIterator(sort, fetchSize, this.resultSize,
+               lazyItId, topDocsResponses, cache);
+
+      return it;
+   }
+
+   private HashMap<UUID, ClusteredTopDocs> treatIteratorResponses(ClusteredQueryCommand command) {
       ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache);
 
       HashMap<UUID, ClusteredTopDocs> topDocsResponses = null;
@@ -109,16 +124,18 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
          log.error("Could not broadcast distributed query", e);
       }
       this.resultSize = resultSize;
-      DistributedLazyIterator it = new DistributedLazyIterator(sort, fetchSize, resultSize,
-               lazyItId, topDocsResponses, cache);
-
-      return it;
+      return topDocsResponses;
    }
 
    @Override
    public List<Object> list() throws SearchException {
-      // TODO
-      return null;
+      QueryIterator iterator = iterator();
+      List<Object> values = new ArrayList<Object>();
+      while (iterator.hasNext()) {
+         values.add(iterator.next());
+      }
+
+      return values;
    }
 
 }

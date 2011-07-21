@@ -77,6 +77,13 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
       return clQuery;
    }
 
+   public static ClusteredQueryCommand createEagerIterator(HSQuery query, Cache cache) {
+      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(
+               ClusteredQueryCommandType.CREATE_EAGER_ITERATOR, cache.getName());
+      clQuery.query = query;
+      return clQuery;
+   }
+
    public static ClusteredQueryCommand destroyLazyQuery(Cache cache, UUID id) {
       ClusteredQueryCommand clQuery = new ClusteredQueryCommand(
                ClusteredQueryCommandType.DESTROY_LAZY_ITERATOR, cache.getName());
