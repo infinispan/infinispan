@@ -87,7 +87,7 @@ public class JGroupsConfigBuilder {
    private static final Pattern TCP_INITIAL_HOST = Pattern.compile("initial_hosts=[^;]*");
    private static final Pattern UDP_MCAST_ADDRESS = Pattern.compile("mcast_addr=[^;]*");
    private static final Pattern UDP_MCAST_PORT = Pattern.compile("mcast_port=[^;]*");
-   private static final Pattern TEST_NAME = Pattern.compile("testName=[^;]*");
+   private static final Pattern TEST_NAME = Pattern.compile("testName=[^;]");
    private static final Pattern FD_PROT = Pattern.compile(":FD\\(max_tries=[0-9]+;timeout=[0-9]+\\)");
    private static final Pattern FD_SOCK_PROT = Pattern.compile(":FD_SOCK");
    private static final Pattern VER_SUSPECT_PROT = Pattern.compile(":VERIFY_SUSPECT\\(timeout=[0-9]+\\)");
@@ -146,7 +146,7 @@ public class JGroupsConfigBuilder {
    private static String getTestPingDiscovery(String fullTestName, String transportCfg) {
       Matcher m = TEST_NAME.matcher(transportCfg);
       if (m.find()) {
-         return m.replaceFirst("testName=" + fullTestName);
+         return m.replaceFirst("testName=" + fullTestName + ")");
       } else {
          throw new IllegalStateException();
       }

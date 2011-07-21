@@ -2,19 +2,23 @@ package org.infinispan.test.fwk;
 
 import org.jgroups.Address;
 import org.jgroups.Event;
-import org.jgroups.Message;
 import org.jgroups.PhysicalAddress;
+import org.jgroups.View;
 import org.jgroups.annotations.Property;
+import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.Discovery;
 import org.jgroups.protocols.PingData;
-import org.jgroups.protocols.PingHeader;
+import org.jgroups.protocols.pbcast.JoinRsp;
 import org.jgroups.stack.Protocol;
 import org.jgroups.util.Promise;
+import org.jgroups.util.Tuple;
 import org.jgroups.util.UUID;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,9 +31,6 @@ import java.util.concurrent.ConcurrentMap;
  * method calls rather than network calls. Clearly, this protocol only works
  * for clusters that are created in memory.
  *
- * NOTE: This protocol implementation requires a new JGroups release cos it
- * relies on sendDiscoveryResponse() method being protected.
- *
  * @author Galder Zamarreño
  * @since 5.0
  */
@@ -38,22 +39,176 @@ public class TEST_PING extends Discovery {
    @Property(description="Test name. Default is empty String.")
    private String testName = "";
 
-   private String clusterName;
-
    private DISCARD discard;
 
-   private boolean discardChecked;
-
-   // Note: Thread locals won't work cos by the time discovery gets around to
-   // sending messages, each cluster will be running a different thread.
+   // Note: Thread locals could work but if two nodes of the same cluster are
+   // started from different threads, a thread local based solution would not
+   // work, so we're sticking to an static solution
 
    // <Test Name, Cluster Name -> <Node Name -> Discovery>>
-   private static ConcurrentMap<DiscoveryKey, Map<Address, Discovery>> all =
-         new ConcurrentHashMap<DiscoveryKey, Map<Address, Discovery>>();
+   private static ConcurrentMap<DiscoveryKey, Map<Address, TEST_PING>> all =
+         new ConcurrentHashMap<DiscoveryKey, Map<Address, TEST_PING>>();
 
-   public TEST_PING() {
-      // Assign a user-defined id for the protocol which must be over 1000
-      id = 1320;
+   static {
+      ClassConfigurator.addProtocol((short) 1320, TEST_PING.class);
+   }
+
+   @Override
+   protected List<PingData> findInitialMembers(Promise<JoinRsp> promise,
+         int numExpectedRsps, boolean breakOnCoord, boolean returnViewsOnly) {
+
+      Map<Address, TEST_PING> discoveries = registerInDiscoveries();
+
+      // Only send message if DISCARD is not used, or if DISCARD is
+      // configured but it's not discarding messages.
+      boolean discardEnabled = isDiscardEnabled(this);
+      if (!discardEnabled) {
+         if (!discoveries.isEmpty()) {
+            LinkedList<PingData> rsps = new LinkedList<PingData>();
+            for (TEST_PING discovery : discoveries.values()) {
+               // Avoid sending to self! Since there are single instances of
+               // discovery protocol in each node, just compare them by ref.
+               boolean traceEnabled = log.isTraceEnabled();
+               if (discovery != this) {
+                  boolean remoteDiscardEnabled = isDiscardEnabled(discovery);
+                  if (!remoteDiscardEnabled) {
+                     addPingRsp(returnViewsOnly, rsps, discovery);
+                  } else {
+                     if (traceEnabled)
+                        log.trace("Skipping sending response cos DISCARD is on");
+                     return Collections.emptyList();
+                  }
+               } else {
+                  if (traceEnabled)
+                     log.trace("Skipping sending discovery to self");
+               }
+            }
+            return rsps;
+         } else {
+            log.debug("No other nodes yet, so skip sending get-members request");
+            return Collections.emptyList();
+         }
+      } else {
+         log.debug("Not sending discovery because DISCARD is on");
+         return Collections.emptyList();
+      }
+   }
+
+   private boolean isDiscardEnabled(TEST_PING discovery) {
+      // Not pretty but since this protocol does not rely on the transport, the
+      // only possible way to discard messages is by hacking the protocol itself.
+      List<Protocol> protocols = discovery.getProtocolStack().getProtocols();
+      for (Protocol protocol : protocols) {
+         if (protocol instanceof DISCARD) {
+            discovery.discard = (DISCARD) protocol;
+         }
+      }
+
+      return discovery.discard != null && discovery.discard.isDiscardAll();
+   }
+
+   private void addPingRsp(boolean returnViewsOnly, LinkedList<PingData> rsps,
+                           TEST_PING discovery) {
+      // Rather than relying on transport (PING) or your own multicast channel
+      // (MPING), talk to other discovery instances directly via Java method
+      // calls and discover the other nodes in the cluster.
+
+      // Add mapping of remote's address -> physical addr to the local cache
+      mapAddrWithPhysicalAddr(this, discovery);
+
+      // Add mapping of local's address -> physical addr to the remote cache
+      mapAddrWithPhysicalAddr(discovery, this);
+
+      Address localAddr = discovery.getLocalAddr();
+      List<PhysicalAddress> physicalAddrs = returnViewsOnly ? null :
+         Arrays.asList((PhysicalAddress) discovery.down(
+               new Event(Event.GET_PHYSICAL_ADDRESS, localAddr)));
+      String logicalName = UUID.get(localAddr);
+      PingData pingRsp = new PingData(localAddr, discovery.getJGroupsView(),
+         discovery.isServer(), logicalName, physicalAddrs);
+
+      if (log.isTraceEnabled())
+         log.trace(String.format("Returning ping rsp: %s", pingRsp));
+
+      rsps.add(pingRsp);
+   }
+
+   private void mapAddrWithPhysicalAddr(TEST_PING local, TEST_PING remote) {
+      PhysicalAddress physical_addr = (PhysicalAddress)
+         remote.down(new Event(Event.GET_PHYSICAL_ADDRESS, remote.getLocalAddr()));
+      local.down(new Event(Event.SET_PHYSICAL_ADDRESS,
+         new Tuple<Address, PhysicalAddress>(remote.getLocalAddr(), physical_addr)));
+
+      if (log.isTraceEnabled())
+         log.trace(String.format("Map %s with physical address %s in %s",
+                                 remote.getLocalAddr(), physical_addr, local));
+   }
+
+   private Map<Address, TEST_PING> registerInDiscoveries() {
+      DiscoveryKey key = new DiscoveryKey(testName, group_addr);
+      Map<Address, TEST_PING> discoveries = all.get(key);
+      if (discoveries == null) {
+         discoveries = new HashMap<Address, TEST_PING>();
+         Map ret = all.putIfAbsent(key, discoveries);
+         if (ret != null)
+            discoveries = ret;
+      }
+      boolean traceEnabled = log.isTraceEnabled();
+      if (traceEnabled)
+         log.trace(String.format(
+               "Discoveries for %s are : %s", key, discoveries));
+
+      if (!discoveries.containsKey(local_addr)) {
+         discoveries.put(local_addr, this);
+
+         if (traceEnabled)
+            log.trace(String.format(
+                  "Add discovery for %s to cache.  The cache now contains: %s",
+                  local_addr, discoveries));
+      }
+      return discoveries;
+   }
+
+   @Override
+   public void stop() {
+      super.stop();
+      DiscoveryKey key = new DiscoveryKey(testName, group_addr);
+      Map<Address, TEST_PING> discoveries = all.get(key);
+      if (discoveries != null) {
+         removeDiscovery(key, discoveries);
+      } else {
+         log.debug(String.format(
+            "Test (%s) started but not registered discovery", key));
+      }
+   }
+
+   private void removeDiscovery(DiscoveryKey key, Map<Address, TEST_PING> discoveries) {
+      discoveries.remove(local_addr);
+      if (discoveries.isEmpty()) {
+         boolean removed = all.remove(key, discoveries);
+         if (!removed && all.containsKey(key)) {
+            throw new IllegalStateException(String.format(
+               "Concurrent discovery removal for test=%s but not removed??",
+               testName));
+         }
+      }
+   }
+
+   protected Address getLocalAddr() {
+      return local_addr;
+   }
+
+   protected View getJGroupsView() {
+      return view;
+   }
+
+   protected boolean isServer() {
+      return is_server;
+   }
+
+   @Override
+   public void sendGetMembersRequest(String cluster_name, Promise promise, boolean return_views_only) throws Exception {
+      // No-op because it won't get called
    }
 
    @Override
@@ -62,138 +217,8 @@ public class TEST_PING extends Discovery {
    }
 
    @Override
-   public void start() throws Exception {
-      super.start();
-   }
-
-   @Override
-   public void stop() {
-      super.stop();
-      DiscoveryKey key = new DiscoveryKey(testName, clusterName);
-      Map<Address, Discovery> discoveries = all.get(key);
-      if (discoveries != null) {
-         discoveries.remove(local_addr);
-         if (discoveries.isEmpty()) {
-            boolean removed = all.remove(key, discoveries);
-            if (!removed && all.containsKey(key)) {
-               throw new IllegalStateException(String.format(
-                  "Concurrent discovery removal for test=%s but not removed??",
-                  testName));
-            }
-         }
-      } else {
-         log.debug(String.format(
-            "Test (%s) started but not registered discovery", key));
-      }
-   }
-
-   @Override
-   public void sendGetMembersRequest(String cluster_name, Promise promise,
-                                     boolean returnViewsOnly) throws Exception {
-      clusterName = cluster_name;
-
-      DiscoveryKey key = new DiscoveryKey(testName, clusterName);
-      Map<Address, Discovery> discoveries = all.get(key);
-      if (discoveries == null) {
-         discoveries = new HashMap<Address, Discovery>();
-         Map ret = all.putIfAbsent(key, discoveries);
-         if (ret != null)
-            discoveries = ret;
-      }
-      if (log.isTraceEnabled())
-         log.trace(String.format("Discoveries for %s are : %s", key, discoveries));
-
-      if (!discoveries.containsKey(local_addr)) {
-         discoveries.put(local_addr, this);
-
-         if (log.isTraceEnabled())
-            log.trace(String.format(
-                  "Add discovery for %s to cache.  The cache now contains: %s",
-                  local_addr, discoveries));
-      }
-
-      // Only send message if DISCARD is not used, or if DISCARD is
-      // configured but it's not discarding messages.
-      if (discard == null || !discard.isDiscardAll()) {
-         Message msg = createGetMbrsReqMsg(clusterName, returnViewsOnly);
-         if (!discoveries.isEmpty()) {
-            for (Discovery discovery : discoveries.values()) {
-               // Avoid sending to self! Since there are single instances of
-               // discovery protocol in each node, just compare them by ref.
-               if (discovery != this) {
-                  // Rather than relying on transport (PING) or your own multicast
-                  // channel (MPING), simply pass the get-members-request to the
-                  // discovery protocol instances of the other nodes in the cluster.
-                  discovery.up(new Event(Event.MSG, msg));
-               }
-            }
-         } else {
-            log.debug("No other nodes yet, so skip sending get-members request");
-         }
-      } else if (discard != null && discard.isDiscardAll()) {
-         log.debug("Not sending discovery because DISCARD is on");
-      }
-   }
-
-   private Message createGetMbrsReqMsg(String clusterName, boolean returnViewsOnly) {
-      PhysicalAddress physical_addr = (PhysicalAddress)
-            down(new Event(Event.GET_PHYSICAL_ADDRESS, local_addr));
-      List<PhysicalAddress> physical_addrs = Arrays.asList(physical_addr);
-      PingData data = new PingData(
-            local_addr, null, false, UUID.get(local_addr), physical_addrs);
-      PingHeader hdr = new PingHeader(
-            PingHeader.GET_MBRS_REQ, data, clusterName);
-      hdr.return_view_only = returnViewsOnly;
-      Message msg = new Message(null);
-      msg.setFlag(Message.OOB);
-      msg.setSrc(local_addr);
-      msg.putHeader(this.id, hdr);
-
-      if (log.isTraceEnabled())
-         log.trace("Create GET_MBRS_REQ message: " + data);
-
-      return msg;
-   }
-
-   @Override
-   protected void sendDiscoveryResponse(Address logical_addr,
-         List<PhysicalAddress> physical_addrs, boolean is_server,
-         String logical_name, Address sender) {
-      // Not pretty but since this protocol does not rely on the transport, the
-      // only possible way to discard messages is by hacking the protocol itself.
-      if (!discardChecked) {
-         List<Protocol> protocols = getProtocolStack().getProtocols();
-         for (Protocol protocol : protocols) {
-            if (protocol instanceof DISCARD) {
-               discard = (DISCARD) protocol;
-               break;
-            }
-         }
-         discardChecked = true;
-      }
-
-      if (discard == null || !discard.isDiscardAll()) {
-         PingData ping_rsp=new PingData(logical_addr, view, is_server,
-                                        logical_name, physical_addrs);
-         Message rsp_msg=new Message(sender, logical_addr, null);
-         rsp_msg.setFlag(Message.OOB);
-         PingHeader rsp_hdr=new PingHeader(PingHeader.GET_MBRS_RSP, ping_rsp);
-         rsp_msg.putHeader(this.id, rsp_hdr);
-
-         if(log.isTraceEnabled())
-            log.trace(String.format(
-                  "%s received GET_MBRS_REQ from %s", this, sender));
-
-         // Instead of sending a get-members-response down the transport,
-         // update the cached discovery instances directly.
-         DiscoveryKey key = new DiscoveryKey(testName, clusterName);
-         Discovery discovery = all.get(key).get(sender);
-         if(log.isTraceEnabled())
-            log.trace(String.format(
-                  "%s sending (dest=%s) response: %s", this, sender, ping_rsp));
-
-         discovery.up(new Event(Event.MSG, rsp_msg));
-      }
+   public String toString() {
+      return "TEST_PING@" + local_addr;
    }
 
    private class DiscoveryKey {
@@ -238,11 +263,6 @@ public class TEST_PING extends Discovery {
                ", testName='" + testName + '\'' +
                '}';
       }
-   }
-
-   @Override
-   public String toString() {
-      return "TEST_PING@" + local_addr;
    }
 
 }
