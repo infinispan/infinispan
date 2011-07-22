@@ -46,7 +46,7 @@
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-search</artifactId>
-         <version>4.0.0-SNAPSHOT</version>
+         <version>${version.hibernate.search}</version>
          <exclusions>
              <exclusion>
                  <artifactId>antlr</artifactId>

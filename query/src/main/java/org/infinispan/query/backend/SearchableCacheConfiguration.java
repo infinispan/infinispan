@@ -91,4 +91,9 @@ public class SearchableCacheConfiguration implements SearchConfiguration {
    public Map<Class<? extends ServiceProvider<?>>, Object> getProvidedServices() {
       return Collections.emptyMap();
    }
+
+   @Override
+   public boolean isTransactionManagerExpected() {
+      return false;
+   }
 }
