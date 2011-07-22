@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commands.RemoteCommandsFactory;
@@ -454,6 +455,14 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    public void testByteArrayKey() throws Exception {
       ByteArrayKey o = new ByteArrayKey("123".getBytes());
       marshallAndAssertEquality(o);
+   }
+
+   public void testConcurrentHashMap() throws Exception {
+      ConcurrentHashMap map = new ConcurrentHashMap();
+      map.put(1, "v1");
+      map.put(2, "v2");
+      map.put(3, "v3");
+      marshallAndAssertEquality(map);
    }
 
    public static class PojoWhichFailsOnUnmarshalling extends Pojo {
