@@ -22,6 +22,7 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 
 /**
@@ -49,31 +50,34 @@ public class TimeoutConfigurationValidatingVisitor extends AbstractConfiguration
    
    @Override
    public void visitConfiguration(Configuration bean) {
-
-      if (asyncType != null && asyncType.getFlushLockTimeout() > asyncType.getShutdownTimeout())
-         log.invalidTimeoutValue("<async>: flushLockTimeout ", asyncType.getFlushLockTimeout(),
-                  "<async>: shutdownTimeout ", asyncType.getShutdownTimeout());
-
-      if (asyncType != null && asyncType.getShutdownTimeout() > bean.getCacheStopTimeout())
-         log.invalidTimeoutValue("<async>: shutdownTimeout ", asyncType.getShutdownTimeout(),
-                  "<transaction>: cacheStopTimeout ", bean.getCacheStopTimeout());
-
-      if (bean.getDeadlockDetectionSpinDuration() > bean.getLockAcquisitionTimeout())
-         log.invalidTimeoutValue("<deadlockDetection>: spinDuration",
-                  bean.getDeadlockDetectionSpinDuration(), "<locking>:lockAcquisitionTimeout ",
-                  bean.getLockAcquisitionTimeout());
-
-      if (bean.getLockAcquisitionTimeout() > bean.getSyncReplTimeout())
-         log.invalidTimeoutValue("<locking>:lockAcquisitionTimeout ",
-                  bean.getLockAcquisitionTimeout(), "<sync>:replTimeout", bean.getSyncReplTimeout());
-
-      if (bean.getSyncReplTimeout() > global.getDistributedSyncTimeout())
-         log.invalidTimeoutValue("<sync>:replTimeout", bean.getSyncReplTimeout(),
-                  "<transport>: distributedSyncTimout", global.getDistributedSyncTimeout());
-
-      if (global.getDistributedSyncTimeout() > bean.getStateRetrievalTimeout())
-         log.invalidTimeoutValue("<transport>: distributedSyncTimout", global.getDistributedSyncTimeout(),
-                  "<stateRetrieval>:timeout", bean.getStateRetrievalTimeout());
+      
+      boolean nonLocalCache = bean.getCacheMode() != CacheMode.LOCAL && global.getTransportClass() != null;
+      if(nonLocalCache){
+         if (asyncType != null && asyncType.getFlushLockTimeout() > asyncType.getShutdownTimeout())
+            log.invalidTimeoutValue("<async>: flushLockTimeout ", asyncType.getFlushLockTimeout(),
+                     "<async>: shutdownTimeout ", asyncType.getShutdownTimeout());
+   
+         if (asyncType != null && asyncType.getShutdownTimeout() > bean.getCacheStopTimeout())
+            log.invalidTimeoutValue("<async>: shutdownTimeout ", asyncType.getShutdownTimeout(),
+                     "<transaction>: cacheStopTimeout ", bean.getCacheStopTimeout());
+   
+         if (bean.getDeadlockDetectionSpinDuration() > bean.getLockAcquisitionTimeout())
+            log.invalidTimeoutValue("<deadlockDetection>: spinDuration",
+                     bean.getDeadlockDetectionSpinDuration(), "<locking>:lockAcquisitionTimeout ",
+                     bean.getLockAcquisitionTimeout());
+   
+         if (bean.getLockAcquisitionTimeout() > bean.getSyncReplTimeout())
+            log.invalidTimeoutValue("<locking>:lockAcquisitionTimeout ",
+                     bean.getLockAcquisitionTimeout(), "<sync>:replTimeout", bean.getSyncReplTimeout());
+   
+         if (bean.getSyncReplTimeout() > global.getDistributedSyncTimeout())
+            log.invalidTimeoutValue("<sync>:replTimeout", bean.getSyncReplTimeout(),
+                     "<transport>: distributedSyncTimout", global.getDistributedSyncTimeout());
+   
+         if (global.getDistributedSyncTimeout() > bean.getStateRetrievalTimeout())
+            log.invalidTimeoutValue("<transport>: distributedSyncTimout", global.getDistributedSyncTimeout(),
+                     "<stateRetrieval>:timeout", bean.getStateRetrievalTimeout());
+      }
 
    }
 }
