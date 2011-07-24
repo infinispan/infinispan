@@ -23,62 +23,38 @@ package org.infinispan.query.clustered;
 
 import java.util.UUID;
 
-import org.apache.lucene.search.FieldDoc;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
-import org.infinispan.remoting.transport.Address;
 
 /**
- * ClusteredTopDocs.
+ * ClusteredScoreDoc.
  * 
- * A TopDocs with UUID and address of node who has the doc.
+ * A scoreDoc with his index and the uuid of the node who has the value.
  * 
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class ClusteredTopDocs {
+public class ClusteredScoreDoc extends ScoreDoc implements ClusteredDoc {
 
-   private int currentIndex = 0;
+   private static final long serialVersionUID = -951189455330773036L;
 
-   private final TopDocs topDocs;
+   private final UUID nodeUuid;
 
-   private final UUID id;
+   private final int index;
 
-   private Address nodeAddress;
-
-   ClusteredTopDocs(TopDocs topDocs, UUID id) {
-      this.topDocs = topDocs;
-      this.id = id;
+   public ClusteredScoreDoc(ScoreDoc scoreDoc, UUID nodeUuid, int index) {
+      super(scoreDoc.doc, scoreDoc.score);
+      this.nodeUuid = nodeUuid;
+      this.index = index;
    }
 
-   public UUID getId() {
-      return id;
+   @Override
+   public UUID getNodeUuid() {
+      return nodeUuid;
    }
 
-   public boolean hasNext() {
-      return !(currentIndex >= topDocs.scoreDocs.length);
+   @Override
+   public int getIndex() {
+      return index;
    }
 
-   public TopDocs getTopDocs() {
-      return topDocs;
-   }
-
-   public ScoreDoc getNext() {
-      if (currentIndex >= topDocs.scoreDocs.length)
-         return null;
-
-      ScoreDoc scoreDoc = topDocs.scoreDocs[currentIndex];
-      if (scoreDoc instanceof FieldDoc)
-         return new ClusteredFieldDoc((FieldDoc) scoreDoc, id, currentIndex++);
-      else 
-         return new ClusteredScoreDoc(scoreDoc, id, currentIndex++);
-   }
-
-   public void setNodeAddress(Address nodeAddress) {
-      this.nodeAddress = nodeAddress;
-   }
-
-   public Address getNodeAddress() {
-      return nodeAddress;
-   }
 }

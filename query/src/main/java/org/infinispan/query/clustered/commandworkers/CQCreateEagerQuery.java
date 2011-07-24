@@ -59,8 +59,7 @@ public class CQCreateEagerQuery extends ClusteredQueryCommandWorker {
 
 		// collecting keys (it's a eager query!)
 		for (int i = 0; i < topDocs.scoreDocs.length; i++) {
-			keys[0] = QueryExtractorUtil.extractKey(extractor, cache, i);
-
+			keys[i] = QueryExtractorUtil.extractKey(extractor, cache, i);
 		}
 
 		return new ISPNEagerTopDocs(topDocs, keys);

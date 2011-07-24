@@ -56,7 +56,7 @@ class ISPNPriorityQueueFactory {
    public static PriorityQueue<FieldDoc> getFieldDocSortedHitQueue(int size, SortField[] sort) {
       String className = "org.apache.lucene.search.FieldDocSortedHitQueue";
 
-      PriorityQueue<FieldDoc> queue = createPriorityHitQueue(size, className);
+      PriorityQueue<FieldDoc> queue = createPriorityHitQueue(className, size);
       Method[] methods = queue.getClass().getDeclaredMethods();
       
       for(Method method : methods){
@@ -80,10 +80,11 @@ class ISPNPriorityQueueFactory {
    public static PriorityQueue<FieldDoc> getHitQueue(int size) {
       String className = "org.apache.lucene.search.HitQueue";
 
-      return createPriorityHitQueue(size, className);
+      // className, size of queue, pre populate with sentinels
+      return createPriorityHitQueue(className, size, false);
    }
 
-   private static PriorityQueue<FieldDoc> createPriorityHitQueue(int size, String className) {
+   private static PriorityQueue<FieldDoc> createPriorityHitQueue(String className, Object ... params) {
       try {
          Class clazz = Class.forName(className);
 
@@ -91,7 +92,13 @@ class ISPNPriorityQueueFactory {
          AccessibleObject ao = c;
          ao.setAccessible(true);
 
-         Object ob = c.newInstance(size);
+         Object ob = null;
+         if(params.length == 1)
+            ob = c.newInstance(params[0]);
+         else if(params.length == 2)
+        	 ob = c.newInstance(params[0], params[1]);
+         else
+        	 throw new IllegalArgumentException("Wrong number of arguments...");
 
          return (PriorityQueue<FieldDoc>) ob;
       } catch (IllegalArgumentException e) {
