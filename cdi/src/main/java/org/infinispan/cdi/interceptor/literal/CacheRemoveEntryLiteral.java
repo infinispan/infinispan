@@ -28,7 +28,6 @@ import javax.cache.interceptor.CacheResolver;
 import javax.cache.interceptor.DefaultCacheKeyGenerator;
 import javax.cache.interceptor.DefaultCacheResolver;
 import javax.enterprise.util.AnnotationLiteral;
-import java.lang.annotation.Annotation;
 
 /**
  *  @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
