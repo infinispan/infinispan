@@ -23,37 +23,19 @@ package org.infinispan.query.clustered;
 
 import java.util.UUID;
 
-import org.apache.lucene.search.FieldDoc;
-
 /**
- * ClusteredFIeldDoc.
+ * ClusteredDoc.
  * 
- * A FieldDoc with UUID of node who has the doc.
+ * Interface to encapsulate a score doc of a distributed query. NodeUUID it's the node that has the
+ * value. And getIndex must return the index of the scoreDoc.
  * 
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class ClusteredFieldDoc extends FieldDoc implements ClusteredDoc{
+public interface ClusteredDoc {
 
-   /** The serialVersionUID */
-   private static final long serialVersionUID = 1834188214178689282L;
+   UUID getNodeUuid();
 
-   private final UUID nodeUuid;
-
-   private int index;
-
-   public ClusteredFieldDoc(FieldDoc scoreDoc, UUID nodeUuid, int index) {
-      super(scoreDoc.doc, scoreDoc.score, scoreDoc.fields);
-      this.nodeUuid = nodeUuid;
-      this.index = index;
-   }
-
-   public UUID getNodeUuid() {
-      return nodeUuid;
-   }
-   
-   public int getIndex(){
-      return index;
-   }
+   int getIndex();
 
 }

@@ -27,6 +27,7 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.apache.lucene.search.FieldDoc;
+import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.PriorityQueue;
@@ -59,7 +60,7 @@ public class DistributedIterator extends AbstractIterator {
 
 	private HashMap<UUID, ClusteredTopDocs> topDocsResponses;
 
-	private PriorityQueue<FieldDoc> hq;
+	private PriorityQueue hq;
 
 	private final int resultSize;
 
@@ -151,7 +152,7 @@ public class DistributedIterator extends AbstractIterator {
 
 		while (orderedValues.size() <= index || fetched < fetchSize) {
 			// getting the next scoreDoc. If null, then there is no more results
-			ClusteredFieldDoc scoreDoc = (ClusteredFieldDoc) hq.pop();
+			ClusteredDoc scoreDoc = (ClusteredDoc) hq.pop();
 			if (scoreDoc == null) {
 				return;
 			}
@@ -159,7 +160,7 @@ public class DistributedIterator extends AbstractIterator {
 			// "recharging" the queue
 			ClusteredTopDocs topDoc = topDocsResponses.get(scoreDoc
 					.getNodeUuid());
-			ClusteredFieldDoc score = topDoc.getNext();
+			ScoreDoc score = topDoc.getNext();
 			if (score != null) {
 				hq.add(score);
 			}
@@ -173,10 +174,10 @@ public class DistributedIterator extends AbstractIterator {
 		}
 	}
 
-	protected Object fetchValue(ClusteredFieldDoc scoreDoc,
+	protected Object fetchValue(ClusteredDoc scoreDoc,
 			ClusteredTopDocs topDoc) {
 		ISPNEagerTopDocs eagerTopDocs = (ISPNEagerTopDocs) topDoc.getTopDocs();
-		return cache.get(eagerTopDocs.keys[scoreDoc.index]);
+		return cache.get(eagerTopDocs.keys[scoreDoc.getIndex()]);
 	}
 
 	@Override
