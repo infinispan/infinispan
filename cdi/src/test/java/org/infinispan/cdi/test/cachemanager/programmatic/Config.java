@@ -23,23 +23,39 @@
 package org.infinispan.cdi.test.cachemanager.programmatic;
 
 import org.infinispan.cdi.Infinispan;
+import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.config.Configuration;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 
 /**
- * Creates caches programatically.
- *
- * @author pmuir
+ * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class Config {
-
    /**
-    * Associates the "small" cache with the qualifier {@link Small}. Here we test that we can still register the event
-    * bridge for the cache when it isn't created by Seam.
+    * Associates the "small" cache with the qualifier {@link Small}.
     */
    @Produces
    @Infinispan("small")
    @Small
    Configuration configuration;
+
+   /**
+    * Override the default cache manager.
+    */
+   @Produces
+   @OverrideDefault
+   @ApplicationScoped
+   public EmbeddedCacheManager getDefaultCacheManager() {
+      Configuration defaultConfiguration = new Configuration();
+      defaultConfiguration.fluent()
+            .eviction()
+            .maxEntries(7);
+
+      return new DefaultCacheManager(defaultConfiguration);
+   }
 }
