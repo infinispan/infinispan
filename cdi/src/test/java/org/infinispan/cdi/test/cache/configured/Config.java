@@ -27,17 +27,19 @@ import org.infinispan.config.Configuration;
 
 import javax.enterprise.inject.Produces;
 
+/**
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ */
 public class Config {
-
    /**
-    * Configure a "tiny" cache (with a very low number of entries), and associate it with the qualifier {@link Tiny}.
-    * <p/>
-    * This will use the default cache container.
+    * <p>Configures a "tiny" cache (with a very low number of entries), and associates it with the qualifier {@link
+    * Tiny}.</p>
+    * <p>This will use the default cache container.</p>
     */
    @Produces
    @Infinispan("tiny")
    @Tiny
-   public Configuration getTinyConfiguration() {
+   public Configuration tinyConfiguration() {
       Configuration configuration = new Configuration();
       configuration.fluent()
             .eviction()
@@ -47,15 +49,14 @@ public class Config {
    }
 
    /**
-    * Configure a "small" cache (with a pretty low number of entries), and associate it with the qualifier {@link
-    * Small}.
-    * <p/>
-    * This will use the default cache container.
+    * <p>Configures a "small" cache (with a pretty low number of entries), and associates it with the qualifier {@link
+    * Small}.</p>
+    * <p>This will use the default cache container.</p>
     */
    @Produces
    @Infinispan("small")
    @Small
-   public Configuration getSmallConfiguration() {
+   public Configuration smallConfiguration() {
       Configuration configuration = new Configuration();
       configuration.fluent()
             .eviction()

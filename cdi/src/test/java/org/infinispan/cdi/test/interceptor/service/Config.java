@@ -35,21 +35,31 @@ import javax.enterprise.inject.Produces;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class Config {
-
+   /**
+    * <p>Associates the "custom" cache with the qualifier {@link Custom}.</p>
+    * <p>The default configuration will be used.</p>
+    */
    @Custom
    @Infinispan("custom")
    @Produces
-   Configuration getCustomConfiguration;
+   public Configuration customConfiguration;
 
+   /**
+    * <p>Associates the "small" cache with the qualifier {@link Small}.</p>
+    * <p>The default configuration will be used.</p>
+    */
    @Small
    @Infinispan("small")
    @Produces
-   Configuration getSmallConfiguration;
+   public Configuration smallConfiguration;
 
+   /**
+    * Associates the "small" cache with the small cache manager.
+    */
    @Small
    @Produces
    @ApplicationScoped
-   EmbeddedCacheManager getSmallCacheManager(@Default Configuration defaultConfiguration) {
+   EmbeddedCacheManager smallCacheManager(@Default Configuration defaultConfiguration) {
       defaultConfiguration.fluent()
             .eviction()
             .maxEntries(4);

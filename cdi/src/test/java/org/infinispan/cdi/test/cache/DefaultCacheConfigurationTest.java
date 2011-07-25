@@ -53,19 +53,21 @@ public class DefaultCacheConfigurationTest extends Arquillian {
    }
 
    @Inject
-   private Cache<String, String> defaultCache;
+   private Cache<?, ?> cache;
 
    public void testCustomDefaultCacheConfiguration() {
-      assertEquals(defaultCache.getConfiguration().getEvictionMaxEntries(), 16);
-      assertEquals(defaultCache.getName(), DEFAULT_CACHE_NAME);
+      assertEquals(cache.getConfiguration().getEvictionMaxEntries(), 16);
+      assertEquals(cache.getName(), DEFAULT_CACHE_NAME);
    }
 
-   // override the default cache configuration
-   static class Config {
+   /**
+    * Overrides the default cache configuration.
+    */
+   public static class Config {
       @Produces
       @OverrideDefault
       @ApplicationScoped
-      Configuration getCustomDefaultCacheConfiguration() {
+      public Configuration customDefaultCacheConfiguration() {
          Configuration defaultConfiguration = new Configuration();
          defaultConfiguration.fluent()
                .eviction()

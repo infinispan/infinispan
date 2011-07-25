@@ -35,7 +35,7 @@ import static org.testng.Assert.assertEquals;
 
 
 /**
- * Tests for a cache container defined programmatically
+ * Tests for a cache container defined programmatically.
  *
  * @author Pete Muir
  * @see Config
@@ -54,7 +54,7 @@ public class ProgrammaticCacheContainerTest extends Arquillian {
    private AdvancedCache<?, ?> smallCache;
 
    @Inject
-   SmallCacheObservers observers;
+   private SmallCacheObservers observers;
 
    public void testSmallCache() {
       assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 7);

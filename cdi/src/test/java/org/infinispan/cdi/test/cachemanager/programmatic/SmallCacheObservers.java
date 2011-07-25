@@ -27,6 +27,9 @@ import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 
+/**
+ * @author Pete Muir
+ */
 @ApplicationScoped
 public class SmallCacheObservers {
 
@@ -48,5 +51,4 @@ public class SmallCacheObservers {
    public int getCacheStartedEventCount() {
       return cacheStartedEventCount;
    }
-
 }

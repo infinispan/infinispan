@@ -33,6 +33,9 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ */
 @Qualifier
 @Target({TYPE, METHOD, PARAMETER, FIELD})
 @Retention(RUNTIME)

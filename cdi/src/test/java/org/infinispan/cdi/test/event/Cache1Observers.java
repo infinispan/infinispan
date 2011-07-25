@@ -30,6 +30,9 @@ import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 
+/**
+ * @author Pete Muir
+ */
 @ApplicationScoped
 public class Cache1Observers {
 

@@ -28,21 +28,27 @@ import org.infinispan.config.Configuration;
 import javax.enterprise.inject.Produces;
 
 /**
- * Configure two default caches - we will use both caches to check that events for one don't spill over to the other.
+ * Configures two default caches - we will use both caches to check that events for one don't spill over to the other.
+ *
+ * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class Config {
-
+   /**
+    * <p>Associates the "cache1" cache with the qualifier {@link Cache1}.</p>
+    * <p>The default configuration will be used.</p>
+    */
    @Produces
    @Infinispan("cache1")
    @Cache1
-   public Configuration getTinyConfiguration() {
-      return new Configuration();
-   }
+   public Configuration cache1Configuration;
 
+   /**
+    * <p>Associates the "cache2" cache with the qualifier {@link Cache2}.</p>
+    * <p>The default configuration will be used.</p>
+    */
    @Produces
    @Infinispan("cache2")
    @Cache2
-   public Configuration getSmallConfiguration() {
-      return new Configuration();
-   }
+   public Configuration cache2Configuration;
 }

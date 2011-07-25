@@ -32,10 +32,11 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 
 import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
+import static org.infinispan.manager.CacheContainer.DEFAULT_CACHE_NAME;
 import static org.testng.Assert.assertEquals;
 
 /**
- * Tests that the default cache is available
+ * Tests that the default cache is available and can be injected with no configuration.
  *
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
@@ -49,9 +50,6 @@ public class DefaultCacheTest extends Arquillian {
             .addClass(DefaultCacheTest.class);
    }
 
-   /**
-    * The default cache can be injected with no configuration
-    */
    @Inject
    private Cache<String, String> cache;
 
@@ -64,6 +62,7 @@ public class DefaultCacheTest extends Arquillian {
       cache.put("manik", "Sri Lankan");
       assertEquals(cache.get("pete"), "British");
       assertEquals(cache.get("manik"), "Sri Lankan");
+      assertEquals(cache.getName(), DEFAULT_CACHE_NAME);
       /*
        * Check that the advanced cache contains the same data as the simple
        * cache. As we can inject either Cache or AdvancedCache, this is double
@@ -72,5 +71,6 @@ public class DefaultCacheTest extends Arquillian {
        */
       assertEquals(advancedCache.get("pete"), "British");
       assertEquals(advancedCache.get("manik"), "Sri Lankan");
+      assertEquals(advancedCache.getName(), DEFAULT_CACHE_NAME);
    }
 }

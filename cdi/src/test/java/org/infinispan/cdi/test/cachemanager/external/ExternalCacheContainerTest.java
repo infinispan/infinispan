@@ -35,7 +35,7 @@ import static org.testng.Assert.assertEquals;
 
 
 /**
- * Tests for a cache container defined by some external mechanism
+ * Tests for a cache container defined by some external mechanism.
  *
  * @author Pete Muir
  * @see Config

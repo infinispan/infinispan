@@ -34,9 +34,10 @@ import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
 import static org.testng.Assert.assertEquals;
 
 /**
- * Tests that the simple form of configuration works
+ * Tests that the simple form of configuration works.
  *
  * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  * @see Config
  */
 @Test(groups = "functional", testName = "cdi.test.cache.configured.ConfiguredCacheTest")
@@ -48,19 +49,13 @@ public class ConfiguredCacheTest extends Arquillian {
             .addPackage(ConfiguredCacheTest.class.getPackage());
    }
 
-   /**
-    * Inject a cache configured by the application
-    */
    @Inject
    @Tiny
-   private AdvancedCache<String, String> tinyCache;
+   private AdvancedCache<?, ?> tinyCache;
 
-   /**
-    * Inject a cache configured by application
-    */
    @Inject
    @Small
-   private AdvancedCache<String, String> smallCache;
+   private AdvancedCache<?, ?> smallCache;
 
    public void testTinyCache() {
       // Check that we have the correctly configured cache

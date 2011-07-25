@@ -34,7 +34,7 @@ import javax.inject.Inject;
 import static org.testng.Assert.assertEquals;
 
 /**
- * Test that a cache configured in XML is available, and that it can be overridden
+ * Test that a cache configured in XML is available, and that it can be overridden.
  *
  * @author Pete Muir
  * @see Config

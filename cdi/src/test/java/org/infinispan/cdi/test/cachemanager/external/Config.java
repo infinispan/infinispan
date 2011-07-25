@@ -39,23 +39,23 @@ import javax.enterprise.inject.Produces;
  */
 public class Config {
    /**
-    * Associate the externally defined "large" cache with the qualifier {@link Large}
+    * Associates the externally defined "large" cache with the qualifier {@link Large}.
     */
    @Produces
    @Infinispan("large")
    @Large
-   Configuration largeConfiguration;
+   public Configuration largeConfiguration;
 
    /**
-    * Associate the externally defined "quick" cache with the qualifier {@link Quick}
+    * Associates the externally defined "quick" cache with the qualifier {@link Quick}.
     */
    @Produces
    @Infinispan("quick")
    @Quick
-   Configuration quickConfiguration;
+   public Configuration quickConfiguration;
 
    /**
-    * Override the default cache manager to define the quick and large cache configurations externally.
+    * Overrides the default cache manager to define the quick and large cache configurations externally.
     */
    @Produces
    @OverrideDefault
