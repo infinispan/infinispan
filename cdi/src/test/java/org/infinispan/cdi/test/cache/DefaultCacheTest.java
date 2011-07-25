@@ -38,7 +38,9 @@ import static org.testng.Assert.assertEquals;
  * Tests that the default cache is available
  *
  * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
+@Test(groups = "functional", testName = "cdi.test.cache.DefaultCacheTest")
 public class DefaultCacheTest extends Arquillian {
 
    @Deployment
@@ -56,7 +58,6 @@ public class DefaultCacheTest extends Arquillian {
    @Inject
    private AdvancedCache<String, String> advancedCache;
 
-   @Test(groups = "functional")
    public void testDefaultCache() {
       // Simple test to make sure the default cache works
       cache.put("pete", "British");

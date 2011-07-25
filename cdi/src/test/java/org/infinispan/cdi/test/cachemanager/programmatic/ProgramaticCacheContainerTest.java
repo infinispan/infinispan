@@ -35,11 +35,12 @@ import static org.testng.Assert.assertEquals;
 
 
 /**
- * Tests for a cache container defined programatically
+ * Tests for a cache container defined programmatically
  *
  * @author Pete Muir
  * @see Config
  */
+@Test(groups = "functional", testName = "cdi.test.cachemanager.programmatic.ProgramaticCacheContainerTest")
 public class ProgramaticCacheContainerTest extends Arquillian {
 
    @Deployment
@@ -55,7 +56,6 @@ public class ProgramaticCacheContainerTest extends Arquillian {
    @Inject
    SmallCacheObservers observers;
 
-   @Test(groups = "functional")
    public void testSmallCache() {
       assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 7);
       assertEquals(observers.getCacheStartedEventCount(), 1);

@@ -34,8 +34,13 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 
-public class Deployments {
-
+/**
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ */
+public final class Deployments {
+   /**
+    * The base deployment web archive.
+    */
    public static WebArchive baseDeployment() {
       return ShrinkWrap.create(WebArchive.class, "test.war")
             .addPackage(Infinispan.class.getPackage())

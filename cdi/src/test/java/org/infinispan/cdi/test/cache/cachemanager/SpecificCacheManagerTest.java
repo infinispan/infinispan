@@ -42,6 +42,7 @@ import static org.testng.Assert.assertTrue;
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
+@Test(groups = "functional", testName = "cdi.test.cache.cachemanager.SpecificCacheManagerTest")
 public class SpecificCacheManagerTest extends Arquillian {
 
    @Deployment
@@ -61,7 +62,6 @@ public class SpecificCacheManagerTest extends Arquillian {
    @Small
    private Cache<String, String> smallCache;
 
-   @Test(groups = "functional")
    public void testSpecificCacheManager() throws Exception {
       assertEquals(largeCache.getConfiguration().getEvictionMaxEntries(), 2000);
       assertEquals(largeCache.getConfiguration().getEvictionStrategy(), FIFO);

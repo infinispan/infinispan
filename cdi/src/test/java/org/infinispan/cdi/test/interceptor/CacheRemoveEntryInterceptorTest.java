@@ -48,6 +48,7 @@ import static org.testng.Assert.assertTrue;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  * @see javax.cache.interceptor.CacheRemoveEntry
  */
+@Test(groups = "functional", testName = "cdi.test.interceptor.CacheRemoveEntryInterceptorTest")
 public class CacheRemoveEntryInterceptorTest extends Arquillian {
 
    @Deployment
@@ -65,18 +66,17 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
    @Custom
    private Cache<CacheKey, String> cache;
 
-   @BeforeMethod(groups = "functional")
+   @BeforeMethod
    public void setUp() {
       cache.clear();
       assertTrue(cache.isEmpty());
    }
 
-   @Test(groups = "functional", expectedExceptions = CacheException.class)
+   @Test(expectedExceptions = CacheException.class)
    public void testDefaultCacheRemoveEntry() {
       adminService.removeUser("Kevin");
    }
 
-   @Test(groups = "functional")
    public void testCacheRemoveEntryWithCacheName() {
       CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
       cache.put(cacheKey, "Hello Kevin");
@@ -87,7 +87,6 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
       assertEquals(cache.size(), 0);
    }
 
-   @Test(groups = "functional")
    public void testCacheRemoveEntryAfterInvocationWithException() {
       CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
       cache.put(cacheKey, "Hello Kevin");
@@ -103,7 +102,6 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
       }
    }
 
-   @Test(groups = "functional")
    public void testCacheRemoveEntryWithCustomCacheKeyGenerator() throws NoSuchMethodException {
       Method method = CacheRemoveService.class.getMethod("removeUserWithCustomCacheKeyGenerator", String.class);
 
@@ -116,7 +114,6 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
       assertEquals(cache.size(), 0);
    }
 
-   @Test(groups = "functional")
    public void testCacheRemoveEntryBeforeInvocationWithException() {
       CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
       cache.put(cacheKey, "Hello Kevin");

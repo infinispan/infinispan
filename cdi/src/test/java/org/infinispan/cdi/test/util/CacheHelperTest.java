@@ -41,24 +41,23 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
+@Test(groups = "unit", testName = "cdi.test.util.CacheHelperTest")
 public class CacheHelperTest {
 
    private InvocationContext contextMock;
 
-   @BeforeClass(groups = "unit")
+   @BeforeClass
    public void setUp() throws Exception {
       contextMock = createMock(InvocationContext.class);
       expect(contextMock.getParameters()).andReturn(new String[]{"first, second"});
    }
 
-   @Test(groups = "unit",
-         expectedExceptions = NullPointerException.class,
+   @Test(expectedExceptions = NullPointerException.class,
          expectedExceptionsMessageRegExp = "method parameter cannot be null")
    public void testGetDefaultMethodCacheNameWithNullParameter() throws Exception {
       CacheHelper.getDefaultMethodCacheName(null);
    }
 
-   @Test(groups = "unit")
    public void testGetDefaultMethodCacheName() throws Exception {
       Method method = CacheHelperTest.class.getMethod("fooMethod", Integer.TYPE, String.class);
       String defaultCacheName = CacheHelper.getDefaultMethodCacheName(method);
@@ -66,21 +65,18 @@ public class CacheHelperTest {
       assertEquals(defaultCacheName, "org.infinispan.cdi.test.util.CacheHelperTest.fooMethod(int,java.lang.String)");
    }
 
-   @Test(groups = "unit",
-         expectedExceptions = NullPointerException.class,
+   @Test(expectedExceptions = NullPointerException.class,
          expectedExceptionsMessageRegExp = "cacheKeyGeneratorClass parameter cannot be null")
    public void testGenerateCacheKeyWithNullCacheKeyGeneratorClass() throws Exception {
       CacheHelper.generateCacheKey(null, contextMock);
    }
 
-   @Test(groups = "unit",
-         expectedExceptions = NullPointerException.class,
+   @Test(expectedExceptions = NullPointerException.class,
          expectedExceptionsMessageRegExp = "context parameter cannot be null")
    public void testGenerateCacheKeyWithNullInvocationContext() throws Exception {
       CacheHelper.generateCacheKey(DefaultCacheKeyGenerator.class, null);
    }
 
-   @Test(groups = "unit")
    public void testGenerateCacheKey() throws Exception {
       replay(contextMock);
       CacheKey cacheKey = CacheHelper.generateCacheKey(DefaultCacheKeyGenerator.class, contextMock);

@@ -27,6 +27,7 @@ import static org.testng.Assert.assertTrue;
  * @author Kevin Pollet - SERLI - (kevin.pollet@serli.com)
  * @see javax.cache.interceptor.CacheResult
  */
+@Test(groups = "functional", testName = "cdi.test.interceptor.CacheResultInterceptorTest")
 public class CacheResultInterceptorTest extends Arquillian {
 
    @Deployment
@@ -51,13 +52,12 @@ public class CacheResultInterceptorTest extends Arquillian {
    @Small
    private Cache<CacheKey, String> smallCache;
 
-   @BeforeMethod(groups = "functional")
+   @BeforeMethod
    public void setUp() {
       customCache.clear();
       assertTrue(customCache.isEmpty());
    }
 
-   @Test(groups = "functional")
    public void testDefaultCacheResult() throws NoSuchMethodException {
       Method method = GreetingService.class.getMethod("sayMorning", String.class);
       Cache<CacheKey, String> cache = cacheContainer.getCache(getDefaultMethodCacheName(method));
@@ -73,7 +73,6 @@ public class CacheResultInterceptorTest extends Arquillian {
       assertEquals(greetingService.getSayMorningCount(), 1);
    }
 
-   @Test(groups = "functional")
    public void testCacheResultWithCacheName() {
       String message = greetingService.sayHi("Pete");
 
@@ -89,7 +88,6 @@ public class CacheResultInterceptorTest extends Arquillian {
       assertEquals(greetingService.getSayHiCount(), 1);
    }
 
-   @Test(groups = "functional")
    public void testCacheResultWithCustomCacheKeyGenerator() throws NoSuchMethodException {
       Method method = GreetingService.class.getMethod("sayHello", String.class);
       Cache<CacheKey, String> cache = cacheContainer.getCache(getDefaultMethodCacheName(method));
@@ -106,7 +104,6 @@ public class CacheResultInterceptorTest extends Arquillian {
       assertEquals(greetingService.getSayHelloCount(), 1);
    }
 
-   @Test(groups = "functional")
    public void testCacheResultWithSkipGet() throws NoSuchMethodException {
       Method method = GreetingService.class.getMethod("sayHey", String.class);
       Cache<CacheKey, String> cache = cacheContainer.getCache(getDefaultMethodCacheName(method));
@@ -125,7 +122,6 @@ public class CacheResultInterceptorTest extends Arquillian {
       assertEquals(greetingService.getSayHeyCount(), 2);
    }
 
-   @Test(groups = "functional")
    public void testCacheResultWithSpecificCacheManager() {
       String message = greetingService.sayBonjour("Pete");
 

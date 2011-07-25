@@ -39,6 +39,7 @@ import static org.testng.Assert.assertEquals;
  * @author Pete Muir
  * @see Config
  */
+@Test(groups = "functional", testName = "cdi.test.cache.configured.ConfiguredCacheTest")
 public class ConfiguredCacheTest extends Arquillian {
 
    @Deployment
@@ -61,13 +62,11 @@ public class ConfiguredCacheTest extends Arquillian {
    @Small
    private AdvancedCache<String, String> smallCache;
 
-   @Test(groups = "functional")
    public void testTinyCache() {
       // Check that we have the correctly configured cache
       assertEquals(tinyCache.getConfiguration().getEvictionMaxEntries(), 1);
    }
 
-   @Test(groups = "functional")
    public void testSmallCache() {
       // Check that we have the correctly configured cache
       assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 10);

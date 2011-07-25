@@ -46,6 +46,7 @@ import static org.testng.Assert.assertTrue;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  * @see javax.cache.interceptor.CacheRemoveAll
  */
+@Test(groups = "functional", testName = "cdi.test.interceptor.CacheRemoveAllInterceptorTest")
 public class CacheRemoveAllInterceptorTest extends Arquillian {
 
    @Deployment
@@ -63,13 +64,13 @@ public class CacheRemoveAllInterceptorTest extends Arquillian {
    @Custom
    private Cache<CacheKey, String> cache;
 
-   @BeforeMethod(groups = "functional")
+   @BeforeMethod
    public void setUp() {
       cache.clear();
       assertTrue(cache.isEmpty());
    }
 
-   @Test(groups = "functional", expectedExceptions = CacheException.class)
+   @Test(expectedExceptions = CacheException.class)
    public void testDefaultCacheRemoveAll() {
       cache.put(new DefaultCacheKey(new Object[]{"Kevin"}), "Hi Kevin");
       cache.put(new DefaultCacheKey(new Object[]{"Pete"}), "Hi Pete");
@@ -79,7 +80,6 @@ public class CacheRemoveAllInterceptorTest extends Arquillian {
       assertEquals(cache.size(), 0);
    }
 
-   @Test(groups = "functional")
    public void testCacheRemoveAllWithCacheName() {
       cache.put(new DefaultCacheKey(new Object[]{"Kevin"}), "Hi Kevin");
       cache.put(new DefaultCacheKey(new Object[]{"Pete"}), "Hi Pete");
@@ -89,7 +89,6 @@ public class CacheRemoveAllInterceptorTest extends Arquillian {
       assertEquals(cache.size(), 0);
    }
 
-   @Test(groups = "functional")
    public void testCacheRemoveAllAfterInvocationWithException() {
       cache.put(new DefaultCacheKey(new Object[]{"Kevin"}), "Hi Kevin");
       cache.put(new DefaultCacheKey(new Object[]{"Pete"}), "Hi Pete");
@@ -104,7 +103,6 @@ public class CacheRemoveAllInterceptorTest extends Arquillian {
       }
    }
 
-   @Test(groups = "functional")
    public void testCacheRemoveAllBeforeInvocationWithException() {
       cache.put(new DefaultCacheKey(new Object[]{"Kevin"}), "Hi Kevin");
       cache.put(new DefaultCacheKey(new Object[]{"Pete"}), "Hi Pete");

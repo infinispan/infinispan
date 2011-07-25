@@ -40,6 +40,7 @@ import static org.testng.Assert.assertEquals;
  * @author Pete Muir
  * @see Config
  */
+@Test(groups = "functional", testName = "cdi.test.cachemanager.external.ExternalCacheContainerTest")
 public class ExternalCacheContainerTest extends Arquillian {
 
    @Deployment
@@ -56,14 +57,11 @@ public class ExternalCacheContainerTest extends Arquillian {
    @Quick
    private AdvancedCache<?, ?> quickCache;
 
-   @Test(groups = "functional")
    public void testLargeCache() {
       assertEquals(largeCache.getConfiguration().getEvictionMaxEntries(), 100);
    }
 
-   @Test(groups = "functional")
    public void testQuickCache() {
       assertEquals(quickCache.getConfiguration().getEvictionWakeUpInterval(), 1);
    }
-
 }

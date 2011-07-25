@@ -34,11 +34,13 @@ import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
 import static org.testng.Assert.assertEquals;
 
 /**
- * Tests that the simple form of configuration works
+ * Tests that the simple form of configuration works.
+ * This test is disabled due to a bug with parameterized events in Weld.
  *
  * @author Pete Muir
  * @see Config
  */
+@Test(groups = "functional", testName = "cdi.test.event.CacheEventTest", enabled = false)
 public class CacheEventTest extends Arquillian {
 
    @Deployment
@@ -67,8 +69,6 @@ public class CacheEventTest extends Arquillian {
    @Inject
    private Cache2Observers observers2;
 
-   // This test is disabled due to a bug with parameterized events in Weld.
-   @Test(groups = "functional", enabled = false)
    public void testSmallCache() {
       // Put something into the cache, ensure it is started
       cache1.put("pete", "Edinburgh");
@@ -97,5 +97,4 @@ public class CacheEventTest extends Arquillian {
       assertEquals(observers1.getCacheStoppedEventCount(), 1);
       assertEquals(observers1.getCacheStoppedEvent().getCacheName(), "cache1");
    }
-
 }
