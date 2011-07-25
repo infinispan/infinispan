@@ -29,38 +29,38 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Disposes;
+import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
 
 /**
- * <p>This producer is responsible to produce the default cache manager used in the application.</p>
- * <p>By default the cache manager used is a {@link DefaultCacheManager} with the default configuration. If you want to
- * provide your own default cache manager follow this steps:
- * <ol>
- *    <li>Extend this bean</li>
- *    <li>Add {@linkplain javax.enterprise.inject.Specializes @Specializes} annotation on your class</li>
- *    <li>Override the {@link DefaultCacheManagerProducer#getDefaultCacheManager(org.infinispan.config.Configuration)}
- *    method.</li>
- * </ol></p>
+ * <p>The default cache manager producer.</p>
+ * <p>By default the cache manager produced is an instance of {@link DefaultCacheManager} initialized with the default
+ * configuration produced by the {@link DefaultCacheConfigurationProducer}. The default cache manager can be overridden
+ * by creating a producer which produces the new default cache manager. The new default cache manager produced must be
+ * qualified by {@link OverrideDefault}.</p>
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class DefaultCacheManagerProducer {
    /**
-    * <p>Produces the default cache manager.<p>
-    * <p>Note: there is only one instance of the default cache manager per application.</p>
+    * Produces the default cache manager.
     *
-    * @param defaultConfiguration the default cache configuration produced by the {@link DefaultCacheConfigurationProducer}.
+    * @param providedDefaultCacheManager the provided default cache manager.
+    * @param defaultConfiguration the default cache configuration produced by {@link DefaultCacheConfigurationProducer}.
     * @return the default cache manager used by the application.
     */
    @Produces
    @Default
    @ApplicationScoped
-   public EmbeddedCacheManager getDefaultCacheManager(@Default Configuration defaultConfiguration) {
+   public EmbeddedCacheManager getDefaultCacheManager(@OverrideDefault Instance<EmbeddedCacheManager> providedDefaultCacheManager, @Default Configuration defaultConfiguration) {
+      if (!providedDefaultCacheManager.isUnsatisfied()) {
+         return providedDefaultCacheManager.get();
+      }
       return new DefaultCacheManager(defaultConfiguration);
    }
 
    /**
-    * This method is responsible to stop the default cache manager when the corresponding instance is released.
+    * Stops the default cache manager when the corresponding instance is released.
     *
     * @param defaultCacheManager the default cache manager produced.
     */

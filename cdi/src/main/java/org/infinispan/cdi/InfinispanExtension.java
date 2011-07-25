@@ -113,8 +113,7 @@ public class InfinispanExtension implements Extension {
 
    void registerCacheConfigurations(@Observes AfterDeploymentValidation event, CacheManagerEventBridge eventBridge, @Any Instance<EmbeddedCacheManager> cacheContainers, BeanManager beanManager) {
       CreationalContext<Configuration> ctx = beanManager.createCreationalContext(null);
-      Instance<EmbeddedCacheManager> defaultCacheManager = cacheContainers.select(new AnnotationLiteral<Default>() {
-      });
+      Instance<EmbeddedCacheManager> defaultCacheManager = cacheContainers.select(new AnnotationLiteral<Default>() {});
 
       for (ConfigurationHolder oneConfigurationHolder : configurations) {
          String cacheName = oneConfigurationHolder.getName();

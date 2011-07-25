@@ -23,14 +23,15 @@
 package org.infinispan.cdi.test.cache;
 
 import org.infinispan.Cache;
-import org.infinispan.cdi.DefaultCacheConfigurationProducer;
+import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.config.Configuration;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Test;
 
-import javax.enterprise.inject.Specializes;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import static junit.framework.Assert.assertEquals;
@@ -38,7 +39,7 @@ import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
 import static org.infinispan.manager.CacheContainer.DEFAULT_CACHE_NAME;
 
 /**
- * Tests that the default cache configuration can be overridden
+ * Tests that the default cache configuration can be overridden.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
@@ -55,21 +56,20 @@ public class DefaultCacheConfigurationTest extends Arquillian {
 
    @Test(groups = "functional")
    public void testCustomDefaultCacheConfiguration() {
-      assertEquals(defaultCache.getConfiguration().getEvictionMaxEntries(), 10);
+      assertEquals(defaultCache.getConfiguration().getEvictionMaxEntries(), 16);
       assertEquals(defaultCache.getName(), DEFAULT_CACHE_NAME);
    }
 
-   /**
-    * Use a custom default cache configuration.
-    */
-   @Specializes
-   public static class CustomDefaultCacheConfiguration extends DefaultCacheConfigurationProducer {
-      @Override
-      public Configuration getDefaultCacheConfiguration() {
-         Configuration defaultConfiguration = super.getDefaultCacheConfiguration();
+   // override the default cache configuration
+   static class Config {
+      @Produces
+      @OverrideDefault
+      @ApplicationScoped
+      Configuration getCustomDefaultCacheConfiguration() {
+         Configuration defaultConfiguration = new Configuration();
          defaultConfiguration.fluent()
                .eviction()
-               .maxEntries(10);
+               .maxEntries(16);
 
          return defaultConfiguration;
       }

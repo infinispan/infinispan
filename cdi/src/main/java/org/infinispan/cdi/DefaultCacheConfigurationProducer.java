@@ -24,32 +24,35 @@ package org.infinispan.cdi;
 
 import org.infinispan.config.Configuration;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
 
 /**
- * <p>This producer is responsible to produce the default configuration used by the default cache manager.</p>
- * <p>If you want to provide a specific default configuration for the default cache manager follow this steps:
- * <ol>
- *    <li>Extend this bean</li>
- *    <li>Add {@linkplain javax.enterprise.inject.Specializes @Specializes} annotation on your class</li>
- *    <li>Override the {@link DefaultCacheConfigurationProducer#getDefaultCacheConfiguration()} method.</li>
- * </ol></p>
+ * <p>The default cache configuration producer.</p>
+ * <p>The default cache configuration is used by the default cache manager. The default cache configuration can be
+ * overridden by creating a producer which produces the new default configuration. The new default cache configuration
+ * produced must be qualified by {@link OverrideDefault}.</p>
  *
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class DefaultCacheConfigurationProducer {
    /**
-    * <p>This producer is responsible to produce the default configuration used by the default cache manager produced
-    * by the {@link DefaultCacheManagerProducer}.</p>
+    * Produces the default cache configuration.
     *
-    * @return The default configuration used by the default cache manager.
+    * @param providedDefaultConfiguration the provided default cache configuration.
+    * @return the default cache configuration used by the default cache manager.
     */
+   @Produces
    @Default
    @Infinispan
-   @Produces
-   public Configuration getDefaultCacheConfiguration() {
+   @ApplicationScoped
+   public Configuration getDefaultCacheConfiguration(@OverrideDefault Instance<Configuration> providedDefaultConfiguration) {
+      if (!providedDefaultConfiguration.isUnsatisfied()) {
+         return providedDefaultConfiguration.get();
+      }
       return new Configuration();
    }
 }

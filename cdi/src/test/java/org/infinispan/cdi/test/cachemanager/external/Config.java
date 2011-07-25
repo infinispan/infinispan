@@ -23,24 +23,28 @@
 package org.infinispan.cdi.test.cachemanager.external;
 
 import org.infinispan.cdi.Infinispan;
+import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.config.Configuration;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 
 /**
- * Creates a number of caches, based on come external mechanism as de
+ * Creates a number of caches, based on some external mechanism.
  *
  * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class Config {
-
    /**
     * Associate the externally defined "large" cache with the qualifier {@link Large}
     */
    @Produces
    @Infinispan("large")
    @Large
-   Configuration largeconfiguration;
+   Configuration largeConfiguration;
 
    /**
     * Associate the externally defined "quick" cache with the qualifier {@link Quick}
@@ -48,5 +52,33 @@ public class Config {
    @Produces
    @Infinispan("quick")
    @Quick
-   Configuration configuration;
+   Configuration quickConfiguration;
+
+   /**
+    * Override the default cache manager to define the quick and large cache configurations externally.
+    */
+   @Produces
+   @OverrideDefault
+   @ApplicationScoped
+   public EmbeddedCacheManager getDefaultCacheManager() {
+      EmbeddedCacheManager externalCacheContainerManager = new DefaultCacheManager();
+
+      // define large configuration
+      Configuration largeConfiguration = new Configuration();
+      largeConfiguration.fluent()
+            .eviction()
+            .maxEntries(100);
+
+      externalCacheContainerManager.defineConfiguration("large", largeConfiguration);
+
+      // define quick configuration
+      Configuration quickConfiguration = new Configuration();
+      quickConfiguration.fluent()
+            .eviction()
+            .wakeUpInterval(1l);
+
+      externalCacheContainerManager.defineConfiguration("quick", quickConfiguration);
+
+      return externalCacheContainerManager;
+   }
 }

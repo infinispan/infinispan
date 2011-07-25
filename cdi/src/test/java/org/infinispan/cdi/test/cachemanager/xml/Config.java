@@ -23,21 +23,31 @@
 package org.infinispan.cdi.test.cachemanager.xml;
 
 import org.infinispan.cdi.Infinispan;
+import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.config.Configuration;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.jboss.seam.solder.resourceLoader.Resource;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
+import java.io.IOException;
+import java.io.InputStream;
 
-@ApplicationScoped
+/**
+ * Creates a number of caches, based on some external mechanism.
+ *
+ * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ */
 public class Config {
-
    /**
     * Associate the "very-large" cache (configured below) with the qualifier {@link VeryLarge}.
     */
    @Produces
    @Infinispan("very-large")
    @VeryLarge
-   Configuration veryLargeCacheContainer;
+   Configuration veryLargeConfiguration;
 
    /**
     * Associate the "quick-very-large" cache (configured below) with the qualifier {@link Quick}.
@@ -45,6 +55,24 @@ public class Config {
    @Produces
    @Infinispan("quick-very-large")
    @Quick
-   Configuration quickVeryLargeCacheContainer;
+   Configuration quickVeryLargeConfiguration;
 
+   /**
+    * Override the default cache manager
+    */
+   @Produces
+   @OverrideDefault
+   @ApplicationScoped
+   public EmbeddedCacheManager getDefaultCacheManager(@Resource("infinispan.xml") InputStream xml) throws IOException {
+      EmbeddedCacheManager externalCacheContainerManager = new DefaultCacheManager(xml);
+
+      Configuration quickVeryLargeConfiguration = externalCacheContainerManager.getDefaultConfiguration().clone();
+      quickVeryLargeConfiguration.fluent()
+            .eviction()
+            .wakeUpInterval(1l);
+
+      externalCacheContainerManager.defineConfiguration("quick-very-large", quickVeryLargeConfiguration);
+
+      return externalCacheContainerManager;
+   }
 }

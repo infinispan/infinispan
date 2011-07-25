@@ -20,28 +20,29 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.cachemanager.programmatic;
+package org.infinispan.cdi;
 
-import org.infinispan.cdi.DefaultCacheManagerProducer;
-import org.infinispan.config.Configuration;
-import org.infinispan.manager.EmbeddedCacheManager;
+import javax.inject.Qualifier;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Specializes;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * @author Pete Muir
+ * This annotation is used to qualify the provided default configuration or/and default cache manager.
+ *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @see DefaultCacheConfigurationProducer
+ * @see DefaultCacheManagerProducer
  */
-@Specializes
-public class ExternalCacheContainerManager extends DefaultCacheManagerProducer {
-
-   @Override
-   public EmbeddedCacheManager getDefaultCacheManager(@Default Configuration defaultConfiguration) {
-      defaultConfiguration.fluent()
-            .eviction()
-            .maxEntries(7);
-
-      return super.getDefaultCacheManager(defaultConfiguration);
-   }
+@Target({METHOD, FIELD, PARAMETER, TYPE})
+@Retention(RUNTIME)
+@Qualifier
+@Documented
+public @interface OverrideDefault {
 }
