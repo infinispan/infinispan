@@ -40,13 +40,13 @@ import static org.testng.Assert.assertEquals;
  * @author Pete Muir
  * @see Config
  */
-@Test(groups = "functional", testName = "cdi.test.cachemanager.programmatic.ProgramaticCacheContainerTest")
-public class ProgramaticCacheContainerTest extends Arquillian {
+@Test(groups = "functional", testName = "cdi.test.cachemanager.programmatic.ProgrammaticCacheContainerTest")
+public class ProgrammaticCacheContainerTest extends Arquillian {
 
    @Deployment
    public static Archive<?> deployment() {
       return baseDeployment()
-            .addPackage(ProgramaticCacheContainerTest.class.getPackage());
+            .addPackage(ProgrammaticCacheContainerTest.class.getPackage());
    }
 
    @Inject
