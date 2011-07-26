@@ -81,11 +81,12 @@ public class EvictionManagerImpl implements EvictionManager {
             cacheStore = cacheLoaderManager.getCacheStore();
          }
          // Set up the eviction timer task
-         if (configuration.getEvictionWakeUpInterval() <= 0) {
+         long expWakeUpInt = configuration.getExpirationWakeUpInterval();
+         if (expWakeUpInt <= 0) {
             log.notStartingEvictionThread();
          } else {
-            evictionTask = executor.scheduleWithFixedDelay(new ScheduledTask(), configuration.getEvictionWakeUpInterval(),
-                                                           configuration.getEvictionWakeUpInterval(), TimeUnit.MILLISECONDS);
+            evictionTask = executor.scheduleWithFixedDelay(new ScheduledTask(),
+                  expWakeUpInt, expWakeUpInt, TimeUnit.MILLISECONDS);
          }
       }
    }

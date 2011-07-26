@@ -188,9 +188,9 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
             .add(new CacheLoaderInterceptor()).before(CallInterceptor.class)
          .eviction()
             .maxEntries(7676).strategy(EvictionStrategy.FIFO)
-            .threadPolicy(EvictionThreadPolicy.PIGGYBACK).wakeUpInterval(7585L)
+            .threadPolicy(EvictionThreadPolicy.PIGGYBACK)
          .expiration()
-            .maxIdle(8392L).lifespan(4372L)
+            .maxIdle(8392L).lifespan(4372L).wakeUpInterval(7585L)
          .clustering()
             .mode(Configuration.CacheMode.INVALIDATION_SYNC)
             .async()
@@ -269,7 +269,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
       assert 7676 == c.getEvictionMaxEntries();
       assert EvictionStrategy.FIFO == c.getEvictionStrategy();
       assert EvictionThreadPolicy.PIGGYBACK == c.getEvictionThreadPolicy();
-      assert 7585L == c.getEvictionWakeUpInterval();
+      assert 7585L == c.getExpirationWakeUpInterval();
 
       List<CustomInterceptorConfig> customInterceptors = c.getCustomInterceptors();
       assert customInterceptors.get(0).getInterceptor() instanceof LockingInterceptor;

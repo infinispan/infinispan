@@ -24,8 +24,10 @@
 
 -->
 
-<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:4.2 http://www.infinispan.org/schemas/infinispan-config-4.2.xsd"
-    xmlns="urn:infinispan:config:4.2">
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:5.0 http://www.infinispan.org/schemas/infinispan-config-5.0.xsd"
+      xmlns="urn:infinispan:config:5.0">
 
    <!--
       ******************************************************************************************************************
@@ -288,8 +290,7 @@
    -->
 
    <!--
-      A cache configured with eviction.  WakeupInterval defines how often the eviction thread runs, in milliseconds.
-      0 means the eviction thread will never run.  A separate executor is used for eviction in each cache.
+      A cache configured with eviction.
 
       See:
 
@@ -299,11 +300,11 @@
    <!--
    <namedCache name="evictionCache">
       <eviction
-         wakeUpInterval="500"
          maxEntries="5000"
          strategy="FIFO"
       />
       <expiration
+         wakeUpInterval="500"
          lifespan="60000"
          maxIdle="1000"
       />
@@ -361,11 +362,11 @@
    <!--
    <namedCache name="evictionAndPassivationCache">
       <eviction 
-         wakeUpInterval="500"
          maxEntries="5000"
          strategy="LIRS"
       />
       <expiration
+         wakeUpInterval="500"
          lifespan="60000"
          maxIdle="1000"
       />

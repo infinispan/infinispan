@@ -48,12 +48,12 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration cfg = new Configuration();
-      cfg.setEvictionStrategy(EvictionStrategy.FIFO);
-      cfg.setEvictionWakeUpInterval(100);
-      cfg.setEvictionMaxEntries(CACHE_SIZE); // CACHE_SIZE max entries
-      cfg.setUseLockStriping(false); // to minimise chances of deadlock in the unit test
-      cfg.setUseLazyDeserialization(true);
+      Configuration cfg = new Configuration().fluent()
+         .eviction().strategy(EvictionStrategy.FIFO).maxEntries(CACHE_SIZE) // CACHE_SIZE max entries
+         .expiration().wakeUpInterval(100L)
+         .locking().useLockStriping(false) // to minimise chances of deadlock in the unit test
+         .storeAsBinary()
+         .build();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       StreamingMarshaller marshaller = TestingUtil.extractComponent(cache, StreamingMarshaller.class);
@@ -135,8 +135,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
          if (this == o) return true;
          if (o == null || getClass() != o.getClass()) return false;
          EvictionPojo pojo = (EvictionPojo) o;
-         if (i != pojo.i) return false;
-         return true;
+         return i == pojo.i;
       }
 
       public int hashCode() {

@@ -95,18 +95,6 @@
                </xsl:if>
             </xsl:attribute>
 
-            <xsl:attribute name="wakeUpInterval">
-               <xsl:choose>
-                  <xsl:when test="@diskExpiryThreadIntervalSeconds">
-                     <xsl:value-of select="concat(@diskExpiryThreadIntervalSeconds,'000')"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                     <!-- by default the value is 120 seconds in EHCache-->
-                     <xsl:value-of select="120000"/>
-                  </xsl:otherwise>
-               </xsl:choose>
-            </xsl:attribute>
-
             <xsl:if test="@maxElementsInMemory">
                <xsl:attribute name="maxEntries">
                   <xsl:value-of select="@maxElementsInMemory"/>
@@ -128,6 +116,17 @@
                   <xsl:value-of select="@timeToLiveSeconds"/>
                </xsl:attribute>
             </xsl:if>
+            <xsl:attribute name="wakeUpInterval">
+               <xsl:choose>
+                  <xsl:when test="@diskExpiryThreadIntervalSeconds">
+                     <xsl:value-of select="concat(@diskExpiryThreadIntervalSeconds,'000')"/>
+                  </xsl:when>
+                  <xsl:otherwise>
+                     <!-- by default the value is 120 seconds in EHCache-->
+                     <xsl:value-of select="120000"/>
+                  </xsl:otherwise>
+               </xsl:choose>
+            </xsl:attribute>
          </xsl:element>
       </xsl:if>
 

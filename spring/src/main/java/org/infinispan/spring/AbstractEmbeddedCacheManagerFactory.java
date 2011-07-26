@@ -134,7 +134,7 @@ public class AbstractEmbeddedCacheManagerFactory {
     * Sets the {@link org.springframework.core.io.Resource <code>location</code>} of the
     * configuration file which will be used to configure the
     * {@link org.infinispan.manager.EmbeddedCacheManager <code>EmbeddedCacheManager</code>} the
-    * {@link org.infinispan.spring.spi.SpringEmbeddedCacheManager
+    * {@link org.infinispan.spring.provider.SpringEmbeddedCacheManager
     * <code>SpringEmbeddedCacheManager</code>} created by this <code>FactoryBean</code> delegates
     * to. If no location is supplied, <tt>Infinispan</tt>'s default configuration will be used.
     * </p>
@@ -149,7 +149,7 @@ public class AbstractEmbeddedCacheManagerFactory {
     *           configuration file which will be used to configure the
     *           {@link org.infinispan.manager.EmbeddedCacheManager
     *           <code>EmbeddedCacheManager</code>} the
-    *           {@link org.infinispan.spring.spi.SpringEmbeddedCacheManager
+    *           {@link org.infinispan.spring.provider.SpringEmbeddedCacheManager
     *           <code>SpringEmbeddedCacheManager</code>} created by this <code>FactoryBean</code>
     *           delegates to
     */

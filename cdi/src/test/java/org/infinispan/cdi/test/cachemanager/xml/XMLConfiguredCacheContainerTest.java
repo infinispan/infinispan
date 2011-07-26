@@ -62,6 +62,6 @@ public class XMLConfiguredCacheContainerTest extends Arquillian {
 
    public void testQuickCache() {
       assertEquals(quickCache.getConfiguration().getEvictionMaxEntries(), 1000);
-      assertEquals(quickCache.getConfiguration().getEvictionWakeUpInterval(), 1);
+      assertEquals(quickCache.getConfiguration().getExpirationWakeUpInterval(), 1);
    }
 }

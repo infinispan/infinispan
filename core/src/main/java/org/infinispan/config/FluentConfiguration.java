@@ -314,14 +314,6 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
     */
    public interface EvictionConfig extends FluentTypes {
       /**
-       * Interval between subsequent eviction runs, in milliseconds. If you wish to disable the
-       * periodic eviction process altogether, set wakeupInterval to -1.
-       *
-       * @param wakeUpInterval
-       */
-      EvictionConfig wakeUpInterval(Long wakeUpInterval);
-
-      /**
        * Eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable
        * eviction).
        *
@@ -370,6 +362,15 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @param maxIdle
        */
       ExpirationConfig maxIdle(Long maxIdle);
+
+      /**
+       * Interval (in milliseconds) between subsequent runs to purge expired
+       * entries from memory and any cache stores. If you wish to disable the
+       * periodic eviction process altogether, set wakeupInterval to -1.
+       *
+       * @param wakeUpInterval
+       */
+      ExpirationConfig wakeUpInterval(Long wakeUpInterval);
    }
 
    /**

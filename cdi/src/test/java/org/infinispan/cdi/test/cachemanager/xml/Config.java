@@ -67,10 +67,8 @@ public class Config {
    public EmbeddedCacheManager getDefaultCacheManager(@Resource("infinispan.xml") InputStream xml) throws IOException {
       EmbeddedCacheManager externalCacheContainerManager = new DefaultCacheManager(xml);
 
-      Configuration quickVeryLargeConfiguration = externalCacheContainerManager.getDefaultConfiguration().clone();
-      quickVeryLargeConfiguration.fluent()
-            .eviction()
-            .wakeUpInterval(1l);
+      Configuration quickVeryLargeConfiguration = new Configuration().fluent()
+            .expiration().wakeUpInterval(1l).build();
 
       externalCacheContainerManager.defineConfiguration("quick-very-large", quickVeryLargeConfiguration);
 

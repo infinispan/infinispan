@@ -62,6 +62,6 @@ public class ExternalCacheContainerTest extends Arquillian {
    }
 
    public void testQuickCache() {
-      assertEquals(quickCache.getConfiguration().getEvictionWakeUpInterval(), 1);
+      assertEquals(quickCache.getConfiguration().getExpirationWakeUpInterval(), 1);
    }
 }
