@@ -686,7 +686,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       List<Grouper<?>> getGroupers();
       
       @Override // Override definition so that Scala classes can see it.
-      public Configuration build();
+      Configuration build();
       
    }
 
@@ -754,8 +754,15 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    }
 
    public static interface StoreAsBinaryConfig extends FluentTypes {
+
       StoreAsBinaryConfig storeKeysAsBinary(Boolean storeKeysAsBinary);
+
       StoreAsBinaryConfig storeValuesAsBinary(Boolean storeValuesAsBinary);
+
+      StoreAsBinaryConfig disable();
+
+      @Override // Override definition so that Scala classes can see it.
+      Configuration build();
    }
 
    public static interface JmxStatisticsConfig extends FluentTypes {}
