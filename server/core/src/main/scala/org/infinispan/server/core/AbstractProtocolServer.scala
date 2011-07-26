@@ -88,8 +88,11 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
             debugf("Starting server with basic settings: host=%s, port=%d, masterThreads=%s, workerThreads=%d, " +
                   "idleTimeout=%d, tcpNoDelay=%b, sendBufSize=%d, recvBufSize=%d", host, port,
                   masterThreads, workerThreads, idleTimeout, tcpNoDelay, sendBufSize, recvBufSize)
+            debug("Avoid binary storage duplication and start default cache")
          }
 
+         // Disable store as binary for default cache
+         cacheManager.getDefaultConfiguration.fluent.storeAsBinary.disable
          // Start default cache
          startDefaultCache
 

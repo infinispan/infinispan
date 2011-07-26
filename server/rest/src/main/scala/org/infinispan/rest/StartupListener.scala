@@ -27,6 +27,7 @@ import scala.collection.JavaConversions._
 import javax.servlet.http.HttpServlet
 import org.infinispan.manager.{EmbeddedCacheManager, DefaultCacheManager}
 import javax.servlet.ServletConfig
+import org.infinispan.config.Configuration
 
 /**
  * To init the cache manager. Nice to do this on startup as any config problems will be picked up before any
@@ -59,11 +60,22 @@ class StartupListener extends HttpServlet with Log {
             ManagerInstance.instance = new DefaultCacheManager(cfgFile)
       }
 
+      val cm = ManagerInstance.instance
+
+      if (isDebugEnabled)
+         debug("Avoid binary storage duplication and start named and default caches")
+
       // Start defined caches to avoid issues with lazily started caches
-      for (cacheName <- asIterator(ManagerInstance.instance.getCacheNames.iterator))
-         ManagerInstance.instance.getCache(cacheName)
+      for (cacheName <- asScalaIterator(cm.getCacheNames.iterator)) {
+         val cfg = new Configuration().fluent.storeAsBinary.disable.build
+         // Force disabling binary storage cos the server already does that
+         cm.defineConfiguration(cacheName, cfg)
+         cm.getCache(cacheName)
+      }
+
+      cm.getDefaultConfiguration.fluent.storeAsBinary.disable
       // Finally, start default cache as well
-      ManagerInstance.instance.getCache[String, Any]()
+      cm.getCache[String, Any]()
    }
 
    /**

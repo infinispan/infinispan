@@ -32,6 +32,7 @@ import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.test._
 import org.infinispan.util.ByteArrayKey
 import org.infinispan.test.TestingUtil.generateRandomString
+import org.infinispan.config.Configuration
 
 /**
  * Hot Rod server functional test.
@@ -404,6 +405,21 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    def testPutBigSizeValue(m: Method) {
       val value = generateRandomString(1024 * 1024).getBytes
       assertStatus(client.put(k(m), 0, 0, value), Success)
+   }
+
+   def testStoreAsBinaryOverrideOnNamedCache(m: Method) {
+      val cm = createTestCacheManager
+      val cacheName = "cache-" + m.getName
+      val namedCfg = new Configuration().fluent.storeAsBinary.build
+      assertTrue(namedCfg.isStoreAsBinary)
+      cm.defineConfiguration(cacheName, namedCfg)
+      val testServer = startHotRodServer(cm, server.getPort + 33)
+      try {
+         assertFalse(cm.getCache(cacheName).getConfiguration.isStoreAsBinary)
+      } finally {
+         cm.stop
+         testServer.stop
+      }
    }
 
 }
