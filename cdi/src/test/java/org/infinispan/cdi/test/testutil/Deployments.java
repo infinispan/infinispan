@@ -61,7 +61,6 @@ public final class Deployments {
                   DependencyResolvers.use(MavenDependencyResolver.class)
                         .loadReposFromPom("pom.xml")
                         .artifact("org.jboss.seam.solder:seam-solder")
-                        .artifact("org.infinispan:infinispan-core")
                         .resolveAs(JavaArchive.class)
             );
    }
