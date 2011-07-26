@@ -41,7 +41,9 @@ import static org.testng.Assert.assertTrue;
  * Tests that a specific cache manager can be used for one or more caches.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @see Config
  */
+@Test(groups = "functional", testName = "cdi.test.cache.cachemanager.SpecificCacheManagerTest")
 public class SpecificCacheManagerTest extends Arquillian {
 
    @Deployment
@@ -51,17 +53,16 @@ public class SpecificCacheManagerTest extends Arquillian {
    }
 
    @Inject
-   private Cache<String, String> defaultCache;
+   private Cache<?, ?> cache;
 
    @Inject
    @Large
-   private Cache<String, String> largeCache;
+   private Cache<?, ?> largeCache;
 
    @Inject
    @Small
-   private Cache<String, String> smallCache;
+   private Cache<?, ?> smallCache;
 
-   @Test(groups = "functional")
    public void testSpecificCacheManager() throws Exception {
       assertEquals(largeCache.getConfiguration().getEvictionMaxEntries(), 2000);
       assertEquals(largeCache.getConfiguration().getEvictionStrategy(), FIFO);
@@ -73,11 +74,11 @@ public class SpecificCacheManagerTest extends Arquillian {
 
       // asserts that the small and large cache are defined in the same cache manager
       assertTrue(smallCache.getCacheManager().equals(largeCache.getCacheManager()));
-      assertFalse(smallCache.getCacheManager().equals(defaultCache.getCacheManager()));
+      assertFalse(smallCache.getCacheManager().equals(cache.getCacheManager()));
 
       // check that default cache configuration has not been modified
-      assertEquals(defaultCache.getConfiguration().getEvictionStrategy(), NONE);
-      assertEquals(defaultCache.getConfiguration().getEvictionMaxEntries(), -1);
-      assertEquals(defaultCache.getCacheManager().getDefaultConfiguration().getEvictionStrategy(), NONE);
+      assertEquals(cache.getConfiguration().getEvictionStrategy(), NONE);
+      assertEquals(cache.getConfiguration().getEvictionMaxEntries(), -1);
+      assertEquals(cache.getCacheManager().getDefaultConfiguration().getEvictionStrategy(), NONE);
    }
 }

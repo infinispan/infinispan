@@ -32,20 +32,23 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 
 /**
+ * Creates a cache, based on some external mechanism.
+ *
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class Config {
    /**
-    * Associates the "small" cache with the qualifier {@link Small}.
+    * <p>Associates the "small" cache with the qualifier {@link Small}.</p>
+    * <p>The default configuration will be used.</p>
     */
    @Produces
    @Infinispan("small")
    @Small
-   Configuration configuration;
+   public Configuration smallConfiguration;
 
    /**
-    * Override the default cache manager.
+    * Overrides the default cache manager.
     */
    @Produces
    @OverrideDefault

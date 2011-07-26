@@ -34,11 +34,12 @@ import javax.inject.Inject;
 import static org.testng.Assert.assertEquals;
 
 /**
- * Test that a cache configured in XML is available, and that it can be overridden
+ * Test that a cache configured in XML is available, and that it can be overridden.
  *
  * @author Pete Muir
  * @see Config
  */
+@Test(groups = "functional", testName = "cdi.test.cachemanager.xml.XMLConfiguredCacheContainerTest")
 public class XMLConfiguredCacheContainerTest extends Arquillian {
 
    @Deployment
@@ -55,15 +56,12 @@ public class XMLConfiguredCacheContainerTest extends Arquillian {
    @Quick
    private AdvancedCache<?, ?> quickCache;
 
-   @Test(groups = "functional")
    public void testVeryLargeCache() {
       assertEquals(largeCache.getConfiguration().getEvictionMaxEntries(), 1000);
    }
 
-   @Test(groups = "functional")
    public void testQuickCache() {
       assertEquals(quickCache.getConfiguration().getEvictionMaxEntries(), 1000);
       assertEquals(quickCache.getConfiguration().getEvictionWakeUpInterval(), 1);
    }
-
 }

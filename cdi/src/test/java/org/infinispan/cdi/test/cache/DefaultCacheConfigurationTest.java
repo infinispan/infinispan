@@ -43,6 +43,7 @@ import static org.infinispan.manager.CacheContainer.DEFAULT_CACHE_NAME;
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
+@Test(groups = "functional", testName = "cdi.test.cache.DefaultCacheConfigurationTest")
 public class DefaultCacheConfigurationTest extends Arquillian {
 
    @Deployment
@@ -52,20 +53,21 @@ public class DefaultCacheConfigurationTest extends Arquillian {
    }
 
    @Inject
-   private Cache<String, String> defaultCache;
+   private Cache<?, ?> cache;
 
-   @Test(groups = "functional")
    public void testCustomDefaultCacheConfiguration() {
-      assertEquals(defaultCache.getConfiguration().getEvictionMaxEntries(), 16);
-      assertEquals(defaultCache.getName(), DEFAULT_CACHE_NAME);
+      assertEquals(cache.getConfiguration().getEvictionMaxEntries(), 16);
+      assertEquals(cache.getName(), DEFAULT_CACHE_NAME);
    }
 
-   // override the default cache configuration
-   static class Config {
+   /**
+    * Overrides the default cache configuration.
+    */
+   public static class Config {
       @Produces
       @OverrideDefault
       @ApplicationScoped
-      Configuration getCustomDefaultCacheConfiguration() {
+      public Configuration customDefaultCacheConfiguration() {
          Configuration defaultConfiguration = new Configuration();
          defaultConfiguration.fluent()
                .eviction()

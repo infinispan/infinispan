@@ -32,8 +32,13 @@ import javax.enterprise.inject.Produces;
 
 import static org.infinispan.eviction.EvictionStrategy.FIFO;
 
+/**
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ */
 public class Config {
-
+   /**
+    * Associates the "large" cache with the qualifier {@link Large}.
+    */
    @Large
    @Infinispan("large")
    @Produces
@@ -46,6 +51,9 @@ public class Config {
       return largeConfiguration;
    }
 
+   /**
+    * Associates the "small" cache with the qualifier {@link Small}.
+    */
    @Small
    @Infinispan("small")
    @Produces
@@ -58,6 +66,9 @@ public class Config {
       return largeConfiguration;
    }
 
+   /**
+    * Associates the "small" and "large" caches with this specific cache manager.
+    */
    @Large
    @Small
    @Produces

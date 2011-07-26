@@ -28,29 +28,41 @@ import org.infinispan.cdi.event.cache.CacheEventBridge;
 import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.cdi.interceptor.CacheResultInterceptor;
 import org.infinispan.cdi.util.CacheHelper;
-import org.jboss.shrinkwrap.api.GenericArchive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 
-public class Deployments {
-
+/**
+ * Arquillian deployment utility class.
+ *
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ */
+public final class Deployments {
+   /**
+    * The base deployment web archive. The CDI extension is packaged as an individual jar.
+    */
    public static WebArchive baseDeployment() {
       return ShrinkWrap.create(WebArchive.class, "test.war")
-            .addPackage(Infinispan.class.getPackage())
-            .addPackage(AbstractEventBridge.class.getPackage())
-            .addPackage(CacheEventBridge.class.getPackage())
-            .addPackage(CacheManagerEventBridge.class.getPackage())
-            .addPackage(CacheResultInterceptor.class.getPackage())
-            .addPackage(CacheHelper.class.getPackage())
             .addAsWebInfResource(Deployments.class.getResource("/beans.xml"), "beans.xml")
-            .addAsManifestResource(Deployments.class.getResource("/META-INF/services/javax.enterprise.inject.spi.Extension"), "services/javax.enterprise.inject.spi.Extension")
+            .addAsLibrary(
+                  ShrinkWrap.create(JavaArchive.class, "infinispan-cdi.jar")
+                        .addPackage(Infinispan.class.getPackage())
+                        .addPackage(AbstractEventBridge.class.getPackage())
+                        .addPackage(CacheEventBridge.class.getPackage())
+                        .addPackage(CacheManagerEventBridge.class.getPackage())
+                        .addPackage(CacheResultInterceptor.class.getPackage())
+                        .addPackage(CacheHelper.class.getPackage())
+                        .addAsManifestResource(Infinispan.class.getResource("/META-INF/beans.xml"), "beans.xml")
+                        .addAsManifestResource(Infinispan.class.getResource("/META-INF/services/javax.enterprise.inject.spi.Extension"), "services/javax.enterprise.inject.spi.Extension")
+            )
             .addAsLibraries(
                   DependencyResolvers.use(MavenDependencyResolver.class)
                         .loadReposFromPom("pom.xml")
                         .artifact("org.jboss.seam.solder:seam-solder")
-                        .resolveAs(GenericArchive.class)
+                        .artifact("org.infinispan:infinispan-core")
+                        .resolveAs(JavaArchive.class)
             );
    }
 }

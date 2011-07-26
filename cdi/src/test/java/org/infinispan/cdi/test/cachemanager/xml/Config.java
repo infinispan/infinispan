@@ -42,23 +42,24 @@ import java.io.InputStream;
  */
 public class Config {
    /**
-    * Associate the "very-large" cache (configured below) with the qualifier {@link VeryLarge}.
+    * <p>Associates the "very-large" cache (configured below) with the qualifier {@link VeryLarge}.</p>
+    * <p>The default configuration defined in "infinispan.xml" will be used.</p>
     */
    @Produces
    @Infinispan("very-large")
    @VeryLarge
-   Configuration veryLargeConfiguration;
+   public Configuration veryLargeConfiguration;
 
    /**
-    * Associate the "quick-very-large" cache (configured below) with the qualifier {@link Quick}.
+    * Associates the "quick-very-large" cache (configured below) with the qualifier {@link Quick}.
     */
    @Produces
    @Infinispan("quick-very-large")
    @Quick
-   Configuration quickVeryLargeConfiguration;
+   public Configuration quickVeryLargeConfiguration;
 
    /**
-    * Override the default cache manager
+    * Overrides the default cache manager.
     */
    @Produces
    @OverrideDefault

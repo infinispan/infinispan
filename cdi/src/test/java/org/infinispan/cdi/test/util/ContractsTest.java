@@ -28,16 +28,15 @@ import org.testng.annotations.Test;
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
+@Test(groups = "unit", testName = "cdi.test.util.ContractsTest")
 public class ContractsTest {
 
-   @Test(groups = "unit",
-         expectedExceptions = NullPointerException.class,
+   @Test(expectedExceptions = NullPointerException.class,
          expectedExceptionsMessageRegExp = "This parameter cannot be null")
    public void testAssertNotNullOnNullParameter() {
       Contracts.assertNotNull(null, "This parameter cannot be null");
    }
 
-   @Test(groups = "unit")
    public void testAssertNotNullOnNotNullParameter() {
       Contracts.assertNotNull("not null", "This parameter cannot be null");
    }
