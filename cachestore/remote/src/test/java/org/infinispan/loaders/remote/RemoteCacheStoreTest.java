@@ -56,13 +56,10 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
       assert remoteCacheStoreConfig.isUseDefaultRemoteCache();
 
       localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
-      localCacheManager.getDefaultConfiguration()
-         .fluent()
-            .eviction()
-               .maxEntries(100)
-               .wakeUpInterval(10L)
-               .strategy(EvictionStrategy.UNORDERED)
-             .build();
+      localCacheManager.getDefaultConfiguration().fluent()
+         .eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED)
+         .expiration().wakeUpInterval(10L)
+         .build();
       hrServer = TestHelper.startHotRodServer(localCacheManager);
       Properties properties = new Properties();
       properties.put("infinispan.client.hotrod.server_list", "localhost:" + hrServer.getPort());

@@ -32,7 +32,6 @@ import org.testng.annotations.Test;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import java.util.Properties;
 
 /**
  * Tests eviction thread counts under several distinct circumstances.
@@ -47,20 +46,20 @@ public class EvictionThreadCountTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      GlobalConfiguration globalCfg = new GlobalConfiguration();
-      Properties props = new Properties();
-      props.setProperty("threadNamePrefix", EVICT_THREAD_NAME_PREFIX);
-      globalCfg.setEvictionScheduledExecutorProperties(props);
+      GlobalConfiguration globalCfg = new GlobalConfiguration().fluent()
+         .evictionScheduledExecutor()
+            .addProperty("threadNamePrefix", EVICT_THREAD_NAME_PREFIX)
+         .build();
       return TestCacheManagerFactory.createCacheManager(globalCfg);
    }
 
    public void testDefineMultipleCachesWithEviction() {
       for (int i = 0; i < 50; i++) {
-         Configuration cfg = new Configuration();
-         cfg.setEvictionStrategy(EvictionStrategy.LIRS);
-         cfg.setEvictionWakeUpInterval(100);
-         cfg.setEvictionMaxEntries(128); // 128 max entries
-         cfg.setUseLockStriping(false); // to minimize chances of deadlock in the unit test
+         Configuration cfg = new Configuration().fluent()
+            .eviction().strategy(EvictionStrategy.LIRS).maxEntries(128) // 128 max entries
+            .expiration().wakeUpInterval(100L)
+            .locking().useLockStriping(false) // to minimize chances of deadlock in the unit test
+            .build();
          String cacheName = Integer.toString(i);
          cacheManager.defineConfiguration(cacheName, cfg);
          cacheManager.getCache(cacheName);

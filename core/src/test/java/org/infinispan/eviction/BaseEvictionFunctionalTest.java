@@ -49,12 +49,12 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
    protected abstract EvictionStrategy getEvictionStrategy();
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration cfg = new Configuration();
-      cfg.setEvictionStrategy(getEvictionStrategy());
-      cfg.setEvictionWakeUpInterval(100);
-      cfg.setEvictionMaxEntries(128); // 128 max entries
-      cfg.setUseLockStriping(false); // to minimize chances of deadlock in the unit test
-      cfg.setInvocationBatchingEnabled(true);
+      Configuration cfg = new Configuration().fluent()
+         .eviction().strategy(getEvictionStrategy()).maxEntries(128) // 128 max entries
+         .expiration().wakeUpInterval(100L)
+         .locking().useLockStriping(false) // to minimize chances of deadlock in the unit test
+         .invocationBatching()
+         .build();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       cache.addListener(new EvictionListener());

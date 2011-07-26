@@ -34,9 +34,9 @@ import org.infinispan.factories.scopes.Scopes;
  * Central component that deals with eviction of cache entries.
  * <p />
  * Typically, {@link #processEviction()} is called periodically by the eviction thread (which can be configured using
- * {@link org.infinispan.config.Configuration#setEvictionWakeUpInterval(long)} and {@link org.infinispan.config.GlobalConfiguration#setEvictionScheduledExecutorFactoryClass(String)}).
+ * {@link org.infinispan.config.FluentConfiguration.ExpirationConfig#wakeUpInterval(Long)} and {@link org.infinispan.config.GlobalConfiguration#setEvictionScheduledExecutorFactoryClass(String)}).
  * <p />
- * If the eviction thread is disabled - by setting {@link org.infinispan.config.Configuration#setEvictionWakeUpInterval (long)} to <tt>0</tt> -
+ * If the eviction thread is disabled - by setting {@link org.infinispan.config.FluentConfiguration.ExpirationConfig#wakeUpInterval(Long)} to <tt>0</tt> -
  * then this method could be called directly, perhaps by any other maintenance thread that runs periodically in the application.
  * <p />
  * Note that this method is a no-op if the eviction strategy configured is {@link org.infinispan.eviction.EvictionStrategy#NONE}.

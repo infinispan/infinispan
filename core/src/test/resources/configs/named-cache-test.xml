@@ -183,11 +183,14 @@
    <namedCache name="evictionCache">
 
       <!--
-         Eviction configuration.  WakeupInterval defines how often the eviction thread runs, in milliseconds.  0 means
-         the eviction thread will never run.  A separate executor is used for eviction in each cache.
+         Eviction configuration.
       -->
-      <eviction wakeUpInterval="500" maxEntries="5000"  threadPolicy="PIGGYBACK" strategy="FIFO"/>
-      <expiration lifespan="60000" maxIdle="1000"/>
+      <eviction maxEntries="5000"  threadPolicy="PIGGYBACK" strategy="FIFO"/>
+      <!--
+         Expiration wakeUpInterval defines the interval between successive runs
+         to purge expired entries from memory and any cache stores.
+      -->
+      <expiration wakeUpInterval="500" lifespan="60000" maxIdle="1000"/>
    </namedCache>
 
    <namedCache name="withouthJmxEnabled">

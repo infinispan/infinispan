@@ -36,15 +36,13 @@ import static org.easymock.EasyMock.*;
 public class EvictionManagerTest extends AbstractInfinispanTest {
 
    private Configuration getCfg() {
-      Configuration cfg = new Configuration();
-      cfg.setEvictionStrategy(EvictionStrategy.FIFO);
-      return cfg;
+      return new Configuration().fluent()
+            .eviction().strategy(EvictionStrategy.FIFO).build();
    }
 
    public void testNoEvictionThread() {
       EvictionManagerImpl em = new EvictionManagerImpl();
-      Configuration cfg = getCfg();
-      cfg.setEvictionWakeUpInterval(0);
+      Configuration cfg = getCfg().fluent().expiration().wakeUpInterval(0L).build();
 
       ScheduledExecutorService mockService = createMock(ScheduledExecutorService.class);
       em.initialize(mockService, cfg, null, null, null);
@@ -57,8 +55,7 @@ public class EvictionManagerTest extends AbstractInfinispanTest {
 
    public void testWakeupInterval() {
       EvictionManagerImpl em = new EvictionManagerImpl();
-      Configuration cfg = getCfg();
-      cfg.setEvictionWakeUpInterval(789);
+      Configuration cfg = getCfg().fluent().expiration().wakeUpInterval(789L).build();
 
       ScheduledExecutorService mockService = createMock(ScheduledExecutorService.class);
       em.initialize(mockService, cfg, null, null, null);

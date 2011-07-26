@@ -398,11 +398,6 @@
          </xsl:attribute>
       </xsl:if>
       <xsl:element name="eviction">
-         <xsl:if test="/jbosscache/eviction[@wakeUpInterval]">
-            <xsl:attribute name="wakeUpInterval">
-               <xsl:value-of select="/jbosscache/eviction/@wakeUpInterval"/>
-            </xsl:attribute>
-         </xsl:if>
          <xsl:if test="property[@name='maxNodes']">
             <xsl:attribute name="maxEntries">
                <xsl:value-of select="normalize-space(property[@name='maxNodes']/@value)"/>
@@ -437,6 +432,11 @@
             <xsl:if test="property[@name='maxAge']">
                <xsl:attribute name="lifespan">
                   <xsl:value-of select="property[@name='maxAge']/@value"/>
+               </xsl:attribute>
+            </xsl:if>
+            <xsl:if test="/jbosscache/eviction[@wakeUpInterval]">
+               <xsl:attribute name="wakeUpInterval">
+                  <xsl:value-of select="/jbosscache/eviction/@wakeUpInterval"/>
                </xsl:attribute>
             </xsl:if>
          </xsl:element>

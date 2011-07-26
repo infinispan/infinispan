@@ -89,11 +89,10 @@ public class MapStressTest {
    }
 
    private Cache<String, Integer> configureAndBuildCache(int capacity) {
-      Configuration config = new Configuration().fluent().eviction().maxEntries(capacity).strategy(EvictionStrategy.LRU)
-            .wakeUpInterval(5000L)
-            .expiration()
-            .maxIdle(120000L)
-            .build();
+      Configuration config = new Configuration().fluent()
+         .eviction().maxEntries(capacity).strategy(EvictionStrategy.LRU)
+         .expiration().wakeUpInterval(5000L).maxIdle(120000L)
+         .build();
 
       DefaultCacheManager cm = new DefaultCacheManager(GlobalConfiguration.getNonClusteredDefault(), config);
       cm.start();
