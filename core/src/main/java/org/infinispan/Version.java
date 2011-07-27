@@ -36,13 +36,13 @@ import java.io.ByteArrayOutputStream;
 public class Version {
 
    private static final String MAJOR = "5";
-   private static final String MINOR = "0";
+   private static final String MINOR = "1";
    private static final String MICRO = "0";
    private static final String MODIFIER = "SNAPSHOT";
    private static final boolean SNAPSHOT = true;
 
    public static String VERSION = String.format("%s.%s.%s%s%s", MAJOR, MINOR, MICRO, SNAPSHOT ? "-" : ".", MODIFIER);
-   public static String CODENAME = "Pagoa";
+   public static String CODENAME = "Brahma";
    public static final String PROJECT_NAME = "Infinispan";
    public static byte[] VERSION_ID = readVersionBytes();
    public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
