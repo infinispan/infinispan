@@ -43,7 +43,7 @@ import collection.immutable
 import org.infinispan.util.concurrent.TimeoutException
 import org.infinispan.remoting.transport.jgroups.SuspectException
 import org.infinispan.context.Flag
-import org.infinispan.config.{GlobalConfiguration, CacheLoaderManagerConfig, Configuration}
+import org.infinispan.config.{CacheLoaderManagerConfig, Configuration}
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -64,7 +64,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    override def getEncoder = new HotRodEncoder(getCacheManager)
 
-   override def getDecoder() : HotRodDecoder = {
+   override def getDecoder : HotRodDecoder = {
       val hotRodDecoder: HotRodDecoder = new HotRodDecoder(getCacheManager, transport)
       hotRodDecoder.versionGenerator = this.versionGenerator
       hotRodDecoder
@@ -84,9 +84,16 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       // Start rest of the caches and self to view once we know for sure that we need to start
       // and we know that the rank calculator listener is registered
 
+      if (isDebugEnabled)
+         debug("Avoid binary storage duplication and start named caches")
+
       // Start defined caches to avoid issues with lazily started caches
-      for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator))
+      for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator)) {
+         val cfg = new Configuration().fluent.storeAsBinary.disable.build
+         // Force disabling binary storage cos the server already does that
+         cacheManager.defineConfiguration(cacheName, cfg)
          cacheManager.getCache(cacheName)
+      }
 
       // If clustered, set up a cache for topology information
       if (isClustered) {
