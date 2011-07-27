@@ -82,7 +82,7 @@ public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
          assert clmConfig != null;
          CacheLoaderConfig loaderConfig = clmConfig.getCacheLoaderConfigs().get(0);
          assert loaderConfig.getCacheLoaderClassName().equals("org.infinispan.loaders.file.FileCacheStore");
-         assertEquals(configuration.getEvictionWakeUpInterval(), 119000);
+         assertEquals(configuration.getExpirationWakeUpInterval(), 119000);
          assertEquals(configuration.getEvictionStrategy(), EvictionStrategy.LRU);
 
          assert dcm.getDefinedCacheNames().contains("sampleCache1");

@@ -89,7 +89,7 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          assert defaultConfig.getEvictionStrategy().equals(EvictionStrategy.LRU);
          assert defaultConfig.getEvictionMaxEntries() == 5001;
          assert defaultConfig.getExpirationMaxIdle() == 1001 : "Received " + defaultConfig.getExpirationLifespan();
-         assert defaultConfig.getEvictionWakeUpInterval() == 50015;
+         assert defaultConfig.getExpirationWakeUpInterval() == 50015;
 
          ConcurrentMap<String, Configuration> configurationOverrides = (ConcurrentMap<String, Configuration>) TestingUtil.extractField(ecm, "configurationOverrides");
 
@@ -97,13 +97,13 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          assert regionOne != null;
          assert regionOne.getEvictionStrategy().equals(EvictionStrategy.LRU);
          assert regionOne.getExpirationMaxIdle() == 2002;
-         assert regionOne.getEvictionWakeUpInterval() == 50015;
+         assert regionOne.getExpirationWakeUpInterval() == 50015;
 
          Configuration regionTwo = configurationOverrides.get("/org/jboss/data2");
          assert regionTwo != null;
          assert regionTwo.getEvictionStrategy().equals(EvictionStrategy.FIFO);
          assert regionTwo.getEvictionMaxEntries() == 3003;
-         assert regionTwo.getEvictionWakeUpInterval() == 50015;
+         assert regionTwo.getExpirationWakeUpInterval() == 50015;
 
 
          CacheLoaderManagerConfig loaderManagerConfig = defaultConfig.getCacheLoaderManagerConfig();

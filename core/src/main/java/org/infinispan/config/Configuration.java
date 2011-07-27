@@ -543,18 +543,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
-    * Eviction thread wake up interval, in milliseconds.
+    * @deprecated Use {@link #getExpirationWakeUpInterval()}
     */
    public long getEvictionWakeUpInterval() {
-      return eviction.wakeUpInterval;
+      return getExpirationWakeUpInterval();
    }
 
    /**
-    * Interval between subsequent eviction runs, in milliseconds. If you wish to disable the periodic eviction process
-    * altogether, set wakeupInterval to -1.
-    *
-    * @param evictionWakeUpInterval
-    * @deprecated Use {@link FluentConfiguration.EvictionConfig#wakeUpInterval(Long)} instead
+    * @deprecated Use {@link FluentConfiguration.ExpirationConfig#wakeUpInterval(Long)} instead
     */
    @Deprecated
    public void setEvictionWakeUpInterval(long evictionWakeUpInterval) {
@@ -676,6 +672,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    @Deprecated
    public void setExpirationMaxIdle(long expirationMaxIdle) {
       this.expiration.setMaxIdle(expirationMaxIdle);
+   }
+
+   /**
+    * Eviction thread wake up interval, in milliseconds.
+    */
+   public long getExpirationWakeUpInterval() {
+      return expiration.wakeUpInterval;
    }
 
    /**
@@ -2493,6 +2496,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setExpirationMaxIdle")
       protected Long maxIdle = -1L;
 
+      @ConfigurationDocRef(bean = ExpirationConfig.class, targetElement = "wakeUpInterval")
+      @XmlAttribute
+      protected Long wakeUpInterval = 5000L;
+
       public void accept(ConfigurationBeanVisitor v) {
          v.visitExpirationType(this);
       }
@@ -2538,6 +2545,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
 
       @Override
+      public ExpirationConfig wakeUpInterval(Long wakeUpInterval) {
+         testImmutability("wakeUpInterval");
+         this.wakeUpInterval = wakeUpInterval;
+         return this;
+      }
+
+      @Override
       protected ExpirationType setConfiguration(Configuration config) {
          super.setConfiguration(config);
          return this;
@@ -2552,6 +2566,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
          if (lifespan != null ? !lifespan.equals(that.lifespan) : that.lifespan != null) return false;
          if (maxIdle != null ? !maxIdle.equals(that.maxIdle) : that.maxIdle != null) return false;
+         if (wakeUpInterval != null ? !wakeUpInterval.equals(that.wakeUpInterval) : that.wakeUpInterval != null)
+            return false;
 
          return true;
       }
@@ -2560,6 +2576,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public int hashCode() {
          int result = lifespan != null ? lifespan.hashCode() : 0;
          result = 31 * result + (maxIdle != null ? maxIdle.hashCode() : 0);
+         result = 31 * result + (wakeUpInterval != null ? wakeUpInterval.hashCode() : 0);
          return result;
       }
    }
@@ -2578,8 +2595,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        */
       private static final long serialVersionUID = -1248563712058858791L;
 
-      @ConfigurationDocRef(bean = Configuration.class, targetElement = "setEvictionWakeUpInterval")
-      protected Long wakeUpInterval = 5000L;
+      @Deprecated
+      protected Long wakeUpInterval = Long.MIN_VALUE;
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setEvictionStrategy")
       protected EvictionStrategy strategy = EvictionStrategy.NONE;
@@ -2594,24 +2611,24 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          v.visitEvictionType(this);
       }
 
+      /**
+       * @deprecated Use {@link org.infinispan.config.Configuration#getExpirationWakeUpInterval()}
+       */
       @XmlAttribute
+      @Deprecated
       public Long getWakeUpInterval() {
+         log.evictionWakeUpIntervalDeprecated();
          return wakeUpInterval;
       }
 
       /**
-       * @deprecated The visibility of this will be reduced, use {@link #wakeUpInterval(Long)}
+       * @deprecated Use {@link ExpirationConfig#wakeUpInterval(Long)}
        */
       @Deprecated
       public void setWakeUpInterval(Long wakeUpInterval) {
+         log.evictionWakeUpIntervalDeprecated();
          testImmutability("wakeUpInterval");
          this.wakeUpInterval = wakeUpInterval;
-      }
-
-      @Override
-      public EvictionConfig wakeUpInterval(Long wakeUpInterval) {
-         setWakeUpInterval(wakeUpInterval);
-         return this;
       }
 
       @XmlAttribute
@@ -2690,16 +2707,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (maxEntries != null ? !maxEntries.equals(that.maxEntries) : that.maxEntries != null) return false;
          if (strategy != that.strategy) return false;
          if (threadPolicy != that.threadPolicy) return false;
-         if (wakeUpInterval != null ? !wakeUpInterval.equals(that.wakeUpInterval) : that.wakeUpInterval != null)
-            return false;
 
          return true;
       }
 
       @Override
       public int hashCode() {
-         int result = wakeUpInterval != null ? wakeUpInterval.hashCode() : 0;
-         result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
+         int result = strategy != null ? strategy.hashCode() : 0;
          result = 31 * result + (threadPolicy != null ? threadPolicy.hashCode() : 0);
          result = 31 * result + (maxEntries != null ? maxEntries.hashCode() : 0);
          return result;

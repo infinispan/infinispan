@@ -25,6 +25,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -86,7 +87,7 @@ public class DataLossOnJoinOneOwnerTest extends AbstractInfinispanTest {
                .hash().numOwners(1)
             .clustering().l1().disable()
             .build();
-      return new DefaultCacheManager(gc, c);
+      return TestCacheManagerFactory.createCacheManager(gc, c);
    }
 
 }

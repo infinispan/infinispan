@@ -64,18 +64,14 @@ public class Config {
       EmbeddedCacheManager externalCacheContainerManager = new DefaultCacheManager();
 
       // define large configuration
-      Configuration largeConfiguration = new Configuration();
-      largeConfiguration.fluent()
-            .eviction()
-            .maxEntries(100);
+      Configuration largeConfiguration = new Configuration().fluent()
+         .eviction().maxEntries(100).build();
 
       externalCacheContainerManager.defineConfiguration("large", largeConfiguration);
 
       // define quick configuration
-      Configuration quickConfiguration = new Configuration();
-      quickConfiguration.fluent()
-            .eviction()
-            .wakeUpInterval(1l);
+      Configuration quickConfiguration = new Configuration().fluent()
+         .expiration().wakeUpInterval(1l).build();
 
       externalCacheContainerManager.defineConfiguration("quick", quickConfiguration);
 

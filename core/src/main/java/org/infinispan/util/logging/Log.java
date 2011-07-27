@@ -200,7 +200,7 @@ public interface Log extends BasicLogger {
    void unableToStopTransactionLogging(@Cause IllegalMonitorStateException imse);
 
    @LogMessage(level = INFO)
-   @Message(value = "wakeUpInterval is <= 0, not starting eviction thread", id = 25)
+   @Message(value = "wakeUpInterval is <= 0, not starting expired purge thread", id = 25)
    void notStartingEvictionThread();
 
    @LogMessage(level = WARN)
@@ -731,5 +731,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Passivation configured without a valid eviction policy.  " +
       "This could mean that the cache store will never get used unless code calls Cache.evict() manually.", id = 152)
    void passivationWithoutEviction();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Ignoring eviction wakeUpInterval configuration since it is deprecated, please configure Expiration's wakeUpInterval instead", id = 153)
+   void evictionWakeUpIntervalDeprecated();
 
 }
