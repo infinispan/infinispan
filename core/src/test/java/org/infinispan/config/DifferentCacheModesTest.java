@@ -44,6 +44,8 @@ public class DifferentCacheModesTest extends AbstractInfinispanTest {
                  "<default><clustering mode=\"r\"><sync /></clustering></default>" +
                  "<namedCache name=\"local\"><clustering mode=\"local\" /></namedCache>" +
                  "<namedCache name=\"dist\"><clustering mode=\"d\"><sync /></clustering></namedCache>" +
+                 "<namedCache name=\"distasync\"><clustering mode=\"d\"><async /></clustering></namedCache>" +
+                 "<namedCache name=\"replicationasync\"><clustering mode=\"replication\"><async /></clustering></namedCache>" +
                  "</infinispan>";
 
          InputStream is = new ByteArrayInputStream(xml.getBytes());
@@ -61,6 +63,12 @@ public class DifferentCacheModesTest extends AbstractInfinispanTest {
 
          cfg = cm.getCache("dist").getConfiguration();
          assert cfg.getCacheMode() == Configuration.CacheMode.DIST_SYNC;
+
+         cfg = cm.getCache("distasync").getConfiguration();
+         assert cfg.getCacheMode() == Configuration.CacheMode.DIST_ASYNC;
+
+         cfg = cm.getCache("replicationasync").getConfiguration();
+         assert cfg.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
@@ -85,6 +93,12 @@ public class DifferentCacheModesTest extends AbstractInfinispanTest {
                      "<stateRetrieval fetchInMemoryState=\"true\"/>" +
                   "</clustering>" +
                "</namedCache>" +
+               "<namedCache name=\"explicit-state-enable-async\">" +
+                  "<clustering mode=\"r\">" +
+                     "<async />" +
+                     "<stateRetrieval fetchInMemoryState=\"true\"/>" +
+                  "</clustering>" +
+               "</namedCache>" +
              "</infinispan>";
 
          InputStream is = new ByteArrayInputStream(xml.getBytes());
@@ -104,6 +118,11 @@ public class DifferentCacheModesTest extends AbstractInfinispanTest {
                cm.getCache("explicit-state-enable").getConfiguration();
          assert explicitEnable.getCacheMode() == Configuration.CacheMode.REPL_SYNC;
          assert explicitEnable.isStateTransferEnabled();
+
+         Configuration explicitEnableAsync =
+               cm.getCache("explicit-state-enable-async").getConfiguration();
+         assert explicitEnableAsync.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
+         assert explicitEnableAsync.isStateTransferEnabled();
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
