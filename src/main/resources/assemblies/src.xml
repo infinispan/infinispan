@@ -52,6 +52,7 @@
                 <exclude>**/*.lck</exclude>
                 <exclude>**/*-BdbjeCacheStore/**</exclude>
                 <exclude>**/coretarget/**</exclude>
+                <exclude>**/.git/**</exclude>
             </excludes>
         </fileSet>
     </fileSets>
