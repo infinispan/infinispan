@@ -32,6 +32,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -69,6 +70,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    // TODO Find a way to interrupt all transactions waiting for answers from remote nodes, instead
    // of waiting for all of them to finish
    private ReentrantReadWriteLock txLock = new ReentrantReadWriteLock();
+   private ReclosableLatch txLockLatch = new ReclosableLatch(true);
 
    final BlockingQueue<WriteCommand> commandQueue = new LinkedBlockingQueue<WriteCommand>();
    final Map<GlobalTransaction, PrepareCommand> uncommittedPrepares = new ConcurrentHashMap<GlobalTransaction, PrepareCommand>();
@@ -241,6 +243,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    @Override
    public void blockNewTransactions() throws InterruptedException {
       if (trace) log.debug("Blocking new transactions");
+      txLockLatch.close();
       // we want to ensure that all the modifications that passed through the tx gate have ended
       txLock.writeLock().lockInterruptibly();
    }
@@ -249,6 +252,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    public void unblockNewTransactions() {
       if (trace) log.debug("Unblocking new transactions");
       txLock.writeLock().unlock();
+      txLockLatch.open();
    }
 
 
@@ -260,8 +264,10 @@ public class TransactionLoggerImpl implements TransactionLogger {
       // TODO With numOwners > 2 there is still a chance that locking will succeed on some of the remote nodes
       // which could be a problem if the command is a CommitCommand
       long timeout = ctx.isOriginLocal() ? lockTimeout : 0;
-      if (!txLock.readLock().tryLock(timeout, TimeUnit.MILLISECONDS))
+      if (!txLockLatch.await(timeout, TimeUnit.MILLISECONDS))
          throw new TimeoutException("Timed out waiting for the transaction lock to be released after " + lockTimeout + "ms");
+      // hold the read lock to ensure the rehash process waits for the tx to end
+      txLock.readLock().lock();
    }
 
    private void releaseLockForTx() {
