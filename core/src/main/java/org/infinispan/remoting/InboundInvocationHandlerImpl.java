@@ -24,8 +24,10 @@ package org.infinispan.remoting;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.RehashControlCommand;
+import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.distribution.DistributionManager;
@@ -266,11 +268,18 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       boolean unlock = false;
       String cacheName = cmd.getCacheName();
       try {
-         // READ calls should NEVER be enqueued - what's the point!!
-         boolean isClusteredGet = cmd instanceof ClusteredGetCommand;
-         if (isClusteredGet || cmd instanceof RehashControlCommand) {
+         // We want to retry put operations after the cache has started up
+         // We ignore read calls and distributed tasks before the cache has been started
+         // as in both cases a a late response won't be useful to the caller.
+         // RehashControlCommands are the mechanism used for joining the cluster,
+         // so they need to go through immediately (they also ignore the processing lock).
+         boolean isRehashCommand = cmd instanceof RehashControlCommand;
+         boolean isClusteredGetCommand = cmd instanceof ClusteredGetCommand;
+         boolean isDistributedExecuteCommand = cmd instanceof SingleRpcCommand && ((SingleRpcCommand)cmd).getCommand() instanceof DistributedExecuteCommand;
+         boolean needRetry = !(isRehashCommand || isClusteredGetCommand || isDistributedExecuteCommand);
+         if (!needRetry) {
             try {
-               if (isClusteredGet) {
+               if (!isRehashCommand) {
                   distributedSync.acquireProcessingLock(false, distributedSyncTimeout, MILLISECONDS);
                   unlock = true;
                }
