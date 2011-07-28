@@ -344,9 +344,9 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    public static interface ExpirationConfig extends FluentTypes {
       /**
        * Maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in
-       * milliseconds. -1 means the entries never expire. <br />
-       * <br />
-       * Note that this can be overriden on a per-entry bassi by using the Cache API.
+       * milliseconds. -1 means the entries never expire. 
+       * 
+       * Note that this can be overridden on a per-entry basis by using the Cache API.
        *
        * @param lifespan
        */
@@ -355,9 +355,9 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       /**
        * Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the
        * idle time is exceeded, the entry will be expired cluster-wide. -1 means the entries never
-       * expire. <br />
-       * <br />
-       * Note that this can be overriden on a per-entry bassi by using the Cache API.
+       * expire. 
+       * 
+       * Note that this can be overridden on a per-entry basis by using the Cache API.
        *
        * @param maxIdle
        */
@@ -724,7 +724,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       
       /**
        * <p>Defines a single property. Can be used multiple times to define all needed properties,
-       * but the full set is overriden by {@link #withProperties(Properties)}.</p>
+       * but the full set is overridden by {@link #withProperties(Properties)}.</p>
        * <p>These properties are passed directly to the embedded Hibernate Search engine, so
        * for the complete and up to date documentation about available properties
        * refer to the Hibernate Search reference of the version you're using with Infinispan Query.</p>
