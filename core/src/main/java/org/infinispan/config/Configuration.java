@@ -643,7 +643,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    /**
     * Maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in milliseconds. -1 means the
-    * entries never expire. <br /> <br /> Note that this can be overriden on a per-entry bassi by using the Cache API.
+    * entries never expire. <br /> <br /> Note that this can be overriden on a per-entry basis by using the Cache API.
     *
     * @param expirationLifespan
     * @deprecated Use {@link FluentConfiguration.ExpirationConfig#lifespan(Long)} instead
@@ -664,7 +664,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle time is exceeded,
     * the entry will be expired cluster-wide. -1 means the entries never expire. <br /> <br /> Note that this can be
-    * overriden on a per-entry bassi by using the Cache API.
+    * overriden on a per-entry basis by using the Cache API.
     *
     * @param expirationMaxIdle
     * @deprecated Use {@link FluentConfiguration.ExpirationConfig#maxIdle(Long)} instead
@@ -2015,9 +2015,18 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
    }
 
+   /**
+    * Recovery makes sure data in both transactional resource and Infinispan end up in a consistent state. 
+    * Fore more details see 
+    * <a href="https://docs.jboss.org/author/display/ISPN/Transaction+recovery">Infinispan Transaction Recovery</a>.
+    */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "recovery", parentName = "transaction")
    public static class RecoveryType extends AbstractFluentConfigurationBean implements RecoveryConfig {
+      
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 7727835976746044904L;
+
       public static final String DEFAULT_RECOVERY_INFO_CACHE = "__recoveryInfoCacheName__";
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "isTransactionRecoveryEnabled")
@@ -2490,10 +2499,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        */
       private static final long serialVersionUID = 5757161438110848530L;
 
-      @ConfigurationDocRef(bean = Configuration.class, targetElement = "setExpirationLifespan")
+      @ConfigurationDocRef(bean = ExpirationConfig.class, targetElement = "lifespan")
       protected Long lifespan = -1L;
 
-      @ConfigurationDocRef(bean = Configuration.class, targetElement = "setExpirationMaxIdle")
+      @ConfigurationDocRef(bean = ExpirationConfig.class, targetElement = "maxIdle")
       protected Long maxIdle = -1L;
 
       @ConfigurationDocRef(bean = ExpirationConfig.class, targetElement = "wakeUpInterval")
@@ -2596,6 +2605,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       private static final long serialVersionUID = -1248563712058858791L;
 
       @Deprecated
+      @ConfigurationDocRef(bean = EvictionType.class, targetElement = "setWakeUpInterval")
       protected Long wakeUpInterval = Long.MIN_VALUE;
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setEvictionStrategy")
@@ -2622,6 +2632,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
 
       /**
+       * Deprecated setting. Please use wakeUpInterval of expiration.
        * @deprecated Use {@link ExpirationConfig#wakeUpInterval(Long)}
        */
       @Deprecated
@@ -3881,8 +3892,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * Allows you to tune various unsafe or non-standard characteristics. Certain operations such as Cache.put() that are
     * supposed to return the previous value associated with the specified key according to the java.util.Map contract
-    * will not fulfill this contract if unsafe toggle is turned on. Use with care. See details at
-    * http://www.jboss.org/community/wiki/infinispantechnicalfaqs
+    * will not fulfill this contract if unsafe toggle is turned on. Use with care. See details at 
+    * <a href="https://docs.jboss.org/author/display/ISPN/Technical+FAQs">Technical FAQ</a> 
     *
     * @see <a href="../../../config.html#ce_default_unsafe">Configuration reference</a>
     */
