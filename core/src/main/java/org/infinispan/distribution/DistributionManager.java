@@ -183,7 +183,7 @@ public interface DistributionManager {
 
    void markNodePushCompleted(int viewId, Address node) throws InterruptedException;
 
-   public void notifyCoordinatorPushCompleted(int viewId) throws InterruptedException;
+   public void notifyCoordinatorPushCompleted(int viewId) throws Exception;
 
    /**
     * Wait until the cluster-wide rehash for view <code>viewId</code> has finished.

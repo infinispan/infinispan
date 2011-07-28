@@ -137,7 +137,7 @@ public class DistributionManagerImpl implements DistributionManager {
          public Thread newThread(Runnable r) {
             Thread t = new Thread(r);
             t.setDaemon(true);
-            t.setName("Rehasher," + configuration.getGlobalConfiguration().getClusterName()
+            t.setName("Rehasher," + configuration.getName()
                   + "," + rpcManager.getTransport().getAddress());
             return t;
          }
@@ -157,7 +157,7 @@ public class DistributionManagerImpl implements DistributionManager {
       this.rpcManager = rpcManager;
       this.notifier = notifier;
       this.cf = cf;
-      this.transactionLogger = new TransactionLoggerImpl(cf);
+      this.transactionLogger = new TransactionLoggerImpl(cf, configuration);
       this.dataContainer = dataContainer;
       this.interceptorChain = interceptorChain;
       this.icc = icc;
@@ -468,7 +468,7 @@ public class DistributionManagerImpl implements DistributionManager {
       }
    }
 
-   public void notifyCoordinatorPushCompleted(int viewId) throws InterruptedException {
+   public void notifyCoordinatorPushCompleted(int viewId) throws Exception {
       Transport t = rpcManager.getTransport();
 
       if (t.isCoordinator()) {
@@ -479,7 +479,7 @@ public class DistributionManagerImpl implements DistributionManager {
          Address coordinator = rpcManager.getTransport().getCoordinator();
 
          if (trace) log.tracef("Node %s is not the coordinator, sending request to mark push for %d as complete to %s", self, viewId, coordinator);
-         rpcManager.invokeRemotely(Collections.singleton(coordinator), cmd, true);
+         rpcManager.invokeRemotely(Collections.singleton(coordinator), cmd, ResponseMode.SYNCHRONOUS, configuration.getRehashRpcTimeout());
       }
    }
 

@@ -29,6 +29,8 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 
+import java.util.concurrent.TimeoutException;
+
 /**
  * Typically adding a command, the following pattern would be used:
  * <p/>
@@ -103,24 +105,24 @@ public interface TransactionLogger extends RemoteTransactionLogger {
    /**
     * Notify the transaction logger before a write command, potentially blocking.
     */
-   void beforeCommand(InvocationContext ctx, WriteCommand command) throws InterruptedException;
+   void beforeCommand(InvocationContext ctx, WriteCommand command) throws InterruptedException, TimeoutException;
 
    /**
     * Notify the transaction logger before a prepare command, potentially blocking.
     */
-   void beforeCommand(TxInvocationContext ctx, PrepareCommand command) throws InterruptedException;
+   void beforeCommand(TxInvocationContext ctx, PrepareCommand command) throws InterruptedException, TimeoutException;
 
    /**
     * Notify the transaction logger before a commit command, potentially blocking.
     * If transaction logging was not enabled during the prepare command, use the
     * context to extract the list of modifications.
     */
-   void beforeCommand(TxInvocationContext ctx, CommitCommand command) throws InterruptedException;
+   void beforeCommand(TxInvocationContext ctx, CommitCommand command) throws InterruptedException, TimeoutException;
 
    /**
     * Notify the transaction logger before a rollback command, potentially blocking.
     */
-   void beforeCommand(TxInvocationContext ctx, RollbackCommand command) throws InterruptedException;
+   void beforeCommand(TxInvocationContext ctx, RollbackCommand command) throws InterruptedException, TimeoutException;
 
    /**
     * Causes new transactions to block when calling <code>beforeCommand()</code>.
