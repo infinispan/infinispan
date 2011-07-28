@@ -20,24 +20,29 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.interceptor.service.generator;
+package org.infinispan.cdi.interceptor;
 
 import javax.cache.interceptor.CacheKey;
-import java.lang.reflect.Method;
+
+import static java.util.Arrays.deepEquals;
+import static java.util.Arrays.deepHashCode;
+import static java.util.Arrays.deepToString;
 
 /**
+ * This is the default cache key implementation.
+ *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class CustomCacheKey implements CacheKey {
+public class DefaultCacheKey implements CacheKey {
 
-   private static final long serialVersionUID = -2393683631229917970L;
+   private static final long serialVersionUID = 4410523928649671768L;
 
-   private final Method method;
-   private final Object firstParameter;
+   private final Object[] parameters;
+   private final int hashCode;
 
-   public CustomCacheKey(Method method, Object firstParameter) {
-      this.method = method;
-      this.firstParameter = firstParameter;
+   public DefaultCacheKey(Object[] parameters) {
+      this.parameters = parameters;
+      this.hashCode = deepHashCode(parameters);
    }
 
    @Override
@@ -45,19 +50,24 @@ public class CustomCacheKey implements CacheKey {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      CustomCacheKey that = (CustomCacheKey) o;
+      DefaultCacheKey that = (DefaultCacheKey) o;
 
-      if (firstParameter != null ? !firstParameter.equals(that.firstParameter) : that.firstParameter != null)
-         return false;
-      if (method != null ? !method.equals(that.method) : that.method != null) return false;
-
-      return true;
+      return deepEquals(parameters, that.parameters);
    }
 
    @Override
    public int hashCode() {
-      int result = method != null ? method.hashCode() : 0;
-      result = 31 * result + (firstParameter != null ? firstParameter.hashCode() : 0);
-      return result;
+      return this.hashCode;
+   }
+
+   @Override
+   public String toString() {
+      final StringBuilder builder = new StringBuilder()
+            .append("CacheKey{")
+            .append("parameters=").append(parameters == null ? null : deepToString(parameters))
+            .append(", hashCode=").append(hashCode)
+            .append('}');
+
+      return builder.toString();
    }
 }

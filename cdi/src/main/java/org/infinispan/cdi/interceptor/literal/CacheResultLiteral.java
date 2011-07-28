@@ -25,13 +25,10 @@ package org.infinispan.cdi.interceptor.literal;
 import javax.cache.interceptor.CacheKeyGenerator;
 import javax.cache.interceptor.CacheResolver;
 import javax.cache.interceptor.CacheResult;
-import javax.cache.interceptor.DefaultCacheKeyGenerator;
-import javax.cache.interceptor.DefaultCacheResolver;
 import javax.enterprise.util.AnnotationLiteral;
-import java.lang.annotation.Annotation;
 
 /**
- *  @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class CacheResultLiteral extends AnnotationLiteral<CacheResult> implements CacheResult {
 
@@ -52,22 +49,12 @@ public class CacheResultLiteral extends AnnotationLiteral<CacheResult> implement
    }
 
    @Override
-   public Class<? extends CacheResolver> cacheResovler() {
-      return DefaultCacheResolver.class;
-   }
-
-   @Override
-   public Class<? extends Annotation>[] cacheResolverQualifiers() {
-      return new Class[0];
+   public Class<? extends CacheResolver> cacheResolver() {
+      return CacheResolver.class;
    }
 
    @Override
    public Class<? extends CacheKeyGenerator> cacheKeyGenerator() {
-      return DefaultCacheKeyGenerator.class;
-   }
-
-   @Override
-   public Class<? extends Annotation>[] cacheKeyGeneratorQualifiers() {
-      return new Class[0];
+      return CacheKeyGenerator.class;
    }
 }

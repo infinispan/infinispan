@@ -6,7 +6,7 @@ import org.infinispan.cdi.test.interceptor.service.GreetingService;
 import org.infinispan.cdi.test.interceptor.service.Small;
 import org.infinispan.cdi.test.interceptor.service.generator.CustomCacheKey;
 import org.infinispan.cdi.test.interceptor.service.generator.CustomCacheKeyGenerator;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -39,10 +39,10 @@ public class CacheResultInterceptorTest extends Arquillian {
    }
 
    @Inject
-   private CacheContainer cacheContainer;
+   private EmbeddedCacheManager cacheManager;
 
    @Inject
-   private GreetingService greetingService;
+   private GreetingService service;
 
    @Inject
    @Custom
@@ -60,81 +60,81 @@ public class CacheResultInterceptorTest extends Arquillian {
 
    public void testDefaultCacheResult() throws NoSuchMethodException {
       Method method = GreetingService.class.getMethod("sayMorning", String.class);
-      Cache<CacheKey, String> cache = cacheContainer.getCache(getDefaultMethodCacheName(method));
+      Cache<CacheKey, String> cache = cacheManager.getCache(getDefaultMethodCacheName(method));
 
-      String message = greetingService.sayMorning("Foo");
+      String message = service.sayMorning("Foo");
       assertEquals("Morning Foo", message);
       assertEquals(cache.size(), 1);
 
-      message = greetingService.sayMorning("Foo");
+      message = service.sayMorning("Foo");
       assertEquals("Morning Foo", message);
       assertEquals(cache.size(), 1);
 
-      assertEquals(greetingService.getSayMorningCount(), 1);
+      assertEquals(service.getSayMorningCount(), 1);
    }
 
    public void testCacheResultWithCacheName() {
-      String message = greetingService.sayHi("Pete");
+      String message = service.sayHi("Pete");
 
       assertNotNull(message);
       assertEquals("Hi Pete", message);
       assertEquals(customCache.size(), 1);
 
-      message = greetingService.sayHi("Pete");
+      message = service.sayHi("Pete");
       assertNotNull(message);
       assertEquals("Hi Pete", message);
       assertEquals(customCache.size(), 1);
 
-      assertEquals(greetingService.getSayHiCount(), 1);
+      assertEquals(service.getSayHiCount(), 1);
    }
 
    public void testCacheResultWithCustomCacheKeyGenerator() throws NoSuchMethodException {
       Method method = GreetingService.class.getMethod("sayHello", String.class);
-      Cache<CacheKey, String> cache = cacheContainer.getCache(getDefaultMethodCacheName(method));
+      Cache<CacheKey, String> cache = cacheManager.getCache(getDefaultMethodCacheName(method));
 
-      String message = greetingService.sayHello("Kevin");
+      String message = service.sayHello("Kevin");
       assertEquals("Hello Kevin", message);
       assertEquals(cache.size(), 1);
       assertTrue(cache.containsKey(new CustomCacheKey(method, "Kevin")));
 
-      message = greetingService.sayHello("Kevin");
+      message = service.sayHello("Kevin");
       assertEquals("Hello Kevin", message);
       assertEquals(cache.size(), 1);
 
-      assertEquals(greetingService.getSayHelloCount(), 1);
+      assertEquals(service.getSayHelloCount(), 1);
    }
 
    public void testCacheResultWithSkipGet() throws NoSuchMethodException {
       Method method = GreetingService.class.getMethod("sayHey", String.class);
-      Cache<CacheKey, String> cache = cacheContainer.getCache(getDefaultMethodCacheName(method));
+      Cache<CacheKey, String> cache = cacheManager.getCache(getDefaultMethodCacheName(method));
 
-      String message = greetingService.sayHey("Manik");
+      String message = service.sayHey("Manik");
 
       assertNotNull(message);
       assertEquals("Hey Manik", message);
       assertEquals(cache.size(), 1);
 
-      message = greetingService.sayHey("Manik");
+      message = service.sayHey("Manik");
       assertNotNull(message);
       assertEquals("Hey Manik", message);
       assertEquals(cache.size(), 1);
 
-      assertEquals(greetingService.getSayHeyCount(), 2);
+      assertEquals(service.getSayHeyCount(), 2);
    }
 
    public void testCacheResultWithSpecificCacheManager() {
-      String message = greetingService.sayBonjour("Pete");
+      String message = service.sayBonjour("Pete");
 
       assertNotNull(message);
       assertEquals("Bonjour Pete", message);
       assertEquals(smallCache.size(), 1);
 
-      message = greetingService.sayBonjour("Pete");
+      message = service.sayBonjour("Pete");
       assertNotNull(message);
       assertEquals("Bonjour Pete", message);
       assertEquals(smallCache.size(), 1);
 
-      assertEquals(greetingService.getSayBonjourCount(), 1);
+      assertEquals(service.getSayBonjourCount(), 1);
       assertEquals(smallCache.size(), 1);
       assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 4);
    }
