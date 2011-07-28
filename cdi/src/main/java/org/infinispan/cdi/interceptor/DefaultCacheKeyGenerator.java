@@ -20,34 +20,22 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.interceptor.literal;
+package org.infinispan.cdi.interceptor;
 
-import javax.cache.interceptor.CacheRemoveAll;
-import javax.cache.interceptor.CacheResolver;
-import javax.enterprise.util.AnnotationLiteral;
+import javax.cache.interceptor.CacheKey;
+import javax.cache.interceptor.CacheKeyGenerator;
+import javax.interceptor.InvocationContext;
 
 /**
+ * This is the default cache key generator implementation. By default all parameters of the method intercepted compose
+ * the {@link CacheKey}.
+ *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class CacheRemoveAllLiteral extends AnnotationLiteral<CacheRemoveAll> implements CacheRemoveAll {
-
-   public final static CacheRemoveAllLiteral INSTANCE = new CacheRemoveAllLiteral();
-
-   private CacheRemoveAllLiteral() {
-   }
+public class DefaultCacheKeyGenerator implements CacheKeyGenerator {
 
    @Override
-   public String cacheName() {
-      return "";
-   }
-
-   @Override
-   public boolean afterInvocation() {
-      return false;
-   }
-
-   @Override
-   public Class<? extends CacheResolver> cacheResolver() {
-      return CacheResolver.class;
+   public CacheKey generateCacheKey(InvocationContext context) {
+      return new DefaultCacheKey(context.getParameters());
    }
 }

@@ -25,12 +25,10 @@ package org.infinispan.cdi.interceptor.literal;
 import javax.cache.interceptor.CacheKeyGenerator;
 import javax.cache.interceptor.CacheRemoveEntry;
 import javax.cache.interceptor.CacheResolver;
-import javax.cache.interceptor.DefaultCacheKeyGenerator;
-import javax.cache.interceptor.DefaultCacheResolver;
 import javax.enterprise.util.AnnotationLiteral;
 
 /**
- *  @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class CacheRemoveEntryLiteral extends AnnotationLiteral<CacheRemoveEntry> implements CacheRemoveEntry {
 
@@ -50,12 +48,12 @@ public class CacheRemoveEntryLiteral extends AnnotationLiteral<CacheRemoveEntry>
    }
 
    @Override
-   public Class<? extends CacheResolver> cacheResovler() {
-      return DefaultCacheResolver.class;
+   public Class<? extends CacheResolver> cacheResolver() {
+      return CacheResolver.class;
    }
 
    @Override
    public Class<? extends CacheKeyGenerator> cacheKeyGenerator() {
-      return DefaultCacheKeyGenerator.class;
+      return CacheKeyGenerator.class;
    }
 }

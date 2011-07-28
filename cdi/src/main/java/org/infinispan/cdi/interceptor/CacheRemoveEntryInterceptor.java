@@ -24,6 +24,7 @@ package org.infinispan.cdi.interceptor;
 
 import org.infinispan.Cache;
 
+import javax.cache.CacheException;
 import javax.cache.interceptor.CacheKey;
 import javax.cache.interceptor.CacheRemoveEntry;
 import javax.inject.Inject;
@@ -37,9 +38,10 @@ import static org.infinispan.cdi.util.CacheHelper.generateCacheKey;
 /**
  * <p>Implementation class of the {@link CacheRemoveEntry} interceptor.This interceptor uses the following algorithm
  * describes in JSR-107.</p>
- * <p> The interceptor that intercepts method annotated with {@code @CacheRemoveEntry} must do the following, generate a key
- * based on InvocationContext using the specified {@linkplain javax.cache.interceptor.CacheKeyGenerator CacheKeyGenerator}
- * , use this key to remove the entry in the cache. The remove occurs after the method body is executed. This can be
+ *
+ * <p>The interceptor that intercepts method annotated with {@code @CacheRemoveEntry} must do the following, generate a
+ * key based on InvocationContext using the specified {@linkplain javax.cache.interceptor.CacheKeyGenerator CacheKeyGenerator},
+ * use this key to remove the entry in the cache. The remove occurs after the method body is executed. This can be
  * overridden by specifying a afterInvocation attribute value of false. If afterInvocation is true and the annotated
  * method throws an exception the remove will not happen.</p>
  *
@@ -60,6 +62,13 @@ public class CacheRemoveEntryInterceptor {
       final Method method = context.getMethod();
       final CacheRemoveEntry cacheRemoveEntry = method.getAnnotation(CacheRemoveEntry.class);
       final String cacheName = cacheRemoveEntry.cacheName();
+
+      //TODO KP: is it the expected behavior? nothing about this in the spec.
+      if (cacheName.trim().isEmpty()) {
+         throw new CacheException("Method named '" + method.getName() + "' annotated with CacheRemoveEntry " +
+                                        "doesn't specify a cache name");
+      }
+
       final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheName, method);
       final CacheKey cacheKey = generateCacheKey(cacheRemoveEntry.cacheKeyGenerator(), context);
 

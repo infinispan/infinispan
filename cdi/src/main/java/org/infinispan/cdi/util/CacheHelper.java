@@ -23,6 +23,7 @@
 package org.infinispan.cdi.util;
 
 import org.infinispan.CacheException;
+import org.infinispan.cdi.interceptor.DefaultCacheKeyGenerator;
 
 import javax.cache.interceptor.CacheKey;
 import javax.cache.interceptor.CacheKeyGenerator;
@@ -46,7 +47,7 @@ public final class CacheHelper {
     * Returns the default cache name associated to the given method according to JSR-107 specification.
     *
     * @param method the method.
-    * @return The default cache name for the given method.
+    * @return the default cache name for the given method.
     */
    public static String getDefaultMethodCacheName(Method method) {
       assertNotNull(method, "method parameter cannot be null");
@@ -68,9 +69,7 @@ public final class CacheHelper {
          i++;
       }
 
-      return cacheName
-            .append(")")
-            .toString();
+      return cacheName.append(")").toString();
    }
 
    /**
@@ -79,21 +78,28 @@ public final class CacheHelper {
     *
     * @param cacheKeyGeneratorClass the cache key generator class.
     * @param context                the invocation context.
-    * @return An instance of {@code CacheKey} for the given {@code InvocationContext}.
+    * @return an instance of {@code CacheKey} for the given {@code InvocationContext}.
     */
    public static CacheKey generateCacheKey(Class<? extends CacheKeyGenerator> cacheKeyGeneratorClass, InvocationContext context) {
       assertNotNull(cacheKeyGeneratorClass, "cacheKeyGeneratorClass parameter cannot be null");
       assertNotNull(context, "context parameter cannot be null");
 
-      try {
+      CacheKeyGenerator cacheKeyGenerator;
 
-         CacheKeyGenerator cacheKeyGenerator = cacheKeyGeneratorClass.newInstance();
-         return cacheKeyGenerator.generateCacheKey(context);
+      if (cacheKeyGeneratorClass.equals(CacheKeyGenerator.class)) {
+         cacheKeyGenerator = new DefaultCacheKeyGenerator();
+      } else {
+         try {
 
-      } catch (InstantiationException e) {
-         throw new CacheException("Cannot instantiate CacheKeyGenerator named '" + cacheKeyGeneratorClass + "'", e);
-      } catch (IllegalAccessException e) {
-         throw new CacheException("Cannot instantiate CacheKeyGenerator named '" + cacheKeyGeneratorClass + "'", e);
+            cacheKeyGenerator = cacheKeyGeneratorClass.newInstance();
+
+         } catch (InstantiationException e) {
+            throw new CacheException("Cannot instantiate CacheKeyGenerator named '" + cacheKeyGeneratorClass + "'", e);
+         } catch (IllegalAccessException e) {
+            throw new CacheException("Cannot instantiate CacheKeyGenerator named '" + cacheKeyGeneratorClass + "'", e);
+         }
       }
+
+      return cacheKeyGenerator.generateCacheKey(context);
    }
 }

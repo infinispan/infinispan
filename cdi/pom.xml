@@ -64,7 +64,7 @@
       <dependency>
          <groupId>javax.cache</groupId>
          <artifactId>cache-api</artifactId>
-         <version>${version.jsr107}</version>
+         <version>${version.javax.cache}</version>
       </dependency>
       <dependency>
          <groupId>javax.enterprise</groupId>

@@ -23,6 +23,7 @@
 package org.infinispan.cdi.test.interceptor;
 
 import org.infinispan.Cache;
+import org.infinispan.cdi.interceptor.DefaultCacheKey;
 import org.infinispan.cdi.test.interceptor.service.CacheRemoveService;
 import org.infinispan.cdi.test.interceptor.service.Custom;
 import org.infinispan.cdi.test.interceptor.service.GreetingService;
@@ -36,7 +37,6 @@ import org.testng.annotations.Test;
 
 import javax.cache.CacheException;
 import javax.cache.interceptor.CacheKey;
-import javax.cache.interceptor.DefaultCacheKey;
 import javax.inject.Inject;
 import java.lang.reflect.Method;
 
@@ -60,45 +60,45 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
    }
 
    @Inject
-   private CacheRemoveService adminService;
+   private CacheRemoveService service;
 
    @Inject
    @Custom
-   private Cache<CacheKey, String> cache;
+   private Cache<CacheKey, String> customCache;
 
    @BeforeMethod
    public void setUp() {
-      cache.clear();
-      assertTrue(cache.isEmpty());
+      customCache.clear();
+      assertTrue(customCache.isEmpty());
    }
 
    @Test(expectedExceptions = CacheException.class)
    public void testDefaultCacheRemoveEntry() {
-      adminService.removeUser("Kevin");
+      service.removeUser("Kevin");
    }
 
    public void testCacheRemoveEntryWithCacheName() {
       CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
-      cache.put(cacheKey, "Hello Kevin");
-      assertEquals(cache.size(), 1);
-      assertTrue(cache.containsKey(cacheKey));
+      customCache.put(cacheKey, "Hello Kevin");
+      assertEquals(customCache.size(), 1);
+      assertTrue(customCache.containsKey(cacheKey));
 
-      adminService.removeUserWithCacheName("Kevin");
-      assertEquals(cache.size(), 0);
+      service.removeUserWithCacheName("Kevin");
+      assertEquals(customCache.size(), 0);
    }
 
    public void testCacheRemoveEntryAfterInvocationWithException() {
       CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
-      cache.put(cacheKey, "Hello Kevin");
-      assertEquals(cache.size(), 1);
-      assertTrue(cache.containsKey(cacheKey));
+      customCache.put(cacheKey, "Hello Kevin");
+      assertEquals(customCache.size(), 1);
+      assertTrue(customCache.containsKey(cacheKey));
 
       try {
 
-         adminService.removeUserWithCacheName("Kevin");
+         service.removeUserWithCacheName(null);
 
       } catch (NullPointerException e) {
-         assertEquals(cache.size(), 1);
+         assertEquals(customCache.size(), 1);
       }
    }
 
@@ -106,26 +106,26 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
       Method method = CacheRemoveService.class.getMethod("removeUserWithCustomCacheKeyGenerator", String.class);
 
       CacheKey cacheKey = new CustomCacheKey(method, "Kevin");
-      cache.put(cacheKey, "Hello Kevin");
-      assertEquals(cache.size(), 1);
-      assertTrue(cache.containsKey(cacheKey));
+      customCache.put(cacheKey, "Hello Kevin");
+      assertEquals(customCache.size(), 1);
+      assertTrue(customCache.containsKey(cacheKey));
 
-      adminService.removeUserWithCustomCacheKeyGenerator("Kevin");
-      assertEquals(cache.size(), 0);
+      service.removeUserWithCustomCacheKeyGenerator("Kevin");
+      assertEquals(customCache.size(), 0);
    }
 
    public void testCacheRemoveEntryBeforeInvocationWithException() {
       CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
-      cache.put(cacheKey, "Hello Kevin");
-      assertEquals(cache.size(), 1);
-      assertTrue(cache.containsKey(cacheKey));
+      customCache.put(cacheKey, "Hello Kevin");
+      assertEquals(customCache.size(), 1);
+      assertTrue(customCache.containsKey(cacheKey));
 
       try {
 
-         adminService.removeUserBeforeInvocationWithException("Kevin");
+         service.removeUserBeforeInvocationWithException("Kevin");
 
       } catch (NullPointerException e) {
-         assertEquals(cache.size(), 0);
+         assertEquals(customCache.size(), 0);
       }
    }
 }
