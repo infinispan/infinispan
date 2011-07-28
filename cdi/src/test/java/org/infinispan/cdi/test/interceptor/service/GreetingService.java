@@ -1,7 +1,5 @@
 package org.infinispan.cdi.test.interceptor.service;
 
-import org.infinispan.cdi.test.interceptor.service.generator.CustomCacheKeyGenerator;
-
 import javax.cache.interceptor.CacheResult;
 import javax.enterprise.context.ApplicationScoped;
 
