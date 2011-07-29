@@ -39,7 +39,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
@@ -84,7 +84,7 @@ import static org.infinispan.util.Util.getInstance;
  * <li><tt>infinispan.client.hotrod.async_executor_factory</tt>, default = org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory.  Allows you to specify a custom asynchroous executor for async calls.</li>
  * <li><tt>infinispan.client.hotrod.default_executor_factory.pool_size</tt>, default = 10.  If the default executor is used, this configures the number of threads to initialize the executor with.</li>
  * <li><tt>infinispan.client.hotrod.default_executor_factory.queue_size</tt>, default = 100000.  If the default executor is used, this configures the queue size to initialize the executor with.</li>
- * <li><tt>infinispan.client.hotrod.hash_function_impl.1</tt>, default = org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1.  This specifies the version of the hash function and consistent hash algorithm in use, and is closely tied with the HotRod server version used.</li>
+ * <li><tt>infinispan.client.hotrod.hash_function_impl.1</tt>, default = It uses the hash function specified by the server in the responses as indicated in {@link org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory}.  This specifies the version of the hash function and consistent hash algorithm in use, and is closely tied with the HotRod server version used.</li>
  * <li><tt>infinispan.client.hotrod.key_size_estimate</tt>, default = 64.  This hint allows sizing of byte buffers when serializing and deserializing keys, to minimize array resizing.</li>
  * <li><tt>infinispan.client.hotrod.value_size_estimate</tt>, default = 512.  This hint allows sizing of byte buffers when serializing and deserializing values, to minimize array resizing.</li>
  * <li><tt>infinispan.client.hotrod.socket_timeout</tt>, default = 60000 (60 seconds).  This property defines the maximum socket read timeout before giving up waiting for bytes from the server.</li>
@@ -439,7 +439,7 @@ public class RemoteCacheManager implements CacheContainer {
    public void start() {
       String factory = config.getTransportFactory();
       transportFactory = (TransportFactory) getInstance(factory, classLoader);
-      Collection<InetSocketAddress> servers = config.getServerList();
+      Collection<SocketAddress> servers = config.getServerList();
       transportFactory.start(config, servers, topologyId, classLoader);
       if (marshaller == null) {
          String marshallerName = config.getMarshaller();

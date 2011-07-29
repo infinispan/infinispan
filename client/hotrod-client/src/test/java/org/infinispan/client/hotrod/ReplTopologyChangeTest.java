@@ -35,6 +35,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Collection;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -164,7 +165,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
          remoteCache.put("k" + i, "v" + i);         
          if (added == tcpConnectionFactory.getServers().contains(server1Address)) break;
       }
-      Collection<InetSocketAddress> addresses = tcpConnectionFactory.getServers();
+      Collection<SocketAddress> addresses = tcpConnectionFactory.getServers();
       assertEquals(server1Address + " not found in " + addresses, added, addresses.contains(server1Address));
    }
    

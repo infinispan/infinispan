@@ -33,7 +33,11 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -187,35 +191,43 @@ public abstract class HotRodOperation implements HotRodConstants {
       int hashSpace = transport.readVInt();
       int clusterSize = transport.readVInt();
 
-      if (log.isTraceEnabled()) {
+      boolean trace = log.isTraceEnabled();
+      if (trace) {
          log.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
                           "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
                     newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
       }
 
-      LinkedHashMap<InetSocketAddress, Integer> servers2HashCode = new LinkedHashMap<InetSocketAddress, Integer>();
+      Map<SocketAddress, Set<Integer>> servers2Hash = new LinkedHashMap<SocketAddress, Set<Integer>>();
 
       for (int i = 0; i < clusterSize; i++) {
          String host = transport.readString();
          int port = transport.readUnsignedShort();
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Server read: %s:%d", host, port);
          }
          int hashCode = transport.read4ByteInt();
-         servers2HashCode.put(new InetSocketAddress(host, port), hashCode);
-         if (log.isTraceEnabled()) {
+         InetSocketAddress address = new InetSocketAddress(host, port);
+         Set<Integer> hashes = servers2Hash.get(address);
+         if (hashes == null) {
+            hashes = new HashSet<Integer>();
+            servers2Hash.put(address, hashes);
+         }
+         hashes.add(hashCode);
+         if (trace) {
             log.tracef("Hash code is: %d", hashCode);
          }
       }
+
       if (log.isInfoEnabled()) {
-         log.newTopology(servers2HashCode);
+         log.newTopology(servers2Hash.keySet());
       }
-      transport.getTransportFactory().updateServers(servers2HashCode.keySet());
+      transport.getTransportFactory().updateServers(servers2Hash.keySet());
       if (hashFunctionVersion == 0) {
-         if (log.isTraceEnabled())
+         if (trace)
             log.trace("Not using a consistent hash function (hash function version == 0).");
       } else {
-         transport.getTransportFactory().updateHashFunction(servers2HashCode, numKeyOwners, hashFunctionVersion, hashSpace);
+         transport.getTransportFactory().updateHashFunction(servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace);
       }
    }
 }

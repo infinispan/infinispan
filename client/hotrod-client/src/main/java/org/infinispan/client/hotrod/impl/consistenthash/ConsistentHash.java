@@ -22,8 +22,9 @@
  */
 package org.infinispan.client.hotrod.impl.consistenthash;
 
-import java.net.InetSocketAddress;
-import java.util.LinkedHashMap;
+import java.net.SocketAddress;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Abstraction for the used consistent hash.
@@ -33,7 +34,8 @@ import java.util.LinkedHashMap;
  */
 public interface ConsistentHash {
    
-   void init(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, int hashSpace);
+   void init(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, int hashSpace);
 
-   InetSocketAddress getServer(byte[] key);
+   SocketAddress getServer(byte[] key);
+
 }
