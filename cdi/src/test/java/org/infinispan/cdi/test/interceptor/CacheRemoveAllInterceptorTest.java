@@ -25,8 +25,8 @@ package org.infinispan.cdi.test.interceptor;
 import org.infinispan.Cache;
 import org.infinispan.cdi.test.interceptor.service.CacheRemoveService;
 import org.infinispan.cdi.test.interceptor.service.Custom;
+import org.infinispan.cdi.test.interceptor.service.CustomCacheKeyGenerator;
 import org.infinispan.cdi.test.interceptor.service.GreetingService;
-import org.infinispan.cdi.test.interceptor.service.generator.CustomCacheKeyGenerator;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -34,8 +34,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.cache.CacheException;
-import javax.cache.interceptor.CacheKey;
-import javax.cache.interceptor.DefaultCacheKey;
 import javax.inject.Inject;
 
 import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
@@ -58,62 +56,62 @@ public class CacheRemoveAllInterceptorTest extends Arquillian {
    }
 
    @Inject
-   private CacheRemoveService adminService;
+   private CacheRemoveService service;
 
    @Inject
    @Custom
-   private Cache<CacheKey, String> cache;
+   private Cache<String, String> customCache;
 
    @BeforeMethod
    public void setUp() {
-      cache.clear();
-      assertTrue(cache.isEmpty());
+      customCache.clear();
+      assertTrue(customCache.isEmpty());
    }
 
    @Test(expectedExceptions = CacheException.class)
    public void testDefaultCacheRemoveAll() {
-      cache.put(new DefaultCacheKey(new Object[]{"Kevin"}), "Hi Kevin");
-      cache.put(new DefaultCacheKey(new Object[]{"Pete"}), "Hi Pete");
-      assertEquals(cache.size(), 2);
+      customCache.put("Kevin", "Hi Kevin");
+      customCache.put("Pete", "Hi Pete");
+      assertEquals(customCache.size(), 2);
 
-      adminService.removeAll();
-      assertEquals(cache.size(), 0);
+      service.removeAll();
+      assertEquals(customCache.size(), 0);
    }
 
    public void testCacheRemoveAllWithCacheName() {
-      cache.put(new DefaultCacheKey(new Object[]{"Kevin"}), "Hi Kevin");
-      cache.put(new DefaultCacheKey(new Object[]{"Pete"}), "Hi Pete");
-      assertEquals(cache.size(), 2);
+      customCache.put("Kevin", "Hi Kevin");
+      customCache.put("Pete", "Hi Pete");
+      assertEquals(customCache.size(), 2);
 
-      adminService.removeAllWithCacheName();
-      assertEquals(cache.size(), 0);
+      service.removeAllWithCacheName();
+      assertEquals(customCache.size(), 0);
    }
 
    public void testCacheRemoveAllAfterInvocationWithException() {
-      cache.put(new DefaultCacheKey(new Object[]{"Kevin"}), "Hi Kevin");
-      cache.put(new DefaultCacheKey(new Object[]{"Pete"}), "Hi Pete");
-      assertEquals(cache.size(), 2);
+      customCache.put("Kevin", "Hi Kevin");
+      customCache.put("Pete", "Hi Pete");
+      assertEquals(customCache.size(), 2);
 
       try {
 
-         adminService.removeAllAfterInvocationWithException();
+         service.removeAllAfterInvocationWithException();
 
       } catch (IllegalArgumentException e) {
-         assertEquals(cache.size(), 2);
+         assertEquals(customCache.size(), 2);
       }
    }
 
    public void testCacheRemoveAllBeforeInvocationWithException() {
-      cache.put(new DefaultCacheKey(new Object[]{"Kevin"}), "Hi Kevin");
-      cache.put(new DefaultCacheKey(new Object[]{"Pete"}), "Hi Pete");
-      assertEquals(cache.size(), 2);
+      customCache.put("Kevin", "Hi Kevin");
+      customCache.put("Pete", "Hi Pete");
+      assertEquals(customCache.size(), 2);
 
       try {
 
-         adminService.removeAllBeforeInvocationWithException();
+         service.removeAllBeforeInvocationWithException();
 
       } catch (IllegalArgumentException e) {
-         assertEquals(cache.size(), 0);
+         assertEquals(customCache.size(), 0);
       }
    }
 }

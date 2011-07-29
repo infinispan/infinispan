@@ -39,9 +39,9 @@ import javax.inject.Inject;
 import static org.jboss.seam.solder.bean.Beans.getQualifiers;
 
 /**
- * <p>This class is responsible to produce the {@link Cache} and {@link AdvancedCache}. This class use the
+ * This class is responsible to produce the {@link Cache} and {@link AdvancedCache}. This class use the
  * <a href="http://docs.jboss.org/seam/3/solder/latest/reference/en-US/html_single/#genericbeans">Generic Beans</a>
- * mechanism provided by Seam Solder.</p>
+ * mechanism provided by Seam Solder.
  *
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI

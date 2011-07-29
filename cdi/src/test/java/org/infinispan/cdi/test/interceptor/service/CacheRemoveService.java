@@ -22,11 +22,10 @@
  */
 package org.infinispan.cdi.test.interceptor.service;
 
-import org.infinispan.cdi.test.interceptor.service.generator.CustomCacheKeyGenerator;
-import org.infinispan.cdi.util.Contracts;
-
 import javax.cache.interceptor.CacheRemoveAll;
 import javax.cache.interceptor.CacheRemoveEntry;
+
+import static org.infinispan.cdi.util.Contracts.assertNotNull;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
@@ -35,22 +34,22 @@ public class CacheRemoveService {
 
    @CacheRemoveEntry
    public void removeUser(String login) {
-      Contracts.assertNotNull(login, "login parameter cannot be null");
+      assertNotNull(login, "login parameter cannot be null");
    }
 
    @CacheRemoveEntry(cacheName = "custom")
    public void removeUserWithCacheName(String login) {
-      Contracts.assertNotNull(login, "login parameter cannot be null");
+      assertNotNull(login, "login parameter cannot be null");
    }
 
    @CacheRemoveEntry(cacheName = "custom", afterInvocation = false)
    public void removeUserBeforeInvocationWithException(String login) {
-      Contracts.assertNotNull(login, "login parameter cannot be null");
+      assertNotNull(login, "login parameter cannot be null");
    }
 
    @CacheRemoveEntry(cacheName = "custom", cacheKeyGenerator = CustomCacheKeyGenerator.class)
    public void removeUserWithCustomCacheKeyGenerator(String login) {
-      Contracts.assertNotNull(login, "login parameter cannot be null");
+      assertNotNull(login, "login parameter cannot be null");
    }
 
    @CacheRemoveAll

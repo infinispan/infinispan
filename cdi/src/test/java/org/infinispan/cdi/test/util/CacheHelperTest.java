@@ -22,13 +22,13 @@
  */
 package org.infinispan.cdi.test.util;
 
+import org.infinispan.cdi.interceptor.DefaultCacheKey;
+import org.infinispan.cdi.interceptor.DefaultCacheKeyGenerator;
 import org.infinispan.cdi.util.CacheHelper;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.cache.interceptor.CacheKey;
-import javax.cache.interceptor.DefaultCacheKey;
-import javax.cache.interceptor.DefaultCacheKeyGenerator;
 import javax.interceptor.InvocationContext;
 import java.lang.reflect.Method;
 

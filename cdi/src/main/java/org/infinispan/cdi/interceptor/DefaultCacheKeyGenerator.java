@@ -20,41 +20,22 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.interceptor.service.generator;
+package org.infinispan.cdi.interceptor;
 
 import javax.cache.interceptor.CacheKey;
-import java.lang.reflect.Method;
+import javax.cache.interceptor.CacheKeyGenerator;
+import javax.interceptor.InvocationContext;
 
 /**
+ * This is the default cache key generator implementation. By default all parameters of the method intercepted compose
+ * the {@link CacheKey}.
+ *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class CustomCacheKey implements CacheKey {
-   private final Method method;
-   private final Object firstParameter;
-
-   public CustomCacheKey(Method method, Object firstParameterValue) {
-      this.method = method;
-      this.firstParameter = firstParameterValue;
-   }
+public class DefaultCacheKeyGenerator implements CacheKeyGenerator {
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      CustomCacheKey that = (CustomCacheKey) o;
-
-      if (firstParameter != null ? !firstParameter.equals(that.firstParameter) : that.firstParameter != null)
-         return false;
-      if (method != null ? !method.equals(that.method) : that.method != null) return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = method != null ? method.hashCode() : 0;
-      result = 31 * result + (firstParameter != null ? firstParameter.hashCode() : 0);
-      return result;
+   public CacheKey generateCacheKey(InvocationContext context) {
+      return new DefaultCacheKey(context.getParameters());
    }
 }

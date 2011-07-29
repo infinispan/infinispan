@@ -22,50 +22,17 @@
  */
 package org.infinispan.cdi.test.interceptor.service;
 
-
-import org.infinispan.cdi.test.interceptor.service.generator.CustomCacheKeyGenerator;
-
-import javax.cache.interceptor.CacheRemoveAll;
-import javax.cache.interceptor.CacheRemoveEntry;
+import javax.cache.interceptor.CacheKey;
+import javax.cache.interceptor.CacheKeyGenerator;
+import javax.interceptor.InvocationContext;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class AdminService {
+public class CustomCacheKeyGenerator implements CacheKeyGenerator {
 
-   @CacheRemoveEntry
-   public void removeUser(String login) {
-      if (login == null) {
-         throw new IllegalArgumentException("login parameter cannot be null");
-      }
-   }
-
-   @CacheRemoveEntry(afterInvocation = false)
-   public void removeUserBeforeInvocation(String login) {
-      removeUser(login);
-   }
-
-   @CacheRemoveEntry(cacheKeyGenerator = CustomCacheKeyGenerator.class)
-   public void removeUserWithCustomCacheKeyGenerator(String login) {
-      removeUser(login);
-   }
-
-   @CacheRemoveEntry(cacheName = "custom")
-   public void removeUserWithCacheName(String login) {
-      removeUser(login);
-   }
-
-   @CacheRemoveAll
-   public void removeAllUser() {
-   }
-
-   @CacheRemoveAll(afterInvocation = false)
-   public void removeAllUserBeforeInvocation(String login) {
-      throw new IllegalArgumentException();
-   }
-
-   @CacheRemoveAll(cacheName = "custom")
-   public void removeAllUserWithCacheName(String login) {
-      removeUser(login);
+   @Override
+   public CacheKey generateCacheKey(InvocationContext invocationContext) {
+      return new CustomCacheKey(invocationContext.getMethod(), invocationContext.getParameters()[0]);
    }
 }

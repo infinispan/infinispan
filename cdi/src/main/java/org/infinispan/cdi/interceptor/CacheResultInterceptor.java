@@ -33,11 +33,13 @@ import javax.interceptor.InvocationContext;
 import java.lang.reflect.Method;
 
 import static org.infinispan.cdi.util.CacheHelper.generateCacheKey;
+import static org.infinispan.cdi.util.CacheHelper.getDefaultMethodCacheName;
 
 /**
  * <p>Implementation class of the {@link CacheResult} interceptor. This interceptor uses the following algorithm
  * describes in JSR-107.</p>
- * <p> When a method annotated with @CacheResult is invoked the following must occur.
+ *
+ * <p>When a method annotated with @CacheResult is invoked the following must occur.
  * <ol>
  *    <li>Generate a key based on InvocationContext using the specified {@linkplain javax.cache.interceptor.CacheKeyGenerator
  *    CacheKeyGenerator}.</li>
@@ -49,7 +51,7 @@ import static org.infinispan.cdi.util.CacheHelper.generateCacheKey;
  *
  * There is a skipGet attribute which if set to true will cause the method body to always be invoked and the return
  * value put into the cache. The cache is not checked for the key before method body invocation, skipping steps 2 and 3
- * from the list above. This can be used for annotating methods that do a cache.put() with no other consequences. </p>
+ * from the list above. This can be used for annotating methods that do a cache.put() with no other consequences.</p>
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
@@ -67,7 +69,8 @@ public class CacheResultInterceptor {
    public Object cacheResult(InvocationContext context) throws Exception {
       final Method method = context.getMethod();
       final CacheResult cacheResult = method.getAnnotation(CacheResult.class);
-      final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheResult.cacheName(), context.getMethod());
+      final String cacheName = cacheResult.cacheName().trim().isEmpty() ? getDefaultMethodCacheName(method) : cacheResult.cacheName();
+      final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheName, context.getMethod());
       final CacheKey cacheKey = generateCacheKey(cacheResult.cacheKeyGenerator(), context);
 
       Object methodResult = null;

@@ -24,11 +24,10 @@ package org.infinispan.cdi.interceptor.literal;
 
 import javax.cache.interceptor.CacheRemoveAll;
 import javax.cache.interceptor.CacheResolver;
-import javax.cache.interceptor.DefaultCacheResolver;
 import javax.enterprise.util.AnnotationLiteral;
 
 /**
- *  @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class CacheRemoveAllLiteral extends AnnotationLiteral<CacheRemoveAll> implements CacheRemoveAll {
 
@@ -48,7 +47,7 @@ public class CacheRemoveAllLiteral extends AnnotationLiteral<CacheRemoveAll> imp
    }
 
    @Override
-   public Class<? extends CacheResolver> cacheResovler() {
-      return DefaultCacheResolver.class;
+   public Class<? extends CacheResolver> cacheResolver() {
+      return CacheResolver.class;
    }
 }
