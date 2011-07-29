@@ -94,7 +94,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
                                                             2, true);
 
       for (int i = 0; i < 4; i++) {
-         advancedCache(i).addInterceptor(new HitsAwareCacheManagersTest.HitCountInterceptor(null), 1);
+         advancedCache(i).addInterceptor(new HitsAwareCacheManagersTest.HitCountInterceptor(), 1);
       }
    }
 

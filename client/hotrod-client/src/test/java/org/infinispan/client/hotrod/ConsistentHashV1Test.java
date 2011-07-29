@@ -28,9 +28,12 @@ import org.infinispan.util.hash.Hash;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 
 import static org.testng.Assert.assertEquals;
 
@@ -54,11 +57,11 @@ public class ConsistentHashV1Test {
       a2 = new InetSocketAddress(2);
       a3 = new InetSocketAddress(3);
       a4 = new InetSocketAddress(4);
-      LinkedHashMap<InetSocketAddress, Integer> map = new LinkedHashMap<InetSocketAddress, Integer>();
-      map.put(a1, 0);
-      map.put(a2, 1000);
-      map.put(a3, 2000);
-      map.put(a4, 3000);
+      LinkedHashMap<SocketAddress, Set<Integer>> map = new LinkedHashMap<SocketAddress, Set<Integer>>();
+      map.put(a1, Collections.singleton(0));
+      map.put(a2, Collections.singleton(1000));
+      map.put(a3, Collections.singleton(2000));
+      map.put(a4, Collections.singleton(3000));
 
       this.v1 = new ConsistentHashV1();
       this.v1.init(map, numOwners, 10000);

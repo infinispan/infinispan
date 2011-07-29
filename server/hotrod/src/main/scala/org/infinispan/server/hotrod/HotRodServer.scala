@@ -172,11 +172,16 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
          val maxWaitTime = cache.getConfiguration.getRehashRpcTimeout() * 10 // after which we give up!
          val giveupTime = System.currentTimeMillis + maxWaitTime
          var hashIdRetrieved = false
+         val isTrace = isTraceEnabled
          do {
             try {
                val distHashIds = cacheDm.getConsistentHash.getHashIds(clusterAddress)
+               if (isTrace)
+                  trace("Cluster address (%s) has these hash ids associated: %s", clusterAddress, distHashIds)
                // Once hash ids retrieved, make them immutable and update the topology address
                hashIds += (hashIdKey -> asScalaBuffer(distHashIds.asInstanceOf[java.util.List[Int]]).toList)
+               if (isTrace)
+                  trace("After scala transformation, cluster address (%s) has these hash ids associated: %s", clusterAddress, hashIds)
                hashIdRetrieved = true
             } catch {
                case u: UnsupportedOperationException => {
@@ -184,7 +189,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
                      debug("Unable to get all hash ids due to rehashing being in process.")
                   var time = rand.nextInt((maxSleepTime - minSleepTime) / 10)
                   time = (time * 10) + minSleepTime
-                  if (isTraceEnabled)
+                  if (isTrace)
                      trace("Sleeping for %s", Util.prettyPrintTime(time))
                   Thread.sleep(time) // sleep for a while and retry
                }
