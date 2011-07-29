@@ -23,7 +23,6 @@
 package org.infinispan.client.hotrod.logging;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
@@ -32,7 +31,8 @@ import org.jboss.logging.MessageLogger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.LinkedHashMap;
+import java.net.SocketAddress;
+import java.util.Set;
 
 import static org.jboss.logging.Logger.Level.*;
 
@@ -68,7 +68,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @LogMessage(level = INFO)
    @Message(value = "New topology: %s", id = 4006)
-   void newTopology(LinkedHashMap<InetSocketAddress, Integer> servers2HashCode);
+   void newTopology(Set<SocketAddress> topology);
 
    @LogMessage(level = ERROR)
    @Message(value = "Exception encountered. Retry %d out of %d", id = 4007)
@@ -100,15 +100,15 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @LogMessage(level = INFO)
    @Message(value = "New server added(%s), adding to the pool.", id = 4014)
-   void newServerAdded(InetSocketAddress server);
+   void newServerAdded(SocketAddress server);
 
    @LogMessage(level = WARN)
    @Message(value = "Failed adding new server %s", id = 4015)
-   void failedAddingNewServer(InetSocketAddress server, @Cause Exception e);
+   void failedAddingNewServer(SocketAddress server, @Cause Exception e);
 
    @LogMessage(level = INFO)
    @Message(value = "Server not in cluster anymore(%s), removing from the pool.", id = 4016)
-   void removingServer(InetSocketAddress server);
+   void removingServer(SocketAddress server);
 
    @LogMessage(level = ERROR)
    @Message(value = "Could not fetch transport", id = 4017)

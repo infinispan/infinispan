@@ -36,12 +36,12 @@ import org.infinispan.util.Util;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -55,14 +55,14 @@ public class TcpTransportFactory implements TransportFactory {
    private static final Log log = LogFactory.getLog(TcpTransportFactory.class, Log.class);
 
    /**
-    * We need synchronization as the thread that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#start(org.infinispan.client.hotrod.impl.ConfigurationProperties, java.util.Collection, java.util.concurrent.atomic.AtomicInteger)}
+    * We need synchronization as the thread that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#start(org.infinispan.client.hotrod.impl.ConfigurationProperties, java.util.Collection, java.util.concurrent.atomic.AtomicInteger, ClassLoader)}
     * might(and likely will) be different from the thread(s) that calls {@link #getTransport()} or other methods
     */
    private Object lock = new Object();
    // The connection pool implementation is assumed to be thread-safe, so we need to synchronize just the access to this field and not the method calls
    private GenericKeyedObjectPool connectionPool;
    private RequestBalancingStrategy balancer;
-   private Collection<InetSocketAddress> servers;
+   private Collection<SocketAddress> servers;
    private ConsistentHash consistentHash;
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
    
@@ -71,7 +71,7 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile int soTimeout;
 
    @Override
-   public void start(ConfigurationProperties cfg, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId, ClassLoader classLoader) {
+   public void start(ConfigurationProperties cfg, Collection<SocketAddress> staticConfiguredServers, AtomicInteger topologyId, ClassLoader classLoader) {
       synchronized (lock) {
          hashFactory.init(cfg, classLoader);
          boolean pingOnStartup = cfg.getPingOnStartup();
@@ -95,9 +95,9 @@ public class TcpTransportFactory implements TransportFactory {
     * This will makes sure that, when the evictor thread kicks in the minIdle is set. We don't want to do this is the caller's thread,
     * as this is the user.
     */
-   private void createAndPreparePool(Collection<InetSocketAddress> staticConfiguredServers, PropsKeyedObjectPoolFactory poolFactory) {
+   private void createAndPreparePool(Collection<SocketAddress> staticConfiguredServers, PropsKeyedObjectPoolFactory poolFactory) {
       connectionPool = (GenericKeyedObjectPool) poolFactory.createPool();
-      for (InetSocketAddress addr: staticConfiguredServers) {
+      for (SocketAddress addr: staticConfiguredServers) {
          connectionPool.preparePool(addr, false);
       }
    }
@@ -115,13 +115,13 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    @Override
-   public void updateHashFunction(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, short hashFunctionVersion, int hashSpace) {
+   public void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace) {
        synchronized (lock) {
          ConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
          if (hash == null) {
             log.noHasHFunctionConfigured(hashFunctionVersion);
          } else {
-            hash.init(servers2HashCode, numKeyOwners, hashSpace);
+            hash.init(servers2Hash, numKeyOwners, hashSpace);
          }
          consistentHash = hash;
       }
@@ -129,7 +129,7 @@ public class TcpTransportFactory implements TransportFactory {
 
    @Override
    public Transport getTransport() {
-      InetSocketAddress server;
+      SocketAddress server;
       synchronized (lock) {
          server = balancer.nextServer();
       }
@@ -137,7 +137,7 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    public Transport getTransport(byte[] key) {
-      InetSocketAddress server;
+      SocketAddress server;
       synchronized (lock) {
          if (consistentHash != null) {
             server = consistentHash.getServer(key);
@@ -180,11 +180,11 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    @Override
-   public void updateServers(Collection<InetSocketAddress> newServers) {
+   public void updateServers(Collection<SocketAddress> newServers) {
       synchronized (lock) {
-         Set<InetSocketAddress> addedServers = new HashSet<InetSocketAddress>(newServers);
+         Set<SocketAddress> addedServers = new HashSet<SocketAddress>(newServers);
          addedServers.removeAll(servers);
-         Set<InetSocketAddress> failedServers = new HashSet<InetSocketAddress>(servers);
+         Set<SocketAddress> failedServers = new HashSet<SocketAddress>(servers);
          failedServers.removeAll(newServers);
          if (log.isTraceEnabled()) {
             log.tracef("Current list: %s", servers);
@@ -198,7 +198,7 @@ public class TcpTransportFactory implements TransportFactory {
          }
 
          //1. first add new servers. For servers that went down, the returned transport will fail for now
-         for (InetSocketAddress server : newServers) {
+         for (SocketAddress server : newServers) {
             log.newServerAdded(server);
             try {
                connectionPool.addObject(server);
@@ -214,7 +214,7 @@ public class TcpTransportFactory implements TransportFactory {
 
 
          //3. Now just remove failed servers
-         for (InetSocketAddress server : failedServers) {
+         for (SocketAddress server : failedServers) {
             log.removingServer(server);
             connectionPool.clear(server);
          }
@@ -223,20 +223,20 @@ public class TcpTransportFactory implements TransportFactory {
       }
    }
 
-   public Collection<InetSocketAddress> getServers() {
+   public Collection<SocketAddress> getServers() {
       synchronized (lock) {
          return servers;
       }
    }
 
-   private void logConnectionInfo(InetSocketAddress server) {
+   private void logConnectionInfo(SocketAddress server) {
       KeyedObjectPool pool = getConnectionPool();
       if (log.isTraceEnabled()) {
          log.tracef("For server %s: active = %d; idle = %d", server, pool.getNumActive(server), pool.getNumIdle(server));
       }
    }
 
-   private Transport borrowTransportFromPool(InetSocketAddress server) {
+   private Transport borrowTransportFromPool(SocketAddress server) {
       // The borrowObject() call could take a long time, so we hold the lock only until we get the connection pool reference
       KeyedObjectPool pool = getConnectionPool();
       try {

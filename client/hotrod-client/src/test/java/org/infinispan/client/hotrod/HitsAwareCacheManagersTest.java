@@ -33,6 +33,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.BeforeMethod;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +71,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
       return hitCountInterceptor;
    }
 
-   protected void assertOnlyServerHit(InetSocketAddress serverAddress) {
+   protected void assertOnlyServerHit(SocketAddress serverAddress) {
       CacheContainer cacheContainer = hrServ2CacheManager.get(serverAddress);
       HitCountInterceptor interceptor = getHitCountInterceptor(cacheContainer.getCache());
       assert interceptor.getHits() == 1 : "Expected one hit but received " + interceptor.getHits();
@@ -109,9 +110,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    }
 
    private void addHitCountInterceptor(Cache<Object, Object> cache) {
-      InetSocketAddress addr;
-      addr = getHotRodServerAddress(cache);
-      HitCountInterceptor interceptor = new HitCountInterceptor(addr);
+      HitCountInterceptor interceptor = new HitCountInterceptor();
       cache.getAdvancedCache().addInterceptor(interceptor, 1);
    }
 
@@ -132,11 +131,6 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    public static class HitCountInterceptor extends CommandInterceptor{
 
       private volatile int invocationCount;
-      private volatile InetSocketAddress addr;
-
-      public HitCountInterceptor(InetSocketAddress addr) {
-         this.addr = addr;
-      }
 
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {

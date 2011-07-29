@@ -24,9 +24,10 @@ package org.infinispan.client.hotrod.impl.transport;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -41,13 +42,13 @@ public interface TransportFactory {
 
    public void releaseTransport(Transport transport);
 
-   void start(ConfigurationProperties props, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId, ClassLoader classLoader);
+   void start(ConfigurationProperties props, Collection<SocketAddress> staticConfiguredServers, AtomicInteger topologyId, ClassLoader classLoader);
 
-   void updateServers(Collection<InetSocketAddress> newServers);
+   void updateServers(Collection<SocketAddress> newServers);
 
    void destroy();
 
-   void updateHashFunction(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, short hashFunctionVersion, int hashSpace);
+   void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace);
 
    Transport getTransport(byte[] key);
 

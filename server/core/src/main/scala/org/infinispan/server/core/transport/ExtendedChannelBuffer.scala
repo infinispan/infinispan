@@ -33,7 +33,7 @@ import org.jboss.netty.buffer.{ChannelBuffers, ChannelBuffer}
 object ExtendedChannelBuffer {
 
    def wrappedBuffer(array: Array[Byte]*) = ChannelBuffers.wrappedBuffer(array : _*)
-   def dynamicBuffer() = ChannelBuffers.dynamicBuffer()
+   def dynamicBuffer = ChannelBuffers.dynamicBuffer()
 
    def readUnsignedShort(bf: ChannelBuffer): Int = bf.readUnsignedShort
    def readUnsignedInt(bf: ChannelBuffer): Int = VInt.read(bf)
