@@ -40,6 +40,7 @@ import javax.enterprise.inject.Produces;
 public class Config {
    /**
     * <p>Associates the "small" cache with the qualifier {@link Small}.</p>
+    *
     * <p>The default configuration will be used.</p>
     */
    @Produces
@@ -53,12 +54,9 @@ public class Config {
    @Produces
    @OverrideDefault
    @ApplicationScoped
-   public EmbeddedCacheManager getDefaultCacheManager() {
-      Configuration defaultConfiguration = new Configuration();
-      defaultConfiguration.fluent()
-            .eviction()
-            .maxEntries(7);
-
-      return new DefaultCacheManager(defaultConfiguration);
+   public EmbeddedCacheManager defaultCacheManager() {
+      return new DefaultCacheManager(new Configuration().fluent()
+                                           .eviction().maxEntries(7)
+                                           .build());
    }
 }

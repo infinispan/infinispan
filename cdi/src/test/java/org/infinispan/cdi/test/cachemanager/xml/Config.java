@@ -43,6 +43,7 @@ import java.io.InputStream;
 public class Config {
    /**
     * <p>Associates the "very-large" cache (configured below) with the qualifier {@link VeryLarge}.</p>
+    *
     * <p>The default configuration defined in "infinispan.xml" will be used.</p>
     */
    @Produces
@@ -64,13 +65,12 @@ public class Config {
    @Produces
    @OverrideDefault
    @ApplicationScoped
-   public EmbeddedCacheManager getDefaultCacheManager(@Resource("infinispan.xml") InputStream xml) throws IOException {
+   public EmbeddedCacheManager defaultCacheManager(@Resource("infinispan.xml") InputStream xml) throws IOException {
       EmbeddedCacheManager externalCacheContainerManager = new DefaultCacheManager(xml);
 
-      Configuration quickVeryLargeConfiguration = new Configuration().fluent()
-            .expiration().wakeUpInterval(1l).build();
-
-      externalCacheContainerManager.defineConfiguration("quick-very-large", quickVeryLargeConfiguration);
+      externalCacheContainerManager.defineConfiguration("quick-very-large", new Configuration().fluent()
+            .expiration().wakeUpInterval(1l)
+            .build());
 
       return externalCacheContainerManager;
    }
