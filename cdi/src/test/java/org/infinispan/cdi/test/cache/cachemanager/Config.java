@@ -43,12 +43,9 @@ public class Config {
    @Infinispan("large")
    @Produces
    Configuration largeConfiguration() {
-      Configuration largeConfiguration = new Configuration();
-      largeConfiguration.fluent()
-            .eviction()
-            .maxEntries(2000);
-
-      return largeConfiguration;
+      return new Configuration().fluent()
+            .eviction().maxEntries(2000)
+            .build();
    }
 
    /**
@@ -58,12 +55,9 @@ public class Config {
    @Infinispan("small")
    @Produces
    Configuration smallConfiguration() {
-      Configuration largeConfiguration = new Configuration();
-      largeConfiguration.fluent()
-            .eviction()
-            .maxEntries(20);
-
-      return largeConfiguration;
+      return new Configuration().fluent()
+            .eviction().maxEntries(20)
+            .build();
    }
 
    /**
@@ -74,11 +68,8 @@ public class Config {
    @Produces
    @ApplicationScoped
    EmbeddedCacheManager specificCacheManager() {
-      Configuration defaultConfiguration = new Configuration();
-      defaultConfiguration.fluent()
-            .eviction()
-            .strategy(FIFO);
-
-      return new DefaultCacheManager(defaultConfiguration);
+      return new DefaultCacheManager(new Configuration().fluent()
+                                           .eviction().strategy(FIFO)
+                                           .build());
    }
 }

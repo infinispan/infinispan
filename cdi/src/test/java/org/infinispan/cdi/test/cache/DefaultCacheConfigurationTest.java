@@ -68,12 +68,9 @@ public class DefaultCacheConfigurationTest extends Arquillian {
       @OverrideDefault
       @ApplicationScoped
       public Configuration customDefaultCacheConfiguration() {
-         Configuration defaultConfiguration = new Configuration();
-         defaultConfiguration.fluent()
-               .eviction()
-               .maxEntries(16);
-
-         return defaultConfiguration;
+         return new Configuration().fluent()
+               .eviction().maxEntries(16)
+               .build();
       }
    }
 }

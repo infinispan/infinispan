@@ -60,20 +60,18 @@ public class Config {
    @Produces
    @OverrideDefault
    @ApplicationScoped
-   public EmbeddedCacheManager getDefaultCacheManager() {
+   public EmbeddedCacheManager defaultCacheManager() {
       EmbeddedCacheManager externalCacheContainerManager = new DefaultCacheManager();
 
       // define large configuration
-      Configuration largeConfiguration = new Configuration().fluent()
-         .eviction().maxEntries(100).build();
-
-      externalCacheContainerManager.defineConfiguration("large", largeConfiguration);
+      externalCacheContainerManager.defineConfiguration("large", new Configuration().fluent()
+            .eviction().maxEntries(100)
+            .build());
 
       // define quick configuration
-      Configuration quickConfiguration = new Configuration().fluent()
-         .expiration().wakeUpInterval(1l).build();
-
-      externalCacheContainerManager.defineConfiguration("quick", quickConfiguration);
+      externalCacheContainerManager.defineConfiguration("quick", new Configuration().fluent()
+            .expiration().wakeUpInterval(1l)
+            .build());
 
       return externalCacheContainerManager;
    }

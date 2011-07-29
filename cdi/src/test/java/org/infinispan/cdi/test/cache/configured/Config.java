@@ -34,34 +34,30 @@ public class Config {
    /**
     * <p>Configures a "tiny" cache (with a very low number of entries), and associates it with the qualifier {@link
     * Tiny}.</p>
+    *
     * <p>This will use the default cache container.</p>
     */
    @Produces
    @Infinispan("tiny")
    @Tiny
    public Configuration tinyConfiguration() {
-      Configuration configuration = new Configuration();
-      configuration.fluent()
-            .eviction()
-            .maxEntries(1);
-
-      return configuration;
+      return new Configuration().fluent()
+            .eviction().maxEntries(1)
+            .build();
    }
 
    /**
     * <p>Configures a "small" cache (with a pretty low number of entries), and associates it with the qualifier {@link
     * Small}.</p>
+    *
     * <p>This will use the default cache container.</p>
     */
    @Produces
    @Infinispan("small")
    @Small
    public Configuration smallConfiguration() {
-      Configuration configuration = new Configuration();
-      configuration.fluent()
-            .eviction()
-            .maxEntries(10);
-
-      return configuration;
+      return new Configuration().fluent()
+            .eviction().maxEntries(10)
+            .build();
    }
 }

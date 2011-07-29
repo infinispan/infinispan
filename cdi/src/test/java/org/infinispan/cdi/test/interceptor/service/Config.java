@@ -28,7 +28,6 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 
 /**
@@ -37,6 +36,7 @@ import javax.enterprise.inject.Produces;
 public class Config {
    /**
     * <p>Associates the "custom" cache with the qualifier {@link Custom}.</p>
+    *
     * <p>The default configuration will be used.</p>
     */
    @Custom
@@ -46,6 +46,7 @@ public class Config {
 
    /**
     * <p>Associates the "small" cache with the qualifier {@link Small}.</p>
+    *
     * <p>The default configuration will be used.</p>
     */
    @Small
@@ -59,11 +60,9 @@ public class Config {
    @Small
    @Produces
    @ApplicationScoped
-   EmbeddedCacheManager smallCacheManager(@Default Configuration defaultConfiguration) {
-      defaultConfiguration.fluent()
-            .eviction()
-            .maxEntries(4);
-
-      return new DefaultCacheManager(defaultConfiguration);
+   EmbeddedCacheManager smallCacheManager() {
+      return new DefaultCacheManager(new Configuration().fluent()
+                                           .eviction().maxEntries(4)
+                                           .build());
    }
 }
