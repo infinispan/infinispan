@@ -24,7 +24,7 @@ package org.infinispan.client.hotrod.retry;
 
 import static org.testng.Assert.assertEquals;
 
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Map;
 
 import org.infinispan.client.hotrod.VersionedValue;
@@ -121,7 +121,7 @@ public class ReplicationRetryTest extends AbstractRetryTest {
    private void validateSequenceAndStopServer() {
       resetStats();
       assertNoHits();
-      InetSocketAddress expectedServer = strategy.getServers()[strategy.getNextPosition()];
+      SocketAddress expectedServer = strategy.getServers()[strategy.getNextPosition()];
       assertNoHits();
       remoteCache.put("k","v");
 

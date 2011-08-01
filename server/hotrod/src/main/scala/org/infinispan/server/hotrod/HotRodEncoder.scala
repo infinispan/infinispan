@@ -185,7 +185,8 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends OneToOneEncoder 
       // If virtual nodes are enabled, we need to send as many hashes as
       // cluster members * num virtual nodes. Otherwise, rely on the default
       // when virtual nodes is disabled which is '1'.
-      writeUnsignedInt(h.view.members.size * numVNodes, buffer)
+      val totalNumServers = h.view.members.size * numVNodes
+      writeUnsignedInt(totalNumServers, buffer)
       h.view.members.foreach {address =>
          // Take hash ids associated with the cache
          val cacheHashIds = address.hashIds.get(r.cacheName).get

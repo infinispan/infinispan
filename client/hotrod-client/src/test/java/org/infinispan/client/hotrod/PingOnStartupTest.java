@@ -23,12 +23,11 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.config.Configuration;
-import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.util.Properties;
@@ -40,44 +39,17 @@ import static org.testng.AssertJUnit.assertEquals;
  * @since 4.1
  */
 @Test(groups = "functional", testName = "client.hotrod.PingOnStartupTest")
-public class PingOnStartupTest extends MultipleCacheManagersTest {
-   private HotRodServer hotRodServer1;
-   private HotRodServer hotRodServer2;
+public class PingOnStartupTest extends MultiHotRodServersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-      addClusterEnabledCacheManager(config);
-      addClusterEnabledCacheManager(config);
-
-      hotRodServer1 = TestHelper.startHotRodServer(manager(0));
-      hotRodServer2 = TestHelper.startHotRodServer(manager(1));
-
-      assert manager(0).getCache() != null;
-      assert manager(1).getCache() != null;
-
-      TestingUtil.blockUntilViewReceived(manager(0).getCache(), 2, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
-
-      cache(0).put("k","v");
-      assertEquals("v", cache(1).get("k"));
-   }
-
-   @AfterClass
-   @Override
-   protected void destroy() {
-      super.destroy();
-      try {
-         hotRodServer1.stop();
-         hotRodServer2.stop();
-      } catch (Exception e) {
-         //ignore
-      }
+      Configuration config = getDefaultClusteredConfig(CacheMode.DIST_SYNC);
+      createHotRodServers(2, config);
    }
 
    public void testTopologyFetched() throws Exception {
       Properties props = new Properties();
+      HotRodServer hotRodServer2 = server(1);
       props.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
       props.put("infinispan.client.hotrod.ping_on_startup", "true");
       props.put("timeBetweenEvictionRunsMillis", "500");
@@ -100,6 +72,7 @@ public class PingOnStartupTest extends MultipleCacheManagersTest {
 
    public void testTopologyNotFetched() {
       Properties props = new Properties();
+      HotRodServer hotRodServer2 = server(1);
       props.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
       props.put("infinispan.client.hotrod.ping_on_startup", "false");
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(props);

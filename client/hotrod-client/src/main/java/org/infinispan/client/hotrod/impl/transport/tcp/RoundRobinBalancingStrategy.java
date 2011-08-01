@@ -27,12 +27,9 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Round-robin implementation for {@link org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy}.
@@ -47,10 +44,10 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
 
    private int index = 0;
 
-   private InetSocketAddress[] servers;
+   private SocketAddress[] servers;
 
    @Override
-   public void setServers(Collection<InetSocketAddress> servers) {
+   public void setServers(Collection<SocketAddress> servers) {
       this.servers = servers.toArray(new InetSocketAddress[servers.size()]);
       // keep the old index if possible so that we don't produce more requests for the first server
       if (index >= this.servers.length) {
@@ -65,8 +62,8 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
     * Multiple threads might call this method at the same time.
     */
    @Override
-   public InetSocketAddress nextServer() {
-      InetSocketAddress server = getServerByIndex(index++);
+   public SocketAddress nextServer() {
+      SocketAddress server = getServerByIndex(index++);
       // don't allow index to overflow and have a negative value
       if (index >= servers.length)
          index = 0;
@@ -76,19 +73,19 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
    /**
     * Returns same value as {@link #nextServer()} without modifying indexes/state.
     */
-   public InetSocketAddress dryRunNextServer() {
+   public SocketAddress dryRunNextServer() {
       return getServerByIndex(index);
    }
 
-   private InetSocketAddress getServerByIndex(int pos) {
-      InetSocketAddress server = servers[pos];
+   private SocketAddress getServerByIndex(int pos) {
+      SocketAddress server = servers[pos];
       if (log.isTraceEnabled()) {
          log.tracef("Returning server: %s", server);
       }
       return server;
    }
 
-   public InetSocketAddress[] getServers() {
+   public SocketAddress[] getServers() {
       return servers;
    }
 

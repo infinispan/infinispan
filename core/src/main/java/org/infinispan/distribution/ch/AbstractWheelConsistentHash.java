@@ -119,6 +119,8 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
          }
       }
 
+      log.tracef("Positions are: %s", positions);
+
       // then populate caches, positionKeys and positionValues with the correct values (and in the correct order)
       caches = new LinkedHashSet<Address>(newCaches.size());
       positionKeys = new int[positions.size()];

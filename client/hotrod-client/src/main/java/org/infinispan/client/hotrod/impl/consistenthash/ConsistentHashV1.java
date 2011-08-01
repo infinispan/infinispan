@@ -27,11 +27,11 @@ import org.infinispan.util.hash.MurmurHash2;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -45,7 +45,7 @@ public class ConsistentHashV1 implements ConsistentHash {
 
    private static final Log log = LogFactory.getLog(ConsistentHashV1.class);
    
-   private final SortedMap<Integer, InetSocketAddress> positions = new TreeMap<Integer, InetSocketAddress>();
+   private final SortedMap<Integer, SocketAddress> positions = new TreeMap<Integer, SocketAddress>();
 
    private int hashSpace;
 
@@ -56,36 +56,41 @@ public class ConsistentHashV1 implements ConsistentHash {
    private Random rnd = new Random();
 
    @Override
-   public void init(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, int hashSpace) {
-      for (InetSocketAddress addr : servers2HashCode.keySet()) {
-         positions.put(servers2HashCode.get(addr), addr);
+   public void init(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, int hashSpace) {
+      for (Map.Entry<SocketAddress, Set<Integer>> entry : servers2Hash.entrySet()){
+         SocketAddress addr = entry.getKey();
+         for (Integer hash : entry.getValue()) {
+            SocketAddress prev = positions.put(hash, addr);
+            if (prev != null)
+               log.debugf("Adding hash (%d) again, this time for %s. Previously it was associated with: %s", hash, addr, prev);
+         }
       }
-      if (log.isTraceEnabled())
-         log.tracef("Positions are: %s", positions);
+
+      log.tracef("Positions (%d entries) are: %s", positions.size(), positions);
       this.hashSpace = hashSpace;
       this.numKeyOwners = numKeyOwners;
    }
 
    @Override
-   public InetSocketAddress getServer(byte[] key) {
+   public SocketAddress getServer(byte[] key) {
       int keyHashCode = hash.hash(key);
       if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
       int hash = Math.abs(keyHashCode);
 
-      SortedMap<Integer, InetSocketAddress> candidates = positions.tailMap(hash % hashSpace);
+      SortedMap<Integer, SocketAddress> candidates = positions.tailMap(hash % hashSpace);
       if (log.isTraceEnabled()) {
          log.tracef("Found possible candidates: %s", candidates);
       }
       int index = getIndex();
       if (candidates.size() <= index) {
          int newIndex = index - candidates.size();
-         InetSocketAddress socketAddress = getItemAtPosition(newIndex, positions);
+         SocketAddress socketAddress = getItemAtPosition(newIndex, positions);
          if (log.isTraceEnabled()) {
             log.tracef("Over the wheel, returning member: %s", socketAddress);
          }
          return socketAddress;
       } else {
-         InetSocketAddress socketAddress = getItemAtPosition(index, candidates);
+         SocketAddress socketAddress = getItemAtPosition(index, candidates);
          if (log.isTraceEnabled()) {
             log.tracef("Found candidate: %s", socketAddress);
          }
@@ -97,8 +102,8 @@ public class ConsistentHashV1 implements ConsistentHash {
       return rnd.nextInt(Math.min(numKeyOwners, positions.size()));
    }
 
-   private InetSocketAddress getItemAtPosition(int position, SortedMap<Integer, InetSocketAddress> map) {
-      Iterator<Map.Entry<Integer,InetSocketAddress>> iterator = map.entrySet().iterator();
+   private SocketAddress getItemAtPosition(int position, SortedMap<Integer, SocketAddress> map) {
+      Iterator<Map.Entry<Integer,SocketAddress>> iterator = map.entrySet().iterator();
       for (int i = 0; i < position; i++) {
          iterator.next();
       }

@@ -23,9 +23,10 @@
 
 package org.infinispan.spring.mock;
 
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
@@ -45,12 +46,12 @@ public final class MockTransportFactory implements TransportFactory {
 
    @Override
    public void start(final ConfigurationProperties props,
-            final Collection<InetSocketAddress> staticConfiguredServers,
+            final Collection<SocketAddress> staticConfiguredServers,
             final AtomicInteger topologyId, ClassLoader cl) {
    }
 
    @Override
-   public void updateServers(final Collection<InetSocketAddress> newServers) {
+   public void updateServers(final Collection<SocketAddress> newServers) {
    }
 
    @Override
@@ -58,7 +59,7 @@ public final class MockTransportFactory implements TransportFactory {
    }
 
    @Override
-   public void updateHashFunction(final LinkedHashMap<InetSocketAddress, Integer> servers2HashCode,
+   public void updateHashFunction(final Map<SocketAddress, Set<Integer>> servers2Hash,
             final int numKeyOwners, final short hashFunctionVersion, final int hashSpace) {
    }
 

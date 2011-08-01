@@ -36,6 +36,7 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -127,7 +128,7 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
       hotRodServer4 = TestHelper.startHotRodServer((EmbeddedCacheManager) c4.getCacheManager());
       registerCacheManager(c4.getCacheManager());
 
-      List<InetSocketAddress> serverAddresses = new ArrayList<InetSocketAddress>();
+      List<SocketAddress> serverAddresses = new ArrayList<SocketAddress>();
       serverAddresses.add(new InetSocketAddress("localhost", hotRodServer1.getPort()));
       serverAddresses.add(new InetSocketAddress("localhost", hotRodServer2.getPort()));
       serverAddresses.add(new InetSocketAddress("localhost", hotRodServer3.getPort()));
@@ -197,7 +198,7 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
 
    @Test(dependsOnMethods = "testStopServer")
    public void testRemoveServers() {
-      List<InetSocketAddress> serverAddresses = new ArrayList<InetSocketAddress>();
+      List<SocketAddress> serverAddresses = new ArrayList<SocketAddress>();
       serverAddresses.add(new InetSocketAddress("localhost", hotRodServer1.getPort()));
       serverAddresses.add(new InetSocketAddress("localhost", hotRodServer2.getPort()));
 

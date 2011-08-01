@@ -24,7 +24,7 @@ package org.infinispan.client.hotrod.impl.transport.tcp;
 
 import net.jcip.annotations.ThreadSafe;
 
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Collection;
 
 /**
@@ -36,7 +36,8 @@ import java.util.Collection;
 @ThreadSafe
 public interface RequestBalancingStrategy {
 
-   void setServers(Collection<InetSocketAddress> servers);
+   void setServers(Collection<SocketAddress> servers);
 
-   InetSocketAddress nextServer();
+   SocketAddress nextServer();
+
 }

@@ -29,6 +29,7 @@ import org.infinispan.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.util.TypedProperties;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Properties;
@@ -83,8 +84,8 @@ public class ConfigurationProperties {
       return props.getProperty(TRANSPORT_FACTORY, TcpTransportFactory.class.getName());
    }
 
-   public Collection<InetSocketAddress> getServerList() {
-      Set<InetSocketAddress> addresses = new HashSet<InetSocketAddress>();
+   public Collection<SocketAddress> getServerList() {
+      Set<SocketAddress> addresses = new HashSet<SocketAddress>();
       String servers = props.getProperty(SERVER_LIST, "127.0.0.1:" + DEFAULT_HOTROD_PORT);
       for (String server: servers.split(";")) {
          String[] components = server.trim().split(":");
