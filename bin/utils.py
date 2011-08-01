@@ -322,22 +322,17 @@ class Git(object):
 
 class DryRun(object):
   location_root = "%s/%s" % (os.getenv("HOME"), "infinispan_release_dry_run")
-  flags = "-r --protocol=28"
-  
-  def __init__(self):
-    if settings['verbose']:
-      self.flags = "-rv --protocol=28"
   
   def find_version(self, url):
     return os.path.split(url)[1]
       
   def copy(self, src, dst):
-    prettyprint( "  DryRun: Executing %s" % ['rsync', self.flags, src, dst], Levels.DEBUG)
+    prettyprint( "  DryRun: Executing %s" % ['rsync', '-rv', '--protocol=28', src, dst], Levels.DEBUG)
     try:
       os.makedirs(dst)
     except:
       pass
-    subprocess.check_call(['rsync', self.flags, src, dst])  
+    subprocess.check_call(['rsync', '-rv', '--protocol=28', src, dst])  
 
 class Uploader(object):
   def __init__(self):
