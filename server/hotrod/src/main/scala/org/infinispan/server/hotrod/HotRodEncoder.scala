@@ -115,9 +115,8 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends OneToOneEncoder 
                      TopologyAwareResponse(TopologyView(currentTopologyView.topologyId, currentTopologyView.members))
                   } else { // Must be 3 and distributed
                      // TODO: Retrieve hash function when we have specified functions
-                     val hashSpace = cache.getAdvancedCache.getDistributionManager.getConsistentHash.getHashSpace
                      HashDistAwareResponse(TopologyView(currentTopologyView.topologyId, currentTopologyView.members),
-                           config.getNumOwners, DEFAULT_HASH_FUNCTION_VERSION, hashSpace)
+                           config.getNumOwners, DEFAULT_HASH_FUNCTION_VERSION, Integer.MAX_VALUE)
                   }
                } else null
             }
