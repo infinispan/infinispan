@@ -99,14 +99,6 @@ public interface ConsistentHash {
    List<Integer> getHashIds(Address a);
 
    /**
-    * Returns the hash space constant for this consistent hash algorithm class. This integer is often used as modulus
-    * for arithmetic operations within the algorithm, for example, limiting the range of possible hash values.
-    * 
-    * @return A positive integer containing the hash space constant or 0 is not supported by implementation. 
-    */
-   int getHashSpace();
-
-   /**
     * Returns the nodes that need will replicate their state if the specified node crashes. The return collection
     * should contain all the nodes that backup-ed on leaver and one of the nodes which acted as a backup for the leaver .
     * <p>
