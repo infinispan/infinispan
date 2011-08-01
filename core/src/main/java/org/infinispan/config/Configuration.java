@@ -1335,6 +1335,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    // ------------------------------------------------------------------------------------------------------------
 
    public void accept(ConfigurationBeanVisitor v) {
+      v.visitConfiguration(this);
       clustering.accept(v);
       customInterceptors.accept(v);
       dataContainer.accept(v);
@@ -1350,7 +1351,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       transaction.accept(v);
       unsafe.accept(v);
       indexing.accept(v);
-      v.visitConfiguration(this);
    }
 
    /**
