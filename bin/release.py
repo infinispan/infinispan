@@ -182,7 +182,8 @@ def get_module_name(pom_file):
   return tree.findtext("./{%s}artifactId" % maven_pom_xml_namespace)
 
 
-def upload_artifacts_to_sourceforge(base_dir, version):
+def upload_artifacts(base_dir, version):
+  """Artifacts gets rsync'ed to filemgmt.jboss.org, in the downloads_htdocs/infinispan directory"""
   shutil.rmtree(".tmp", ignore_errors = True)  
   os.mkdir(".tmp")
   os.mkdir(".tmp/%s" % version)
@@ -193,7 +194,7 @@ def upload_artifacts_to_sourceforge(base_dir, version):
     full_name = "%s/%s" % (dist_dir, item)
     if item.strip().lower().endswith(".zip") and os.path.isfile(full_name):      
       shutil.copy2(full_name, version)
-  uploader.upload_scp(version, "sourceforge_frs:/home/frs/project/i/in/infinispan/infinispan")
+  uploader.upload_rsync(version, "infinispan@filemgmt.jboss.org:/downloads_htdocs/infinispan")
   shutil.rmtree(".tmp", ignore_errors = True)  
 
 def unzip_archive(version):
@@ -220,11 +221,12 @@ def upload_javadocs(base_dir, version):
   os.chdir(base_dir)
 
 def upload_schema(base_dir, version):
-  """Schema gets rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan/schemas directory"""
+  """Schema gets rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan/schemas and schema_htdoc/infinispan directories"""
   os.chdir("%s/target/distribution/infinispan-%s/etc/schema" % (base_dir, version))
   
-  ## rsync this stuff to filemgmt.jboss.org
+  ## rsync this stuff to filemgmt.jboss.org, we put it in the orginal location (docs/infinispan/schemas) and the new location (schema/infinispan)
   uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan/schemas")
+  uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/schema_htdocs/infinispan/")
   os.chdir(base_dir)
 
 def do_task(target, args, async_processes):
@@ -300,8 +302,8 @@ def release():
   do_task(upload_javadocs, [base_dir, version], async_processes)
   prettyprint("Step 4: Complete", Levels.INFO)
   
-  prettyprint("Step 5: Uploading to Sourceforge", Levels.INFO)
-  do_task(upload_artifacts_to_sourceforge, [base_dir, version], async_processes)    
+  prettyprint("Step 5: Uploading Artifacts", Levels.INFO)
+  do_task(upload_artifacts, [base_dir, version], async_processes)    
   prettyprint("Step 5: Complete", Levels.INFO)
   
   prettyprint("Step 6: Uploading to configuration XML schema", Levels.INFO)
