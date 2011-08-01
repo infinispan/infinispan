@@ -203,7 +203,7 @@ object HotRodTestingUtil extends Log {
       assertAddressEquals(hashTopologyResp.view.members.tail.head, servers.tail.head.getAddress, hashIds.tail.head)
       assertEquals(hashTopologyResp.numOwners, 2)
       assertEquals(hashTopologyResp.hashFunction, EXPECTED_HASH_FUNCTION_VERSION)
-      assertEquals(hashTopologyResp.hashSpace, 10240)
+      assertEquals(hashTopologyResp.hashSpace, Integer.MAX_VALUE)
    }
 
    def assertNoHashTopologyReceived(topoResp: AbstractTopologyResponse, servers: List[HotRodServer], hashIds: List[Map[String, Seq[Int]]]) {
