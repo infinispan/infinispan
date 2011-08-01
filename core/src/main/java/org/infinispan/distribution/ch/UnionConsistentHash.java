@@ -78,14 +78,6 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       throw new UnsupportedOperationException("Unsupported!");
    }
 
-   @Override
-   public int getHashSpace() {
-      int oldHashSpace = oldCH.getHashSpace();
-      int newHashSpace = newCH.getHashSpace();
-      // In a union, the hash space is the biggest of the hash spaces.
-      return oldHashSpace > newHashSpace ? oldHashSpace : newHashSpace;
-   }
-
    public ConsistentHash getNewConsistentHash() {
       return newCH;
    }
