@@ -25,8 +25,8 @@ package org.infinispan.query.backend;
 import org.hibernate.search.backend.TransactionContext;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
+import org.hibernate.search.engine.spi.EntityIndexBinder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
-import org.hibernate.search.store.DirectoryProvider;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -174,11 +174,10 @@ public class QueryInterceptor extends CommandInterceptor {
          if (trace) log.trace("shouldModifyIndexes() is true and we can clear the indexes");
 
          for (Class c : this.knownClasses.keySet()) {
-            DirectoryProvider[] providers = this.searchFactory.getDirectoryProviders(c);
-            Serializable id = null;
-            if (providers != null && providers.length > 0) { //check as not all known classes are indexed
-               searchFactory.getWorker().performWork(new Work<Object>(c, id, WorkType.PURGE_ALL),
-                                                  new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry));
+            EntityIndexBinder binder = this.searchFactory.getIndexBindingForEntity(c);
+            if ( binder != null ) { //check as not all known classes are indexed
+               searchFactory.getWorker().performWork(new Work<Object>(c, (Serializable)null,
+                     WorkType.PURGE_ALL), new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry));
             }
          }
       }

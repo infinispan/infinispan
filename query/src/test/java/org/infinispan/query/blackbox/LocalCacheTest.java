@@ -31,7 +31,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
-import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
+import org.hibernate.search.engine.spi.EntityIndexBinder;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
@@ -356,9 +356,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       SearchFactoryImplementor searchFactoryIntegrator = (SearchFactoryImplementor) cr.getComponent(SearchFactoryIntegrator.class);
       Assert.assertNotNull(searchFactoryIntegrator);
-      Map<Class<?>, DocumentBuilderIndexedEntity<?>> buildersIndexedEntities = searchFactoryIntegrator.getDocumentBuildersIndexedEntities();
-      Assert.assertNotNull(buildersIndexedEntities);
-      Set<Class<?>> keySet = buildersIndexedEntities.keySet();
+      Map<Class<?>, EntityIndexBinder<?>> indexBindingForEntity = searchFactoryIntegrator.getIndexBindingForEntity();
+      Assert.assertNotNull(indexBindingForEntity);
+      Set<Class<?>> keySet = indexBindingForEntity.keySet();
       Assert.assertEquals(types.length, keySet.size());
       Assert.assertTrue(keySet.containsAll(Arrays.asList(types)));
    }
