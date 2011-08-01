@@ -40,6 +40,7 @@ import java.util.Set;
 public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVisitor {
    private TransportType tt = null;
    private boolean evictionEnabled = false;
+   private Configuration cfg;
 
    @Override
    public void visitSingletonStoreConfig(SingletonStoreConfig ssc) {
@@ -52,7 +53,8 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
    }
 
    @Override
-   public void visitConfiguration(Configuration bean) {
+   public void visitConfiguration(Configuration cfg) {
+      this.cfg= cfg;
    }
 
    @Override
@@ -117,9 +119,25 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
       }
    }
 
+   @Override
    public void visitEvictionType(EvictionType et) {
       evictionEnabled = et.strategy.isEnabled();
       if (et.strategy.isEnabled() && et.maxEntries <= 0)
          throw new ConfigurationException("Eviction maxEntries value cannot be less than or equal to zero if eviction is enabled");
+   }
+
+   @Override
+   public void visitQueryConfigurationBean(Configuration.QueryConfigurationBean qcb) {
+      // Check that the query module is on the classpath.
+      try {
+         String clazz = "org.infinispan.query.Search";
+         ClassLoader classLoader;
+         if ((classLoader = cfg.getClassLoader()) == null)
+            Class.forName(clazz);
+         else
+            classLoader.loadClass(clazz);
+      } catch (ClassNotFoundException e) {
+         log.warnf("Indexing can only be enabled if infinispan-query.jar is available on your classpath, and this jar has not been detected. Intended behavior may not be exhibited.");
+      }
    }
 }
