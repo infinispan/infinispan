@@ -95,7 +95,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       if (newCaches.size() == 0 || newCaches.contains(null))
          throw new IllegalArgumentException("Invalid cache list for consistent hash: " + newCaches);
 
-      if (newCaches.size() * numVirtualNodes > Math.pow(2, 32))
+      if (((long) newCaches.size()) * numVirtualNodes > Integer.MAX_VALUE)
          throw new IllegalArgumentException("Too many nodes: " + newCaches.size() + " * " + numVirtualNodes
                                                   + " exceeds the available hash space");
 
@@ -137,7 +137,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       // this is deterministic since the address list is ordered and the order is consistent across the grid
       while (positions.containsKey(positionIndex)) {
          if (positionIndex == Integer.MAX_VALUE)
-            positionIndex = Integer.MIN_VALUE;
+            positionIndex = 0;
          else
             positionIndex = positionIndex + 1;
       }
@@ -227,7 +227,8 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
 
    public int getNormalizedHash(Object key) {
       // more efficient impl
-      return hashFunction.hash(key);
+      int h = hashFunction.hash(key);
+      return h % Integer.MAX_VALUE; // make sure no negative numbers are involved.
    }
 
    protected boolean isVirtualNodesEnabled() {
