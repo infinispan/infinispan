@@ -84,16 +84,9 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       // Start rest of the caches and self to view once we know for sure that we need to start
       // and we know that the rank calculator listener is registered
 
-      if (isDebugEnabled)
-         debug("Avoid binary storage duplication and start named caches")
-
       // Start defined caches to avoid issues with lazily started caches
-      for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator)) {
-         val cfg = new Configuration().fluent.storeAsBinary.disable.build
-         // Force disabling binary storage cos the server already does that
-         cacheManager.defineConfiguration(cacheName, cfg)
+      for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator))
          cacheManager.getCache(cacheName)
-      }
 
       // If clustered, set up a cache for topology information
       if (isClustered) {

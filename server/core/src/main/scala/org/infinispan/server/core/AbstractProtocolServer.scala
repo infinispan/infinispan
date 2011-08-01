@@ -26,7 +26,7 @@ import java.net.InetSocketAddress
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.Main._
 import transport.NettyTransport
-import org.infinispan.util.{ClusterIdGenerator, TypedProperties, FileLookup, FileLookupFactory}
+import org.infinispan.util.{ClusterIdGenerator, TypedProperties, FileLookupFactory}
 import logging.Log
 import org.infinispan.jmx.{JmxUtil, ResourceDMBean}
 import javax.management.{ObjectName, MBeanServer}
@@ -88,11 +88,8 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
             debugf("Starting server with basic settings: host=%s, port=%d, masterThreads=%s, workerThreads=%d, " +
                   "idleTimeout=%d, tcpNoDelay=%b, sendBufSize=%d, recvBufSize=%d", host, port,
                   masterThreads, workerThreads, idleTimeout, tcpNoDelay, sendBufSize, recvBufSize)
-            debug("Avoid binary storage duplication and start default cache")
          }
 
-         // Disable store as binary for default cache
-         cacheManager.getDefaultConfiguration.fluent.storeAsBinary.disable
          // Start default cache
          startDefaultCache
 
