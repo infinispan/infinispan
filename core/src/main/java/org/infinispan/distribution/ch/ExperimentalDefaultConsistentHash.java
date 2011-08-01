@@ -308,11 +308,6 @@ public class ExperimentalDefaultConsistentHash extends AbstractConsistentHash {
       throw new RuntimeException("Not yet implemented");
    }
 
-   @Override
-   public int getHashSpace() {
-      return Integer.MAX_VALUE; // Entire positive integer range
-   }
-
    /**
     * @return A String representing the object pool.
     */

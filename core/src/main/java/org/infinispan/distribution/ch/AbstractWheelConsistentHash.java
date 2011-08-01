@@ -22,17 +22,17 @@
  */
 package org.infinispan.distribution.ch;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.*;
-
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 import org.infinispan.util.hash.Hash;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.*;
 
 /**
  * <p>
@@ -57,8 +57,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.2
  */
 public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash {
-
-   final static int HASH_SPACE = 10240; // no more than 10k nodes * vnodes?
 
    protected final Log log;
    protected final boolean trace;
@@ -97,7 +95,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       if (newCaches.size() == 0 || newCaches.contains(null))
          throw new IllegalArgumentException("Invalid cache list for consistent hash: " + newCaches);
 
-      if (newCaches.size() * numVirtualNodes > HASH_SPACE)
+      if (newCaches.size() * numVirtualNodes > Math.pow(2, 32))
          throw new IllegalArgumentException("Too many nodes: " + newCaches.size() + " * " + numVirtualNodes
                                                   + " exceeds the available hash space");
 
@@ -137,8 +135,12 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
 
    private void addNode(TreeMap<Integer, Address> positions, Address a, int positionIndex) {
       // this is deterministic since the address list is ordered and the order is consistent across the grid
-      while (positions.containsKey(positionIndex))
-         positionIndex = (positionIndex + 1) % HASH_SPACE;
+      while (positions.containsKey(positionIndex)) {
+         if (positionIndex == Integer.MAX_VALUE)
+            positionIndex = Integer.MIN_VALUE;
+         else
+            positionIndex = positionIndex + 1;
+      }
       positions.put(positionIndex, a);
    }
 
@@ -195,12 +197,6 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    }
 
    @Override
-   public int getHashSpace() {
-      return HASH_SPACE;
-   }
-
-
-   @Override
    public List<Integer> getHashIds(Address a) {
       // Not the most efficient way of doing this but it's usage it's so far
       // limited to the HotRod server and it does it only on once on startup,
@@ -214,7 +210,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       for (int i = 0; i < positionValues.length; i++) {
          if (positionValues[i].equals(a)) {
             if (vNodesEnabled && hashIds == null)
-               hashIds = new ArrayList(numVirtualNodes);
+               hashIds = new ArrayList<Integer>(numVirtualNodes);
 
             if (vNodesEnabled)
                hashIds.add(positionKeys[i]);
@@ -231,9 +227,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
 
    public int getNormalizedHash(Object key) {
       // more efficient impl
-      int keyHashCode = hashFunction.hash(key);
-      if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
-      return Math.abs(keyHashCode) % HASH_SPACE;
+      return hashFunction.hash(key);
    }
 
    protected boolean isVirtualNodesEnabled() {
