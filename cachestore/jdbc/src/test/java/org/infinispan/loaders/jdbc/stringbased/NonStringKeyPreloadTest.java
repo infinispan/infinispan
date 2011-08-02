@@ -49,7 +49,7 @@ import static junit.framework.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(groups = "functional", testName = "loaders.jdbc.stringbased.AbstractInfinispanTest")
+@Test(groups = "functional", testName = "loaders.jdbc.stringbased.NonStringKeyPreloadTest")
 public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
 
    public void testPreloadWithKey2StringMapper() throws Exception {

@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-@Test(groups = "functional", testName = "tx.synchronization.DldEagerLockingDistWithSyncTest")
+@Test(groups = "functional", testName = "tx.synchronization.DldLazyLockingDistributionWithSyncTest")
 public class DldLazyLockingDistributionWithSyncTest extends DldLazyLockingDistributionTest {
 
    @Override

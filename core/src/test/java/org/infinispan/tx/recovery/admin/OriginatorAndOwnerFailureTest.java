@@ -43,7 +43,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea Markus
  * @since 5.0
  */
-@Test (groups = "functional", testName = "tx.recovery.admin.TestRecoveryWithOriginatorFailure")
+@Test (groups = "functional", testName = "tx.recovery.admin.OriginatorAndOwnerFailureTest")
 @CleanupAfterMethod
 public class OriginatorAndOwnerFailureTest extends AbstractRecoveryTest {
 
