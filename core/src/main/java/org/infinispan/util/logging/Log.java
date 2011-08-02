@@ -737,6 +737,6 @@ public interface Log extends BasicLogger {
    void evictionWakeUpIntervalDeprecated();
 
    @LogMessage(level = ERROR)
-   @Message(value = "Unable to unlock keys %2$s for transaction %1$s after they were rebalanced off node %3$s")
+   @Message(value = "Unable to unlock keys %2$s for transaction %1$s after they were rebalanced off node %3$s", id = 154)
    void unableToUnlockRebalancedKeys(GlobalTransaction gtx, List<Object> keys, Address self, @Cause Throwable t);
 }
