@@ -156,7 +156,7 @@ public class QueryInterceptor extends CommandInterceptor {
          for (Map.Entry entry : dataMap.entrySet()) {
             Object value = extractValue(entry.getValue());
             updateKnownTypesIfNeeded( value );
-            addToIndexes(value, extractValue(entry.getKey()));
+            updateIndexes(value, extractValue(entry.getKey()));
          }
       }
       return mapPut;
