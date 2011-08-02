@@ -162,7 +162,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
 
    @Override
    public void afterCommand(TxInvocationContext ctx, LockControlCommand command) {
-      if (!command.isImplicit() && !command.isUnlock())
+      if (!command.isUnlock())
          releaseLockForTx();
       // TODO Log lock control commands too
    }
@@ -218,7 +218,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
 
    @Override
    public void beforeCommand(TxInvocationContext ctx, LockControlCommand cmd) throws TimeoutException, InterruptedException {
-      if (!cmd.isImplicit() && !cmd.isUnlock()) {
+      if (!cmd.isUnlock()) {
          acquireLockForTx(ctx);
       }
    }
