@@ -554,7 +554,7 @@ public class DistributionManagerImpl implements DistributionManager {
       return joinComplete;
    }
 
-   public List<Address> getAffectedNodes(Collection<Object> affectedKeys) {
+   public Collection<Address> getAffectedNodes(Collection<Object> affectedKeys) {
       if (affectedKeys == null || affectedKeys.isEmpty()) {
          if (trace) log.trace("affected keys are empty");
          return Collections.emptyList();
@@ -562,7 +562,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
       Set<Address> an = new HashSet<Address>();
       for (List<Address> addresses : locateAll(affectedKeys).values()) an.addAll(addresses);
-      return new ArrayList<Address>(an);
+      return an;
    }
 
    public void applyRemoteTxLog(List<WriteCommand> commands) {

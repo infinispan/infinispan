@@ -263,11 +263,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             Map<Object, List<Address>> toMulticast = dm.locateAll(command.getKeys(), 1);
 
             //now compile address reunion
-            List<Address> where;
+            Collection<Address> where;
             if (toMulticast.size() == 1) {//avoid building an extra array, as most often this will be a single key
                where = toMulticast.values().iterator().next();
             } else {
-               where = new LinkedList<Address>();
+               where = new HashSet<Address>();
                for (List<Address> values : toMulticast.values()) where.addAll(values);
             }
             rpcManager.invokeRemotely(where, command, true, true);
@@ -293,7 +293,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          Collection<Address> preparedOn = ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired();
 
-         List<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
+         Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
 
          // By default, use the configured commit sync settings
          boolean syncCommitPhase = configuration.isSyncCommitPhase();
@@ -346,7 +346,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       boolean sync = isSynchronous(ctx);
 
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         List<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
+         Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
          NotifyingNotifiableFuture<Object> f = null;
          if (isL1CacheEnabled && command.isOnePhaseCommit())
             f = l1Manager.flushCache(ctx.getLockedKeys(), null, null);

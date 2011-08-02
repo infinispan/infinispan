@@ -31,6 +31,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.Set;
 
 import static java.util.Collections.emptySet;
@@ -52,7 +53,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
    protected transient volatile Object localLockIntention;
 
-   protected volatile Set<Object> remoteLockIntention = emptySet();
+   protected volatile Collection<Object> remoteLockIntention = emptySet();
 
    protected volatile Set<Object> locksAtOrigin = emptySet();
 
@@ -135,18 +136,18 @@ public class DldGlobalTransaction extends GlobalTransaction {
       return contains; //this works for replication
    }
 
-   public void setRemoteLockIntention(Set<Object> remoteLockIntention) {
+   public void setRemoteLockIntention(Collection<Object> remoteLockIntention) {
       if (trace) {
          log.tracef("Setting the remote lock intention: %s", remoteLockIntention);
       }
       this.remoteLockIntention = remoteLockIntention;
    }
 
-   public Set<Object> getRemoteLockIntention() {
+   public Collection<Object> getRemoteLockIntention() {
       return remoteLockIntention;
    }
 
-   public boolean hasLockAtOrigin(Set<Object> remoteLockIntention) {
+   public boolean hasLockAtOrigin(Collection<Object> remoteLockIntention) {
       if (log.isTraceEnabled())
          log.tracef("Our(%s) locks at origin are: %s. Others remote lock intention is: %s",
                     this, locksAtOrigin, remoteLockIntention);
