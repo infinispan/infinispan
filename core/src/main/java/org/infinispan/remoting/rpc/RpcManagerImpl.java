@@ -156,7 +156,7 @@ public class RpcManagerImpl implements RpcManager {
       return invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, null);
    }
 
-   public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) throws Exception {
+   public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) {
       return invokeRemotely(recipients, rpcCommand, mode, timeout, false, null);
    }
 
