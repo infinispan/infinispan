@@ -30,11 +30,9 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.PriorityQueue;
-import org.infinispan.Cache;
+import org.infinispan.AdvancedCache;
 import org.infinispan.query.impl.AbstractIterator;
 import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * DistributedIterator.
@@ -46,14 +44,10 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class DistributedIterator extends AbstractIterator {
 
-	private int fetchSize = 1;
-
 	private int currentIndex = -1;
 
 	// this array keeps all values (ordered) fetched by this iterator...
 	private final ArrayList<Object> orderedValues = new ArrayList<Object>();
-
-	protected Cache cache;
 
 	private final Sort sort;
 
@@ -63,10 +57,8 @@ public class DistributedIterator extends AbstractIterator {
 
 	private final int resultSize;
 
-	private static final Log log = LogFactory.getLog(DistributedIterator.class);
-
 	public DistributedIterator(Sort sort, int fetchSize, int resultSize,
-			HashMap<UUID, ClusteredTopDocs> topDocsResponses, Cache cache) {
+			HashMap<UUID, ClusteredTopDocs> topDocsResponses, AdvancedCache<?,?> cache) {
 		this.sort = sort;
 		this.fetchSize = fetchSize;
 		this.resultSize = resultSize;

@@ -26,7 +26,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.lucene.search.Sort;
-import org.infinispan.Cache;
+import org.infinispan.AdvancedCache;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,7 +47,8 @@ public class DistributedLazyIterator extends DistributedIterator {
    private static final Log log = LogFactory.getLog(DistributedLazyIterator.class);
 
    public DistributedLazyIterator(Sort sort, int fetchSize, int resultSize, UUID id,
-            HashMap<UUID, ClusteredTopDocs> topDocsResponses, ExecutorService asyncExecutor, Cache cache) {
+            HashMap<UUID, ClusteredTopDocs> topDocsResponses,
+            ExecutorService asyncExecutor, AdvancedCache<?,?> cache) {
       super(sort, fetchSize, resultSize, topDocsResponses, cache);
       this.queryId = id;
       this.asyncExecutor = asyncExecutor;

@@ -36,8 +36,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryIterator;
 import org.infinispan.query.impl.CacheQueryImpl;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A extension of CacheQueryImpl used for distributed queries.
@@ -46,8 +44,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 5.1
  */
 public class ClusteredCacheQueryImpl extends CacheQueryImpl {
-
-   private static final Log log = LogFactory.getLog(ClusteredCacheQueryImpl.class);
 
    private Sort sort;
 
