@@ -25,6 +25,8 @@ package org.infinispan.loaders;
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.parsing.XmlConfigHelper;
+import org.infinispan.loaders.decorators.AsyncStoreConfig;
+import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.util.Util;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
@@ -102,12 +104,27 @@ class CacheLoaderConfigAdapter extends XmlAdapter<AbstractCacheStoreConfig, Cach
       
       if (clc instanceof CacheStoreConfig) {
          CacheStoreConfig csc = (CacheStoreConfig) clc;
-         csc.setFetchPersistentState(storeConfig.isFetchPersistentState());
-         csc.setIgnoreModifications(storeConfig.isIgnoreModifications());
-         csc.setPurgeOnStartup(storeConfig.isPurgeOnStartup());
-         csc.setPurgeSynchronously(storeConfig.isPurgeSynchronously());
-         csc.setSingletonStoreConfig(storeConfig.getSingletonStoreConfig());
-         csc.setAsyncStoreConfig(storeConfig.getAsyncStoreConfig());         
+         csc
+               .fetchPersistentState(storeConfig.isFetchPersistentState())
+               .ignoreModifications(storeConfig.isIgnoreModifications())
+               .purgeOnStartup(storeConfig.isPurgeOnStartup())
+               .purgeSynchronously(storeConfig.isPurgeSynchronously())
+               .purgerThreads(storeConfig.getPurgerThreads());
+
+         SingletonStoreConfig singletonStoreConfig = storeConfig.getSingletonStoreConfig();
+         if (singletonStoreConfig != null) {
+            csc.singletonStore()
+               .enabled(singletonStoreConfig.isSingletonStoreEnabled())
+               .pushStateTimeout(singletonStoreConfig.getPushStateTimeout());
+         }
+
+         AsyncStoreConfig asyncStoreConfig = storeConfig.getAsyncStoreConfig();
+         if (asyncStoreConfig != null && asyncStoreConfig.isEnabled()) {
+            csc.asyncStore()
+                  .flushLockTimeout(asyncStoreConfig.getFlushLockTimeout())
+                  .shutdownTimeout(asyncStoreConfig.getShutdownTimeout())
+                  .threadPoolSize(asyncStoreConfig.getThreadPoolSize());
+         }
       }
       return clc;
    }
