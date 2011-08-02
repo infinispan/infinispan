@@ -109,7 +109,7 @@ import java.util.concurrent.CountDownLatch;
       return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue);
    }
 
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) throws Exception {
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) {
       log.trace("invokeRemotely3");
       waitFirst(rpcCommand);
       return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout);
