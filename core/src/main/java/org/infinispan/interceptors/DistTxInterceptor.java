@@ -25,6 +25,7 @@ package org.infinispan.interceptors;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -100,6 +101,16 @@ public class DistTxInterceptor extends TxInterceptor {
       dm.getTransactionLogger().beforeCommand(ctx, cmd);
       try {
          return super.visitCommitCommand(ctx, cmd);
+      } finally {
+         dm.getTransactionLogger().afterCommand(ctx, cmd);
+      }
+   }
+
+   @Override
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand cmd) throws Throwable {
+      dm.getTransactionLogger().beforeCommand(ctx, cmd);
+      try {
+         return super.visitLockControlCommand(ctx, cmd);
       } finally {
          dm.getTransactionLogger().afterCommand(ctx, cmd);
       }

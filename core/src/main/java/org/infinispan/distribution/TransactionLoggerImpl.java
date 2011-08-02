@@ -23,6 +23,7 @@
 package org.infinispan.distribution;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -151,12 +152,19 @@ public class TransactionLoggerImpl implements TransactionLogger {
 
    @Override
    public void afterCommand(TxInvocationContext ctx, RollbackCommand command) {
-      if (!ctx.hasFlag(Flag.SKIP_LOCKING))
-         releaseLockForTx();
+//      if (!ctx.hasFlag(Flag.SKIP_LOCKING))
+//         releaseLockForTx();
 
       if (loggingEnabled) {
          uncommittedPrepares.remove(command.getGlobalTransaction());
       }
+   }
+
+   @Override
+   public void afterCommand(TxInvocationContext ctx, LockControlCommand command) {
+      if (!command.isImplicit() && !command.isUnlock())
+         releaseLockForTx();
+      // TODO Log lock control commands too
    }
 
    private void logModificationsInTransaction(PrepareCommand command) throws InterruptedException {
@@ -203,7 +211,14 @@ public class TransactionLoggerImpl implements TransactionLogger {
 
    @Override
    public void beforeCommand(TxInvocationContext ctx, RollbackCommand command) throws InterruptedException, TimeoutException {
-      if (!ctx.hasFlag(Flag.SKIP_LOCKING)) {
+//      if (!ctx.hasFlag(Flag.SKIP_LOCKING)) {
+//         acquireLockForTx(ctx);
+//      }
+   }
+
+   @Override
+   public void beforeCommand(TxInvocationContext ctx, LockControlCommand cmd) throws TimeoutException, InterruptedException {
+      if (!cmd.isImplicit() && !cmd.isUnlock()) {
          acquireLockForTx(ctx);
       }
    }
@@ -265,9 +280,10 @@ public class TransactionLoggerImpl implements TransactionLogger {
       // which could be a problem if the command is a CommitCommand
       long timeout = ctx.isOriginLocal() ? lockTimeout : 0;
       if (!txLockLatch.await(timeout, TimeUnit.MILLISECONDS))
-         throw new TimeoutException("Timed out waiting for the transaction lock to be released after " + lockTimeout + "ms");
+         throw new TimeoutException("Timed out waiting for the transaction lock to be released after " + timeout + "ms");
       // hold the read lock to ensure the rehash process waits for the tx to end
-      txLock.readLock().lock();
+      if (!txLock.readLock().tryLock())
+         throw new IllegalStateException("Tx lock should not be locked for writing as long as the latch is open");
    }
 
    private void releaseLockForTx() {

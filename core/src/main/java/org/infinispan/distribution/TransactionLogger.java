@@ -22,6 +22,7 @@
  */
 package org.infinispan.distribution;
 
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -97,6 +98,11 @@ public interface TransactionLogger extends RemoteTransactionLogger {
    void afterCommand(TxInvocationContext ctx, RollbackCommand command) throws InterruptedException;
 
    /**
+    * Notify the transaction logger after a lock control command.
+    */
+   void afterCommand(TxInvocationContext ctx, LockControlCommand cmd);
+
+   /**
     * Checks whether transaction logging is enabled
     * @return true if enabled, false otherwise.
     */
@@ -123,6 +129,11 @@ public interface TransactionLogger extends RemoteTransactionLogger {
     * Notify the transaction logger before a rollback command, potentially blocking.
     */
    void beforeCommand(TxInvocationContext ctx, RollbackCommand command) throws InterruptedException, TimeoutException;
+
+   /**
+    * Notify the transaction logger before a lock control command, potentially blocking
+    */
+   void beforeCommand(TxInvocationContext ctx, LockControlCommand cmd) throws TimeoutException, InterruptedException;
 
    /**
     * Causes new transactions to block when calling <code>beforeCommand()</code>.
