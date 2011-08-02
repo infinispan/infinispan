@@ -24,9 +24,11 @@
 package org.infinispan.transaction;
 
 import org.infinispan.CacheException;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -48,6 +50,7 @@ import org.infinispan.transaction.synchronization.SyncLocalTransaction;
 import org.infinispan.transaction.synchronization.SynchronizationAdapter;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -88,11 +91,13 @@ public class TransactionTable {
    private ExecutorService lockBreakingService;
    private EmbeddedCacheManager cm;
    private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
+   private LockManager lockManager;
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration,
                           InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier,
-                          TransactionFactory gtf, EmbeddedCacheManager cm, TransactionCoordinator txCoordinator, TransactionSynchronizationRegistry transactionSynchronizationRegistry) {
+                          TransactionFactory gtf, EmbeddedCacheManager cm, TransactionCoordinator txCoordinator,
+                          TransactionSynchronizationRegistry transactionSynchronizationRegistry, LockManager lockManager) {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.icc = icc;
@@ -102,6 +107,7 @@ public class TransactionTable {
       this.cm = cm;
       this.txCoordinator = txCoordinator;
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
+      this.lockManager = lockManager;
    }
 
    @Start
@@ -233,42 +239,77 @@ public class TransactionTable {
          if (tce.isPre())
             return;
 
-         final ConsistentHash chNew = tce.getConsistentHashAtEnd();
-         final Set<Address> oldMembers = tce.getConsistentHashAtStart().getCaches();
-         final Set<Address> newMembers = tce.getConsistentHashAtEnd().getCaches();
+         Address self = rpcManager.getAddress();
+         ConsistentHash chOld = tce.getConsistentHashAtStart();
+         ConsistentHash chNew = tce.getConsistentHashAtEnd();
 
-         final Set<Address> leavers = MembershipArithmetic.getMembersLeft(oldMembers, newMembers);
-         if (!leavers.isEmpty()) {
-            // roll back local transactions if they had acquired locks on one of the leavers
-            if (configuration.isEagerLockingSingleNodeInUse()) {
-               for (LocalTransaction localTx : localTransactions.values()) {
-                  if (localTx.hasRemoteLocksAcquired(leavers)) {
+         if (configuration.isEagerLockingSingleNodeInUse()) {
+            log.tracef("Cleaning local transactions with stale eager single node locks");
+            // roll back local transactions if their main data owner has changed
+            for (LocalTransaction localTx : localTransactions.values()) {
+               for (Object key : localTx.getAffectedKeys()) {
+                  List<Address> oldPrimaryOwner = chOld.locate(key, 1);
+                  List<Address> newPrimaryOwner = chNew.locate(key, 1);
+                  if (!oldPrimaryOwner.get(0).equals(newPrimaryOwner.get(0))) {
                      localTx.markForRollback(true);
-                     if (trace) log.tracef("Marked local transaction for rollback, as it had acquired " +
-                                                 "locks on a node that has left the cluster: %s", localTx);
+                     log.tracef("Marked local transaction %sfor rollback, as the main data " +
+                           "owner has changed from %s to %s", localTx.getGlobalTransaction(),
+                           oldPrimaryOwner, newPrimaryOwner);
+                     break;
                   }
                }
             }
             log.tracef("Finished cleaning local transactions with stale eager single node locks");
          }
 
-         final Set<Address> joiners = MembershipArithmetic.getMembersJoined(oldMembers, newMembers);
-         if (!joiners.isEmpty()) {
-            // roll back local transactions if their main data owner has changed
-            if (configuration.isEagerLockingSingleNodeInUse()) {
-               for (LocalTransaction localTx : localTransactions.values()) {
-                  for (Object k : localTx.getAffectedKeys()) {
-                     Address newMainOwner = chNew.locate(k, 1).get(0);
-                     if (joiners.contains(newMainOwner)) {
-                        localTx.markForRollback(true);
-                        if (trace) log.tracef("Marked local transaction for rollback, as the main data " +
-                                                   "owner has changed %s", localTx);
-                        break;
-                     }
+         // for remote transactions, release locks for which we are no longer an owner
+         // only for remote transactions, since we acquire locks on the origin node regardless if it's the owner or not
+         log.tracef("Unlocking keys for which we are no longer an owner");
+         int numOwners = configuration.isEagerLockingSingleNodeInUse() ? 1 : configuration.getNumOwners();
+         for (RemoteTransaction remoteTx : remoteTransactions.values()) {
+            GlobalTransaction gtx = remoteTx.getGlobalTransaction();
+            List<Object> keys = new ArrayList<Object>();
+            boolean txHasLocalKeys = false;
+            for (Object key : remoteTx.getLockedKeys()) {
+               boolean wasLocal = chOld.isKeyLocalToAddress(self, key, numOwners);
+               boolean isLocal = chNew.isKeyLocalToAddress(self, key, numOwners);
+               if (wasLocal && !isLocal) {
+                  keys.add(key);
+               }
+               txHasLocalKeys |= isLocal;
+            }
+            if (keys.size() > 0) {
+               if (trace) log.tracef("Unlocking keys %s for remote transaction %s as we are no longer an owner", keys, gtx);
+               Set<Flag> flags = EnumSet.of(Flag.CACHE_MODE_LOCAL);
+               LockControlCommand unlockCmd = new LockControlCommand(keys, configuration.getName(), flags, false);
+               unlockCmd.init(invoker, icc, TransactionTable.this);
+               unlockCmd.attachGlobalTransaction(gtx);
+               unlockCmd.setUnlock(true);
+               try {
+                  unlockCmd.perform(null);
+                  log.tracef("Unlocking moved keys for %s complete.", gtx);
+               } catch (Throwable t) {
+                  log.unableToUnlockRebalancedKeys(gtx, keys, self, t);
+               }
+
+               // if the transaction doesn't touch local keys any more, we can roll it back
+               if (!txHasLocalKeys) {
+                  if (trace) log.tracef("Killing remote transaction without any local keys %s", gtx);
+                  RollbackCommand rc = new RollbackCommand(gtx);
+                  rc.init(invoker, icc, TransactionTable.this);
+                  try {
+                     rc.perform(null);
+                     log.tracef("Rollback of transaction %s complete.", gtx);
+                  } catch (Throwable e) {
+                     log.unableToRollbackGlobalTx(gtx, e);
+                  } finally {
+                     removeRemoteTransaction(gtx);
                   }
                }
             }
          }
+
+         log.trace("Finished cleaning locks for keys that are no longer local");
       }
 
       private void cleanTxForWhichTheOwnerLeft(final Collection<Address> leavers) {
@@ -303,12 +344,12 @@ public class TransactionTable {
       }
 
       for (GlobalTransaction gtx : toKill) {
-         if (trace) log.tracef("Killing %s", gtx);
+         if (trace) log.tracef("Killing remote transaction originating on leaver %s", gtx);
          RollbackCommand rc = new RollbackCommand(gtx);
          rc.init(invoker, icc, TransactionTable.this);
          try {
             rc.perform(null);
-            if (trace) log.tracef("Rollback of %s complete.", gtx);
+            if (trace) log.tracef("Rollback of transaction %s complete.", gtx);
          } catch (Throwable e) {
             log.unableToRollbackGlobalTx(gtx, e);
          } finally {

@@ -129,7 +129,7 @@ public class LockingInterceptor extends CommandInterceptor {
       try {
          abortIfRemoteTransactionInvalid(ctx, command);
          return invokeNextInterceptor(ctx, command);
-      } catch (TimeoutException te) {
+      } catch (Throwable te) {
          cleanupLocks(ctx, false);
          throw te;
       } finally {
