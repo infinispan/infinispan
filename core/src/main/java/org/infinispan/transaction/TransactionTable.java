@@ -82,7 +82,7 @@ public class TransactionTable {
 
 
    private final Object listener = new StaleTransactionCleanup();
-   
+
    protected Configuration configuration;
    protected InvocationContextContainer icc;
    protected TransactionCoordinator txCoordinator;
@@ -268,6 +268,7 @@ public class TransactionTable {
                   }
                }
             }
+            log.tracef("Finished cleaning local transactions with stale eager single node locks");
          }
 
          // for remote transactions, release locks for which we are no longer an owner
@@ -364,7 +365,7 @@ public class TransactionTable {
          }
       }
 
-      if (trace) log.trace("Completed cleaning stale locks.");
+      if (trace) log.trace("Completed cleaning transactions originating on leavers");
    }
 
    /**
