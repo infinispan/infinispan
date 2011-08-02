@@ -91,7 +91,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public void start() {
       isL1CacheEnabled = configuration.isL1CacheEnabled();
       needReliableReturnValues = !configuration.isUnsafeUnreliableReturnValues();
-      
+
    }
 
    // ---- READ commands
@@ -107,13 +107,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       // so we need to check whether join has completed as well.
       boolean isRehashInProgress = !dm.isJoinComplete() || dm.isRehashInProgress();
       Object returnValue = invokeNextInterceptor(ctx, command);
-      
+
       // If L1 caching is enabled, this is a remote command, and we found a value in our cache
       // we store it so that we can later invalidate it
       if (isL1CacheEnabled && !ctx.isOriginLocal() && returnValue != null) {
       	l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
       }
-      
+
       // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
       // available.  It could just have been removed in the same tx beforehand.
       if (needsRemoteGet(ctx, command.getKey(), returnValue == null))
@@ -330,7 +330,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                log.tracef("Released the transaction lock temporarily, allow rehashing to proceed on %s", rpcManager.getAddress());
 
                transactionLogger.resumeTransactionLock(ctx);
-               log.tracef("Rehashing completed, acquiring the transaction lock and manik: I %s", rpcManager.getAddress());
+               log.tracef("Rehashing completed, acquiring the transaction lock and resuming transaction % on %s",
+                     ctx.getGlobalTransaction(), rpcManager.getAddress());
             }
          }
 
@@ -404,19 +405,19 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       Object returnValue = invokeNextInterceptor(ctx, command);
 
       if (command.isSuccessful()) {
-      	
+
          if (!ctx.isInTxScope()) {
          	NotifyingNotifiableFuture<Object> future = null;
             if (ctx.isOriginLocal()) {
                List<Address> rec = recipientGenerator.generateRecipients();
                int numCallRecipients = rec == null ? 0 : rec.size();
                if (trace) log.tracef("Invoking command %s on hosts %s", command, rec);
-               
+
                boolean useFuture = ctx.isUseFutureReturnType();
                if (isL1CacheEnabled && !skipL1Invalidation)
                	// Handle the case where the put is local. If in unicast mode and this is not a data
                	// owner, nothing happens. If in multicast mode, we this node will send the multicast
-               	if (rpcManager.getTransport().getMembers().size() > numCallRecipients) { 
+               	if (rpcManager.getTransport().getMembers().size() > numCallRecipients) {
                		// Command was successful, we have a number of receipients and L1 should be flushed, so request any L1 invalidations from this node
                		if (trace) log.tracef("Put occuring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s", command.getAffectedKeys(), dm.getAffectedNodes(command.getAffectedKeys()));
                		future = l1Manager.flushCache(recipientGenerator.getKeys(), returnValue, null);
