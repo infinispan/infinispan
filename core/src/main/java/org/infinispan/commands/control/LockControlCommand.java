@@ -32,15 +32,10 @@ import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * LockControlCommand is a command that enables distributed locking across infinispan nodes.
@@ -56,8 +51,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    private static final Log log = LogFactory.getLog(LockControlCommand.class);
 
    public static final int COMMAND_ID = 3;
-   private Set<Object> keys;
-   private Object singleKey;
+   private List<Object> keys;
    private boolean implicit = false;
    private boolean unlock = false;
    private Set<Flag> flags;
@@ -71,15 +65,11 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
    public LockControlCommand(Collection<Object> keys, String cacheName, Set<Flag> flags, boolean implicit) {
       this.cacheName = cacheName;
-      this.keys = null;
-      this.singleKey = null;
-      if (keys != null && !keys.isEmpty()) {
-         if (keys.size() == 1) {
-            for (Object k: keys) this.singleKey = k;
-         } else {
-            // defensive copy
-            this.keys = new HashSet<Object>(keys);
-         }
+      if (keys != null) {
+         // defensive copy
+         this.keys = new ArrayList<Object>(keys);
+      } else {
+         keys = Collections.emptySet();
       }
       this.flags = flags;
       this.implicit = implicit;
@@ -89,46 +79,35 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       globalTx = gtx;
    }
 
-   public Set<Object> getKeys() {
-      if (keys == null) {
-         if (singleKey == null)
-            return Collections.emptySet();
-         else
-            return Collections.singleton(singleKey);
-      }
-
+   public Collection<Object> getKeys() {
       return keys;
    }
 
    public void replaceKey(Object oldKey, Object replacement) {
-      if (singleKey != null && singleKey.equals(oldKey)) {
-         singleKey = replacement;
-      } else {
-         if (keys != null) {
-            if (keys.remove(oldKey)) keys.add(replacement);
-         }
+      int i = keys.indexOf(oldKey);
+      if (i >= 0) {
+         keys.set(i, replacement);
       }
    }
 
    public void replaceKeys(Map<Object, Object> replacements) {
-      for (Map.Entry<Object, Object> e: replacements.entrySet()) replaceKey(e.getKey(), e.getValue());
+      for (int i = 0; i < keys.size(); i++) {
+         Object replacement = replacements.get(keys.get(i));
+         if (replacement != null) {
+            keys.set(i, replacement);
+         }
+      }
    }
 
    public boolean multipleKeys() {
-      return keys != null && keys.size() > 1;
+      return keys.size() > 1;
    }
 
    public Object getSingleKey() {
-      if (singleKey == null) {
-         if (keys != null) {
-            for (Object sk: keys) return sk;
-            return null;
-         } else {
-            return null;
-         }
-      } else {
-         return singleKey;
-      }
+      if (keys.size() == 0)
+         return null;
+
+      return keys.get(0);
    }
 
    public boolean isImplicit() {
@@ -174,13 +153,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    public Object[] getParameters() {
-      if (keys == null || keys.isEmpty()) {
-         if (singleKey == null)
-            return new Object[]{globalTx, cacheName, unlock, (byte) 1, flags};
-         else
-            return new Object[]{globalTx, cacheName, unlock, (byte) 2, singleKey, flags};
-      }
-      return new Object[]{globalTx, cacheName, unlock, (byte) 3, keys, flags};
+      return new Object[]{globalTx, cacheName, unlock, keys, flags};
    }
 
    @SuppressWarnings("unchecked")
@@ -191,25 +164,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       cacheName = (String) args[1];
       unlock = (Boolean) args[2];
 
-      keys = null;
-      singleKey = null;
-      byte mode = (Byte) args[3];
-      switch (mode) {
-         case 1:
-            if (args.length == 5)
-               this.flags = (Set<Flag>) args[4];
-            break;
-         case 2:
-            singleKey = args[4];
-            if (args.length == 6)
-               this.flags = (Set<Flag>) args[5];
-            break;
-         case 3:
-            keys = (Set<Object>) args[4];
-            if (args.length == 6)
-               this.flags = (Set<Flag>) args[5];
-            break;
-      }
+      keys = (List<Object>) args[3];
    }
 
    public boolean isUnlock() {
@@ -222,34 +177,39 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
    @Override
    public boolean equals(Object o) {
-      if (this == o)
-         return true;
-      if (o == null || getClass() != o.getClass())
-         return false;
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
 
       LockControlCommand that = (LockControlCommand) o;
-      if (!super.equals(that))
-         return false;
-      return keys.equals(that.keys) && Util.safeEquals(singleKey, that.singleKey) && (unlock == that.unlock);
+
+      if (implicit != that.implicit) return false;
+      if (unlock != that.unlock) return false;
+      if (!flags.equals(that.flags)) return false;
+      if (!keys.equals(that.keys)) return false;
+
+      return true;
    }
 
    @Override
    public int hashCode() {
       int result = super.hashCode();
-      result = 31 * result + (keys != null ? keys.hashCode() : 0);
-      return 31 * result + (singleKey != null ? singleKey.hashCode() : 0);
+      result = 31 * result + keys.hashCode();
+      result = 31 * result + (implicit ? 1 : 0);
+      result = 31 * result + (unlock ? 1 : 0);
+      result = 31 * result + flags.hashCode();
+      return result;
    }
 
    @Override
    public String toString() {
       return new StringBuilder()
-         .append("LockControlCommand{keys=").append(keys)
-         .append(", cacheName='").append(cacheName)
+         .append("LockControlCommand{cache=").append(cacheName)
+         .append(", keys=").append(keys)
          .append(", flags=").append(flags)
-         .append("', implicit=").append(implicit)
+         .append(", implicit=").append(implicit)
          .append(", unlock=").append(unlock)
-         .append(", singleKey='").append(singleKey)
-         .append("'}")
+         .append("}")
          .toString();
    }
 
