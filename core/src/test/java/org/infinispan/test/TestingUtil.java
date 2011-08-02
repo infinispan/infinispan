@@ -156,9 +156,7 @@ public class TestingUtil {
    }
 
    public static void waitForRehashToComplete(Collection<? extends Cache> caches) {
-      Set<Cache> cachesSet = new HashSet<Cache>();
-      cachesSet.addAll(caches);
-      waitForRehashToComplete(cachesSet.toArray(new Cache[cachesSet.size()]));
+      waitForRehashToComplete(caches.toArray(new Cache[caches.size()]));
    }
 
    public static void waitForInitRehashToComplete(Cache... caches) {
@@ -888,11 +886,11 @@ public class TestingUtil {
       ic.invoke(ctxt, command);
    }
 
-   public static void blockUntilViewsReceived(int timeout, List caches) {
+   public static void blockUntilViewsReceived(int timeout, Collection caches) {
       blockUntilViewsReceived(timeout, (Cache[]) caches.toArray(new Cache[]{}));
    }
 
-   public static void blockUntilViewsReceived(int timeout, boolean barfIfTooManyMembers, List caches) {
+   public static void blockUntilViewsReceived(int timeout, boolean barfIfTooManyMembers, Collection caches) {
       blockUntilViewsReceived(timeout, barfIfTooManyMembers, (Cache[]) caches.toArray(new Cache[caches.size()]));
    }
 

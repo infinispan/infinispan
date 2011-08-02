@@ -94,8 +94,8 @@ public class RehashWithSharedCacheStore extends BaseDistCacheStoreTest {
       primaryOwner.getCacheManager().stop();
 
 
+      TestingUtil.blockUntilViewsReceived(60000, false, caches);
       TestingUtil.waitForRehashToComplete(caches);
-
 
 
       owners = getOwners(k);
