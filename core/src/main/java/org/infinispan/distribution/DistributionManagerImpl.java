@@ -307,8 +307,10 @@ public class DistributionManagerImpl implements DistributionManager {
    public InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx) throws Exception {
       ClusteredGetCommand get = cf.buildClusteredGetCommand(key, ctx.getFlags());
 
-      ResponseFilter filter = new ClusteredGetResponseValidityFilter(locate(key));
-      Map<Address, Response> responses = rpcManager.invokeRemotely(locate(key), get, ResponseMode.SYNCHRONOUS,
+      List<Address> targets = locate(key);
+      targets.remove(getSelf());
+      ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets);
+      Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, ResponseMode.SYNCHRONOUS,
                                                                    configuration.getSyncReplTimeout(), false, filter);
 
       if (!responses.isEmpty()) {
