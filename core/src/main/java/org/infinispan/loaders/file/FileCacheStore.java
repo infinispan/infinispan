@@ -91,7 +91,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       } catch (InterruptedException ie) {
          if (log.isDebugEnabled()) {
             log.debug("Interrupted, so stop looping over buckets.");
-        }
+         }
          Thread.currentThread().interrupt();
       }
    }
@@ -152,7 +152,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
             FileInputStream fileInStream = null;
             try {
                if (trace) {
-                log.tracef("Opening file in %s", file);
+                  log.tracef("Opening file in %s", file);
                }
                fileInStream = new FileInputStream(file);
                int sz = fileInStream.available();
@@ -198,54 +198,60 @@ public class FileCacheStore extends BucketBasedCacheStore {
 
    @Override
    protected void purgeInternal() throws CacheLoaderException {
-      if (trace) {
-         log.trace("purgeInternal()");
-      }
-      if (acquireGlobalLock(false)) {
-         try {
-            File[] files = root.listFiles();
-            if (files == null)
-               throw new CacheLoaderException("Root not directory or IO error occurred");
+      if (trace) log.trace("purgeInternal()");
 
-            for (final File bucketFile : files) {
-               if (multiThreadedPurge) {
-                  purgerService.execute(new Runnable() {
-                     @Override
-                     public void run() {
-                        Bucket bucket;
-                        try {
-                           if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries()) {
-                              updateBucket(bucket);
-                           }
-                        } catch (InterruptedException ie) {
-                           if (log.isDebugEnabled()) {
-                              log.debug("Interrupted, so finish work.");
-                           }
-                        } catch (CacheLoaderException e) {
-                           log.problemsPurgingFile(bucketFile, e);
+      try {
+         File[] files = root.listFiles();
+         if (files == null)
+            throw new CacheLoaderException("Root not directory or IO error occurred");
+
+         for (final File bucketFile : files) {
+            if (multiThreadedPurge) {
+               purgerService.execute(new Runnable() {
+                  @Override
+                  public void run() {
+                     Integer bucketKey = Integer.valueOf(bucketFile.getName());
+                     try {
+                        lockForReading(bucketKey);
+                        Bucket bucket = loadBucket(bucketFile);
+
+                        if (bucket != null) {
+                           if (bucket.removeExpiredEntries())
+                              lockForWriting(bucketKey);
+                           updateBucket(bucket);
                         }
+                     } catch (InterruptedException ie) {
+                        if (log.isDebugEnabled()) {
+                           log.debug("Interrupted, so finish work.");
+                        }
+                     } catch (CacheLoaderException e) {
+                        log.problemsPurgingFile(bucketFile, e);
+                     } finally {
+                        unlock(bucketKey);
                      }
-                  });
-               } else {
-                  Bucket bucket;
-                  if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries()) {
-                    updateBucket(bucket);
                   }
+               });
+            } else {
+               Integer bucketKey = Integer.valueOf(bucketFile.getName());
+               try {
+                  lockForReading(bucketKey);
+                  Bucket bucket = loadBucket(bucketFile);
+
+                  if (bucket != null) {
+                     if (bucket.removeExpiredEntries())
+                        lockForWriting(bucketKey);
+                     updateBucket(bucket);
+                  }
+               } finally {
+                  unlock(bucketKey);
                }
             }
-         } catch (InterruptedException ie) {
-            if (log.isDebugEnabled()) {
-                log.debug("Interrupted, so stop loading and finish with purging.");
-            }
-            Thread.currentThread().interrupt();
-         } finally {
-            releaseGlobalLock(false);
-            if (trace) {
-                log.trace("Exit purgeInternal()");
-            }
          }
-      } else {
-         log.unableToAcquireLockToPurgeStore();
+      } catch (InterruptedException ie) {
+         if (log.isDebugEnabled()) {
+            log.debug("Interrupted, so stop loading and finish with purging.");
+         }
+         Thread.currentThread().interrupt();
       }
    }
 
@@ -306,7 +312,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       }
 
       if (!b.getEntries().isEmpty()) {
-        try {
+         try {
             byte[] bytes = marshaller.objectToByteBuffer(b);
             fileSync.write(bytes, f);
          } catch (IOException ex) {
@@ -345,8 +351,8 @@ public class FileCacheStore extends BucketBasedCacheStore {
       }
       streamBufferSize = config.getStreamBufferSize();
 
-      switch(config.getFsyncMode()) {
-         case DEFAULT :
+      switch (config.getFsyncMode()) {
+         case DEFAULT:
             fileSync = new BufferedFileSync();
             break;
          case PER_WRITE:
@@ -382,8 +388,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       try {
          fileSync.purge(f);
          return true;
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          if (trace)
             log.trace("Error encountered while clearing file: " + f, e);
          return false;
@@ -412,8 +417,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    }
 
    /**
-    * Specifies how the changes written to a file will be synched
-    * with the underlying file system.
+    * Specifies how the changes written to a file will be synched with the underlying file system.
     */
    private interface FileSync {
 
@@ -421,15 +425,14 @@ public class FileCacheStore extends BucketBasedCacheStore {
        * Writes the given bytes to the file.
        *
        * @param bytes byte array containing the bytes to write.
-       * @param f File instance representing the location where to store the data.
+       * @param f     File instance representing the location where to store the data.
        * @throws IOException if an I/O error occurs
        */
       void write(byte[] bytes, File f) throws IOException;
 
       /**
-       * Force the file changes to be flushed to the underlying file system.
-       * Client code calling this flush method should in advance check whether
-       * the file exists and so this method assumes that check was already done.
+       * Force the file changes to be flushed to the underlying file system. Client code calling this flush method
+       * should in advance check whether the file exists and so this method assumes that check was already done.
        *
        * @param f File instance representing the location changes should be flushed to.
        * @throws IOException if an I/O error occurs
@@ -437,9 +440,8 @@ public class FileCacheStore extends BucketBasedCacheStore {
       void flush(File f) throws IOException;
 
       /**
-       * Forces the file to be purged. Implementations are free to decide what
-       * the best option should be here. For example, whether to delete the
-       * file, whether to empty it...etc.
+       * Forces the file to be purged. Implementations are free to decide what the best option should be here. For
+       * example, whether to delete the file, whether to empty it...etc.
        *
        * @param f File instance that should be purged.
        * @throws IOException if an I/O error occurs
@@ -447,8 +449,8 @@ public class FileCacheStore extends BucketBasedCacheStore {
       void purge(File f) throws IOException;
 
       /**
-       * Stop the file synching mechanism. This offers implementors the
-       * opportunity to do any cleanup when the cache stops.
+       * Stop the file synching mechanism. This offers implementors the opportunity to do any cleanup when the cache
+       * stops.
        */
       void stop();
 
@@ -476,8 +478,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
             boolean replaced = streams.replace(path, oldChannel, channel);
             if (replaced) {
                Util.close(oldChannel);
-            }
-            else {
+            } else {
                Util.close(channel);
                channel = streams.get(path);
             }
@@ -567,7 +568,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
          IOException error = flushErrors.get(path);
          if (error != null)
             throw new IOException(String.format(
-               "Periodic flush of channel for %s failed", path), error);
+                  "Periodic flush of channel for %s failed", path), error);
 
          super.write(bytes, f);
       }
