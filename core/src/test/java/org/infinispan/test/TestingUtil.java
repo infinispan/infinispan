@@ -208,14 +208,23 @@ public class TestingUtil {
    }
 
    private static void viewsTimedOut(Cache[] caches) {
-      int length = caches.length;
+      CacheContainer[] cacheContainers = new CacheContainer[caches.length];
+      for (int i = 0; i < caches.length; i++) {
+         cacheContainers[i] = caches[i].getCacheManager();
+      }
+      viewsTimedOut(cacheContainers);
+   }
+   private static void viewsTimedOut(CacheContainer[] cacheContainers) {
+      int length = cacheContainers.length;
       List<List<Address>> allViews = new ArrayList<List<Address>>(length);
-      for (int i = 0; i < length; i++)
-         allViews.add(caches[i].getCacheManager().getMembers());
+      for (int i = 0; i < length; i++) {
+         EmbeddedCacheManager cm = (EmbeddedCacheManager) cacheContainers[i];
+         allViews.add(cm.getMembers());
+      }
 
       throw new RuntimeException(String.format(
          "Timed out before caches had complete views.  Expected %d members in each view.  Views are as follows: %s",
-         caches.length, allViews));
+         cacheContainers.length, allViews));
    }
 
    public static void blockUntilViewsReceivedInt(Cache[] caches, long timeout) throws InterruptedException {
@@ -275,11 +284,7 @@ public class TestingUtil {
          }
       }
 
-      Cache[] caches = new Cache[cacheContainers.length];
-      for (int i = 0; i < cacheContainers.length; i++)
-         caches[i] = cacheContainers[i].getCache();
-
-      viewsTimedOut(caches);
+      viewsTimedOut(cacheContainers);
    }
 
    /**
@@ -884,7 +889,11 @@ public class TestingUtil {
    }
 
    public static void blockUntilViewsReceived(int timeout, List caches) {
-      blockUntilViewsReceived((Cache[]) caches.toArray(new Cache[]{}), timeout);
+      blockUntilViewsReceived(timeout, (Cache[]) caches.toArray(new Cache[]{}));
+   }
+
+   public static void blockUntilViewsReceived(int timeout, boolean barfIfTooManyMembers, List caches) {
+      blockUntilViewsReceived(timeout, barfIfTooManyMembers, (Cache[]) caches.toArray(new Cache[caches.size()]));
    }
 
    public static CommandsFactory extractCommandsFactory(Cache<Object, Object> cache) {

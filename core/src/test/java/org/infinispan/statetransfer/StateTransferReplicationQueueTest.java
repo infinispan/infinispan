@@ -123,7 +123,7 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
       manager3.stop();
 
       // Pause for view to update
-      TestingUtil.blockUntilViewsReceived(60000, cache1);
+      TestingUtil.blockUntilViewsReceived(60000, false, cache1);
 
       cache3 = createCacheManager().getCache(cacheName);
 
