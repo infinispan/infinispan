@@ -83,7 +83,7 @@ public interface RpcManager {
     * @return a map of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
-   Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) throws Exception;
+   Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout);
 
    /**
     * Initiates a state retrieval process from neighbouring caches.  This method will block until it either times out,
