@@ -131,13 +131,14 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    public Response handle(final CacheRpcCommand cmd, Address origin) throws Throwable {
    	cmd.setOrigin(origin);
       String cacheName = cmd.getCacheName();
+
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
 
       if (cr == null) {
          if (embeddedCacheManager.getGlobalConfiguration().isStrictPeerToPeer()) {
             // lets see if the cache is *defined* and perhaps just not started.
             if (isDefined(cacheName)) {
-               log.waitForCacheToStart();
+               log.waitForCacheToStart(cacheName);
                long giveupTime = System.currentTimeMillis() + 30000; // arbitrary (?) wait time for caches to start
                while (cr == null && System.currentTimeMillis() < giveupTime) {
                   Thread.sleep(100);
@@ -154,6 +155,15 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
 
       final Configuration localConfig = cr.getComponent(Configuration.class);
       cmd.injectComponents(localConfig, cr);
+
+      // in distributed mode we need to allow rehash control commands to go through even if we're not started yet
+      // in other modes we just wait until the cache is fully started
+      if (!localConfig.getCacheMode().isDistributed()) {
+         long giveupTime = System.currentTimeMillis() + localConfig.getStateRetrievalTimeout();
+         while (cr.getStatus().startingUp() && System.currentTimeMillis() < giveupTime)
+            LockSupport.parkNanos(MILLISECONDS.toNanos(100));
+      }
+
       return handleWithRetry(cmd);
    }
 
@@ -211,9 +221,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
                return JoinHandle.IGNORE;
          }
       } else {
-         long giveupTime = System.currentTimeMillis() + localConfig.getStateRetrievalTimeout();
-         while (cr.getStatus().startingUp() && System.currentTimeMillis() < giveupTime)
-            LockSupport.parkNanos(MILLISECONDS.toNanos(100));
          if (!cr.getStatus().allowInvocations()) {
             log.cacheCanNotHandleInvocations(cmd.getCacheName(), cr.getStatus());
             return JoinHandle.IGNORE;
