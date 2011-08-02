@@ -2507,7 +2507,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @ConfigurationDocRef(bean = ExpirationConfig.class, targetElement = "wakeUpInterval")
       @XmlAttribute
-      protected Long wakeUpInterval = 5000L;
+      protected Long wakeUpInterval = TimeUnit.MINUTES.toMillis(1);
 
       public void accept(ConfigurationBeanVisitor v) {
          v.visitExpirationType(this);
