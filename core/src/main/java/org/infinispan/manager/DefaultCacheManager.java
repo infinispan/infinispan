@@ -538,28 +538,33 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    @GuardedBy("Cache name lock container keeps a lock per cache name which guards this method")
    private Cache createCache(String cacheName) {
-      CacheWrapper existingCache = caches.get(cacheName);
-      if (existingCache != null)
-         return existingCache.getCache();
-
-      Configuration c = getConfiguration(cacheName);
-      setConfigurationName(cacheName, c);
-
-      c.setGlobalConfiguration(globalConfiguration);
-      c.accept(configurationValidator);
-      c.assertValid();
-      Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName, reflectionCache);
-      CacheWrapper cw = new CacheWrapper(cache);
+      LogFactory.pushNDC(cacheName, log.isTraceEnabled());
       try {
-         existingCache = caches.putIfAbsent(cacheName, cw);
-         if (existingCache != null) {
-            throw new IllegalStateException("attempt to initialize the cache twice");
+         CacheWrapper existingCache = caches.get(cacheName);
+         if (existingCache != null)
+            return existingCache.getCache();
+
+         Configuration c = getConfiguration(cacheName);
+         setConfigurationName(cacheName, c);
+
+         c.setGlobalConfiguration(globalConfiguration);
+         c.accept(configurationValidator);
+         c.assertValid();
+         Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName, reflectionCache);
+         CacheWrapper cw = new CacheWrapper(cache);
+         try {
+            existingCache = caches.putIfAbsent(cacheName, cw);
+            if (existingCache != null) {
+               throw new IllegalStateException("attempt to initialize the cache twice");
+            }
+            cache.start();
+         } finally {
+            cw.latch.countDown();
          }
-         cache.start();
+         return cache;
       } finally {
-         cw.latch.countDown();
+         LogFactory.popNDC(log.isTraceEnabled());
       }
-      return cache;
    }
 
    private Configuration getConfiguration(String cacheName) {
