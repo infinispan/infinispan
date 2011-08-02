@@ -37,7 +37,7 @@ import static org.testng.Assert.assertNull;
  * Test for https://issues.jboss.org/browse/ISPN-1093.
  * @author Mircea Markus
  */
-@Test (groups = "functional", testName = "tx.MemberFailureDuring1PCTest")
+@Test (groups = "functional", testName = "tx.FailureWith1PCTest")
 public class FailureWith1PCTest extends MultipleCacheManagersTest {
 
    @Override
