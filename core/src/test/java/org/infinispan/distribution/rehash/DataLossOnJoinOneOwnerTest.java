@@ -21,7 +21,6 @@ package org.infinispan.distribution.rehash;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -37,7 +36,6 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "distribution.rehash.DataLossOnJoinOneOwnerTest")
 public class DataLossOnJoinOneOwnerTest extends AbstractInfinispanTest {
 
-   private static final int WAIT_TIME = 80;
    private static final String VALUE = DataLossOnJoinOneOwnerTest.class.getName() + "value";
    private static final String KEY = DataLossOnJoinOneOwnerTest.class.getName() + "key";
 
@@ -55,23 +53,13 @@ public class DataLossOnJoinOneOwnerTest extends AbstractInfinispanTest {
          c1.put(KEY, VALUE);
          hasKey(c1);
          cm2 = newCM();
-         TestingUtil.blockUntilViewsReceived(45000, cm1, cm2);
-         sleep();
          Cache<String, String> c2 = cm2.getCache();
-         sleep();
+         TestingUtil.blockUntilViewsReceived(45000, cm1, cm2);
          hasKey(c1);
          hasKey(c2);
       }
       finally {
          TestingUtil.killCacheManagers(cm1, cm2);
-      }
-   }
-
-   private void sleep() {
-      try {
-         Thread.sleep(WAIT_TIME);
-      } catch (InterruptedException e) {
-         assert false;
       }
    }
 

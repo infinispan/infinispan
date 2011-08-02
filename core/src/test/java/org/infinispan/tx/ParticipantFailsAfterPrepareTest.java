@@ -78,7 +78,7 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
       List<Cache> participants;
       participants = getParticipants(indexToKill);
 
-      TestingUtil.blockUntilViewsReceived(60000, participants);
+      TestingUtil.blockUntilViewsReceived(60000, false, participants);
 
       //one of the participants must not have a prepare on it
       boolean noLocks = false;
