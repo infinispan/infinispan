@@ -77,7 +77,7 @@ public class TransactionTable {
 
 
    private final Object listener = new StaleTransactionCleanup();
-   
+
    protected Configuration configuration;
    protected InvocationContextContainer icc;
    protected TransactionCoordinator txCoordinator;
@@ -249,6 +249,7 @@ public class TransactionTable {
                   }
                }
             }
+            log.tracef("Finished cleaning local transactions with stale eager single node locks");
          }
 
          final Set<Address> joiners = MembershipArithmetic.getMembersJoined(oldMembers, newMembers);
@@ -315,7 +316,7 @@ public class TransactionTable {
          }
       }
 
-      if (trace) log.trace("Completed cleaning stale locks.");
+      if (trace) log.trace("Completed cleaning transactions originating on leavers");
    }
 
    /**
