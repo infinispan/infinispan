@@ -52,7 +52,7 @@ public class RecoveryWithCustomCacheDistTest extends RecoveryWithDefaultCacheDis
       manager(0).defineConfiguration(CUSTOM_CACHE, recoveryCache);
       manager(1).defineConfiguration(CUSTOM_CACHE, recoveryCache);
 
-      waitForClusterToForm();
+      waitForClusterToForm(CUSTOM_CACHE);
 
       assert manager(0).getCacheNames().contains(CUSTOM_CACHE);
       assert manager(1).getCacheNames().contains(CUSTOM_CACHE);

@@ -57,7 +57,7 @@ public class MarshallExternalPojosTest extends MultipleCacheManagersTest {
       registerCacheManager(cm1, cm2);
       Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       defineConfigurationOnAllManagers(CACHE_NAME, cfg);
-      waitForClusterToForm();
+      waitForClusterToForm(CACHE_NAME);
    }
 
    public void testReplicateJBossExternalizePojo(Method m) {

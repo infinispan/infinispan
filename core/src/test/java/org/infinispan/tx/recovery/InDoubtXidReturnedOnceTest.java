@@ -62,7 +62,7 @@ public class InDoubtXidReturnedOnceTest extends MultipleCacheManagersTest {
       DummyTransaction dummyTransaction1 = beginAndSuspendTx(this.cache(3));
       prepareTransaction(dummyTransaction1);
       manager(3).stop();
-      TestingUtil.blockUntilViewsReceived(60000, cache(0), cache(1), cache(2));
+      TestingUtil.blockUntilViewsReceived(60000, false, cache(0), cache(1), cache(2));
 
 
       DummyTransaction dummyTransaction = beginAndSuspendTx(this.cache(0));

@@ -25,7 +25,6 @@ package org.infinispan.distribution.rehash;
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.statetransfer.StateTransferFunctionalTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -100,7 +99,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
       waitForRehashCompletion();
       log.info("Rehash complete");
-      additionalWait();
+
       int i = 0;
       for (MagicKey key : keys) assertOnAllCachesAndOwnership(key, "v" + ++i);
       assertProperConsistentHashOnAllCaches();
@@ -152,13 +151,12 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       l.countDown();
       th.join();
 
+      //ownership can only be verified after the rehashing has completed
+      waitForRehashCompletion();
       log.info("Rehash complete");
-      additionalWait();
 
       //only check for these values if tx was not rolled back
       if (!rollback.get()) {
-         //ownership can only be verified after the rehashing has completed
-         TestingUtil.waitForRehashToComplete(caches);
          // the ownership of k1 might change during the tx and a cache might end up with it in L1
          assertOwnershipAndNonOwnership(keys.get(0), true);
          assertOwnershipAndNonOwnership(keys.get(1), l1OnRehash);
@@ -210,7 +208,6 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       for (Updater u : updaters) u.join();
 
       waitForRehashCompletion();
-      additionalWait();
 
       log.info("Rehash complete");
 
