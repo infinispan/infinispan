@@ -25,18 +25,22 @@ package org.infinispan.query.blackbox;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
+import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.config.FluentConfiguration;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.infinispan.config.Configuration.CacheMode.REPL_SYNC;
 import static org.infinispan.query.helper.TestQueryHelperFactory.*;
@@ -211,6 +215,27 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       List<Object> found = cacheQuery.list();
 
       assert found.size() == 1;
+   }
+
+   public void testPutMap() {
+      prepareTestData();
+      SearchManager searchManager = Search.getSearchManager(cache2);
+      QueryBuilder queryBuilder = searchManager
+            .buildQueryBuilderForClass(Person.class)
+            .get();
+      Query allQuery = queryBuilder.all().createQuery();
+      assert searchManager.getQuery(allQuery, Person.class).list().size() == 3;
+
+      Map<String,Person> allWrites = new HashMap<String,Person>();
+      allWrites.put(key1, person1);
+      allWrites.put(key2, person2);
+      allWrites.put(key3, person3);
+
+      cache2.putAll(allWrites);
+      assert searchManager.getQuery(allQuery, Person.class).list().size() == 3;
+
+      cache2.putAll(allWrites);
+      assert searchManager.getQuery(allQuery, Person.class).list().size() == 3;
    }
 
    public void testClear() throws ParseException {
