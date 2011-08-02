@@ -273,6 +273,10 @@ public class FileCacheStore extends BucketBasedCacheStore {
             // It could happen that the output buffer might not have been
             // flushed, so just in case, flush it to be able to read it.
             fileSync.flush(bucketFile);
+            if (bucketFile.length() == 0) {
+               // short circuit
+               return null;
+            }
             is = new FileInputStream(bucketFile);
             bucket = (Bucket) objectFromInputStreamInReentrantMode(is);
          } catch (InterruptedException ie) {
