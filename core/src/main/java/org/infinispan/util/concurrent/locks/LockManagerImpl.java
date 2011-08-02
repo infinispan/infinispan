@@ -95,7 +95,7 @@ public class LockManagerImpl implements LockManager {
                throw new IllegalStateException("Transaction "+tx+" appears to no longer be valid!");
             }
          }
-         if (trace) log.trace("Successfully acquired lock %s!");
+         if (trace) log.tracef("Successfully acquired lock %s!", key);
          return true;
       }
 
