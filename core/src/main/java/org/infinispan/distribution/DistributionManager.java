@@ -107,9 +107,9 @@ public interface DistributionManager {
     * rehash in progress, involving nodes that the key maps to.
     *
     * @param key key to look up
-    * @param ctx 
+    * @param ctx
     * @return an internal cache entry, or null if it cannot be located
-    * @throws Exception if something bad happens 
+    * @throws Exception if something bad happens
     */
    InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx) throws Exception;
 
@@ -192,5 +192,7 @@ public interface DistributionManager {
     * @return true if the rehashed finished successfully, false if there is another rehash pending.
     */
    public boolean waitForRehashToComplete(int viewId) throws InterruptedException, TimeoutException;
+
+   void markRehashTaskCompleted();
 }
 
