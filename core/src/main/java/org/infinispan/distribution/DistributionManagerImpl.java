@@ -128,6 +128,11 @@ public class DistributionManagerImpl implements DistributionManager {
     * Set if the cluster is in rehash mode, i.e. not all the nodes have applied the new state.
     */
    private volatile boolean rehashInProgress = false;
+   /**
+    * When we get the rehash completed notification we have to first invalidate the moved keys
+    * Only then we can unset the rehashInProgress flag.
+    */
+   private volatile boolean receivedRehashCompletedNotification = false;
    private final Object rehashInProgressMonitor = new Object();
 
    private volatile int lastViewId = -1;
@@ -267,11 +272,11 @@ public class DistributionManagerImpl implements DistributionManager {
    public boolean waitForRehashToComplete(int viewId) throws InterruptedException, TimeoutException {
       long endTime = System.currentTimeMillis() + configuration.getRehashRpcTimeout();
       synchronized (rehashInProgressMonitor) {
-         while (rehashInProgress && lastViewId == viewId && System.currentTimeMillis() < endTime) {
+         while (!receivedRehashCompletedNotification && lastViewId == viewId && System.currentTimeMillis() < endTime) {
             rehashInProgressMonitor.wait(configuration.getRehashRpcTimeout());
          }
       }
-      if (rehashInProgress) {
+      if (!receivedRehashCompletedNotification) {
          if (lastViewId != viewId) {
             log.debug("Received a new view while waiting for cluster-wide rehash to finish");
             return false;
@@ -419,7 +424,7 @@ public class DistributionManagerImpl implements DistributionManager {
       }
 
       if (trace) log.tracef("Rehash completed on node %s, data container has %d keys", getSelf(), dataContainer.size());
-      rehashInProgress = false;
+      receivedRehashCompletedNotification = true;
       synchronized (rehashInProgressMonitor) {
          // we know for sure the rehash task is waiting for this confirmation, so the CH hasn't been replaced
          if (trace) log.tracef("Updating last rehashed CH to %s", this.lastSuccessfulCH);
@@ -504,6 +509,7 @@ public class DistributionManagerImpl implements DistributionManager {
          boolean rehashInterrupted = rehashInProgress;
          synchronized (rehashInProgressMonitor) {
             rehashInProgress = true;
+            receivedRehashCompletedNotification = false;
             lastViewId = e.getViewId();
             rehashInProgressMonitor.notifyAll();
          }
@@ -549,6 +555,13 @@ public class DistributionManagerImpl implements DistributionManager {
       return rehashInProgress;
    }
 
+   @Override
+   public void markRehashTaskCompleted() {
+      synchronized (rehashInProgressMonitor) {
+         rehashInProgress = false;
+         rehashInProgressMonitor.notifyAll();
+      }
+   }
 
    public boolean isJoinComplete() {
       return joinComplete;

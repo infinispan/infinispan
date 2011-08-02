@@ -31,6 +31,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -43,10 +44,13 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
-import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
 
 /**
  * Task which handles view changes (joins, merges or leaves) and rebalances keys using a push based approach.
@@ -72,7 +76,7 @@ public class RebalanceTask extends RehashTask {
    private final CacheNotifier notifier;
    private final InterceptorChain interceptorChain;
    private final int newViewId;
-   private final boolean rehashInterrupted;
+   private final boolean previousRehashWasInterrupted;
 
    public RebalanceTask(RpcManager rpcManager, CommandsFactory commandsFactory, Configuration conf,
                         DataContainer dataContainer, DistributionManagerImpl dmi,
@@ -83,7 +87,7 @@ public class RebalanceTask extends RehashTask {
       this.notifier = notifier;
       this.interceptorChain = interceptorChain;
       this.newViewId = newViewId;
-      this.rehashInterrupted = rehashInterrupted;
+      this.previousRehashWasInterrupted = rehashInterrupted;
    }
 
 
@@ -94,11 +98,12 @@ public class RebalanceTask extends RehashTask {
                newViewId, getMyAddress(), dataContainer.size());
       Collection<Address> oldCacheSet = Collections.emptySet(), newCacheSet = Collections.emptySet();
       List<Object> keysToRemove = new ArrayList<Object>();
+      boolean anotherRehashIsPending = false;
 
       try {
          // Don't need to log anything, all transactions will be blocked
          //distributionManager.getTransactionLogger().enable();
-         if (rehashInterrupted) {
+         if (previousRehashWasInterrupted) {
             log.tracef("Rehash is still in progress, not blocking transactions as they should already be blocked");
          } else {
             // if the previous rehash was interrupted by the arrival of a new view
@@ -108,7 +113,7 @@ public class RebalanceTask extends RehashTask {
 
          // Create the new CH:
          List<Address> newMembers = rpcManager.getTransport().getMembers();
-         ConsistentHash chNew = createConsistentHash(configuration, newMembers);
+         ConsistentHash chNew = ConsistentHashHelper.createConsistentHash(configuration, newMembers);
          ConsistentHash chOld = distributionManager.setConsistentHash(chNew);
 
          if (trace) {
@@ -148,22 +153,23 @@ public class RebalanceTask extends RehashTask {
             if (trace) log.trace("Rehash not enabled, so not pushing state");
          }
       } finally {
-         boolean pendingRehash = false;
          try {
             // now we can inform the coordinator that we have finished our push
             distributionManager.notifyCoordinatorPushCompleted(newViewId);
 
-            // wait to unblock transactions until
-            pendingRehash = !distributionManager.waitForRehashToComplete(newViewId);
+            // wait to unblock transactions until every node has confirmed pushing state
+            // if there is another pending rehash the call will return early and
+            // DistributionManager.isRehashInProgress() will return true
+            anotherRehashIsPending = !distributionManager.waitForRehashToComplete(newViewId);
 
-            if (configuration.isRehashEnabled()) {
+            if (!anotherRehashIsPending && configuration.isRehashEnabled()) {
                // now we can invalidate the keys
                invalidateKeys(keysToRemove);
 
                notifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, false);
             }
          } finally {
-            if (pendingRehash) {
+            if (anotherRehashIsPending) {
                log.debugf("Another rehash is pending, keeping the transactions blocked");
             } else {
                try {
@@ -171,6 +177,7 @@ public class RebalanceTask extends RehashTask {
                } catch (Exception e) {
                   log.debug("Unblocking transactions failed", e);
                }
+               distributionManager.markRehashTaskCompleted();
             }
          }
          log.debugf("Node %s completed rehash for view %d in %s!", self, newViewId,
