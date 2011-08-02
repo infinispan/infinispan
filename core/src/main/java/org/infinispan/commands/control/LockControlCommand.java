@@ -35,7 +35,13 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 
 /**
  * LockControlCommand is a command that enables distributed locking across infinispan nodes.
@@ -69,7 +75,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          // defensive copy
          this.keys = new ArrayList<Object>(keys);
       } else {
-         keys = Collections.emptySet();
+         this.keys = Collections.emptyList();
       }
       this.flags = flags;
       this.implicit = implicit;
