@@ -49,7 +49,7 @@ import static org.infinispan.test.TestingUtil.v;
  * @author Galder Zamarreño
  * @since 5.0
  */
-@Test(groups = "functional", testName = "distribution.SingleOwnerAndAsyncMethodsWitTxTest")
+@Test(groups = "functional", testName = "distribution.SingleOwnerAndAsyncMethodsWithTxTest")
 public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest {
 
    public SingleOwnerAndAsyncMethodsWithTxTest() {
