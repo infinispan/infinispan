@@ -22,6 +22,8 @@
  */
 package org.infinispan.query;
 
+import java.util.concurrent.ExecutorService;
+
 import org.apache.lucene.search.Query;
 import org.hibernate.search.SearchFactory;
 import org.hibernate.search.query.dsl.EntityContext;
@@ -84,7 +86,8 @@ class SearchManagerImpl implements SearchManager {
    @Override
    public CacheQuery getClusteredQuery(Query luceneQuery, Class<?>... classes) {
       queryInterceptor.enableClasses(classes);
-      return new ClusteredCacheQueryImpl(luceneQuery, searchFactory, cache, classes);
+      ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
+      return new ClusteredCacheQueryImpl(luceneQuery, searchFactory, asyncExecutor, cache, classes);
    }
 
    /* (non-Javadoc)

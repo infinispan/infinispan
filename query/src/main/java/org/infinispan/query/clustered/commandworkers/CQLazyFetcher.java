@@ -22,6 +22,7 @@
 package org.infinispan.query.clustered.commandworkers;
 
 import org.infinispan.query.clustered.QueryBox;
+import org.infinispan.query.clustered.QueryResponse;
 
 /**
  * CQLazyFetcher.
@@ -34,7 +35,7 @@ import org.infinispan.query.clustered.QueryBox;
 public class CQLazyFetcher extends ClusteredQueryCommandWorker {
 
    @Override
-   public Object perform() {
+   public QueryResponse perform() {
       QueryBox box = getQueryBox();
       return box.getValue(lazyQueryId, docIndex);
    }

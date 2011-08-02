@@ -38,7 +38,7 @@ import org.infinispan.query.clustered.QueryResponse;
 public class CQCreateLazyQuery extends ClusteredQueryCommandWorker {
 
    @Override
-   public Object perform() {
+   public QueryResponse perform() {
       query.afterDeserialise((SearchFactoryImplementor) getSearchFactory());
       DocumentExtractor extractor = query.queryDocumentExtractor();
       int resultSize = query.queryResultSize();

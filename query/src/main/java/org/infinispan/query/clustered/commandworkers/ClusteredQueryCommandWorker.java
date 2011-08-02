@@ -28,6 +28,7 @@ import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.clustered.QueryBox;
+import org.infinispan.query.clustered.QueryResponse;
 
 /**
  * ClusteredQueryCommandWorker.
@@ -58,7 +59,7 @@ public abstract class ClusteredQueryCommandWorker {
       this.docIndex = docIndex;
    }
 
-   public abstract Object perform();
+   public abstract QueryResponse perform();
 
    protected QueryBox getQueryBox() {
       if (queryBox == null) {

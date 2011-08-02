@@ -120,7 +120,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
       return perform(cache);
    }
 
-   public Object perform(Cache cache) {
+   public QueryResponse perform(Cache cache) {
       ClusteredQueryCommandWorker worker = commandType.getCommand(cache, query, lazyQueryId, docIndex);
       return worker.perform();
    }

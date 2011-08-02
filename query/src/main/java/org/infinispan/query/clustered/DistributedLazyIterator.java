@@ -23,6 +23,7 @@ package org.infinispan.query.clustered;
 
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.lucene.search.Sort;
 import org.infinispan.Cache;
@@ -41,19 +42,22 @@ public class DistributedLazyIterator extends DistributedIterator {
 
    private UUID queryId;
 
+   private final ExecutorService asyncExecutor;
+
    private static final Log log = LogFactory.getLog(DistributedLazyIterator.class);
 
    public DistributedLazyIterator(Sort sort, int fetchSize, int resultSize, UUID id,
-            HashMap<UUID, ClusteredTopDocs> topDocsResponses, Cache cache) {
+            HashMap<UUID, ClusteredTopDocs> topDocsResponses, ExecutorService asyncExecutor, Cache cache) {
       super(sort, fetchSize, resultSize, topDocsResponses, cache);
       this.queryId = id;
+      this.asyncExecutor = asyncExecutor;
    }
 
    @Override
    public void close() {
       ClusteredQueryCommand killQuery = ClusteredQueryCommand.destroyLazyQuery(cache, queryId);
 
-      ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache);
+      ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
       try {
          invoker.broadcast(killQuery);
       } catch (Exception e) {
@@ -63,7 +67,7 @@ public class DistributedLazyIterator extends DistributedIterator {
 
    @Override
    protected Object fetchValue(ClusteredDoc scoreDoc, ClusteredTopDocs topDoc) {
-      ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache);
+      ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
       Object value = null;
       try {
          value = invoker.getValue(scoreDoc.getIndex(), topDoc.getNodeAddress(), queryId);
