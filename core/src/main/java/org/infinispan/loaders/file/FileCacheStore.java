@@ -212,7 +212,6 @@ public class FileCacheStore extends BucketBasedCacheStore {
                   public void run() {
                      Integer bucketKey = Integer.valueOf(bucketFile.getName());
                      try {
-                        lockForReading(bucketKey);
                         Bucket bucket = loadBucket(bucketFile);
 
                         if (bucket != null) {
@@ -234,7 +233,6 @@ public class FileCacheStore extends BucketBasedCacheStore {
             } else {
                Integer bucketKey = Integer.valueOf(bucketFile.getName());
                try {
-                  lockForReading(bucketKey);
                   Bucket bucket = loadBucket(bucketFile);
 
                   if (bucket != null) {
@@ -462,6 +460,12 @@ public class FileCacheStore extends BucketBasedCacheStore {
 
       @Override
       public void write(byte[] bytes, File f) throws IOException {
+         if (bytes.length == 0) {
+            // Short circuit
+            if (f.exists()) f.delete();
+            return;
+         }
+
          String path = f.getPath();
          FileChannel channel = streams.get(path);
          if (channel == null) {
@@ -585,9 +589,13 @@ public class FileCacheStore extends BucketBasedCacheStore {
       public void write(byte[] bytes, File f) throws IOException {
          FileOutputStream fos = null;
          try {
-            fos = new FileOutputStream(f);
-            fos.write(bytes);
-            fos.flush();
+            if (bytes.length > 0) {
+               fos = new FileOutputStream(f);
+               fos.write(bytes);
+               fos.flush();
+            } else if (f.exists()) {
+               f.delete();
+            }
          } finally {
             if (fos != null)
                fos.close();
