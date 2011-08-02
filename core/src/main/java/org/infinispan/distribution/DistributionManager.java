@@ -165,10 +165,11 @@ public interface DistributionManager {
    /**
     * A helper method that retrieves a list of nodes affected by operations on a set of keys.  This helper will in turn
     * call {@link #locateAll(java.util.Collection)} and then combine the result addresses.
+    *
     * @param affectedKeys keys to locate
     * @return a list of addresses which represent a combined set of all addresses affected by the set of keys.
     */
-   List<Address> getAffectedNodes(Collection<Object> affectedKeys);
+   Collection<Address> getAffectedNodes(Collection<Object> affectedKeys);
 
    /**
     * Applies an ordered list of modifications to the current node.  Typically used when state is pushed to the node
