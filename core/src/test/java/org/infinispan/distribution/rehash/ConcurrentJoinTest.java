@@ -66,8 +66,10 @@ public class ConcurrentJoinTest extends RehashTestBase {
 
    @SuppressWarnings("unchecked")
    void waitForRehashCompletion() {
+      List<Cache> allCaches = new ArrayList<Cache>(caches);
+      allCaches.addAll(joiners);
+      TestingUtil.blockUntilViewsReceived(60000, false, allCaches);
       waitForJoinTasksToComplete(SECONDS.toMillis(480), joiners.toArray(new Cache[numJoiners]));
-      TestingUtil.sleepThread(SECONDS.toMillis(2));
       int[] joinersPos = new int[numJoiners];
       for (int i = 0; i < numJoiners; i++) joinersPos[i] = locateJoiner(joinerManagers.get(i).getAddress());
 

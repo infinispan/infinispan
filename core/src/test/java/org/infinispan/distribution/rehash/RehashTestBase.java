@@ -97,7 +97,6 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       log.info("Invoking rehash event");
       performRehashEvent(false);
 
-      TestingUtil.blockUntilViewsReceived(60000, false, caches());
       waitForRehashCompletion();
       log.info("Rehash complete");
 
@@ -209,7 +208,6 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       for (Updater u : updaters) u.complete();
       for (Updater u : updaters) u.join();
 
-      TestingUtil.blockUntilViewsReceived(60000, false, caches());
       waitForRehashCompletion();
 
       log.info("Rehash complete");
