@@ -31,7 +31,7 @@ import java.util.List;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-@Test(groups = "functional", testName = "util.VersionGeneratorTest")
+@Test(groups = "functional", testName = "util.ClusterIdGeneratorTest")
    public class ClusterIdGeneratorTest {
 
    public void testGenerateVersion() {

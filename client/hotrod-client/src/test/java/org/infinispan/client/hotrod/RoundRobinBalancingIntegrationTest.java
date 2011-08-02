@@ -46,7 +46,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(testName = "client.hotrod.RoundRobinBalancingTest")
+@Test(testName = "client.hotrod.RoundRobinBalancingIntegrationTest")
 public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(RoundRobinBalancingIntegrationTest.class);

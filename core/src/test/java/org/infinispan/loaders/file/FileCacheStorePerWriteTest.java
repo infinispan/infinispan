@@ -22,12 +22,12 @@
  */
 package org.infinispan.loaders.file;
 
-import java.io.File;
-
 import org.infinispan.loaders.bucket.Bucket;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", testName = "loaders.file.FileCacheStoreTest")
+import java.io.File;
+
+@Test(groups = "unit", testName = "loaders.file.FileCacheStorePerWriteTest")
 public class FileCacheStorePerWriteTest extends FileCacheStoreTest {
 
    @Override

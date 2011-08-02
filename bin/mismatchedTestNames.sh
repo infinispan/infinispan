@@ -1,0 +1,1 @@
+find . -name '*Test.java' | xargs egrep '@Test\(.*testName\s*=' | grep MapStressTest | perl -ne 'if (/^.*\/([a-zA-Z0-9]*).java.*testName *= *"[^"]*\.([a-zA-Z0-9]*)".*$/) { print "$1 $2\n" if $1 ne $2 }'

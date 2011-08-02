@@ -23,14 +23,14 @@
 
 package org.infinispan.spring.support.embedded;
 
-import static org.testng.AssertJUnit.assertNotNull;
-
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertNotNull;
 
 /**
  * <p>
@@ -42,7 +42,7 @@ import org.testng.annotations.Test;
  */
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @ContextConfiguration("classpath:/org/infinispan/spring/support/embedded/InfinispanEmbeddedCacheManagerFactoryBeanContextTest.xml")
-@Test(testName = "spring.support.embedded.", groups = "functional")
+@Test(testName = "spring.support.embedded.InfinispanEmbeddedCacheManagerFactoryBeanContextTest", groups = "functional")
 public class InfinispanEmbeddedCacheManagerFactoryBeanContextTest extends
          AbstractTestNGSpringContextTests {
 
