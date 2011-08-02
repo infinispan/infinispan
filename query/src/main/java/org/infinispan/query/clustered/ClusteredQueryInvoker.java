@@ -29,10 +29,10 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
+import org.hibernate.search.SearchException;
 import org.infinispan.Cache;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -44,6 +44,7 @@ import org.infinispan.remoting.transport.Address;
  * Invoke a CusteredQueryCommand on the cluster, including on own node. 
  * 
  * @author Israel Lacerra <israeldl@gmail.com>
+ * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
  * @since 5.1
  */
 public class ClusteredQueryInvoker {
@@ -53,8 +54,11 @@ public class ClusteredQueryInvoker {
    private final Cache localCacheInstance;
 
    private final Address myAddress;
-   
-   ClusteredQueryInvoker(Cache localCacheInstance) {
+
+   private ExecutorService asyncExecutor;
+
+   ClusteredQueryInvoker(Cache localCacheInstance, ExecutorService asyncExecutor) {
+      this.asyncExecutor = asyncExecutor;
       this.rpcManager = localCacheInstance.getAdvancedCache().getComponentRegistry()
                .getLocalComponent(RpcManager.class);
       this.localCacheInstance = localCacheInstance;
@@ -66,7 +70,7 @@ public class ClusteredQueryInvoker {
                localCacheInstance, queryId, doc);
 
       if (address.equals(myAddress)) {
-         FutureTask<Object> localResponse = localInvoke(clusteredQuery);
+         Future<QueryResponse> localResponse = localInvoke(clusteredQuery);
          try {
             return localResponse.get();
          } catch (InterruptedException e) {
@@ -86,7 +90,7 @@ public class ClusteredQueryInvoker {
          try {
             Map<Address, Response> responses = rpcManager.invokeRemotely(addresss, clusteredQuery,
                      ResponseMode.SYNCHRONOUS, 10000);
-            List<Object> objects = cast(responses);
+            List<QueryResponse> objects = cast(responses);
             return objects.get(0);
          } catch (Exception e) {
             // FIXME
@@ -96,33 +100,38 @@ public class ClusteredQueryInvoker {
       }
    }
 
-   public List<Object> broadcast(ClusteredQueryCommand clusteredQuery) throws Exception {
+   public List<QueryResponse> broadcast(ClusteredQueryCommand clusteredQuery) {
       // invoke on own node
-      FutureTask<Object> localResponse = localInvoke(clusteredQuery);
+      Future<QueryResponse> localResponse = localInvoke(clusteredQuery);
+      Map<Address, Response> responses = rpcManager.invokeRemotely(null, clusteredQuery,
+            ResponseMode.SYNCHRONOUS, 10000);
 
-      List<Object> objects = cast(rpcManager.invokeRemotely(null, clusteredQuery,
-               ResponseMode.SYNCHRONOUS, 10000));
-      objects.add(localResponse.get());
+      List<QueryResponse> objects = cast(responses);
+      final QueryResponse localReturnValue;
+      try {
+         localReturnValue = localResponse.get();
+      } catch (InterruptedException e1) {
+         throw new SearchException("interrupted while searching locally", e1);
+      } catch (ExecutionException e1) {
+         throw new SearchException("Exception while searching locally", e1);
+      }
+      objects.add(localReturnValue);
       return objects;
    }
 
-   private FutureTask<Object> localInvoke(ClusteredQueryCommand clusteredQuery) {
-      Executor executor = Executors.newSingleThreadExecutor();
-      FutureTask<Object> future = new FutureTask<Object>(new ClusteredQueryCallable(clusteredQuery,
-               localCacheInstance));
-      executor.execute(future);
-
-      return future;
+   private Future<QueryResponse> localInvoke(ClusteredQueryCommand clusteredQuery) {
+      ClusteredQueryCallable clusteredQueryCallable = new ClusteredQueryCallable(clusteredQuery, localCacheInstance);
+      return asyncExecutor.submit(clusteredQueryCallable);
    }
 
-   private List<Object> cast(Map<Address, Response> responses) {
-      List<Object> objects = new LinkedList<Object>();
+   private List<QueryResponse> cast(Map<Address, Response> responses) {
+      List<QueryResponse> objects = new LinkedList<QueryResponse>();
       for (Entry<Address, Response> pair : responses.entrySet()) {
          Response resp = pair.getValue();
          if (resp instanceof SuccessfulResponse) {
-            Object response = ((SuccessfulResponse) resp).getResponseValue();
+            QueryResponse response = (QueryResponse) ((SuccessfulResponse) resp).getResponseValue();
             objects.add(response);
-         }else{
+         } else {
             //TODO
          }
       }
@@ -136,7 +145,7 @@ public class ClusteredQueryInvoker {
     * @author Israel Lacerra <israeldl@gmail.com>
     * @since 5.1
     */
-   private class ClusteredQueryCallable implements Callable<Object> {
+   private static final class ClusteredQueryCallable implements Callable<QueryResponse> {
 
       private final ClusteredQueryCommand clusteredQuery;
 
@@ -148,7 +157,7 @@ public class ClusteredQueryInvoker {
       }
 
       @Override
-      public Object call() throws Exception {
+      public QueryResponse call() throws Exception {
          try {
             return clusteredQuery.perform(localInstance);
          } catch (Throwable e) {

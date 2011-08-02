@@ -35,6 +35,8 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
@@ -46,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -69,17 +72,28 @@ public class QueryInterceptor extends CommandInterceptor {
    private final Lock mutating = new ReentrantLock();
    protected TransactionManager transactionManager;
    protected TransactionSynchronizationRegistry transactionSynchronizationRegistry;
+   private ExecutorService asyncExecutor;
 
    public QueryInterceptor(SearchFactoryIntegrator searchFactory) {
       this.searchFactory = searchFactory;
    }
 
    @Inject
-   public void init(TransactionManager transactionManager, TransactionSynchronizationRegistry transactionSynchronizationRegistry) {
+   public void injectDependencies(
+         @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
+      this.asyncExecutor = e;
    }
 
    protected boolean shouldModifyIndexes(InvocationContext ctx) {
       return ! ctx.hasFlag(Flag.SKIP_INDEXING);
+   }
+
+   /**
+    * Use this executor for Async operations
+    * @return
+    */
+   public ExecutorService getAsyncExecutor() {
+      return asyncExecutor;
    }
 
    @Override

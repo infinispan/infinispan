@@ -21,15 +21,12 @@
  */
 package org.infinispan.query.clustered;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.clustered.commandworkers.QueryExtractorUtil;
 
 /**
@@ -55,11 +52,11 @@ public class QueryBox {
    // this id will be sent with the responses to rpcs
    private final UUID myId = UUID.randomUUID();
 
-   private AdvancedCache cache;
+   private AdvancedCache<Object,QueryResponse> cache;
 
    public org.infinispan.util.logging.Log log;
 
-   public Object getValue(UUID queryUuid, int docIndex) {
+   public QueryResponse getValue(UUID queryUuid, int docIndex) {
       touch(queryUuid);
 
       DocumentExtractor extractor = queries.get(queryUuid);

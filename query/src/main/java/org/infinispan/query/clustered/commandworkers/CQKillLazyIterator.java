@@ -21,6 +21,8 @@
  */
 package org.infinispan.query.clustered.commandworkers;
 
+import org.infinispan.query.clustered.QueryResponse;
+
 /**
  * CQKillLazyIterator.
  * 
@@ -32,7 +34,7 @@ package org.infinispan.query.clustered.commandworkers;
 public class CQKillLazyIterator extends ClusteredQueryCommandWorker{
 
    @Override
-   public Object perform() {
+   public QueryResponse perform() {
       getQueryBox().kill(lazyQueryId);
       
       // FIXME not a good idea...

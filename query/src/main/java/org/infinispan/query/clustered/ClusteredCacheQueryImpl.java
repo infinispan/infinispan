@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
@@ -52,9 +53,12 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
    private Integer resultSize;
 
+   private final ExecutorService asyncExecutor;
+
    public ClusteredCacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory,
-            AdvancedCache cache, Class<?>... classes) {
+            ExecutorService asyncExecutor, AdvancedCache cache, Class<?>... classes) {
       super(luceneQuery, searchFactory, cache, classes);
+      this.asyncExecutor = asyncExecutor;
       hSearchQuery = searchFactory.createHSQuery()
             .luceneQuery(luceneQuery)
             .targetedEntities(Arrays.asList(classes));
@@ -95,34 +99,30 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
       HashMap<UUID, ClusteredTopDocs> topDocsResponses = treatIteratorResponses(command);
       DistributedLazyIterator it = new DistributedLazyIterator(sort, fetchSize, this.resultSize,
-               lazyItId, topDocsResponses, cache);
+               lazyItId, topDocsResponses, asyncExecutor, cache);
 
       return it;
    }
 
    private HashMap<UUID, ClusteredTopDocs> treatIteratorResponses(ClusteredQueryCommand command) {
-      ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache);
+      ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
 
       HashMap<UUID, ClusteredTopDocs> topDocsResponses = null;
       int resultSize = 0;
-      try {
-         List<Object> responses = invoker.broadcast(command);
+      List<QueryResponse> responses = invoker.broadcast(command);
 
-         topDocsResponses = new HashMap<UUID, ClusteredTopDocs>();
+      topDocsResponses = new HashMap<UUID, ClusteredTopDocs>();
 
-         for (Object response : responses) {
-            QueryResponse queryResponse = (QueryResponse) response;
-            ClusteredTopDocs topDocs = new ClusteredTopDocs(queryResponse.getTopDocs(),
-                     queryResponse.getNodeUUID());
+      for (Object response : responses) {
+         QueryResponse queryResponse = (QueryResponse) response;
+         ClusteredTopDocs topDocs = new ClusteredTopDocs(queryResponse.getTopDocs(),
+                  queryResponse.getNodeUUID());
 
-            resultSize += queryResponse.getResultSize();
-            topDocs.setNodeAddress(queryResponse.getAddress());
-            topDocsResponses.put(queryResponse.getNodeUUID(), topDocs);
-         }
-
-      } catch (Exception e) {
-         log.error("Could not broadcast distributed query", e);
+         resultSize += queryResponse.getResultSize();
+         topDocs.setNodeAddress(queryResponse.getAddress());
+         topDocsResponses.put(queryResponse.getNodeUUID(), topDocs);
       }
+
       this.resultSize = resultSize;
       return topDocsResponses;
    }
