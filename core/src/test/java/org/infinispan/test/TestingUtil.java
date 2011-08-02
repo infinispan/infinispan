@@ -139,7 +139,7 @@ public class TestingUtil {
    }
 
    public static void waitForRehashToComplete(Cache... caches) {
-      int gracetime = 120000; // 120 seconds?
+      int gracetime = 30000; // 30 seconds?
       long giveup = System.currentTimeMillis() + gracetime;
       for (Cache c : caches) {
          DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
@@ -149,7 +149,7 @@ public class TestingUtil {
                log.error(message);
                throw new RuntimeException(message);
             }
-            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
+            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
          }
          log.trace("Node " + dmi.getRpcManager().getAddress() + " finished rehash task.");
       }
@@ -170,7 +170,7 @@ public class TestingUtil {
                log.error(message);
                throw new RuntimeException(message);
             }
-            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
+            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
          }
          log.trace("Node " + dmi.getRpcManager().getAddress() + " finished join task.");
       }

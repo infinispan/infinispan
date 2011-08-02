@@ -210,7 +210,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected void createCluster(Configuration.CacheMode mode, boolean transactional, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, transactional);
    }
-   
+
    protected void createCluster(Configuration config, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(config);
    }
@@ -287,7 +287,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          Cache<K, V> cache = cm.getCache(cacheName);
          caches.add(cache);
       }
-      waitForClusterToForm();
+      waitForClusterToForm(cacheName);
       return caches;
    }
 
@@ -381,7 +381,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected LockManager lockManager(int i) {
       return TestingUtil.extractLockManager(cache(i));
    }
-   
+
    protected LockManager lockManager(int i, String cacheName) {
       return TestingUtil.extractLockManager(cache(i, cacheName));
    }
