@@ -58,6 +58,8 @@ import java.util.concurrent.TimeUnit;
  * Also, like many {@link ConcurrentMap} implementations, Cache does not support the use of <tt>null</tt> keys or
  * values.
  * <p/>
+ * <h3>Unsupported operations</h3>
+ * <p>{@link #containsValue(Object)}</p>
  * <h3>Asynchronous operations</h3> Cache also supports the use of "async" remote operations.  Note that these methods
  * only really make sense if you are using a clustered cache.  I.e., when used in LOCAL mode, these "async" operations
  * offer no benefit whatsoever.  These methods, such as {@link #putAsync(Object, Object)} offer the best of both worlds
