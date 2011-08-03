@@ -128,6 +128,9 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
 
    @Override
    public void visitQueryConfigurationBean(Configuration.QueryConfigurationBean qcb) {
+      if ( ! qcb.enabled ) {
+         return;
+      }
       // Check that the query module is on the classpath.
       try {
          String clazz = "org.infinispan.query.Search";
