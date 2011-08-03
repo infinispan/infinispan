@@ -60,12 +60,12 @@ class ISPNPriorityQueueFactory {
       PriorityQueue<FieldDoc> queue = buildPriorityQueueSafe(className, types, constructorArgument);
       Method[] methods = queue.getClass().getDeclaredMethods();
       
-      for(Method method : methods){
-    	  if(method.getName().equals("setFields")){
-    		  Object[] parameters = new Object[1];
-    		  parameters[0] = sort;
-    		  ReflectionUtil.invokeAccessibly(queue, method, parameters);
-    	  }
+      for (Method method : methods) {
+         if (method.getName().equals("setFields")) {
+            Object[] parameters = new Object[1];
+            parameters[0] = sort;
+            ReflectionUtil.invokeAccessibly(queue, method, parameters);
+         }
       }
       
       return queue;
