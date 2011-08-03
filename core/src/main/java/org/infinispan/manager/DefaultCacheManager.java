@@ -538,7 +538,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    @GuardedBy("Cache name lock container keeps a lock per cache name which guards this method")
    private Cache createCache(String cacheName) {
-      LogFactory.pushNDC(cacheName, log.isTraceEnabled());
+      boolean trace = log.isTraceEnabled();
+      LogFactory.pushNDC(cacheName, trace);
       try {
          CacheWrapper existingCache = caches.get(cacheName);
          if (existingCache != null)
@@ -563,7 +564,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          }
          return cache;
       } finally {
-         LogFactory.popNDC(log.isTraceEnabled());
+         LogFactory.popNDC(trace);
       }
    }
 
@@ -578,6 +579,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    public void start() {
       globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
+      log.debugf("Started cache manager %s on %s", globalConfiguration.getClusterName(), getAddress());
    }
 
    public void stop() {
@@ -586,6 +588,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             // DCL to make sure that only one thread calls stop at one time,
             // and any other calls by other threads are ignored.
             if (!stopping) {
+               log.debugf("Stopping cache manager %s on %s", globalConfiguration.getClusterName(), getAddress());
                stopping = true;
                // make sure we stop the default cache LAST!
                Cache defaultCache = null;

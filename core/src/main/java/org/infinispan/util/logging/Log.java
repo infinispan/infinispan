@@ -373,8 +373,8 @@ public interface Log extends BasicLogger {
    void unableToReadVersionId();
 
    @LogMessage(level = INFO)
-   @Message(value = "Will try and wait for cache named %s to start", id = 67)
-   void waitForCacheToStart(String cache);
+   @Message(value = "Will try and wait for the cache %s to start", id = 67)
+   void waitForCacheToStart(String cacheName);
 
    @LogMessage(level = INFO)
    @Message(value = "Cache named %s does not exist on this cache manager!", id = 68)
