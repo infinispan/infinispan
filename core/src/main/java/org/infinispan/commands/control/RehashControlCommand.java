@@ -119,16 +119,21 @@ public class RehashControlCommand extends BaseRpcCommand {
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
-      switch (type) {
-         case APPLY_STATE:
-            distributionManager.applyState(newCH, state, sender, viewId);
-            return null;
-         case NODE_PUSH_COMPLETED:
-            distributionManager.markNodePushCompleted(viewId, sender);
-            return null;
-         case REHASH_COMPLETED:
-            distributionManager.markRehashCompleted(viewId);
-            return null;
+      LogFactory.pushNDC(configuration.getName(), log.isTraceEnabled());
+      try {
+         switch (type) {
+            case APPLY_STATE:
+               distributionManager.applyState(newCH, state, sender, viewId);
+               return null;
+            case NODE_PUSH_COMPLETED:
+               distributionManager.markNodePushCompleted(viewId, sender);
+               return null;
+            case REHASH_COMPLETED:
+               distributionManager.markRehashCompleted(viewId);
+               return null;
+         }
+      } finally {
+         LogFactory.popNDC(log.isTraceEnabled());
       }
       throw new CacheException("Unknown rehash control command type " + type);
    }
@@ -160,7 +165,8 @@ public class RehashControlCommand extends BaseRpcCommand {
    @Override
    public String toString() {
       return "RehashControlCommand{" +
-            "type=" + type +
+            "cache=" + cacheName +
+            ", type=" + type +
             ", sender=" + sender +
             ", viewId=" + viewId +
             ", state=" + (state == null ? "N/A" : state.size()) +
