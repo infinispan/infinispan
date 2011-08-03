@@ -38,8 +38,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
-
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -132,7 +130,6 @@ public class TransactionCoordinator {
                throw new XAException(XAException.XAER_RMERR);
             }
          } else {
-            handleTopologyChanges(localTransaction);
             CommitCommand commitCommand = commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
             try {
                invoker.invoke(ctx, commitCommand);
@@ -177,27 +174,6 @@ public class TransactionCoordinator {
          rollback(localTransaction);
          throw new XAException(XAException.XA_RBROLLBACK);
       }
-   }
-
-   /**
-    * This method looks to see if some of the nodes present when transaction prepared are no longer in the cluster.
-    * If this was the case it re-runs prepare.
-    */
-   private void handleTopologyChanges(LocalTransaction localTransaction) throws XAException {
-      Collection<Address> preparedNodes = localTransaction.getRemoteLocksAcquired();
-      List<Address> members = getClusterMembers();
-      if (!members.containsAll(preparedNodes)) {
-         if (trace) log.tracef("Member(s) left, so re-applying prepare for %s", localTransaction);
-         localTransaction.filterRemoteLocksAcquire(members);
-         try {
-            prepare(localTransaction); //re-run prepare
-         } catch (XAException e) {
-            if (!configuration.isTransactionRecoveryEnabled()) {
-               rollback(localTransaction);
-               throw new XAException(XAException.XA_RBROLLBACK);
-            }
-         }
-      } else if (trace) log.trace("All prepared nodes are okay.");
    }
 
    private List<Address> getClusterMembers() {
