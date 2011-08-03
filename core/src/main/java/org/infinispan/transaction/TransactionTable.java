@@ -114,7 +114,7 @@ public class TransactionTable {
    private void start() {
       ThreadFactory tf = new ThreadFactory() {
          public Thread newThread(Runnable r) {
-            Thread th = new Thread(r, "LockBreakingService," + configuration.getGlobalConfiguration().getClusterName()
+            Thread th = new Thread(r, "LockBreakingService," + configuration.getName()
                   + "," + rpcManager.getTransport().getAddress());
             th.setDaemon(true);
             return th;

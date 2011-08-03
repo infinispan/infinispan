@@ -75,7 +75,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
 
       ComponentStatus status = componentRegistry.getStatus();
       if (command.ignoreCommandOnStatus(status)) {
-         log.debugv("Status: %s : Ignoring %s command", status, command);
+         log.debugf("Status: %s : Ignoring %s command", status, command);
          return null;
       }
 
