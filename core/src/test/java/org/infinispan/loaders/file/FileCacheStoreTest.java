@@ -22,14 +22,6 @@
  */
 package org.infinispan.loaders.file;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
@@ -45,6 +37,14 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashSet;
+import java.util.Set;
 
 @Test(groups = "unit", testName = "loaders.file.FileCacheStoreTest")
 public class FileCacheStoreTest extends BaseCacheStoreTest {
@@ -161,7 +161,7 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
       ObjectInput oi = marshaller.startObjectInput(in, false);
       try {
          assert oi.readInt() == 1 : "we have 3 different buckets";
-         assert oi.readObject().equals("k1".hashCode() + "");
+         assert oi.readObject().equals(fcs.getLockFromKey("k1") + "");
          assert oi.readInt() > 0; //size on disk
       } finally {
          marshaller.finishObjectInput(oi);

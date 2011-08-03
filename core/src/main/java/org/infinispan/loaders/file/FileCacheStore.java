@@ -369,7 +369,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    }
 
    public Bucket loadBucketContainingKey(String key) throws CacheLoaderException {
-      return loadBucket(key.hashCode());
+      return loadBucket(getLockFromKey(key));
    }
 
    private boolean deleteFile(File f) {
