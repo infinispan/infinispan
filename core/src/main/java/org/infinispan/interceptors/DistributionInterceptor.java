@@ -291,8 +291,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             f = l1Manager.flushCache(ctx.getLockedKeys(), null, null);
          }
 
-         boolean needToWaitForRehash = false;
-         do {
+         while (true) {
+            boolean needToWaitForRehash = false;
             Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
 
             // By default, use the configured commit sync settings
@@ -305,28 +305,15 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                   syncCommitPhase = true;
                }
             }
-            Map<Address, Response> responses = rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
-
-            if (!responses.isEmpty()) {
-               List<Address> resendTo = new LinkedList<Address>();
-               for (Map.Entry<Address, Response> r : responses.entrySet()) {
-                  if (needToResendAfterRehash(r.getValue())) {
-                     needToWaitForRehash = true;
+            try {
+               Map<Address, Response> responses = rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
+               if (!responses.isEmpty()) {
+                  List<Address> resendTo = new LinkedList<Address>();
+                  for (Map.Entry<Address, Response> r : responses.entrySet()) {
+                     if (needToResendPrepare(r.getValue()))
+                        resendTo.add(r.getKey());
                   }
-                  if (needToResendPrepare(r.getValue()))
-                     resendTo.add(r.getKey());
-               }
 
-               if (needToWaitForRehash) {
-                  // we are assuming the current node is also trying to start the rehash, but it can't
-                  // because we're holding the tx lock
-                  // there is no problem if some nodes already applied the commit
-                  transactionLogger.suspendTransactionLock(ctx);
-                  log.tracef("Released the transaction lock temporarily, allow rehashing to proceed on %s", rpcManager.getAddress());
-
-                  transactionLogger.resumeTransactionLock(ctx);
-                  log.tracef("Rehashing completed, acquiring the transaction lock and manik: I %s", rpcManager.getAddress());
-               } else {
                   if (!resendTo.isEmpty()) {
                      log.debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
                      // Make sure this is 1-Phase!!
@@ -334,8 +321,18 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                      rpcManager.invokeRemotely(resendTo, pc, true, true);
                   }
                }
+               break;
+            } catch (RehashInProgressException e) {
+               // we are assuming the current node is also trying to start the rehash, but it can't
+               // because we're holding the tx lock
+               // there is no problem if some nodes already applied the commit
+               transactionLogger.suspendTransactionLock(ctx);
+               log.tracef("Released the transaction lock temporarily, allow rehashing to proceed on %s", rpcManager.getAddress());
+
+               transactionLogger.resumeTransactionLock(ctx);
+               log.tracef("Rehashing completed, acquiring the transaction lock and manik: I %s", rpcManager.getAddress());
             }
-         } while (needToWaitForRehash);
+         }
 
          if (f != null && configuration.isSyncCommitPhase()) {
             try {
