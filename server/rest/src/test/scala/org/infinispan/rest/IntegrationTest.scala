@@ -24,19 +24,20 @@ package org.infinispan.rest
 
 
 import org.apache.commons.httpclient.methods._
-import javax.servlet.http.{HttpServletResponse}
+import javax.servlet.http.HttpServletResponse
+import javax.servlet.http.HttpServletResponse._
 import org.infinispan.remoting.MIMECacheEntry
 import java.io._
 import org.testng.annotations.{Test, BeforeClass, AfterClass}
-import org.testng.Assert._
 import java.lang.reflect.Method
 import org.infinispan.manager.CacheContainer
 import scala.math._
 import org.infinispan.test.TestingUtil
 import java.text.SimpleDateFormat
 import org.apache.commons.httpclient.{HttpMethodBase, Header, HttpClient}
-import java.util.{Arrays, Calendar, Locale}
 import org.apache.commons.httpclient.HttpMethod
+import java.util.{Arrays, Calendar, Locale}
+import org.testng.AssertJUnit._
 
 /**
  * This tests using the Apache HTTP commons client library - but you could use anything
@@ -49,9 +50,9 @@ import org.apache.commons.httpclient.HttpMethod
  */
 @Test(groups = Array("functional"), testName = "rest.IntegrationTest")
 class IntegrationTest {
-   val HOST = "http://localhost:8888/"
+   val HOST = "http://localhost:8888"
    val cacheName = CacheContainer.DEFAULT_CACHE_NAME
-   val fullPath = HOST + "rest/" + cacheName
+   val fullPath = HOST + "/rest/" + cacheName
    val DATE_PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz";
 
    //val HOST = "http://localhost:8080/infinispan/"
@@ -134,7 +135,7 @@ class IntegrationTest {
    def testEmptyGet = {
       assertEquals(
          HttpServletResponse.SC_NOT_FOUND,
-         Client.call(new GetMethod(HOST + "rest/" + cacheName + "/nodata")).getStatusCode
+         Client.call(new GetMethod(HOST + "/rest/" + cacheName + "/nodata")).getStatusCode
       )
    }
 
@@ -393,7 +394,7 @@ class IntegrationTest {
    }
 
    def testNonexistentCache(m: Method) = {
-      val fullPathKey = HOST + "rest/nonexistent/" + m.getName
+      val fullPathKey = HOST + "/rest/nonexistent/" + m.getName
       val get = new GetMethod(fullPathKey)
       Client call get
       assertEquals(HttpServletResponse.SC_NOT_FOUND, get.getStatusCode)
@@ -465,6 +466,69 @@ class IntegrationTest {
       val oin = new ObjectInputStream(new ByteArrayInputStream(bytesRead))
       val dataBack = oin.readObject().asInstanceOf[Array[Byte]]
       assertTrue(Arrays.equals(data, dataBack))
+   }
+
+   def testDefaultConfiguredExpiryValues(m: Method) {
+      val cacheName = "evictExpiryCache"
+      var fullPathKey = "%s/rest/%s/%s".format(HOST, cacheName, m.getName)
+      var post = new PostMethod(fullPathKey)
+      post.setRequestHeader("Content-Type", "application/text")
+      // Live forever...
+      post.setRequestHeader("timeToLiveSeconds", "-1")
+      post.setRequestEntity(new StringRequestEntity("data", "text/plain", "UTF-8"))
+      Client.call(post)
+      // Sleep way beyond the default in the config
+      Thread.sleep(5000)
+      assertEquals("data", Client.call(new GetMethod(fullPathKey)).getResponseBodyAsString)
+
+      var startTime = System.currentTimeMillis
+      var lifespan = 3000
+      fullPathKey = "%s-2".format(fullPathKey)
+      post = new PostMethod(fullPathKey)
+      post.setRequestHeader("Content-Type", "application/text")
+      // It'll fallback on configured lifespan/maxIdle values.
+      post.setRequestHeader("timeToLiveSeconds", "0")
+      post.setRequestHeader("maxIdleTimeSeconds", "0")
+      post.setRequestEntity(new StringRequestEntity("data2", "text/plain", "UTF-8"))
+      Client.call(post)
+      while (System.currentTimeMillis() < startTime + lifespan - 10) {
+         assertEquals("data2", Client.call(new GetMethod(fullPathKey)).getResponseBodyAsString)
+         Thread.sleep(100)
+      }
+      // Make sure that in the next 20 secs data is removed
+      waitNotFound(startTime, lifespan, fullPathKey)
+      assertEquals(SC_NOT_FOUND, Client.call(new GetMethod(fullPathKey)).getStatusCode)
+
+      startTime = System.currentTimeMillis
+      lifespan = 0
+      fullPathKey = "%s-3".format(fullPathKey)
+      post = new PostMethod(fullPathKey)
+      post.setRequestHeader("Content-Type", "application/text")
+      // It will expire immediately
+      post.setRequestHeader("timeToLiveSeconds", "0")
+      post.setRequestEntity(new StringRequestEntity("data3", "text/plain", "UTF-8"))
+      Client.call(post)
+      waitNotFound(startTime, lifespan, fullPathKey)
+
+      fullPathKey = "%s-4".format(fullPathKey)
+      post = new PostMethod(fullPathKey)
+      post.setRequestHeader("Content-Type", "application/text")
+      // It will use configured maxIdle
+      post.setRequestHeader("maxIdleTimeSeconds", "0")
+      post.setRequestEntity(new StringRequestEntity("data4", "text/plain", "UTF-8"))
+      Client.call(post)
+      // Sleep way beyond the default in the config
+      Thread.sleep(2500)
+      assertEquals(HttpServletResponse.SC_NOT_FOUND, Client.call(new GetMethod(fullPathKey)).getStatusCode)
+   }
+
+   private def waitNotFound(startTime: Long, lifespan: Int, fullPathKey: String) {
+      if (System.currentTimeMillis < startTime + lifespan + 20000) {
+         if (!SC_NOT_FOUND.equals(Client.call(new GetMethod(fullPathKey)).getStatusCode)) {
+            Thread.sleep(100)
+            waitNotFound(startTime, lifespan, fullPathKey) // Good ol' tail recursion :)
+         }
+      }
    }
 
    private def put(m: Method): HttpMethodBase = put(m, "data", "application/text")
