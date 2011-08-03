@@ -128,13 +128,14 @@ public class LockingInterceptor extends CommandInterceptor {
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       try {
          abortIfRemoteTransactionInvalid(ctx, command);
-         return invokeNextInterceptor(ctx, command);
+         Object result = invokeNextInterceptor(ctx, command);
+         if (command.isOnePhaseCommit()) {
+            cleanupLocks(ctx, true);
+         }
+         return result;
       } catch (Throwable te) {
          cleanupLocks(ctx, false);
          throw te;
-      } finally {
-         if (command.isOnePhaseCommit())
-            cleanupLocks(ctx, true);
       }
    }
 
@@ -257,7 +258,7 @@ public class LockingInterceptor extends CommandInterceptor {
          doAfterCall(ctx);
       }
    }
-   
+
    @Override
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
       Object keys [] = command.getKeys();
@@ -273,7 +274,7 @@ public class LockingInterceptor extends CommandInterceptor {
                   keysCopy.remove(key);
                   if(keysCopy.isEmpty())
                      return null;
-               } 
+               }
             }
             command.setKeys(keysCopy.toArray());
          }
