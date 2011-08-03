@@ -46,12 +46,12 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 public class EntryFactoryImpl implements EntryFactory {
-   private boolean useRepeatableRead;
-   DataContainer container;
-   boolean writeSkewCheck;
-   LockManager lockManager;
-   Configuration configuration;
-   CacheNotifier notifier;
+   protected boolean useRepeatableRead;
+   protected DataContainer container;
+   protected boolean writeSkewCheck;
+   protected LockManager lockManager;
+   protected Configuration configuration;
+   protected CacheNotifier notifier;
 
    private static final Log log = LogFactory.getLog(EntryFactoryImpl.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -70,15 +70,7 @@ public class EntryFactoryImpl implements EntryFactory {
       writeSkewCheck = configuration.isWriteSkewCheck();
    }
 
-   private MVCCEntry createWrappedEntry(Object key, Object value, boolean isForInsert, boolean forRemoval, long lifespan) {
-      if (value == null && !isForInsert) return useRepeatableRead ?
-            forRemoval ? new NullMarkerEntryForRemoval(key) : NullMarkerEntry.getInstance()
-            : null;
-
-      return useRepeatableRead ? new RepeatableReadEntry(key, value, lifespan) : new ReadCommittedEntry(key, value, lifespan);
-   }
-
-   public final CacheEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException {
+   public CacheEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException {
       CacheEntry cacheEntry;
       if (ctx.hasFlag(Flag.FORCE_WRITE_LOCK)) {
          if (trace) log.trace("Forcing lock on reading");
@@ -208,57 +200,20 @@ public class EntryFactoryImpl implements EntryFactory {
       }
    }
 
-   /**
-    * Attempts to lock an entry if the lock isn't already held in the current scope, and records the lock in the
-    * context.
-    *
-    * @param ctx context
-    * @param key Key to lock
-    * @return true if a lock was needed and acquired, false if it didn't need to acquire the lock (i.e., lock was
-    *         already held)
-    * @throws InterruptedException if interrupted
-    * @throws org.infinispan.util.concurrent.TimeoutException
-    *                              if we are unable to acquire the lock after a specified timeout.
-    */
    public final boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException {
-      // don't EVER use lockManager.isLocked() since with lock striping it may be the case that we hold the relevant
-      // lock which may be shared with another key that we have a lock for already.
-      // nothing wrong, just means that we fail to record the lock.  And that is a problem.
-      // Better to check our records and lock again if necessary.
-
-      boolean shouldSkipLocking = ctx.hasFlag(Flag.SKIP_LOCKING);
-
-      if (!ctx.hasLockedKey(key) && !shouldSkipLocking) {
-         if (lockManager.lockAndRecord(key, ctx)) {
-            return true;
-         } else {
-            Object owner = lockManager.getOwner(key);
-            // if lock cannot be acquired, expose the key itself, not the marshalled value
-            if (key instanceof MarshalledValue) {
-               key = ((MarshalledValue) key).get();
-            }
-            throw new TimeoutException("Unable to acquire lock after [" + Util.prettyPrintTime(getLockAcquisitionTimeout(ctx)) + "] on key [" + key + "] for requestor [" +
-                  ctx.getLockOwner() + "]! Lock held by [" + owner + "]");
-         }
-      } else {
-         if (trace) {
-            if (shouldSkipLocking)
-               log.trace("SKIP_LOCKING flag used!");
-            else
-               log.trace("Already own lock for entry");
-         }
-      }
-
-      return false;
-   }
-
-   //TODO resolve code duplication with org.infinispan.util.concurrent.locks.LockManagerImpl.getLockAcquisitionTimeout(InvocationContext)
-   private long getLockAcquisitionTimeout(InvocationContext ctx) {
-      return ctx.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
-            0 : configuration.getLockAcquisitionTimeout();
+      return lockManager.acquireLock(ctx, key);
    }
 
    public final void releaseLock(Object key) {
       lockManager.unlock(key);
    }
+
+   protected final MVCCEntry createWrappedEntry(Object key, Object value, boolean isForInsert, boolean forRemoval, long lifespan) {
+      if (value == null && !isForInsert) return useRepeatableRead ?
+            forRemoval ? new NullMarkerEntryForRemoval(key) : NullMarkerEntry.getInstance()
+            : null;
+
+      return useRepeatableRead ? new RepeatableReadEntry(key, value, lifespan) : new ReadCommittedEntry(key, value, lifespan);
+   }
+
 }

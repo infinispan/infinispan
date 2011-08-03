@@ -52,7 +52,9 @@ public interface EntryFactory {
     * @throws InterruptedException if interrupted
     * @throws org.infinispan.util.concurrent.TimeoutException
     *                              if we are unable to acquire the lock after a specified timeout.
+    * @deprecated please use {@link org.infinispan.util.concurrent.locks.LockManager#acquireLock(org.infinispan.context.InvocationContext, Object)}
     */
+   @Deprecated
    boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException;
 
    /**
@@ -90,6 +92,8 @@ public interface EntryFactory {
     * Wraps an entry for reading.  Usually this is just a raw {@link CacheEntry} but certain combinations of isolation
     * levels and the presence of an ongoing JTA transaction may force this to be a proper, wrapped MVCCEntry.  The entry
     * is also typically placed in the invocation context.
+    *
+    *
     *
     * @param ctx current invocation context
     * @param key key to look up and wrap

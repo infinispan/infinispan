@@ -132,6 +132,7 @@ public class TransactionXaAdapter implements XAResource {
    public void rollback(Xid externalXid) throws XAException {
       Xid xid = convertXid(externalXid);
       LocalXaTransaction localTransaction1 = getLocalTransactionAndValidateImpl(xid, txTable);
+      localTransaction.markForRollback(true); //ISPN-879 : make sure that locks are no longer associated to this transactions
       txCoordinator.rollback(localTransaction1);
       forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction1);
    }
