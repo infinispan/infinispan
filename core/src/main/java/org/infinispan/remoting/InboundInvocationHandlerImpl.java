@@ -139,7 +139,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          if (embeddedCacheManager.getGlobalConfiguration().isStrictPeerToPeer()) {
             // lets see if the cache is *defined* and perhaps just not started.
             if (isDefined(cacheName)) {
-               log.waitForCacheToStart();
+               log.waitForCacheToStart(cacheName);
                long giveupTime = System.currentTimeMillis() + 30000; // arbitrary (?) wait time for caches to start
                while (cr == null && System.currentTimeMillis() < giveupTime) {
                   Thread.sleep(100);

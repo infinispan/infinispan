@@ -538,28 +538,34 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    @GuardedBy("Cache name lock container keeps a lock per cache name which guards this method")
    private Cache createCache(String cacheName) {
-      CacheWrapper existingCache = caches.get(cacheName);
-      if (existingCache != null)
-         return existingCache.getCache();
-
-      Configuration c = getConfiguration(cacheName);
-      setConfigurationName(cacheName, c);
-
-      c.setGlobalConfiguration(globalConfiguration);
-      c.accept(configurationValidator);
-      c.assertValid();
-      Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName, reflectionCache);
-      CacheWrapper cw = new CacheWrapper(cache);
+      boolean trace = log.isTraceEnabled();
+      LogFactory.pushNDC(cacheName, trace);
       try {
-         existingCache = caches.putIfAbsent(cacheName, cw);
-         if (existingCache != null) {
-            throw new IllegalStateException("attempt to initialize the cache twice");
+         CacheWrapper existingCache = caches.get(cacheName);
+         if (existingCache != null)
+            return existingCache.getCache();
+
+         Configuration c = getConfiguration(cacheName);
+         setConfigurationName(cacheName, c);
+
+         c.setGlobalConfiguration(globalConfiguration);
+         c.accept(configurationValidator);
+         c.assertValid();
+         Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName, reflectionCache);
+         CacheWrapper cw = new CacheWrapper(cache);
+         try {
+            existingCache = caches.putIfAbsent(cacheName, cw);
+            if (existingCache != null) {
+               throw new IllegalStateException("attempt to initialize the cache twice");
+            }
+            cache.start();
+         } finally {
+            cw.latch.countDown();
          }
-         cache.start();
+         return cache;
       } finally {
-         cw.latch.countDown();
+         LogFactory.popNDC(log.isTraceEnabled());
       }
-      return cache;
    }
 
    private Configuration getConfiguration(String cacheName) {
@@ -573,6 +579,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    public void start() {
       globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
+      log.debugf("Started cache manager %s on %s", globalConfiguration.getClusterName(), getAddress());
    }
 
    public void stop() {
@@ -581,6 +588,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             // DCL to make sure that only one thread calls stop at one time,
             // and any other calls by other threads are ignored.
             if (!stopping) {
+               log.debugf("Stopping cache manager %s on %s", globalConfiguration.getClusterName(), getAddress());
                stopping = true;
                // make sure we stop the default cache LAST!
                Cache defaultCache = null;
