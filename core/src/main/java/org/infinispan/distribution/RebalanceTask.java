@@ -246,19 +246,14 @@ public class RebalanceTask extends RehashTask {
       if (oldOwners.equals(newOwners))
          return;
 
-      // 3. The pushing server is the last node in the old owner list that's also in the new owner list
+      // 3. The pushing server is the last node in the old owner list that's also in the new CH
       // It will only be null if all the old owners left the cluster
       Address pushingOwner = null;
-      if (oldOwners.size() == 1) {
-         // This could happen if numOwners == 1!  See ISPN-1244
-         pushingOwner = oldOwners.get(0);
-      } else {
-         for (int i = oldOwners.size() - 1; i >= 0; i--) {
-            Address server = oldOwners.get(i);
-            if (newOwners.contains(server)) {
-               pushingOwner = server;
-               break;
-            }
+      for (int i = oldOwners.size() - 1; i >= 0; i--) {
+         Address server = oldOwners.get(i);
+         if (chNew.getCaches().contains(server)) {
+            pushingOwner = server;
+            break;
          }
       }
 
