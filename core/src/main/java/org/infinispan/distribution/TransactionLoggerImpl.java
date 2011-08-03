@@ -81,7 +81,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
 
    public TransactionLoggerImpl(CommandsFactory cf, Configuration config) {
       this.cf = cf;
-      this.lockTimeout = config.getLockAcquisitionTimeout();
+      this.lockTimeout = config.getRehashWaitTime();
    }
 
    @Override
@@ -91,7 +91,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
 
    @Override
    public List<WriteCommand> drain() {
-      List<WriteCommand> list = new LinkedList<WriteCommand>();
+      List<WriteCommand> list = new ArrayList<WriteCommand>();
       commandQueue.drainTo(list);
       return list;
    }
@@ -152,8 +152,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
 
    @Override
    public void afterCommand(TxInvocationContext ctx, RollbackCommand command) {
-//      if (!ctx.hasFlag(Flag.SKIP_LOCKING))
-//         releaseLockForTx();
+      // don't need to lock, rollbacks won't touch the data container
 
       if (loggingEnabled) {
          uncommittedPrepares.remove(command.getGlobalTransaction());
@@ -178,27 +177,27 @@ public class TransactionLoggerImpl implements TransactionLogger {
    }
 
    @Override
-   public void beforeCommand(InvocationContext ctx, WriteCommand command) throws InterruptedException, TimeoutException {
+   public boolean beforeCommand(InvocationContext ctx, WriteCommand command) throws InterruptedException, TimeoutException {
       // for transactions the real work starts with the prepare command, so don't block here
-      if (ctx.isInTxScope())
-         return;
+      if (ctx.isInTxScope() || ctx.hasFlag(Flag.SKIP_LOCKING))
+         return true;
 
-      if (!ctx.hasFlag(Flag.SKIP_LOCKING)) {
-         acquireLockForTx(ctx);
-      }
+      return acquireLockForTx(ctx);
    }
 
    @Override
-   public void beforeCommand(TxInvocationContext ctx, PrepareCommand command) throws InterruptedException, TimeoutException {
-      if (!ctx.hasFlag(Flag.SKIP_LOCKING)) {
-         acquireLockForTx(ctx);
-      }
+   public boolean beforeCommand(TxInvocationContext ctx, PrepareCommand command) throws InterruptedException, TimeoutException {
+      if (ctx.hasFlag(Flag.SKIP_LOCKING))
+         return true;
+
+      return acquireLockForTx(ctx);
    }
 
    @Override
-   public void beforeCommand(TxInvocationContext ctx, CommitCommand command) throws InterruptedException, TimeoutException {
+   public boolean beforeCommand(TxInvocationContext ctx, CommitCommand command) throws InterruptedException, TimeoutException {
       if (!ctx.hasFlag(Flag.SKIP_LOCKING)) {
-         acquireLockForTx(ctx);
+         if (!acquireLockForTx(ctx))
+            return false;
       }
 
       // if the prepare command wasn't logged, do it here instead
@@ -207,22 +206,33 @@ public class TransactionLoggerImpl implements TransactionLogger {
          if (!uncommittedPrepares.containsKey(gtx = ctx.getGlobalTransaction()))
             uncommittedPrepares.put(gtx, cf.buildPrepareCommand(gtx, ctx.getModifications(), false));
       }
+
+      return true;
    }
 
    @Override
-   public void beforeCommand(TxInvocationContext ctx, RollbackCommand command) throws InterruptedException, TimeoutException {
-//      if (!ctx.hasFlag(Flag.SKIP_LOCKING)) {
-//         acquireLockForTx(ctx);
-//      }
+   public boolean beforeCommand(TxInvocationContext ctx, RollbackCommand command) throws InterruptedException, TimeoutException {
+      // do nothing, rollbacks won't touch the data container
+      return true;
    }
 
    @Override
-   public void beforeCommand(TxInvocationContext ctx, LockControlCommand cmd) throws TimeoutException, InterruptedException {
-      if (!cmd.isUnlock()) {
-         acquireLockForTx(ctx);
-      }
+   public boolean beforeCommand(TxInvocationContext ctx, LockControlCommand cmd) throws TimeoutException, InterruptedException {
+      if (cmd.isUnlock())
+         return true;
+
+      return acquireLockForTx(ctx);
    }
 
+   @Override
+   public void suspendTransactionLock(InvocationContext ctx) {
+      releaseLockForTx();
+   }
+
+   @Override
+   public void resumeTransactionLock(InvocationContext ctx) throws TimeoutException, InterruptedException {
+      acquireLockForTx(ctx);
+   }
 
    private int size() {
       return loggingEnabled ? commandQueue.size() : 0;
@@ -270,20 +280,29 @@ public class TransactionLoggerImpl implements TransactionLogger {
       txLockLatch.open();
    }
 
+   @Override
+   public boolean areTransactionsBlocked() {
+      try {
+         return txLockLatch.await(0, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         return false;
+      }
+   }
 
-   private void acquireLockForTx(InvocationContext ctx) throws InterruptedException, TimeoutException {
+   private boolean acquireLockForTx(InvocationContext ctx) throws InterruptedException, TimeoutException {
       // When the command is being replicated, the caller already holds the tx lock for read on the
       // origin since DistributionInterceptor is above DistTxInterceptor in the interceptor chain.
       // In order to allow the rehashing thread on the origin to obtain the tx lock for write on the
       // origin, we lock on the remote nodes with 0 timeout.
-      // TODO With numOwners > 2 there is still a chance that locking will succeed on some of the remote nodes
-      // which could be a problem if the command is a CommitCommand
       long timeout = ctx.isOriginLocal() ? lockTimeout : 0;
       if (!txLockLatch.await(timeout, TimeUnit.MILLISECONDS))
-         throw new TimeoutException("Timed out waiting for the transaction lock to be released after " + timeout + "ms");
+         return false;
       // hold the read lock to ensure the rehash process waits for the tx to end
       if (!txLock.readLock().tryLock())
          throw new IllegalStateException("Tx lock should not be locked for writing as long as the latch is open");
+
+      return true;
    }
 
    private void releaseLockForTx() {

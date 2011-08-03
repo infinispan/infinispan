@@ -35,16 +35,17 @@ import java.util.concurrent.TimeoutException;
 /**
  * Typically adding a command, the following pattern would be used:
  * <p/>
+ *
  * <code>
- *
- * txLogger.beforeCommand();
- * try {
- *    // execute this command!
- * } finally {
- *    txLogger.afterCommand(cmd);
+ * if (txLogger.beforeCommand()) {
+ *    try {
+ *       // execute this command!
+ *    } finally {
+ *       txLogger.afterCommand(cmd);
+ *    }
  * }
- *
  * </code>
+ *
  * <p/>
  * When draining, the following pattern should be used:
  * <p/>
@@ -110,30 +111,46 @@ public interface TransactionLogger extends RemoteTransactionLogger {
 
    /**
     * Notify the transaction logger before a write command, potentially blocking.
+    * @return <code>true</code> if the transaction can proceed, <code>false</code> otherwise
     */
-   void beforeCommand(InvocationContext ctx, WriteCommand command) throws InterruptedException, TimeoutException;
+   boolean beforeCommand(InvocationContext ctx, WriteCommand command) throws InterruptedException, TimeoutException;
 
    /**
     * Notify the transaction logger before a prepare command, potentially blocking.
+    * @return <code>true</code> if the transaction can proceed, <code>false</code> otherwise
     */
-   void beforeCommand(TxInvocationContext ctx, PrepareCommand command) throws InterruptedException, TimeoutException;
+   boolean beforeCommand(TxInvocationContext ctx, PrepareCommand command) throws InterruptedException, TimeoutException;
 
    /**
     * Notify the transaction logger before a commit command, potentially blocking.
     * If transaction logging was not enabled during the prepare command, use the
     * context to extract the list of modifications.
+    * @return <code>true</code> if the transaction can proceed, <code>false</code> otherwise
     */
-   void beforeCommand(TxInvocationContext ctx, CommitCommand command) throws InterruptedException, TimeoutException;
+   boolean beforeCommand(TxInvocationContext ctx, CommitCommand command) throws InterruptedException, TimeoutException;
 
    /**
     * Notify the transaction logger before a rollback command, potentially blocking.
+    * @return <code>true</code> if the transaction can proceed, <code>false</code> otherwise
     */
-   void beforeCommand(TxInvocationContext ctx, RollbackCommand command) throws InterruptedException, TimeoutException;
+   boolean beforeCommand(TxInvocationContext ctx, RollbackCommand command) throws InterruptedException, TimeoutException;
 
    /**
     * Notify the transaction logger before a lock control command, potentially blocking
+    * @return <code>true</code> if the transaction can proceed, <code>false</code> otherwise
     */
-   void beforeCommand(TxInvocationContext ctx, LockControlCommand cmd) throws TimeoutException, InterruptedException;
+   boolean beforeCommand(TxInvocationContext ctx, LockControlCommand cmd) throws TimeoutException, InterruptedException;
+
+   /**
+    * Use before synchronous remote calls, as the remote call will also try to acquire the transaction lock on that node.
+    * Since the rehashing process may try to acquire the same locks in reverse order, this could lead to deadlocks.
+    */
+   void suspendTransactionLock(InvocationContext ctx);
+
+   /**
+    * Re-acquire the transaction lock when a remote call returns.
+    */
+   void resumeTransactionLock(InvocationContext ctx) throws TimeoutException, InterruptedException;
 
    /**
     * Causes new transactions to block when calling <code>beforeCommand()</code>.
@@ -144,4 +161,9 @@ public interface TransactionLogger extends RemoteTransactionLogger {
     * Unblocks anything blocking on <code>beforeCommand()</code>.
     */
    void unblockNewTransactions() throws InterruptedException;
+
+   /**
+    * @return <code>true</code> if new transactions are blocked and <code>false</code> otherwise.
+    */
+   boolean areTransactionsBlocked();
 }

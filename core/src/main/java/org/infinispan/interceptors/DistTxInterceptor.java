@@ -29,15 +29,11 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.RehashInProgressException;
 import org.infinispan.factories.annotations.Inject;
 
 import java.util.HashMap;
@@ -78,7 +74,9 @@ public class DistTxInterceptor extends TxInterceptor {
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand cmd) throws Throwable {
-      dm.getTransactionLogger().beforeCommand(ctx, cmd);
+      if (!dm.getTransactionLogger().beforeCommand(ctx, cmd)) {
+         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+      }
       try {
          return super.visitPrepareCommand(ctx, cmd);
       } finally {
@@ -88,7 +86,9 @@ public class DistTxInterceptor extends TxInterceptor {
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand cmd) throws Throwable {
-      dm.getTransactionLogger().beforeCommand(ctx, cmd);
+      if (!dm.getTransactionLogger().beforeCommand(ctx, cmd)) {
+         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+      }
       try {
          return super.visitRollbackCommand(ctx, cmd);
       } finally {
@@ -98,7 +98,9 @@ public class DistTxInterceptor extends TxInterceptor {
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand cmd) throws Throwable {
-      dm.getTransactionLogger().beforeCommand(ctx, cmd);
+      if (!dm.getTransactionLogger().beforeCommand(ctx, cmd)) {
+         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+      }
       try {
          return super.visitCommitCommand(ctx, cmd);
       } finally {
@@ -108,7 +110,9 @@ public class DistTxInterceptor extends TxInterceptor {
 
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand cmd) throws Throwable {
-      dm.getTransactionLogger().beforeCommand(ctx, cmd);
+      if (!dm.getTransactionLogger().beforeCommand(ctx, cmd)) {
+         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+      }
       try {
          return super.visitLockControlCommand(ctx, cmd);
       } finally {
@@ -118,7 +122,9 @@ public class DistTxInterceptor extends TxInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      dm.getTransactionLogger().beforeCommand(ctx, command);
+      if (!dm.getTransactionLogger().beforeCommand(ctx, command)) {
+         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+      }
       try {
          return super.visitPutKeyValueCommand(ctx, command);
       } finally {
@@ -128,7 +134,9 @@ public class DistTxInterceptor extends TxInterceptor {
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      dm.getTransactionLogger().beforeCommand(ctx, command);
+      if (!dm.getTransactionLogger().beforeCommand(ctx, command)) {
+         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+      }
       try {
          return super.visitRemoveCommand(ctx, command);
       } finally {
@@ -138,7 +146,9 @@ public class DistTxInterceptor extends TxInterceptor {
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      dm.getTransactionLogger().beforeCommand(ctx, command);
+      if (!dm.getTransactionLogger().beforeCommand(ctx, command)) {
+         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+      }
       try {
          return super.visitReplaceCommand(ctx, command);
       } finally {
@@ -148,7 +158,9 @@ public class DistTxInterceptor extends TxInterceptor {
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      dm.getTransactionLogger().beforeCommand(ctx, command);
+      if (!dm.getTransactionLogger().beforeCommand(ctx, command)) {
+         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+      }
       try {
          return super.visitClearCommand(ctx, command);
       } finally {
@@ -158,7 +170,9 @@ public class DistTxInterceptor extends TxInterceptor {
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      dm.getTransactionLogger().beforeCommand(ctx, command);
+      if (!dm.getTransactionLogger().beforeCommand(ctx, command)) {
+         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+      }
       try {
          return super.visitPutMapCommand(ctx, command);
       } finally {

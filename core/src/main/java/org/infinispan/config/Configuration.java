@@ -3165,7 +3165,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setNumOwners")
       protected Integer numOwners = 2;
 
-      @ConfigurationDoc(desc = "Future flag. Currenly unused.")
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "setRehashWait")
       protected Long rehashWait = MINUTES.toMillis(1);
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setRehashRpcTimeout")

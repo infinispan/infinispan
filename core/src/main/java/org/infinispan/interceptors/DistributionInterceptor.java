@@ -28,12 +28,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -42,12 +37,11 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.DataLocality;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.L1Manager;
+import org.infinispan.distribution.*;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
@@ -55,13 +49,7 @@ import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The interceptor that handles distribution of entries across a cluster, as well as transparent lookup
@@ -78,6 +66,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    boolean isL1CacheEnabled, needReliableReturnValues;
    EntryFactory entryFactory;
    L1Manager l1Manager;
+   TransactionLogger transactionLogger;
 
    static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
       public List<Address> generateRecipients() {
@@ -287,45 +276,66 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return r instanceof SuccessfulResponse && Byte.valueOf(CommitCommand.RESEND_PREPARE).equals(((SuccessfulResponse) r).getResponseValue());
    }
 
-   // ---- TX boundary commands 
+   private boolean needToResendAfterRehash(Response r) {
+      return r instanceof ExceptionResponse && ((SuccessfulResponse)r).getResponseValue() instanceof RehashInProgressException;
+   }
+
+   // ---- TX boundary commands
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          Collection<Address> preparedOn = ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired();
 
-         Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
-
-         // By default, use the configured commit sync settings
-         boolean syncCommitPhase = configuration.isSyncCommitPhase();
-         for (Address a : preparedOn) {
-            if (!recipients.contains(a)) {
-               recipients.add(a);
-               // However if we have prepared on some nodes and are now committing on different nodes, make sure we
-               // force sync commit so we can respond to prepare resend requests.
-               syncCommitPhase = true;
-            }
-         }
          NotifyingNotifiableFuture<Object> f = null;
          if (isL1CacheEnabled) {
-         	f = l1Manager.flushCache(ctx.getLockedKeys(), null, null);
+            f = l1Manager.flushCache(ctx.getLockedKeys(), null, null);
          }
 
-         Map<Address, Response> responses = rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
+         boolean needToWaitForRehash = false;
+         do {
+            Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
 
-         if (!responses.isEmpty()) {
-            List<Address> resendTo = new LinkedList<Address>();
-            for (Map.Entry<Address, Response> r : responses.entrySet()) {
-               if (needToResendPrepare(r.getValue()))
-                  resendTo.add(r.getKey());
+            // By default, use the configured commit sync settings
+            boolean syncCommitPhase = configuration.isSyncCommitPhase();
+            for (Address a : preparedOn) {
+               if (!recipients.contains(a)) {
+                  recipients.add(a);
+                  // However if we have prepared on some nodes and are now committing on different nodes, make sure we
+                  // force sync commit so we can respond to prepare resend requests.
+                  syncCommitPhase = true;
+               }
             }
+            Map<Address, Response> responses = rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
 
-            if (!resendTo.isEmpty()) {
-               log.debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
-               // Make sure this is 1-Phase!!
-               PrepareCommand pc = cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
-               rpcManager.invokeRemotely(resendTo, pc, true, true);
+            if (!responses.isEmpty()) {
+               List<Address> resendTo = new LinkedList<Address>();
+               for (Map.Entry<Address, Response> r : responses.entrySet()) {
+                  if (needToResendAfterRehash(r.getValue())) {
+                     needToWaitForRehash = true;
+                  }
+                  if (needToResendPrepare(r.getValue()))
+                     resendTo.add(r.getKey());
+               }
+
+               if (needToWaitForRehash) {
+                  // we are assuming the current node is also trying to start the rehash, but it can't
+                  // because we're holding the tx lock
+                  // there is no problem if some nodes already applied the commit
+                  transactionLogger.suspendTransactionLock(ctx);
+                  log.tracef("Released the transaction lock temporarily, allow rehashing to proceed on %s", rpcManager.getAddress());
+
+                  transactionLogger.resumeTransactionLock(ctx);
+                  log.tracef("Rehashing completed, acquiring the transaction lock and manik: I %s", rpcManager.getAddress());
+               } else {
+                  if (!resendTo.isEmpty()) {
+                     log.debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
+                     // Make sure this is 1-Phase!!
+                     PrepareCommand pc = cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
+                     rpcManager.invokeRemotely(resendTo, pc, true, true);
+                  }
+               }
             }
-         }
+         } while (needToWaitForRehash);
 
          if (f != null && configuration.isSyncCommitPhase()) {
             try {
