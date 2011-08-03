@@ -95,22 +95,18 @@ public class LockManagerImpl implements LockManager {
       }
 
       // couldn't acquire lock!
-      if (trace) {
-         log.tracef("Failed to acquire lock %s, owner is %s", key, getOwner(key));
+      if (log.isDebugEnabled()) {
+         log.debugf("Failed to acquire lock %s, owner is %s", key, getOwner(key));
          Object owner = ctx.getLockOwner();
          Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
-         Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
-         if (trace) log.tracef("Number of entries in context: %s", entries.size());
          List<Object> lockedKeys = new ArrayList<Object>(entries.size());
-
-         while (it.hasNext()) {
-            Map.Entry<Object, CacheEntry> e = it.next();
+         for (Map.Entry<Object, CacheEntry> e : entries) {
             Object lockedKey = e.getKey();
             if (ownsLock(lockedKey, owner)) {
                lockedKeys.add(lockedKey);
             }
          }
-         log.tracef("This transaction (%s) already owned locks %s", owner, lockedKeys);
+         log.debugf("This transaction (%s) already owned locks %s", owner, lockedKeys);
       }
       return false;
    }
