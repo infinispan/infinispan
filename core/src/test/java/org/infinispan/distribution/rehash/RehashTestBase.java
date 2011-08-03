@@ -152,8 +152,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       th.join();
 
       //ownership can only be verified after the rehashing has completed
-      TestingUtil.blockUntilViewsReceived(60000, false, caches);
-      TestingUtil.waitForRehashToComplete(caches);
+      waitForRehashCompletion();
       log.info("Rehash complete");
 
       //only check for these values if tx was not rolled back
