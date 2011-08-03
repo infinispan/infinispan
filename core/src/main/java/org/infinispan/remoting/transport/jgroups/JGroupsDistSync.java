@@ -24,6 +24,7 @@ package org.infinispan.remoting.transport.jgroups;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.remoting.transport.DistributedSync;
+import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -51,9 +52,11 @@ public class JGroupsDistSync implements DistributedSync {
    private final ReclosableLatch flushBlockGate = new ReclosableLatch(true);
    private final AtomicInteger flushBlockGateCount = new AtomicInteger(0);
    private final AtomicInteger flushWaitGateCount = new AtomicInteger(0);
-   private final ReclosableLatch flushWaitGate = new ReclosableLatch(false);   
+   private final ReclosableLatch flushWaitGate = new ReclosableLatch(false);
    private static final Log log = LogFactory.getLog(JGroupsDistSync.class);
    private static final boolean trace = log.isTraceEnabled();
+
+   private final ConcurrentHashSet<Thread> debugReadLockHolders = new ConcurrentHashSet<Thread>();
 
    public SyncResponse blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException {
       int initState = flushWaitGateCount.get();
@@ -96,9 +99,13 @@ public class JGroupsDistSync implements DistributedSync {
    public void acquireProcessingLock(boolean exclusive, long timeout, TimeUnit timeUnit) throws TimeoutException {
       Lock lock = exclusive ? processingLock.writeLock() : processingLock.readLock();
       try {
-         if (!lock.tryLock(timeout, timeUnit))
-            throw new TimeoutException(format("%s could not obtain %s processing lock after %s.  Locks in question are %s and %s", currentThread().getName(), exclusive ? "exclusive" : "shared", prettyPrintTime(timeout, timeUnit), processingLock.readLock(), processingLock.writeLock()));
-//         log.info("Acquired processing lock xcl = %s.  Locks are %s and %s", exclusive, processingLock.readLock(), processingLock.writeLock());
+         if (!lock.tryLock(timeout, timeUnit)) {
+            if (exclusive) log.debugf("Failed to acquire exclusive processing lock. Read lock holders are %s", debugReadLockHolders);
+            throw new TimeoutException(format("%s could not obtain %s processing lock after %s.  Locks in question are %s and %s",
+                  currentThread().getName(), exclusive ? "exclusive" : "shared", prettyPrintTime(timeout, timeUnit),
+                  processingLock.readLock(), processingLock.writeLock()));
+         }
+         if (log.isDebugEnabled() && !exclusive) debugReadLockHolders.add(currentThread());
       } catch (InterruptedException ie) {
          currentThread().interrupt();
       }
@@ -110,8 +117,8 @@ public class JGroupsDistSync implements DistributedSync {
             processingLock.writeLock().unlock();
          } else {
             processingLock.readLock().unlock();
+            if (log.isDebugEnabled()) debugReadLockHolders.remove(currentThread());
          }
-//         log.info("Releasing %s processing lock.  Locks now are %s and %s", exclusive ? "exclusive": "shared", processingLock.readLock(), processingLock.writeLock());
       } catch (IllegalMonitorStateException imse) {
          if (trace) log.trace("Did not own lock!");
       }
