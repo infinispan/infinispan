@@ -22,14 +22,14 @@
  */
 package org.infinispan.loaders.bucket;
 
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.LockSupportCacheStore;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.LockSupportCacheStore;
 
 /**
  * Base class for CacheStore implementations that combine entries into buckets when storing data.
@@ -120,8 +120,8 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore<Intege
     * hash code of the key, as all keys having same hash code will be mapped to same bucket.
     */
    @Override
-   protected Integer getLockFromKey(Object key) {
-      return Integer.valueOf(key.hashCode());
+   public Integer getLockFromKey(Object key) {
+      return key.hashCode() & 0xfffffc00; // To reduce the number of buckets/locks that may be created.  TODO: This should be configurable.
    }
 
    /**
