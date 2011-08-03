@@ -21,7 +21,6 @@
  */
 package org.infinispan.query.clustered;
 
-import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -29,6 +28,7 @@ import java.lang.reflect.Method;
 import org.apache.lucene.search.FieldDoc;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.PriorityQueue;
+import org.hibernate.search.SearchException;
 import org.infinispan.util.ReflectionUtil;
 
 /**
@@ -37,12 +37,12 @@ import org.infinispan.util.ReflectionUtil;
  * Factory to construct a lucene PriotityQueue (unfortunately not public classes)
  * 
  * @author Israel Lacerra <israeldl@gmail.com>
+ * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 5.1
  */
 class ISPNPriorityQueueFactory {
 
    private ISPNPriorityQueueFactory() {
-
    }
 
    /**
@@ -55,8 +55,9 @@ class ISPNPriorityQueueFactory {
     */
    public static PriorityQueue<FieldDoc> getFieldDocSortedHitQueue(int size, SortField[] sort) {
       String className = "org.apache.lucene.search.FieldDocSortedHitQueue";
-
-      PriorityQueue<FieldDoc> queue = createPriorityHitQueue(className, size);
+      Object[] constructorArgument = new Object[]{ size };
+      Class[] types = new Class[]{ int.class };
+      PriorityQueue<FieldDoc> queue = buildPriorityQueueSafe(className, types, constructorArgument);
       Method[] methods = queue.getClass().getDeclaredMethods();
       
       for(Method method : methods){
@@ -79,39 +80,40 @@ class ISPNPriorityQueueFactory {
     */
    public static PriorityQueue<FieldDoc> getHitQueue(int size) {
       String className = "org.apache.lucene.search.HitQueue";
-
-      // className, size of queue, pre populate with sentinels
-      return createPriorityHitQueue(className, size, false);
+      Object[] constructorArgument = new Object[]{ size, false };
+      Class[] types = new Class[]{ int.class, boolean.class };
+      return buildPriorityQueueSafe(className, types, constructorArgument);
    }
 
-   private static PriorityQueue<FieldDoc> createPriorityHitQueue(String className, Object ... params) {
+   /**
+    * @param className fully qualified name of the class to construct
+    * @param types types of the constructor to use
+    * @param constructorArgument arguments for the chosen constructor
+    */
+   private static PriorityQueue<FieldDoc> buildPriorityQueueSafe(String className,
+         Class[] types, Object[] constructorArgument) {
       try {
-         Class clazz = Class.forName(className);
-
-         Constructor c = clazz.getDeclaredConstructors()[0];
-         AccessibleObject ao = c;
-         ao.setAccessible(true);
-
-         Object ob = null;
-         if(params.length == 1)
-            ob = c.newInstance(params[0]);
-         else if(params.length == 2)
-        	 ob = c.newInstance(params[0], params[1]);
-         else
-        	 throw new IllegalArgumentException("Wrong number of arguments...");
-
-         return (PriorityQueue<FieldDoc>) ob;
-      } catch (IllegalArgumentException e) {
-         throw new RuntimeException("Could not create PriotityQueue instance...", e);
-      } catch (InstantiationException e) {
-         throw new RuntimeException("Could not create PriotityQueue instance...", e);
-      } catch (IllegalAccessException e) {
-         throw new RuntimeException("Could not create PriotityQueue instance...", e);
-      } catch (InvocationTargetException e) {
-         throw new RuntimeException("Could not create PriotityQueue instance...", e);
-      } catch (ClassNotFoundException e) {
-         throw new RuntimeException("Could not create PriotityQueue instance...", e);
+         return buildPriorityQueue(className, types, constructorArgument);
+      } catch (Exception e) {
+         throw new SearchException("Could not initialize required Lucene class: " + className + 
+               ". Either the Lucene version is incompatible, or security is preventing me to access it.", e);
       }
+   }
+
+   /**
+    * Creates a class instance from classname, types and arguments, to workaround the
+    * fact that these Lucene PriorityQueues are not public.
+    * @param className
+    * @param types
+    * @param constructorArgument
+    */
+   private static PriorityQueue<FieldDoc> buildPriorityQueue(String className, Class[] types,
+         java.lang.Object[] constructorArgument) throws ClassNotFoundException, SecurityException, NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
+      Class<?> clazz = Class.forName(className);
+      Constructor c = clazz.getDeclaredConstructor(types);
+      c.setAccessible(true);
+      Object newInstance = c.newInstance(constructorArgument);
+      return (PriorityQueue<FieldDoc>) newInstance;
    }
 
 }
