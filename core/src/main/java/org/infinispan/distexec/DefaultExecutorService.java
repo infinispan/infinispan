@@ -80,17 +80,17 @@ import org.infinispan.util.logging.LogFactory;
  * This ExecutorService provides methods to submit tasks for an execution on a cluster of Infinispan
  * nodes.
  * <p>
- * 
- * 
+ *
+ *
  * Note that due to potential task migration to another nodes every {@link Callable},
  * {@link Runnable} and/or {@link DistributedCallable} submitted must be either {@link Serializable}
  * or {@link Externalizable}. Also the value returned from a callable must be {@link Serializable}
  * or {@link Externalizable}. Unfortunately if the value returned is not serializable then a
  * {@link NotSerializableException} will be thrown.
- * 
+ *
  * @author Vladimir Blagojevic
  * @since 5.0
- * 
+ *
  */
 public class DefaultExecutorService extends AbstractExecutorService implements DistributedExecutorService {
 
@@ -105,7 +105,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    /**
     * Create a new DefaultExecutorService given a master cache node. All distributed task executions
     * will be initiated from this cache node.
-    * 
+    *
     * @param masterCacheNode
     *           cache node initiating map reduce task
     */
@@ -114,13 +114,13 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       if (masterCacheNode == null)
          throw new NullPointerException("Can not use " + masterCacheNode
                   + " cache for DefaultExecutorService");
-      
+
       ensureProperCacheState(masterCacheNode.getAdvancedCache());
-      
+
       this.cache = masterCacheNode.getAdvancedCache();
-      ComponentRegistry registry = cache.getComponentRegistry();      
+      ComponentRegistry registry = cache.getComponentRegistry();
       GlobalComponentRegistry globalRegistry = cache.getComponentRegistry().getGlobalComponentRegistry();
-      
+
       this.rpc = cache.getRpcManager();
       this.invoker = registry.getComponent(InterceptorChain.class);
       this.factory = registry.getComponent(CommandsFactory.class);
@@ -128,7 +128,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    @Override
-   public <T> NotifyingFuture<T> submit(Runnable task, T result) {      
+   public <T> NotifyingFuture<T> submit(Runnable task, T result) {
       return (NotifyingFuture<T>) super.submit(task, result);
    }
 
@@ -278,7 +278,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             cmd = (DistributedRunnableFuture<Object>) newTaskFor(command, null);
          } else {
             throw new IllegalArgumentException("Runnable command is not Serializable  " + command);
-         }         
+         }
          executeFuture(selectExecutionNode(), cmd);
       } else {
          throw new RejectedExecutionException();
@@ -288,7 +288,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    @Override
    protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
       if (runnable == null) throw new NullPointerException();
-      
+
       DistributedExecuteCommand<T> executeCommand = factory.buildDistributedExecuteCommand(
                new RunnableAdapter<T>(runnable, value), rpc.getAddress(), null);
       DistributedRunnableFuture<T> future = new DistributedRunnableFuture<T>(executeCommand);
@@ -298,7 +298,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    @Override
    protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
       if (callable == null) throw new NullPointerException();
-      
+
       DistributedExecuteCommand<T> executeCommand = factory.buildDistributedExecuteCommand(
                callable, rpc.getAddress(), null);
       DistributedRunnableFuture<T> future = new DistributedRunnableFuture<T>(executeCommand);
@@ -307,15 +307,15 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
    @Override
    public <T, K> Future<T> submit(Callable<T> task, K... input) {
-      if (task == null) throw new NullPointerException();      
-      
+      if (task == null) throw new NullPointerException();
+
       if(inputKeysSpecified(input)){
          Map<Address, List<K>> nodesKeysMap = mapKeysToNodes(input);
          Address me = rpc.getAddress();
          DistributedExecuteCommand<T> c = factory.buildDistributedExecuteCommand(task, me, Arrays.asList(input));
          DistributedRunnableFuture<T> f = new DistributedRunnableFuture<T>(c);
          ArrayList<Address> nodes = new ArrayList<Address>(nodesKeysMap.keySet());
-         executeFuture(selectExecutionNode(nodes), f);         
+         executeFuture(selectExecutionNode(nodes), f);
          return f;
       } else {
          return submit(task);
@@ -337,8 +337,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          }
          DistributedRunnableFuture<T> f = new DistributedRunnableFuture<T>(c);
          futures.add(f);
-         executeFuture(target, f);         
-      }    
+         executeFuture(target, f);
+      }
       return futures;
    }
 
@@ -350,7 +350,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          Address me = rpc.getAddress();
          Map<Address, List<K>> nodesKeysMap = mapKeysToNodes(input);
          for (Entry<Address, List<K>> e : nodesKeysMap.entrySet()) {
-            Address target = e.getKey();   
+            Address target = e.getKey();
             DistributedExecuteCommand<T> c = null;
             if (target.equals(me)) {
                c = factory.buildDistributedExecuteCommand(clone(task), me, e.getValue());
@@ -359,14 +359,14 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             }
             DistributedRunnableFuture<T> f = new DistributedRunnableFuture<T>(c);
             futures.add(f);
-            executeFuture(target, f);            
+            executeFuture(target, f);
          }
          return futures;
       } else {
          return submitEverywhere(task);
       }
    }
-   
+
    protected <T> Callable<T> clone(Callable<T> task){
      return Util.cloneWithMarshaller(marshaller, task);
    }
@@ -375,7 +375,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       if (rpc.getAddress().equals(address)) {
          invokeLocally(f);
       } else {
-         log.debugf("Sending %s to remote execution at node %s", f, address);
+         log.tracef("Sending %s to remote execution at node %s", f, address);
          try {
             rpc.invokeRemotelyInFuture(Collections.singletonList(address), f.getCommand(),
                      (DistributedRunnableFuture<Object>) f);
@@ -384,7 +384,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          }
       }
    }
-   
+
    private <K> boolean inputKeysSpecified(K...input){
       return input != null && input.length > 0;
    }
@@ -393,10 +393,10 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       log.debugf("Sending %s to self", future);
       try {
          Callable<Object> call = new Callable<Object>() {
-            
+
             @Override
             public Object call() throws Exception {
-               Map<Address,Response> rspMap = new HashMap<Address, Response>();   
+               Map<Address,Response> rspMap = new HashMap<Address, Response>();
                Object result = null;
                future.getCommand().init(cache);
                try {
@@ -412,7 +412,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             }
          };
          final FutureTask<Object> task = new FutureTask<Object>(call);
-         future.setNetworkFuture((Future<T>) task);         
+         future.setNetworkFuture((Future<T>) task);
          task.run();
       } catch (Throwable e1) {
          log.localExecutionFailed(e1);
@@ -434,26 +434,26 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
       return addressToKey;
    }
-   
-   protected Address selectExecutionNode(List<Address> candidates) {           
+
+   protected Address selectExecutionNode(List<Address> candidates) {
       List<Address> list = randomClusterMembers(candidates,1);
       return list.get(0);
    }
-   
+
    protected Address selectExecutionNode() {
-     return selectExecutionNode(rpc.getTransport().getMembers());     
+     return selectExecutionNode(rpc.getTransport().getMembers());
    }
 
    protected List<Address> randomClusterMembers(final List<Address> members, int numNeeded) {
       if(members == null || members.isEmpty())
          throw new IllegalArgumentException("Invalid member list " + members);
-      
+
       if (members.size() < numNeeded) {
          log.cannotSelectRandomMembers(numNeeded, members);
          numNeeded = members.size();
       }
       List<Address> membersCopy = new ArrayList<Address>(members);
-      List<Address> chosen = new ArrayList<Address>();      
+      List<Address> chosen = new ArrayList<Address>();
       Random r = new Random();
       while (!membersCopy.isEmpty() && numNeeded >= chosen.size()) {
          int count = membersCopy.size();
@@ -462,21 +462,21 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
       return chosen;
    }
-   
+
    private void ensureProperCacheState(AdvancedCache cache) throws NullPointerException,
             IllegalStateException {
-      
+
       if (cache.getRpcManager() == null)
          throw new IllegalStateException("Can not use non-clustered cache for DefaultExecutorService");
 
       if (cache.getStatus() != ComponentStatus.RUNNING)
          throw new IllegalStateException("Invalid cache state " + cache.getStatus());
    }
-   
+
    /**
-    * DistributedRunnableFuture is essentially a Future wrap around DistributedExecuteCommand. 
-    * 
-    * 
+    * DistributedRunnableFuture is essentially a Future wrap around DistributedExecuteCommand.
+    *
+    *
     * @author Mircea Markus
     * @author Vladimir Blagojevic
     */
@@ -493,8 +493,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
        * Creates a <tt>DistributedRunnableFuture</tt> that will upon running, execute the given
        * <tt>Runnable</tt>, and arrange that <tt>get</tt> will return the given result on successful
        * completion.
-       * 
-       * 
+       *
+       *
        * @param runnable
        *           the runnable task
        * @param result
@@ -522,20 +522,20 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
 
       /**
-       * 
+       *
        */
       public V get() throws InterruptedException, ExecutionException {
          Object response = f.get();
-         return retrieveResult(response);      
+         return retrieveResult(response);
       }
 
       /**
-       * 
+       *
        */
       public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException,
                TimeoutException {
          Object response = f.get(timeout, unit);
-         return retrieveResult(response);      
+         return retrieveResult(response);
       }
 
       @Override
@@ -567,12 +567,12 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       public void setNetworkFuture(Future<V> future) {
          this.f = future;
       }
-      
+
       private V retrieveResult(Object response) throws ExecutionException {
          if (response instanceof Exception) {
             throw new ExecutionException((Exception) response);
          }
-         
+
          Map<Address, Response> mapResult = (Map<Address, Response>) response;
          for (Entry<Address, Response> e : mapResult.entrySet()) {
             if (e.getValue() instanceof SuccessfulResponse) {
@@ -600,7 +600,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          return getCommand().hashCode();
       }
    }
-   
+
    private static final class RunnableAdapter<T> implements Callable<T>, Serializable {
 
       /** The serialVersionUID */
