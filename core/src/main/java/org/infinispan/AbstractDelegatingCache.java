@@ -23,6 +23,7 @@
 package org.infinispan;
 
 import org.infinispan.config.Configuration;
+import org.infinispan.context.Flag;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -83,6 +84,14 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
 
    public V put(K key, V value, long lifespan, TimeUnit unit) {
       return cache.put(key, value, lifespan, unit);
+   }
+
+   /**
+    * Don't remove.
+    * @see {@link org.infinispan.CacheSupport#set(Object, Object)}
+    */
+   protected void set(K key, V value) {
+      put(key, value);
    }
 
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {

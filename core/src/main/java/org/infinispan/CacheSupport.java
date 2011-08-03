@@ -51,6 +51,17 @@ public abstract class CacheSupport<K,V> implements Cache<K,V> {
       return put(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
+   /**
+    * This is intentionally a non-public method meant as an integration point for bytecode
+    * manipulation. Don't remove or alter the signature even if it might look like
+    * unreachable code.
+    * Implementors should perform a put operation but optimizing it as return values are
+    * not required.
+    * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
+    * @since 5.0
+    */
+   protected abstract void set(K key, V value);
+
    public final void putAll(Map<? extends K, ? extends V> map) {
       putAll(map, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
