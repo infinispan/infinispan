@@ -38,7 +38,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.ReflectionCache;
-import org.infinispan.util.BeanUtils;
 import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.logging.Log;
@@ -323,16 +322,11 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       if (oldWrapper != null) {
          component = unwrapComponent(oldWrapper);
       } else {
-         // see if this has been injected externally.
-         component = getFromConfiguration(componentClass);
-
-         if (component == null) {
             // create this component and add it to the registry
             AbstractComponentFactory factory = getFactory(componentClass);
             component = factory instanceof NamedComponentFactory ?
                     ((NamedComponentFactory) factory).construct(componentClass, name)
                     : factory.construct(componentClass);
-         }
 
          if (component != null) {
             registerComponent(component, name);
@@ -447,30 +441,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    protected final void registerNullComponent(String name) {
       registerComponent(NULL_COMPONENT, name);
-   }
-
-   /**
-    * Retrieves a component from the {@link Configuration}
-    *
-    * @param componentClass component type
-    *
-    * @return component, or null if it cannot be found
-    */
-   @SuppressWarnings("unchecked")
-   protected <T> T getFromConfiguration(Class<T> componentClass) {
-      getLog().debugf("Looking in configuration for an instance of %s that may have been injected from an external source.", componentClass);
-      Method getter = BeanUtils.getterMethod(Configuration.class, componentClass);
-      T returnValue = null;
-
-      if (getter != null) {
-         try {
-            returnValue = (T) getter.invoke(getConfiguration());
-         }
-         catch (Exception e) {
-            getLog().unableToInvokeGetterOnConfiguration(getter, e);
-         }
-      }
-      return returnValue;
    }
 
    /**
