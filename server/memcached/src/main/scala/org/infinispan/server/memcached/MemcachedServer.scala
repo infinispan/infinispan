@@ -26,6 +26,8 @@ import org.infinispan.server.core.AbstractProtocolServer
 import java.util.concurrent.Executors
 import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Properties
+import org.infinispan.config.Configuration
+import org.infinispan.Cache
 
 /**
  * Memcached server defining its decoder/encoder settings. In fact, Memcached does not use an encoder since there's
@@ -35,6 +37,7 @@ import java.util.Properties
  * @since 4.1
  */
 class MemcachedServer extends AbstractProtocolServer("Memcached") {
+   import MemcachedServer._
 
    protected lazy val scheduler = Executors.newScheduledThreadPool(1)
 
@@ -46,13 +49,20 @@ class MemcachedServer extends AbstractProtocolServer("Memcached") {
    override def getEncoder = null
 
    override def getDecoder: MemcachedDecoder = {
-      val memcachedDecoder: MemcachedDecoder = new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue], scheduler, transport)
-      memcachedDecoder.versionGenerator = this.versionGenerator
-      memcachedDecoder
+      val cm = getCacheManager
+      // Define the Memcached cache as clone of the default one
+      cm.defineConfiguration(cacheName, new Configuration)
+      val dec = new MemcachedDecoder(cm.getCache(cacheName), scheduler, transport)
+      dec.versionGenerator = this.versionGenerator
+      dec
    }
 
    override def stop {
       super.stop
       scheduler.shutdown
    }
+}
+
+object MemcachedServer {
+   private[memcached] val cacheName = "memcachedCache"
 }
