@@ -32,8 +32,9 @@ import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent
 import java.util.concurrent.{CountDownLatch, TimeUnit}
-import org.infinispan.Version
 import org.infinispan.test.fwk.TestCacheManagerFactory
+import org.infinispan.config.Configuration
+import org.infinispan.Version
 
 /**
  * Tests Memcached protocol functionality against Infinispan Memcached server.
@@ -547,11 +548,13 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
    def testStoreAsBinaryOverride {
       val cm = TestCacheManagerFactory.createLocalCacheManager
-      val defaultCfg = cm.getDefaultConfiguration.fluent.storeAsBinary.build
-      assertTrue(defaultCfg.isStoreAsBinary)
+      val cfg = new Configuration().fluent.storeAsBinary.build
+      cm.defineConfiguration(MemcachedServer.cacheName, cfg)
+      assertTrue(cfg.isStoreAsBinary)
       val testServer = startMemcachedTextServer(cm, server.getPort + 33)
       try {
-         assertFalse(cm.getCache().getConfiguration.isStoreAsBinary)
+         val memcachedCache = cm.getCache(MemcachedServer.cacheName)
+         assertFalse(memcachedCache.getConfiguration.isStoreAsBinary)
       } finally {
          cm.stop
          testServer.stop

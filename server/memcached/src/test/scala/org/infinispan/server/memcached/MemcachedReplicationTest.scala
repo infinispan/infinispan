@@ -47,7 +47,7 @@ class MemcachedReplicationTest extends MultipleCacheManagersTest with MemcachedT
 
    @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
    override def createCacheManagers {
-      var config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC)
+      val config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC)
       config.setFetchInMemoryState(true)
       for (i <- 0 until 2) {
          val cm = addClusterEnabledCacheManager()
