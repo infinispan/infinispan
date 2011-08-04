@@ -37,6 +37,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -642,22 +643,28 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
       final NotifyingNotifiableFuture f = new DeferredReturnFuture();
       final EnumSet<Flag> flags = flagHolder.get() == null ? null : flagHolder.get().flags;
 
-      // Optimisations to not start a new thread:
-      // 1. If distribution and no cache loader, and either SKIP_REMOTE_LOOKUP or key is local,
-      // 2. If no cache loader config, or config is present and, SKIP_CACHE_STORE or SKIP_CACHE_LOAD flags are passed
-      boolean isSkipLoader = isSkipLoader(flags);
-      if (isDistributedAndLocal(flags, key, isSkipLoader) || isSkipLoader) {
+      // Optimization to not start a new thread only when the operation is cheap:
+      if (asyncSkipsThread(flags, key)) {
          return wrapInFuture(get(key));
       } else {
+         // Make sure the flags are cleared
+         final EnumSet<Flag> appliedFlags;
+         if (flags == null) {
+            appliedFlags = null;
+         }
+         else {
+            appliedFlags = flags.clone();
+            flags.clear();
+         }
          Callable<V> c = new Callable<V>() {
             @Override
             public V call() throws Exception {
                assertKeyNotNull(key);
                InvocationContext ctx = getInvocationContext(tx);
-               if (flags != null)
-                  ctx.setFlags(flags);
+               if (appliedFlags != null)
+                  ctx.setFlags(appliedFlags);
 
-               GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, flags);
+               GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, appliedFlags);
                Object ret = invoker.invoke(ctx, command);
                f.notifyDone();
                return (V) ret;
@@ -668,11 +675,30 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
       }
    }
 
-   private boolean isDistributedAndLocal(EnumSet<Flag> flags, K key, boolean isSkipLoader) {
-      return config.getCacheMode().isDistributed()
-            && isSkipLoader
-            && ((flags != null && flags.contains(Flag.SKIP_REMOTE_LOOKUP))
-                      || distributionManager.getLocality(key).isLocal());
+   /**
+    * Encodes the cases for an asyncGet operation in which it makes sense to actually
+    * perform the operation in sync.
+    * @param flags
+    * @param key
+    * @return true if we skip the thread (performing it in sync)
+    */
+   private boolean asyncSkipsThread(EnumSet<Flag> flags, K key) {
+      boolean isSkipLoader = isSkipLoader(flags);
+      if ( ! isSkipLoader ) {
+         // if we can't skip the cacheloader, we really want a thread for async.
+         return false;
+      }
+      CacheMode cacheMode = config.getCacheMode();
+      if ( ! cacheMode.isDistributed() ) {
+         //in these cluster modes we won't RPC for a get, so no need to fork a thread.
+         return true;
+      }
+      else if (flags != null && (flags.contains(Flag.SKIP_REMOTE_LOOKUP) || flags.contains(Flag.CACHE_MODE_LOCAL))) {
+         //with these flags we won't RPC either
+         return true;
+      }
+      //finally, we will skip the thread if the key maps to the local node
+      return distributionManager.getLocality(key).isLocal();
    }
 
    private boolean isSkipLoader(EnumSet<Flag> flags) {
