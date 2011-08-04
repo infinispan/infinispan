@@ -98,6 +98,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.*;
 
 /**
@@ -738,5 +739,11 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
    public AdvancedCache<K, V> with(ClassLoader classLoader) {
       return new ClassLoaderSpecfiedCache<K, V>(this, classLoader);
    }
-   
+
+   @Override
+   protected void set(K key, V value) {
+      withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD)
+         .put(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
+   }
+
 }
