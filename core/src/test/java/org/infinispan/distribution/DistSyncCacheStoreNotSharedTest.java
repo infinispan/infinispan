@@ -32,6 +32,7 @@ import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 /**
  * DistSyncSharedTest.
@@ -87,6 +88,26 @@ public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
       assertOwnershipAndNonOwnership(key, true);
    }
    
+   public void testAsyncGetCleansContextFlags() throws Exception {
+      String key = "k2", value = "value2";
+      for (Cache<Object, String> c : caches) assert c.isEmpty();
+
+      Cache<Object, String> nonOwner = getFirstNonOwner(key);
+      Cache<Object, String> owner = getFirstOwner(key);
+      owner.put(key, value);
+
+      owner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
+
+      Future<String> async = nonOwner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).getAsync(key);
+      assert async != null;
+      assert async.get() == null;
+
+      async = nonOwner.getAdvancedCache().getAsync(key);
+      assert async != null;
+      String returnedValue = async.get();
+      assert value.equals(returnedValue);
+   }
+
    public void testPutFromNonOwnerWithFlags() throws Exception {
       String key = "k2", value = "value2";
       for (Cache<Object, String> c : caches) assert c.isEmpty();
