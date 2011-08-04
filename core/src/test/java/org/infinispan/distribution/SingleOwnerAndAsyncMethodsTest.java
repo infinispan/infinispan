@@ -23,6 +23,7 @@
 
 package org.infinispan.distribution;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -50,7 +51,7 @@ public class SingleOwnerAndAsyncMethodsTest extends BaseDistFunctionalTest {
       numOwners = 1;
       sync = true;
       tx = false;
-      l1CacheEnabled = true;
+      l1CacheEnabled = false;
    }
 
    public void testAsyncPut(Method m) throws Exception {
@@ -62,12 +63,33 @@ public class SingleOwnerAndAsyncMethodsTest extends BaseDistFunctionalTest {
    }
 
    public void testAsyncGet(Method m) throws Exception {
-      Cache<Object, String> ownerCache = getOwner(k(m));
-      ownerCache.put(k(m), v(m));
+      final String key = k(m);
+      final String value = v(m);
+      Cache<Object, String> ownerCache = getOwner(key);
+      ownerCache.put(key, value);
+      AdvancedCache<Object, String> nonOwnerCache = getNonOwner(key).getAdvancedCache();
+
       // Make the cache getAsync call go remote to verify it gets it correctly
-      NotifyingFuture<String> f = getNonOwner(k(m)).getAsync(k(m));
+      NotifyingFuture<String> f = nonOwnerCache.getAsync(key);
       assert f != null;
-      assert f.get().equals(v(m));
+      assert f.get().equals(value);
+
+
+      f = nonOwnerCache.withFlags(Flag.SKIP_REMOTE_LOOKUP).getAsync(key);
+      assert f != null;
+      assert f.get() == null;
+
+      f = nonOwnerCache.getAsync(key);
+      assert f != null;
+      assert f.get().equals(value);
+
+      f = nonOwnerCache.withFlags(Flag.CACHE_MODE_LOCAL).getAsync(key);
+      assert f != null;
+      assert f.get() == null;
+
+      f = nonOwnerCache.getAsync(key);
+      assert f != null;
+      assert f.get().equals(value);
    }
 
    public void testAsyncReplace(Method m) throws Exception {
