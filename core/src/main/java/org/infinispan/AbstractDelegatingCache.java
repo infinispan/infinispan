@@ -91,7 +91,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
     * @see {@link org.infinispan.CacheSupport#set(Object, Object)}
     */
    protected void set(K key, V value) {
-      put(key, value);
+      cache.put(key, value);
    }
 
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
