@@ -647,15 +647,24 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
       if (asyncSkipsThread(flags, key)) {
          return wrapInFuture(get(key));
       } else {
+         // Make sure the flags are cleared
+         final EnumSet<Flag> appliedFlags;
+         if (flags == null) {
+            appliedFlags = null;
+         }
+         else {
+            appliedFlags = flags.clone();
+            flags.clear();
+         }
          Callable<V> c = new Callable<V>() {
             @Override
             public V call() throws Exception {
                assertKeyNotNull(key);
                InvocationContext ctx = getInvocationContext(tx);
-               if (flags != null)
-                  ctx.setFlags(flags);
+               if (appliedFlags != null)
+                  ctx.setFlags(appliedFlags);
 
-               GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, flags);
+               GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, appliedFlags);
                Object ret = invoker.invoke(ctx, command);
                f.notifyDone();
                return (V) ret;
