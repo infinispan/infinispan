@@ -51,7 +51,6 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
 
    var versionGenerator: ClusterIdGenerator = _
 
-   private val versionCounter = new AtomicInteger
    private val isTrace = isTraceEnabled
 
    protected var header: SuitableHeader = null.asInstanceOf[SuitableHeader]

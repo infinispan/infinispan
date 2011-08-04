@@ -48,6 +48,7 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with Memca
       cacheManager = createTestCacheManager
       memcachedServer = startMemcachedTextServer(cacheManager)
       memcachedClient = createMemcachedClient(60000, server.getPort)
+      cache = cacheManager.getCache(MemcachedServer.cacheName)
       return cacheManager
    }
 
