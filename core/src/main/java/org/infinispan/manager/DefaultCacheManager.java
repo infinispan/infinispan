@@ -22,7 +22,6 @@
  */
 package org.infinispan.manager;
 
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.Version;
@@ -64,6 +63,7 @@ import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -447,21 +447,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          return cw.getCache();
       }
 
-      boolean acquired = false;
-      try {
-         if (cacheCreateLock.tryLock(defaultConfiguration.getLockAcquisitionTimeout(), MILLISECONDS)) {
-            acquired = true;
-            return createCache(cacheName);
-         } else {
-            throw new CacheException("Unable to acquire lock on cache with name " + cacheName);
-         }
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new CacheException("Interrupted while trying to get lock on cache with cache name " + cacheName, e);
-      } finally {
-         if (acquired)
-            cacheCreateLock.unlock();
+      if (caches.size() > 0) {
+         log.shouldBeUsingStartCache(cacheName);
       }
+      return createCache(cacheName);
    }
 
    @Override
@@ -476,6 +465,42 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          return null;
       else
          return getCache(cacheName);
+   }
+
+   @Override
+   public EmbeddedCacheManager startCaches(final String... cacheNames) {
+      List<Thread> threads = new ArrayList<Thread>(cacheNames.length);
+      boolean haveStoppedCaches = false;
+      boolean haveRunningCaches = false;
+      for (final String cacheName : cacheNames) {
+         if (isRunning(cacheName)) {
+            haveRunningCaches = true;
+            continue;
+         }
+
+         haveStoppedCaches = true;
+         String threadName = "CacheStartThread," + globalConfiguration.getClusterName() + "," + cacheName;
+         Thread thread = new Thread(threadName) {
+            @Override
+            public void run() {
+               createCache(cacheName);
+            }
+         };
+         thread.start();
+         threads.add(thread);
+      }
+      if (haveStoppedCaches && haveRunningCaches) {
+         log.asymmetricClusterWarning();
+      }
+      try {
+         for (Thread thread : threads) {
+            thread.join(defaultConfiguration.getLockAcquisitionTimeout());
+         }
+      } catch (InterruptedException e) {
+         throw new CacheException("Interrupted while waiting for the caches to start");
+      }
+
+      return this;
    }
 
    @Override
@@ -536,14 +561,42 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       return t != null && t.isCoordinator();
    }
 
-   @GuardedBy("Cache name lock container keeps a lock per cache name which guards this method")
    private Cache createCache(String cacheName) {
       boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
+         Cache cache = wireCache(cacheName);
+         // a null return value means the cache was created by someone else before we got the lock
+         if (cache == null)
+            return caches.get(cacheName).getCache();
+
+         // start the cache-level components
+         try {
+            cache.start();
+         } finally {
+            // allow other threads to access the cache
+            caches.get(cacheName).latch.countDown();
+         }
+
+         return cache;
+      } finally {
+         LogFactory.popNDC(trace);
+      }
+   }
+
+   /**
+    * @return a null return value means the cache was created by someone else before we got the lock
+    */
+   private Cache wireCache(String cacheName) {
+      boolean acquired = false;
+      try {
+         if (!cacheCreateLock.tryLock(defaultConfiguration.getLockAcquisitionTimeout(), MILLISECONDS)) {
+            throw new CacheException("Unable to acquire lock on cache with name " + cacheName);
+         }
+         acquired = true;
          CacheWrapper existingCache = caches.get(cacheName);
          if (existingCache != null)
-            return existingCache.getCache();
+            return null;
 
          Configuration c = getConfiguration(cacheName);
          setConfigurationName(cacheName, c);
@@ -553,18 +606,21 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          c.assertValid();
          Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName, reflectionCache);
          CacheWrapper cw = new CacheWrapper(cache);
-         try {
-            existingCache = caches.putIfAbsent(cacheName, cw);
-            if (existingCache != null) {
-               throw new IllegalStateException("attempt to initialize the cache twice");
-            }
-            cache.start();
-         } finally {
-            cw.latch.countDown();
+         existingCache = caches.put(cacheName, cw);
+         if (existingCache != null) {
+            throw new IllegalStateException("attempt to initialize the cache twice");
          }
+
+         // start the global components here, while we have the global lock
+         globalComponentRegistry.start();
+
          return cache;
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException("Interrupted while trying to get lock on cache with cache name " + cacheName, e);
       } finally {
-         LogFactory.popNDC(trace);
+         if (acquired)
+            cacheCreateLock.unlock();
       }
    }
 
