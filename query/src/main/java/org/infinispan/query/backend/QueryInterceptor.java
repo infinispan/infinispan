@@ -136,8 +136,10 @@ public class QueryInterceptor extends CommandInterceptor {
          updateKnownTypesIfNeeded( p1 );
          updateKnownTypesIfNeeded( p2 );
          Object key = extractValue(command.getKey());
-
-         removeFromIndexes(p1, key);
+         
+         if (p1 != null) {
+            removeFromIndexes(p1, key);
+         }
          addToIndexes(p2, key);
       }
 
