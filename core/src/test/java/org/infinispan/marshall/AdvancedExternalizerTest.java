@@ -57,7 +57,7 @@ public class AdvancedExternalizerTest extends MultipleCacheManagersTest {
       registerCacheManager(cm1, cm2);
       Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       defineConfigurationOnAllManagers(getCacheName(), cfg);
-      waitForClusterToForm();
+      waitForClusterToForm(getCacheName());
    }
 
    protected String getCacheName() {

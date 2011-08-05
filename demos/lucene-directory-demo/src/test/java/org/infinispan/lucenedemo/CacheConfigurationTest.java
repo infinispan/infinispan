@@ -40,7 +40,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.0
  */
-@Test(groups = "functional", testName = "lucenedemo.SmokeTest")
+@Test(groups = "functional", testName = "lucenedemo.CacheConfigurationTest")
 public class CacheConfigurationTest {
    
    private DefaultCacheManager cacheManager1;

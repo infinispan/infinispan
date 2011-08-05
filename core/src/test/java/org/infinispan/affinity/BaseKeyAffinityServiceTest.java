@@ -98,7 +98,7 @@ public class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest {
    }
 
    protected void waitForClusterToResize() {
-      TestingUtil.blockUntilViewsReceived(10000, caches);
+      TestingUtil.blockUntilViewsReceived(10000, false, caches);
       TestingUtil.waitForRehashToComplete(caches);
       assertEquals(caches.size(), topology().size());
    }

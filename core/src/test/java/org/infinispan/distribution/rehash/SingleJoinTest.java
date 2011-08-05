@@ -24,7 +24,11 @@ package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -41,6 +45,9 @@ public class SingleJoinTest extends RehashTestBase {
 
    void waitForRehashCompletion() {
       // need to block until this join has completed!
+      List<Cache> allCaches = new ArrayList(caches);
+      allCaches.add(joiner);
+      TestingUtil.blockUntilViewsReceived(60000, allCaches);
       waitForJoinTasksToComplete(SECONDS.toMillis(480), joiner);
 
       // where does the joiner sit in relation to the other caches?
@@ -48,6 +55,7 @@ public class SingleJoinTest extends RehashTestBase {
 
       log.info("***>>> Joiner is in position " + joinerPos);
 
+      cacheManagers.add(joinerPos, joinerManager);
       caches.add(joinerPos, joiner);
    }
 }

@@ -33,11 +33,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.util.ReversibleOrderedSet;
-import org.infinispan.util.concurrent.locks.containers.LockContainer;
-import org.infinispan.util.concurrent.locks.containers.OwnableReentrantPerEntryLockContainer;
-import org.infinispan.util.concurrent.locks.containers.OwnableReentrantStripedLockContainer;
-import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
-import org.infinispan.util.concurrent.locks.containers.ReentrantStripedLockContainer;
+import org.infinispan.util.concurrent.locks.containers.*;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
@@ -45,8 +41,7 @@ import org.rhq.helpers.pluginAnnotations.agent.Metric;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -95,11 +90,24 @@ public class LockManagerImpl implements LockManager {
                throw new IllegalStateException("Transaction "+tx+" appears to no longer be valid!");
             }
          }
-         if (trace) log.trace("Successfully acquired lock!");         
+         if (trace) log.tracef("Successfully acquired lock %s!", key);
          return true;
       }
 
       // couldn't acquire lock!
+      if (log.isDebugEnabled()) {
+         log.debugf("Failed to acquire lock %s, owner is %s", key, getOwner(key));
+         Object owner = ctx.getLockOwner();
+         Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
+         List<Object> lockedKeys = new ArrayList<Object>(entries.size());
+         for (Map.Entry<Object, CacheEntry> e : entries) {
+            Object lockedKey = e.getKey();
+            if (ownsLock(lockedKey, owner)) {
+               lockedKeys.add(lockedKey);
+            }
+         }
+         log.debugf("This transaction (%s) already owned locks %s", owner, lockedKeys);
+      }
       return false;
    }
 

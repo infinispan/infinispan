@@ -58,7 +58,7 @@ public abstract class BaseDldLazyLockingTest extends BaseDldTest {
       assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t1.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
 
       t0.setKeyValue(k0, "k0_0");
-      t1.setKeyValue(k1, "k1_0");
+      t1.setKeyValue(k1, "k1_1");
 
       t0.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
       t1.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
@@ -112,7 +112,7 @@ public abstract class BaseDldLazyLockingTest extends BaseDldTest {
       t0.setKeyValue(k0, "k0_0");
       t0.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
 
-      t1.setKeyValue(k1, "k1_0");
+      t1.setKeyValue(k1, "k1_1");
       assertEquals(t1.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE), PerCacheExecutorThread.OperationsResult.PUT_KEY_VALUE_OK);
       t1.setKeyValue(k0, "k0_1");
       assertEquals(t1.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE), PerCacheExecutorThread.OperationsResult.PUT_KEY_VALUE_OK);

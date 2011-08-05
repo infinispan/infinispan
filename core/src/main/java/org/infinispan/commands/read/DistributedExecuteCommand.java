@@ -146,6 +146,15 @@ public class DistributedExecuteCommand<V> implements VisitableCommand {
    }
 
    @Override
+   public String toString() {
+      return "DistributedExecuteCommand{" +
+            "cache=" + cache +
+            ", keys=" + keys +
+            ", callable=" + callable +
+            '}';
+   }
+
+   @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }

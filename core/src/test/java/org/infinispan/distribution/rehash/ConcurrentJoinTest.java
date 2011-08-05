@@ -30,6 +30,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -42,32 +43,46 @@ public class ConcurrentJoinTest extends RehashTestBase {
    final int numJoiners = 4;
 
    void performRehashEvent(boolean offline) {
-      Runnable runnable = new Runnable() {
-         public void run() {
+      joinerManagers = new CopyOnWriteArrayList<EmbeddedCacheManager>();
+      joiners = new CopyOnWriteArrayList<Cache<Object, String>>(new Cache[numJoiners]);
 
-            joinerManagers = new ArrayList<EmbeddedCacheManager>(numJoiners);
-            joiners = new ArrayList<Cache<Object, String>>(numJoiners);
-            for (int i = 0; i < numJoiners; i++) {
-               EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager(true);
-               joinerManager.defineConfiguration(cacheName, configuration);
+      for (int i = 0; i < numJoiners; i++) {
+         EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager(true);
+         joinerManager.defineConfiguration(cacheName, configuration);
+         joinerManagers.add(joinerManager);
+         joiners.set(i, null);
+      }
+
+      Thread[] threads = new Thread[numJoiners];
+      for (int i = 0; i < numJoiners; i++) {
+         final int ii = i;
+         threads[i] = new Thread(new Runnable() {
+            public void run() {
+               EmbeddedCacheManager joinerManager = joinerManagers.get(ii);
                Cache<Object, String> joiner = joinerManager.getCache(cacheName);
-               joinerManagers.add(joinerManager);
-               joiners.add(joiner);
+               joiners.set(ii, joiner);
             }
-         }
-      };
+         }, "ConcurrentJoinTest-Worker-" + i);
+      }
 
-      if (offline) {
-         new Thread(runnable).start();
-      } else {
-         runnable.run();
+      for (int i = 0; i < numJoiners; i++) {
+         threads[i].start();
+      }
+      for (int i = 0; i < numJoiners; i++) {
+         try {
+            threads[i].join();
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
       }
    }
 
    @SuppressWarnings("unchecked")
    void waitForRehashCompletion() {
+      List<Cache> allCaches = new ArrayList<Cache>(caches);
+      allCaches.addAll(joiners);
+      TestingUtil.blockUntilViewsReceived(60000, false, allCaches);
       waitForJoinTasksToComplete(SECONDS.toMillis(480), joiners.toArray(new Cache[numJoiners]));
-      TestingUtil.sleepThread(SECONDS.toMillis(2));
       int[] joinersPos = new int[numJoiners];
       for (int i = 0; i < numJoiners; i++) joinersPos[i] = locateJoiner(joinerManagers.get(i).getAddress());
 

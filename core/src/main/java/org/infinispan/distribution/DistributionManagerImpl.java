@@ -67,8 +67,22 @@ import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.infinispan.context.Flag.*;
 
@@ -114,6 +128,11 @@ public class DistributionManagerImpl implements DistributionManager {
     * Set if the cluster is in rehash mode, i.e. not all the nodes have applied the new state.
     */
    private volatile boolean rehashInProgress = false;
+   /**
+    * When we get the rehash completed notification we have to first invalidate the moved keys
+    * Only then we can unset the rehashInProgress flag.
+    */
+   private volatile boolean receivedRehashCompletedNotification = false;
    private final Object rehashInProgressMonitor = new Object();
 
    private volatile int lastViewId = -1;
@@ -137,7 +156,7 @@ public class DistributionManagerImpl implements DistributionManager {
          public Thread newThread(Runnable r) {
             Thread t = new Thread(r);
             t.setDaemon(true);
-            t.setName("Rehasher," + configuration.getGlobalConfiguration().getClusterName()
+            t.setName("Rehasher," + configuration.getName()
                   + "," + rpcManager.getTransport().getAddress());
             return t;
          }
@@ -157,7 +176,7 @@ public class DistributionManagerImpl implements DistributionManager {
       this.rpcManager = rpcManager;
       this.notifier = notifier;
       this.cf = cf;
-      this.transactionLogger = new TransactionLoggerImpl(cf);
+      this.transactionLogger = new TransactionLoggerImpl(cf, configuration);
       this.dataContainer = dataContainer;
       this.interceptorChain = interceptorChain;
       this.icc = icc;
@@ -253,11 +272,11 @@ public class DistributionManagerImpl implements DistributionManager {
    public boolean waitForRehashToComplete(int viewId) throws InterruptedException, TimeoutException {
       long endTime = System.currentTimeMillis() + configuration.getRehashRpcTimeout();
       synchronized (rehashInProgressMonitor) {
-         while (rehashInProgress && lastViewId == viewId && System.currentTimeMillis() < endTime) {
+         while (!receivedRehashCompletedNotification && lastViewId == viewId && System.currentTimeMillis() < endTime) {
             rehashInProgressMonitor.wait(configuration.getRehashRpcTimeout());
          }
       }
-      if (rehashInProgress) {
+      if (!receivedRehashCompletedNotification) {
          if (lastViewId != viewId) {
             log.debug("Received a new view while waiting for cluster-wide rehash to finish");
             return false;
@@ -293,8 +312,10 @@ public class DistributionManagerImpl implements DistributionManager {
    public InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx) throws Exception {
       ClusteredGetCommand get = cf.buildClusteredGetCommand(key, ctx.getFlags());
 
-      ResponseFilter filter = new ClusteredGetResponseValidityFilter(locate(key));
-      Map<Address, Response> responses = rpcManager.invokeRemotely(locate(key), get, ResponseMode.SYNCHRONOUS,
+      List<Address> targets = locate(key);
+      targets.remove(getSelf());
+      ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets);
+      Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, ResponseMode.SYNCHRONOUS,
                                                                    configuration.getSyncReplTimeout(), false, filter);
 
       if (!responses.isEmpty()) {
@@ -329,38 +350,36 @@ public class DistributionManagerImpl implements DistributionManager {
    @ManagedOperation(description = "Determines whether a given key is affected by an ongoing rehash, if any.")
    @Operation(displayName = "Could key be affected by rehash?")
    public boolean isAffectedByRehash(@Parameter(name = "key", description = "Key to check") Object key) {
-      return isRehashInProgress() && !getConsistentHash().locate(key, getReplCount()).contains(getSelf());
+      // TODO Do we really need to check if it's local now or is it enough to check that it wasn't local in the last CH
+      return isRehashInProgress() && consistentHash.locate(key, getReplCount()).contains(getSelf())
+            && !lastSuccessfulCH.locate(key, getReplCount()).contains(getSelf());
    }
 
    public TransactionLogger getTransactionLogger() {
       return transactionLogger;
    }
 
-   private Map<Object, InternalCacheValue> applyStateMap(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state, boolean withRetry) {
+   private Map<Object, InternalCacheValue> applyStateMap(Map<Object, InternalCacheValue> state, boolean withRetry) {
       Map<Object, InternalCacheValue> retry = withRetry ? new HashMap<Object, InternalCacheValue>() : null;
 
       for (Map.Entry<Object, InternalCacheValue> e : state.entrySet()) {
-         if (consistentHash.locate(e.getKey(), configuration.getNumOwners()).contains(getSelf())) {
-            InternalCacheValue v = e.getValue();
-            InvocationContext ctx = icc.createInvocationContext();
-            // locking not necessary in the case of a join since the node isn't doing anything else
-            // TODO what if the node is already running?
-            ctx.setFlags(CACHE_MODE_LOCAL, SKIP_CACHE_LOAD, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING,
-                         SKIP_OWNERSHIP_CHECK);
-            try {
-               PutKeyValueCommand put = cf.buildPutKeyValueCommand(e.getKey(), v.getValue(), v.getLifespan(), v.getMaxIdle(), ctx.getFlags());
-               interceptorChain.invoke(ctx, put);
-            } catch (Exception ee) {
-               if (withRetry) {
-                  if (trace)
-                     log.tracef("Problem %s encountered when applying state for key %s. Adding entry to retry queue.", ee.getMessage(), e.getKey());
-                  retry.put(e.getKey(), e.getValue());
-               } else {
-                  log.problemApplyingStateForKey(ee.getMessage(), e.getKey());
-               }
+         InternalCacheValue v = e.getValue();
+         InvocationContext ctx = icc.createInvocationContext();
+         // locking not necessary in the case of a join since the node isn't doing anything else
+         // TODO what if the node is already running?
+         ctx.setFlags(CACHE_MODE_LOCAL, SKIP_CACHE_LOAD, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING,
+                      SKIP_OWNERSHIP_CHECK);
+         try {
+            PutKeyValueCommand put = cf.buildPutKeyValueCommand(e.getKey(), v.getValue(), v.getLifespan(), v.getMaxIdle(), ctx.getFlags());
+            interceptorChain.invoke(ctx, put);
+         } catch (Exception ee) {
+            if (withRetry) {
+               if (trace)
+                  log.tracef("Problem %s encountered when applying state for key %s. Adding entry to retry queue.", ee.getMessage(), e.getKey());
+               retry.put(e.getKey(), e.getValue());
+            } else {
+               log.problemApplyingStateForKey(ee.getMessage(), e.getKey());
             }
-         } else {
-            log.keyDoesNotMapToLocalNode(e.getKey(), consistentHash.locate(e.getKey(), configuration.getNumOwners()));
          }
       }
       return retry;
@@ -371,12 +390,9 @@ public class DistributionManagerImpl implements DistributionManager {
                           Address sender, int viewId) throws InterruptedException {
       waitForJoinToStart();
 
-      // use the sender's CH if his view is newer
-      // an use our CH if the our view is newer
-      ConsistentHash latestCH = consistentHash;
       if (viewId < lastViewId) {
          log.debugf("Rejecting state pushed by node %s for old rehash %d (last view id is %d)", sender, viewId, lastViewId);
-         latestCH = getConsistentHash();
+         return;
       }
 
       log.debugf("Applying new state from %s: received %d keys", sender, state.size());
@@ -384,11 +400,11 @@ public class DistributionManagerImpl implements DistributionManager {
       int retryCount = 3; // in case we have issues applying state.
       Map<Object, InternalCacheValue> pendingApplications = state;
       for (int i = 0; i < retryCount; i++) {
-         pendingApplications = applyStateMap(latestCH, pendingApplications, true);
+         pendingApplications = applyStateMap(pendingApplications, true);
          if (pendingApplications.isEmpty()) break;
       }
       // one last go
-      if (!pendingApplications.isEmpty()) applyStateMap(latestCH, pendingApplications, false);
+      if (!pendingApplications.isEmpty()) applyStateMap(pendingApplications, false);
 
       if(trace) log.tracef("After applying state data container has %d keys", dataContainer.size());
    }
@@ -408,7 +424,7 @@ public class DistributionManagerImpl implements DistributionManager {
       }
 
       if (trace) log.tracef("Rehash completed on node %s, data container has %d keys", getSelf(), dataContainer.size());
-      rehashInProgress = false;
+      receivedRehashCompletedNotification = true;
       synchronized (rehashInProgressMonitor) {
          // we know for sure the rehash task is waiting for this confirmation, so the CH hasn't been replaced
          if (trace) log.tracef("Updating last rehashed CH to %s", this.lastSuccessfulCH);
@@ -468,7 +484,7 @@ public class DistributionManagerImpl implements DistributionManager {
       }
    }
 
-   public void notifyCoordinatorPushCompleted(int viewId) throws InterruptedException {
+   public void notifyCoordinatorPushCompleted(int viewId) throws Exception {
       Transport t = rpcManager.getTransport();
 
       if (t.isCoordinator()) {
@@ -479,7 +495,7 @@ public class DistributionManagerImpl implements DistributionManager {
          Address coordinator = rpcManager.getTransport().getCoordinator();
 
          if (trace) log.tracef("Node %s is not the coordinator, sending request to mark push for %d as complete to %s", self, viewId, coordinator);
-         rpcManager.invokeRemotely(Collections.singleton(coordinator), cmd, true);
+         rpcManager.invokeRemotely(Collections.singleton(coordinator), cmd, ResponseMode.SYNCHRONOUS, configuration.getRehashRpcTimeout());
       }
    }
 
@@ -493,6 +509,7 @@ public class DistributionManagerImpl implements DistributionManager {
          boolean rehashInterrupted = rehashInProgress;
          synchronized (rehashInProgressMonitor) {
             rehashInProgress = true;
+            receivedRehashCompletedNotification = false;
             lastViewId = e.getViewId();
             rehashInProgressMonitor.notifyAll();
          }
@@ -538,12 +555,19 @@ public class DistributionManagerImpl implements DistributionManager {
       return rehashInProgress;
    }
 
+   @Override
+   public void markRehashTaskCompleted() {
+      synchronized (rehashInProgressMonitor) {
+         rehashInProgress = false;
+         rehashInProgressMonitor.notifyAll();
+      }
+   }
 
    public boolean isJoinComplete() {
       return joinComplete;
    }
 
-   public List<Address> getAffectedNodes(Collection<Object> affectedKeys) {
+   public Collection<Address> getAffectedNodes(Collection<Object> affectedKeys) {
       if (affectedKeys == null || affectedKeys.isEmpty()) {
          if (trace) log.trace("affected keys are empty");
          return Collections.emptyList();
@@ -551,7 +575,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
       Set<Address> an = new HashSet<Address>();
       for (List<Address> addresses : locateAll(affectedKeys).values()) an.addAll(addresses);
-      return new ArrayList<Address>(an);
+      return an;
    }
 
    public void applyRemoteTxLog(List<WriteCommand> commands) {

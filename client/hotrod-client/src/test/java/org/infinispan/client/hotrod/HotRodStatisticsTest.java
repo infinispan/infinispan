@@ -40,7 +40,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(groups = "functional", testName = "client.hotrod.HotrodStatisticsTest")
+@Test(groups = "functional", testName = "client.hotrod.HotRodStatisticsTest")
 public class HotRodStatisticsTest {
 
    private HotRodServer hotrodServer;

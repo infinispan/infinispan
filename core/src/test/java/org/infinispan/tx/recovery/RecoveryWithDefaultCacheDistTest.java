@@ -40,7 +40,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Mircea.Markus@jboss.com
  */
-@Test (groups = "functional", testName = "tx.recovery.BasicRecoveryTest")
+@Test (groups = "functional", testName = "tx.recovery.RecoveryWithDefaultCacheDistTest")
 public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest {
 
    Configuration configuration;

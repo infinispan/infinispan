@@ -31,6 +31,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -50,8 +51,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
-import static org.infinispan.distribution.ch.ConsistentHashHelper.createConsistentHash;
 
 /**
  * Task which handles view changes (joins, merges or leaves) and rebalances keys using a push based approach.
@@ -77,7 +76,7 @@ public class RebalanceTask extends RehashTask {
    private final CacheNotifier notifier;
    private final InterceptorChain interceptorChain;
    private final int newViewId;
-   private final boolean rehashInterrupted;
+   private final boolean previousRehashWasInterrupted;
 
    public RebalanceTask(RpcManager rpcManager, CommandsFactory commandsFactory, Configuration conf,
                         DataContainer dataContainer, DistributionManagerImpl dmi,
@@ -88,20 +87,23 @@ public class RebalanceTask extends RehashTask {
       this.notifier = notifier;
       this.interceptorChain = interceptorChain;
       this.newViewId = newViewId;
-      this.rehashInterrupted = rehashInterrupted;
+      this.previousRehashWasInterrupted = rehashInterrupted;
    }
 
 
    protected void performRehash() throws Exception {
       long start = System.currentTimeMillis();
       if (log.isDebugEnabled())
-         log.debugf("Commencing rehash on node: %s. Before start, data container had %d entries",
-               getMyAddress(), dataContainer.size());
-      ConsistentHash chOld, chNew;
+         log.debugf("Commencing rehash %d on node: %s. Before start, data container had %d entries",
+               newViewId, getMyAddress(), dataContainer.size());
+      Collection<Address> oldCacheSet = Collections.emptySet(), newCacheSet = Collections.emptySet();
+      List<Object> keysToRemove = new ArrayList<Object>();
+      boolean anotherRehashIsPending = false;
+
       try {
          // Don't need to log anything, all transactions will be blocked
          //distributionManager.getTransactionLogger().enable();
-         if (rehashInterrupted) {
+         if (previousRehashWasInterrupted) {
             log.tracef("Rehash is still in progress, not blocking transactions as they should already be blocked");
          } else {
             // if the previous rehash was interrupted by the arrival of a new view
@@ -111,22 +113,20 @@ public class RebalanceTask extends RehashTask {
 
          // Create the new CH:
          List<Address> newMembers = rpcManager.getTransport().getMembers();
-         chNew = createConsistentHash(configuration, newMembers);
-         chOld = distributionManager.setConsistentHash(chNew);
+         ConsistentHash chNew = ConsistentHashHelper.createConsistentHash(configuration, newMembers);
+         ConsistentHash chOld = distributionManager.setConsistentHash(chNew);
 
          if (trace) {
-            log.tracef("Rebalancing\nchOld = %s\nchNew = %s", chOld, chNew);
+            log.tracef("Rebalancing: chOld = %s, chNew = %s", chOld, chNew);
          }
 
          if (configuration.isRehashEnabled()) {
             // Cache sets for notification
-            Collection<Address> oldCacheSet = Immutables.immutableCollectionWrap(chOld.getCaches());
-            Collection<Address> newCacheSet = Immutables.immutableCollectionWrap(chNew.getCaches());
+            oldCacheSet = Immutables.immutableCollectionWrap(chOld.getCaches());
+            newCacheSet = Immutables.immutableCollectionWrap(chNew.getCaches());
 
             // notify listeners that a rehash is about to start
             notifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, true);
-
-            List<Object> keysToRemove = new ArrayList<Object>();
 
             int numOwners = configuration.getNumOwners();
 
@@ -149,22 +149,27 @@ public class RebalanceTask extends RehashTask {
 
             // Now for each server S in states.keys(): push states.get(S) to S via RPC
             pushState(chOld, chNew, states);
-
-            // now we can invalidate the keys
-            invalidateKeys(oldCacheSet, newCacheSet, keysToRemove);
          } else {
             if (trace) log.trace("Rehash not enabled, so not pushing state");
          }
       } finally {
-         boolean pendingRehash = false;
          try {
             // now we can inform the coordinator that we have finished our push
             distributionManager.notifyCoordinatorPushCompleted(newViewId);
 
-            // wait to unblock transactions until
-            pendingRehash = !distributionManager.waitForRehashToComplete(newViewId);
+            // wait to unblock transactions until every node has confirmed pushing state
+            // if there is another pending rehash the call will return early and
+            // DistributionManager.isRehashInProgress() will return true
+            anotherRehashIsPending = !distributionManager.waitForRehashToComplete(newViewId);
+
+            if (!anotherRehashIsPending && configuration.isRehashEnabled()) {
+               // now we can invalidate the keys
+               invalidateKeys(keysToRemove);
+
+               notifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, false);
+            }
          } finally {
-            if (pendingRehash) {
+            if (anotherRehashIsPending) {
                log.debugf("Another rehash is pending, keeping the transactions blocked");
             } else {
                try {
@@ -172,6 +177,7 @@ public class RebalanceTask extends RehashTask {
                } catch (Exception e) {
                   log.debug("Unblocking transactions failed", e);
                }
+               distributionManager.markRehashTaskCompleted();
             }
          }
          log.debugf("Node %s completed rehash for view %d in %s!", self, newViewId,
@@ -179,17 +185,16 @@ public class RebalanceTask extends RehashTask {
       }
    }
 
-   private void invalidateKeys(Collection<Address> oldCacheSet, Collection<Address> newCacheSet, List<Object> keysToRemove) {
+   private void invalidateKeys(List<Object> keysToRemove) {
       try {
-         InvalidateCommand invalidateCmd = cf.buildInvalidateFromL1Command(true, keysToRemove);
-         InvocationContext ctx = icc.createNonTxInvocationContext();
-         ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_LOCKING);
-         interceptorChain.invoke(ctx, invalidateCmd);
+         if (keysToRemove.size() > 0) {
+            InvalidateCommand invalidateCmd = cf.buildInvalidateFromL1Command(true, keysToRemove);
+            InvocationContext ctx = icc.createNonTxInvocationContext();
+            ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_LOCKING);
+            interceptorChain.invoke(ctx, invalidateCmd);
 
-         if (trace) {
-            if (keysToRemove.size() > 0)
-               log.tracef("%s removed %d keys", self, keysToRemove.size());
-            log.tracef("data container has now %d keys", dataContainer.size());
+            log.debugf("Invalidated %d keys, data container now has %d keys", keysToRemove.size(), dataContainer.size());
+            log.tracef("Invalidated keys: %s", keysToRemove);
          }
       } catch (CacheException e) {
          log.failedToInvalidateKeys(e);
@@ -202,8 +207,8 @@ public class RebalanceTask extends RehashTask {
       for (Map.Entry<Address, Map<Object, InternalCacheValue>> entry : states.entrySet()) {
          final Address target = entry.getKey();
          Map<Object, InternalCacheValue> state = entry.getValue();
-         log.debugf("%s pushing to %s %d keys", self, target, state.size());
-         if (trace) log.tracef("Pushed keys %s", self, target, state.keySet());
+         log.debugf("Pushing to node %s %d keys", target, state.size());
+         log.tracef("Pushing to node %s keys: %s", target, state.keySet());
 
          final RehashControlCommand cmd = cf.buildRehashControlCommand(RehashControlCommand.Type.APPLY_STATE, self,
                                                                        newViewId, state, chOld, chNew);
@@ -248,19 +253,14 @@ public class RebalanceTask extends RehashTask {
       if (oldOwners.equals(newOwners))
          return;
 
-      // 3. The pushing server is the last node in the old owner list that's also in the new owner list
+      // 3. The pushing server is the last node in the old owner list that's also in the new CH
       // It will only be null if all the old owners left the cluster
       Address pushingOwner = null;
-      if (oldOwners.size() == 1) {
-         // This could happen if numOwners == 1!  See ISPN-1244
-         pushingOwner = oldOwners.get(0);
-      } else {
-         for (int i = oldOwners.size() - 1; i >= 0; i--) {
-            Address server = oldOwners.get(i);
-            if (newOwners.contains(server)) {
-               pushingOwner = server;
-               break;
-            }
+      for (int i = oldOwners.size() - 1; i >= 0; i--) {
+         Address server = oldOwners.get(i);
+         if (chNew.getCaches().contains(server)) {
+            pushingOwner = server;
+            break;
          }
       }
 

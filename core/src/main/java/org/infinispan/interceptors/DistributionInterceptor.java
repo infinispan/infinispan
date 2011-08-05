@@ -45,6 +45,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.L1Manager;
+import org.infinispan.distribution.RehashInProgressException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
@@ -90,7 +91,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    };
 
    @Inject
-   public void injectDependencies(DistributionManager distributionManager, CommandsFactory cf, DataContainer dataContainer, EntryFactory entryFactory, L1Manager l1Manager) {
+   public void injectDependencies(DistributionManager distributionManager, CommandsFactory cf,
+                                  DataContainer dataContainer, EntryFactory entryFactory, L1Manager l1Manager) {
       this.dm = distributionManager;
       this.cf = cf;
       this.dataContainer = dataContainer;
@@ -102,7 +104,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public void start() {
       isL1CacheEnabled = configuration.isL1CacheEnabled();
       needReliableReturnValues = !configuration.isUnsafeUnreliableReturnValues();
-      
+
    }
 
    // ---- READ commands
@@ -118,13 +120,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       // so we need to check whether join has completed as well.
       boolean isRehashInProgress = !dm.isJoinComplete() || dm.isRehashInProgress();
       Object returnValue = invokeNextInterceptor(ctx, command);
-      
+
       // If L1 caching is enabled, this is a remote command, and we found a value in our cache
       // we store it so that we can later invalidate it
       if (isL1CacheEnabled && !ctx.isOriginLocal() && returnValue != null) {
       	l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
       }
-      
+
       // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
       // available.  It could just have been removed in the same tx beforehand.
       if (needsRemoteGet(ctx, command.getKey(), returnValue == null))
@@ -263,11 +265,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             Map<Object, List<Address>> toMulticast = dm.locateAll(command.getKeys(), 1);
 
             //now compile address reunion
-            List<Address> where;
+            Collection<Address> where;
             if (toMulticast.size() == 1) {//avoid building an extra array, as most often this will be a single key
                where = toMulticast.values().iterator().next();
             } else {
-               where = new LinkedList<Address>();
+               where = new HashSet<Address>();
                for (List<Address> values : toMulticast.values()) where.addAll(values);
             }
             rpcManager.invokeRemotely(where, command, true, true);
@@ -287,43 +289,58 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return r instanceof SuccessfulResponse && Byte.valueOf(CommitCommand.RESEND_PREPARE).equals(((SuccessfulResponse) r).getResponseValue());
    }
 
-   // ---- TX boundary commands 
+   // ---- TX boundary commands
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          Collection<Address> preparedOn = ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired();
 
-         List<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
-
-         // By default, use the configured commit sync settings
-         boolean syncCommitPhase = configuration.isSyncCommitPhase();
-         for (Address a : preparedOn) {
-            if (!recipients.contains(a)) {
-               recipients.add(a);
-               // However if we have prepared on some nodes and are now committing on different nodes, make sure we
-               // force sync commit so we can respond to prepare resend requests.
-               syncCommitPhase = true;
-            }
-         }
          NotifyingNotifiableFuture<Object> f = null;
          if (isL1CacheEnabled) {
-         	f = l1Manager.flushCache(ctx.getLockedKeys(), null, null);
+            f = l1Manager.flushCache(ctx.getLockedKeys(), null, null);
          }
 
-         Map<Address, Response> responses = rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
+         // We try harder to make a commit succeed, but at some point we have to give up
+         for (int i = 0; i < 3; i++) {
+            boolean needToWaitForRehash = false;
+            Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
 
-         if (!responses.isEmpty()) {
-            List<Address> resendTo = new LinkedList<Address>();
-            for (Map.Entry<Address, Response> r : responses.entrySet()) {
-               if (needToResendPrepare(r.getValue()))
-                  resendTo.add(r.getKey());
+            // By default, use the configured commit sync settings
+            boolean syncCommitPhase = configuration.isSyncCommitPhase();
+            for (Address a : preparedOn) {
+               if (!recipients.contains(a)) {
+                  recipients.add(a);
+                  // However if we have prepared on some nodes and are now committing on different nodes, make sure we
+                  // force sync commit so we can respond to prepare resend requests.
+                  syncCommitPhase = true;
+               }
             }
+            try {
+               Map<Address, Response> responses = rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
+               if (!responses.isEmpty()) {
+                  List<Address> resendTo = new LinkedList<Address>();
+                  for (Map.Entry<Address, Response> r : responses.entrySet()) {
+                     if (needToResendPrepare(r.getValue()))
+                        resendTo.add(r.getKey());
+                  }
 
-            if (!resendTo.isEmpty()) {
-               log.debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
-               // Make sure this is 1-Phase!!
-               PrepareCommand pc = cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
-               rpcManager.invokeRemotely(resendTo, pc, true, true);
+                  if (!resendTo.isEmpty()) {
+                     log.debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
+                     // Make sure this is 1-Phase!!
+                     PrepareCommand pc = cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
+                     rpcManager.invokeRemotely(resendTo, pc, true, true);
+                  }
+               }
+               break;
+            } catch (RehashInProgressException e) {
+               // we are assuming the current node is also trying to start the rehash, but it can't
+               // because we're holding the tx lock
+               // there is no problem if some nodes already applied the commit
+               dm.getTransactionLogger().suspendTransactionLock(ctx);
+               log.tracef("Released the transaction lock temporarily, allow rehashing to proceed on %s", rpcManager.getAddress());
+
+               dm.getTransactionLogger().resumeTransactionLock(ctx);
+               log.tracef("Rehashing completed, retrying the commit on the remote nodes %s", rpcManager.getAddress());
             }
          }
 
@@ -346,7 +363,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       boolean sync = isSynchronous(ctx);
 
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         List<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
+         Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
          NotifyingNotifiableFuture<Object> f = null;
          if (isL1CacheEnabled && command.isOnePhaseCommit())
             f = l1Manager.flushCache(ctx.getLockedKeys(), null, null);
@@ -397,19 +414,19 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       Object returnValue = invokeNextInterceptor(ctx, command);
 
       if (command.isSuccessful()) {
-      	
+
          if (!ctx.isInTxScope()) {
          	NotifyingNotifiableFuture<Object> future = null;
             if (ctx.isOriginLocal()) {
                List<Address> rec = recipientGenerator.generateRecipients();
                int numCallRecipients = rec == null ? 0 : rec.size();
                if (trace) log.tracef("Invoking command %s on hosts %s", command, rec);
-               
+
                boolean useFuture = ctx.isUseFutureReturnType();
                if (isL1CacheEnabled && !skipL1Invalidation)
                	// Handle the case where the put is local. If in unicast mode and this is not a data
                	// owner, nothing happens. If in multicast mode, we this node will send the multicast
-               	if (rpcManager.getTransport().getMembers().size() > numCallRecipients) { 
+               	if (rpcManager.getTransport().getMembers().size() > numCallRecipients) {
                		// Command was successful, we have a number of receipients and L1 should be flushed, so request any L1 invalidations from this node
                		if (trace) log.tracef("Put occuring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s", command.getAffectedKeys(), dm.getAffectedNodes(command.getAffectedKeys()));
                		future = l1Manager.flushCache(recipientGenerator.getKeys(), returnValue, null);

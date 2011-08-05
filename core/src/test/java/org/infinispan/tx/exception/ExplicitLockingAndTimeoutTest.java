@@ -51,7 +51,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(groups = "functional", testName = "tx.timeout.EagerLockingAndTimeoutTest")
+@Test(groups = "functional", testName = "tx.timeout.ExplicitLockingAndTimeoutTest")
 public class ExplicitLockingAndTimeoutTest extends MultipleCacheManagersTest {
 
    private LockManager lm1;

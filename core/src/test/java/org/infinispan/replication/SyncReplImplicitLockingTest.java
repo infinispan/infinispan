@@ -26,9 +26,6 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -38,6 +35,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.assertNoLocks;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 /**
  * Tests for implicit locking
@@ -171,7 +170,7 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
       t.start();
 
       // wait till the put in thread t times out
-      assert latch.await(1, TimeUnit.SECONDS) : "Concurrent put didn't time out!";
+      assert latch.await(5, TimeUnit.SECONDS) : "Concurrent put didn't time out!";
       mgr.commit();
 
       t.join();

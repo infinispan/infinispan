@@ -107,9 +107,9 @@ public interface DistributionManager {
     * rehash in progress, involving nodes that the key maps to.
     *
     * @param key key to look up
-    * @param ctx 
+    * @param ctx
     * @return an internal cache entry, or null if it cannot be located
-    * @throws Exception if something bad happens 
+    * @throws Exception if something bad happens
     */
    InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx) throws Exception;
 
@@ -165,10 +165,11 @@ public interface DistributionManager {
    /**
     * A helper method that retrieves a list of nodes affected by operations on a set of keys.  This helper will in turn
     * call {@link #locateAll(java.util.Collection)} and then combine the result addresses.
+    *
     * @param affectedKeys keys to locate
     * @return a list of addresses which represent a combined set of all addresses affected by the set of keys.
     */
-   List<Address> getAffectedNodes(Collection<Object> affectedKeys);
+   Collection<Address> getAffectedNodes(Collection<Object> affectedKeys);
 
    /**
     * Applies an ordered list of modifications to the current node.  Typically used when state is pushed to the node
@@ -183,7 +184,7 @@ public interface DistributionManager {
 
    void markNodePushCompleted(int viewId, Address node) throws InterruptedException;
 
-   public void notifyCoordinatorPushCompleted(int viewId) throws InterruptedException;
+   public void notifyCoordinatorPushCompleted(int viewId) throws Exception;
 
    /**
     * Wait until the cluster-wide rehash for view <code>viewId</code> has finished.
@@ -191,5 +192,7 @@ public interface DistributionManager {
     * @return true if the rehashed finished successfully, false if there is another rehash pending.
     */
    public boolean waitForRehashToComplete(int viewId) throws InterruptedException, TimeoutException;
+
+   void markRehashTaskCompleted();
 }
 

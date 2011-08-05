@@ -50,7 +50,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea Markus
  * @since 5.0
  */
-@Test (groups = "functional", testName = "tx.recovery.admin.LocalCacheRecoveryAdminTest")
+@Test (groups = "functional", testName = "tx.recovery.admin.SimpleCacheRecoveryAdminTest")
 @CleanupAfterMethod
 public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
@@ -93,7 +93,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
       prepareTransaction(tx1);
 
       TestingUtil.killCacheManagers(manager(2));
-      TestingUtil.blockUntilViewsReceived(600000, cache(0, "test"), cache(1, "test"));
+      TestingUtil.blockUntilViewsReceived(600000, false, cache(0, "test"), cache(1, "test"));
 
    }
 

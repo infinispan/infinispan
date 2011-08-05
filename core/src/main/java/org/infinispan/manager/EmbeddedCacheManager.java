@@ -212,6 +212,18 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
    <K, V> Cache<K, V> getCache(String cacheName, boolean createIfAbsent);
 
    /**
+    * Starts a set of caches in parallel.
+    * Infinispan doesn't yet support asymmetric clusters (that is, two nodes
+    * having different sets of caches running). Calling this method on
+    * application/application server startup with all your cache names
+    * will ensure that the cluster is symmetric.
+    *
+    * @param cacheNames the names of the caches to start
+    * @since 5.0
+    */
+   EmbeddedCacheManager startCaches(String... cacheNames);
+
+   /**
     * Removes a cache with the given name from the system. This is a cluster
     * wide operation that results not only in stopping the cache with the given
     * name in all nodes in the cluster, but also deletes its contents both in

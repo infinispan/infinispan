@@ -368,11 +368,14 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
       componentRegistry.start();
       defaultLifespan = config.getExpirationLifespan();
       defaultMaxIdleTime = config.getExpirationMaxIdle();
+      if (log.isDebugEnabled()) log.debugf("Started cache %s on %s", getName(), getCacheManager().getAddress());
    }
 
    @ManagedOperation(description = "Stops the cache.")
    @Operation(displayName = "Stops cache.")
    public void stop() {
+      if (log.isDebugEnabled()) log.debugf("Stopping cache %s on %s", getName(), getCacheManager().getAddress());
+
       // Create invocation context to pass flags
       getInvocationContext(false);
       componentRegistry.stop();

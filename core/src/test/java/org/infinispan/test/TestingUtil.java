@@ -139,7 +139,7 @@ public class TestingUtil {
    }
 
    public static void waitForRehashToComplete(Cache... caches) {
-      int gracetime = 120000; // 120 seconds?
+      int gracetime = 30000; // 30 seconds?
       long giveup = System.currentTimeMillis() + gracetime;
       for (Cache c : caches) {
          DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
@@ -149,16 +149,14 @@ public class TestingUtil {
                log.error(message);
                throw new RuntimeException(message);
             }
-            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
+            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
          }
          log.trace("Node " + dmi.getRpcManager().getAddress() + " finished rehash task.");
       }
    }
 
    public static void waitForRehashToComplete(Collection<? extends Cache> caches) {
-      Set<Cache> cachesSet = new HashSet<Cache>();
-      cachesSet.addAll(caches);
-      waitForRehashToComplete(cachesSet.toArray(new Cache[cachesSet.size()]));
+      waitForRehashToComplete(caches.toArray(new Cache[caches.size()]));
    }
 
    public static void waitForInitRehashToComplete(Cache... caches) {
@@ -172,7 +170,7 @@ public class TestingUtil {
                log.error(message);
                throw new RuntimeException(message);
             }
-            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
+            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
          }
          log.trace("Node " + dmi.getRpcManager().getAddress() + " finished join task.");
       }
@@ -208,14 +206,23 @@ public class TestingUtil {
    }
 
    private static void viewsTimedOut(Cache[] caches) {
-      int length = caches.length;
+      CacheContainer[] cacheContainers = new CacheContainer[caches.length];
+      for (int i = 0; i < caches.length; i++) {
+         cacheContainers[i] = caches[i].getCacheManager();
+      }
+      viewsTimedOut(cacheContainers);
+   }
+   private static void viewsTimedOut(CacheContainer[] cacheContainers) {
+      int length = cacheContainers.length;
       List<List<Address>> allViews = new ArrayList<List<Address>>(length);
-      for (int i = 0; i < length; i++)
-         allViews.add(caches[i].getCacheManager().getMembers());
+      for (int i = 0; i < length; i++) {
+         EmbeddedCacheManager cm = (EmbeddedCacheManager) cacheContainers[i];
+         allViews.add(cm.getMembers());
+      }
 
       throw new RuntimeException(String.format(
          "Timed out before caches had complete views.  Expected %d members in each view.  Views are as follows: %s",
-         caches.length, allViews));
+         cacheContainers.length, allViews));
    }
 
    public static void blockUntilViewsReceivedInt(Cache[] caches, long timeout) throws InterruptedException {
@@ -275,11 +282,7 @@ public class TestingUtil {
          }
       }
 
-      Cache[] caches = new Cache[cacheContainers.length];
-      for (int i = 0; i < cacheContainers.length; i++)
-         caches[i] = cacheContainers[i].getCache();
-
-      viewsTimedOut(caches);
+      viewsTimedOut(cacheContainers);
    }
 
    /**
@@ -883,8 +886,12 @@ public class TestingUtil {
       ic.invoke(ctxt, command);
    }
 
-   public static void blockUntilViewsReceived(int timeout, List caches) {
-      blockUntilViewsReceived((Cache[]) caches.toArray(new Cache[]{}), timeout);
+   public static void blockUntilViewsReceived(int timeout, Collection caches) {
+      blockUntilViewsReceived(timeout, (Cache[]) caches.toArray(new Cache[]{}));
+   }
+
+   public static void blockUntilViewsReceived(int timeout, boolean barfIfTooManyMembers, Collection caches) {
+      blockUntilViewsReceived(timeout, barfIfTooManyMembers, (Cache[]) caches.toArray(new Cache[caches.size()]));
    }
 
    public static CommandsFactory extractCommandsFactory(Cache<Object, Object> cache) {
