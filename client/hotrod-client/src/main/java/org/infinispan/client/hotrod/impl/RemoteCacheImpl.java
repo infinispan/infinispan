@@ -22,6 +22,8 @@
  */
 package org.infinispan.client.hotrod.impl;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -447,4 +449,13 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
          throw new RemoteCacheManagerNotStartedException(message);
       }
    }
+
+   @Override
+   protected void set(K key, V value) {
+      // no need to optimize the put operation: all invocations are already non-return by default,
+      // see org.infinispan.client.hotrod.Flag.FORCE_RETURN_VALUE
+      // Warning: never invoke put(K,V) in this scope or we'll get a stackoverflow.
+      put(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
+   }
+
 }
