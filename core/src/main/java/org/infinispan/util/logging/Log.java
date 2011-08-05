@@ -739,4 +739,13 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Unable to unlock keys %2$s for transaction %1$s after they were rebalanced off node %3$s", id = 154)
    void unableToUnlockRebalancedKeys(GlobalTransaction gtx, List<Object> keys, Address self, @Cause Throwable t);
+
+   @LogMessage(level = WARN)
+   @Message(value = "You are not starting all your caches at the same time. This can lead to problems as asymmetric clusters are not supported, see ISPN-658", id = 155)
+   void asymmetricClusterWarning();
+
+   @LogMessage(level = WARN)
+   @Message(value = "You are not starting all your caches at the same time. This can lead to problems as asymmetric clusters are not supported, see ISPN-658. " +
+         "We recommend using EmbeddedCacheManager.startCaches() to start all your caches upfront.", id = 156)
+   void shouldBeUsingStartCache(String cacheName);
 }
