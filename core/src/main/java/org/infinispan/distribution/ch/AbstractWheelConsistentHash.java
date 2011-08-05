@@ -227,8 +227,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
 
    public int getNormalizedHash(Object key) {
       // more efficient impl
-      int h = hashFunction.hash(key);
-      return h % Integer.MAX_VALUE; // make sure no negative numbers are involved.
+      return hashFunction.hash(key) & Integer.MAX_VALUE; // make sure no negative numbers are involved.
    }
 
    protected boolean isVirtualNodesEnabled() {
