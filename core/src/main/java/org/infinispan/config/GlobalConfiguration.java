@@ -43,6 +43,8 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.infinispan.config.FluentGlobalConfiguration.SerializationConfig;
 import org.infinispan.config.FluentGlobalConfiguration.TransportConfig;
 import org.infinispan.config.FluentGlobalConfiguration.GlobalJmxStatisticsConfig;
@@ -79,6 +81,8 @@ import java.util.Properties;
 @XmlRootElement
 @ConfigurationDoc(name = "global", desc = "Defines global settings shared among all cache instances created by a single CacheManager.")
 public class GlobalConfiguration extends AbstractConfigurationBean {
+
+   private static final Log log = LogFactory.getLog(GlobalConfiguration.class);
 
    /**
     * The serialVersionUID
