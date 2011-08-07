@@ -24,6 +24,8 @@ package org.infinispan.config;
 
 import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * TimeoutConfigurationValidatingVisitor checks transport related timeout relationships of
@@ -34,6 +36,8 @@ import org.infinispan.loaders.decorators.AsyncStoreConfig;
  * @since 5.0
  */
 public class TimeoutConfigurationValidatingVisitor extends AbstractConfigurationBeanVisitor {
+
+   private static final Log log = LogFactory.getLog(TimeoutConfigurationValidatingVisitor.class);
 
    private AsyncStoreConfig asyncType = null;
    private GlobalConfiguration global = null;

@@ -38,7 +38,6 @@ import org.infinispan.config.Configuration.StateRetrievalType;
 import org.infinispan.config.Configuration.SyncType;
 import org.infinispan.config.Configuration.TransactionType;
 import org.infinispan.config.Configuration.UnsafeType;
-import org.infinispan.config.FluentConfiguration.GroupsConfig;
 import org.infinispan.config.GlobalConfiguration.FactoryClassWithPropertiesType;
 import org.infinispan.config.GlobalConfiguration.GlobalJmxStatisticsType;
 import org.infinispan.config.GlobalConfiguration.SerializationType;
@@ -72,7 +71,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public abstract class AbstractConfigurationBeanVisitor implements ConfigurationBeanVisitor {
 
-   protected transient Log log = LogFactory.getLog(getClass());
+   private static final Log log = LogFactory.getLog(AbstractConfigurationBeanVisitor.class);
 
    @Override
    public void visitInfinispanConfiguration(InfinispanConfiguration bean) {

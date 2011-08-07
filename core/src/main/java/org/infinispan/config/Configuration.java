@@ -47,6 +47,8 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.hash.Hash;
 import org.infinispan.util.hash.MurmurHash3;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -86,6 +88,7 @@ import static org.infinispan.config.Configuration.CacheMode.*;
 public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    private static final long serialVersionUID = 5553791890144997466L;
+   private static final Log log = LogFactory.getLog(Configuration.class);
 
    // reference to a global configuration
    @XmlTransient

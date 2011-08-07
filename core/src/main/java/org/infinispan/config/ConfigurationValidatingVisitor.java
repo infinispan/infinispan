@@ -27,6 +27,8 @@ import org.infinispan.config.GlobalConfiguration.TransportType;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Set;
 
@@ -38,6 +40,9 @@ import java.util.Set;
  * @since 4.0
  */
 public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVisitor {
+
+   private static final Log log = LogFactory.getLog(ConfigurationValidatingVisitor.class);
+
    private TransportType tt = null;
    private boolean evictionEnabled = false;
    private Configuration cfg;
