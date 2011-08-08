@@ -41,7 +41,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * Invoke a CusteredQueryCommand on the cluster, including on own node. 
+ * Invoke a CusteredQueryCommand on the cluster, including on own node.
  * 
  * @author Israel Lacerra <israeldl@gmail.com>
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
@@ -65,6 +65,17 @@ public class ClusteredQueryInvoker {
       this.myAddress = localCacheInstance.getAdvancedCache().getRpcManager().getAddress();
    }
 
+   /**
+    * Retrieves the value (using doc index) in a remote query instance
+    * 
+    * @param doc
+    *           Doc index of the value on remote query
+    * @param address
+    *           Address of the node who has the value
+    * @param queryId
+    *           Id of the query
+    * @return The value of index doc of the query with queryId on node at address
+    */
    public Object getValue(int doc, Address address, UUID queryId) {
       ClusteredQueryCommand clusteredQuery = ClusteredQueryCommand.retrieveKeyFromLazyQuery(
                localCacheInstance, queryId, doc);
@@ -72,39 +83,35 @@ public class ClusteredQueryInvoker {
       if (address.equals(myAddress)) {
          Future<QueryResponse> localResponse = localInvoke(clusteredQuery);
          try {
-            return localResponse.get();
+            return localResponse.get().getFetchedValue();
          } catch (InterruptedException e) {
-            //FIXME
-            e.printStackTrace();
-            return null;
+            throw new SearchException("interrupted while searching locally", e);
          } catch (ExecutionException e) {
-            //FIXME
-            e.printStackTrace();
-            return null;
+            throw new SearchException("Exception while searching locally", e);
          }
       } else {
-
          List<Address> addresss = new ArrayList<Address>(1);
          addresss.add(address);
 
-         try {
-            Map<Address, Response> responses = rpcManager.invokeRemotely(addresss, clusteredQuery,
-                     ResponseMode.SYNCHRONOUS, 10000);
-            List<QueryResponse> objects = cast(responses);
-            return objects.get(0);
-         } catch (Exception e) {
-            // FIXME
-            e.printStackTrace();
-            return null;
-         }
+         Map<Address, Response> responses = rpcManager.invokeRemotely(addresss, clusteredQuery,
+                  ResponseMode.SYNCHRONOUS, 10000);
+         List<QueryResponse> objects = cast(responses);
+         return objects.get(0).getFetchedValue();
       }
    }
 
+   /**
+    * Broadcast this ClusteredQueryCommand to all cluster nodes. The command will be also invoked on
+    * local node.
+    * 
+    * @param clusteredQuery
+    * @return A list with all responses
+    */
    public List<QueryResponse> broadcast(ClusteredQueryCommand clusteredQuery) {
       // invoke on own node
       Future<QueryResponse> localResponse = localInvoke(clusteredQuery);
       Map<Address, Response> responses = rpcManager.invokeRemotely(null, clusteredQuery,
-            ResponseMode.SYNCHRONOUS, 10000);
+               ResponseMode.SYNCHRONOUS, 10000);
 
       List<QueryResponse> objects = cast(responses);
       final QueryResponse localReturnValue;
@@ -120,7 +127,8 @@ public class ClusteredQueryInvoker {
    }
 
    private Future<QueryResponse> localInvoke(ClusteredQueryCommand clusteredQuery) {
-      ClusteredQueryCallable clusteredQueryCallable = new ClusteredQueryCallable(clusteredQuery, localCacheInstance);
+      ClusteredQueryCallable clusteredQueryCallable = new ClusteredQueryCallable(clusteredQuery,
+               localCacheInstance);
       return asyncExecutor.submit(clusteredQueryCallable);
    }
 
@@ -132,7 +140,7 @@ public class ClusteredQueryInvoker {
             QueryResponse response = (QueryResponse) ((SuccessfulResponse) resp).getResponseValue();
             objects.add(response);
          } else {
-            //TODO
+            throw new SearchException("Unexpected response: " + resp);
          }
       }
 
@@ -140,7 +148,7 @@ public class ClusteredQueryInvoker {
    }
 
    /**
-    * Created to call a ClusteredQueryCommand on own node. 
+    * Created to call a ClusteredQueryCommand on own node.
     * 
     * @author Israel Lacerra <israeldl@gmail.com>
     * @since 5.1

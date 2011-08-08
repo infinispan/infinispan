@@ -27,6 +27,7 @@ import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.Cache;
 import org.infinispan.query.clustered.commandworkers.CQCreateEagerQuery;
 import org.infinispan.query.clustered.commandworkers.CQCreateLazyQuery;
+import org.infinispan.query.clustered.commandworkers.CQGetResultSize;
 import org.infinispan.query.clustered.commandworkers.CQKillLazyIterator;
 import org.infinispan.query.clustered.commandworkers.CQLazyFetcher;
 import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker;
@@ -47,11 +48,11 @@ public enum ClusteredQueryCommandType {
       }
    },
    CREATE_EAGER_ITERATOR() {
-	      @Override
-	      public ClusteredQueryCommandWorker getNewInstance() {
-	         return new CQCreateEagerQuery();
-	      }
-	   },
+      @Override
+      public ClusteredQueryCommandWorker getNewInstance() {
+         return new CQCreateEagerQuery();
+      }
+   },
    DESTROY_LAZY_ITERATOR() {
       @Override
       public ClusteredQueryCommandWorker getNewInstance() {
@@ -62,6 +63,12 @@ public enum ClusteredQueryCommandType {
       @Override
       public ClusteredQueryCommandWorker getNewInstance() {
          return new CQLazyFetcher();
+      }
+   },
+   GET_RESULT_SIZE() {
+      @Override
+      public ClusteredQueryCommandWorker getNewInstance() {
+         return new CQGetResultSize();
       }
    };
 

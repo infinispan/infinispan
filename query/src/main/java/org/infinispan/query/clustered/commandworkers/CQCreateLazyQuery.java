@@ -30,8 +30,8 @@ import org.infinispan.query.clustered.QueryResponse;
 /**
  * CQCreateLazyQuery.
  * 
- * Creates a lazy iterator of a distributed query.
- * 
+ * Creates a DocumentExtractor and register it on the node QueryBox.
+ *  
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
@@ -44,9 +44,12 @@ public class CQCreateLazyQuery extends ClusteredQueryCommandWorker {
       int resultSize = query.queryResultSize();
 
       QueryBox box = getQueryBox();
+      
+      // registering...
       box.put(lazyQueryId, extractor);
+      
+      // returning the QueryResponse 
       TopDocs topDocs = extractor.getTopDocs();
-
       QueryResponse queryResponse = new QueryResponse(topDocs, box.getMyId(), resultSize);
       queryResponse.setAddress(cache.getAdvancedCache().getRpcManager().getAddress());
       return queryResponse;

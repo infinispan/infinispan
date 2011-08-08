@@ -71,9 +71,17 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    }
 
    public static ClusteredQueryCommand createLazyIterator(HSQuery query, Cache cache, UUID id) {
-      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.CREATE_LAZY_ITERATOR, cache.getName());
+      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(
+               ClusteredQueryCommandType.CREATE_LAZY_ITERATOR, cache.getName());
       clQuery.query = query;
       clQuery.lazyQueryId = id;
+      return clQuery;
+   }
+
+   public static ClusteredQueryCommand getResultSize(HSQuery query, Cache cache) {
+      ClusteredQueryCommand clQuery = new ClusteredQueryCommand(
+               ClusteredQueryCommandType.GET_RESULT_SIZE, cache.getName());
+      clQuery.query = query;
       return clQuery;
    }
 
@@ -121,7 +129,8 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    }
 
    public QueryResponse perform(Cache cache) {
-      ClusteredQueryCommandWorker worker = commandType.getCommand(cache, query, lazyQueryId, docIndex);
+      ClusteredQueryCommandWorker worker = commandType.getCommand(cache, query, lazyQueryId,
+               docIndex);
       return worker.perform();
    }
 

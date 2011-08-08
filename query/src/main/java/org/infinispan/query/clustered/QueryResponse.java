@@ -39,16 +39,26 @@ public class QueryResponse implements Serializable {
 
    private static final long serialVersionUID = -2113889511877165954L;
 
-   private final UUID nodeUUID;
+   private UUID nodeUUID;
 
    private TopDocs topDocs;
 
    private Address address;
 
    private Integer resultSize;
-   
+
+   private Object fetchedValue;
+
    public TopDocs getTopDocs() {
       return topDocs;
+   }
+
+   public QueryResponse(Object value) {
+      fetchedValue = value;
+   }
+
+   public QueryResponse(int resultSize) {
+      this.resultSize = resultSize;
    }
 
    public QueryResponse(TopDocs topDocs, UUID nodeUUid, int resultSize) {
@@ -71,6 +81,10 @@ public class QueryResponse implements Serializable {
 
    public Address getAddress() {
       return address;
+   }
+
+   public Object getFetchedValue() {
+      return fetchedValue;
    }
 
 }

@@ -21,24 +21,27 @@
  */
 package org.infinispan.query.clustered.commandworkers;
 
-import org.infinispan.query.clustered.QueryBox;
+import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.infinispan.query.clustered.QueryResponse;
 
 /**
- * CQLazyFetcher.
+ * CQGetResultSize.
  * 
- * Fetch a new result for a lazy iterator
+ * Get the result size of this query on current node
  * 
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class CQLazyFetcher extends ClusteredQueryCommandWorker {
+public class CQGetResultSize extends ClusteredQueryCommandWorker {
 
    @Override
    public QueryResponse perform() {
-      QueryBox box = getQueryBox();
-      Object value = box.getValue(lazyQueryId, docIndex);
-      return new QueryResponse(value);
+      query.afterDeserialise((SearchFactoryImplementor) getSearchFactory());
+      query.queryDocumentExtractor();
+      int resultSize = query.queryResultSize();
+
+      QueryResponse queryResponse = new QueryResponse(resultSize);
+      return queryResponse;
    }
 
 }
