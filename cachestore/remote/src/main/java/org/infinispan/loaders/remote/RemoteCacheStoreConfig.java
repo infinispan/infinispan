@@ -28,6 +28,8 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +52,7 @@ import java.util.Properties;
 public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
 
    private volatile String remoteCacheName;
-
+   private static final Log log = LogFactory.getLog(RemoteCacheStoreConfig.class);
    private final Properties hotRodClientProperties = new Properties();
 
    public RemoteCacheStoreConfig() {
@@ -80,16 +82,16 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
    }
 
    public void setHotRodClientProperties(Properties props) {
-      this.hotRodClientProperties.putAll(props);
+      hotRodClientProperties.putAll(props);
    }
 
-   public void setHotRodClientPropertiesFile(String hotRodClientProperties) {
+   public void setHotRodClientPropertiesFile(String hotRodClientPropertiesFile) {
       FileLookup fileLookup = FileLookupFactory.newInstance();
-      InputStream inputStream = fileLookup.lookupFile(hotRodClientProperties, getClassLoader());
+      InputStream inputStream = fileLookup.lookupFile(hotRodClientPropertiesFile, getClassLoader());
       try {
-         this.hotRodClientProperties.load(inputStream);
+         hotRodClientProperties.load(inputStream);
       } catch (IOException e) {
-         log.error("Issues while loading properties from file", e);
+         log.error("Issues while loading properties from file " + hotRodClientPropertiesFile, e);
          throw new CacheException(e);
       } finally {
          Util.close(inputStream);
