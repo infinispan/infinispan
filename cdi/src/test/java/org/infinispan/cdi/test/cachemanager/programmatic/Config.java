@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi.test.cachemanager.programmatic;
 
-import org.infinispan.cdi.Infinispan;
+import org.infinispan.cdi.ConfigureCache;
 import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
@@ -44,7 +44,7 @@ public class Config {
     * <p>The default configuration will be used.</p>
     */
    @Produces
-   @Infinispan("small")
+   @ConfigureCache("small")
    @Small
    public Configuration smallConfiguration;
 

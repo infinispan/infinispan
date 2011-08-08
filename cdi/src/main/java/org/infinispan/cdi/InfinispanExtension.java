@@ -99,7 +99,7 @@ public class InfinispanExtension implements Extension {
    }
 
    void saveCacheConfigurations(@Observes ProcessProducer<?, Configuration> event, BeanManager beanManager) {
-      Infinispan annotation = event.getAnnotatedMember().getAnnotation(Infinispan.class);
+      ConfigureCache annotation = event.getAnnotatedMember().getAnnotation(ConfigureCache.class);
       if (annotation != null) {
          String name = annotation.value();
          configurations.add(new ConfigurationHolder(

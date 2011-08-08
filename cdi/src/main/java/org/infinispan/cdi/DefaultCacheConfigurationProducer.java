@@ -48,7 +48,7 @@ public class DefaultCacheConfigurationProducer {
     */
    @Produces
    @Default
-   @Infinispan
+   @ConfigureCache
    @ApplicationScoped
    public Configuration getDefaultCacheConfiguration(@OverrideDefault Instance<Configuration> providedDefaultConfiguration) {
       if (!providedDefaultConfiguration.isUnsatisfied()) {

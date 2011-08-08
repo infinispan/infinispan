@@ -35,18 +35,17 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * This annotation is used to define a specific cache {@link Configuration}. This configuration will be registered in
- * the default {@linkplain org.infinispan.manager.CacheContainer CacheContainer} implementation provided by the {@link
- * DefaultCacheManagerProducer}.
+ * This annotation is used to define a cache {@link Configuration}.
  *
  * @author Pete Muir
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @Retention(RUNTIME)
 @Target({METHOD, FIELD, PARAMETER, TYPE})
 @GenericType(Configuration.class)
-public @interface Infinispan {
+public @interface ConfigureCache {
    /**
-    * The configuration name.
+    * The name of the cache to configure. If no value is provided the configured cache is the default one.
     */
    String value() default "";
 }
