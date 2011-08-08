@@ -170,6 +170,10 @@ public class RpcManagerImpl implements RpcManager {
             if (log.isDebugEnabled())
                log.debug("We're the only member in the cluster; no one to retrieve state from. Not doing anything!");
             return;
+         } else if (t.isCoordinator()) {
+            if (log.isDebugEnabled())
+               log.debug("We're the coordinator, so don't request state from other nodes in the cluster");
+            return;
          }
 
          boolean success = false;
