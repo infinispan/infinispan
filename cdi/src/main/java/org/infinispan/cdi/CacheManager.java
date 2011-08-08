@@ -46,7 +46,7 @@ import static org.jboss.seam.solder.bean.Beans.getQualifiers;
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-@GenericConfiguration(Infinispan.class)
+@GenericConfiguration(ConfigureCache.class)
 public class CacheManager {
 
    @Inject
@@ -58,7 +58,7 @@ public class CacheManager {
 
    @Inject
    @Generic
-   private Infinispan infinispan;
+   private ConfigureCache configureCache;
 
    @Inject
    @Generic
@@ -78,7 +78,7 @@ public class CacheManager {
    @Produces
    @ApplyScope
    public <K, V> AdvancedCache<K, V> getAdvancedCache(BeanManager beanManager) {
-      final String name = infinispan.value();
+      final String name = configureCache.value();
       Cache<K, V> cache;
 
       if (name.isEmpty()) {

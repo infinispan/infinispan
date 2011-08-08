@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi.test.cachemanager.external;
 
-import org.infinispan.cdi.Infinispan;
+import org.infinispan.cdi.ConfigureCache;
 import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
@@ -42,7 +42,7 @@ public class Config {
     * Associates the externally defined "large" cache with the qualifier {@link Large}.
     */
    @Produces
-   @Infinispan("large")
+   @ConfigureCache("large")
    @Large
    public Configuration largeConfiguration;
 
@@ -50,7 +50,7 @@ public class Config {
     * Associates the externally defined "quick" cache with the qualifier {@link Quick}.
     */
    @Produces
-   @Infinispan("quick")
+   @ConfigureCache("quick")
    @Quick
    public Configuration quickConfiguration;
 

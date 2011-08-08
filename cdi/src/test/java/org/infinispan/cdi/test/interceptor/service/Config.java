@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi.test.interceptor.service;
 
-import org.infinispan.cdi.Infinispan;
+import org.infinispan.cdi.ConfigureCache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -40,7 +40,7 @@ public class Config {
     * <p>The default configuration will be used.</p>
     */
    @Custom
-   @Infinispan("custom")
+   @ConfigureCache("custom")
    @Produces
    public Configuration customConfiguration;
 
@@ -50,7 +50,7 @@ public class Config {
     * <p>The default configuration will be used.</p>
     */
    @Small
-   @Infinispan("small")
+   @ConfigureCache("small")
    @Produces
    public Configuration smallConfiguration;
 

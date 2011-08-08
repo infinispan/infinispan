@@ -44,7 +44,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Target({METHOD, FIELD, PARAMETER, TYPE})
 @GenericType(Configuration.class)
-public @interface Infinispan {
+public @interface ConfigureCache {
    /**
     * The configuration name.
     */
