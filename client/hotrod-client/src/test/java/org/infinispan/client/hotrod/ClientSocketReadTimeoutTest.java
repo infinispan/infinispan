@@ -186,6 +186,11 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
       }
 
       @Override
+      public EmbeddedCacheManager startCaches(String... cacheNames) {
+         return delegate.startCaches(cacheNames);
+      }
+
+      @Override
       public void removeCache(String cacheName) {
          delegate.removeCache(cacheName);
       }
