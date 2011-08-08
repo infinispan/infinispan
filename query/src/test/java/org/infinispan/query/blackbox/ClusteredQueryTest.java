@@ -180,6 +180,11 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
          previousAge = person.getAge();
       }
    }
+   
+   public void testGetResultSizeList() throws ParseException {
+      populateCache();
+      assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
+   }
 
    private void populateCache() throws ParseException {
       prepareTestData();

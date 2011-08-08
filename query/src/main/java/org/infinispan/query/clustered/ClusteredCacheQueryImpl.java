@@ -55,9 +55,8 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
             ExecutorService asyncExecutor, AdvancedCache cache, Class<?>... classes) {
       super(luceneQuery, searchFactory, cache, classes);
       this.asyncExecutor = asyncExecutor;
-      hSearchQuery = searchFactory.createHSQuery()
-            .luceneQuery(luceneQuery)
-            .targetedEntities(Arrays.asList(classes));
+      hSearchQuery = searchFactory.createHSQuery().luceneQuery(luceneQuery)
+               .targetedEntities(Arrays.asList(classes));
    }
 
    @Override
@@ -69,7 +68,15 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
    @Override
    public int getResultSize() {
       if (resultSize == null) {
-         // TODO fetch result size
+         ClusteredQueryCommand command = ClusteredQueryCommand.getResultSize(hSearchQuery, cache);
+
+         ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
+         List<QueryResponse> responses = invoker.broadcast(command);
+
+         resultSize = 0;
+         for (QueryResponse response : responses) {
+            resultSize += response.getResultSize();
+         }
       }
       return resultSize;
    }
@@ -79,7 +86,7 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
       ClusteredQueryCommand command = ClusteredQueryCommand
                .createEagerIterator(hSearchQuery, cache);
 
-      HashMap<UUID, ClusteredTopDocs> topDocsResponses = treatIteratorResponses(command);
+      HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
       DistributedIterator it = new DistributedIterator(sort, fetchSize, this.resultSize,
                topDocsResponses, cache);
 
@@ -89,25 +96,22 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
    @Override
    public QueryIterator lazyIterator(int fetchSize) {
       UUID lazyItId = UUID.randomUUID();
+      ClusteredQueryCommand command = ClusteredQueryCommand.createLazyIterator(hSearchQuery, cache,
+               lazyItId);
 
-      ClusteredQueryCommand command = ClusteredQueryCommand.createLazyIterator(
-               hSearchQuery, cache, lazyItId);
-
-      HashMap<UUID, ClusteredTopDocs> topDocsResponses = treatIteratorResponses(command);
+      HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
       DistributedLazyIterator it = new DistributedLazyIterator(sort, fetchSize, this.resultSize,
                lazyItId, topDocsResponses, asyncExecutor, cache);
 
       return it;
    }
 
-   private HashMap<UUID, ClusteredTopDocs> treatIteratorResponses(ClusteredQueryCommand command) {
+   private HashMap<UUID, ClusteredTopDocs> broadcastQuery(ClusteredQueryCommand command) {
       ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
 
-      HashMap<UUID, ClusteredTopDocs> topDocsResponses = null;
+      HashMap<UUID, ClusteredTopDocs> topDocsResponses = new HashMap<UUID, ClusteredTopDocs>();
       int resultSize = 0;
       List<QueryResponse> responses = invoker.broadcast(command);
-
-      topDocsResponses = new HashMap<UUID, ClusteredTopDocs>();
 
       for (Object response : responses) {
          QueryResponse queryResponse = (QueryResponse) response;

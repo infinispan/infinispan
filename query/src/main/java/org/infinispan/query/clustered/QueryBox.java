@@ -30,10 +30,15 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.query.clustered.commandworkers.QueryExtractorUtil;
 
 /**
- * Each node in the cluster has a QueryBox instance. The QueryBox keep the active lazy iterators on
- * the cluster, so it can return values for the queries in a "lazy" way.
+ * Each node in the cluster has a QueryBox instance. The QueryBox keep the active lazy iterators
+ * (actually it keeps the DocumentExtractor of the searches) on the cluster, so it can return values
+ * for the queries in a "lazy" way.
  * 
- * EVICTION: Currently the QueryBox keeps the last BOX_LIMIT used... probably there is a better way.
+ * When a DistributedLazyIterator is created, every nodes creates a DocumentExtractor and register
+ * it in your own QueryBox. So, the LazyIterator can fetch the values in a lazy way.
+ * 
+ * EVICTION: Currently the QueryBox keeps the last BOX_LIMIT DocumentExtractor used... probably
+ * there is a better way.
  * 
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
@@ -52,11 +57,21 @@ public class QueryBox {
    // this id will be sent with the responses to rpcs
    private final UUID myId = UUID.randomUUID();
 
-   private AdvancedCache<Object,QueryResponse> cache;
+   // the local cache instance
+   private AdvancedCache cache;
 
    public org.infinispan.util.logging.Log log;
 
-   public QueryResponse getValue(UUID queryUuid, int docIndex) {
+   /**
+    * Get the "docIndex" value on the correct DocumentExtractor
+    * 
+    * @param queryUuid
+    *           The queryId, so we can get the correct DocumentExtractor
+    * @param docIndex
+    *           value index in the DocumentExtractor
+    * @return
+    */
+   public Object getValue(UUID queryUuid, int docIndex) {
       touch(queryUuid);
 
       DocumentExtractor extractor = queries.get(queryUuid);
@@ -76,6 +91,12 @@ public class QueryBox {
       }
    }
 
+   /**
+    * Kill the query (DocumentExtractor)
+    * 
+    * @param id
+    *           The id of the query
+    */
    public void kill(UUID id) {
       DocumentExtractor extractor = queries.remove(id);
       ageOrderedQueries.remove(id);
@@ -83,6 +104,14 @@ public class QueryBox {
          extractor.close();
    }
 
+   /**
+    * Register a query (DocumentExtractor), so we can lazily load the results.
+    * 
+    * @param id
+    *           The id of the query
+    * @param extractor
+    *           The query
+    */
    public synchronized void put(UUID id, DocumentExtractor extractor) {
       synchronized (ageOrderedQueries) {
          if (ageOrderedQueries.size() >= BOX_LIMIT) {
@@ -94,6 +123,11 @@ public class QueryBox {
       queries.put(id, extractor);
    }
 
+   /**
+    * Id of this QueryBox
+    * 
+    * @return
+    */
    public UUID getMyId() {
       return myId;
    }
