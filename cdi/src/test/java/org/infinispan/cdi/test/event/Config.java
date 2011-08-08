@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi.test.event;
 
-import org.infinispan.cdi.Infinispan;
+import org.infinispan.cdi.ConfigureCache;
 import org.infinispan.config.Configuration;
 
 import javax.enterprise.inject.Produces;
@@ -39,7 +39,7 @@ public class Config {
     * <p>The default configuration will be used.</p>
     */
    @Produces
-   @Infinispan("cache1")
+   @ConfigureCache("cache1")
    @Cache1
    public Configuration cache1Configuration;
 
@@ -48,7 +48,7 @@ public class Config {
     * <p>The default configuration will be used.</p>
     */
    @Produces
-   @Infinispan("cache2")
+   @ConfigureCache("cache2")
    @Cache2
    public Configuration cache2Configuration;
 }

@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi.test.testutil;
 
-import org.infinispan.cdi.Infinispan;
+import org.infinispan.cdi.ConfigureCache;
 import org.infinispan.cdi.event.AbstractEventBridge;
 import org.infinispan.cdi.event.cache.CacheEventBridge;
 import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
@@ -48,14 +48,14 @@ public final class Deployments {
             .addAsWebInfResource(Deployments.class.getResource("/beans.xml"), "beans.xml")
             .addAsLibrary(
                   ShrinkWrap.create(JavaArchive.class, "infinispan-cdi.jar")
-                        .addPackage(Infinispan.class.getPackage())
+                        .addPackage(ConfigureCache.class.getPackage())
                         .addPackage(AbstractEventBridge.class.getPackage())
                         .addPackage(CacheEventBridge.class.getPackage())
                         .addPackage(CacheManagerEventBridge.class.getPackage())
                         .addPackage(CacheResultInterceptor.class.getPackage())
                         .addPackage(CacheHelper.class.getPackage())
-                        .addAsManifestResource(Infinispan.class.getResource("/META-INF/beans.xml"), "beans.xml")
-                        .addAsManifestResource(Infinispan.class.getResource("/META-INF/services/javax.enterprise.inject.spi.Extension"), "services/javax.enterprise.inject.spi.Extension")
+                        .addAsManifestResource(ConfigureCache.class.getResource("/META-INF/beans.xml"), "beans.xml")
+                        .addAsManifestResource(ConfigureCache.class.getResource("/META-INF/services/javax.enterprise.inject.spi.Extension"), "services/javax.enterprise.inject.spi.Extension")
             )
             .addAsLibraries(
                   DependencyResolvers.use(MavenDependencyResolver.class)

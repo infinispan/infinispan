@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi.test.cache.cachemanager;
 
-import org.infinispan.cdi.Infinispan;
+import org.infinispan.cdi.ConfigureCache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -40,7 +40,7 @@ public class Config {
     * Associates the "large" cache with the qualifier {@link Large}.
     */
    @Large
-   @Infinispan("large")
+   @ConfigureCache("large")
    @Produces
    Configuration largeConfiguration() {
       return new Configuration().fluent()
@@ -52,7 +52,7 @@ public class Config {
     * Associates the "small" cache with the qualifier {@link Small}.
     */
    @Small
-   @Infinispan("small")
+   @ConfigureCache("small")
    @Produces
    Configuration smallConfiguration() {
       return new Configuration().fluent()
