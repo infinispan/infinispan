@@ -41,6 +41,9 @@ public class TEST_PING extends Discovery {
 
    private DISCARD discard;
 
+   // volatile in case resurrection happens from a different thread
+   private volatile boolean stopped;
+
    // Note: Thread locals could work but if two nodes of the same cluster are
    // started from different threads, a thread local based solution would not
    // work, so we're sticking to an static solution
@@ -57,39 +60,44 @@ public class TEST_PING extends Discovery {
    protected List<PingData> findInitialMembers(Promise<JoinRsp> promise,
          int numExpectedRsps, boolean breakOnCoord, boolean returnViewsOnly) {
 
-      Map<Address, TEST_PING> discoveries = registerInDiscoveries();
+      if (!stopped) {
+         Map<Address, TEST_PING> discoveries = registerInDiscoveries();
 
-      // Only send message if DISCARD is not used, or if DISCARD is
-      // configured but it's not discarding messages.
-      boolean discardEnabled = isDiscardEnabled(this);
-      if (!discardEnabled) {
-         if (!discoveries.isEmpty()) {
-            LinkedList<PingData> rsps = new LinkedList<PingData>();
-            for (TEST_PING discovery : discoveries.values()) {
-               // Avoid sending to self! Since there are single instances of
-               // discovery protocol in each node, just compare them by ref.
-               boolean traceEnabled = log.isTraceEnabled();
-               if (discovery != this) {
-                  boolean remoteDiscardEnabled = isDiscardEnabled(discovery);
-                  if (!remoteDiscardEnabled) {
-                     addPingRsp(returnViewsOnly, rsps, discovery);
+         // Only send message if DISCARD is not used, or if DISCARD is
+         // configured but it's not discarding messages.
+         boolean discardEnabled = isDiscardEnabled(this);
+         if (!discardEnabled) {
+            if (!discoveries.isEmpty()) {
+               LinkedList<PingData> rsps = new LinkedList<PingData>();
+               for (TEST_PING discovery : discoveries.values()) {
+                  // Avoid sending to self! Since there are single instances of
+                  // discovery protocol in each node, just compare them by ref.
+                  boolean traceEnabled = log.isTraceEnabled();
+                  if (discovery != this) {
+                     boolean remoteDiscardEnabled = isDiscardEnabled(discovery);
+                     if (!remoteDiscardEnabled) {
+                        addPingRsp(returnViewsOnly, rsps, discovery);
+                     } else {
+                        if (traceEnabled)
+                           log.trace("Skipping sending response cos DISCARD is on");
+                        return Collections.emptyList();
+                     }
                   } else {
                      if (traceEnabled)
-                        log.trace("Skipping sending response cos DISCARD is on");
-                     return Collections.emptyList();
+                        log.trace("Skipping sending discovery to self");
                   }
-               } else {
-                  if (traceEnabled)
-                     log.trace("Skipping sending discovery to self");
                }
+               return rsps;
+            } else {
+               log.debug("No other nodes yet, so skip sending get-members request");
+               return Collections.emptyList();
             }
-            return rsps;
          } else {
-            log.debug("No other nodes yet, so skip sending get-members request");
+            log.debug("Not sending discovery because DISCARD is on");
             return Collections.emptyList();
          }
       } else {
-         log.debug("Not sending discovery because DISCARD is on");
+         log.debug("Discovery protocol already stopped, so don't look for members");
          return Collections.emptyList();
       }
    }
@@ -180,6 +188,7 @@ public class TEST_PING extends Discovery {
          log.debug(String.format(
             "Test (%s) started but not registered discovery", key));
       }
+      stopped = true;
    }
 
    private void removeDiscovery(DiscoveryKey key, Map<Address, TEST_PING> discoveries) {
