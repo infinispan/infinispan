@@ -283,7 +283,7 @@ public class RebalanceTask extends RehashTask {
       }
 
       // 5. Remove K if it should not be stored here any longer; rebalancing moved K to a different server
-      if (oldOwners.contains(self) && !newOwners.contains(self)) {
+      if (!newOwners.contains(self)) {
          keysToRemove.add(key);
       }
    }
