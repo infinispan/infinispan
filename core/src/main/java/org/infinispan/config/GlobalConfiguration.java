@@ -828,14 +828,25 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     *
     * @return a new global configuration
     */
-   public static GlobalConfiguration getClusteredDefault() {
-      GlobalConfiguration gc = new GlobalConfiguration();
+   public static GlobalConfiguration getClusteredDefault(ClassLoader cl) {
+      GlobalConfiguration gc =
+            cl == null ? new GlobalConfiguration() : new GlobalConfiguration(cl);
       gc.setTransportClass(JGroupsTransport.class.getName());
       gc.setTransportProperties((Properties) null);
       Properties p = new Properties();
       p.setProperty("threadNamePrefix", "asyncTransportThread");
       gc.setAsyncTransportExecutorProperties(p);
       return gc;
+   }
+
+   /**
+    * Helper method that gets you a default constructed GlobalConfiguration, preconfigured to use the default clustering
+    * stack.
+    *
+    * @return a new global configuration
+    */
+   public static GlobalConfiguration getClusteredDefault() {
+      return getClusteredDefault(null);
    }
 
    /**

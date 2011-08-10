@@ -252,18 +252,16 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
 
    public static abstract class Externalizer<T extends AbstractWheelConsistentHash> extends AbstractExternalizer<T> {
 
-      private ClassLoader cl;
-      
-      public void inject(ClassLoader cl) {
-         this.cl = cl;
-      }
+      // Injecting a classloader here is redundant and complicates marshalling
+      // code. Let JBoss Marshalling's class resolver do its job, which is
+      // resolving classes sent around.
 
       protected abstract T instance();
 
       @Override
       public void writeObject(ObjectOutput output, T abstractWheelConsistentHash) throws IOException {
          output.writeInt(abstractWheelConsistentHash.numVirtualNodes);
-         output.writeObject(abstractWheelConsistentHash.hashFunction.getClass().getName());
+         output.writeObject(abstractWheelConsistentHash.hashFunction);
          output.writeObject(abstractWheelConsistentHash.caches);
       }
 
@@ -272,8 +270,8 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       public T readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          T instance = instance();
          instance.numVirtualNodes = unmarshaller.readInt();
-         String hashFunctionName = (String) unmarshaller.readObject();
-         instance.setHashFunction((Hash) Util.getInstance(hashFunctionName, cl));
+         Hash hash = (Hash) unmarshaller.readObject();
+         instance.setHashFunction(hash);
          Set<Address> caches = (Set<Address>) unmarshaller.readObject();
          instance.setCaches(caches);
          return instance;

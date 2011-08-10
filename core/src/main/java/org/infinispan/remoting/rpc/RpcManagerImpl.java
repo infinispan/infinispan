@@ -28,7 +28,6 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -36,6 +35,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.responses.Response;
@@ -62,6 +62,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
  * This component really is just a wrapper around a {@link org.infinispan.remoting.transport.Transport} implementation,
@@ -92,16 +94,19 @@ public class RpcManagerImpl implements RpcManager {
    private ReplicationQueue replicationQueue;
    private ExecutorService asyncExecutor;
    private CommandsFactory cf;
+   private StreamingMarshaller marshaller;
 
 
    @Inject
    public void injectDependencies(Transport t, Configuration configuration, ReplicationQueue replicationQueue, CommandsFactory cf,
-                                  @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
+                                  @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
+                                  @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller) {
       this.t = t;
       this.configuration = configuration;
       this.replicationQueue = replicationQueue;
       this.asyncExecutor = e;
       this.cf = cf;
+      this.marshaller = marshaller;
    }
 
    @Start(priority = 9)

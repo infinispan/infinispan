@@ -144,6 +144,16 @@ public final class ImmutableContext implements InvocationContext {
       return this;
    }
 
+   @Override
+   public ClassLoader getClassLoader() {
+      return null;
+   }
+
+   @Override
+   public void setClassLoader(ClassLoader classLoader) {
+      throw newUnsupportedMethod();
+   }
+
    /**
     * @return an exception to state this context is read only
     */

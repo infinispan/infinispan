@@ -33,6 +33,7 @@ import static org.infinispan.context.Flag.*;
 
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -51,6 +52,7 @@ import java.util.Collections;
 import java.util.Set;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 public class CacheLoaderManagerImpl implements CacheLoaderManager {
 
@@ -63,7 +65,9 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
    private static final Log log = LogFactory.getLog(CacheLoaderManagerImpl.class);
 
    @Inject
-   public void inject(AdvancedCache<Object, Object> cache, StreamingMarshaller marshaller, Configuration configuration, InvocationContextContainer icc) {
+   public void inject(AdvancedCache<Object, Object> cache,
+                      @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
+                      Configuration configuration, InvocationContextContainer icc) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;

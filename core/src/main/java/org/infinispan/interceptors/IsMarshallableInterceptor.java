@@ -33,6 +33,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -40,6 +41,8 @@ import org.infinispan.marshall.NotSerializableException;
 import org.infinispan.marshall.StreamingMarshaller;
 
 import java.util.Map;
+
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 /**
  * Interceptor to verify whether parameters passed into cache are marshallables
@@ -62,7 +65,8 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
    private boolean storeAsBinary;
 
    @Inject
-   protected void injectMarshaller(StreamingMarshaller marshaller, DistributionManager distManager) {
+   protected void injectMarshaller(@ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
+                                   DistributionManager distManager) {
       this.marshaller = marshaller;
       this.distManager = distManager;
    }

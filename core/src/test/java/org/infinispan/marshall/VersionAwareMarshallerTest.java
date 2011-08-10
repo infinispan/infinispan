@@ -44,7 +44,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.atomic.AtomicHashMap;
-import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -59,7 +58,6 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalEntryFactory;
@@ -71,6 +69,7 @@ import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.loaders.bucket.Bucket;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.jboss.JBossMarshallingTest.CustomReadObjectMethod;
 import org.infinispan.marshall.jboss.JBossMarshallingTest.ObjectThatContainsACustomReadObjectMethod;
 import org.infinispan.remoting.MIMECacheEntry;
@@ -83,6 +82,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.data.Person;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
@@ -102,7 +102,8 @@ import org.testng.annotations.Test;
 public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    private static final Log log = LogFactory.getLog(VersionAwareMarshallerTest.class);
-   private final VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
+   private AbstractDelegatingMarshaller marshaller;
+   private EmbeddedCacheManager cm;
 
    private final TransactionFactory gtf = new TransactionFactory();
 
@@ -112,13 +113,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory(), new GlobalConfiguration());
-      marshaller.start();
+      cm = TestCacheManagerFactory.createLocalCacheManager();
+      marshaller = extractCacheMarshaller(cm.getCache());
    }
 
    @AfterClass
    public void tearDown() {
-      marshaller.stop();
+      cm.stop();
    }
 
    public void testJGroupsAddressMarshalling() throws Exception {

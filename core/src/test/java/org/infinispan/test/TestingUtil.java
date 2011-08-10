@@ -36,6 +36,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.DistributionManagerImpl;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -43,6 +44,9 @@ import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.AbstractDelegatingMarshaller;
+import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.marshall.jboss.ExternalizerTable;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -807,6 +811,16 @@ public class TestingUtil {
       return (ComponentRegistry) extractField(ci, "componentRegistry");
    }
 
+   public static AbstractDelegatingMarshaller extractCacheMarshaller(Cache cache) {
+      ComponentRegistry cr = (ComponentRegistry) extractField(cache, "componentRegistry");
+      StreamingMarshaller marshaller = cr.getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+      return (AbstractDelegatingMarshaller) marshaller;
+   }
+
+   public static ExternalizerTable extractExtTable(CacheContainer cacheContainer) {
+      GlobalComponentRegistry gcr = (GlobalComponentRegistry) extractField(cacheContainer, "globalComponentRegistry");
+      return gcr.getComponent(ExternalizerTable.class);
+   }
 
    /**
     * Replaces the existing interceptor chain in the cache wih one represented by the interceptor passed in.  This

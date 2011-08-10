@@ -23,15 +23,17 @@
 package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
-import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.EmbeddedCacheManagerStartupException;
+import org.infinispan.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -45,7 +47,9 @@ import java.io.ObjectOutput;
 import java.util.Set;
 
 import static org.infinispan.marshall.AdvancedExternalizerTest.*;
+import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * Test the behaviour of JBoss Marshalling based {@link org.infinispan.marshall.StreamingMarshaller} implementation
@@ -56,18 +60,16 @@ import static org.testng.AssertJUnit.assertEquals;
 public class JBossMarshallerTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(JBossMarshallerTest.class);
 
-   private final VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
+   private EmbeddedCacheManager cm;
 
    @BeforeTest
    public void setUp() {
-      ClassLoader cl = Thread.currentThread().getContextClassLoader();
-      marshaller.inject(cl, new RemoteCommandsFactory(), new GlobalConfiguration());
-      marshaller.start();
+      cm = TestCacheManagerFactory.createLocalCacheManager();
    }
 
    @AfterTest
    public void tearDown() {
-      marshaller.stop();
+      cm.stop();
    }
    
    public void testInternalDuplicateExternalizerId() throws Exception {
@@ -97,54 +99,54 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
 
    public void testForeignExternalizerConfigIdWins() throws Exception {
       GlobalConfiguration globalCfg = createForeignExternalizerGlobalConfig(3456);
-      JBossMarshaller jbmarshaller = new JBossMarshaller();
-      ClassLoader cl = Thread.currentThread().getContextClassLoader();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalCfg);
       try {
-         jbmarshaller.start(cl, new RemoteCommandsFactory(), null, globalCfg);
-         assertEquals(3456, jbmarshaller.externalizerTable.getExternalizerId(new IdViaBothObj()));
+         cm.getCache();
+         ExternalizerTable extTable = TestingUtil.extractExtTable(cm);
+         assertEquals(3456, extTable.getExternalizerId(new IdViaBothObj()));
       } finally {
-         jbmarshaller.stop();
+         cm.stop();
       }
    }
 
    public void testForeignExternalizerMultiClassTypesViaSameExternalizer() {
-      GlobalConfiguration globalCfg = new GlobalConfiguration();
+      GlobalConfiguration globalCfg = GlobalConfiguration.getNonClusteredDefault();
       globalCfg.fluent().serialization().addAdvancedExternalizer(new MultiIdViaClassExternalizer());
-      JBossMarshaller jbmarshaller = new JBossMarshaller();
-      ClassLoader cl = Thread.currentThread().getContextClassLoader();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalCfg);
       try {
-         jbmarshaller.start(cl, new RemoteCommandsFactory(), null, globalCfg);
-         assert 767 == jbmarshaller.externalizerTable.getExternalizerId(new IdViaConfigObj());
-         assert 767 == jbmarshaller.externalizerTable.getExternalizerId(new IdViaAnnotationObj());
-         assert 767 == jbmarshaller.externalizerTable.getExternalizerId(new IdViaBothObj());
+         cm.getCache();
+         ExternalizerTable extTable = TestingUtil.extractExtTable(cm);
+         assert 767 == extTable.getExternalizerId(new IdViaConfigObj());
+         assert 767 == extTable.getExternalizerId(new IdViaAnnotationObj());
+         assert 767 == extTable.getExternalizerId(new IdViaBothObj());
       } finally {
-         jbmarshaller.stop();
+         cm.stop();
       }
    }
 
    public void testForeignExternalizerMultiClassNameTypesViaSameExternalizer() {
-      GlobalConfiguration globalCfg = new GlobalConfiguration();
+      GlobalConfiguration globalCfg = GlobalConfiguration.getNonClusteredDefault();
       globalCfg.fluent().serialization().addAdvancedExternalizer(868, new MultiIdViaClassNameExternalizer());
-      JBossMarshaller jbmarshaller = new JBossMarshaller();
-      ClassLoader cl = Thread.currentThread().getContextClassLoader();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalCfg);
       try {
-         jbmarshaller.start(cl, new RemoteCommandsFactory(), null, globalCfg);
-         assert 868 == jbmarshaller.externalizerTable.getExternalizerId(new IdViaConfigObj());
-         assert 868 == jbmarshaller.externalizerTable.getExternalizerId(new IdViaAnnotationObj());
-         assert 868 == jbmarshaller.externalizerTable.getExternalizerId(new IdViaBothObj());
+         cm.getCache();
+         ExternalizerTable extTable = TestingUtil.extractExtTable(cm);
+         assert 868 == extTable.getExternalizerId(new IdViaConfigObj());
+         assert 868 == extTable.getExternalizerId(new IdViaAnnotationObj());
+         assert 868 == extTable.getExternalizerId(new IdViaBothObj());
       } finally {
-         jbmarshaller.stop();
+         cm.stop();
       }
    }
 
    private GlobalConfiguration createForeignExternalizerGlobalConfig(int id) {
-      GlobalConfiguration globalCfg = GlobalConfiguration.getClusteredDefault();
+      GlobalConfiguration globalCfg = GlobalConfiguration.getNonClusteredDefault();
       globalCfg.fluent().serialization().addAdvancedExternalizer(id, IdViaBothObj.Externalizer.class);
       return globalCfg;
    }
 
    private GlobalConfiguration createMultiForeignExternalizerGlobalConfig(int id, boolean doSetId) {
-      GlobalConfiguration globalCfg = GlobalConfiguration.getClusteredDefault();
+      GlobalConfiguration globalCfg = GlobalConfiguration.getNonClusteredDefault();
       if (doSetId)
          globalCfg.fluent().serialization().addAdvancedExternalizer(id, new IdViaConfigObj.Externalizer());
       else
@@ -156,36 +158,30 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
    }
 
    private void withExpectedInternalFailure(final AdvancedExternalizer ext, String message) {
-      JBossMarshaller jbmarshaller = new JBossMarshaller() {
-         @Override
-         protected ExternalizerTable createExternalizerTable(RemoteCommandsFactory f, StreamingMarshaller m, GlobalConfiguration g) {
-            ExternalizerTable objectTable = new ExternalizerTable();
-            objectTable.addInternalExternalizer(ext);
-            objectTable.start(f, m, g, Thread.currentThread().getContextClassLoader());
-            return objectTable;
-         }
-      };
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       try {
-         ClassLoader cl = Thread.currentThread().getContextClassLoader();
-         jbmarshaller.start(cl, new RemoteCommandsFactory(), marshaller, new GlobalConfiguration());
+         cm.getCache();
+         ExternalizerTable extTable = TestingUtil.extractExtTable(cm);
+         extTable.addInternalExternalizer(ext);
+         extTable.start();
          assert false : message;
       } catch (ConfigurationException ce) {
          log.trace("Expected exception", ce);
       } finally {
-         jbmarshaller.stop();
+         cm.stop();
       }
    }
 
    private void withExpectedFailure(GlobalConfiguration globalCfg, String message) {
-      JBossMarshaller jbmarshaller = new JBossMarshaller();
-      ClassLoader cl = Thread.currentThread().getContextClassLoader();
       try {
-         jbmarshaller.start(cl, new RemoteCommandsFactory(), null, globalCfg);
-         assert false : message;
-      } catch (ConfigurationException ce) {
-         log.trace("Expected exception", ce);
-      } finally {
-         jbmarshaller.stop();
+         EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalCfg);
+         cm.getCache();
+         fail(message);
+      } catch (EmbeddedCacheManagerStartupException e) {
+         if (e.getCause() instanceof ConfigurationException)
+            log.trace("Expected exception", e);
+         else
+            throw e;
       }
    }
 
