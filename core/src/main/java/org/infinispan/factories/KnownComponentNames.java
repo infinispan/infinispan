@@ -39,6 +39,8 @@ public class KnownComponentNames {
    public static final String ASYNC_REPLICATION_QUEUE_EXECUTOR = "org.infinispan.executors.replicationQueue";
    public static final String MODULE_COMMAND_INITIALIZERS ="org.infinispan.modules.command.initializers";
    public static final String MODULE_COMMAND_FACTORIES ="org.infinispan.modules.command.factories";
+   public static final String GLOBAL_MARSHALLER = "org.infinispan.marshaller.global";
+   public static final String CACHE_MARSHALLER = "org.infinispan.marshaller.cache";
 
    private static final Map<String, Integer> DEFAULT_THREADCOUNTS = new HashMap<String, Integer>(2);
    private static final Map<String, Integer> DEFAULT_THREADPRIO = new HashMap<String, Integer>(4);

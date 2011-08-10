@@ -97,8 +97,8 @@ public interface InvocationContextContainer {
    InvocationContext createRemoteInvocationContext(Address origin);
 
    /**
-    * As {@link #createRemoteInvocationContext()}, but returning the flags to the context from
-    * the Command if any Flag was set.
+    * As {@link #createRemoteInvocationContext(org.infinispan.remoting.transport.Address)},
+    * but returning the flags to the context from the Command if any Flag was set.
     * 
     * @param cacheCommand
     * @param origin the origin of the command, or null if local
@@ -125,4 +125,14 @@ public interface InvocationContextContainer {
     */
    void resume(InvocationContext ic);
 
+   /**
+    * Returns the {@link InvocationContext} that is currently associated with
+    * the calling thread. <b>Important:<b/> implementations of this method is
+    * most likely expensive (ThreadLocal.get), it is recommended to cache the
+    * result of this method rather than repeating the call.
+    *
+    * @return the invocation context associated with the calling thread or
+    *         null if none has been associated yet
+    */
+   InvocationContext peekInvocationContext();
 }

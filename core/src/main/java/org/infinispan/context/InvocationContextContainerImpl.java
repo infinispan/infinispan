@@ -169,6 +169,11 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
       if (ctxt != null) icTl.set(ctxt);
    }
 
+   @Override
+   public InvocationContext peekInvocationContext() {
+      return icTl.get();
+   }
+
    private Transaction getRunningTx() {
       try {
          return tm == null ? null : tm.getTransaction();

@@ -59,7 +59,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.Marshaller;
@@ -74,6 +73,8 @@ import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 /**
  * Infinispan's implementation of an {@link ExecutorService} and {@link DistributedExecutorService}.
@@ -119,12 +120,11 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       this.cache = masterCacheNode.getAdvancedCache();
       ComponentRegistry registry = cache.getComponentRegistry();
-      GlobalComponentRegistry globalRegistry = cache.getComponentRegistry().getGlobalComponentRegistry();
 
       this.rpc = cache.getRpcManager();
       this.invoker = registry.getComponent(InterceptorChain.class);
       this.factory = registry.getComponent(CommandsFactory.class);
-      this.marshaller = globalRegistry.getComponent(StreamingMarshaller.class);
+      this.marshaller = registry.getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
    }
 
    @Override
