@@ -22,13 +22,18 @@
  */
 package org.infinispan.marshall.jboss;
 
-import org.infinispan.commands.RemoteCommandsFactory;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.marshall.StreamingMarshaller;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
+
+import java.io.IOException;
 
 /**
- * A specialized form of the {@link GenericJBossMarshaller}, making use of a custom object table for types internal to
- * Infinispan.
+ * A JBoss Marshalling based marshaller that is oriented at internal, embedded,
+ * Infinispan usage. It uses of a custom object table for Infinispan based
+ * Externalizer instances that are either internal or user defined.
  * <p />
  * The reason why this is implemented specially in Infinispan rather than resorting to Java serialization or even the
  * more efficient JBoss serialization is that a lot of efficiency can be gained when a majority of the serialization
@@ -41,21 +46,34 @@ import org.infinispan.marshall.StreamingMarshaller;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class JBossMarshaller extends GenericJBossMarshaller implements StreamingMarshaller {   
+public class JBossMarshaller extends AbstractJBossMarshaller implements StreamingMarshaller {
+   private InvocationContextContainer icc;
    ExternalizerTable externalizerTable;
 
-   public void start(ClassLoader appClassLoader, RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller, GlobalConfiguration globalCfg) {
+   public void start(ExternalizerTable externalizerTable, ClassLoader cl, InvocationContextContainer icc) {
       if (log.isDebugEnabled()) log.debug("Using JBoss Marshalling");
-      this.appClassLoader = appClassLoader;
-      externalizerTable = createExternalizerTable(cmdFactory, ispnMarshaller, globalCfg);
-      configuration.setObjectTable(externalizerTable);
+      this.icc = icc;
+      this.externalizerTable = externalizerTable;
+      baseCfg.setObjectTable(externalizerTable);
+      // Override the class resolver with one that can detect injected
+      // classloaders via AdvancedCache.with(ClassLoader) calls.
+      baseCfg.setClassResolver(new EmbeddedContextClassResolver(cl));
+   }
+
+   @Override
+   protected Marshaller getMarshaller(boolean isReentrant) throws IOException {
+      return factory.createMarshaller(baseCfg);
+   }
+
+   @Override
+   protected Unmarshaller getUnmarshaller(boolean isReentrant) throws IOException {
+      return factory.createUnmarshaller(baseCfg);
    }
 
    public void stop() {
       super.stop();
-      // Do not leak classloader when cache is stopped.
-      appClassLoader = null;
-      if (externalizerTable != null) externalizerTable.stop();
+      // Just in case, to avoid leaking class resolver which references classloader
+      baseCfg.setClassResolver(null);
    }
 
    @Override
@@ -63,9 +81,27 @@ public class JBossMarshaller extends GenericJBossMarshaller implements Streaming
       return super.isMarshallableCandidate(o) || externalizerTable.isMarshallableCandidate(o);
    }
 
-   protected ExternalizerTable createExternalizerTable(RemoteCommandsFactory f, StreamingMarshaller m, GlobalConfiguration g) {
-      ExternalizerTable extTable = new ExternalizerTable();
-      extTable.start(f, m, g, appClassLoader);
-      return extTable;
+   /**
+    * An embedded context class resolver that is able to retrieve a class
+    * loader from the embedded Infinispan call context. This might happen when
+    * {@link org.infinispan.AdvancedCache#with(ClassLoader)} is used.
+    */
+   public class EmbeddedContextClassResolver extends DefaultContextClassResolver {
+      public EmbeddedContextClassResolver(ClassLoader defaultClassLoader) {
+         super(defaultClassLoader);
+      }
+
+      @Override
+      protected ClassLoader getClassLoader() {
+         if (icc != null) {
+            InvocationContext ctx = icc.peekInvocationContext();
+            if (ctx != null) {
+               ClassLoader cl = ctx.getClassLoader();
+               if (cl != null) return cl;
+            }
+         }
+         return super.getClassLoader();
+      }
    }
+
 }

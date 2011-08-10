@@ -27,14 +27,16 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.CtMethod;
-import org.infinispan.commands.RemoteCommandsFactory;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.SerializeWith;
-import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CherryPickClassLoader;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.Util;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -46,6 +48,7 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 
+import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -67,6 +70,20 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
    private static final String PERSON_EXT = PERSON + "Externalizer";
    private static final String HOUSE = BASE + "House";
    private static final String HOUSE_EXT = HOUSE + "Externalizer";
+
+   private AbstractDelegatingMarshaller marshaller;
+   private EmbeddedCacheManager cm;
+
+   @BeforeTest
+   public void setUp() {
+      cm = TestCacheManagerFactory.createLocalCacheManager();
+      marshaller = extractCacheMarshaller(cm.getCache());
+   }
+
+   @AfterTest(alwaysRun = true)
+   public void tearDown() {
+      cm.stop();
+   }
 
    public void testAddIntFieldDiffIspnExternalizer() throws Exception {
       MarshallingMethod method = MarshallingMethod.INFINISPAN;
@@ -343,11 +360,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
       }
    }
 
-   private VersionAwareMarshaller getMarshaller() {
-      VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
-      marshaller.inject(Thread.currentThread().getContextClassLoader(),
-            new RemoteCommandsFactory(), new GlobalConfiguration());
-      marshaller.start();
+   private AbstractDelegatingMarshaller getMarshaller() {
       return marshaller;
    }
 

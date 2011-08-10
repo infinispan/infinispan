@@ -47,7 +47,6 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -101,6 +100,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.*;
+import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -160,10 +160,11 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
                                   TransactionManager transactionManager,
                                   BatchContainer batchContainer,
                                   RpcManager rpcManager, DataContainer dataContainer,
-                                  StreamingMarshaller marshaller, ResponseGenerator responseGenerator,
+                                  @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
+                                  ResponseGenerator responseGenerator,
                                   DistributionManager distributionManager,
                                   EmbeddedCacheManager cacheManager, StateTransferManager stateTransferManager,
-                                  @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
+                                  @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
                                   TransactionTable txTable, RecoveryManager recoveryManager, TransactionCoordinator txCoordinator,
                                   LockManager lockManager) {
       this.commandsFactory = commandsFactory;
@@ -344,6 +345,11 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
       if (!pic.flags.isEmpty()) {
          ctx.setFlags(pic.flags);
       }
+
+      // Either set per-invocation, or configured classloader
+      ClassLoader cl = pic.classLoader != null ? pic.classLoader : getClassLoader();
+      ctx.setClassLoader(cl);
+
       pic.flags.clear();
       return ctx;
    }
@@ -748,6 +754,7 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
 
    private static final class PreInvocationContext {
       private EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
+      private ClassLoader classLoader;
 
       private PreInvocationContext() {
       }
@@ -756,6 +763,10 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
          for (Flag f : newFlags) {
             flags.add(f);
          }
+      }
+
+      public void setClassLoader(ClassLoader classLoader) {
+         this.classLoader = classLoader;
       }
    }
 
@@ -766,7 +777,12 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
 
    @Override
    public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      return new ClassLoaderSpecfiedCache<K, V>(this, classLoader);
+      if (classLoader == null)
+         throw new NullPointerException("Class loader cannot be null");
+
+      PreInvocationContext pic = flagHolder.get();
+      pic.setClassLoader(classLoader);
+      return this;
    }
 
    @Override

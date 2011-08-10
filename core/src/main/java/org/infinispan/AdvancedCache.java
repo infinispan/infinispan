@@ -146,30 +146,96 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     */
    boolean lock(Collection<? extends K> keys);
 
+   /**
+    * Returns the component in charge of communication with other caches in
+    * the cluster.  If the cache's {@link org.infinispan.config.Configuration.CacheMode}
+    * is {@link org.infinispan.config.Configuration.CacheMode#LOCAL}, this
+    * method will return null.
+    *
+    * @return the RPC manager component associated with this cache instance or null
+    */
    RpcManager getRpcManager();
 
+   /**
+    * Returns the component in charge of batching cache operations.
+    *
+    * @return the batching component associated with this cache instance
+    */
    BatchContainer getBatchContainer();
 
+   /**
+    * Returns the component in charge of managing the interactions between the
+    * cache operations and the context information associated with them.
+    *
+    * @return the invocation context container component
+    */
    InvocationContextContainer getInvocationContextContainer();
 
+   /**
+    * Returns the container where data is stored in the cache. Users should
+    * interact with this component with care because direct calls on it bypass
+    * the internal interceptors and other infrastructure in place to guarantee
+    * the consistency of data.
+    *
+    * @return the data container associated with this cache instance
+    */
    DataContainer getDataContainer();
 
+   /**
+    * Returns the transaction manager configured for this cache. If no
+    * transaction manager was configured, this method returns null.
+    *
+    * @return the transaction manager associated with this cache instance or null
+    */
    TransactionManager getTransactionManager();
 
    /**
-    * @return retrieves the lock manager associated with this cache instance.
+    * Returns the component that deals with all aspects of acquiring and
+    * releasing locks for cache entries.
+    *
+    * @return retrieves the lock manager associated with this cache instance
     */
    LockManager getLockManager();
 
+   /**
+    * Returns a {@link Stats} object that allows several statistics associated
+    * with this cache at runtime.
+    *
+    * @return this cache's {@link Stats} object
+    */
    Stats getStats();
 
    /**
-    * Returns an Infinispan XAResource implementation. Useful e.g. for recovery, when the recovery process needs a
-    * reference to Infinispan's XAResource implementation.
+    * Returns the {@link XAResource} associated with this cache which can be
+    * used to do transactional recovery.
+    *
+    * @return an instance of {@link XAResource}
     */
    XAResource getXAResource();
    
+   /**
+    * Returns the cache loader associated associated with this cache.
+    *
+    * @return this cache's cache loader
+    */
    ClassLoader getClassLoader();
    
+   /**
+    * Using this operation, users can call any {@link AdvancedCache} operation
+    * with a given class loader. This means that any class loading happening
+    * as a result of the cache operation will be done using the class loader
+    * given. For example: </p>
+    *
+    * When users store POJO instances in caches configured with {@link org.infinispan.config.Configuration#storeAsBinary},
+    * these instances are transformed into byte arrays. When these entries are
+    * read from the cache, a lazy unmarshalling process happens where these byte
+    * arrays are transformed back into POJO instances. Using {@link AdvancedCache#with(ClassLoader)}
+    * when reading that enables users to provide the class loader that should
+    * be used when trying to locate the classes that are constructed as a result
+    * of the unmarshalling process.
+    *
+    * @return an advanced cache instance upon which operations can be called
+    * with a particular cache loader.
+    */
    AdvancedCache<K, V> with(ClassLoader classLoader);
 }

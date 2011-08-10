@@ -22,9 +22,14 @@
  */
 package org.infinispan.util.hash;
 
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.exts.NoStateExternalizer;
 import org.infinispan.util.ByteArrayKey;
+import org.infinispan.util.Util;
 
+import java.io.ObjectInput;
 import java.nio.charset.Charset;
+import java.util.Set;
 
 /**
  * An implementation of Austin Appleby's MurmurHash2.0 algorithm, as documented on <a href="http://sites.google.com/site/murmurhash/">his website</a>.
@@ -101,5 +106,22 @@ public class MurmurHash2 implements Hash {
          return hash(((ByteArrayKey) o).getData());
       else
          return hash(o.hashCode());
+   }
+
+   public static class Externalizer extends NoStateExternalizer<MurmurHash2> {
+      @Override
+      public Set<Class<? extends MurmurHash2>> getTypeClasses() {
+         return Util.<Class<? extends MurmurHash2>>asSet(MurmurHash2.class);
+      }
+
+      @Override
+      public MurmurHash2 readObject(ObjectInput input) {
+         return new MurmurHash2();
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.MURMURHASH_2;
+      }
    }
 }

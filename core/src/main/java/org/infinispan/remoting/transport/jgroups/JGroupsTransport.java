@@ -25,6 +25,7 @@ package org.infinispan.remoting.transport.jgroups;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.parsing.XmlConfigHelper;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
@@ -61,6 +62,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
 /**
  * An encapsulation of a JGroups transport.  JGroups transports can be configured using a variety of methods, usually by
@@ -132,8 +134,9 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    // Lifecycle and setup stuff
    // ------------------------------------------------------------------------------------------------------------------
 
-   public void initialize(StreamingMarshaller marshaller, ExecutorService asyncExecutor,
-                          InboundInvocationHandler inboundInvocationHandler, CacheManagerNotifier notifier) {
+   public void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
+                          ExecutorService asyncExecutor, InboundInvocationHandler inboundInvocationHandler,
+                          CacheManagerNotifier notifier) {
       this.marshaller = marshaller;
       this.asyncExecutor = asyncExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
