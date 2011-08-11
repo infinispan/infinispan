@@ -748,4 +748,13 @@ public interface Log extends BasicLogger {
    @Message(value = "You are not starting all your caches at the same time. This can lead to problems as asymmetric clusters are not supported, see ISPN-658. " +
          "We recommend using EmbeddedCacheManager.startCaches() to start all your caches upfront.", id = 156)
    void shouldBeUsingStartCache(String cacheName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Could not complete injected transaction.", id = 157)
+   void couldNotCompleteInjectedTransaction(@Cause Throwable t);
+   
+   @LogMessage(level = WARN)
+   @Message(value = "FORCE_WRITE_LOCK doesn't work with optimistic transactions. Not acquiring lock for key: %s", id = 158)
+   void warnForceLockAndOptimistic(Object key);
+   
 }

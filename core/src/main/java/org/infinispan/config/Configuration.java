@@ -39,6 +39,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.ReplicationQueueImpl;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
@@ -1152,6 +1153,24 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return clustering.mode;
    }
 
+   /**
+    * Returns the locking mode for this cache.
+    *
+    * @see LockingMode
+    */
+   public LockingMode getTransactionLockingMode() {
+      return transaction.lockingMode;
+   }
+
+   /**
+    * If the cache is transactional (i.e. {@link #isTransactionalCache()} == true) and transactionAutoCommit is enabled
+    * then for single operation transactions the user doesn't need to manually start a transaction, but a transactions
+    * is injected by the system. Defaults to true.
+    */
+   public boolean isTransactionAutoCommit() {
+      return transaction.autoCommit;
+   }
+
    public IsolationLevel getIsolationLevel() {
       return locking.isolationLevel;
    }
@@ -1206,10 +1225,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return transaction.syncRollbackPhase;
    }
 
+   /**
+    * This is now deprecated. An "eager" locking cache is a transactional cache running in pessimistic mode.
+    * @see #getTransactionLockingMode()
+    */
+   @Deprecated
    public boolean isUseEagerLocking() {
       return transaction.useEagerLocking;
    }
 
+   //todo deprecate that once single node locking is in place
    public boolean isEagerLockSingleNode() {
       return transaction.eagerLockSingleNode;
    }
@@ -1551,7 +1576,17 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return !getCacheMode().isSynchronous();
    }
 
-
+   /**
+    * Returns true if the cache is configured to run in transactional mode, false otherwise. Starting with Infinispan
+    * version 5.1 a cache doesn't support mixed access: i.e.won't support transactional and non-transactional
+    * operations. A cache is transactional if one the following: a transactionManagerLookup is configured for the cache
+    * or if batching is enabled.
+    *
+    * @see #isTransactionAutoCommit()
+    */
+   public boolean isTransactionalCache() {
+      return getTransactionManagerLookup() != null || getTransactionManagerLookupClass() != null || isInvocationBatchingEnabled();
+   }
 
 
    /**
@@ -1600,6 +1635,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Dynamic
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setCacheStopTimeout")
       protected Integer cacheStopTimeout = 30000;
+
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "getTransactionLockingMode")
+      protected LockingMode lockingMode = LockingMode.OPTIMISTIC;
+
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "isTransactionAutoCommit")
+      protected boolean autoCommit = true;
 
       @XmlElement
       protected RecoveryType recovery = new RecoveryType();
@@ -1662,6 +1703,20 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public TransactionConfig useSynchronization(Boolean useSynchronization) {
          return setUseSynchronization(useSynchronization);
+      }
+
+      @Override
+      public TransactionConfig lockingMode(LockingMode lockingMode) {
+         testImmutability("lockingMode");
+         this.lockingMode = lockingMode;
+         return this;
+      }
+
+      @Override
+      public TransactionConfig autoCommit(boolean enabled) {
+         testImmutability("autoCommit");
+         this.autoCommit = enabled;
+         return this;
       }
 
       @XmlAttribute
@@ -2078,6 +2133,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       public void accept(ConfigurationBeanVisitor v) {
          v.visitRecoveryType(this);
+      }
+
+      @Override
+      public TransactionConfig lockingMode(LockingMode lockingMode) {
+         return transaction().lockingMode(lockingMode);
+      }
+
+      @Override
+      public TransactionConfig autoCommit(boolean enabled) {
+         return transaction().autoCommit(enabled);
       }
    }
 

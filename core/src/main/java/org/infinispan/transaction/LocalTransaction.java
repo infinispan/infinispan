@@ -23,6 +23,7 @@
 
 package org.infinispan.transaction;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
@@ -107,7 +108,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       isMarkedForRollback = markForRollback;
    }
 
-   public boolean isMarkedForRollback() {
+   public final boolean isMarkedForRollback() {
       return isMarkedForRollback;
    }
 
@@ -121,6 +122,9 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    }
 
    public void putLookedUpEntry(Object key, CacheEntry e) {
+      if (isMarkedForRollback()) {
+         throw new CacheException("This transaction is marked for rollback and cannot acquire locks!");
+      }
       if (lookedUpEntries == null) lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(4);
       lookedUpEntries.put(key, e);
    }

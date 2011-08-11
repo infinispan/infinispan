@@ -89,6 +89,11 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
       return false;
    }
 
+   @Override
+   public boolean undelete(boolean doUndelete) {
+      return false;
+   }
+
    public final boolean isLockPlaceholder() {
       return false;
    }

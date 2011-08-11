@@ -34,6 +34,7 @@ import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.remoting.ReplicationQueue;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -249,6 +250,18 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       RecoveryConfig recovery();
 
       TransactionConfig useSynchronization(Boolean useSynchronization);
+
+      /**
+       * Configures whether the cache uses optimistic or pessimistic locking. If the cache is not transactional then
+       * the locking mode is ignored.
+       * @see org.infinispan.config.Configuration#isTransactionalCache()
+       */
+      TransactionConfig lockingMode(LockingMode lockingMode);
+
+      /**
+       * @see org.infinispan.config.Configuration#isTransactionAutoCommit().
+       */
+      TransactionConfig autoCommit(boolean enabled);
    }
 
    /**

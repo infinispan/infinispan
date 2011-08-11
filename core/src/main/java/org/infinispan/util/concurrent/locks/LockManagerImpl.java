@@ -32,7 +32,10 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.util.ReversibleOrderedSet;
+import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.containers.*;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -50,6 +53,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * Handles locks for the MVCC based LockingInterceptor
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 @MBean(objectName = "LockManager", description = "Manager that handles MVCC locks for entries")
@@ -80,16 +84,6 @@ public class LockManagerImpl implements LockManager {
       long lockTimeout = getLockAcquisitionTimeout(ctx);
       if (trace) log.tracef("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
       if (lockContainer.acquireLock(key, lockTimeout, MILLISECONDS) != null) {
-         // successfully locked!
-         if (ctx instanceof TxInvocationContext) {
-            TxInvocationContext tctx = (TxInvocationContext) ctx;
-            if (!tctx.isTransactionValid()) {
-               Transaction tx = tctx.getTransaction();
-               log.debugf("Successfully acquired lock, but the transaction %s is no longer valid!  Releasing lock.", tx);
-               lockContainer.releaseLock(key);
-               throw new IllegalStateException("Transaction "+tx+" appears to no longer be valid!");
-            }
-         }
          if (trace) log.tracef("Successfully acquired lock %s!", key);
          return true;
       }
@@ -215,5 +209,51 @@ public class LockManagerImpl implements LockManager {
 
    public int getLockId(Object key) {
       return lockContainer.getLockId(key);
+   }
+
+   public final boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException {
+      // don't EVER use lockManager.isLocked() since with lock striping it may be the case that we hold the relevant
+      // lock which may be shared with another key that we have a lock for already.
+      // nothing wrong, just means that we fail to record the lock.  And that is a problem.
+      // Better to check our records and lock again if necessary.
+
+      if (!ctx.hasLockedKey(key) && !ctx.hasFlag(Flag.SKIP_LOCKING)) {
+         return lock(ctx, key);
+      } else {
+         logLockNotAcquired(ctx);
+      }
+      return false;
+   }
+
+   public final boolean acquireLockNoCheck(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException {
+      if (!ctx.hasFlag(Flag.SKIP_LOCKING)) {
+         return lock(ctx, key);
+      } else {
+         logLockNotAcquired(ctx);
+      }
+      return false;
+   }
+
+   private boolean lock(InvocationContext ctx, Object key) throws InterruptedException {
+      if (lockAndRecord(key, ctx)) {
+         return true;
+      } else {
+         Object owner = getOwner(key);
+         // if lock cannot be acquired, expose the key itself, not the marshalled value
+         if (key instanceof MarshalledValue) {
+            key = ((MarshalledValue) key).get();
+         }
+         throw new TimeoutException("Unable to acquire lock after [" + Util.prettyPrintTime(getLockAcquisitionTimeout(ctx)) + "] on key [" + key + "] for requestor [" +
+               ctx.getLockOwner() + "]! Lock held by [" + owner + "]");
+      }
+   }
+
+   private void logLockNotAcquired(InvocationContext ctx) {
+      if (trace) {
+         if (ctx.hasFlag(Flag.SKIP_LOCKING))
+            log.trace("SKIP_LOCKING flag used!");
+         else
+            log.trace("Already own lock for entry");
+      }
    }
 }

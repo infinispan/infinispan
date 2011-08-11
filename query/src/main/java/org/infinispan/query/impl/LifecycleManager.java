@@ -22,26 +22,28 @@
  */
 package org.infinispan.query.impl;
 
-import java.util.Map;
-import java.util.Properties;
-import java.util.TreeMap;
-
 import org.hibernate.search.cfg.SearchConfiguration;
 import org.hibernate.search.spi.SearchFactoryBuilder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.FluentConfiguration.CustomInterceptorPosition;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.DistLockingInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.LockingInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
+import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
+import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.query.backend.LocalQueryInterceptor;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.logging.Log;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
 
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down
@@ -76,12 +78,12 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          CustomInterceptorPosition customInterceptorPosition = cfg.fluent()
                .customInterceptors()
                .add(queryInterceptor);
-         if (cfg.getCacheMode().isDistributed()) {
-            customInterceptorPosition
-               .after(DistLockingInterceptor.class);
+         if (!cfg.isTransactionalCache()) {
+            customInterceptorPosition.after(NonTransactionalLockingInterceptor.class);
+         } else if (cfg.getTransactionLockingMode() == LockingMode.OPTIMISTIC) {
+            customInterceptorPosition.after(OptimisticLockingInterceptor.class);
          } else {
-            customInterceptorPosition
-               .after(LockingInterceptor.class);
+            customInterceptorPosition.after(PessimisticLockingInterceptor.class);
          }
       }
    }
