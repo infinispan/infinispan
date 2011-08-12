@@ -108,9 +108,12 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    NotifyingFuture<Boolean> removeWithVersionAsync(K key, long version);
 
    /**
-    * Replaces the given value only if its version matches the supplied version. See {@link #removeWithVersion(Object,
-    * long)} for a sample usage of the version-based methods.
+    * Replaces the given value only if its version matches the supplied version.
+    * See {@link #removeWithVersion(Object, long)} for a sample usage of the
+    * version-based methods.
     *
+    * @param version numeric version that should match the one in the server
+    *                for the operation to succeed
     * @return true if the value has been replaced
     * @see #getVersioned(Object)
     * @see VersionedValue
@@ -118,12 +121,30 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    boolean replaceWithVersion(K key, V newValue, long version);
 
    /**
-    * @see #replaceWithVersion(Object, Object, long)
+    * A overloaded form of {@link #replaceWithVersion(Object, Object, long)}
+    * which takes in lifespan parameters.
+    *
+    * @param key key to use
+    * @param newValue new value to be associated with the key
+    * @param version numeric version that should match the one in the server
+    *                for the operation to succeed
+    * @param lifespanSeconds lifespan of the entry
+    * @return true if the value was replaced
     */
    boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds);
 
    /**
-    * @see #replaceWithVersion(Object, Object, long)
+    * A overloaded form of {@link #replaceWithVersion(Object, Object, long)}
+    * which takes in lifespan and maximum idle time parameters.
+    *
+    * @param key key to use
+    * @param newValue new value to be associated with the key
+    * @param version numeric version that should match the one in the server
+    *                for the operation to succeed
+    * @param lifespanSeconds lifespan of the entry
+    * @param maxIdleTimeSeconds the maximum amount of time this key is allowed
+    *                           to be idle for before it is considered as expired
+    * @return true if the value was replaced
     */
    boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds, int maxIdleTimeSeconds);
 
