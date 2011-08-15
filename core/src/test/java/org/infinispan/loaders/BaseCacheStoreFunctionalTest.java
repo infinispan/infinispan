@@ -41,7 +41,6 @@ import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +73,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
       EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
       try {
          CacheLoaderManagerConfig clmConfig = new CacheLoaderManagerConfig();
-         clmConfig.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig) csConfig));
+         clmConfig.addCacheLoader(csConfig);
          localCacheManager.getDefaultConfiguration().setCacheLoaderManagerConfig(clmConfig);
          localCacheManager.defineConfiguration("first", new Configuration());
          localCacheManager.defineConfiguration("second", new Configuration());
