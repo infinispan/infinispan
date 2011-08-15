@@ -26,7 +26,6 @@ import org.infinispan.Version;
 import org.infinispan.config.*;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
-import org.infinispan.distribution.groups.KXGrouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -44,10 +43,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
-import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
-import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
-import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_40;
-import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_NO_SCHEMA;
+import static org.infinispan.test.TestingUtil.*;
 
 @Test(groups = "unit", testName = "config.parsing.XmlFileParsingTest")
 public class XmlFileParsingTest extends AbstractInfinispanTest {
@@ -311,6 +307,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert csConf.getAsyncStoreConfig().getThreadPoolSize() == 5;
       assert csConf.getAsyncStoreConfig().getFlushLockTimeout() == 15000;
       assert csConf.getAsyncStoreConfig().isEnabled();
+      assert csConf.getAsyncStoreConfig().getModificationQueueSize() == 700;
 
       c = getNamedCacheConfig(namedCaches, "withLoaderDefaults");
       csConf = (FileCacheStoreConfig) c.getCacheLoaders().get(0);

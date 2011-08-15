@@ -111,7 +111,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    @GuardedBy("stateMapLock")
    protected ConcurrentMap<Object, Modification> state;
    private ReleaseAllLockContainer lockContainer;
-   private final LinkedBlockingQueue<Modification> changesDeque = new LinkedBlockingQueue<Modification>();
+   private LinkedBlockingQueue<Modification> changesDeque;
    public volatile boolean lastAsyncProcessorShutsDownExecutor = false;
    private long shutdownTimeout;
    private String cacheName;
@@ -124,6 +124,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    @Override
    public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
+      changesDeque = new LinkedBlockingQueue<Modification>(asyncStoreConfig.getModificationQueueSize());
       Configuration cacheCfg = cache != null ? cache.getConfiguration() : null;
       concurrencyLevel = cacheCfg != null ? cacheCfg.getConcurrencyLevel() : 16;
       int cacheStopTimeout = cacheCfg != null ? cacheCfg.getCacheStopTimeout() : 30000;
