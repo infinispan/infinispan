@@ -22,21 +22,9 @@
  */
 package org.infinispan.marshall;
 
-import static org.infinispan.test.TestingUtil.*;
-
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -52,9 +40,17 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.container.entries.*;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.ImmortalCacheValue;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.container.entries.MortalCacheValue;
+import org.infinispan.container.entries.TransientCacheEntry;
+import org.infinispan.container.entries.TransientCacheValue;
+import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.context.Flag;
-import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -88,6 +84,30 @@ import org.jgroups.util.UUID;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
+import static org.infinispan.test.TestingUtil.k;
 
 @Test(groups = "functional", testName = "marshall.VersionAwareMarshallerTest")
 public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
@@ -226,12 +246,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testReplicableCommandsMarshalling() throws Exception {
-      StateTransferControlCommand c1 = new StateTransferControlCommand(true);
-      byte[] bytes = marshaller.objectToByteBuffer(c1);
-      StateTransferControlCommand rc1 = (StateTransferControlCommand) marshaller.objectFromByteBuffer(bytes);
-      assert rc1.getCommandId() == c1.getCommandId() : "Writen[" + c1.getCommandId() + "] and read[" + rc1.getCommandId() + "] objects should be the same";
-      assert Arrays.equals(rc1.getParameters(), c1.getParameters()) : "Writen[" + c1.getParameters() + "] and read[" + rc1.getParameters() + "] objects should be the same";
-
       String cacheName = EmbeddedCacheManager.DEFAULT_CACHE_NAME;
       ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName, Collections.<Flag>emptySet());
       marshallAndAssertEquality(c2);
@@ -239,7 +253,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       // SizeCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
 
       GetKeyValueCommand c4 = new GetKeyValueCommand("key", null, Collections.<Flag>emptySet());
-      bytes = marshaller.objectToByteBuffer(c4);
+      byte[] bytes = marshaller.objectToByteBuffer(c4);
       GetKeyValueCommand rc4 = (GetKeyValueCommand) marshaller.objectFromByteBuffer(bytes);
       assert rc4.getCommandId() == c4.getCommandId() : "Writen[" + c4.getCommandId() + "] and read[" + rc4.getCommandId() + "] objects should be the same";
       assert Arrays.equals(rc4.getParameters(), c4.getParameters()) : "Writen[" + c4.getParameters() + "] and read[" + rc4.getParameters() + "] objects should be the same";
@@ -296,13 +310,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshallAndAssertEquality(c99);
    }
 
-   public void testRehashControlCommand() throws Exception {
+   public void testStateTransferControlCommand() throws Exception {
       Cache<Object,Object> cache = cm.getCache();
 
       String cacheName = EmbeddedCacheManager.DEFAULT_CACHE_NAME;
       ImmortalCacheEntry entry1 = (ImmortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
-      Map<Object, InternalCacheValue> state = new HashMap<Object, InternalCacheValue>();
-      state.put(new MagicKey(cache, "magic_key"), entry1.toInternalCacheValue());
+      Collection<InternalCacheEntry> state = new ArrayList<InternalCacheEntry>();
+      state.add(entry1);
       Address a1 = new JGroupsAddress(UUID.randomUUID());
       Address a2 = new JGroupsAddress(UUID.randomUUID());
       Address a3 = new JGroupsAddress(UUID.randomUUID());
@@ -317,7 +331,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       newAddresses.add(a3);
       DefaultConsistentHash newCh = new DefaultConsistentHash(new MurmurHash2());
       newCh.setCaches(newAddresses);
-      RehashControlCommand c14 = new RehashControlCommand(cacheName, RehashControlCommand.Type.APPLY_STATE, a1, 99, state, oldCh, newCh);
+      StateTransferControlCommand c14 = new StateTransferControlCommand(cacheName, StateTransferControlCommand.Type.APPLY_STATE, a1, 99, state);
       byte[] bytes = marshaller.objectToByteBuffer(c14);
       marshaller.objectFromByteBuffer(bytes);
 
@@ -325,11 +339,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshaller.objectFromByteBuffer(bytes);
 
       bytes = marshaller.objectToByteBuffer(c14);
-      marshaller.objectFromByteBuffer(bytes);
-   }
-
-   public void test000() throws ClassNotFoundException, IOException {
-      byte[] bytes = {3, 1, -2, 3, 74, 0, 0, 17, 0, 0, 0, 4, 100, 105, 115, 116, -52, 2, 3, 1, -2, 6, 73, 0, 3, 39, 4, 10, 0, 0, 0, 21, 111, 114, 103, 46, 106, 103, 114, 111, 117, 112, 115, 46, 117, 116, 105, 108, 46, 85, 85, 73, 68, 55, 34, -52, 74, 28, -68, 13, 92, 50, 16, -56, -4, -32, 96, 91, -106, -114, -128, 26, 71, -50, 106, -52, -69, -36, -109, 53, 75, 0, 0, 0, 2, 3, 2, 0, 1, 4, 9, 0, 0, 0, 36, 111, 114, 103, 46, 105, 110, 102, 105, 110, 105, 115, 112, 97, 110, 46, 100, 105, 115, 116, 114, 105, 98, 117, 116, 105, 111, 110, 46, 77, 97, 103, 105, 99, 75, 101, 121, -12, 104, -127, 32, 29, 91, -126, -98, 0, 0, 0, 3, 0, 0, 0, 7, 97, 100, 100, 114, 101, 115, 115, 20, 0, 0, 0, 0, 8, 104, 97, 115, 104, 99, 111, 100, 101, 35, 0, 0, 0, 0, 4, 110, 97, 109, 101, 20, 0, 22, 62, 11, 78, 111, 100, 101, 65, 45, 51, 50, 54, 50, 56, 122, -66, -70, -47, 62, 2, 107, 50, 3, 14, 62, 2, 118, 50, 3, 51, 0, 0, 0, 1, 3, 73, 83, 2, 95, 3, 39, 4, 59, -2, 50, 16, -56, -4, -32, 96, 91, -106, -114, -128, 26, 71, -50, 106, -52, -69, -36, -109, 53, 3, 39, 4, 59, -2, 50, 16, 73, -73, 104, 36, -62, 59, 74, 125, 126, 57, -12, 55, 10, -121, -44, -82, 53, 3, 51, 0, 0, 0, 1, 3, 73, 83, 3, 95, 3, 39, 4, 59, -2, 50, 16, -56, -4, -32, 96, 91, -106, -114, -128, 26, 71, -50, 106, -52, -69, -36, -109, 53, 3, 39, 4, 59, -2, 50, 16, 73, -73, 104, 36, -62, 59, 74, 125, 126, 57, -12, 55, 10, -121, -44, -82, 53, 3, 39, 4, 59, -2, 50, 16, 19, 93, 117, 78, -28, -19, -41, 13, 38, 93, -96, -106, -106, -6, 0, 68, 53};
       marshaller.objectFromByteBuffer(bytes);
    }
 

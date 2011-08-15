@@ -23,11 +23,6 @@
 
 package org.infinispan.spring.mock;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.marshall.StreamingMarshaller;
@@ -37,10 +32,13 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.util.logging.Log;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 public final class MockTransport implements Transport {
 
@@ -85,22 +83,6 @@ public final class MockTransport implements Transport {
    @Override
    public List<Address> getMembers() {
       return null;
-   }
-
-   @Override
-   public boolean retrieveState(final String cacheName, final Address address, final long timeout)
-            throws StateTransferException {
-      return false;
-   }
-
-   @Override
-   public DistributedSync getDistributedSync() {
-      return null;
-   }
-
-   @Override
-   public boolean isSupportStateTransfer() {
-      return false;
    }
 
    @Override

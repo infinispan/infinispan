@@ -25,7 +25,6 @@ package org.infinispan.remoting.rpc;
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.factories.annotations.ComponentName;
@@ -36,12 +35,11 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.ReplicationQueue;
+import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -63,7 +61,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.infinispan.factories.KnownComponentNames.*;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 /**
  * This component really is just a wrapper around a {@link org.infinispan.remoting.transport.Transport} implementation,
@@ -160,74 +159,6 @@ public class RpcManagerImpl implements RpcManager {
       return invokeRemotely(recipients, rpcCommand, mode, timeout, false, null);
    }
 
-   public void retrieveState(String cacheName, long timeout) throws StateTransferException {
-      if (t.isSupportStateTransfer()) {
-         long initialWaitTime = configuration.getStateRetrievalInitialRetryWaitTime();
-         int waitTimeIncreaseFactor = configuration.getStateRetrievalRetryWaitTimeIncreaseFactor();
-         int numRetries = configuration.getStateRetrievalNumRetries();
-         List<Address> members = t.getMembers();
-         if (members.size() < 2) {
-            if (log.isDebugEnabled())
-               log.debug("We're the only member in the cluster; no one to retrieve state from. Not doing anything!");
-            return;
-         } else if (t.isCoordinator()) {
-            if (log.isDebugEnabled())
-               log.debug("We're the coordinator, so don't request state from other nodes in the cluster");
-            return;
-         }
-
-         boolean success = false;
-
-         try {
-            long wait = initialWaitTime;
-            outer:
-            for (int i = 0; i < numRetries; i++) {
-               for (Address member : members) {
-                  if (!member.equals(t.getAddress())) {
-                     try {
-                        if (log.isInfoEnabled()) log.tryingToFetchState(member);
-                        currentStateTransferSource = member;
-                        mimicPartialFlushViaRPC(currentStateTransferSource, true);
-                        if (t.retrieveState(cacheName, member, timeout)) {
-                           if (log.isInfoEnabled())
-                              log.successfullyAppliedState(member);
-                           success = true;
-                           break outer;
-                        }
-                     } catch (Exception ex){
-                        if (log.isDebugEnabled()) log.debug("Error while fetching state from member " + member, ex);
-                     }
-                     finally {                        
-                        try {
-                           mimicPartialFlushViaRPC(currentStateTransferSource, false);
-                        } catch (Exception ignored) {}
-                        currentStateTransferSource = null;
-                     }
-                  }
-               }
-
-               if (!success) {
-                  log.couldNotFindPeerForState();
-
-                  try {
-                     Thread.sleep(wait *= waitTimeIncreaseFactor);
-                  }
-                  catch (InterruptedException e) {
-                     Thread.currentThread().interrupt();
-                  }
-               }
-
-            }
-         } finally {
-            currentStateTransferSource = null;
-         }
-
-         if (!success) throw new StateTransferException("Unable to fetch state on startup");
-      } else {
-         throw new StateTransferException("Transport does not, or is not configured to, support state transfer.  Please disable fetching state on startup, or reconfigure your transport.");
-      }
-   }
-
    public final void broadcastRpcCommand(ReplicableCommand rpc, boolean sync) throws RpcException {
       broadcastRpcCommand(rpc, sync, false);
    }
@@ -309,10 +240,6 @@ public class RpcManagerImpl implements RpcManager {
       return t;
    }
 
-   public Address getCurrentStateTransferSource() {
-      return currentStateTransferSource;
-   }
-
    private ResponseMode getResponseMode(boolean sync) {
       return sync ? ResponseMode.SYNCHRONOUS : ResponseMode.getAsyncResponseMode(configuration);
    }
@@ -333,26 +260,6 @@ public class RpcManagerImpl implements RpcManager {
       }
    }
    
-   /**
-    * Mimics a partial flush between the current instance and the address to flush, by opening and closing the necessary
-    * latches on both ends.
-    *
-    * @param addressToFlush address to flush in addition to the current address
-    * @param block          if true, mimics setting a flush.  Otherwise, mimics un-setting a flush.
-    * @throws Exception if there are issues
-    */
-   private void mimicPartialFlushViaRPC(Address addressToFlush, boolean block) {
-      StateTransferControlCommand cmd = cf.buildStateTransferControlCommand(block);
-      if (!block)
-         getTransport().getDistributedSync().releaseSync();
-      
-      invokeRemotely(Collections.singletonList(addressToFlush), cmd, ResponseMode.SYNCHRONOUS,
-               configuration.getStateRetrievalTimeout(), true);
-      
-      if (block)
-         getTransport().getDistributedSync().acquireSync();
-   }
-
    // -------------------------------------------- JMX information -----------------------------------------------
 
    @ManagedOperation(description = "Resets statistics gathered by this component")

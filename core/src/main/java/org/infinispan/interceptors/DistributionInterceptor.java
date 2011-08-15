@@ -52,6 +52,7 @@ import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
@@ -70,10 +71,12 @@ import java.util.Set;
  * @author Manik Surtani
  * @author Mircea.Markus@jboss.com
  * @author Pete Muir
+ * @author Dan Berindei <dan@infinispan.org>
  * @since 4.0
  */
 public class DistributionInterceptor extends BaseRpcInterceptor {
    DistributionManager dm;
+   StateTransferLock stateTransferLock;
    CommandsFactory cf;
    DataContainer dataContainer;
    boolean isL1CacheEnabled, needReliableReturnValues;
@@ -91,9 +94,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    };
 
    @Inject
-   public void injectDependencies(DistributionManager distributionManager, CommandsFactory cf,
-                                  DataContainer dataContainer, EntryFactory entryFactory, L1Manager l1Manager) {
+   public void injectDependencies(DistributionManager distributionManager, StateTransferLock stateTransferLock,
+                                  CommandsFactory cf, DataContainer dataContainer, EntryFactory entryFactory,
+                                  L1Manager l1Manager) {
       this.dm = distributionManager;
+      this.stateTransferLock = stateTransferLock;
       this.cf = cf;
       this.dataContainer = dataContainer;
       this.entryFactory = entryFactory;
@@ -104,7 +109,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public void start() {
       isL1CacheEnabled = configuration.isL1CacheEnabled();
       needReliableReturnValues = !configuration.isUnsafeUnreliableReturnValues();
-
    }
 
    // ---- READ commands
@@ -335,10 +339,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                // we are assuming the current node is also trying to start the rehash, but it can't
                // because we're holding the tx lock
                // there is no problem if some nodes already applied the commit
-               dm.getTransactionLogger().suspendTransactionLock(ctx);
-               log.tracef("Released the transaction lock temporarily, allow rehashing to proceed on %s", rpcManager.getAddress());
-
-               dm.getTransactionLogger().resumeTransactionLock(ctx);
+               stateTransferLock.waitForStateTransferToEnd(ctx, command);
                log.tracef("Rehashing completed, retrying the commit on the remote nodes %s", rpcManager.getAddress());
             }
          }

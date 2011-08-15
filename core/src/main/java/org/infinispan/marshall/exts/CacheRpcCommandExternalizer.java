@@ -21,8 +21,8 @@ package org.infinispan.marshall.exts;
 
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.RemoveCacheCommand;
+import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -76,7 +76,7 @@ public class CacheRpcCommandExternalizer extends AbstractExternalizer<CacheRpcCo
    public Set<Class<? extends CacheRpcCommand>> getTypeClasses() {
       Set<Class<? extends CacheRpcCommand>> coreCommands = Util.asSet(
             MapReduceCommand.class, LockControlCommand.class,
-            RehashControlCommand.class, ClusteredGetCommand.class,
+            StateTransferControlCommand.class, ClusteredGetCommand.class,
             MultipleRpcCommand.class, SingleRpcCommand.class, CommitCommand.class,
             PrepareCommand.class, RollbackCommand.class, RemoveCacheCommand.class,
             RemoveRecoveryInfoCommand.class, GetInDoubtTransactionsCommand.class,

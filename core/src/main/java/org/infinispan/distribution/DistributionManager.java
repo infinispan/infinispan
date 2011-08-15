@@ -22,21 +22,17 @@
  */
 package org.infinispan.distribution;
 
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
 
 /**
  * A component that manages the distribution of elements across a cache cluster
@@ -139,19 +135,6 @@ public interface DistributionManager {
    boolean isAffectedByRehash(Object key);
 
    /**
-    * Retrieves the transaction logger instance associated with this DistributionManager
-    * @return a TransactionLogger
-    */
-   TransactionLogger getTransactionLogger();
-
-   /**
-    * Retrieves a cache store if one is available and set up for use in rehashing.  May return null!
-    *
-    * @return a cache store is one is available and configured for use in rehashing, or null otherwise.
-    */
-   CacheStore getCacheStoreForRehashing();
-
-   /**
     * Tests whether a rehash is in progress
     * @return true if a rehash is in progress, false otherwise
     */
@@ -171,31 +154,5 @@ public interface DistributionManager {
     * @return a list of addresses which represent a combined set of all addresses affected by the set of keys.
     */
    Collection<Address> getAffectedNodes(Collection<Object> affectedKeys);
-
-   /**
-    * Applies an ordered list of modifications to the current node.  Typically used when state is pushed to the node
-    * (i.e., anotehr node leaves the cluster) and the transaction log needs to be flushed after pushing state.
-    * @param modifications ordered list of mods
-    */
-   void applyRemoteTxLog(List<WriteCommand> modifications);
-
-   void applyState(ConsistentHash newConsistentHash, Map<Object,InternalCacheValue> state, Address sender, int viewId) throws InterruptedException;
-
-   void markRehashCompleted(int viewId) throws InterruptedException;
-
-   void markNodePushCompleted(int viewId, Address node) throws InterruptedException;
-
-   public void notifyCoordinatorPushCompleted(int viewId) throws Exception;
-
-   /**
-    * Wait until the cluster-wide rehash for view <code>viewId</code> has finished.
-    *
-    * @return true if the rehashed finished successfully, false if there is another rehash pending.
-    */
-   public boolean waitForRehashToComplete(int viewId) throws InterruptedException, TimeoutException;
-
-   void markRehashTaskCompleted();
-
-   void waitForJoinToComplete() throws InterruptedException;
 }
 
