@@ -133,6 +133,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    private final ReflectionCache reflectionCache = new ReflectionCache();
    private volatile boolean stopping;
 
+   private static final boolean SUPPRESS_CACHE_CREATION_WARNING = Boolean.getBoolean("infinispan.suppress_cache_creation_warning");
+
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults.  See {@link
     * Configuration} and {@link GlobalConfiguration} for details of these defaults.
@@ -447,9 +449,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          return cw.getCache();
       }
 
-      if (caches.size() > 0) {
-         log.shouldBeUsingStartCache(cacheName);
-      }
+      if (caches.size() > 0 && !SUPPRESS_CACHE_CREATION_WARNING) log.shouldBeUsingStartCache(cacheName);
+
       return createCache(cacheName);
    }
 
