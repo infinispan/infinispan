@@ -128,33 +128,6 @@ public interface Transport extends Lifecycle {
    List<Address> getMembers();
 
    /**
-    * Initiates a state retrieval from a specific cache (by typically invoking {@link
-    * org.infinispan.remoting.InboundInvocationHandler#generateState(String, java.io.OutputStream)}), and applies this
-    * state to the current cache via the  {@link InboundInvocationHandler#applyState(String, java.io.InputStream)}
-    * callback.
-    *
-    * @param cacheName name of cache for which to retrieve state
-    * @param address   address of remote cache from which to retrieve state
-    * @param timeout   state retrieval timeout in milliseconds
-    * @return true if state was transferred and applied successfully, false if it timed out.
-    * @throws org.infinispan.statetransfer.StateTransferException
-    *          if state cannot be retrieved from the specific cache
-    */
-   boolean retrieveState(String cacheName, Address address, long timeout) throws StateTransferException;
-
-   /**
-    * @return an instance of a DistributedSync that can be used to wait for synchronization events across a cluster.
-    */
-   DistributedSync getDistributedSync();
-
-   /**
-    * Tests whether the transport supports state transfer
-    *
-    * @return true if the implementation supports state transfer, false otherwise.
-    */
-   boolean isSupportStateTransfer();
-   
-   /**
     * Tests whether the transport supports true multicast
     * 
     * @return true if the transport supports true multicast

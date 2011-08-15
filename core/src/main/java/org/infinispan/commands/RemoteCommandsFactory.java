@@ -24,7 +24,6 @@ package org.infinispan.commands;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandFactory;
@@ -33,12 +32,12 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
-import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
-import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
-import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
+import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
+import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
+import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -57,9 +56,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
 
@@ -100,7 +96,7 @@ public class RemoteCommandsFactory {
     * <p/>
     *
     *
-    * @param id         id of the command
+    * @param id id of the command
     * @param parameters parameters to set
     * @param type
     * @return a replicable command
@@ -132,10 +128,6 @@ public class RemoteCommandsFactory {
                break;
             case InvalidateL1Command.COMMAND_ID:
                command = new InvalidateL1Command();
-               break;
-            case StateTransferControlCommand.COMMAND_ID:
-               command = new StateTransferControlCommand();
-               ((StateTransferControlCommand) command).init(transport);
                break;
             case DistributedExecuteCommand.COMMAND_ID:
                command = new DistributedExecuteCommand<Object>();
@@ -188,8 +180,8 @@ public class RemoteCommandsFactory {
             case ClusteredGetCommand.COMMAND_ID:
                command = new ClusteredGetCommand(cacheName);
                break;
-            case RehashControlCommand.COMMAND_ID:
-               command = new RehashControlCommand(cacheName, transport);
+            case StateTransferControlCommand.COMMAND_ID:
+               command = new StateTransferControlCommand(cacheName);
                break;
             case RemoveCacheCommand.COMMAND_ID:
                command = new RemoveCacheCommand(cacheName, cacheManager, registry);

@@ -23,9 +23,8 @@
 package org.infinispan.commands;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
@@ -35,12 +34,12 @@ import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.MultipleRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -55,13 +54,12 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -69,10 +67,11 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.xa.DldGlobalTransaction;
-import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.xa.DldGlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -112,6 +111,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private TransactionTable txTable;
    private Configuration configuration;
    private RecoveryManager recoveryManager;
+   private StateTransferManager stateTransferManager;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -120,7 +120,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  InterceptorChain interceptorChain, DistributionManager distributionManager,
                                  InvocationContextContainer icc, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
-                                 RecoveryManager recoveryManager) {
+                                 RecoveryManager recoveryManager, StateTransferManager stateTransferManager) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -131,6 +131,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.configuration = configuration;
       this.moduleCommandInitializers = moduleCommandInitializers;
       this.recoveryManager = recoveryManager;
+      this.stateTransferManager = stateTransferManager;
    }
 
    @Start(priority = 1)
@@ -227,10 +228,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new SingleRpcCommand(cacheName, call);
    }
 
-   public StateTransferControlCommand buildStateTransferControlCommand(boolean block) {
-      return new StateTransferControlCommand(block);
-   }
-
    public ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags) {
       return new ClusteredGetCommand(key, cacheName, flags);
    }
@@ -325,9 +322,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
                }
             }
             break;
-         case RehashControlCommand.COMMAND_ID:
-            RehashControlCommand rcc = (RehashControlCommand) c;
-            rcc.init(distributionManager, configuration, dataContainer, this);
+         case StateTransferControlCommand.COMMAND_ID:
+            StateTransferControlCommand rcc = (StateTransferControlCommand) c;
+            rcc.init(stateTransferManager, configuration, dataContainer, this);
             break;
          case GetInDoubtTransactionsCommand.COMMAND_ID:
             GetInDoubtTransactionsCommand gptx = (GetInDoubtTransactionsCommand) c;
@@ -367,13 +364,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new LockControlCommand(keys, cacheName, flags, implicit);
    }
 
-   public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type, Address sender, int viewId) {
-      return new RehashControlCommand(cacheName, type, sender, viewId);
+      public StateTransferControlCommand
+      buildStateTransferCommand(StateTransferControlCommand.Type type, Address sender, int viewId) {
+      return new StateTransferControlCommand(cacheName, type, sender, viewId);
    }
 
-   public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type, Address sender,
-         int viewId, Map<Object, InternalCacheValue> state, ConsistentHash oldCH, ConsistentHash newCH) {
-      return new RehashControlCommand(cacheName, type, sender, viewId, state, oldCH, newCH);
+   public StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type type, Address sender,
+                                                         int viewId, Collection<InternalCacheEntry> state) {
+      return new StateTransferControlCommand(cacheName, type, sender, viewId, state);
    }
 
    public String getCacheName() {

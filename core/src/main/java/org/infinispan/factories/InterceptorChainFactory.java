@@ -98,6 +98,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       if (configuration.isExposeJmxStatistics())
          interceptorChain.appendInterceptor(createInterceptor(CacheMgmtInterceptor.class));
 
+      // load the state transfer lock interceptor
+      if ((configuration.getCacheMode().isDistributed() && configuration.isRehashEnabled())
+            || (configuration.getCacheMode().isReplicated() && configuration.isStateTransferEnabled()))
+         interceptorChain.appendInterceptor(createInterceptor(StateTransferLockInterceptor.class));
+
       // load the tx interceptor
       if (configuration.getCacheMode().isDistributed())
          interceptorChain.appendInterceptor(createInterceptor(DistTxInterceptor.class));
