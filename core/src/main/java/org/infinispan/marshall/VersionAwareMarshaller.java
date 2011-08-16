@@ -211,4 +211,8 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
    public boolean isMarshallable(Object o) throws Exception {
       return defaultMarshaller.isMarshallable(o);
    }
+
+   public String getCacheName() {
+      return cacheName;
+   }
 }
