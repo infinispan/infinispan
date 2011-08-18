@@ -20,7 +20,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.cache.cachemanager;
+package org.infinispan.cdi.test.cachemanager.registration;
 
 import org.infinispan.cdi.ConfigureCache;
 import org.infinispan.config.Configuration;
@@ -30,46 +30,57 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 
-import static org.infinispan.eviction.EvictionStrategy.FIFO;
-
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class Config {
    /**
-    * Associates the "large" cache with the qualifier {@link Large}.
+    * <p>Defines the "small" cache configuration.</p>
+    *
+    * <p>This cache will be registered with the default configuration of the default cache manager.</p>
+    */
+   @Small
+   @ConfigureCache("small")
+   @Produces
+   public Configuration smallConfiguration;
+
+   /**
+    * <p>Defines the "large" cache configuration.</p>
+    *
+    * <p>This cache will be registered with the produced configuration in the default cache manager.</p>
     */
    @Large
    @ConfigureCache("large")
    @Produces
    public Configuration largeConfiguration() {
       return new Configuration().fluent()
-            .eviction().maxEntries(2000)
+            .eviction().maxEntries(1024)
             .build();
    }
 
    /**
-    * Associates the "small" cache with the qualifier {@link Small}.
+    * <p>Defines the "very-large" cache configuration.</p>
+    *
+    * <p>This cache will be registered with the produced configuration in the specific cache manager.</p>
     */
-   @Small
-   @ConfigureCache("small")
+   @VeryLarge
+   @ConfigureCache("very-large")
    @Produces
-   public Configuration smallConfiguration() {
+   public Configuration veryLargeConfiguration() {
       return new Configuration().fluent()
-            .eviction().maxEntries(20)
+            .eviction().maxEntries(4096)
             .build();
    }
 
    /**
-    * Associates the "small" and "large" caches with this specific cache manager.
+    * <p>Produces the specific cache manager.</p>
+    *
+    * <p>The "very-large" cache is associated to the specific cache manager with the cache qualifier.</p>
     */
-   @Large
-   @Small
+   @VeryLarge
    @Produces
    @ApplicationScoped
    public EmbeddedCacheManager specificCacheManager() {
-      return new DefaultCacheManager(new Configuration().fluent()
-                                           .eviction().strategy(FIFO)
-                                           .build());
+      return new DefaultCacheManager();
    }
 }

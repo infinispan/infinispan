@@ -37,7 +37,6 @@ import org.jboss.seam.solder.reflection.annotated.AnnotatedTypeBuilder;
 import javax.cache.interceptor.CacheRemoveAll;
 import javax.cache.interceptor.CacheRemoveEntry;
 import javax.cache.interceptor.CacheResult;
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Any;
@@ -62,7 +61,6 @@ import java.util.Set;
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-@ApplicationScoped
 public class InfinispanExtension implements Extension {
 
    private final Set<ConfigurationHolder> configurations;
@@ -111,28 +109,30 @@ public class InfinispanExtension implements Extension {
       }
    }
 
-   void registerCacheConfigurations(@Observes AfterDeploymentValidation event, CacheManagerEventBridge eventBridge, @Any Instance<EmbeddedCacheManager> cacheContainers, BeanManager beanManager) {
-      CreationalContext<Configuration> ctx = beanManager.createCreationalContext(null);
-      Instance<EmbeddedCacheManager> defaultCacheManager = cacheContainers.select(new AnnotationLiteral<Default>() {});
+   void registerCacheConfigurations(@Observes AfterDeploymentValidation event, CacheManagerEventBridge eventBridge, @Any Instance<EmbeddedCacheManager> cacheManagers, BeanManager beanManager) {
+      final CreationalContext<Configuration> ctx = beanManager.createCreationalContext(null);
+      final EmbeddedCacheManager defaultCacheManager = cacheManagers.select(new AnnotationLiteral<Default>() {}).get();
 
       for (ConfigurationHolder oneConfigurationHolder : configurations) {
-         String cacheName = oneConfigurationHolder.getName();
-         Configuration configuration = oneConfigurationHolder.getProducer().produce(ctx);
-         Set<Annotation> qualifiers = oneConfigurationHolder.getQualifiers();
+         final String cacheName = oneConfigurationHolder.getName();
+         final Configuration cacheConfiguration = oneConfigurationHolder.getProducer().produce(ctx);
+         final Set<Annotation> cacheQualifiers = oneConfigurationHolder.getQualifiers();
 
-         Instance<EmbeddedCacheManager> cacheManager = cacheContainers.select(qualifiers.toArray(new Annotation[qualifiers.size()]));
-         if (cacheManager.isUnsatisfied()) {
-            cacheManager = defaultCacheManager;
-         }
+         // if a specific cache manager is defined for this cache we use it
+         final Instance<EmbeddedCacheManager> specificCacheManager = cacheManagers.select(cacheQualifiers.toArray(new Annotation[cacheQualifiers.size()]));
+         final EmbeddedCacheManager cacheManager = specificCacheManager.isUnsatisfied() ? defaultCacheManager : specificCacheManager.get();
 
-         // if the cache name is empty this is the default configuration. This configuration is registered
-         // by default in the default cache manager.
-         if (!cacheName.isEmpty() && configuration != null) {
-            cacheManager.get().defineConfiguration(cacheName, configuration);
+         // the default configuration is registered by the default cache manager producer
+         if (!cacheName.trim().isEmpty()) {
+            if (cacheConfiguration != null) {
+               cacheManager.defineConfiguration(cacheName, cacheConfiguration);
+            } else if (!cacheManager.getCacheNames().contains(cacheName)) {
+               cacheManager.defineConfiguration(cacheName, cacheManager.getDefaultConfiguration().clone());
+            }
          }
 
          // register cache manager observers
-         eventBridge.registerObservers(qualifiers, cacheName, cacheManager.get());
+         eventBridge.registerObservers(cacheQualifiers, cacheName, cacheManager);
       }
    }
 
