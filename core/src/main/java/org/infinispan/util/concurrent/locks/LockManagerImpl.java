@@ -33,7 +33,11 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.util.ReversibleOrderedSet;
-import org.infinispan.util.concurrent.locks.containers.*;
+import org.infinispan.util.concurrent.locks.containers.LockContainer;
+import org.infinispan.util.concurrent.locks.containers.OwnableReentrantPerEntryLockContainer;
+import org.infinispan.util.concurrent.locks.containers.OwnableReentrantStripedLockContainer;
+import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
+import org.infinispan.util.concurrent.locks.containers.ReentrantStripedLockContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
@@ -41,7 +45,11 @@ import org.rhq.helpers.pluginAnnotations.agent.Metric;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -55,7 +63,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @MBean(objectName = "LockManager", description = "Manager that handles MVCC locks for entries")
 public class LockManagerImpl implements LockManager {
    protected Configuration configuration;
-   protected LockContainer lockContainer;
+   protected volatile LockContainer lockContainer;
    private TransactionManager transactionManager;
    private InvocationContextContainer invocationContextContainer;
    private static final Log log = LogFactory.getLog(LockManagerImpl.class);
@@ -69,7 +77,7 @@ public class LockManagerImpl implements LockManager {
       this.invocationContextContainer = invocationContextContainer;
    }
 
-   @Start
+   @Start (priority = 8)
    public void startLockManager() {
       lockContainer = configuration.isUseLockStriping() ?
       transactionManager == null ? new ReentrantStripedLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantStripedLockContainer(configuration.getConcurrencyLevel(), invocationContextContainer) :
