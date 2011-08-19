@@ -39,35 +39,35 @@ import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
 import static org.infinispan.manager.CacheContainer.DEFAULT_CACHE_NAME;
 
 /**
- * Tests that the default cache configuration can be overridden.
+ * Tests that the default configuration of the default cache manager can be overridden.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-@Test(groups = "functional", testName = "cdi.test.cache.DefaultCacheConfigurationTest")
-public class DefaultCacheConfigurationTest extends Arquillian {
+@Test(groups = "functional", testName = "cdi.test.cache.DefaultConfigurationTest")
+public class DefaultConfigurationTest extends Arquillian {
 
    @Deployment
    public static Archive<?> deployment() {
       return baseDeployment()
-            .addClass(DefaultCacheConfigurationTest.class);
+            .addClass(DefaultConfigurationTest.class);
    }
 
    @Inject
    private Cache<?, ?> cache;
 
-   public void testCustomDefaultCacheConfiguration() {
+   public void testDefaultConfiguration() {
       assertEquals(cache.getConfiguration().getEvictionMaxEntries(), 16);
       assertEquals(cache.getName(), DEFAULT_CACHE_NAME);
    }
 
    /**
-    * Overrides the default cache configuration.
+    * Overrides the default configuration used for the initialization of the default cache manager.
     */
    public static class Config {
       @Produces
       @OverrideDefault
       @ApplicationScoped
-      public Configuration customDefaultCacheConfiguration() {
+      public Configuration customDefaultConfiguration() {
          return new Configuration().fluent()
                .eviction().maxEntries(16)
                .build();
