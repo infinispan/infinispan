@@ -76,7 +76,7 @@ public class SpecificCacheManagerTest extends Arquillian {
       assertTrue(smallCache.getCacheManager().equals(largeCache.getCacheManager()));
       assertFalse(smallCache.getCacheManager().equals(cache.getCacheManager()));
 
-      // check that default cache configuration has not been modified
+      // check that the default configuration has not been modified
       assertEquals(cache.getConfiguration().getEvictionStrategy(), NONE);
       assertEquals(cache.getConfiguration().getEvictionMaxEntries(), -1);
       assertEquals(cache.getCacheManager().getDefaultConfiguration().getEvictionStrategy(), NONE);
