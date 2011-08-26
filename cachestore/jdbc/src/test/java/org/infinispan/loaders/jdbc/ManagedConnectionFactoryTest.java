@@ -39,6 +39,7 @@ import javax.sql.DataSource;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.logging.Logger;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -121,6 +122,10 @@ public abstract class ManagedConnectionFactoryTest extends BaseCacheStoreTest {
       }
 
       public boolean isWrapperFor(Class<?> iface) throws SQLException {
+         throw new IllegalStateException("This should not be called!");
+      }
+
+      public Logger getParentLogger() {
          throw new IllegalStateException("This should not be called!");
       }
    }
