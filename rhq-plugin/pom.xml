@@ -191,6 +191,11 @@
                                  <artifactId>infinispan-core</artifactId>
                                  <version>${project.version}</version>
                              </artifactItem>
+                             <artifactItem>
+                                <groupId>org.jboss.logging</groupId>
+                                <artifactId>jboss-logging</artifactId>
+                                <version>${version.jboss.logging}</version>
+                             </artifactItem>
                          </artifactItems>
                          <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                      </configuration>

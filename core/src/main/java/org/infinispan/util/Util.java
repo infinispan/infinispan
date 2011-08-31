@@ -576,4 +576,18 @@ public final class Util {
 
       return buf.toString();
    }
+
+   public static Double constructDouble(Class type, Object o) {
+      if (type.equals(Long.class) || type.equals(long.class))
+         return Double.valueOf((Long) o);
+      else if (type.equals(Double.class) || type.equals(double.class))
+         return (Double) o;
+      else if (type.equals(Integer.class) || type.equals(int.class))
+         return Double.valueOf((Integer) o);
+      else if (type.equals(String.class))
+         return Double.valueOf((String) o);
+
+      throw new IllegalStateException(String.format("Expected a value that can be converted into a double: type=%s, value=%s", type, o));
+   }
+
 }
