@@ -132,8 +132,10 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       return CacheContainer.DEFAULT_CACHE_NAME.equals(cacheName) || embeddedCacheManager.getCacheNames().contains(cacheName);
    }
 
-   public void waitForStart(CacheRpcCommand cmd) {
-      // the cache should not be accessible from user code until the join is finished
+   public void waitForStart(CacheRpcCommand cmd) throws InterruptedException {
+      if (cmd.getConfiguration().getCacheMode().isDistributed()) {
+         cmd.getComponentRegistry().getComponent(DistributionManager.class).waitForJoinToComplete();
+      }
    }
 
    @Override
