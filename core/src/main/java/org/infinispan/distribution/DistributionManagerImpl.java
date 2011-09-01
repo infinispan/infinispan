@@ -67,7 +67,6 @@ import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -223,8 +222,9 @@ public class DistributionManagerImpl implements DistributionManager {
 
    // To avoid blocking other components' start process, wait last, if necessary, for join to complete.
 
+   @Override
    @Start(priority = 1000)
-   public void waitForJoinToComplete() throws Throwable {
+   public void waitForJoinToComplete() throws InterruptedException {
       joinCompletedLatch.await();
       joinComplete = true;
    }

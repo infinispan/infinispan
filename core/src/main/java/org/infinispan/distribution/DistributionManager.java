@@ -32,6 +32,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.transport.Address;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -194,5 +195,7 @@ public interface DistributionManager {
    public boolean waitForRehashToComplete(int viewId) throws InterruptedException, TimeoutException;
 
    void markRehashTaskCompleted();
+
+   void waitForJoinToComplete() throws InterruptedException;
 }
 
