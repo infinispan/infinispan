@@ -42,7 +42,11 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.NamedCacheNotFoundException;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.remoting.responses.*;
+import org.infinispan.remoting.responses.ExceptionResponse;
+import org.infinispan.remoting.responses.ExtendedResponse;
+import org.infinispan.remoting.responses.RequestIgnoredResponse;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.remoting.transport.Transport;
@@ -123,8 +127,10 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       return CacheContainer.DEFAULT_CACHE_NAME.equals(cacheName) || embeddedCacheManager.getCacheNames().contains(cacheName);
    }
 
-   public void waitForStart(CacheRpcCommand cmd) {
-      // the cache should not be accessible from user code until the join is finished
+   public void waitForStart(CacheRpcCommand cmd) throws InterruptedException {
+      if (cmd.getConfiguration().getCacheMode().isDistributed()) {
+         cmd.getComponentRegistry().getComponent(DistributionManager.class).waitForJoinToComplete();
+      }
    }
 
    @Override
