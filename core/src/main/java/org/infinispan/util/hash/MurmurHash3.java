@@ -23,9 +23,14 @@
 
 package org.infinispan.util.hash;
 
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.exts.NoStateExternalizer;
 import org.infinispan.util.ByteArrayKey;
+import org.infinispan.util.Util;
 
+import java.io.ObjectInput;
 import java.nio.charset.Charset;
+import java.util.Set;
 
 /**
  * MurmurHash3 implementation in Java, based on Austin Appleby's <a href=
@@ -285,4 +290,23 @@ public class MurmurHash3 implements Hash {
       else
          return hash(o.hashCode());
    }
+
+   public static class Externalizer extends NoStateExternalizer<MurmurHash3> {
+      @Override
+      public Set<Class<? extends MurmurHash3>> getTypeClasses() {
+         return Util.<Class<? extends MurmurHash3>>asSet(MurmurHash3.class);
+      }
+
+      @Override
+      public MurmurHash3 readObject(ObjectInput input) {
+         return new MurmurHash3();
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.MURMURHASH_3;
+      }
+   }
+
+
 }

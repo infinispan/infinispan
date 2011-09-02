@@ -30,6 +30,8 @@ import org.infinispan.test.TestingUtil;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -60,6 +62,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       Configuration cfg = getDefaultClusteredConfig(getCacheMode(), true);
+      cfg.fluent().transactionManagerLookup(new DummyTransactionManagerLookup());
       cfg.setLockAcquisitionTimeout(500);
       createClusteredCaches(2, "testcache", cfg);
    }
@@ -153,16 +156,22 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
          public void run() {
             log.info("Concurrent " + (useTx ? "tx" : "non-tx") + " write started "
                   + (sameNode ? "on same node..." : "on a different node..."));
-            TransactionManager mgr = null;
+            DummyTransactionManager mgr = null;
             try {
                if (useTx) {
-                  mgr = TestingUtil.getTransactionManager(sameNode ? cache1 : cache2);
+                  mgr = (DummyTransactionManager) TestingUtil.getTransactionManager(sameNode ? cache1 : cache2);
                   mgr.begin();
                }
                if (sameNode) {
                   cache1.put(k, "JBC");
                } else {
                   cache2.put(k, "JBC");
+               }
+               if (useTx) {
+                  if (!mgr.getTransaction().runPrepare()) { //couldn't prepare
+                     latch.countDown();
+                     mgr.rollback();
+                  }
                }
             } catch (Exception e) {
                if (useTx) {

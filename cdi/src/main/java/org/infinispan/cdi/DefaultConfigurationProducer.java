@@ -30,21 +30,21 @@ import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
 
 /**
- * <p>The default cache configuration producer.</p>
+ * <p>The default configuration producer.</p>
  *
- * <p>The default cache configuration is used by the default cache manager. The default cache configuration can be
- * overridden by creating a producer which produces the new default configuration. The new default cache configuration
- * produced must be qualified by {@link OverrideDefault}.</p>
+ * <p>The default configuration is used by the default cache manager. The default configuration can be overridden by
+ * creating a producer which produces the new default configuration. The new default configuration produced must be
+ * qualified by {@link OverrideDefault}.</p>
  *
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class DefaultCacheConfigurationProducer {
+public class DefaultConfigurationProducer {
    /**
-    * Produces the default cache configuration.
+    * Produces the default configuration.
     *
-    * @param providedDefaultConfiguration the provided default cache configuration.
-    * @return the default cache configuration used by the default cache manager.
+    * @param providedDefaultConfiguration the provided default configuration.
+    * @return the default configuration used by the default cache manager.
     */
    @Produces
    @Default

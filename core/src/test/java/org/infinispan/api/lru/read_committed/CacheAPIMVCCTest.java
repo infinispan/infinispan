@@ -29,6 +29,9 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
+
 @Test(groups = "functional", testName = "api.lru.read_committed.CacheAPIMVCCTest")
 public class CacheAPIMVCCTest extends CacheAPITest {
    @Override

@@ -36,6 +36,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -51,6 +52,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 import static org.infinispan.marshall.MarshalledValue.isTypeExcluded;
 
 /**
@@ -73,7 +75,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    private boolean wrapValues = true;
 
    @Inject
-   protected void injectMarshaller(StreamingMarshaller marshaller) {
+   protected void injectMarshaller(@ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller) {
       this.marshaller = marshaller;
    }
 

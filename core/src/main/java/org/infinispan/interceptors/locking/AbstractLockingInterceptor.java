@@ -25,13 +25,13 @@ package org.infinispan.interceptors.locking;
 
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
+import org.infinispan.container.OptimisticEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -58,7 +58,7 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
 
    LockManager lockManager;
    DataContainer dataContainer;
-   EntryFactory entryFactory;
+   OptimisticEntryFactory entryFactory;
    Transport transport;
    ClusteringDependentLogic cll;
 
@@ -66,7 +66,7 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
    public void setDependencies(LockManager lockManager, DataContainer dataContainer, EntryFactory entryFactory, Transport transport, ClusteringDependentLogic cll) {
       this.lockManager = lockManager;
       this.dataContainer = dataContainer;
-      this.entryFactory = entryFactory;
+      this.entryFactory = (OptimisticEntryFactory) entryFactory;
       this.transport = transport;
       this.cll = cll;
    }
@@ -77,15 +77,8 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
          entryFactory.wrapEntryForReading(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } finally {
-         cleanupLocks(ctx, true);
+         releaseLocksIfNeeded(ctx);
       }
-   }
-
-   @Override
-   public final Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      // ensure keys are properly locked for evict commands
-      ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
-      return visitRemoveCommand(ctx, command);
    }
 
    @Override
@@ -100,7 +93,7 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
          return cleanLocksAndRethrow(ctx, te);
       }
       finally {
-         cleanupLocks(ctx, true);
+         releaseLocksIfNeeded(ctx);
       }
    }
 
@@ -114,11 +107,7 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
          return cleanLocksAndRethrow(ctx, te);
       } finally {
          // for non-transactional stuff.
-         if (!ctx.isInTxScope()) {
-            cleanupLocks(ctx, true);
-         } else {
-            if (trace) log.trace("Transactional.  Not cleaning up locks till the transaction ends.");
-         }
+         releaseLocksIfNeeded(ctx);
       }
    }
 
@@ -147,15 +136,15 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
       }
       finally {
          command.setKeys(keys);
-         cleanupLocks(ctx, true);
+         releaseLocksIfNeeded(ctx);
       }
    }
 
-   protected final void cleanupLocks(InvocationContext ctx, boolean commit) {
-      if (commit) {
+   private void releaseLocksIfNeeded(InvocationContext ctx) {
+      if (!ctx.isInTxScope()) {
          commit(ctx);
       } else {
-         lockManager.releaseLocks(ctx);
+         if (trace) log.trace("Transactional.  Not cleaning up locks till the transaction ends.");
       }
    }
 
@@ -189,20 +178,12 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
       throw te;
    }
 
-   protected final void lockForPut(InvocationContext ctx, Object key, boolean undeleteIfNeeded) throws InterruptedException {
-      entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, undeleteIfNeeded);
-   }
-
-   protected final void lockForRemove(InvocationContext ctx, RemoveCommand command) throws InterruptedException {
-      entryFactory.wrapEntryForWriting(ctx, command.getKey(), false, true, false, true, false);
-   }
-
-   protected final void lockForReplace(InvocationContext ctx, ReplaceCommand command) throws InterruptedException {
-      entryFactory.wrapEntryForWriting(ctx, command.getKey(), false, true, false, false, false);
-   }
-
    protected final void lockForClear(InvocationContext ctx) throws InterruptedException {
       for (InternalCacheEntry entry : dataContainer.entrySet())
-         entryFactory.wrapEntryForWriting(ctx, entry, false, false, false, false, false);
+         entryFactory.wrapEntryForClear(ctx, entry.getKey());
+   }
+
+   protected final void lockKey(InvocationContext ctx, Object key) throws InterruptedException {
+      lockManager.acquireLockNoCheck(ctx, key);
    }
 }

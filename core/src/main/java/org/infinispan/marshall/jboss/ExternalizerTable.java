@@ -46,6 +46,12 @@ import org.infinispan.distribution.ch.AbstractWheelConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.ch.UnionConsistentHash;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.AdvancedExternalizer;
@@ -76,6 +82,9 @@ import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.Util;
+import org.infinispan.util.hash.MurmurHash2;
+import org.infinispan.util.hash.MurmurHash2Compat;
+import org.infinispan.util.hash.MurmurHash3;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.Marshaller;
@@ -101,7 +110,8 @@ import java.util.WeakHashMap;
  * @author Galder Zamarreño
  * @since 5.0
  */
-class ExternalizerTable implements ObjectTable {
+@Scope(Scopes.GLOBAL)
+public class ExternalizerTable implements ObjectTable {
    private static final Log log = LogFactory.getLog(ExternalizerTable.class);
    private final Set<AdvancedExternalizer> internalExternalizers = new HashSet<AdvancedExternalizer>();
 
@@ -122,6 +132,9 @@ class ExternalizerTable implements ObjectTable {
    private final Map<Integer, ExternalizerAdapter> readers = new HashMap<Integer, ExternalizerAdapter>();
 
    private volatile boolean started;
+
+   private RemoteCommandsFactory cmdFactory;
+   private GlobalComponentRegistry gcr;
 
    private void initInternalExternalizers() {
       internalExternalizers.add(new ArrayListExternalizer());
@@ -172,16 +185,27 @@ class ExternalizerTable implements ObjectTable {
       internalExternalizers.add(new RemoteTransactionLogDetails.Externalizer());
       internalExternalizers.add(new SerializableXid.XidExternalizer());
       internalExternalizers.add(new InDoubtTxInfoImpl.Externalizer());
+
+      internalExternalizers.add(new MurmurHash2.Externalizer());
+      internalExternalizers.add(new MurmurHash2Compat.Externalizer());
+      internalExternalizers.add(new MurmurHash3.Externalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer ext) {
       internalExternalizers.add(ext);
    }
 
-   public void start(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller, GlobalConfiguration globalCfg, ClassLoader appClassLoader) {
+   @Inject
+   public void inject(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry gcr) {
+      this.cmdFactory = cmdFactory;
+      this.gcr = gcr;
+   }
+
+   @Start(priority = 7) // Should start before global marshaller
+   public void start() {
       initInternalExternalizers();
-      loadInternalMarshallables(cmdFactory, ispnMarshaller, appClassLoader);
-      loadForeignMarshallables(globalCfg);
+      loadInternalMarshallables(cmdFactory, gcr);
+      loadForeignMarshallables(gcr.getGlobalConfiguration());
       started = true;
       if (log.isTraceEnabled()) {
          log.tracef("Constant object table was started and contains these externalizer readers: %s", readers);
@@ -189,6 +213,7 @@ class ExternalizerTable implements ObjectTable {
       }
    }
 
+   @Stop(priority = 13) // Stop after global marshaller
    public void stop() {
       internalExternalizers.clear();
       writers.clear();
@@ -252,15 +277,13 @@ class ExternalizerTable implements ObjectTable {
       return writers.get(o.getClass()).getExternalizerId();
    }
 
-   private void loadInternalMarshallables(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller, ClassLoader appClassLoader) {
+   private void loadInternalMarshallables(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry gcr) {
       for (AdvancedExternalizer ext : internalExternalizers) {
          if (ext instanceof ReplicableCommandExternalizer)
             ((ReplicableCommandExternalizer) ext).inject(cmdFactory);
          if (ext instanceof MarshalledValue.Externalizer)
-            ((MarshalledValue.Externalizer) ext).inject(ispnMarshaller);
-         if (ext instanceof AbstractWheelConsistentHash.Externalizer) 
-            ((AbstractWheelConsistentHash.Externalizer<?>) ext).inject(appClassLoader);
-         
+            ((MarshalledValue.Externalizer) ext).inject(gcr);
+
          int id = checkInternalIdLimit(ext.getId(), ext);
          updateExtReadersWritersWithTypes(new ExternalizerAdapter(id, ext));
       }

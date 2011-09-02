@@ -23,12 +23,16 @@
 package org.infinispan.marshall;
 
 import org.infinispan.commands.RemoteCommandsFactory;
+import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
+import org.infinispan.marshall.jboss.ExternalizerTable;
 import org.infinispan.marshall.jboss.JBossMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -58,37 +62,34 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
 //   private static final int VERSION_410 = 410;
 //   private static final int VERSION_500 = 500;
    private static final int VERSION_510 = 510;
-   private static final int CUSTOM_MARSHALLER = 999;
 
    private final JBossMarshaller defaultMarshaller;
    private ClassLoader loader;
-   private RemoteCommandsFactory remoteCommandsFactory;
-   private GlobalConfiguration globalCfg;
+   private InvocationContextContainer icc;
+   private String cacheName;
 
    public VersionAwareMarshaller() {
       defaultMarshaller = new JBossMarshaller();
    }
 
-   @Inject
-   public void inject(ClassLoader loader, RemoteCommandsFactory remoteCommandsFactory, GlobalConfiguration globalCfg) {
-      this.loader = loader;
-      this.remoteCommandsFactory = remoteCommandsFactory;
-      this.globalCfg = globalCfg;
+   public void inject(Configuration cfg, ClassLoader loader, InvocationContextContainer icc) {
+      if (cfg == null) {
+         this.loader = loader;
+         this.cacheName = null;
+      } else {
+         this.loader = cfg.getClassLoader();
+         this.cacheName = cfg.getName();
+      }
+
+      this.icc = icc;
    }
 
-   @Start(priority = 9)
-   // should start before Transport component
-   public void start() {
-      defaultMarshaller.start(loader, remoteCommandsFactory, this, globalCfg);
+   public void start(ExternalizerTable externalizerTable) {
+      defaultMarshaller.start(externalizerTable, loader, icc);
    }
 
-   @Stop(priority = 11) // Stop after transport to avoid send/receive and marshaller not being ready
    public void stop() {
       defaultMarshaller.stop();
-   }
-
-   protected int getCustomMarshallerVersionInt() {
-      return CUSTOM_MARSHALLER;
    }
 
    @Override
@@ -131,8 +132,9 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
    public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
       ObjectOutput out = defaultMarshaller.startObjectOutput(os, isReentrant);
       try {
-         out.writeShort(VERSION_510);
-         if (trace) log.tracef("Wrote version %s", VERSION_510);
+         final int version = VERSION_510;
+         out.writeShort(version);
+         if (trace) log.tracef("Wrote version %s", version);
       } catch (Exception e) {
          finishObjectOutput(out);
          log.unableToReadVersionId();
@@ -208,5 +210,9 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
    @Override
    public boolean isMarshallable(Object o) throws Exception {
       return defaultMarshaller.isMarshallable(o);
+   }
+
+   public String getCacheName() {
+      return cacheName;
    }
 }

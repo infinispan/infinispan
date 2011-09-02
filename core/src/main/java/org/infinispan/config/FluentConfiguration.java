@@ -216,8 +216,14 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * reside if numOwners==1. If the node where the lock resides crashes, then the transaction is
        * marked for rollback - data is in a consistent state, no fault tolerance.
        *
+       * Note: Starting with infinispan 5.1 eager locking is replaced with pessimistic locking and can
+       * be enforced by setting transaction's locking mode to PESSIMISTIC.
+       *
        * @param useEagerLocking
+       * @deprecated
+       * @see  Configuration#getTransactionLockingMode()
        */
+      @Deprecated
       TransactionConfig useEagerLocking(Boolean useEagerLocking);
 
       /**

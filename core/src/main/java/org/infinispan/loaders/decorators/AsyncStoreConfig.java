@@ -62,6 +62,9 @@ public class AsyncStoreConfig extends AbstractDecoratorConfigurationBean {
    @ConfigurationDocRef(bean=AsyncStoreConfig.class,targetElement="setShutdownTimeout")
    protected Long shutdownTimeout = 25000L;
 
+   @ConfigurationDocRef(bean=AsyncStoreConfig.class,targetElement="setModificationQueueSize")
+   protected Integer modificationQueueSize = 1024;
+
    @XmlAttribute
    public Boolean isEnabled() {
       return enabled;
@@ -168,6 +171,30 @@ public class AsyncStoreConfig extends AbstractDecoratorConfigurationBean {
       testImmutability("shutdownTimeout");
       this.shutdownTimeout = shutdownTimeout;
       return this;
+   }
+
+   @XmlAttribute
+   public Integer getModificationQueueSize() {
+      return modificationQueueSize;
+   }
+
+   public AsyncStoreConfig modificationQueueSize(Integer modificationQueueSize) {
+      testImmutability("modificationQueueSize");
+      this.modificationQueueSize = modificationQueueSize;
+      return this;
+   }
+
+   /**
+    * Sets the size of the modification queue for the async store.  If updates are made at a rate that is faster than
+    * the underlying cache store can process this queue, then the async store behaves like a synchronous store for
+    * that period, blocking until the queue can accept more elements.
+    *
+    * @param modificationQueueSize The size of the modification queue
+    */
+   @Deprecated
+   public void setModificationQueueSize(Integer modificationQueueSize) {
+      testImmutability("modificationQueueSize");
+      this.modificationQueueSize = modificationQueueSize;
    }
 
    @Override

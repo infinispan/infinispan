@@ -48,6 +48,8 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    // an EnumSet.
    protected byte contextFlags = 0;
    private Address origin;
+   // Class loader associated with this invocation which supports AdvancedCache.with() functionality
+   private ClassLoader classLoader;
 
    // if this or any context subclass ever needs to store a boolean, always use a context flag instead.  This is far
    // more space-efficient.  Note that this value will be stored in a byte, which means up to 8 flags can be stored in
@@ -182,6 +184,16 @@ public abstract class AbstractInvocationContext implements InvocationContext {
             result.add(key);
       }
       return result;
+   }
+
+   @Override
+   public ClassLoader getClassLoader() {
+      return classLoader;
+   }
+
+   @Override
+   public void setClassLoader(ClassLoader classLoader) {
+      this.classLoader = classLoader;
    }
 
    @Override

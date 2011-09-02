@@ -88,4 +88,9 @@ public interface Ids {
    int XID_GLOBAL_TRANSACTION = 68;
 
    int IN_DOUBT_TX_INFO = 70;
+
+   int MURMURHASH_2 = 71;
+   int MURMURHASH_2_COMPAT = 72;
+   int MURMURHASH_3 = 73;
+
 }

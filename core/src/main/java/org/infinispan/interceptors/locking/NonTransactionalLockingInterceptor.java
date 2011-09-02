@@ -23,10 +23,12 @@
 
 package org.infinispan.interceptors.locking;
 
+import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 
 /**
@@ -40,8 +42,8 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       try {
-         if (cll.localNodeIsOwner(command.getKey())) lockForPut(ctx, command, !command.isPutIfAbsent());
-         else wrapForRead(ctx, command.getKey());
+         lockKey(ctx, command.getKey());
+         entryFactory.wrapEntryForPut(ctx, command.getKey(), !command.isPutIfAbsent());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          return cleanLocksAndRethrow(ctx, te);
@@ -55,8 +57,8 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       try {
          for (Object key : command.getMap().keySet()) {
-            if (cll.localNodeIsOwner(key)) lockForPut(ctx, key, true);
-            else wrapForRead(ctx, key);
+            lockKey(ctx, key);
+            entryFactory.wrapEntryForPut(ctx, key, true);
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -70,8 +72,8 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
-         if (cll.localNodeIsOwner(command.getKey())) lockForRemove(ctx, command);
-         else wrapForRead(ctx, command.getKey());
+         lockKey(ctx, command.getKey());
+         entryFactory.wrapEntryForRemove(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          return cleanLocksAndRethrow(ctx, te);
@@ -83,8 +85,8 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
-         if (cll.localNodeIsOwner(command.getKey())) lockForReplace(ctx, command);
-         else wrapForRead(ctx, command.getKey());
+         lockKey(ctx, command.getKey());
+         entryFactory.wrapEntryForReplace(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          return cleanLocksAndRethrow(ctx, te);
@@ -94,7 +96,10 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
       }
    }
 
-   private void wrapForRead(InvocationContext ctx, Object key) throws InterruptedException {
-      entryFactory.wrapEntryForReading(ctx, key);
+   @Override
+   public final Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+      // ensure keys are properly locked for evict commands
+      ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+      return visitRemoveCommand(ctx, command);
    }
 }

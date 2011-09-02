@@ -224,7 +224,9 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
          if (prev.version == params.streamVersion) {
             // Generate new version only if key present and version has not changed, otherwise it's wasteful
             val v = createValue(generateVersion(cache))
-            val replaced = cache.replace(key, prev, v);
+            val replaced = cache.replace(key, prev, v,
+                  toMillis(params.lifespan), DefaultTimeUnit,
+                  toMillis(params.maxIdle), DefaultTimeUnit)
             if (replaced)
                createSuccessResponse(prev)
             else

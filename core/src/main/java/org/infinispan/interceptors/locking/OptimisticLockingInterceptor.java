@@ -31,14 +31,11 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.OptimisticEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.concurrent.locks.LockManager;
 
 /**
  * Locking interceptor to be used by optimistic transactional caches.
@@ -128,26 +125,32 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
       @Override
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+         boolean notWrapped = false;
          for (Object key : dataContainer.keySet()) {
             lockKey(ctx, key);
-            if (!ctx.isOriginLocal())
+            if (notWrapped(ctx, key)) {
                entryFactory.wrapEntryForClear(ctx, key);
+               notWrapped = true;
+            }
          }
-         if (!ctx.isOriginLocal())
+         if (notWrapped)
             invokeNextInterceptor(ctx, command);
          return null;
       }
 
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+         boolean notWrapped = false;
          for (Object key : command.getMap().keySet()) {
             if (cll.localNodeIsOwner(key)) {
                lockKey(ctx, key);
-               if (!ctx.isOriginLocal())
+               if (notWrapped(ctx, key)) {
                   entryFactory.wrapEntryForPut(ctx, key, true);
+                  notWrapped = true;
+               }
             }
          }
-         if (!ctx.isOriginLocal())
+         if (notWrapped)
             invokeNextInterceptor(ctx, command);
          return null;
       }
@@ -156,7 +159,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
-            if (!ctx.isOriginLocal()) {
+            if (notWrapped(ctx, command.getKey())) {
                entryFactory.wrapEntryForRemove(ctx, command.getKey());
                invokeNextInterceptor(ctx, command);
             }
@@ -168,7 +171,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
-            if (!ctx.isOriginLocal()) {
+            if (notWrapped(ctx, command.getKey())) {
                entryFactory.wrapEntryForPut(ctx, command.getKey(), !command.isPutIfAbsent());
                invokeNextInterceptor(ctx, command);
             }
@@ -176,20 +179,20 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          return null;
       }
 
-      private void lockKey(InvocationContext ctx, Object key) throws InterruptedException {
-         lockManager.acquireLockNoCheck(ctx, key);
-      }
-
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
-            if (!ctx.isOriginLocal()) {
+            if (notWrapped(ctx, command.getKey())) {
                entryFactory.wrapEntryForReplace(ctx, command.getKey());
                invokeNextInterceptor(ctx, command);
             }
          }
          return null;
+      }
+
+      private boolean notWrapped(InvocationContext ctx, Object key) {
+         return !ctx.getLookedUpEntries().containsKey(key);
       }
    }
 }

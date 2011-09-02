@@ -164,7 +164,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
    }
 
    private boolean isOngoingTransaction(InvocationContext ctx) throws SystemException {
-      return ctx.isInTxScope() && (txTable.containsLocalTx(tm.getTransaction()) ||
-                                         txTable.containRemoteTx(((TxInvocationContext) ctx).getGlobalTransaction()));
+      return ctx.isInTxScope() && (txTable.containsLocalTx(tm.getTransaction()) || ( !ctx.isOriginLocal() &&
+                                         txTable.containRemoteTx(((TxInvocationContext) ctx).getGlobalTransaction())));
    }
 }

@@ -169,4 +169,13 @@ public class InvocationContextFlagsOverride implements InvocationContext {
       return new InvocationContextFlagsOverride(delegate, flags);
    }
 
+   @Override
+   public ClassLoader getClassLoader() {
+      return delegate.getClassLoader();
+   }
+
+   @Override
+   public void setClassLoader(ClassLoader classLoader) {
+      delegate.setClassLoader(classLoader);
+   }
 }

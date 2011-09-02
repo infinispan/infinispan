@@ -57,15 +57,48 @@ public interface InvocationContext extends EntryLookup, FlagContainer, Cloneable
     */
    Object getLockOwner();
 
+   /**
+    * Indicates whether the call requires a {@link java.util.concurrent.Future}
+    * as return type.
+    *
+    * @return true if the call requires a {@link java.util.concurrent.Future}
+    *              as return type, false otherwise
+    */
    boolean isUseFutureReturnType();
 
+   /**
+    * Sets whether the call requires a {@link java.util.concurrent.Future}
+    * as return type.
+    *
+    * @param useFutureReturnType boolean indicating whether a {@link java.util.concurrent.Future}
+    *                            will be needed.
+    */
    void setUseFutureReturnType(boolean useFutureReturnType);
 
+   /**
+    * Clones the invocation context.
+    *
+    * @return A cloned instance of this invocation context instance
+    */
    InvocationContext clone();
 
    /**
     * Returns the set of keys that are locked for writing.
     */
-   public Set<Object> getLockedKeys();
+   Set<Object> getLockedKeys();
 
+   /**
+    * Returns the class loader associated with this invocation
+    *
+    * @return a class loader instance or null if no class loader was
+    *         specifically associated
+    */
+   ClassLoader getClassLoader();
+
+   /**
+    * Sets the class loader associated for this invocation
+    *
+    * @param classLoader
+    */
+   void setClassLoader(ClassLoader classLoader);
 }

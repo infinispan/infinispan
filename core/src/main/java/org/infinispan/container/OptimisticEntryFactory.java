@@ -92,7 +92,7 @@ public class OptimisticEntryFactory extends EntryFactoryImpl {
       } else {
          InternalCacheEntry ice = getFromContainer(key);
          if (ice != null) {
-            mvccEntry = wrapMvccEntryForPut(ctx, key, ice);
+            mvccEntry = wrapInternalCacheEntryForPut(ctx, key, ice);
          }
       }
       if (mvccEntry == null) {
@@ -114,7 +114,7 @@ public class OptimisticEntryFactory extends EntryFactoryImpl {
       } else {
          InternalCacheEntry ice = getFromContainer(key);
          mvccEntry = ice != null ?
-             wrapMvccEntryForPut(ctx, key, ice) :
+             wrapInternalCacheEntryForPut(ctx, key, ice) :
              newMvccEntryForPut(ctx, key);
       }
       mvccEntry.copyForUpdate(container, writeSkewCheck);
@@ -146,10 +146,10 @@ public class OptimisticEntryFactory extends EntryFactoryImpl {
 
    private MVCCEntry wrapMvccEntryForPut(InvocationContext ctx, Object key, CacheEntry cacheEntry) {
       if (cacheEntry instanceof MVCCEntry) return (MVCCEntry) cacheEntry;
-      return wrapMvccEntryForPut(ctx, key, (InternalCacheEntry)cacheEntry);
+      return wrapInternalCacheEntryForPut(ctx, key, (InternalCacheEntry) cacheEntry);
    }
 
-   private MVCCEntry wrapMvccEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry cacheEntry) {
+   private MVCCEntry wrapInternalCacheEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry cacheEntry) {
       MVCCEntry mvccEntry = createWrappedEntry(key, cacheEntry.getValue(), false, false, cacheEntry.getLifespan());
       ctx.putLookedUpEntry(key, mvccEntry);
       return mvccEntry;
@@ -157,7 +157,7 @@ public class OptimisticEntryFactory extends EntryFactoryImpl {
 
    private MVCCEntry wrapMvccEntryForRemove(InvocationContext ctx, Object key, CacheEntry cacheEntry) {
       MVCCEntry mvccEntry = createWrappedEntry(key, cacheEntry.getValue(), false, true, cacheEntry.getLifespan());
-      ctx.putLookedUpEntry(key, cacheEntry);
+      ctx.putLookedUpEntry(key, mvccEntry);
       return mvccEntry;
    }
 
@@ -169,7 +169,7 @@ public class OptimisticEntryFactory extends EntryFactoryImpl {
       } else {
          InternalCacheEntry ice = getFromContainer(key);
          if (ice != null) {
-            mvccEntry = wrapMvccEntryForPut(ctx, ice.getKey(), ice);
+            mvccEntry = wrapInternalCacheEntryForPut(ctx, ice.getKey(), ice);
          }
       }
       if (mvccEntry != null)

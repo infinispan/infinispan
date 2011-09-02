@@ -44,7 +44,6 @@ import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.Marshaller;
@@ -61,6 +60,8 @@ import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
  * MapReduceTask is a distributed task allowing a large scale computation to be transparently
@@ -156,9 +157,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       ensureProperCacheState(masterCacheNode.getAdvancedCache());      
       this.cache = masterCacheNode.getAdvancedCache();
       this.keys = new LinkedList<KIn>();
-      
-      GlobalComponentRegistry globalRegistry = cache.getComponentRegistry().getGlobalComponentRegistry();
-      this.marshaller = globalRegistry.getComponent(StreamingMarshaller.class);      
+      this.marshaller = cache.getComponentRegistry().getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
    }
 
    /**

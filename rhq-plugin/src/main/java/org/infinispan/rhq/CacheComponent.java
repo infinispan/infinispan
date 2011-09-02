@@ -42,10 +42,11 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
-import javax.management.ObjectName;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
+import static org.infinispan.rhq.RhqUtil.constructNumericMeasure;
 
 /**
  * Component class for Caches within Infinispan
@@ -79,7 +80,7 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
          if (trace) log.tracef("Cache status for %s within %s cache manager is anything other than running, so it's down.", cacheName, cacheManagerName);
          return AvailabilityType.DOWN;
       } catch (Exception e) {
-         if (trace) log.trace("There was an exception checking availability, so cache status is down.");
+         if (trace) log.trace("There was an exception checking availability, so cache status is down.", e);
          return AvailabilityType.DOWN;
       }
    }
@@ -88,10 +89,11 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
     * Start the resource connection
     */
    public void start(ResourceContext<CacheManagerComponent> context) {
-      if (log.isTraceEnabled()) log.trace("Start cache component");
       this.context = context;
       this.cacheManagerName = context.getParentResourceComponent().context.getResourceKey();
       this.cacheName = context.getResourceKey();
+      if (log.isTraceEnabled())
+         log.tracef("Start cache component for cache manager %s with cache key %s", cacheManagerName, cacheName);
    }
 
    /**
@@ -128,7 +130,7 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
                   DataType type = req.getDataType();
                   if (type == DataType.MEASUREMENT) {
                      if (o != null) {
-                        MeasurementDataNumeric res = constructMeasurementDataNumeric(attrType, o, req);
+                        MeasurementDataNumeric res = constructNumericMeasure(attrType, o, req);
                         if (res != null) report.addData(res);
                      } else {
                         if (log.isDebugEnabled()) log.debugf("Metric (%s) has null value, do not add to report", req.getName());
@@ -184,34 +186,13 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
       return context.getParentResourceComponent().getEmsConnection();
    }
 
-   private MeasurementDataNumeric constructMeasurementDataNumeric(Class attrType, Object o, MeasurementScheduleRequest req) {
-      boolean trace = log.isTraceEnabled();
-      if (trace) log.tracef("Metric (%s) is measurement with value %s", req.getName(), o);
-      if (attrType.equals(Long.class) || attrType.equals(long.class)) {
-         Long tmp = (Long) o;
-         return new MeasurementDataNumeric(req, Double.valueOf(tmp));
-      } else if (attrType.equals(Double.class) || attrType.equals(double.class)) {
-         Double tmp = (Double) o;
-         return new MeasurementDataNumeric(req, tmp);
-      } else if (attrType.equals(Integer.class) || attrType.equals(int.class)) {
-         Integer tmp = (Integer) o;
-         return new MeasurementDataNumeric(req, Double.valueOf(tmp));
-      } else if (attrType.equals(String.class)) {
-         String tmp = (String) o;
-         return new MeasurementDataNumeric(req, Double.valueOf(tmp));
-      } 
-      
-      log.unknownAttributeType(attrType, o);
-      return null;
-   }
-
    private String getSingleComponentPattern(String cacheManagerName, String cacheName, String componentName) {
       return namedCacheComponentPattern(cacheManagerName, cacheName, componentName) + ",*";
    }
 
    private String namedCacheComponentPattern(String cacheManagerName, String cacheName, String componentName) {
       return CacheDiscovery.cacheComponentPattern(cacheManagerName, componentName)
-            + ",name=" + ObjectName.quote(cacheName);
+            + ",name=" + cacheName;
    }
 
    private EmsBean queryCacheBean() {

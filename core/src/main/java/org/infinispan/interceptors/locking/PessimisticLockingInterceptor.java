@@ -23,6 +23,7 @@
 
 package org.infinispan.interceptors.locking;
 
+import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -31,14 +32,11 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.transaction.xa.GlobalTransaction;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -51,6 +49,7 @@ import java.util.Set;
 public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private CommandsFactory cf;
+   EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
 
    @Inject
    public void init(CommandsFactory factory) {
@@ -62,8 +61,10 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       try {
          abortIfRemoteTransactionInvalid(ctx, command);
          //just apply the changes, no need to acquire locks as this has already happened
-         for (WriteCommand c : command.getModifications()) {
-            invokeNextInterceptor(ctx, c);
+         if (!ctx.isOriginLocal()) {
+            for (WriteCommand c : command.getModifications()) {
+               c.acceptVisitor(ctx, entryWrappingVisitor);
+            }
          }
          return invokeNextAndCommitIf1Pc(ctx, command);
       } catch (Throwable t) {
@@ -75,13 +76,11 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       try {
-         if (ctx.isOriginLocal()) {
-            acquireRemoteIfNeeded(ctx, Collections.singleton(command.getKey()));
-            if (cll.localNodeIsOwner(command.getKey())) {
-               lockForPut(ctx, command.getKey(), !command.isPutIfAbsent());
-            }
-         } else {
-            lockForPut(ctx, command.getKey(), !command.isPutIfAbsent());
+         assertNoRemoteContext(ctx);
+         acquireRemoteIfNeeded(ctx, Collections.singleton(command.getKey()));
+         entryFactory.wrapEntryForPut(ctx, command.getKey(), !command.isPutIfAbsent());
+         if (cll.localNodeIsOwner(command.getKey())) {
+            lockKey(ctx, command.getKey());
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -94,14 +93,12 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       try {
          if (ctx.isOriginLocal()) {
             acquireRemoteIfNeeded(ctx, command.getMap().keySet());
-            for (Object key : command.getMap().keySet()) {
-               if (cll.localNodeIsOwner(key))
-                  lockForPut(ctx, key, true);
+         }
+         for (Object key : command.getMap().keySet()) {
+            if (cll.localNodeIsOwner(key)) {
+               lockKey(ctx, key);
             }
-         } else {
-            for (Object key : command.getMap().keySet()) {
-               lockForPut(ctx, key, true);
-            }
+            entryFactory.wrapEntryForPut(ctx, key, true);
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -112,13 +109,13 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
-         if (ctx.isOriginLocal()) {
-            acquireRemoteIfNeeded(ctx, Collections.singleton(command.getKey()));
-            if (cll.localNodeIsOwner(command.getKey()))
-               lockForRemove(ctx, command);
-         } else {
-            lockForRemove(ctx, command);
+         assertNoRemoteContext(ctx);
+         acquireRemoteIfNeeded(ctx, Collections.singleton(command.getKey()));
+         if (cll.localNodeIsOwner(command.getKey())) {
+            lockKey(ctx, command.getKey());
          }
+         entryFactory.wrapEntryForRemove(ctx, command.getKey());
+         invokeNextInterceptor(ctx, command);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          return cleanLocksAndRethrow(ctx, te);
@@ -128,91 +125,68 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
-         if (ctx.isOriginLocal()) {
-            acquireRemoteIfNeeded(ctx, Collections.singleton(command.getKey()));
-            if (cll.localNodeIsOwner(command.getKey()))
-               lockForReplace(ctx, command);
-         } else {
-            lockForReplace(ctx, command);
+         assertNoRemoteContext(ctx);
+         acquireRemoteIfNeeded(ctx, Collections.singleton(command.getKey()));
+         if (cll.localNodeIsOwner(command.getKey())) {
+            lockKey(ctx, command.getKey());
          }
+         entryFactory.wrapEntryForReplace(ctx, command.getKey());
+         invokeNextInterceptor(ctx, command);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          return cleanLocksAndRethrow(ctx, te);
       }
    }
 
-   private Object lockEagerly(InvocationContext ctx, Collection<Object> keys) throws Throwable {
-      LockControlCommand lcc = cf.buildLockControlCommand(keys, true, ctx.getFlags());
-      return visitLockControlCommand((TxInvocationContext) ctx, lcc);
-   }
-
-   @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand c) throws Throwable {
-      boolean localTxScope = ctx.isOriginLocal() && ctx.isInTxScope();
-      boolean shouldInvokeOnCluster = false;
-
-      try {
-         abortIfRemoteTransactionInvalid(ctx, c);
-         if (localTxScope) {
-            c.attachGlobalTransaction((GlobalTransaction) ctx.getLockOwner());
-         }
-
-         if (c.isUnlock()) {
-            lockManager.releaseLocks(ctx);
-            if (log.isTraceEnabled()) log.trace("Lock released for: " + ctx.getLockOwner());
-            return false;
-         }
-
-         for (Object key : c.getKeys()) {
-            if (c.isImplicit() && localTxScope && !lockManager.ownsLock(key, ctx.getLockOwner())) {
-               //if even one key is unlocked we need to invoke this lock command cluster wide...
-               shouldInvokeOnCluster = true;
-               break;
-            }
-         }
-         boolean goRemoteFirst = configuration.isEnableDeadlockDetection() && localTxScope;
-         if (goRemoteFirst) {
-            Object result;
-            invokeNextInterceptor(ctx, c);
-            try {
-               lockKeysForLockCommand(ctx, c);
-               result = true;
-            } catch (Throwable e) {
-               //if anything happen during locking then unlock remote
-               c.setUnlock(true);
-               invokeNextInterceptor(ctx, c);
-               throw e;
-            }
-            return result;
-         } else {
-            lockKeysForLockCommand(ctx, c);
-            if (shouldInvokeOnCluster || c.isExplicit()) {
-               invokeNextInterceptor(ctx, c);
-               return true;
-            } else {
-               return true;
-            }
-         }
-      } catch (Throwable te) {
-         cleanLocksAndRethrow(ctx, te);
-         return false;
-      }
-   }
-
-   private void lockKeysForLockCommand(TxInvocationContext ctx, LockControlCommand c) throws InterruptedException {
-      for (Object key : c.getKeys()) {
-         MVCCEntry e = entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, false);
-         if (e != null && e.isCreated()) {
-            // mark as temporary entry just for the sake of a lock command
-            e.setLockPlaceholder(true);
-         }
-      }
-   }
-
-
    private void acquireRemoteIfNeeded(InvocationContext ctx, Set<Object> singleton) throws Throwable {
       if (!ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         lockEagerly(ctx, singleton);
+         LockControlCommand lcc = cf.buildLockControlCommand(singleton, true, ctx.getFlags());
+         visitLockControlCommand((TxInvocationContext) ctx, lcc);
+      }
+   }
+
+   private void assertNoRemoteContext(InvocationContext ctx) {
+      if (!ctx.isOriginLocal()) throw new IllegalStateException("This shouldn't be called with a remote context!");
+   }
+
+   private final class EntryWrappingVisitor extends AbstractVisitor {
+
+      @Override
+      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+         for (Object key : command.getMap().keySet()) {
+            if (cll.localNodeIsOwner(key)) {
+               entryFactory.wrapEntryForPut(ctx, key, true);
+               invokeNextInterceptor(ctx, command);
+            }
+         }
+         return null;
+      }
+
+      @Override
+      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+         if (cll.localNodeIsOwner(command.getKey())) {
+            entryFactory.wrapEntryForRemove(ctx, command.getKey());
+            invokeNextInterceptor(ctx, command);
+         }
+         return null;
+      }
+
+      @Override
+      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         if (cll.localNodeIsOwner(command.getKey())) {
+            entryFactory.wrapEntryForPut(ctx, command.getKey(), !command.isPutIfAbsent());
+            invokeNextInterceptor(ctx, command);
+         }
+         return null;
+      }
+
+      @Override
+      public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+         if (cll.localNodeIsOwner(command.getKey())) {
+            entryFactory.wrapEntryForReplace(ctx, command.getKey());
+            invokeNextInterceptor(ctx, command);
+         }
+         return null;
       }
    }
 }

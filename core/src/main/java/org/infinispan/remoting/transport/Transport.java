@@ -24,7 +24,6 @@ package org.infinispan.remoting.transport;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -45,6 +44,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+
+import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
  * An interface that provides a communication link with remote caches.  Also allows remote caches to invoke commands on
@@ -70,8 +71,8 @@ public interface Transport extends Lifecycle {
     * @param notifier      notifier to use
     */
    @Inject
-   void initialize(StreamingMarshaller marshaller,
-                   @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
+   void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
+                   @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
                    InboundInvocationHandler handler, CacheManagerNotifier notifier);
 
    /**
@@ -166,7 +167,18 @@ public interface Transport extends Lifecycle {
    @Stop
    void stop();
 
+   /**
+    * TODO: Document
+    *
+    * @return
+    */
    int getViewId();
 
+   /**
+    * TODO: Document
+    *
+    * @return
+    */
    Log getLog();
+
 }

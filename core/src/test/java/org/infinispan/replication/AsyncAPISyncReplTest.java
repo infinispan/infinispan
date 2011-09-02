@@ -45,15 +45,17 @@ import java.util.concurrent.Future;
 @Test(groups = "functional", testName = "replication.AsyncAPISyncReplTest")
 public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
 
-   protected Cache<Key, String> c1, c2;
-
    @SuppressWarnings("unchecked")
    protected void createCacheManagers() throws Throwable {
-      Configuration c =
-            getDefaultClusteredConfig(sync() ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.REPL_ASYNC, true);
-      List<Cache<Key, String>> l = createClusteredCaches(2, getClass().getSimpleName(), c);
-      c1 = l.get(0);
-      c2 = l.get(1);
+      Configuration c = getConfig(true);
+      createClusteredCaches(2, c);
+      c = getConfig(false);
+      c.fluent().transactionManagerLookup(null).transactionManagerLookupClass(null);
+      defineConfigurationOnAllManagers("noTx", c);
+   }
+
+   private Configuration getConfig(boolean txEnabled) {
+      return getDefaultClusteredConfig(sync() ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.REPL_ASYNC, txEnabled);
    }
 
    protected boolean sync() {
@@ -66,13 +68,16 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
    protected void resetListeners() {
    }  
 
-   protected void assertOnAllCaches(Key k, String v) {
+   protected void assertOnAllCaches(Key k, String v, Cache c1, Cache c2) {
       Object real;
       assert Util.safeEquals((real = c1.get(k)), v) : "Error on cache 1.  Expected " + v + " and got " + real;
       assert Util.safeEquals((real = c2.get(k)), v) : "Error on cache 2.  Expected " + v + " and got " + real;
    }
 
    public void testAsyncMethods() throws ExecutionException, InterruptedException {
+      Cache c1 = cache(0, "noTx");
+      Cache c2 = cache(1, "noTx");
+
 
       String v = "v";
       String v2 = "v2";
@@ -95,7 +100,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       log.info("*** Future not cancelled, checking future.get()");
       assert f.get() == null;
       assert f.isDone();
-      assertOnAllCaches(key, v);
+      assertOnAllCaches(key, v, c1, c2);
 
       f = c1.putAsync(key, v2);
       assert f != null;
@@ -105,7 +110,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f.isCancelled();
       assert f.get().equals(v);
       assert f.isDone();
-      assertOnAllCaches(key, v2);
+      assertOnAllCaches(key, v2, c1, c2);
 
       // putAll
       Future<Void> f2 = c1.putAllAsync(Collections.singletonMap(key, v3));
@@ -116,7 +121,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f2.isCancelled();
       assert f2.get() == null;
       assert f2.isDone();
-      assertOnAllCaches(key, v3);
+      assertOnAllCaches(key, v3, c1, c2);
 
       // putIfAbsent
       f = c1.putIfAbsentAsync(key, v4);
@@ -125,7 +130,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f.isCancelled();
       assert f.get().equals(v3);
       assert f.isDone();
-      assertOnAllCaches(key, v3);
+      assertOnAllCaches(key, v3, c1, c2);
 
       // remove
       f = c1.removeAsync(key);
@@ -136,7 +141,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f.isCancelled();
       assert f.get().equals(v3);
       assert f.isDone();
-      assertOnAllCaches(key, null);
+      assertOnAllCaches(key, null, c1, c2);
 
       // putIfAbsent again
       f = c1.putIfAbsentAsync(key, v4);
@@ -147,7 +152,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f.isCancelled();
       assert f.get() == null;
       assert f.isDone();
-      assertOnAllCaches(key, v4);
+      assertOnAllCaches(key, v4, c1, c2);
 
       // removecond
       Future<Boolean> f3 = c1.removeAsync(key, v_null);
@@ -155,7 +160,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f3.isCancelled();
       assert f3.get().equals(false);
       assert f3.isDone();
-      assertOnAllCaches(key, v4);
+      assertOnAllCaches(key, v4, c1, c2);
 
       f3 = c1.removeAsync(key, v4);
       assert f3 != null;
@@ -165,7 +170,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f3.isCancelled();
       assert f3.get().equals(true);
       assert f3.isDone();
-      assertOnAllCaches(key, null);
+      assertOnAllCaches(key, null, c1, c2);
 
       // replace
       f = c1.replaceAsync(key, v5);
@@ -173,7 +178,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f.isCancelled();
       assert f.get() == null;
       assert f.isDone();
-      assertOnAllCaches(key, null);
+      assertOnAllCaches(key, null, c1, c2);
 
       key.allowSerialization();
       resetListeners();
@@ -188,7 +193,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f.isCancelled();
       assert f.get().equals(v);
       assert f.isDone();
-      assertOnAllCaches(key, v5);
+      assertOnAllCaches(key, v5, c1, c2);
 
       //replace2
       f3 = c1.replaceAsync(key, v_null, v6);
@@ -196,7 +201,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f3.isCancelled();
       assert f3.get().equals(false);
       assert f3.isDone();
-      assertOnAllCaches(key, v5);
+      assertOnAllCaches(key, v5, c1, c2);
 
       f3 = c1.replaceAsync(key, v5, v6);
       assert f3 != null;
@@ -206,10 +211,12 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f3.isCancelled();
       assert f3.get().equals(true);
       assert f3.isDone();
-      assertOnAllCaches(key, v6);
+      assertOnAllCaches(key, v6, c1, c2);
    }
 
    public void testAsyncTxMethods() throws Exception {
+      Cache c1 = cache(0);
+      Cache c2 = cache(1);
 
       String v = "v";
       String v2 = "v2";
@@ -232,7 +239,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert f.get() == null;
       tm.commit();
       asyncWait(true, PutKeyValueCommand.class);
-      assertOnAllCaches(key, v);
+      assertOnAllCaches(key, v, c1, c2);
 
       tm.begin();
       f = c1.putAsync(key, v2);
@@ -245,7 +252,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert f.get().equals(v);
       tm.commit();
       asyncWait(true, PutKeyValueCommand.class);
-      assertOnAllCaches(key, v2);
+      assertOnAllCaches(key, v2, c1, c2);
 
       // putAll
       tm.begin();
@@ -259,7 +266,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert f2.get() == null;
       tm.commit();
       asyncWait(true, PutMapCommand.class);
-      assertOnAllCaches(key, v3);
+      assertOnAllCaches(key, v3, c1, c2);
 
       // putIfAbsent
       tm.begin();
@@ -272,7 +279,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f.isCancelled();
       assert f.get().equals(v3);
       tm.commit();
-      assertOnAllCaches(key, v3);
+      assertOnAllCaches(key, v3, c1, c2);
 
       // remove
       tm.begin();
@@ -286,7 +293,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert f.get().equals(v3);
       tm.commit();
       asyncWait(true, RemoveCommand.class);
-      assertOnAllCaches(key, null);
+      assertOnAllCaches(key, null, c1, c2);
 
       // putIfAbsent again
       tm.begin();
@@ -300,7 +307,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert f.get() == null;
       tm.commit();
       asyncWait(true, PutKeyValueCommand.class);
-      assertOnAllCaches(key, v4);
+      assertOnAllCaches(key, v4, c1, c2);
 
       // removecond
       tm.begin();
@@ -310,7 +317,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert f3.get().equals(false);
       assert f3.isDone();
       tm.commit();
-      assertOnAllCaches(key, v4);
+      assertOnAllCaches(key, v4, c1, c2);
 
       tm.begin();
       f3 = c1.removeAsync(key, v4);
@@ -323,7 +330,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert f3.get().equals(true);
       tm.commit();
       asyncWait(true, RemoveCommand.class);
-      assertOnAllCaches(key, null);
+      assertOnAllCaches(key, null, c1, c2);
 
       // replace
       tm.begin();
@@ -333,7 +340,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert f.get() == null;
       assert f.isDone();
       tm.commit();
-      assertOnAllCaches(key, null);
+      assertOnAllCaches(key, null, c1, c2);
 
       c1.put(key, v);
       asyncWait(false, PutKeyValueCommand.class);
@@ -349,7 +356,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert f.get().equals(v);
       tm.commit();
       asyncWait(true, ReplaceCommand.class);
-      assertOnAllCaches(key, v5);
+      assertOnAllCaches(key, v5, c1, c2);
 
       //replace2
       tm.begin();
@@ -359,7 +366,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert f3.get().equals(false);
       assert f3.isDone();
       tm.commit();
-      assertOnAllCaches(key, v5);
+      assertOnAllCaches(key, v5, c1, c2);
 
       tm.begin();
       f3 = c1.replaceAsync(key, v5, v6);
@@ -372,6 +379,6 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert f3.get().equals(true);
       tm.commit();
       asyncWait(true, ReplaceCommand.class);
-      assertOnAllCaches(key, v6);
+      assertOnAllCaches(key, v6, c1, c2);
    }
 }

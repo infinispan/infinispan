@@ -42,7 +42,7 @@ public class Config {
    @Large
    @ConfigureCache("large")
    @Produces
-   Configuration largeConfiguration() {
+   public Configuration largeConfiguration() {
       return new Configuration().fluent()
             .eviction().maxEntries(2000)
             .build();
@@ -54,7 +54,7 @@ public class Config {
    @Small
    @ConfigureCache("small")
    @Produces
-   Configuration smallConfiguration() {
+   public Configuration smallConfiguration() {
       return new Configuration().fluent()
             .eviction().maxEntries(20)
             .build();
@@ -67,7 +67,7 @@ public class Config {
    @Small
    @Produces
    @ApplicationScoped
-   EmbeddedCacheManager specificCacheManager() {
+   public EmbeddedCacheManager specificCacheManager() {
       return new DefaultCacheManager(new Configuration().fluent()
                                            .eviction().strategy(FIFO)
                                            .build());

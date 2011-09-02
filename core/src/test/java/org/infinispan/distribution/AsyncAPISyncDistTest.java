@@ -43,15 +43,13 @@ public class AsyncAPISyncDistTest extends AsyncAPISyncReplTest {
             getDefaultClusteredConfig(sync() ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, true);
       c.setLockAcquisitionTimeout(30, TimeUnit.SECONDS);
       List<Cache<Key, String>> l = createClusteredCaches(2, getClass().getSimpleName(), c);
-      c1 = l.get(0);
-      c2 = l.get(1);
 
       // wait for any rehashing to complete
       waitForClusterToForm();
    }
 
    @Override
-   protected void assertOnAllCaches(Key k, String v) {
+   protected void assertOnAllCaches(Key k, String v, Cache c1, Cache c2) {
       Object real;
       assert Util.safeEquals((real = c1.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k)), v) : "Error on cache 1.  Expected " + v + " and got " + real;
       assert Util.safeEquals((real = c2.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k)), v) : "Error on cache 2.  Expected " + v + " and got " + real;

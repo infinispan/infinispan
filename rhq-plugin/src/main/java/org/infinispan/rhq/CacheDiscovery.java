@@ -27,7 +27,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
@@ -67,10 +66,11 @@ public class CacheDiscovery extends MBeanResourceDiscoveryComponent<CacheManager
           * stay the same when the resource is discovered the next
           * time */
          String name = bean.getAttribute("CacheName").getValue().toString();
-         if (trace) log.tracef("Resource name is %s", name);
+         String mbeanCacheName = bean.getBeanName().getKeyProperty("name");
+         if (trace) log.tracef("Resource name is %s and resource key %s", name, mbeanCacheName);
          DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                ctx.getResourceType(), // Resource Type
-               name, // Resource Key
+               mbeanCacheName, // Resource Key
                name, // Resource name 
                null, // Version
                "One cache within Infinispan", // ResourceDescription

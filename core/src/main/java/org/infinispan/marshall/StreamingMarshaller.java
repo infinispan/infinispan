@@ -23,8 +23,6 @@
 package org.infinispan.marshall;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,7 +43,6 @@ import java.io.OutputStream;
  * @see Marshaller
  */
 @ThreadSafe
-@Scope(Scopes.GLOBAL)
 public interface StreamingMarshaller extends Marshaller {
 
    /**

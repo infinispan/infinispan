@@ -22,8 +22,10 @@
  */
 package org.infinispan.tx.dld;
 
+import org.infinispan.config.Configuration;
 import org.infinispan.test.PerCacheExecutorThread;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -34,7 +36,7 @@ import javax.transaction.SystemException;
 
 import static org.testng.Assert.assertEquals;
 
-public abstract class BaseDldEagerLockingTest extends BaseDldTest {
+public abstract class BaseDldPessimisticLockingTest extends BaseDldTest {
    protected PerCacheExecutorThread ex0;
    protected PerCacheExecutorThread ex1;
    protected DeadlockDetectingLockManager lm0;
@@ -91,19 +93,27 @@ public abstract class BaseDldEagerLockingTest extends BaseDldTest {
       ex0.waitForResponse();
       ex1.waitForResponse();
 
-      boolean b1 = ex0.lastResponse() instanceof Exception;
-      boolean b2 = ex1.lastResponse() instanceof Exception;
-      log.infof("b1:", b1);
-      log.infof("b2:", b2);
+      final Object resp0 = ex0.lastResponse();
+      boolean b1 = resp0 instanceof Exception;
+      final Object resp1 = ex1.lastResponse();
+      boolean b2 = resp1 instanceof Exception;
+      log.info("resp0:", (Throwable)resp0);
+      log.info("resp1:", (Throwable)resp1);
       assert xor(b1, b2) : "Both are " + (b1 || b2);
 
       assert xor(ex0.getOngoingTransaction().getStatus() == Status.STATUS_MARKED_ROLLBACK,
                  ex1.getOngoingTransaction().getStatus() == Status.STATUS_MARKED_ROLLBACK);
 
+      log.trace("About to commit transactions");
+
       Object txOutcome1 = ex0.execute(PerCacheExecutorThread.Operations.COMMIT_TX);
       Object txOutcome2 = ex1.execute(PerCacheExecutorThread.Operations.COMMIT_TX);
+      System.out.println("txOutcome2 = " + txOutcome1);
+      System.out.println("txOutcome2 = " + txOutcome2);
       assert xor(txOutcome1 == PerCacheExecutorThread.OperationsResult.COMMIT_TX_OK, txOutcome2 == PerCacheExecutorThread.OperationsResult.COMMIT_TX_OK);
       assert xor(txOutcome1 instanceof RollbackException, txOutcome2 instanceof RollbackException);
+
+      log.tracef("k0 is %s, \n k1 is %s", k0, k1);
 
       assert cache(0).get(k0) != null;
       assert cache(0).get(k1) != null;
@@ -115,6 +125,4 @@ public abstract class BaseDldEagerLockingTest extends BaseDldTest {
 
       System.out.println("Test took " + (System.currentTimeMillis() - start) + " millis.");
    }
-
-
 }

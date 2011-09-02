@@ -75,6 +75,7 @@ public class AtomicHashMapPassivationTest extends SingleCacheManagerTest {
       tm.commit();
       assertInCacheNotInStore(key);
 
+      log.trace("About to evict...");
       cache.evict(key);
       assertInStoreNotInCache(key);
 

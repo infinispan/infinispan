@@ -113,19 +113,17 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(CacheMgmtInterceptor.class));
 
       // load the tx interceptor
-      if (configuration.getCacheMode().isDistributed())
-         interceptorChain.appendInterceptor(createInterceptor(DistTxInterceptor.class));
-      else
-         interceptorChain.appendInterceptor(createInterceptor(TxInterceptor.class));
+      if (configuration.isTransactionalCache()) {
+         if (configuration.getCacheMode().isDistributed())
+            interceptorChain.appendInterceptor(createInterceptor(DistTxInterceptor.class));
+         else
+            interceptorChain.appendInterceptor(createInterceptor(TxInterceptor.class));
+      }
 
       if (isUsingMarshalledValues(configuration))
          interceptorChain.appendInterceptor(createInterceptor(MarshalledValueInterceptor.class));
 
       interceptorChain.appendInterceptor(createInterceptor(NotificationInterceptor.class));
-
-      if (configuration.isEnableDeadlockDetection()) {
-         interceptorChain.appendInterceptor(createInterceptor(DeadlockDetectingInterceptor.class));
-      }
 
       if (configuration.isUsingCacheLoaders()) {
          if (configuration.getCacheLoaderManagerConfig().isPassivation()) {
@@ -153,6 +151,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          }
       } else {
          interceptorChain.appendInterceptor(createInterceptor(NonTransactionalLockingInterceptor.class));
+      }
+
+      if (configuration.isEnableDeadlockDetection()) {
+         interceptorChain.appendInterceptor(createInterceptor(DeadlockDetectingInterceptor.class));
       }
 
       switch (configuration.getCacheMode()) {

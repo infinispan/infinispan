@@ -36,7 +36,7 @@ import javax.enterprise.inject.Produces;
  * <p>The default cache manager producer.</p>
  *
  * <p>By default the cache manager produced is an instance of {@link DefaultCacheManager} initialized with the default
- * configuration produced by the {@link DefaultCacheConfigurationProducer}. The default cache manager can be overridden
+ * configuration produced by the {@link DefaultConfigurationProducer}. The default cache manager can be overridden
  * by creating a producer which produces the new default cache manager. The new default cache manager produced must be
  * qualified by {@link OverrideDefault}.</p>
  *
@@ -47,7 +47,7 @@ public class DefaultCacheManagerProducer {
     * Produces the default cache manager.
     *
     * @param providedDefaultCacheManager the provided default cache manager.
-    * @param defaultConfiguration the default cache configuration produced by {@link DefaultCacheConfigurationProducer}.
+    * @param defaultConfiguration the default configuration produced by the {@link DefaultConfigurationProducer}.
     * @return the default cache manager used by the application.
     */
    @Produces

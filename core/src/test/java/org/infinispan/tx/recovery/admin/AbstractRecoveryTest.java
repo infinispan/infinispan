@@ -89,7 +89,7 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
    }
 
    protected void checkProperlyCleanup(int managerIndex) {
-      assertEquals(TestingUtil.extractLockManager(cache(managerIndex)).getNumberOfLocksHeld(), 0);
+      assertEquals(TestingUtil.extractLockManager(cache(managerIndex)).getNumberOfLocksHeld(), 0, "For cache " + address(managerIndex) + "(" + managerIndex + ')');
       final TransactionTable tt = TestingUtil.extractComponent(cache(managerIndex), TransactionTable.class);
       eventually(new Condition() {
          @Override

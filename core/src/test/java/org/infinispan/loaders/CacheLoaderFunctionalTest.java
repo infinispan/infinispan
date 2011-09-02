@@ -185,7 +185,9 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
             assertInCacheAndStore("k" + i, "v" + i, lifespan);
       }
 
+      System.out.println("cache.get(\"k1\") = " + cache.get("k1"));
       assert cache.remove("k1", "v1");
+      System.out.println("cache.get(\"k1\") = " + cache.get("k1"));
       assert cache.remove("k2").equals("v2");
 
       assertNotInCacheAndStore("k1", "k2");

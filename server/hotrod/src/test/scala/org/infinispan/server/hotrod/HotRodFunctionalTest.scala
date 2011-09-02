@@ -33,6 +33,7 @@ import org.infinispan.server.hotrod.test._
 import org.infinispan.util.ByteArrayKey
 import org.infinispan.test.TestingUtil.generateRandomString
 import org.infinispan.config.Configuration
+import java.util.concurrent.TimeUnit
 
 /**
  * Hot Rod server functional test.
@@ -245,6 +246,36 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       assertTrue(Arrays.equals(v(m), resp.previous.get))
    }
 
+   def testRemoveIfUnmodifiedWithExpiry(m: Method) {
+      client.assertPut(m)
+      val resp = client.getWithVersion(k(m), 0)
+      assertSuccess(resp, v(m), 0)
+      assertTrue(resp.version != 0)
+
+      val lifespanSecs = 2
+      val lifespan = TimeUnit.SECONDS.toMillis(lifespanSecs)
+      val startTime = System.currentTimeMillis
+      val resp2 = client.replaceIfUnmodified(k(m), lifespanSecs, 0, v(m, "v1-"), resp.version)
+      assertStatus(resp2, Success)
+
+      while (System.currentTimeMillis() < startTime + lifespan - 10) {
+         assertSuccess(client.assertGet(m), v(m, "v1-"))
+         Thread.sleep(50)
+      }
+
+      waitNotFound(startTime, lifespan, m)
+      assertKeyDoesNotExist(client.assertGet(m))
+   }
+
+   private def waitNotFound(startTime: Long, lifespan: Long, m: Method) {
+      if (System.currentTimeMillis < startTime + lifespan + 20000) {
+         if (Success == client.assertGet(m)) {
+            Thread.sleep(50)
+            waitNotFound(startTime, lifespan, m)
+         }
+      }
+   }
+
    def testRemoveBasic(m: Method) {
       client.assertPut(m)
       val resp = client.remove(k(m))
@@ -288,7 +319,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       client.assertPut(m)
       val resp = client.getWithVersion(k(m), 0)
       assertSuccess(resp, v(m), 0)
-      var resp2 = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v1-"), resp.version)
+      val resp2 = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v1-"), resp.version)
       assertStatus(resp2, Success)
       val resp3 = client.getWithVersion(k(m), 0)
       assertSuccess(resp3, v(m, "v1-"), 0)

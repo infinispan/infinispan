@@ -24,6 +24,9 @@ package org.infinispan.marshall;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.remoting.transport.Address;
@@ -67,6 +70,7 @@ public class MarshalledValue {
    volatile private int cachedHashCode = 0;
    // by default equals() will test on the instance rather than the byte array if conversion is required.
    private transient volatile boolean equalityPreferenceForInstance = true;
+   // A marshaller is needed at construction time to handle equals/hashCode impls
    private final StreamingMarshaller marshaller;
 
    public MarshalledValue(Object instance, boolean equalityPreferenceForInstance, StreamingMarshaller marshaller) {
@@ -215,6 +219,10 @@ public class MarshalledValue {
       return value;
    }
 
+   StreamingMarshaller getMarshaller() {
+      return marshaller;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -303,10 +311,19 @@ public class MarshalledValue {
    }
 
    public static class Externalizer extends AbstractExternalizer<MarshalledValue> {
-      private StreamingMarshaller marshaller;
-      
-      public void inject(StreamingMarshaller marshaller) {
-         this.marshaller = marshaller;
+      private static final String GLOBAL_MARSHALLER_MARKER = "___global___";
+      private GlobalComponentRegistry gcr;
+
+      // TODO: Improve this when marshaller multiplexing is implemented. Details:
+      // Keeping a reference to the marshaller makes the externalizer dependant
+      // of the cache it belongs to. This complicates the externalizer table,
+      // making it variable for each cache. To simplify the code and avoid
+      // extra ExternalizerTable copies, send cache name as extra parameter in
+      // the payload and let unmarshaller figure out the marshaller to use
+      // using the global component registry.
+
+      public void inject(GlobalComponentRegistry gcr) {
+         this.gcr = gcr;
       }
 
       @Override
@@ -315,6 +332,12 @@ public class MarshalledValue {
          UnsignedNumeric.writeUnsignedInt(output, raw.length);
          output.write(raw);
          output.writeInt(mv.hashCode());
+         // TODO: Not ideal :( - but a workaround until we get multiplexing in
+         String cacheName = ((AbstractDelegatingMarshaller) mv.getMarshaller()).getCacheName();
+         if (cacheName == null)
+            output.writeUTF(GLOBAL_MARSHALLER_MARKER);
+         else
+            output.writeUTF(cacheName);
       }
 
       @Override
@@ -323,6 +346,14 @@ public class MarshalledValue {
          byte[] raw = new byte[length];
          input.readFully(raw);
          int hc = input.readInt();
+         String cacheName = input.readUTF();
+         StreamingMarshaller marshaller;
+         if (cacheName.equals(GLOBAL_MARSHALLER_MARKER)) {
+            marshaller = gcr.getComponent(StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
+         } else {
+            ComponentRegistry registry = gcr.getNamedComponentRegistry(cacheName);
+            marshaller = registry.getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+         }
          return new MarshalledValue(raw, hc, marshaller);
       }
 
@@ -335,5 +366,6 @@ public class MarshalledValue {
       public Set<Class<? extends MarshalledValue>> getTypeClasses() {
          return Util.<Class<? extends MarshalledValue>>asSet(MarshalledValue.class);
       }
+
    }
 }

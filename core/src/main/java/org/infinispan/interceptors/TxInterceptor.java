@@ -139,26 +139,31 @@ public class TxInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      assertInTxScope(ctx);
       return enlistWriteAndInvokeNext(ctx, command);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      assertInTxScope(ctx);
       return enlistWriteAndInvokeNext(ctx, command);
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      assertInTxScope(ctx);
       return enlistWriteAndInvokeNext(ctx, command);
    }
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      assertInTxScope(ctx);
       return enlistWriteAndInvokeNext(ctx, command);
    }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      assertInTxScope(ctx);
       return enlistWriteAndInvokeNext(ctx, command);
    }
 
@@ -263,5 +268,9 @@ public class TxInterceptor extends CommandInterceptor {
    @Metric(displayName = "Rollbacks", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public long getRollbacks() {
       return rollbacks.get();
+   }
+
+   private void assertInTxScope(InvocationContext ctx) {
+      if (!ctx.isInTxScope()) throw new IllegalStateException("This is a transactional cache and this operation is out of a transaction's scope");
    }
 }

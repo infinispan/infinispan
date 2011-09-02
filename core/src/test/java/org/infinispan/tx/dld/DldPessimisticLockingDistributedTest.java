@@ -38,7 +38,7 @@ import java.util.concurrent.Executor;
  * @since 4.2
  */
 @Test (groups = "functional", testName = "tx.dld.DldEagerLockingDistributedTest")
-public class DldEagerLockingDistributedTest extends BaseDldEagerLockingTest {
+public class DldPessimisticLockingDistributedTest extends BaseDldPessimisticLockingTest {
 
    private KeyAffinityService cas;
    private Object k0;

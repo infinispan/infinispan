@@ -26,6 +26,7 @@ import org.infinispan.rhq.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.infinispan.jmx.CacheManagerJmxRegistration.CACHE_MANAGER_JMX_GROUP;
+import static org.infinispan.rhq.RhqUtil.constructNumericMeasure;
 
 /**
  * The component class for the Infinispan manager
@@ -111,10 +113,8 @@ public class CacheManagerComponent extends MBeanResourceComponent<MBeanResourceC
       for (MeasurementScheduleRequest req : metrics) {
          DataType type = req.getDataType();
          if (type == DataType.MEASUREMENT) {
-            String tmp = (String) bean.getAttribute(req.getName()).getValue();
-            Double val = Double.valueOf(tmp);
-            if (trace) log.tracef("Metric (%s) is measurement with value %s", req.getName(), val);
-            MeasurementDataNumeric res = new MeasurementDataNumeric(req, val);
+            EmsAttribute att = bean.getAttribute(req.getName());
+            MeasurementDataNumeric res = constructNumericMeasure(att.getTypeClass(), att.getValue(), req);
             report.addData(res);
          } else if (type == DataType.TRAIT) {
             String value = (String) bean.getAttribute(req.getName()).getValue();

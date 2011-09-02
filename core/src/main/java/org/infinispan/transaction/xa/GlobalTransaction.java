@@ -51,7 +51,7 @@ public class GlobalTransaction implements Cloneable {
 
    private static AtomicLong sid = new AtomicLong(0);
 
-   private long id = -1;
+   long id = -1;
 
    protected transient Address addr = null;
    private transient int hash_code = -1;  // in the worst case, hashCode() returns 0, then increases, so we're safe here

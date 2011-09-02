@@ -27,7 +27,6 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -49,8 +48,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -65,6 +62,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
+
 /**
  * Tests implicit marshalled values
  *
@@ -77,7 +76,6 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(MarshalledValueTest.class);
    private MarshalledValueListenerInterceptor mvli;
    String k = "key", v = "value";
-   private VersionAwareMarshaller marshaller;
 
    protected void createCacheManagers() throws Throwable {
       Cache cache1, cache2;
@@ -106,18 +104,10 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       chain.removeInterceptor(MarshalledValueListenerInterceptor.class);
       mvli = new MarshalledValueListenerInterceptor();
       chain.addInterceptorAfter(mvli, MarshalledValueInterceptor.class);
-      
-      marshaller = new VersionAwareMarshaller();
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), null, cache1.getConfiguration().getGlobalConfiguration());
-      marshaller.start();
    }
    
    @AfterClass(alwaysRun=true)
    protected void destroy() {
-      if(marshaller != null) {
-         marshaller.stop();
-         marshaller = null;
-      }      
       super.destroy();
    }
 
@@ -343,7 +333,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
    public void testEqualsAndHashCode() throws Exception {
       Pojo pojo = new Pojo();
-      MarshalledValue mv = new MarshalledValue(pojo, true, marshaller);
+      MarshalledValue mv = new MarshalledValue(pojo, true, extractCacheMarshaller(cache(0)));
       assertDeserialized(mv);
       int oldHashCode = mv.hashCode();
 
@@ -351,7 +341,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       assertSerialized(mv);
       assert oldHashCode == mv.hashCode();
 
-      MarshalledValue mv2 = new MarshalledValue(pojo, true, marshaller);
+      MarshalledValue mv2 = new MarshalledValue(pojo, true, extractCacheMarshaller(cache(0)));
       assertSerialized(mv);
       assertDeserialized(mv2);
 
@@ -372,43 +362,9 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       assert cache2.get("cd-key").equals(anotherObj);
    }
 
-   public void assertUseOfMagicNumbers() throws Exception {
-      Pojo pojo = new Pojo();
-      MarshalledValue mv = new MarshalledValue(pojo, true, marshaller);
-
-      VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), null, new GlobalConfiguration());
-      marshaller.start();
-
-      // start the test
-      ByteArrayOutputStream bout = new ByteArrayOutputStream();
-      ObjectOutput oo = marshaller.startObjectOutput(bout, false);
-      marshaller.objectToObjectStream(mv, oo);
-      marshaller.finishObjectOutput(oo);
-      bout.close();
-
-      // check that the rest just contains a byte stream which a MarshalledValue will be able to deserialize.
-      ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
-      ObjectInput oi = marshaller.startObjectInput(bin, false);
-      MarshalledValue recreated = (MarshalledValue) marshaller.objectFromObjectStream(oi);
-
-      // there should be nothing more
-      assert oi.available() == 0;
-      marshaller.finishObjectInput(oi);
-      bin.close();
-
-      assertSerialized(recreated);
-      assert recreated.equals(mv);
-
-      // since both objects being compared are serialized, the equals() above should just compare byte arrays.
-      assertSerialized(recreated);
-      assertOnlyOneRepresentationExists(recreated);
-   }
-
    /**
     * Run this as last method as it creates and stops cache loaders, which might affect other tests.
     */
-   @Test(dependsOnMethods = "org.infinispan.marshall.MarshalledValueTest.test(?!CacheLoaders)[a-zA-Z]*")
    public void testCacheLoaders() {
       Cache cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
@@ -431,11 +387,11 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
       assertMarshalledValueInterceptorPresent(cache1);
       assertMarshalledValueInterceptorPresent(cache2);
-      assertSerializationCounts(1, 0);
+      assertSerializationCounts(2, 0);
 
       cache2.get("key");
 
-      assertSerializationCounts(1, 1);
+      assertSerializationCounts(2, 1);
    }
 
    public void testCallbackValues() throws Exception {

@@ -25,7 +25,7 @@ package org.infinispan.factories;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.container.EntryFactoryImpl;
+import org.infinispan.container.EntryFactory;
 import org.infinispan.container.OptimisticEntryFactory;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.eviction.EvictionManager;
@@ -39,7 +39,6 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionLog;
-import org.infinispan.container.EntryFactory;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 
 import static org.infinispan.util.Util.getInstance;
@@ -63,7 +62,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       if (componentType.isInterface()) {
          Class componentImpl;
          if (componentType.equals(ClusteringDependentLogic.class)) {
-            if (configuration.getCacheMode().isReplicated() || !configuration.getCacheMode().isClustered()) {
+            if (configuration.getCacheMode().isReplicated() || !configuration.getCacheMode().isClustered() || configuration.getCacheMode().isInvalidation()) {
                return componentType.cast(new ClusteringDependentLogic.ReplicationLogic());
             } else {
                return componentType.cast(new ClusteringDependentLogic.DistributionLogic());
@@ -73,7 +72,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return componentType.cast(versionAwareMarshaller);
          } else if (componentType.equals(EntryFactory.class)) {
             final boolean isOptimistic = configuration.getTransactionLockingMode().equals(LockingMode.OPTIMISTIC);
-            return isOptimistic ? componentType.cast(getInstance(OptimisticEntryFactory.class)) : componentType.cast(getInstance(EntryFactoryImpl.class));
+            return componentType.cast(getInstance(OptimisticEntryFactory.class));
          } else {
             // add an "Impl" to the end of the class name and try again
             componentImpl = loadClass(componentType.getName() + "Impl", configuration.getClassLoader());

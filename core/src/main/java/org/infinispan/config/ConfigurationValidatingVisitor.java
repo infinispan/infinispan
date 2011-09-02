@@ -116,7 +116,7 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
                CacheStoreConfig storeConfig = (CacheStoreConfig)loaderConfig;
                Boolean fetchPersistentState = storeConfig.isFetchPersistentState();
                Boolean purgeOnStartup = storeConfig.isPurgeOnStartup();
-               if (!fetchPersistentState && !purgeOnStartup) {
+               if (!fetchPersistentState && !purgeOnStartup && cfg.getCacheMode().isClustered()) {
                   log.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
                }
             }

@@ -33,6 +33,7 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -70,6 +71,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
  * Sets the cache interceptor chain on an RPCCommand before calling it to perform
@@ -102,7 +104,10 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    }
 
    @Inject
-   public void inject(GlobalComponentRegistry gcr, StreamingMarshaller marshaller, EmbeddedCacheManager embeddedCacheManager, Transport transport, GlobalConfiguration globalConfiguration) {
+   public void inject(GlobalComponentRegistry gcr,
+                      @ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
+                      EmbeddedCacheManager embeddedCacheManager, Transport transport,
+                      GlobalConfiguration globalConfiguration) {
       this.gcr = gcr;
       this.marshaller = marshaller;
       this.embeddedCacheManager = embeddedCacheManager;

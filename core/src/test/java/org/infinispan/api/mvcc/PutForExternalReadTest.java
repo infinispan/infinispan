@@ -22,7 +22,6 @@
  */
 package org.infinispan.api.mvcc;
 
-import org.easymock.EasyMock;
 import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
@@ -40,12 +39,15 @@ import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionTable;
 
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.*;
 import org.testng.annotations.Test;
 
 import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -104,40 +106,6 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    private ResponseMode anyResponseMode() {
       anyObject();
       return null;
-   }
-
-   public void testAsyncForce() throws Exception {
-      Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
-
-      Transport mockTransport = createNiceMock(Transport.class);
-      RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
-      Transport originalTransport = TestingUtil.extractComponent(cache1, Transport.class);
-      try {
-
-         Address mockAddress1 = createNiceMock(Address.class);
-         Address mockAddress2 = createNiceMock(Address.class);
-
-         List<Address> memberList = new ArrayList<Address>(2);
-         memberList.add(mockAddress1);
-         memberList.add(mockAddress2);
-
-         expect(mockTransport.getMembers()).andReturn(memberList).anyTimes();
-         rpcManager.setTransport(mockTransport);
-         // specify what we expectWithTx called on the mock Rpc Manager.  For params we don't care about, just use ANYTHING.
-         // setting the mock object to expectWithTx the "sync" param to be false.
-         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRpcCommand) anyObject(),
-                                             eq(ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING), anyLong(), anyBoolean(), (ResponseFilter) isNull(), anyBoolean())).andReturn(null);
-
-         replay(mockAddress1, mockAddress2, mockTransport);
-
-         // now try a simple replication.  Since the RpcManager is a mock object it will not actually replicate anything.
-         cache1.putForExternalRead(key, value);
-         verify(mockTransport);
-
-      } finally {
-         if (rpcManager != null) rpcManager.setTransport(originalTransport);
-      }
    }
 
    public void testTxSuspension() throws Exception {
@@ -231,7 +199,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    public void testBasicPropagation() throws Exception {
       Cache cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
-      
+
       assert !cache1.containsKey(key);
       assert !cache2.containsKey(key);
       ReplListener replListener2 = replListener(cache2);
@@ -255,9 +223,8 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
     *
     * @throws Exception
     */
-   public void
-   testSimpleCacheModeLocal() throws Exception {
-      cacheModeLocalTest(false);
+   public void testSimpleCacheModeLocal(Method m) throws Exception {
+      cacheModeLocalTest(false, m);
    }
 
    /**
@@ -266,8 +233,8 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
     *
     * @throws Exception
     */
-   public void testCacheModeLocalInTx() throws Exception {
-      cacheModeLocalTest(true);
+   public void testCacheModeLocalInTx(Method m) throws Exception {
+      cacheModeLocalTest(true, m);
    }
 
    /**
@@ -347,35 +314,18 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
     *
     * @throws Exception
     */
-   private void cacheModeLocalTest(boolean transactional) throws Exception {
+   private void cacheModeLocalTest(boolean transactional, Method m) throws Exception {
       Cache<Object, Object> cache1 = cache(0, "replSync");
       Cache<Object, Object> cache2 = cache(1, "replSync");
       TransactionManager tm1 = TestingUtil.getTransactionManager(cache1);
-      TransactionManager tm2 = TestingUtil.getTransactionManager(cache2);
-      RpcManager rpcManager = EasyMock.createMock(RpcManager.class);
-      RpcManager originalRpcManager = TestingUtil.replaceComponent(cache1.getCacheManager(), RpcManager.class, rpcManager, true);
-      try {
+      if (transactional)
+         tm1.begin();
 
-         // specify that we expectWithTx nothing will be called on the mock Rpc Manager.
-         replay(rpcManager);
+      String k = k(m);
+      cache1.getAdvancedCache().withFlags(CACHE_MODE_LOCAL).putForExternalRead(k, v(m));
+      assertFalse(cache2.containsKey(k));
 
-         // now try a simple replication.  Since the RpcManager is a mock object it will not actually replicate anything.
-         if (transactional)
-            tm1.begin();
-
-         cache1.getAdvancedCache().withFlags(CACHE_MODE_LOCAL).putForExternalRead(key, value);
-
-         if (transactional)
-            tm1.commit();
-
-         verify(rpcManager);
-      } finally {
-         if (originalRpcManager != null) {
-            // cleanup
-            TestingUtil.replaceComponent(cache1.getCacheManager(), RpcManager.class, originalRpcManager, true);
-            cache1.remove(key);
-            cache2.remove(key);
-         }
-      }
+      if (transactional)
+         tm1.commit();
    }
 }

@@ -22,11 +22,13 @@
  */
 package org.infinispan.loaders.jdbc.stringbased;
 
-import org.infinispan.commands.RemoteCommandsFactory;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 
 /**
  * JdbcStringBasedCacheStoreTest2 using production level marshaller.
@@ -36,11 +38,21 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreVamTest2")
 public class JdbcStringBasedCacheStoreVamTest2 extends JdbcStringBasedCacheStoreTest2 {
+   private EmbeddedCacheManager cm;
+
    @Override
    protected StreamingMarshaller getMarshaller() {
-      VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory(), new GlobalConfiguration());
-      marshaller.start();
-      return marshaller;
+      cm = TestCacheManagerFactory.createLocalCacheManager();
+      return extractCacheMarshaller(cm.getCache());
+   }
+
+   @AfterMethod(alwaysRun = true)
+   @Override
+   public void clearStore() throws Exception {
+      try {
+         super.clearStore();
+      } finally {
+         cm.stop();
+      }
    }
 }

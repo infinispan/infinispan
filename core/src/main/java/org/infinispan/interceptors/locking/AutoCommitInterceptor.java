@@ -60,8 +60,6 @@ public class AutoCommitInterceptor extends CommandInterceptor {
       this.icc = icc;
    }
 
-
-
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return injectTransactionIfNeeded(ctx, command);
@@ -114,6 +112,8 @@ public class AutoCommitInterceptor extends CommandInterceptor {
 
    private Object injectTransactionIfNeeded(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (!ctx.isInTxScope()) {
+         if (ctx.isUseFutureReturnType())
+            throw new IllegalStateException("Future calls cannot run in auto-commit mode.");
          transactionManager.begin();
          InvocationContext txContext = icc.createInvocationContext();
          txContext.setFlags(ctx.getFlags());

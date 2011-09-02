@@ -91,6 +91,7 @@ public class APIDistTest extends MultipleCacheManagersTest {
       assert "v".equals(cache1.get(key)) : "Could not find key " + key + " on cache1";
       String old = cache1.put(key, "new_value");
       assert "v".equals(old) : "Expected v, was " + old;
+      log.trace("Before commit!");
       tm(0).commit();
 
       String val;

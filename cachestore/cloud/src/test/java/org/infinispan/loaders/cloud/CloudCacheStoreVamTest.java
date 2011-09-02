@@ -22,11 +22,14 @@
  */
 package org.infinispan.loaders.cloud;
 
-import org.infinispan.commands.RemoteCommandsFactory;
-import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 
 /**
  * CloudCacheStoreVamTest using production level marshaller.
@@ -36,11 +39,19 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "unit", testName = "loaders.cloud.CloudCacheStoreVamTest")
 public class CloudCacheStoreVamTest extends CloudCacheStoreTest {
+   private EmbeddedCacheManager cm;
+
    @Override
    protected StreamingMarshaller getMarshaller() {
-      VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory(), new GlobalConfiguration());
-      marshaller.start();
-      return marshaller;
+      cm = TestCacheManagerFactory.createLocalCacheManager();
+      return extractCacheMarshaller(cm.getCache());
    }
+
+   @AfterMethod(alwaysRun = true)
+   @Override
+   public void tearDown() throws CacheLoaderException {
+      super.tearDown();
+      cm.stop();
+   }
+
 }

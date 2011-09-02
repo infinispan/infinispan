@@ -46,6 +46,7 @@ import org.infinispan.util.ObjectDuplicator;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
+import static junit.framework.Assert.assertNull;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -530,9 +531,9 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       TestingUtil.getTransactionManager(cache).begin();
       assert cache.remove(key).equals(old_value);
       assert cache.get(key) == null;
-      assert cache.putIfAbsent(key, new_value) == null;
+//      assertEquals(cache.putIfAbsent(key, new_value), null);
       TestingUtil.getTransactionManager(cache).rollback();
 
-      assert cache.get(key).equals(old_value);
+      assertEquals(old_value, cache.get(key));
    }
 }

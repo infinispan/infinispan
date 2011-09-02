@@ -33,6 +33,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
@@ -61,6 +62,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
 import static org.infinispan.context.Flag.SKIP_SHARED_CACHE_STORE;
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 public class StateTransferManagerImpl implements StateTransferManager {
 
@@ -88,7 +90,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Inject
    @SuppressWarnings("unchecked")
    public void injectDependencies(RpcManager rpcManager, AdvancedCache cache, Configuration configuration,
-                                  DataContainer dataContainer, CacheLoaderManager clm, StreamingMarshaller marshaller,
+                                  DataContainer dataContainer, CacheLoaderManager clm, @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
                                   TransactionLog transactionLog, InterceptorChain interceptorChain, InvocationContextContainer invocationContextContainer,
                                   CommandsFactory commandsFactory, TransactionTable txTable) {
       this.rpcManager = rpcManager;

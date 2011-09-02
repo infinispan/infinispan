@@ -123,7 +123,8 @@ class CacheLoaderConfigAdapter extends XmlAdapter<AbstractCacheStoreConfig, Cach
             csc.asyncStore()
                   .flushLockTimeout(asyncStoreConfig.getFlushLockTimeout())
                   .shutdownTimeout(asyncStoreConfig.getShutdownTimeout())
-                  .threadPoolSize(asyncStoreConfig.getThreadPoolSize());
+                  .threadPoolSize(asyncStoreConfig.getThreadPoolSize())
+                  .modificationQueueSize(asyncStoreConfig.getModificationQueueSize());
          }
       }
       return clc;

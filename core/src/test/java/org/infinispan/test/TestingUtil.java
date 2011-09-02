@@ -36,6 +36,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.DistributionManagerImpl;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -43,6 +44,9 @@ import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.AbstractDelegatingMarshaller;
+import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.marshall.jboss.ExternalizerTable;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -75,8 +79,8 @@ public class TestingUtil {
    public static final String TEST_PATH = "target" + separator + "tempFiles";
    public static final String INFINISPAN_START_TAG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
            "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-           "      xsi:schemaLocation=\"urn:infinispan:config:5.0 http://www.infinispan.org/schemas/infinispan-config-5.0.xsd\"\n" +
-           "      xmlns=\"urn:infinispan:config:5.0\">";
+           "      xsi:schemaLocation=\"urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd\"\n" +
+           "      xmlns=\"urn:infinispan:config:5.1\">";
    public static final String INFINISPAN_START_TAG_40 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
            "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
            "      xsi:schemaLocation=\"urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd\"\n" +
@@ -807,6 +811,16 @@ public class TestingUtil {
       return (ComponentRegistry) extractField(ci, "componentRegistry");
    }
 
+   public static AbstractDelegatingMarshaller extractCacheMarshaller(Cache cache) {
+      ComponentRegistry cr = (ComponentRegistry) extractField(cache, "componentRegistry");
+      StreamingMarshaller marshaller = cr.getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+      return (AbstractDelegatingMarshaller) marshaller;
+   }
+
+   public static ExternalizerTable extractExtTable(CacheContainer cacheContainer) {
+      GlobalComponentRegistry gcr = (GlobalComponentRegistry) extractField(cacheContainer, "globalComponentRegistry");
+      return gcr.getComponent(ExternalizerTable.class);
+   }
 
    /**
     * Replaces the existing interceptor chain in the cache wih one represented by the interceptor passed in.  This

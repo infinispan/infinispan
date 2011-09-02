@@ -37,12 +37,14 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
-import static junit.framework.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 
 /**
@@ -126,7 +128,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
    public void testGetVersionedCacheEntry() {
       VersionedValue value = remoteCache.getVersioned("aKey");
-      assertNull(remoteCache.getVersioned("aKey"), "expected null but received: " + value);
+      assertNull("expected null but received: " + value, remoteCache.getVersioned("aKey"));
       remoteCache.put("aKey", "aValue");
       assert remoteCache.get("aKey").equals("aValue");
       VersionedValue valueBinary = remoteCache.getVersioned("aKey");
@@ -170,6 +172,29 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assertEquals(entry2.getValue(), "aNewValue");
 
       assert !remoteCache.replaceWithVersion("aKey", "aNewValue", valueBinary.getVersion());
+   }
+
+   public void testReplaceIfUnmodifiedWithExpiry(Method m) throws InterruptedException {
+      final int key = 1;
+      remoteCache.put(key, v(m));
+      VersionedValue valueBinary = remoteCache.getVersioned(key);
+      int lifespanSecs = 3; // seconds
+      long lifespan = TimeUnit.SECONDS.toMillis(lifespanSecs);
+      long startTime = System.currentTimeMillis();
+      String newValue = v(m, 2);
+      assert remoteCache.replaceWithVersion(key, newValue, valueBinary.getVersion(), lifespanSecs);
+
+      while (System.currentTimeMillis() < startTime + lifespan - 10) {
+         assertEquals(v(m, 2), remoteCache.get(key));
+         Thread.sleep(50);
+      }
+
+      while (System.currentTimeMillis() < startTime + lifespan + 2000) {
+         if (remoteCache.get(key) == null) break;
+         Thread.sleep(50);
+      }
+
+      assertNull(remoteCache.get(key));
    }
 
    public void testRemoveIfUnmodified() {
