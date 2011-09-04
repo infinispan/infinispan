@@ -506,7 +506,6 @@ public class DistributionManagerImpl implements DistributionManager {
          if(trace)
             log.tracef("New view received: %d, type=%s, members: %s. Starting the RebalanceTask", e.getViewId(), e.getType(), e.getNewMembers());
 
-         boolean rehashInterrupted = rehashInProgress;
          synchronized (rehashInProgressMonitor) {
             rehashInProgress = true;
             receivedRehashCompletedNotification = false;
@@ -538,7 +537,7 @@ public class DistributionManagerImpl implements DistributionManager {
          }
 
          RebalanceTask rebalanceTask = new RebalanceTask(rpcManager, cf, configuration, dataContainer,
-               DistributionManagerImpl.this, icc, cacheNotifier, interceptorChain, e.getViewId(), rehashInterrupted);
+               DistributionManagerImpl.this, icc, cacheNotifier, interceptorChain, e.getViewId());
          rehashExecutor.submit(rebalanceTask);
       }
    }

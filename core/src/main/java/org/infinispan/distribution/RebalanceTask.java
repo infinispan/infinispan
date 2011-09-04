@@ -76,18 +76,16 @@ public class RebalanceTask extends RehashTask {
    private final CacheNotifier notifier;
    private final InterceptorChain interceptorChain;
    private final int newViewId;
-   private final boolean previousRehashWasInterrupted;
 
    public RebalanceTask(RpcManager rpcManager, CommandsFactory commandsFactory, Configuration conf,
                         DataContainer dataContainer, DistributionManagerImpl dmi,
                         InvocationContextContainer icc, CacheNotifier notifier,
-                        InterceptorChain interceptorChain, int newViewId, boolean rehashInterrupted) {
+                        InterceptorChain interceptorChain, int newViewId) {
       super(dmi, rpcManager, conf, commandsFactory, dataContainer);
       this.icc = icc;
       this.notifier = notifier;
       this.interceptorChain = interceptorChain;
       this.newViewId = newViewId;
-      this.previousRehashWasInterrupted = rehashInterrupted;
    }
 
 
@@ -103,13 +101,7 @@ public class RebalanceTask extends RehashTask {
       try {
          // Don't need to log anything, all transactions will be blocked
          //distributionManager.getTransactionLogger().enable();
-         if (previousRehashWasInterrupted) {
-            log.tracef("Rehash is still in progress, not blocking transactions as they should already be blocked");
-         } else {
-            // if the previous rehash was interrupted by the arrival of a new view
-            // then the transactions are still blocked, we don't need to block them again
-            distributionManager.getTransactionLogger().blockNewTransactions();
-         }
+         distributionManager.getTransactionLogger().blockNewTransactions();
 
          // Create the new CH:
          List<Address> newMembers = rpcManager.getTransport().getMembers();
