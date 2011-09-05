@@ -86,6 +86,8 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       InternalCacheEntry internalCacheEntry = cache.getAdvancedCache().getDataContainer().get("IT");
       assert internalCacheEntry==null;
 
+      verifyFullTextHasMatches(1);
+
       Country country = cache.get("IT");
       assert country != null;
       assert "Italy".equals(country.countryName);
