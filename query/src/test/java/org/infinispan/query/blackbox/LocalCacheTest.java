@@ -330,7 +330,8 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       cfg
          .indexing()
             .indexLocalOnly(false)
-            .addProperty("hibernate.search.default.directory_provider", "ram");
+            .addProperty("hibernate.search.default.directory_provider", "ram")
+            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cfg);
       return TestCacheManagerFactory.createCacheManager(cfg.build(), true);
    }

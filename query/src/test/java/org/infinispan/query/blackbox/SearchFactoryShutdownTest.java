@@ -48,7 +48,8 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
 
       try {
          Configuration c = SingleCacheManagerTest.getDefaultClusteredConfig(LOCAL, true);
-         c.fluent().indexing().indexLocalOnly(false);
+         c.fluent().indexing().indexLocalOnly(false)
+            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
          cc = TestCacheManagerFactory.createCacheManager(c, true);
          Cache<?, ?> cache = cc.getCache();
          SearchFactoryIntegrator sfi = TestingUtil.extractComponent(cache, SearchFactoryIntegrator.class);

@@ -74,8 +74,9 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       FluentConfiguration cacheCfg = getDefaultClusteredConfig(REPL_SYNC).fluent();
-      cacheCfg.indexing().indexLocalOnly(false).addProperty(
-               "hibernate.search.default.directory_provider", "ram");
+      cacheCfg.indexing().indexLocalOnly(false)
+         .addProperty("hibernate.search.default.directory_provider", "ram")
+         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);
       List<Cache<String, Person>> caches = createClusteredCaches(2, /* "query-cache", */cacheCfg
                .build());
