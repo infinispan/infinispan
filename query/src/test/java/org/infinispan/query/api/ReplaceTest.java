@@ -37,7 +37,8 @@ public class ReplaceTest extends SingleCacheManagerTest {
       c.fluent()
          .indexing()
          .indexLocalOnly(false)
-         .addProperty("hibernate.search.default.directory_provider", "ram");
+         .addProperty("hibernate.search.default.directory_provider", "ram")
+         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(c, true);
    }
 

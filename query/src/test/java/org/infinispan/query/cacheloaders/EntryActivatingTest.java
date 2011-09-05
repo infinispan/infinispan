@@ -116,6 +116,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
                   .preload(true)
             .indexing()
                .addProperty("hibernate.search.default.directory_provider", "ram")
+               .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT")
       .build();
       cm = TestCacheManagerFactory.createCacheManager(cfg, true);
       cache = cm.getCache();
