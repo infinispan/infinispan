@@ -1,24 +1,20 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
- * contributors as indicated by the @author tags. All rights reserved.
- * See the copyright.txt in the distribution for a full listing of
- * individual contributors.
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other contributors
+ * as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a
+ * full listing of individual contributors.
  *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ * This copyrighted material is made available to anyone wishing to use,
+ * modify, copy, or redistribute it subject to the terms and conditions
+ * of the GNU Lesser General Public License, v. 2.1.
+ * This program is distributed in the hope that it will be useful, but WITHOUT A
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License,
+ * v.2.1 along with this distribution; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA  02110-1301, USA.
  */
 package org.infinispan.distribution;
 
@@ -301,9 +297,8 @@ public class TransactionLoggerImpl implements TransactionLogger {
       // hold the read lock to ensure the rehash process waits for the tx to end
       // first try with 0 timeout, in case a rehash is not in progress
       if (txLockLatch.await(0, TimeUnit.MILLISECONDS)) {
-         if (!txLock.readLock().tryLock())
-            throw new IllegalStateException("Transaction latch open but transaction lock locked exclusively");
-         return true;
+         if (txLock.readLock().tryLock(0, TimeUnit.MILLISECONDS))
+            return true;
       }
 
       // When the command is being replicated, the caller already holds the tx lock for read on the
@@ -319,11 +314,22 @@ public class TransactionLoggerImpl implements TransactionLogger {
       // We do a separate wait here because we don't want to call ctx.getLockedKeys() all the time
       boolean hasAcquiredLocks = ctx.getLockedKeys().size() > 0;
       long timeout = hasAcquiredLocks ? lockTimeout / 100 : lockTimeout;
-      if (!txLockLatch.await(timeout, TimeUnit.MILLISECONDS))
-         return false;
-      if (!txLock.readLock().tryLock())
-         throw new IllegalStateException("Transaction latch open but transaction lock locked exclusively");
-      return true;
+      long endTime = System.currentTimeMillis() + timeout;
+      while (true) {
+         // first check the latch
+         if (!txLockLatch.await(timeout, TimeUnit.MILLISECONDS))
+            return false;
+
+         // hold the read lock to ensure the rehash process waits for the tx to end
+         if (txLock.readLock().tryLock(0, TimeUnit.MILLISECONDS))
+            return true;
+
+         // the rehashing thread has acquired the write lock between our latch check and our read lock attempt
+         // retry, unless the timeout expired
+         timeout = endTime - System.currentTimeMillis();
+         if (timeout < 0)
+            return false;
+      }
    }
 
    private void releaseLockForTx() {
