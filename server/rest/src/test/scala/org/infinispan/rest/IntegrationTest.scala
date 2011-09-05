@@ -245,28 +245,219 @@ class IntegrationTest {
       Client.call(get)
       assertEquals(HttpServletResponse.SC_NOT_FOUND, get.getStatusCode)
    }
-
-   def testPutPreconditionUnimplemented(m: Method): Unit = {
-      testPutPreconditionUnimplemented(m, "If-Match")
-      testPutPreconditionUnimplemented(m, "If-None-Match")
-      testPutPreconditionUnimplemented(m, "If-Modified-Since")
-      testPutPreconditionUnimplemented(m, "If-Unmodified-Since")
-   }
-
-   private def testPutPreconditionUnimplemented(m: Method, preconditionalHeaderName: String) = {
+   
+   def testPutDataWithIfMatch(m: Method) {
+      // Put the data first
       val fullPathKey = fullPath + "/" + m.getName
-      val post = new PostMethod(fullPathKey)
-      post.setRequestHeader("Content-Type", "application/text")
-      post.setRequestHeader(preconditionalHeaderName, "*");
-      post.setRequestEntity(new StringRequestEntity("data", "text/plain", "UTF-8"))
-      Client.call(post)
+      val put = new PutMethod(fullPathKey)
+      put.setRequestHeader("Content-Type", "application/text")
+      put.setRequestBody("data")
+      Client.call(put)
       
-      assertNotImplemented(post)
+      // Now get it to retrieve some attributes
+      var get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
+      val etag = get.getResponseHeader("ETag").getValue      
+      
+      // Put again using the If-Match with the ETag we got back from the get
+      val reput = new PutMethod(fullPathKey)
+      reput.setRequestHeader("Content-Type", "application/text")
+      reput.setRequestHeader("If-Match", etag);
+      reput.setRequestBody("data")
+      assertEquals(HttpServletResponse.SC_OK, Client.call(reput).getStatusCode)
+      
+      // Try to put again, but with a different ETag
+      val reputAgain = new PutMethod(fullPathKey)
+      reputAgain.setRequestHeader("Content-Type", "application/text")
+      reputAgain.setRequestHeader("If-Match", "x");
+      reputAgain.setRequestBody("data")
+      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(reputAgain).getStatusCode)
    }
-
-   def testDeleteEntryPreconditionUnimplemented(m: Method) =
-      testDeletePreconditionalUnimplemented(fullPath + "/" + m.getName)
-
+   
+   def testPutDataWithIfNoneMatch(m: Method) {
+      // Put the data first
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestHeader("Content-Type", "application/text")
+      put.setRequestBody("data")
+      Client.call(put)
+      
+      // Now get it to retrieve some attributes
+      var get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
+      val etag = get.getResponseHeader("ETag").getValue      
+      
+      // Put again using the If-Match with the ETag we got back from the get
+      val reput = new PutMethod(fullPathKey)
+      reput.setRequestHeader("Content-Type", "application/text")
+      reput.setRequestHeader("If-None-Match", "x");
+      reput.setRequestBody("data")
+      assertEquals(HttpServletResponse.SC_OK, Client.call(reput).getStatusCode)
+      
+      // Try to put again, but with a different ETag
+      val reputAgain = new PutMethod(fullPathKey)
+      reputAgain.setRequestHeader("Content-Type", "application/text")
+      reputAgain.setRequestHeader("If-None-Match", etag);
+      reputAgain.setRequestBody("data")
+      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(reputAgain).getStatusCode)
+   }
+   
+   def testPutDataWithIfModifiedSince(m: Method) {
+      // Put the data first
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestHeader("Content-Type", "application/text")
+      put.setRequestBody("data")
+      Client.call(put)
+      
+      // Now get it to retrieve some attributes
+      var get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)      
+      val lastMod = get.getResponseHeader("Last-Modified").getValue      
+      
+      // Put again using the If-Modified-Since with the lastMod we got back from the get
+      val reput = new PutMethod(fullPathKey)
+      reput.setRequestHeader("Content-Type", "application/text")
+      reput.setRequestHeader("If-Modified-Since", lastMod)
+      reput.setRequestBody("data")
+      assertEquals(HttpServletResponse.SC_NOT_MODIFIED, Client.call(reput).getStatusCode)
+      
+      // Try to put again, but with an older last modification date
+      val reputAgain = new PutMethod(fullPathKey)
+      reputAgain.setRequestHeader("Content-Type", "application/text")
+      val dateMinus = addDay(lastMod, -1)      
+      reputAgain.setRequestHeader("If-Modified-Since", dateMinus)
+      reputAgain.setRequestBody("data")
+      assertEquals(HttpServletResponse.SC_OK, Client.call(reputAgain).getStatusCode)
+   }
+   
+   def testPutDataWithIfUnModifiedSince(m: Method) {
+      // Put the data first
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestHeader("Content-Type", "application/text")
+      put.setRequestBody("data")
+      Client.call(put)
+      
+      // Now get it to retrieve some attributes
+      var get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)      
+      val lastMod = get.getResponseHeader("Last-Modified").getValue
+      
+      // Put again using the If-Unmodified-Since with a date earlier than the one we got back from the GET
+      val reput = new PutMethod(fullPathKey)
+      reput.setRequestHeader("Content-Type", "application/text")
+      val dateMinus = addDay(lastMod, -1)      
+      reput.setRequestHeader("If-Unmodified-Since", dateMinus)      
+      reput.setRequestBody("data")
+      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(reput).getStatusCode)
+      
+      // Try to put again, but using the date returned by the GET
+      val reputAgain = new PutMethod(fullPathKey)
+      reputAgain.setRequestHeader("Content-Type", "application/text")
+      reputAgain.setRequestHeader("If-Unmodified-Since", lastMod);
+      reputAgain.setRequestBody("data")
+      assertEquals(HttpServletResponse.SC_OK, Client.call(reputAgain).getStatusCode)
+   }
+   
+   def testDeleteDataWithIfMatch(m: Method) {
+      // Put the data first
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestHeader("Content-Type", "application/text")
+      put.setRequestBody("data")
+      Client.call(put)
+      
+      // Now get it to retrieve some attributes
+      var get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
+      val etag = get.getResponseHeader("ETag").getValue      
+      
+      // Attempt to delete with a wrong ETag
+      val delete = new DeleteMethod(fullPathKey)      
+      delete.setRequestHeader("If-Match", "x");    
+      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(delete).getStatusCode)
+      
+      // Try to delete again, but with the proper ETag
+      val deleteAgain = new DeleteMethod(fullPathKey)
+      deleteAgain.setRequestHeader("If-Match", etag);      
+      assertEquals(HttpServletResponse.SC_OK, Client.call(deleteAgain).getStatusCode)
+   }
+   
+   def testDeleteDataWithIfNoneMatch(m: Method) {
+      // Put the data first
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestHeader("Content-Type", "application/text")
+      put.setRequestBody("data")
+      Client.call(put)
+      
+      // Now get it to retrieve some attributes
+      var get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
+      val etag = get.getResponseHeader("ETag").getValue      
+      
+      // Attempt to delete with the ETag
+      val delete = new DeleteMethod(fullPathKey)      
+      delete.setRequestHeader("If-None-Match", etag);    
+      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(delete).getStatusCode)
+      
+      // Try to delete again, but with a non-matching ETag
+      val deleteAgain = new DeleteMethod(fullPathKey)
+      deleteAgain.setRequestHeader("If-None-Match", "x");      
+      assertEquals(HttpServletResponse.SC_OK, Client.call(deleteAgain).getStatusCode)
+   }
+   
+   def testDeleteDataWithIfModifiedSince(m: Method) {
+      // Put the data first
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestHeader("Content-Type", "application/text")
+      put.setRequestBody("data")
+      Client.call(put)
+      
+      // Now get it to retrieve some attributes
+      var get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)      
+      val lastMod = get.getResponseHeader("Last-Modified").getValue      
+      
+      // Attempt to delete using the If-Modified-Since header with the lastMod we got back from the get
+      val delete = new DeleteMethod(fullPathKey)
+      delete.setRequestHeader("If-Modified-Since", lastMod)      
+      assertEquals(HttpServletResponse.SC_NOT_MODIFIED, Client.call(delete).getStatusCode)
+      
+      // Try to delete again, but with an older last modification date
+      val deleteAgain = new DeleteMethod(fullPathKey)      
+      val dateMinus = addDay(lastMod, -1)      
+      deleteAgain.setRequestHeader("If-Modified-Since", dateMinus)      
+      assertEquals(HttpServletResponse.SC_OK, Client.call(deleteAgain).getStatusCode)
+   }
+   
+   def testDeleteDataWithIfUnmodifiedSince(m: Method) {
+      // Put the data first
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestHeader("Content-Type", "application/text")
+      put.setRequestBody("data")
+      Client.call(put)
+      
+      // Now get it to retrieve some attributes
+      var get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)      
+      val lastMod = get.getResponseHeader("Last-Modified").getValue      
+      
+      // Attempt to delete using the If-Unmodified-Since header with a date earlier than the one we got back from the GET
+      val delete = new DeleteMethod(fullPathKey)
+      val dateMinus = addDay(lastMod, -1)      
+      delete.setRequestHeader("If-Unmodified-Since", dateMinus)      
+      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(delete).getStatusCode)
+      
+      // Try to delete again, but with an older last modification date
+      val deleteAgain = new DeleteMethod(fullPathKey)            
+      deleteAgain.setRequestHeader("If-Unmodified-Since", lastMod)      
+      assertEquals(HttpServletResponse.SC_OK, Client.call(deleteAgain).getStatusCode)
+   }
+   
    def testDeleteCachePreconditionUnimplemented(m: Method) =
       testDeletePreconditionalUnimplemented(fullPath)
 

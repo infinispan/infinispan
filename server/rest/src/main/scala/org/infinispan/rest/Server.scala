@@ -113,48 +113,64 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
    def putEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String,
                 @HeaderParam("Content-Type") mediaType: String, data: Array[Byte],
                 @DefaultValue("-1") @HeaderParam("timeToLiveSeconds") ttl: Long,
-                @DefaultValue("-1") @HeaderParam("maxIdleTimeSeconds") idleTime: Long,
-                @DefaultValue("") @HeaderParam("If-Match") ifMatch: String,
-                @DefaultValue("") @HeaderParam("If-None-Match") ifNoneMatch: String,
-                @DefaultValue("") @HeaderParam("If-Modified-Since") ifModifiedSince: String,
-                @DefaultValue("") @HeaderParam("If-Unmodified-Since") ifUnmodifiedSince: String): Response = {
+                @DefaultValue("-1") @HeaderParam("maxIdleTimeSeconds") idleTime: Long): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) =>
          val cache = ManagerInstance.getCache(cacheName)
          if (request.getMethod == "POST" && cache.containsKey(key)) {
             Response.status(Status.CONFLICT).build()
-         } else if (ifMatch.isEmpty && ifNoneMatch.isEmpty && ifModifiedSince.isEmpty && ifUnmodifiedSince.isEmpty) {
-            val obj = if (isBinaryType(mediaType)) data else new MIMECacheEntry(mediaType, data)
-            (ttl, idleTime, useAsync) match {
-               case (0, 0, false) => cache.put(key, obj)
-               case (x, 0, false) => cache.put(key, obj, ttl, TimeUnit.SECONDS)
-               case (x, y, false) => cache.put(key, obj, ttl, TimeUnit.SECONDS, idleTime, TimeUnit.SECONDS)
-               case (0, 0, true) => cache.putAsync(key, obj)
-               case (x, 0, true) => cache.putAsync(key, obj, ttl, TimeUnit.SECONDS)
-               case (x, y, true) => cache.putAsync(key, obj, ttl, TimeUnit.SECONDS, idleTime, TimeUnit.SECONDS)
-            }
-            Response.ok.build
          } else {
-            preconditionNotImplementedResponse()
+            ManagerInstance.getEntry(cacheName, key) match {
+               case b: MIMECacheEntry => {
+                  // The item already exists in the cache, evaluate preconditions based on its attributes and the headers
+                  val lastMod = new Date(b.lastModified)
+                  request.evaluatePreconditions(lastMod, calcETAG(b)) match {
+                     // One of the preconditions failed, build a response
+                     case bldr: ResponseBuilder => bldr.build
+                     // Preconditions passed
+                     case null => putInCache(cache, mediaType, key, data, ttl, idleTime)
+                  }
+               }
+               case null => putInCache(cache, mediaType, key, data, ttl, idleTime)
+            }
          }
       }
+   }
+      
+   private def putInCache(cache: Cache[String, Any], mediaType: String, key: String, data: Array[Byte], ttl: Long, idleTime: Long): Response = {
+      val obj = if (isBinaryType(mediaType)) data else new MIMECacheEntry(mediaType, data)
+      (ttl, idleTime, useAsync) match {
+         case (0, 0, false) => cache.put(key, obj)
+         case (x, 0, false) => cache.put(key, obj, ttl, TimeUnit.SECONDS)
+         case (x, y, false) => cache.put(key, obj, ttl, TimeUnit.SECONDS, idleTime, TimeUnit.SECONDS)
+         case (0, 0, true) => cache.putAsync(key, obj)
+         case (x, 0, true) => cache.putAsync(key, obj, ttl, TimeUnit.SECONDS)
+         case (x, y, true) => cache.putAsync(key, obj, ttl, TimeUnit.SECONDS, idleTime, TimeUnit.SECONDS)
+      }
+      Response.ok.build
    }
 
    @DELETE
    @Path("/{cacheName}/{cacheKey}")
-   def removeEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String,
-                   @DefaultValue("") @HeaderParam("If-Match") ifMatch: String,
-                   @DefaultValue("") @HeaderParam("If-None-Match") ifNoneMatch: String,
-                   @DefaultValue("") @HeaderParam("If-Modified-Since") ifModifiedSince: String,
-                   @DefaultValue("") @HeaderParam("If-Unmodified-Since") ifUnmodifiedSince: String): Response = {
-      if (ifMatch.isEmpty && ifNoneMatch.isEmpty && ifModifiedSince.isEmpty && ifUnmodifiedSince.isEmpty) {
-         if (useAsync) {
-            ManagerInstance.getCache(cacheName).removeAsync(key)
-         } else {
-            ManagerInstance.getCache(cacheName).remove(key)
+   def removeEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String): Response = {
+      ManagerInstance.getEntry(cacheName, key) match {
+         case b: MIMECacheEntry => {
+            // The item exists in the cache, evaluate preconditions based on its attributes and the headers
+	        val lastMod = new Date(b.lastModified)
+	        request.evaluatePreconditions(lastMod, calcETAG(b)) match {
+               // One of the preconditions failed, build a response
+               case bldr: ResponseBuilder => bldr.build
+               // Preconditions passed
+               case null => {
+                  if (useAsync) {
+                     ManagerInstance.getCache(cacheName).removeAsync(key)
+                  } else {
+                     ManagerInstance.getCache(cacheName).remove(key)
+                  }
+                  Response.ok.build
+               }
+            }
          }
-         Response.ok.build
-      } else {
-         preconditionNotImplementedResponse
+         case null => Response.ok.build
       }
    }
 
