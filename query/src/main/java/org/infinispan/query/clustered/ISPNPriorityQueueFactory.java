@@ -65,10 +65,12 @@ class ISPNPriorityQueueFactory {
             Object[] parameters = new Object[1];
             parameters[0] = sort;
             ReflectionUtil.invokeAccessibly(queue, method, parameters);
+            return queue;
          }
       }
       
-      return queue;
+      //The setFields should have been found
+      throw new SearchException( "Method org.apache.lucene.search.FieldDocSortedHitQueue.setFields not found. This version of Lucene is not compatible." );
    }
 
    /**
