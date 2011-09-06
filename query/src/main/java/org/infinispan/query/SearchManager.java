@@ -59,8 +59,8 @@ public interface SearchManager {
    public SearchFactory getSearchFactory();
 
    /**
-    * 
-    * This should be hided into getQuery method...
+    * Experimental!
+    * Use it to try out the newly introduced distributed queries.
     * 
     * @param luceneQuery
     * @param classes
