@@ -25,6 +25,8 @@ package org.infinispan.test.fwk;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.IClass;
+import org.testng.IInvokedMethod;
+import org.testng.IInvokedMethodListener;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
@@ -35,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author dpospisi@redhat.com
  * @author Mircea.Markus@jboss.com
  */
-public class UnitTestTestNGListener implements ITestListener {
+public class UnitTestTestNGListener implements ITestListener, IInvokedMethodListener {
 
    /**
     * Holds test classes actually running in all threads.
@@ -98,5 +100,16 @@ public class UnitTestTestNGListener implements ITestListener {
 
    private void printStatus() {
       System.out.println("Test suite progress: tests succeeded: " + succeeded.get() + ", failed: " + failed.get() + ", skipped: " + skipped.get() + ".");
+   }
+
+   @Override
+   public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
+   }
+
+   @Override
+   public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
+      if (!method.isTestMethod())
+         return;
+      if (testResult.getThrowable() != null) log.errorf(testResult.getThrowable(), "Method %s threw an exception", getTestDesc(testResult));
    }
 }
