@@ -93,6 +93,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    private static final long timeBeforeWeEnqueueCallForRetry = 10000;
 
    private final Map<String, RetryQueue> retryThreadMap = Collections.synchronizedMap(new HashMap<String, RetryQueue>());
+   private volatile boolean stopping;
 
    /**
     * How to handle an invocation based on the join status of a given cache *
@@ -114,10 +115,12 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    public void start() {
       distributedSync = transport.getDistributedSync();
       distributedSyncTimeout = globalConfiguration.getDistributedSyncTimeout();
+      stopping = false;
    }
 
    @Stop
    public void stop() {
+      stopping = true;
       for (Map.Entry<String, RetryQueue> retryThread : retryThreadMap.entrySet()) {
          retryThread.getValue().interrupt();
       }
@@ -146,7 +149,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
             if (isDefined(cacheName)) {
                log.waitForCacheToStart(cacheName);
                long giveupTime = System.currentTimeMillis() + 30000; // arbitrary (?) wait time for caches to start
-               while (cr == null && System.currentTimeMillis() < giveupTime) {
+               while (cr == null && System.currentTimeMillis() < giveupTime && !stopping) {
                   Thread.sleep(100);
                   cr = gcr.getNamedComponentRegistry(cacheName);
                }
