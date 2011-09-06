@@ -308,7 +308,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             boolean syncCommitPhase = configuration.isSyncCommitPhase();
             for (Address a : preparedOn) {
                if (!recipients.contains(a)) {
-                  recipients.add(a);
                   // However if we have prepared on some nodes and are now committing on different nodes, make sure we
                   // force sync commit so we can respond to prepare resend requests.
                   syncCommitPhase = true;
