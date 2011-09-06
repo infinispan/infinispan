@@ -22,6 +22,8 @@
  */
 package org.infinispan.util;
 
+import net.jcip.annotations.GuardedBy;
+
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ModuleCommandFactory;
@@ -42,6 +44,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * The <code>ModuleProperties</code> class represents Infinispan's module configuration key value
@@ -52,6 +55,7 @@ import java.util.Properties;
  *
  *
  * @author Vladimir Blagojevic
+ * @author Sanne Grinovero
  * @since 4.0
  */
 public class ModuleProperties extends Properties {
@@ -65,9 +69,17 @@ public class ModuleProperties extends Properties {
     public static final String MODULE_LIFECYCLE = "infinispan.module.lifecycle";
     public static final String MODULE_COMMAND_INITIALIZER = "infinispan.module.command.initializer";
     public static final String MODULE_COMMAND_FACTORY = "infinispan.module.command.factory";
+
+    private static final ReentrantLock modulePropertiesGuard = new ReentrantLock();
+    @GuardedBy("modulePropertiesGuard")
     private static Map<String,ModuleProperties> moduleProperties;
+
+    private static final ReentrantLock moduleCommandsGuard = new ReentrantLock();
+    @GuardedBy("moduleCommandsGuard")
     private static Map<Byte,ModuleCommandFactory> commandFactories;
+    @GuardedBy("moduleCommandsGuard")
     private static Map<Byte,Class<? extends ModuleCommandInitializer>> commandInitializers;
+    @GuardedBy("moduleCommandsGuard")
     private static Collection<Class<? extends ReplicableCommand>> moduleCommands;
 
     public static ModuleProperties loadModuleProperties(String moduleName, ClassLoader cl) throws IOException {
@@ -117,8 +129,14 @@ public class ModuleProperties extends Properties {
    }
 
    private static Map<String, ModuleProperties> getModuleProperties(ClassLoader cl) throws IOException {
-      if (moduleProperties == null) moduleProperties = loadModuleProperties(cl);
-      return moduleProperties;
+      modulePropertiesGuard.lock();
+      try {
+         if (moduleProperties == null) moduleProperties = loadModuleProperties(cl);
+         return moduleProperties;
+      }
+      finally {
+         modulePropertiesGuard.unlock();
+      }
    }
 
    public static List<ModuleLifecycle> resolveModuleLifecycles(ClassLoader cl) {
@@ -221,24 +239,44 @@ public class ModuleProperties extends Properties {
    }
 
    public static Collection<Class<? extends ReplicableCommand>> moduleCommands(ClassLoader cl) {
-      if (moduleCommands == null) loadModuleCommandHandlers(cl);
-      return moduleCommands;
+      moduleCommandsGuard.lock();
+      try {
+         if (moduleCommands == null) loadModuleCommandHandlers(cl);
+         return moduleCommands;
+      }
+      finally {
+         moduleCommandsGuard.unlock();
+      }
    }
 
    public static Map<Byte, ModuleCommandFactory> moduleCommandFactories(ClassLoader cl) {
-      if (commandFactories == null) loadModuleCommandHandlers(cl);
-      return commandFactories;
+      moduleCommandsGuard.lock();
+      try {
+         if (commandFactories == null) loadModuleCommandHandlers(cl);
+         return commandFactories;
+      }
+      finally {
+         moduleCommandsGuard.unlock();
+      }
    }
 
    public static Map<Byte, ModuleCommandInitializer> moduleCommandInitializers(ClassLoader cl) {
-      if (commandInitializers == null) loadModuleCommandHandlers(cl);
-      if (commandInitializers.isEmpty())
-         return Collections.emptyMap();
-      else {
-         Map<Byte, ModuleCommandInitializer> initializers = new HashMap<Byte, ModuleCommandInitializer>(commandInitializers.size());
-         for (Map.Entry<Byte, Class<? extends ModuleCommandInitializer>> e: commandInitializers.entrySet())
-            initializers.put(e.getKey(), Util.getInstance(e.getValue()));
-         return initializers;
+      moduleCommandsGuard.lock();
+      try {
+         if (commandInitializers == null)
+            loadModuleCommandHandlers(cl);
+         if (commandInitializers.isEmpty())
+            return Collections.emptyMap();
+         else {
+            Map<Byte, ModuleCommandInitializer> initializers = new HashMap<Byte, ModuleCommandInitializer>(
+                  commandInitializers.size());
+            for (Map.Entry<Byte, Class<? extends ModuleCommandInitializer>> e : commandInitializers
+                  .entrySet())
+               initializers.put(e.getKey(), Util.getInstance(e.getValue()));
+            return initializers;
+         }
+      } finally {
+         moduleCommandsGuard.unlock();
       }
    }
 }
