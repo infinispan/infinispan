@@ -86,6 +86,8 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       InternalCacheEntry internalCacheEntry = cache.getAdvancedCache().getDataContainer().get("IT");
       assert internalCacheEntry==null;
 
+      verifyFullTextHasMatches(1);
+
       Country country = cache.get("IT");
       assert country != null;
       assert "Italy".equals(country.countryName);
@@ -116,6 +118,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
                   .preload(true)
             .indexing()
                .addProperty("hibernate.search.default.directory_provider", "ram")
+               .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT")
       .build();
       cm = TestCacheManagerFactory.createCacheManager(cfg, true);
       cache = cm.getCache();

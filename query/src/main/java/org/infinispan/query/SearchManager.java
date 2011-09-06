@@ -58,4 +58,14 @@ public interface SearchManager {
     */
    public SearchFactory getSearchFactory();
 
+   /**
+    * Experimental!
+    * Use it to try out the newly introduced distributed queries.
+    * 
+    * @param luceneQuery
+    * @param classes
+    * @return
+    */
+   CacheQuery getClusteredQuery(Query luceneQuery, Class<?>... classes);
+
 }

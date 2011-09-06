@@ -31,8 +31,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
-import org.hibernate.search.engine.DocumentBuilderIndexedEntity;
-import org.hibernate.search.engine.SearchFactoryImplementor;
+import org.hibernate.search.engine.spi.EntityIndexBinder;
+import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.config.FluentConfiguration;
@@ -330,7 +330,8 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       cfg
          .indexing()
             .indexLocalOnly(false)
-            .addProperty("hibernate.search.default.directory_provider", "ram");
+            .addProperty("hibernate.search.default.directory_provider", "ram")
+            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cfg);
       return TestCacheManagerFactory.createCacheManager(cfg.build(), true);
    }
@@ -356,9 +357,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       SearchFactoryImplementor searchFactoryIntegrator = (SearchFactoryImplementor) cr.getComponent(SearchFactoryIntegrator.class);
       Assert.assertNotNull(searchFactoryIntegrator);
-      Map<Class<?>, DocumentBuilderIndexedEntity<?>> buildersIndexedEntities = searchFactoryIntegrator.getDocumentBuildersIndexedEntities();
-      Assert.assertNotNull(buildersIndexedEntities);
-      Set<Class<?>> keySet = buildersIndexedEntities.keySet();
+      Map<Class<?>, EntityIndexBinder<?>> indexBindingForEntity = searchFactoryIntegrator.getIndexBindingForEntity();
+      Assert.assertNotNull(indexBindingForEntity);
+      Set<Class<?>> keySet = indexBindingForEntity.keySet();
       Assert.assertEquals(types.length, keySet.size());
       Assert.assertTrue(keySet.containsAll(Arrays.asList(types)));
    }

@@ -53,7 +53,7 @@ public interface ModuleCommandFactory {
    Map<Byte, Class<? extends ReplicableCommand>> getModuleCommands();
 
    /**
-    * Consruct and initialize a ReplicableCommand based on the command id and argument array passed in.
+    * Construct and initialize a ReplicableCommand based on the command id and argument array passed in.
     * @param commandId command id to construct
     * @param args array of arguments with which to initialize the ReplicableCommand
     * @return a ReplicableCommand

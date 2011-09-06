@@ -23,10 +23,10 @@
 package org.infinispan.query.backend;
 
 import org.hibernate.search.backend.TransactionContext;
-import org.hibernate.search.backend.Work;
-import org.hibernate.search.backend.WorkType;
+import org.hibernate.search.backend.spi.Work;
+import org.hibernate.search.backend.spi.WorkType;
+import org.hibernate.search.engine.spi.EntityIndexBinder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
-import org.hibernate.search.store.DirectoryProvider;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -35,6 +35,8 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
@@ -46,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -69,17 +72,28 @@ public class QueryInterceptor extends CommandInterceptor {
    private final Lock mutating = new ReentrantLock();
    protected TransactionManager transactionManager;
    protected TransactionSynchronizationRegistry transactionSynchronizationRegistry;
+   private ExecutorService asyncExecutor;
 
    public QueryInterceptor(SearchFactoryIntegrator searchFactory) {
       this.searchFactory = searchFactory;
    }
 
    @Inject
-   public void init(TransactionManager transactionManager, TransactionSynchronizationRegistry transactionSynchronizationRegistry) {
+   public void injectDependencies(
+         @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
+      this.asyncExecutor = e;
    }
 
    protected boolean shouldModifyIndexes(InvocationContext ctx) {
       return ! ctx.hasFlag(Flag.SKIP_INDEXING);
+   }
+
+   /**
+    * Use this executor for Async operations
+    * @return
+    */
+   public ExecutorService getAsyncExecutor() {
+      return asyncExecutor;
    }
 
    @Override
@@ -174,11 +188,10 @@ public class QueryInterceptor extends CommandInterceptor {
          if (trace) log.trace("shouldModifyIndexes() is true and we can clear the indexes");
 
          for (Class c : this.knownClasses.keySet()) {
-            DirectoryProvider[] providers = this.searchFactory.getDirectoryProviders(c);
-            Serializable id = null;
-            if (providers != null && providers.length > 0) { //check as not all known classes are indexed
-               searchFactory.getWorker().performWork(new Work<Object>(c, id, WorkType.PURGE_ALL),
-                                                  new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry));
+            EntityIndexBinder binder = this.searchFactory.getIndexBindingForEntity(c);
+            if ( binder != null ) { //check as not all known classes are indexed
+               searchFactory.getWorker().performWork(new Work<Object>(c, (Serializable)null,
+                     WorkType.PURGE_ALL), new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry));
             }
          }
       }

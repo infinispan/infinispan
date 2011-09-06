@@ -74,12 +74,12 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       FluentConfiguration cacheCfg = getDefaultClusteredConfig(REPL_SYNC).fluent();
-      cacheCfg
-         .indexing()
-         .indexLocalOnly(false)
-         .addProperty("hibernate.search.default.directory_provider", "ram");
+      cacheCfg.indexing().indexLocalOnly(false)
+         .addProperty("hibernate.search.default.directory_provider", "ram")
+         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);
-      List<Cache<String, Person>> caches = createClusteredCaches(2, /*"query-cache",*/ cacheCfg.build());
+      List<Cache<String, Person>> caches = createClusteredCaches(2, /* "query-cache", */cacheCfg
+               .build());
       cache1 = caches.get(0);
       cache2 = caches.get(1);
    }
@@ -97,7 +97,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       person3.setName("MiniGoat");
       person3.setBlurb("Eats cheese");
 
-      //Put the 3 created objects in the cache1.
+      // Put the 3 created objects in the cache1.
 
       cache1.put(key1, person1);
       cache1.put(key2, person2);
@@ -128,7 +128,8 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    private void assertQueryInterceptorPresent(Cache<?, ?> c) {
       CommandInterceptor i = TestingUtil.findInterceptor(c, QueryInterceptor.class);
-      assert i != null : "Expected to find a QueryInterceptor, only found " + c.getAdvancedCache().getInterceptorChain();
+      assert i != null : "Expected to find a QueryInterceptor, only found "
+               + c.getAdvancedCache().getInterceptorChain();
    }
 
    public void testModified() throws ParseException {
@@ -147,7 +148,6 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       person1.setBlurb("Likes pizza");
       cache1.put("Navin", person1);
 
-
       queryParser = createQueryParser("blurb");
       luceneQuery = queryParser.parse("pizza");
       cacheQuery = Search.getSearchManager(cache2).getQuery(luceneQuery);
@@ -165,7 +165,6 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       luceneQuery = queryParser.parse("eats");
       cacheQuery = Search.getSearchManager(cache2).getQuery(luceneQuery);
       List<Object> found = cacheQuery.list();
-
 
       assert found.size() == 2 : "Size of list should be 2";
       assert found.contains(person2);
@@ -249,23 +248,6 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       luceneQuery = queryParser.parse("playing");
       queries[1] = luceneQuery;
-
-      luceneQuery = luceneQuery.combine(queries);
-
-      cacheQuery = Search.getSearchManager(cache1).getQuery(luceneQuery);
-      assert cacheQuery.getResultSize() == 3;
-
-      // run the same query on cache 2
-      cacheQuery = Search.getSearchManager(cache2).getQuery(luceneQuery);
-      assert cacheQuery.getResultSize() == 3;
-
-      cache1.clear();
-      cacheQuery = Search.getSearchManager(cache1).getQuery(luceneQuery);
-      assert cacheQuery.getResultSize() == 0;
-
-      // run the same query on cache 2
-      cacheQuery = Search.getSearchManager(cache2).getQuery(luceneQuery);
-      assert cacheQuery.getResultSize() == 0;
    }
 
 }
