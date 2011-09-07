@@ -679,7 +679,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
       boolean traceEnabled = getLog().isTraceEnabled();
       for (PrioritizedMethod em : startMethods) {
-         if (traceEnabled) getLog().tracef("Invoking stop method %s on component %s", em.method, em.component.getName());
+         if (traceEnabled) getLog().tracef("Invoking start method %s on component %s", em.method, em.component.getName());
          em.invoke();
       }
 
