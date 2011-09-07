@@ -82,7 +82,7 @@ import static org.jboss.logging.Logger.Level.*;
  * <p/>
  * In addition to the 6 log levels available, this framework also supports
  * parameter interpolation, similar to the JDKs {@link String#format(String, Object...)}
- * method.  What this means is, that the following block:
+ * method. What this means is, that the following block:
  * <code> if (log.isTraceEnabled()) { log.trace("This is a message " + message + " and some other value is " + value); }
  * </code>
  * <p/>
@@ -120,7 +120,7 @@ public interface Log extends BasicLogger {
    void errorReadingProperties(@Cause IOException e);
 
    @LogMessage(level = WARN)
-   @Message(value = "Detected write skew on key [%s].  Another process has changed the entry since we last read it!  Unable to copy entry for update.", id = 5)
+   @Message(value = "Detected write skew on key [%s]. Another process has changed the entry since we last read it! Unable to copy entry for update.", id = 5)
    void unableToCopyEntryForUpdate(Object key);
 
    @LogMessage(level = WARN)
@@ -136,15 +136,15 @@ public interface Log extends BasicLogger {
    void cannotSelectRandomMembers(int numNeeded, List<Address> members);
 
    @LogMessage(level = INFO)
-   @Message(value = "Detected a view change.  Member list changed from %s to %s", id = 9)
+   @Message(value = "Detected a view change. Member list changed from %s to %s", id = 9)
    void viewChangeDetected(List<Address> oldMembers, List<Address> newMembers);
 
    @LogMessage(level = INFO)
-   @Message(value = "This is a JOIN event!  Wait for notification from new joiner %s", id = 10)
+   @Message(value = "This is a JOIN event! Wait for notification from new joiner %s", id = 10)
    void joinEvent(Address joiner);
 
    @LogMessage(level = INFO)
-   @Message(value = "This is a LEAVE event!  Node %s has just left", id = 11)
+   @Message(value = "This is a LEAVE event! Node %s has just left", id = 11)
    void leaveEvent(Address leaver);
 
    @LogMessage(level = FATAL)
@@ -156,11 +156,11 @@ public interface Log extends BasicLogger {
    void participatingInRehash(Address address, List<Address> stateProviders, List<Address> receiversOfLeaverState);
 
    @LogMessage(level = INFO)
-   @Message(value = "DistributionManager not yet joined the cluster.  Cannot do anything about other concurrent joiners.", id = 14)
+   @Message(value = "DistributionManager not yet joined the cluster. Cannot do anything about other concurrent joiners.", id = 14)
    void distributionManagerNotJoined();
 
    @LogMessage(level = WARN)
-   @Message(value = "DistributionManager not started after waiting up to 5 minutes!  Not rehashing!", id = 15)
+   @Message(value = "DistributionManager not started after waiting up to 5 minutes! Not rehashing!", id = 15)
    void distributionManagerNotStarted();
 
    @LogMessage(level = WARN)
@@ -381,7 +381,7 @@ public interface Log extends BasicLogger {
    void namedCacheDoesNotExist(String cacheName);
 
    @LogMessage(level = INFO)
-   @Message(value = "Cache named [%s] exists but isn't in a state to handle invocations.  Its state is %s.", id = 69)
+   @Message(value = "Cache named [%s] exists but isn't in a state to handle invocations. Its state is %s.", id = 69)
    void cacheCanNotHandleInvocations(String cacheName, ComponentStatus status);
 
    @LogMessage(level = INFO)
@@ -437,11 +437,11 @@ public interface Log extends BasicLogger {
    void stoppingRpcDispatcher();
 
    @LogMessage(level = ERROR)
-   @Message(value = "Class [%s] cannot be cast to JGroupsChannelLookup!  Not using a channel lookup.", id = 83)
+   @Message(value = "Class [%s] cannot be cast to JGroupsChannelLookup! Not using a channel lookup.", id = 83)
    void wrongTypeForJGroupsChannelLookup(String channelLookupClassName, @Cause Exception e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Errors instantiating [%s]!  Not using a channel lookup.", id = 84)
+   @Message(value = "Errors instantiating [%s]! Not using a channel lookup.", id = 84)
    void errorInstantiatingJGroupsChannelLookup(String channelLookupClassName, @Cause Exception e);
 
    @LogMessage(level = ERROR)
@@ -457,7 +457,7 @@ public interface Log extends BasicLogger {
    void errorCreatingChannelFromConfigString(String cfg);
 
    @LogMessage(level = INFO)
-   @Message(value = "Unable to use any JGroups configuration mechanisms provided in properties %s.  " +
+   @Message(value = "Unable to use any JGroups configuration mechanisms provided in properties %s. " +
          "Using default JGroups configuration!", id = 88)
    void unableToUseJGroupsPropertiesProvided(TypedProperties props);
 
@@ -470,7 +470,7 @@ public interface Log extends BasicLogger {
    void unableToRetrieveState(Address member, @Cause Exception e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Channel does not contain STREAMING_STATE_TRANSFER.  " +
+   @Message(value = "Channel does not contain STREAMING_STATE_TRANSFER. " +
          "Cannot support state transfers!", id = 91)
    void streamingStateTransferNotPresent();
 
@@ -534,8 +534,8 @@ public interface Log extends BasicLogger {
    void failedToCreateInitialCtx(@Cause NamingException e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Found WebSphere TransactionManager factory class [%s], but" +
-         " couldn't invoke its static 'getTransactionManager' method", id = 106)
+   @Message(value = "Found WebSphere TransactionManager factory class [%s], but " +
+         "couldn't invoke its static 'getTransactionManager' method", id = 106)
    void unableToInvokeWebsphereStaticGetTmMethod(@Cause Exception ex, String className);
 
    @LogMessage(level = INFO)
@@ -603,15 +603,15 @@ public interface Log extends BasicLogger {
    void unableToSetValue(@Cause Exception e);
 
    @LogMessage(level = WARN)
-   @Message(value = "Unable to convert string property [%s] to an int!  Using default value of %d", id = 122)
+   @Message(value = "Unable to convert string property [%s] to an int! Using default value of %d", id = 122)
    void unableToConvertStringPropertyToInt(String value, int defaultValue);
 
    @LogMessage(level = WARN)
-   @Message(value = "Unable to convert string property [%s] to a long!  Using default value of %d", id = 123)
+   @Message(value = "Unable to convert string property [%s] to a long! Using default value of %d", id = 123)
    void unableToConvertStringPropertyToLong(String value, long defaultValue);
 
    @LogMessage(level = WARN)
-   @Message(value = "Unable to convert string property [%s] to a boolean!  Using default value of %b", id = 124)
+   @Message(value = "Unable to convert string property [%s] to a boolean! Using default value of %b", id = 124)
    void unableToConvertStringPropertyToBoolean(String value, boolean defaultValue);
 
    @LogMessage(level = WARN)
@@ -635,7 +635,7 @@ public interface Log extends BasicLogger {
    void cacheNotStarted();
 
    @LogMessage(level = ERROR)
-   @Message(value = "Caught exception!  Aborting join.", id = 130)
+   @Message(value = "Caught exception! Aborting join.", id = 130)
    void abortingJoin(@Cause Exception e);
 
    @LogMessage(level = INFO)
@@ -686,8 +686,8 @@ public interface Log extends BasicLogger {
    void couldNotRollbackPrepared1PcTransaction(LocalXaTransaction localTransaction, @Cause XAException e1);
 
    @LogMessage(level = WARN)
-   @Message(value = "The async store shutdown timeout (%d ms) is too high compared" +
-         " to cache stop timeout (%d ms), so instead using %d ms for async store stop wait", id = 142)
+   @Message(value = "The async store shutdown timeout (%d ms) is too high compared " +
+         "to cache stop timeout (%d ms), so instead using %d ms for async store stop wait", id = 142)
    void asyncStoreShutdownTimeoutTooHigh(long configuredAsyncStopTimeout,
       long cacheStopTimeout, long asyncStopTimeout);
 
@@ -728,7 +728,7 @@ public interface Log extends BasicLogger {
    void errorFlushingToFileChannel(FileChannel f, @Cause Exception e);
 
    @LogMessage(level = WARN)
-   @Message(value = "Passivation configured without a valid eviction policy.  " +
+   @Message(value = "Passivation configured without a valid eviction policy. " +
       "This could mean that the cache store will never get used unless code calls Cache.evict() manually.", id = 152)
    void passivationWithoutEviction();
 
