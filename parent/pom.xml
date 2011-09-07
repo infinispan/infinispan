@@ -140,7 +140,7 @@
       <version.jstl>1.2</version.jstl>
       <version.jta>1.0.1.GA</version.jta>
       <version.log4j>1.2.16</version.log4j>
-      <version.lucene>3.3.0</version.lucene>
+      <version.lucene>3.4.0</version.lucene>
       <version.mysql.driver>5.1.9</version.mysql.driver>
       <version.netty>3.2.3.Final</version.netty>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
