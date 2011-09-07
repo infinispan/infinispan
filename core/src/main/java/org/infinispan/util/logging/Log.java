@@ -373,8 +373,8 @@ public interface Log extends BasicLogger {
    void unableToReadVersionId();
 
    @LogMessage(level = INFO)
-   @Message(value = "Will try and wait for cache named %s to start", id = 67)
-   void waitForCacheToStart(String cache);
+   @Message(value = "Will try and wait for the cache %s to start", id = 67)
+   void waitForCacheToStart(String cacheName);
 
    @LogMessage(level = INFO)
    @Message(value = "Cache named %s does not exist on this cache manager!", id = 68)
@@ -737,6 +737,15 @@ public interface Log extends BasicLogger {
    void evictionWakeUpIntervalDeprecated();
 
    @LogMessage(level = ERROR)
-   @Message(value = "Unable to unlock keys %2$s for transaction %1$s after they were rebalanced off node %3$s")
+   @Message(value = "Unable to unlock keys %2$s for transaction %1$s after they were rebalanced off node %3$s", id = 154)
    void unableToUnlockRebalancedKeys(GlobalTransaction gtx, List<Object> keys, Address self, @Cause Throwable t);
+
+   @LogMessage(level = WARN)
+   @Message(value = "You are not starting all your caches at the same time. This can lead to problems as asymmetric clusters are not supported, see ISPN-658", id = 155)
+   void asymmetricClusterWarning();
+
+   @LogMessage(level = WARN)
+   @Message(value = "You are not starting all your caches at the same time. This can lead to problems as asymmetric clusters are not supported, see ISPN-658. " +
+         "We recommend using EmbeddedCacheManager.startCaches() to start all your caches upfront.", id = 156)
+   void shouldBeUsingStartCache(String cacheName);
 }

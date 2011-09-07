@@ -28,7 +28,12 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.*;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -37,11 +42,13 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.*;
+import org.infinispan.distribution.DataLocality;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.L1Manager;
+import org.infinispan.distribution.RehashInProgressException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
-import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
@@ -49,7 +56,13 @@ import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * The interceptor that handles distribution of entries across a cluster, as well as transparent lookup
@@ -66,7 +79,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    boolean isL1CacheEnabled, needReliableReturnValues;
    EntryFactory entryFactory;
    L1Manager l1Manager;
-   TransactionLogger transactionLogger;
 
    static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
       public List<Address> generateRecipients() {
@@ -79,7 +91,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    };
 
    @Inject
-   public void injectDependencies(DistributionManager distributionManager, CommandsFactory cf, DataContainer dataContainer, EntryFactory entryFactory, L1Manager l1Manager) {
+   public void injectDependencies(DistributionManager distributionManager, CommandsFactory cf,
+                                  DataContainer dataContainer, EntryFactory entryFactory, L1Manager l1Manager) {
       this.dm = distributionManager;
       this.cf = cf;
       this.dataContainer = dataContainer;
@@ -91,7 +104,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public void start() {
       isL1CacheEnabled = configuration.isL1CacheEnabled();
       needReliableReturnValues = !configuration.isUnsafeUnreliableReturnValues();
-      
+
    }
 
    // ---- READ commands
@@ -107,13 +120,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       // so we need to check whether join has completed as well.
       boolean isRehashInProgress = !dm.isJoinComplete() || dm.isRehashInProgress();
       Object returnValue = invokeNextInterceptor(ctx, command);
-      
+
       // If L1 caching is enabled, this is a remote command, and we found a value in our cache
       // we store it so that we can later invalidate it
       if (isL1CacheEnabled && !ctx.isOriginLocal() && returnValue != null) {
       	l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
       }
-      
+
       // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
       // available.  It could just have been removed in the same tx beforehand.
       if (needsRemoteGet(ctx, command.getKey(), returnValue == null))
@@ -276,10 +289,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return r instanceof SuccessfulResponse && Byte.valueOf(CommitCommand.RESEND_PREPARE).equals(((SuccessfulResponse) r).getResponseValue());
    }
 
-   private boolean needToResendAfterRehash(Response r) {
-      return r instanceof ExceptionResponse && ((SuccessfulResponse)r).getResponseValue() instanceof RehashInProgressException;
-   }
-
    // ---- TX boundary commands
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
@@ -291,8 +300,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             f = l1Manager.flushCache(ctx.getLockedKeys(), null, null);
          }
 
-         while (true) {
-            boolean needToWaitForRehash = false;
+         // We try harder to make a commit succeed, but at some point we have to give up
+         for (int i = 0; i < 3; i++) {
             Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
 
             // By default, use the configured commit sync settings
@@ -326,11 +335,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                // we are assuming the current node is also trying to start the rehash, but it can't
                // because we're holding the tx lock
                // there is no problem if some nodes already applied the commit
-               transactionLogger.suspendTransactionLock(ctx);
+               dm.getTransactionLogger().suspendTransactionLock(ctx);
                log.tracef("Released the transaction lock temporarily, allow rehashing to proceed on %s", rpcManager.getAddress());
 
-               transactionLogger.resumeTransactionLock(ctx);
-               log.tracef("Rehashing completed, acquiring the transaction lock and manik: I %s", rpcManager.getAddress());
+               dm.getTransactionLogger().resumeTransactionLock(ctx);
+               log.tracef("Rehashing completed, retrying the commit on the remote nodes %s", rpcManager.getAddress());
             }
          }
 
@@ -404,19 +413,19 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       Object returnValue = invokeNextInterceptor(ctx, command);
 
       if (command.isSuccessful()) {
-      	
+
          if (!ctx.isInTxScope()) {
          	NotifyingNotifiableFuture<Object> future = null;
             if (ctx.isOriginLocal()) {
                List<Address> rec = recipientGenerator.generateRecipients();
                int numCallRecipients = rec == null ? 0 : rec.size();
                if (trace) log.tracef("Invoking command %s on hosts %s", command, rec);
-               
+
                boolean useFuture = ctx.isUseFutureReturnType();
                if (isL1CacheEnabled && !skipL1Invalidation)
                	// Handle the case where the put is local. If in unicast mode and this is not a data
                	// owner, nothing happens. If in multicast mode, we this node will send the multicast
-               	if (rpcManager.getTransport().getMembers().size() > numCallRecipients) { 
+               	if (rpcManager.getTransport().getMembers().size() > numCallRecipients) {
                		// Command was successful, we have a number of receipients and L1 should be flushed, so request any L1 invalidations from this node
                		if (trace) log.tracef("Put occuring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s", command.getAffectedKeys(), dm.getAffectedNodes(command.getAffectedKeys()));
                		future = l1Manager.flushCache(recipientGenerator.getKeys(), returnValue, null);

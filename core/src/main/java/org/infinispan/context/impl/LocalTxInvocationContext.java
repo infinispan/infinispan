@@ -28,6 +28,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.AbstractCacheTransaction;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.BidirectionalLinkedHashMap;
 import org.infinispan.util.BidirectionalMap;
 
 import javax.transaction.Status;
@@ -45,6 +46,8 @@ import java.util.Map;
  * @since 4.0
  */
 public class LocalTxInvocationContext extends AbstractTxInvocationContext {
+
+   public static final BidirectionalLinkedHashMap<Object,CacheEntry> EMPTY_ENTRY_MAP = new BidirectionalLinkedHashMap<Object, CacheEntry>();
 
    private LocalTransaction localTransaction;
 
@@ -86,7 +89,7 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
-      return localTransaction.getLookedUpEntries();
+      return localTransaction != null ? localTransaction.getLookedUpEntries() : EMPTY_ENTRY_MAP;
    }
 
    public void putLookedUpEntry(Object key, CacheEntry e) {

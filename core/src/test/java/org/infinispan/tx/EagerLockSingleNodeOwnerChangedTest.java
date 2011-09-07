@@ -52,7 +52,7 @@ import java.util.concurrent.Executors;
  * @author Mircea Markus
  * @since 5.0
  */
-@Test (groups = "functional", testName = "tx.MainOwnerChangedTest")
+@Test (groups = "functional", testName = "tx.EagerLockSingleNodeOwnerChangedTest")
 @CleanupAfterMethod
 public class EagerLockSingleNodeOwnerChangedTest extends MultipleCacheManagersTest {
 

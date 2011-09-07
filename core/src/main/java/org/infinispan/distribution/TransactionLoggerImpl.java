@@ -37,8 +37,16 @@ import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.util.Arrays.asList;
@@ -163,7 +171,6 @@ public class TransactionLoggerImpl implements TransactionLogger {
    public void afterCommand(TxInvocationContext ctx, LockControlCommand command) {
       if (!command.isUnlock())
          releaseLockForTx();
-      // TODO Log lock control commands too
    }
 
    private void logModificationsInTransaction(PrepareCommand command) throws InterruptedException {
@@ -291,17 +298,31 @@ public class TransactionLoggerImpl implements TransactionLogger {
    }
 
    private boolean acquireLockForTx(InvocationContext ctx) throws InterruptedException, TimeoutException {
+      // hold the read lock to ensure the rehash process waits for the tx to end
+      // first try with 0 timeout, in case a rehash is not in progress
+      if (txLockLatch.await(0, TimeUnit.MILLISECONDS)) {
+         if (!txLock.readLock().tryLock())
+            throw new IllegalStateException("Transaction latch open but transaction lock locked exclusively");
+         return true;
+      }
+
       // When the command is being replicated, the caller already holds the tx lock for read on the
       // origin since DistributionInterceptor is above DistTxInterceptor in the interceptor chain.
       // In order to allow the rehashing thread on the origin to obtain the tx lock for write on the
-      // origin, we lock on the remote nodes with 0 timeout.
-      long timeout = ctx.isOriginLocal() ? lockTimeout : 0;
+      // origin, we only lock on the remote nodes with 0 timeout.
+      if (!ctx.isOriginLocal())
+         return false;
+
+      // A rehash may be in progress, wait for it to end
+      // But another transaction may have obtained the tx lock and be waiting on one of the keys locked by us
+      // So if we have any locks wait for a much shorter amount of time
+      // We do a separate wait here because we don't want to call ctx.getLockedKeys() all the time
+      boolean hasAcquiredLocks = ctx.getLockedKeys().size() > 0;
+      long timeout = hasAcquiredLocks ? lockTimeout / 100 : lockTimeout;
       if (!txLockLatch.await(timeout, TimeUnit.MILLISECONDS))
          return false;
-      // hold the read lock to ensure the rehash process waits for the tx to end
       if (!txLock.readLock().tryLock())
-         throw new IllegalStateException("Tx lock should not be locked for writing as long as the latch is open");
-
+         throw new IllegalStateException("Transaction latch open but transaction lock locked exclusively");
       return true;
    }
 
