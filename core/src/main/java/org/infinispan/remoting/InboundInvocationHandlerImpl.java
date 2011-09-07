@@ -95,6 +95,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    private static final long timeBeforeWeEnqueueCallForRetry = 10000;
 
    private final Map<String, RetryQueue> retryThreadMap = Collections.synchronizedMap(new HashMap<String, RetryQueue>());
+   private volatile boolean stopping;
 
    /**
     * How to handle an invocation based on the join status of a given cache *
@@ -119,10 +120,12 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    public void start() {
       distributedSync = transport.getDistributedSync();
       distributedSyncTimeout = globalConfiguration.getDistributedSyncTimeout();
+      stopping = false;
    }
 
    @Stop
    public void stop() {
+      stopping = true;
       for (Map.Entry<String, RetryQueue> retryThread : retryThreadMap.entrySet()) {
          retryThread.getValue().interrupt();
       }
@@ -132,8 +135,10 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       return CacheContainer.DEFAULT_CACHE_NAME.equals(cacheName) || embeddedCacheManager.getCacheNames().contains(cacheName);
    }
 
-   public void waitForStart(CacheRpcCommand cmd) {
-      // the cache should not be accessible from user code until the join is finished
+   public void waitForStart(CacheRpcCommand cmd) throws InterruptedException {
+      if (cmd.getConfiguration().getCacheMode().isDistributed()) {
+         cmd.getComponentRegistry().getComponent(DistributionManager.class).waitForJoinToComplete();
+      }
    }
 
    @Override
@@ -148,7 +153,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
             if (isDefined(cacheName)) {
                log.waitForCacheToStart(cacheName);
                long giveupTime = System.currentTimeMillis() + 30000; // arbitrary (?) wait time for caches to start
-               while (cr == null && System.currentTimeMillis() < giveupTime) {
+               while (cr == null && System.currentTimeMillis() < giveupTime && !stopping) {
                   Thread.sleep(100);
                   cr = gcr.getNamedComponentRegistry(cacheName);
                }

@@ -274,11 +274,14 @@ public class TransactionLoggerImpl implements TransactionLogger {
 
    @Override
    public void blockNewTransactions() throws InterruptedException {
-      if (trace) log.debug("Blocking new transactions");
-      // for lock commands
-      txLockLatch.close();
-      // we want to ensure that all the modifications that passed through the tx gate have ended
-      txLock.writeLock().lockInterruptibly();
+      if (!txLock.isWriteLockedByCurrentThread()) {
+         if (trace) log.debug("Blocking new transactions");
+         txLockLatch.close();
+         // we want to ensure that all the modifications that passed through the tx gate have ended
+         txLock.writeLock().lockInterruptibly();
+      } else {
+         if (trace) log.debug("New transactions were not unblocked by the previous rehash");
+      }
    }
 
    @Override

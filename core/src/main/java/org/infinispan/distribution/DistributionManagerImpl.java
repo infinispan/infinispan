@@ -67,7 +67,6 @@ import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -223,8 +222,9 @@ public class DistributionManagerImpl implements DistributionManager {
 
    // To avoid blocking other components' start process, wait last, if necessary, for join to complete.
 
+   @Override
    @Start(priority = 1000)
-   public void waitForJoinToComplete() throws Throwable {
+   public void waitForJoinToComplete() throws InterruptedException {
       joinCompletedLatch.await();
       joinComplete = true;
    }
@@ -506,7 +506,6 @@ public class DistributionManagerImpl implements DistributionManager {
          if(trace)
             log.tracef("New view received: %d, type=%s, members: %s. Starting the RebalanceTask", e.getViewId(), e.getType(), e.getNewMembers());
 
-         boolean rehashInterrupted = rehashInProgress;
          synchronized (rehashInProgressMonitor) {
             rehashInProgress = true;
             receivedRehashCompletedNotification = false;
@@ -538,7 +537,7 @@ public class DistributionManagerImpl implements DistributionManager {
          }
 
          RebalanceTask rebalanceTask = new RebalanceTask(rpcManager, cf, configuration, dataContainer,
-               DistributionManagerImpl.this, icc, cacheNotifier, interceptorChain, e.getViewId(), rehashInterrupted);
+               DistributionManagerImpl.this, icc, cacheNotifier, interceptorChain, e.getViewId());
          rehashExecutor.submit(rebalanceTask);
       }
    }
