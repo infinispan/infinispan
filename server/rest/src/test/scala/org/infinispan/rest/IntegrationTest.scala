@@ -76,8 +76,7 @@ class IntegrationTest {
       val insert = new PutMethod(fullPathKey)
       val initialXML = <hey>ho</hey>
 
-      insert.setRequestBody(new ByteArrayInputStream(initialXML.toString.getBytes))
-      insert.setRequestHeader("Content-Type", "application/octet-stream")
+      insert.setRequestEntity(new ByteArrayRequestEntity(initialXML.toString.getBytes, "application/octet-stream"))      
 
       Client.call(insert)
 
@@ -116,8 +115,7 @@ class IntegrationTest {
 
       val insertMore = new PutMethod(fullPathKey)
 
-      insertMore.setRequestBody(new ByteArrayInputStream(byteData))
-      insertMore.setRequestHeader("Content-Type", "application/octet-stream")
+      insertMore.setRequestEntity(new ByteArrayRequestEntity(byteData,  "application/octet-stream"))
 
       Client.call(insertMore)
 
@@ -142,8 +140,7 @@ class IntegrationTest {
    def testGet(m: Method) = {
       val fullPathKey = fullPath + "/" + m.getName
       val post = new PostMethod(fullPathKey)
-      post.setRequestHeader("Content-Type", "application/text")
-      post.setRequestBody("data")
+      post.setRequestEntity(new StringRequestEntity("data", "application/text", null))
       Client.call(post)
 
       val get = Client.call(new GetMethod(fullPathKey))
@@ -157,8 +154,7 @@ class IntegrationTest {
    def testHead(m: Method) = {
       val fullPathKey = fullPath + "/" + m.getName
       val post = new PostMethod(fullPathKey)
-      post.setRequestHeader("Content-Type", "application/text")
-      post.setRequestBody("data")
+      post.setRequestEntity(new StringRequestEntity("data", "application/text", null))
       Client.call(post)
 
       val get = Client.call(new HeadMethod(fullPathKey))
@@ -173,8 +169,7 @@ class IntegrationTest {
    def testGetIfUnmodified(m: Method) = {
       val fullPathKey = fullPath + "/" + m.getName
       val post = new PostMethod(fullPathKey)
-      post.setRequestHeader("Content-Type", "application/text")
-      post.setRequestBody("data")
+      post.setRequestEntity(new StringRequestEntity("data", "application/text", null))
       Client.call(post)
 
       var get = Client.call(new GetMethod(fullPathKey))
@@ -199,16 +194,14 @@ class IntegrationTest {
    def testPostDuplicate(m: Method) = {
       val fullPathKey = fullPath + "/" + m.getName
       val post = new PostMethod(fullPathKey)
-      post.setRequestHeader("Content-Type", "application/text")
-      post.setRequestBody("data")
+      post.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
       Client.call(post)
 
       //Should get a conflict as its a DUPE post
       assertEquals(HttpServletResponse.SC_CONFLICT, Client.call(post).getStatusCode)
 
       val put = new PutMethod(fullPathKey)
-      put.setRequestHeader("Content-Type", "application/text")
-      put.setRequestBody("data")
+      put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
 
       //Should be all ok as its a put
       assertEquals(HttpServletResponse.SC_OK, Client.call(put).getStatusCode)
@@ -222,8 +215,7 @@ class IntegrationTest {
 
    private def putAndAssertEphemeralData(m: Method, timeToLiveSeconds: String, maxIdleTimeSeconds: String) {
       val fullPathKey = fullPath + "/" + m.getName
-      val post = new PostMethod(fullPathKey)
-      post.setRequestHeader("Content-Type", "application/text")
+      val post = new PostMethod(fullPathKey)      
       var maxWaitTime = 0
       if (!timeToLiveSeconds.isEmpty) {
          maxWaitTime = max(maxWaitTime, timeToLiveSeconds.toInt)
@@ -235,7 +227,7 @@ class IntegrationTest {
          post.setRequestHeader("maxIdleTimeSeconds", maxIdleTimeSeconds)
       }
 
-      post.setRequestBody("data")
+      post.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
       Client.call(post)
 
       val get = Client.call(new GetMethod(fullPathKey))
@@ -245,28 +237,203 @@ class IntegrationTest {
       Client.call(get)
       assertEquals(HttpServletResponse.SC_NOT_FOUND, get.getStatusCode)
    }
-
-   def testPutPreconditionUnimplemented(m: Method): Unit = {
-      testPutPreconditionUnimplemented(m, "If-Match")
-      testPutPreconditionUnimplemented(m, "If-None-Match")
-      testPutPreconditionUnimplemented(m, "If-Modified-Since")
-      testPutPreconditionUnimplemented(m, "If-Unmodified-Since")
-   }
-
-   private def testPutPreconditionUnimplemented(m: Method, preconditionalHeaderName: String) = {
+   
+   def testPutDataWithIfMatch(m: Method) {
+      // Put the data first
       val fullPathKey = fullPath + "/" + m.getName
-      val post = new PostMethod(fullPathKey)
-      post.setRequestHeader("Content-Type", "application/text")
-      post.setRequestHeader(preconditionalHeaderName, "*");
-      post.setRequestEntity(new StringRequestEntity("data", "text/plain", "UTF-8"))
-      Client.call(post)
+      val put = new PutMethod(fullPathKey)
+      put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      Client.call(put)
       
-      assertNotImplemented(post)
+      // Now get it to retrieve some attributes
+      val get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
+      val etag = get.getResponseHeader("ETag").getValue      
+      
+      // Put again using the If-Match with the ETag we got back from the get
+      val reput = new PutMethod(fullPathKey)      
+      reput.setRequestHeader("If-Match", etag);
+      reput.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      assertEquals(HttpServletResponse.SC_OK, Client.call(reput).getStatusCode)
+      
+      // Try to put again, but with a different ETag
+      val reputAgain = new PutMethod(fullPathKey)
+      reputAgain.setRequestHeader("If-Match", "x");
+      reputAgain.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(reputAgain).getStatusCode)
    }
-
-   def testDeleteEntryPreconditionUnimplemented(m: Method) =
-      testDeletePreconditionalUnimplemented(fullPath + "/" + m.getName)
-
+   
+   def testPutDataWithIfNoneMatch(m: Method) {
+      // Put the data first
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      Client.call(put)
+      
+      // Now get it to retrieve some attributes
+      val get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
+      val etag = get.getResponseHeader("ETag").getValue      
+      
+      // Put again using the If-Match with the ETag we got back from the get
+      val reput = new PutMethod(fullPathKey)      
+      reput.setRequestHeader("If-None-Match", "x");
+      reput.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      assertEquals(HttpServletResponse.SC_OK, Client.call(reput).getStatusCode)
+      
+      // Try to put again, but with a different ETag
+      val reputAgain = new PutMethod(fullPathKey)      
+      reputAgain.setRequestHeader("If-None-Match", etag);
+      reputAgain.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(reputAgain).getStatusCode)
+   }
+   
+   def testPutDataWithIfModifiedSince(m: Method) {
+      // Put the data first
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      Client.call(put)
+      
+      // Now get it to retrieve some attributes
+      val get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)      
+      val lastMod = get.getResponseHeader("Last-Modified").getValue      
+      
+      // Put again using the If-Modified-Since with the lastMod we got back from the get
+      val reput = new PutMethod(fullPathKey)
+      reput.setRequestHeader("If-Modified-Since", lastMod)
+      reput.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      assertEquals(HttpServletResponse.SC_NOT_MODIFIED, Client.call(reput).getStatusCode)
+      
+      // Try to put again, but with an older last modification date
+      val reputAgain = new PutMethod(fullPathKey)
+      val dateMinus = addDay(lastMod, -1)      
+      reputAgain.setRequestHeader("If-Modified-Since", dateMinus)
+      reputAgain.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      assertEquals(HttpServletResponse.SC_OK, Client.call(reputAgain).getStatusCode)
+   }
+   
+   def testPutDataWithIfUnModifiedSince(m: Method) {
+      // Put the data first
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      Client.call(put)
+      
+      // Now get it to retrieve some attributes
+      val get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)      
+      val lastMod = get.getResponseHeader("Last-Modified").getValue
+      
+      // Put again using the If-Unmodified-Since with a date earlier than the one we got back from the GET
+      val reput = new PutMethod(fullPathKey)
+      val dateMinus = addDay(lastMod, -1)      
+      reput.setRequestHeader("If-Unmodified-Since", dateMinus)      
+      reput.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(reput).getStatusCode)
+      
+      // Try to put again, but using the date returned by the GET
+      val reputAgain = new PutMethod(fullPathKey)
+      reputAgain.setRequestHeader("If-Unmodified-Since", lastMod);
+      reputAgain.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      assertEquals(HttpServletResponse.SC_OK, Client.call(reputAgain).getStatusCode)
+   }
+   
+   def testDeleteDataWithIfMatch(m: Method) {
+      // Put the data first
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      Client.call(put)
+      
+      // Now get it to retrieve some attributes
+      val get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
+      val etag = get.getResponseHeader("ETag").getValue      
+      
+      // Attempt to delete with a wrong ETag
+      val delete = new DeleteMethod(fullPathKey)      
+      delete.setRequestHeader("If-Match", "x");    
+      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(delete).getStatusCode)
+      
+      // Try to delete again, but with the proper ETag
+      val deleteAgain = new DeleteMethod(fullPathKey)
+      deleteAgain.setRequestHeader("If-Match", etag);      
+      assertEquals(HttpServletResponse.SC_OK, Client.call(deleteAgain).getStatusCode)
+   }
+   
+   def testDeleteDataWithIfNoneMatch(m: Method) {
+      // Put the data first
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      Client.call(put)
+      
+      // Now get it to retrieve some attributes
+      val get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
+      val etag = get.getResponseHeader("ETag").getValue      
+      
+      // Attempt to delete with the ETag
+      val delete = new DeleteMethod(fullPathKey)      
+      delete.setRequestHeader("If-None-Match", etag);    
+      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(delete).getStatusCode)
+      
+      // Try to delete again, but with a non-matching ETag
+      val deleteAgain = new DeleteMethod(fullPathKey)
+      deleteAgain.setRequestHeader("If-None-Match", "x");      
+      assertEquals(HttpServletResponse.SC_OK, Client.call(deleteAgain).getStatusCode)
+   }
+   
+   def testDeleteDataWithIfModifiedSince(m: Method) {
+      // Put the data first
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      Client.call(put)
+      
+      // Now get it to retrieve some attributes
+      val get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)      
+      val lastMod = get.getResponseHeader("Last-Modified").getValue      
+      
+      // Attempt to delete using the If-Modified-Since header with the lastMod we got back from the get
+      val delete = new DeleteMethod(fullPathKey)
+      delete.setRequestHeader("If-Modified-Since", lastMod)      
+      assertEquals(HttpServletResponse.SC_NOT_MODIFIED, Client.call(delete).getStatusCode)
+      
+      // Try to delete again, but with an older last modification date
+      val deleteAgain = new DeleteMethod(fullPathKey)      
+      val dateMinus = addDay(lastMod, -1)      
+      deleteAgain.setRequestHeader("If-Modified-Since", dateMinus)      
+      assertEquals(HttpServletResponse.SC_OK, Client.call(deleteAgain).getStatusCode)
+   }
+   
+   def testDeleteDataWithIfUnmodifiedSince(m: Method) {
+      // Put the data first
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
+      Client.call(put)
+      
+      // Now get it to retrieve some attributes
+      val get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)      
+      val lastMod = get.getResponseHeader("Last-Modified").getValue      
+      
+      // Attempt to delete using the If-Unmodified-Since header with a date earlier than the one we got back from the GET
+      val delete = new DeleteMethod(fullPathKey)
+      val dateMinus = addDay(lastMod, -1)      
+      delete.setRequestHeader("If-Unmodified-Since", dateMinus)      
+      assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED, Client.call(delete).getStatusCode)
+      
+      // Try to delete again, but with an older last modification date
+      val deleteAgain = new DeleteMethod(fullPathKey)            
+      deleteAgain.setRequestHeader("If-Unmodified-Since", lastMod)      
+      assertEquals(HttpServletResponse.SC_OK, Client.call(deleteAgain).getStatusCode)
+   }
+   
    def testDeleteCachePreconditionUnimplemented(m: Method) =
       testDeletePreconditionalUnimplemented(fullPath)
 
@@ -295,8 +462,7 @@ class IntegrationTest {
    def testRemoveEntry(m: Method) = {
       val fullPathKey = fullPath + "/" + m.getName
       val put = new PostMethod(fullPathKey)
-      put.setRequestHeader("Content-Type", "application/text")
-      put.setRequestBody("data")
+      put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
       Client.call(put)
 
       assertEquals(HttpServletResponse.SC_OK, Client.call(new HeadMethod(fullPathKey)).getStatusCode)
@@ -308,13 +474,11 @@ class IntegrationTest {
    def testWipeCacheBucket(m: Method) = {
       val fullPathKey = fullPath + "/" + m.getName
       val put = new PostMethod(fullPathKey)
-      put.setRequestHeader("Content-Type", "application/text")
-      put.setRequestBody("data")
+      put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
       Client.call(put)
 
       val put_ = new PostMethod(fullPathKey + "2")
-      put_.setRequestHeader("Content-Type", "application/text")
-      put_.setRequestBody("data")
+      put_.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
       Client.call(put_)
 
       assertEquals(HttpServletResponse.SC_OK, Client.call(new HeadMethod(fullPathKey)).getStatusCode)
@@ -324,10 +488,9 @@ class IntegrationTest {
 
    def testAsyncAddRemove(m: Method) = {
       val fullPathKey = fullPath + "/" + m.getName
-      val put = new PostMethod(fullPathKey)
-      put.setRequestHeader("Content-Type", "application/text")
+      val put = new PostMethod(fullPathKey)      
       put.setRequestHeader("performAsync", "true")
-      put.setRequestBody("data")
+      put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
       Client.call(put)
 
       Thread.sleep(50)
@@ -403,8 +566,7 @@ class IntegrationTest {
       assertEquals(HttpServletResponse.SC_NOT_FOUND, head.getStatusCode)
 
       val put = new PostMethod(fullPathKey)
-      put.setRequestHeader("Content-Type", "application/text")
-      put.setRequestBody("data")
+      put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
       Client call put
       assertEquals(HttpServletResponse.SC_NOT_FOUND, put.getStatusCode)
    }
@@ -471,8 +633,7 @@ class IntegrationTest {
    def testDefaultConfiguredExpiryValues(m: Method) {
       val cacheName = "evictExpiryCache"
       var fullPathKey = "%s/rest/%s/%s".format(HOST, cacheName, m.getName)
-      var post = new PostMethod(fullPathKey)
-      post.setRequestHeader("Content-Type", "application/text")
+      var post = new PostMethod(fullPathKey)      
       // Live forever...
       post.setRequestHeader("timeToLiveSeconds", "-1")
       post.setRequestEntity(new StringRequestEntity("data", "text/plain", "UTF-8"))
@@ -502,8 +663,7 @@ class IntegrationTest {
       startTime = System.currentTimeMillis
       lifespan = 0
       fullPathKey = "%s-3".format(fullPathKey)
-      post = new PostMethod(fullPathKey)
-      post.setRequestHeader("Content-Type", "application/text")
+      post = new PostMethod(fullPathKey)      
       // It will expire immediately
       post.setRequestHeader("timeToLiveSeconds", "0")
       post.setRequestEntity(new StringRequestEntity("data3", "text/plain", "UTF-8"))
@@ -511,8 +671,7 @@ class IntegrationTest {
       waitNotFound(startTime, lifespan, fullPathKey)
 
       fullPathKey = "%s-4".format(fullPathKey)
-      post = new PostMethod(fullPathKey)
-      post.setRequestHeader("Content-Type", "application/text")
+      post = new PostMethod(fullPathKey)      
       // It will use configured maxIdle
       post.setRequestHeader("maxIdleTimeSeconds", "0")
       post.setRequestEntity(new StringRequestEntity("data4", "text/plain", "UTF-8"))
