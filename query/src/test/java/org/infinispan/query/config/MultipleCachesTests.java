@@ -113,5 +113,13 @@ public class MultipleCachesTests extends SingleCacheManagerTest {
       assertEquals("A Person's Name", p.getName());
       assertEquals("A paragraph containing some text", p.getBlurb());
       assertEquals(75, p.getAge());
+
+      SearchManager queryFactory = Search.getSearchManager(indexedCache);
+      SearchFactoryImplementor searchImpl = (SearchFactoryImplementor) queryFactory.getSearchFactory();
+      IndexManager[] indexManagers = searchImpl.getIndexBindingForEntity(Person.class).getIndexManagers();
+      assert indexManagers != null && indexManagers.length == 1;
+      DirectoryBasedIndexManager directory = (DirectoryBasedIndexManager)indexManagers[0];
+      DirectoryProvider directoryProvider = directory.getDirectoryProvider();
+      assert directoryProvider instanceof RAMDirectoryProvider : "configuration properties where ignored";
    }
 }
