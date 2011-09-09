@@ -30,6 +30,7 @@ import org.infinispan.util.Util;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -80,7 +81,7 @@ import java.util.Set;
  * @since 4.0
  */
 @Immutable
-public class Fqn implements Comparable<Fqn> {
+public class Fqn implements Comparable<Fqn>, Serializable {
    /**
     * Separator between FQN elements.
     */

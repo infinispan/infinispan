@@ -29,6 +29,7 @@ import static org.infinispan.tree.NodeKey.Type.STRUCTURE;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.Set;
 
 import org.infinispan.marshall.AbstractExternalizer;
@@ -40,7 +41,7 @@ import org.infinispan.util.Util;
  * @author Manik Surtani
  * @since 4.0
  */
-public class NodeKey {
+public class NodeKey implements Serializable {
    final Fqn fqn;
    final Type contents;
 

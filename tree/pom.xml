@@ -55,6 +55,14 @@
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-cachestore-jdbm</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope>
+      </dependency>
+
    </dependencies>
 
    <build>
