@@ -26,6 +26,7 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -212,9 +213,9 @@ public class RemoteCommandsFactory {
                throw new CacheException("Unknown command id " + id + "!");
          }
       } else {
-         ModuleCommandFactory mcf = commandFactories.get(id);
+         ExtendedModuleCommandFactory mcf = (ExtendedModuleCommandFactory) commandFactories.get(id);
          if (mcf != null)
-            return (CacheRpcCommand) mcf.fromStream(id, parameters);
+            return mcf.fromStream(id, parameters, cacheName);
          else
             throw new CacheException("Unknown command id " + id + "!");
       }

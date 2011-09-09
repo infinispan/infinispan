@@ -295,4 +295,16 @@ public class ModuleProperties extends Properties {
       return cacheRpcCmds;
    }
 
+   public static Collection<Class<? extends ReplicableCommand>> moduleOnlyReplicableCommands() {
+      Collection<Class<? extends ReplicableCommand>> cmds = moduleCommands(null);
+      Collection<Class<? extends ReplicableCommand>> replicableOnlyCmds =
+            new HashSet<Class<? extends ReplicableCommand>>();
+      for (Class<? extends ReplicableCommand> moduleCmdClass : cmds) {
+         if (!CacheRpcCommand.class.isAssignableFrom(moduleCmdClass)) {
+            replicableOnlyCmds.add(moduleCmdClass);
+         }
+      }
+      return replicableOnlyCmds;
+   }
+
 }
