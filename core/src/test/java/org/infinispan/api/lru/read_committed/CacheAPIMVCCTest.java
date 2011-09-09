@@ -47,6 +47,11 @@ public class CacheAPIMVCCTest extends CacheAPITest {
       return cfg;
    }
 
+   @Override
+   public void testConcurrentMapMethods() {
+      super.testConcurrentMapMethods();    // TODO: Customise this generated block
+   }
+
    public void testRollbackAfterClear() throws Exception {
       String key = "key", value = "value";
       int size = 0;

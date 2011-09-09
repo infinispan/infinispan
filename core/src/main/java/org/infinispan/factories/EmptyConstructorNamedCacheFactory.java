@@ -36,7 +36,6 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
@@ -71,7 +70,6 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             VersionAwareMarshaller versionAwareMarshaller = getInstance(VersionAwareMarshaller.class);
             return componentType.cast(versionAwareMarshaller);
          } else if (componentType.equals(EntryFactory.class)) {
-            final boolean isOptimistic = configuration.getTransactionLockingMode().equals(LockingMode.OPTIMISTIC);
             return componentType.cast(getInstance(OptimisticEntryFactory.class));
          } else {
             // add an "Impl" to the end of the class name and try again

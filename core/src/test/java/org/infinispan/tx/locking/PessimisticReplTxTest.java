@@ -97,6 +97,8 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
 
       log.info("Before get...");
       assert cache(1).get(k).equals("v1");
+      assert !lockManager(0).isLocked(k);
+      assert !lockManager(1).isLocked(k);
    }
 
    public void simpleTest() throws Exception {

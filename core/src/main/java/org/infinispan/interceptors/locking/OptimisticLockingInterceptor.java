@@ -26,6 +26,7 @@ package org.infinispan.interceptors.locking;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -33,6 +34,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.OptimisticEntryFactory;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -65,6 +67,18 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       } catch (Throwable te) {
          lockManager.releaseLocks(ctx);
          throw te;
+      }
+   }
+
+   @Override
+   public final Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+      // ensure keys are properly locked for evict commands
+      ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+      try {
+         return visitRemoveCommand(ctx, command);
+      } finally {
+         //evict doesn't get called within a tx scope, so we should apply the changes before returning
+         lockManager.unlock(ctx);
       }
    }
 

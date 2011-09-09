@@ -64,10 +64,14 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       Configuration c = getDefaultStandaloneConfig(true);
       c.setIsolationLevel(getIsolationLevel());
       c = addEviction(c);
+      amend(c);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       cm.defineConfiguration("test", c);
       cache = cm.getCache("test");
       return cm;
+   }
+
+   protected void amend(Configuration c) {
    }
 
    protected abstract IsolationLevel getIsolationLevel();

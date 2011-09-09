@@ -28,6 +28,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -135,10 +136,22 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
          }
-         invokeNextInterceptor(ctx, command);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
+      }
+   }
+
+   @Override
+   public final Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+      // ensure keys are properly locked for evict commands
+      ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+      try {
+         lockKey(ctx, command.getKey());
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         //evict doesn't get called within a tx scope, so we should apply the changes before returning
+         lockManager.unlock(ctx);
       }
    }
 

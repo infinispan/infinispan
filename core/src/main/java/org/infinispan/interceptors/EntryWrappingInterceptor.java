@@ -25,8 +25,10 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -35,6 +37,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.EntryFactory;
 import org.infinispan.container.OptimisticEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -63,18 +66,14 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private OptimisticEntryFactory entryFactory;
    private DataContainer dataContainer;
-   private Transport transport;
    private ClusteringDependentLogic cll;
-   private EntryWrappingVisitor entryWrappingVisitor;
+   private final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
 
    @Inject
-   public void init(OptimisticEntryFactory entryFactory, DataContainer dataContainer, Transport transport,
-                    ClusteringDependentLogic cll, EntryWrappingVisitor entryWrappingVisitor ) {
-      this.entryFactory = entryFactory;
+   public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cll) {
+      this.entryFactory = (OptimisticEntryFactory) entryFactory;
       this.dataContainer = dataContainer;
-      this.transport = transport;
       this.cll = cll;
-      this.entryWrappingVisitor = entryWrappingVisitor;
    }
 
    @Override
@@ -93,9 +92,18 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    }
 
    @Override
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         commitContextEntries(ctx);
+      }
+   }
+
+   @Override
    public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       entryFactory.wrapEntryForReading(ctx, command.getKey());
-      return super.visitGetKeyValueCommand(ctx, command);
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
@@ -148,6 +156,10 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       return invokeNextAndApplyChanges(ctx, command);
    }
 
+   @Override
+   public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+      return visitRemoveCommand(ctx, command);
+   }
 
    private void commitContextEntries(InvocationContext ctx) {
       ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();

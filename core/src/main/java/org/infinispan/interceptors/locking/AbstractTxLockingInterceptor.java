@@ -79,18 +79,6 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
       return result;
    }
 
-   @Override
-   public final Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      // ensure keys are properly locked for evict commands
-      ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
-      try {
-         return visitRemoveCommand(ctx, command);
-      } finally {
-         //evict doesn't get called within a tx scope, so we should apply the changes before returning
-         lockManager.unlock(ctx);
-      }
-   }
-
       @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand c) throws Throwable {
       boolean localTxScope = ctx.isOriginLocal() && ctx.isInTxScope();
