@@ -53,21 +53,21 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    // for retrieve keys on a lazy query
    private Integer docIndex = 0;
 
+   private ClusteredQueryCommand(ClusteredQueryCommandType type, String cacheName) {
+      super(cacheName);
+      commandType = type;
+   }
+
    /**
     * For CommandFactory only. To create a ClusteredQueryCommand, use createLazyIterator(),
     * destroyLazyQuery(), getResultSize() or retrieveKeyFromLazyQuery()
     */
-   public ClusteredQueryCommand() {
-
+   public ClusteredQueryCommand(String cacheName) {
+      super(cacheName);
    }
 
    public void injectComponents(Cache cache) {
       this.cache = cache;
-   }
-
-   private ClusteredQueryCommand(ClusteredQueryCommandType type, String cacheName) {
-      commandType = type;
-      this.cacheName = cacheName;
    }
 
    public static ClusteredQueryCommand createLazyIterator(HSQuery query, Cache cache, UUID id) {
@@ -139,28 +139,20 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    }
 
    public Object[] getParameters() {
-      return new Object[] { cacheName, commandType, query, lazyQueryId, docIndex };
+      return new Object[] { commandType, query, lazyQueryId, docIndex };
    }
 
    public void setParameters(int commandId, Object[] args) {
-      cacheName = (String) args[0];
-      commandType = (ClusteredQueryCommandType) args[1];
-      query = (HSQuery) args[2];
-      lazyQueryId = (UUID) args[3];
-      docIndex = (Integer) args[4];
+      int i = 0;
+      commandType = (ClusteredQueryCommandType) args[i++];
+      query = (HSQuery) args[i++];
+      lazyQueryId = (UUID) args[i++];
+      docIndex = (Integer) args[i++];
    }
 
    @Override
    public String toString() {
       return "ClusteredQuery{ cache=" + getCacheName() + '}';
-   }
-
-   public String getCacheName() {
-      return cacheName;
-   }
-
-   public void setCacheName(String cacheName) {
-      this.cacheName = cacheName;
    }
 
    @Override

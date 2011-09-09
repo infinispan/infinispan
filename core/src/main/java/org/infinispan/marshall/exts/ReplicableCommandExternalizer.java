@@ -50,6 +50,8 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Set;
 
+import static org.infinispan.util.ModuleProperties.moduleOnlyReplicableCommands;
+
 /**
  * ReplicableCommandExternalizer.
  *
@@ -87,6 +89,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    }
 
    protected void writeCommandHeader(ObjectOutput output, ReplicableCommand command) throws IOException {
+      // To decide whether it's a core or user defined command, load them all and check
       Collection<Class<? extends ReplicableCommand>> moduleCommands = getModuleCommands();
       // Write an indexer to separate commands defined external to the
       // infinispan core module from the ones defined via module commands
@@ -133,7 +136,8 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             InvalidateCommand.class, InvalidateL1Command.class,
             PutKeyValueCommand.class, PutMapCommand.class,
             RemoveCommand.class, ReplaceCommand.class);
-      Collection<Class<? extends ReplicableCommand>> moduleCommands = getModuleCommands();
+      // Search only those commands that replicable and not cache specific replicable commands
+      Collection<Class<? extends ReplicableCommand>> moduleCommands = moduleOnlyReplicableCommands();
       if (moduleCommands != null && !moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);
       return coreCommands;
    }
@@ -141,4 +145,5 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    private Collection<Class<? extends ReplicableCommand>> getModuleCommands() {
       return ModuleProperties.moduleCommands(null);
    }
+
 }

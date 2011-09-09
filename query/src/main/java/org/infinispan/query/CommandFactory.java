@@ -25,7 +25,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.module.ModuleCommandFactory;
+import org.infinispan.commands.module.ExtendedModuleCommandFactory;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.query.clustered.ClusteredQueryCommand;
 
 /**
@@ -34,7 +35,7 @@ import org.infinispan.query.clustered.ClusteredQueryCommand;
 * @author Israel Lacerra <israeldl@gmail.com>
 * @since 5.1
 */
-public class CommandFactory implements ModuleCommandFactory {
+public class CommandFactory implements ExtendedModuleCommandFactory {
 
    @Override
    public Map<Byte, Class<? extends ReplicableCommand>> getModuleCommands() {
@@ -45,10 +46,17 @@ public class CommandFactory implements ModuleCommandFactory {
 
    @Override
    public ReplicableCommand fromStream(byte commandId, Object[] args) {
-      ReplicableCommand c;
+      // Should not be called while this factory only
+      // provides cache specific replicable commands.
+      return null;
+   }
+
+   @Override
+   public CacheRpcCommand fromStream(byte commandId, Object[] args, String cacheName) {
+      CacheRpcCommand c;
       switch (commandId) {
          case ClusteredQueryCommand.COMMAND_ID:
-            c = new ClusteredQueryCommand();
+            c = new ClusteredQueryCommand(cacheName);
             break;
          default:
             throw new IllegalArgumentException("Not registered to handle command id " + commandId);
@@ -56,5 +64,5 @@ public class CommandFactory implements ModuleCommandFactory {
       c.setParameters(commandId, args);
       return c;
    }
-   
+
 }

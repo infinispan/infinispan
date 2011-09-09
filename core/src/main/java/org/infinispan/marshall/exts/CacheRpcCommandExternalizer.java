@@ -81,7 +81,7 @@ public class CacheRpcCommandExternalizer extends AbstractExternalizer<CacheRpcCo
             PrepareCommand.class, RollbackCommand.class, RemoveCacheCommand.class,
             RemoveRecoveryInfoCommand.class, GetInDoubtTransactionsCommand.class,
             GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class);
-
+      // Only interested in cache specific replicable commands
       coreCommands.addAll(ModuleProperties.moduleCacheRpcCommands());
       return coreCommands;
    }
