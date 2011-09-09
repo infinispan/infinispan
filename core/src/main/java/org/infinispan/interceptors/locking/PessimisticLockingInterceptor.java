@@ -26,6 +26,7 @@ package org.infinispan.interceptors.locking;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -56,6 +57,19 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
+   public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      try {
+         if (ctx.hasFlag(Flag.FORCE_WRITE_LOCK)) {
+            lockKey(ctx, command.getKey());
+         }
+         return invokeNextInterceptor(ctx, command);
+      } catch (Throwable t) {
+         lockManager.releaseLocks(ctx);
+         throw t;
+      }
+   }
+
+   @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       try {
          abortIfRemoteTransactionInvalid(ctx, command);
@@ -76,7 +90,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       }
    }
 
@@ -94,7 +108,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       }
    }
 
@@ -109,7 +123,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          invokeNextInterceptor(ctx, command);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       }
    }
 
@@ -124,7 +138,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          invokeNextInterceptor(ctx, command);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       }
    }
 

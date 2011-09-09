@@ -23,12 +23,9 @@
 
 package org.infinispan.interceptors.locking;
 
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.OptimisticEntryFactory;
@@ -72,42 +69,29 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      try {
-         //todo - check force write lock
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         //todo - modify to release locks
-         releaseLocksIfNeeded(ctx);
-      }
-   }
-
-   @Override
    public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
       try {
-         //todo - acquire locks
+         for (Object key : command.getKeys()) {
+            lockKey(ctx, key);
+         }
          return invokeNextInterceptor(ctx, command);
-      } catch (Throwable te) {
-         //todo only release locks
-         return cleanLocksAndRethrow(ctx, te);
-      }
-      finally {
-         releaseLocksIfNeeded(ctx);
+      } finally {
+         releaseLocksIfNoTransaction(ctx);
       }
    }
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       try {
-         // get a snapshot of all keys in the data container
-         //todo - revisit!
-         lockForClear(ctx);
+         for (InternalCacheEntry entry : dataContainer.entrySet())
+            lockKey(ctx, entry.getKey());
+
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       } finally {
          // for non-transactional stuff.
-         releaseLocksIfNeeded(ctx);
+         releaseLocksIfNoTransaction(ctx);
       }
    }
 
@@ -115,57 +99,42 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
    public final Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
       Object keys [] = command.getKeys();
       try {
-         //todo acquire locks
+         if (keys != null && keys.length >= 1) {
+            ArrayList<Object> keysCopy = new ArrayList<Object>(Arrays.asList(keys));
+            for (Object key : command.getKeys()) {
+               ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+               try {
+                  lockKey(ctx, key);
+               } catch (TimeoutException te) {
+                  log.unableToLockToInvalidate(key, transport.getAddress());
+                  keysCopy.remove(key);
+                  if (keysCopy.isEmpty())
+                     return null;
+               }
+            }
+            command.setKeys(keysCopy.toArray());
+         }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       }
       finally {
          command.setKeys(keys);
-         releaseLocksIfNeeded(ctx);
+         releaseLocksIfNoTransaction(ctx);
       }
    }
 
-   private void releaseLocksIfNeeded(InvocationContext ctx) {
+   private void releaseLocksIfNoTransaction(InvocationContext ctx) {
       if (!ctx.isInTxScope()) {
-         commit(ctx);
+         lockManager.unlock(ctx);
       } else {
          if (trace) log.trace("Transactional.  Not cleaning up locks till the transaction ends.");
       }
    }
 
-   protected final void commit(InvocationContext ctx) {
-      Object owner = ctx.getLockOwner();
-      ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
-      Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
-      if (trace) log.tracef("Number of entries in context: %s", entries.size());
-      while (it.hasNext()) {
-         Map.Entry<Object, CacheEntry> e = it.next();
-         CacheEntry entry = e.getValue();
-         Object key = e.getKey();
-         boolean needToUnlock = lockManager.possiblyLocked(entry);
-         // could be null with read-committed
-         if (entry != null && entry.isChanged()) {
-            cll.commitEntry(entry, ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK));
-         } else {
-            if (trace) log.tracef("Entry for key %s is null, not calling commitUpdate", key);
-         }
-
-         // and then unlock
-         if (needToUnlock && !ctx.hasFlag(Flag.SKIP_LOCKING)) {
-            if (trace) log.tracef("Releasing lock on [%s] for owner %s", key, owner);
-            lockManager.unlock(key);
-         }
-      }
-   }
-
-   protected final Object cleanLocksAndRethrow(InvocationContext ctx, Throwable te) throws Throwable {
+   protected final Throwable cleanLocksAndRethrow(InvocationContext ctx, Throwable te) {
       lockManager.releaseLocks(ctx);
-      throw te;
-   }
-
-   protected final void lockForClear(InvocationContext ctx) throws InterruptedException {
-      //todo - acqurie locks for clear
+      return te;
    }
 
    protected final void lockKey(InvocationContext ctx, Object key) throws InterruptedException {

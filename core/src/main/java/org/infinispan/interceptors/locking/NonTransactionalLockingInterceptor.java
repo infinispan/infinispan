@@ -45,10 +45,10 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
          lockKey(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       }
       finally {
-         commit(ctx);
+         lockManager.unlock(ctx);
       }
    }
 
@@ -60,10 +60,10 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       }
       finally {
-         commit(ctx);
+         lockManager.unlock(ctx);
       }
    }
 
@@ -73,9 +73,9 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
          lockKey(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       } finally {
-         commit(ctx);
+         lockManager.unlock(ctx);
       }
    }
 
@@ -85,10 +85,10 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
          lockKey(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       }
       finally {
-         commit(ctx);
+         lockManager.unlock(ctx);
       }
    }
 

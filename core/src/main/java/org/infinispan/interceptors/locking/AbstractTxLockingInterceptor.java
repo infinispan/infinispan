@@ -24,19 +24,12 @@
 package org.infinispan.interceptors.locking;
 
 import org.infinispan.CacheException;
-import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -56,7 +49,7 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         commit(ctx);
+         lockManager.unlock(ctx);
       }
    }
 
@@ -81,7 +74,7 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
    protected final Object invokeNextAndCommitIf1Pc(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object result = invokeNextInterceptor(ctx, command);
       if (command.isOnePhaseCommit()) {
-         commit(ctx);
+         lockManager.unlock(ctx);
       }
       return result;
    }
@@ -94,7 +87,7 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
          return visitRemoveCommand(ctx, command);
       } finally {
          //evict doesn't get called within a tx scope, so we should apply the changes before returning
-         commit(ctx);
+         lockManager.unlock(ctx);
       }
    }
 
@@ -146,8 +139,7 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
             }
          }
       } catch (Throwable te) {
-         cleanLocksAndRethrow(ctx, te);
-         return false;
+         throw cleanLocksAndRethrow(ctx, te);
       }
    }
 

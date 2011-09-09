@@ -120,20 +120,9 @@ public class LockManagerImpl implements LockManager {
 
    @SuppressWarnings("unchecked")
    public void unlock(InvocationContext ctx) {
-      ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
-      if (!entries.isEmpty()) {
-         // unlocking needs to be done in reverse order.
-         Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
-         while (it.hasNext()) {
-            Map.Entry<Object, CacheEntry> e = it.next();
-            CacheEntry entry = e.getValue();
-            if (possiblyLocked(entry)) {
-               // has been locked!
-               Object k = e.getKey();
-               if (trace) log.tracef("Attempting to unlock %s", k);
-               lockContainer.releaseLock(k);
-            }
-         }
+      for (Object k : ctx.getLockedKeys()) {
+         if (trace) log.tracef("Attempting to unlock %s", k);
+         lockContainer.releaseLock(k);
       }
    }
 
@@ -239,6 +228,7 @@ public class LockManagerImpl implements LockManager {
 
    private boolean lock(InvocationContext ctx, Object key) throws InterruptedException {
       if (lockAndRecord(key, ctx)) {
+         ctx.registerLockedKey(key);
          return true;
       } else {
          Object owner = getOwner(key);

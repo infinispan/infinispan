@@ -110,14 +110,4 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
             ", tx=" + tx +
             '}';
    }
-
-   public Set<Object> getLockedKeys() {
-      Set<Object> result = new HashSet<Object>();
-      for (Object key : getLookedUpEntries().keySet()) {
-         result.add(key);
-      }
-      if (lookedUpEntries.entrySet().size() != result.size())
-         throw new IllegalStateException("Different sizes!");
-      return result;
-   }
 }

@@ -85,10 +85,6 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
             c.acceptVisitor(ctx, entryWrappingVisitor);
          }
       }
-      return invokeNextAndCommitIf1Pc(ctx, command);
-   }
-
-   protected final Object invokeNextAndCommitIf1Pc(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object result = invokeNextInterceptor(ctx, command);
       if (command.isOnePhaseCommit()) {
          commitContextEntries(ctx);
@@ -96,7 +92,64 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       return result;
    }
 
-   private void commitContextEntries(TxInvocationContext ctx) {
+   @Override
+   public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      entryFactory.wrapEntryForReading(ctx, command.getKey());
+      return super.visitGetKeyValueCommand(ctx, command);
+   }
+
+   @Override
+   public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
+      if (command.getKeys() != null) {
+         for (Object key : command.getKeys())
+            entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false, false);
+      }
+      return invokeNextAndApplyChanges(ctx, command);
+   }
+
+   @Override
+   public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      for (InternalCacheEntry entry : dataContainer.entrySet())
+         entryFactory.wrapEntryForClear(ctx, entry.getKey());
+      return invokeNextAndApplyChanges(ctx, command);
+   }
+
+   @Override
+   public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
+      for (Object key : command.getKeys()) {
+         entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false, false);
+      }
+      return invokeNextAndApplyChanges(ctx, command);
+   }
+
+   @Override
+   public final Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      entryFactory.wrapEntryForPut(ctx, command.getKey(), !command.isPutIfAbsent());
+      return invokeNextAndApplyChanges(ctx, command);
+   }
+
+   @Override
+   public final Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      entryFactory.wrapEntryForRemove(ctx, command.getKey());
+      return invokeNextAndApplyChanges(ctx, command);
+   }
+
+   @Override
+   public final Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      entryFactory.wrapEntryForReplace(ctx, command.getKey());
+      return invokeNextAndApplyChanges(ctx, command);
+   }
+
+   @Override
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      for (Object key : command.getMap().keySet()) {
+         entryFactory.wrapEntryForPut(ctx, key, true);
+      }
+      return invokeNextAndApplyChanges(ctx, command);
+   }
+
+
+   private void commitContextEntries(InvocationContext ctx) {
       ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
       Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
       if (trace) log.tracef("Number of entries in context: %s", entries.size());
@@ -111,74 +164,10 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       }
    }
 
-
-   @Override
-   public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      entryFactory.wrapEntryForReading(ctx, command.getKey());
-      return super.visitGetKeyValueCommand(ctx, command);
-   }
-
-   @Override
-   public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
-      if (command.getKeys() != null) {
-         for (Object key : command.getKeys())
-            entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false, false);
-      }
-      return invokeNextInterceptor(ctx, command);
-   }
-
-   @Override
-   public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      for (InternalCacheEntry entry : dataContainer.entrySet())
-         entryFactory.wrapEntryForClear(ctx, entry.getKey());
-      return invokeNextInterceptor(ctx, command);
-   }
-
-   @Override
-   public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
-      Object keys [] = command.getKeys();
-      if (keys != null && keys.length>=1) {
-         ArrayList<Object> keysCopy = new ArrayList<Object>(Arrays.asList(keys));
-         for (Object key : command.getKeys()) {
-            ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
-            try {
-               entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false, false);
-            } catch (TimeoutException te){
-               log.unableToLockToInvalidate(key,transport.getAddress());
-               keysCopy.remove(key);
-               if(keysCopy.isEmpty())
-                  return null;
-            }
-         }
-         command.setKeys(keysCopy.toArray());
-      }
-      return invokeNextInterceptor(ctx, command);
-   }
-
-   @Override
-   public final Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      entryFactory.wrapEntryForPut(ctx, command.getKey(), !command.isPutIfAbsent());
-      return invokeNextInterceptor(ctx, command);
-   }
-
-   @Override
-   public final Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      entryFactory.wrapEntryForRemove(ctx, command.getKey());
-      return invokeNextInterceptor(ctx, command);
-   }
-
-   @Override
-   public final Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      entryFactory.wrapEntryForReplace(ctx, command.getKey());
-      return invokeNextInterceptor(ctx, command);
-   }
-
-   @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      for (Object key : command.getMap().keySet()) {
-         entryFactory.wrapEntryForPut(ctx, key, true);
-      }
-      return invokeNextInterceptor(ctx, command);
+   private Object invokeNextAndApplyChanges(InvocationContext ctx, WriteCommand command) throws Throwable {
+      final Object result = invokeNextInterceptor(ctx, command);
+      if (!ctx.isInTxScope()) commitContextEntries(ctx);
+      return result;
    }
 
    private final class EntryWrappingVisitor extends AbstractVisitor {

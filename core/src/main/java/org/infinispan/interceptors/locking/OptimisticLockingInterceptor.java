@@ -73,7 +73,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       try {
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       }
    }
 
@@ -82,7 +82,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       try {
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       }
    }
 
@@ -91,7 +91,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       try {
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       }
    }
 
@@ -100,7 +100,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       try {
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       }
    }
 
@@ -111,7 +111,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
             entryFactory.wrapEntryForClear(ctx, key);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         return cleanLocksAndRethrow(ctx, te);
+         throw cleanLocksAndRethrow(ctx, te);
       }
    }
 

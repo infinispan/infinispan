@@ -101,4 +101,6 @@ public interface InvocationContext extends EntryLookup, FlagContainer, Cloneable
     * @param classLoader
     */
    void setClassLoader(ClassLoader classLoader);
+
+   void registerLockedKey(Object key);
 }

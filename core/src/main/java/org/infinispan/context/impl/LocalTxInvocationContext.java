@@ -37,6 +37,7 @@ import javax.transaction.Transaction;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Invocation context to be used for locally originated transactions.
@@ -128,4 +129,13 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
       return localTransaction;
    }
 
+   @Override
+   public Set<Object> getLockedKeys() {
+      return localTransaction == null ? null : localTransaction.getLockedKeys();
+   }
+
+   @Override
+   public void registerLockedKey(Object key) {
+      localTransaction.registerLockedKey(key);
+   }
 }
