@@ -52,13 +52,16 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
       Configuration c = getDefaultStandaloneConfig(true).fluent()
             .invocationBatching()
             .loaders()
-               .addCacheLoader(new DummyInMemoryCacheStore.Cfg(getClass().getName()))
+               .addCacheLoader(getCacheStoreCfg())
             .build();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
       cache = new TreeCacheImpl<String, String>(cm.getCache());
-      CacheLoaderManager m = TestingUtil.extractComponent(cache.getCache(), CacheLoaderManager.class);
-      store = m.getCacheStore();
+      store = extractCacheStore();
       return cm;
+   }
+
+   protected CacheStoreConfig getCacheStoreCfg() {
+      return new DummyInMemoryCacheStore.Cfg(getClass().getName());
    }
 
    public void testPersistence() throws CacheLoaderException {
@@ -69,8 +72,7 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
       assert "value".equals(nodeContentsInCacheStore(store, Fqn.fromString("/a/b/c")).get("key"));
       assert store.containsKey(new NodeKey(Fqn.fromString("/a/b/c"), STRUCTURE));
 
-      cache.stop();
-      cache.start();
+      restartCache();
       assert "value".equals(cache.get("/a/b/c", "key"));
       assert store.containsKey(new NodeKey(Fqn.fromString("/a/b/c"), DATA));
       assert "value".equals(nodeContentsInCacheStore(store, Fqn.fromString("/a/b/c")).get("key"));
@@ -84,8 +86,7 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
       assert "value".equals(nodeContentsInCacheStore(store, ROOT).get("key"));
       assert store.containsKey(new NodeKey(ROOT, STRUCTURE));
 
-      cache.stop();
-      cache.start();
+      restartCache();
       assert "value".equals(cache.get(ROOT, "key"));
 
       assert store.containsKey(new NodeKey(ROOT, DATA));
@@ -96,8 +97,7 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
    public void testDuplicatePersistence() throws CacheLoaderException {
       cache.put(Fqn.fromElements("a", "b"), "k", "v");
       assert "v".equals(cache.get(Fqn.fromElements("a", "b"), "k"));
-      cache.stop();
-      cache.start();
+      restartCache();
       cache.put(Fqn.fromElements("a", "b"), "k", "v");
       assert "v".equals(cache.get(Fqn.fromElements("a", "b"), "k"));
    }
@@ -105,6 +105,17 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
    @SuppressWarnings("unchecked")
    private Map<String, String> nodeContentsInCacheStore(CacheStore cs, Fqn fqn) throws CacheLoaderException {
       return (Map<String, String>) cs.load(new NodeKey(fqn, DATA)).getValue();
+   }
+
+   private CacheStore extractCacheStore() {
+      CacheLoaderManager m = TestingUtil.extractComponent(cache.getCache(), CacheLoaderManager.class);
+      return m.getCacheStore();
+   }
+
+   private void restartCache() {
+      cache.stop();
+      cache.start();
+      store = extractCacheStore();
    }
 
 }
