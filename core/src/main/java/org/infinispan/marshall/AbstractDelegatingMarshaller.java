@@ -1,9 +1,6 @@
 package org.infinispan.marshall;
 
-import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.io.ByteBuffer;
-import org.infinispan.marshall.jboss.ExternalizerTable;
-import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,22 +20,9 @@ public abstract class AbstractDelegatingMarshaller implements StreamingMarshalle
 
    // TODO: Should avoid hardcoding but it's really not likely to change
    protected VersionAwareMarshaller marshaller;
-   private ExternalizerTable extTable;
-
-   public void inject(ExternalizerTable extTable) {
-      this.extTable = extTable;
-   }
-
-   public void start() {
-      marshaller.start(extTable);
-   }
 
    public void stop() {
       marshaller.stop();
-   }
-
-   protected VersionAwareMarshaller createMarshaller(GlobalConfiguration globalCfg, ClassLoader loader) {
-      return (VersionAwareMarshaller) Util.getInstance(globalCfg.getMarshallerClass(), loader);
    }
 
    @Override
@@ -104,10 +88,6 @@ public abstract class AbstractDelegatingMarshaller implements StreamingMarshalle
    @Override
    public boolean isMarshallable(Object o) throws Exception {
       return marshaller.isMarshallable(o);
-   }
-
-   String getCacheName() {
-      return marshaller.getCacheName();
    }
 
 }

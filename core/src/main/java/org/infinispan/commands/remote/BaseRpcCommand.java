@@ -27,11 +27,15 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 
 public abstract class BaseRpcCommand implements CacheRpcCommand {
-   protected String cacheName;
+   protected final String cacheName;
 
    protected Configuration configuration;
    protected ComponentRegistry componentRegistry;
    private Address origin;
+
+   protected BaseRpcCommand(String cacheName) {
+      this.cacheName = cacheName;
+   }
 
    public void injectComponents(Configuration configuration, ComponentRegistry componentRegistry) {
       this.configuration = configuration;
@@ -44,14 +48,6 @@ public abstract class BaseRpcCommand implements CacheRpcCommand {
 
    public ComponentRegistry getComponentRegistry() {
       return componentRegistry;
-   }
-
-
-   protected BaseRpcCommand(String cacheName) {
-      this.cacheName = cacheName;
-   }
-
-   protected BaseRpcCommand() {
    }
 
    public String getCacheName() {

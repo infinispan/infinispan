@@ -44,17 +44,14 @@ public class RemoveCacheCommand extends BaseRpcCommand {
    private EmbeddedCacheManager cacheManager;
    private GlobalComponentRegistry registry;
 
-   RemoveCacheCommand() {
-      // For command id uniqueness test
+   private RemoveCacheCommand() {
+      super(null); // For command id uniqueness test
    }
 
-   public RemoveCacheCommand(EmbeddedCacheManager cacheManager, GlobalComponentRegistry registry) {
+   public RemoveCacheCommand(String cacheName, EmbeddedCacheManager cacheManager, GlobalComponentRegistry registry) {
+      super(cacheName);
       this.cacheManager = cacheManager;
       this.registry = registry;
-   }
-
-   public void setCacheName(String cacheName) {
-      this.cacheName = cacheName;
    }
 
    @Override
@@ -72,11 +69,11 @@ public class RemoveCacheCommand extends BaseRpcCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{cacheName};
+      return new Object[0];
    }
 
    @Override
    public void setParameters(int commandId, Object[] parameters) {
-      cacheName = (String) parameters[0];
+      // No parameters
    }
 }

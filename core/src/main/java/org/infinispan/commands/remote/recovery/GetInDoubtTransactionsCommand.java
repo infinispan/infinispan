@@ -42,11 +42,12 @@ public class GetInDoubtTransactionsCommand extends RecoveryCommand {
 
    public static final int COMMAND_ID = 21;
 
-   public GetInDoubtTransactionsCommand() {
+   private GetInDoubtTransactionsCommand() {
+      super(null); // For command id uniqueness test
    }
 
    public GetInDoubtTransactionsCommand(String cacheName) {
-      this.cacheName = cacheName;
+      super(cacheName);
    }
 
    @Override
@@ -63,14 +64,14 @@ public class GetInDoubtTransactionsCommand extends RecoveryCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[] {cacheName};
+      return new Object[0];
    }
 
    @Override
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID)
          throw new IllegalStateException("Expected " + COMMAND_ID + "and received " + commandId);
-      cacheName = (String) parameters[0];
+      // No parameters
    }
 
    @Override

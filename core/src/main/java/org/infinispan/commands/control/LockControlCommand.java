@@ -62,7 +62,12 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    private boolean unlock = false;
    private Set<Flag> flags;
 
-   public LockControlCommand() {
+   private LockControlCommand() {
+      super(null); // For command id uniqueness test
+   }
+
+   public LockControlCommand(String cacheName) {
+      super(cacheName);
    }
 
    public LockControlCommand(Collection<Object> keys, String cacheName, Set<Flag> flags) {
@@ -70,7 +75,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    public LockControlCommand(Collection<Object> keys, String cacheName, Set<Flag> flags, boolean implicit) {
-      this.cacheName = cacheName;
+      super(cacheName);
       if (keys != null) {
          // defensive copy
          this.keys = new ArrayList<Object>(keys);
@@ -159,18 +164,18 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    public Object[] getParameters() {
-      return new Object[]{globalTx, cacheName, unlock, keys, flags};
+      return new Object[]{globalTx, unlock, keys, flags};
    }
 
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] args) {
+      // TODO: Check duplicated in all commands? A better solution is needed.
       if (commandId != COMMAND_ID)
          throw new IllegalStateException("Unusupported command id:" + commandId);
-      globalTx = (GlobalTransaction) args[0];
-      cacheName = (String) args[1];
-      unlock = (Boolean) args[2];
-
-      keys = (List<Object>) args[3];
+      int i = 0;
+      globalTx = (GlobalTransaction) args[i++];
+      unlock = (Boolean) args[i++];
+      keys = (List<Object>) args[i++];
    }
 
    public boolean isUnlock() {
@@ -191,7 +196,10 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
       if (implicit != that.implicit) return false;
       if (unlock != that.unlock) return false;
-      if (!flags.equals(that.flags)) return false;
+      if (flags == null)
+         return that.flags == null;
+      else
+         if (!flags.equals(that.flags)) return false;
       if (!keys.equals(that.keys)) return false;
 
       return true;
@@ -203,7 +211,8 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       result = 31 * result + keys.hashCode();
       result = 31 * result + (implicit ? 1 : 0);
       result = 31 * result + (unlock ? 1 : 0);
-      result = 31 * result + flags.hashCode();
+      if (flags != null)
+         result = 31 * result + flags.hashCode();
       return result;
    }
 

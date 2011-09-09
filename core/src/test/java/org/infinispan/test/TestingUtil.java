@@ -817,6 +817,12 @@ public class TestingUtil {
       return (AbstractDelegatingMarshaller) marshaller;
    }
 
+   public static AbstractDelegatingMarshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
+      GlobalComponentRegistry gcr = (GlobalComponentRegistry) extractField(cm, "globalComponentRegistry");
+      return (AbstractDelegatingMarshaller)
+            gcr.getComponent(StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
+   }
+
    public static ExternalizerTable extractExtTable(CacheContainer cacheContainer) {
       GlobalComponentRegistry gcr = (GlobalComponentRegistry) extractField(cacheContainer, "globalComponentRegistry");
       return gcr.getComponent(ExternalizerTable.class);

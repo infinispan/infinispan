@@ -46,7 +46,12 @@ public class CompleteTransactionCommand extends RecoveryCommand {
     */
    private boolean commit;
 
-   public CompleteTransactionCommand() {
+   private CompleteTransactionCommand() {
+      super(null); // For command id uniqueness test
+   }
+
+   public CompleteTransactionCommand(String cacheName) {
+      super(cacheName);
    }
 
    public CompleteTransactionCommand(String cacheName, Xid xid, boolean commit) {
@@ -67,7 +72,7 @@ public class CompleteTransactionCommand extends RecoveryCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{xid, commit, cacheName};
+      return new Object[]{xid, commit};
    }
 
    @Override
@@ -75,9 +80,9 @@ public class CompleteTransactionCommand extends RecoveryCommand {
       if (commandId != COMMAND_ID) {
          throw new IllegalArgumentException("Unexpected command id: " + commandId + ". Expected " + COMMAND_ID);
       }
-      xid = (Xid) parameters[0];
-      commit = (Boolean) parameters[1];
-      cacheName = (String) parameters[2];
+      int i = 0;
+      xid = (Xid) parameters[i++];
+      commit = (Boolean) parameters[i++];
    }
 
    @Override

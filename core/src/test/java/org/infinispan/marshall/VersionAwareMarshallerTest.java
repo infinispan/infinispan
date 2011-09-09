@@ -30,20 +30,13 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicHashMap;
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -58,16 +51,11 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.container.entries.ImmortalCacheValue;
-import org.infinispan.container.entries.InternalEntryFactory;
-import org.infinispan.container.entries.MortalCacheEntry;
-import org.infinispan.container.entries.MortalCacheValue;
-import org.infinispan.container.entries.TransientCacheEntry;
-import org.infinispan.container.entries.TransientCacheValue;
-import org.infinispan.container.entries.TransientMortalCacheEntry;
-import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.config.Configuration;
+import org.infinispan.container.entries.*;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.MagicKey;
+import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.jboss.JBossMarshallingTest.CustomReadObjectMethod;
@@ -90,10 +78,13 @@ import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.hash.MurmurHash2;
+import org.infinispan.util.hash.MurmurHash3;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.TraceInformation;
 import org.jgroups.stack.IpAddress;
+import org.jgroups.util.UUID;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -113,7 +104,9 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
+      // Use a clustered cache manager to be able to test global marshaller interaction too
+      cm = TestCacheManagerFactory.createClusteredCacheManager();
+      cm.getDefaultConfiguration().fluent().clustering().mode(Configuration.CacheMode.DIST_SYNC);
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 
@@ -239,7 +232,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assert rc1.getCommandId() == c1.getCommandId() : "Writen[" + c1.getCommandId() + "] and read[" + rc1.getCommandId() + "] objects should be the same";
       assert Arrays.equals(rc1.getParameters(), c1.getParameters()) : "Writen[" + c1.getParameters() + "] and read[" + rc1.getParameters() + "] objects should be the same";
 
-      ClusteredGetCommand c2 = new ClusteredGetCommand("key", "mycache", Collections.<Flag>emptySet());
+      String cacheName = EmbeddedCacheManager.DEFAULT_CACHE_NAME;
+      ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName, Collections.<Flag>emptySet());
       marshallAndAssertEquality(c2);
 
       // SizeCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
@@ -289,16 +283,61 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
       Address local = new JGroupsAddress(new IpAddress(12345));
       GlobalTransaction gtx = gtf.newGlobalTransaction(local, false);
-      PrepareCommand c11 = new PrepareCommand(gtx, true, c5, c6, c8, c10);
+      PrepareCommand c11 = new PrepareCommand(cacheName, gtx, true, c5, c6, c8, c10);
       marshallAndAssertEquality(c11);
 
-      CommitCommand c12 = new CommitCommand(gtx);
+      CommitCommand c12 = new CommitCommand(cacheName, gtx);
       marshallAndAssertEquality(c12);
 
-      RollbackCommand c13 = new RollbackCommand(gtx);
+      RollbackCommand c13 = new RollbackCommand(cacheName, gtx);
       marshallAndAssertEquality(c13);
 
-      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.asList(c2, c5, c6, c8, c10, c12, c13), "mycache");
+      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.asList(c2, c5, c6, c8, c10, c12, c13), cacheName);
+      marshallAndAssertEquality(c99);
+   }
+
+   public void testRehashControlCommand() throws Exception {
+      Cache<Object,Object> cache = cm.getCache();
+
+      String cacheName = EmbeddedCacheManager.DEFAULT_CACHE_NAME;
+      ImmortalCacheEntry entry1 = (ImmortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
+      Map<Object, InternalCacheValue> state = new HashMap<Object, InternalCacheValue>();
+      state.put(new MagicKey(cache, "magic_key"), entry1.toInternalCacheValue());
+      Address a1 = new JGroupsAddress(UUID.randomUUID());
+      Address a2 = new JGroupsAddress(UUID.randomUUID());
+      Address a3 = new JGroupsAddress(UUID.randomUUID());
+      Set<Address> oldAddresses = new LinkedHashSet();
+      oldAddresses.add(a1);
+      oldAddresses.add(a2);
+      DefaultConsistentHash oldCh = new DefaultConsistentHash(new MurmurHash3());
+      oldCh.setCaches(oldAddresses);
+      Set<Address> newAddresses = new LinkedHashSet();
+      newAddresses.add(a1);
+      newAddresses.add(a2);
+      newAddresses.add(a3);
+      DefaultConsistentHash newCh = new DefaultConsistentHash(new MurmurHash2());
+      newCh.setCaches(newAddresses);
+      RehashControlCommand c14 = new RehashControlCommand(cacheName, RehashControlCommand.Type.APPLY_STATE, a1, 99, state, oldCh, newCh);
+      byte[] bytes = marshaller.objectToByteBuffer(c14);
+      marshaller.objectFromByteBuffer(bytes);
+
+      bytes = marshaller.objectToByteBuffer(c14);
+      marshaller.objectFromByteBuffer(bytes);
+
+      bytes = marshaller.objectToByteBuffer(c14);
+      marshaller.objectFromByteBuffer(bytes);
+   }
+
+   public void test000() throws ClassNotFoundException, IOException {
+      byte[] bytes = {3, 1, -2, 3, 74, 0, 0, 17, 0, 0, 0, 4, 100, 105, 115, 116, -52, 2, 3, 1, -2, 6, 73, 0, 3, 39, 4, 10, 0, 0, 0, 21, 111, 114, 103, 46, 106, 103, 114, 111, 117, 112, 115, 46, 117, 116, 105, 108, 46, 85, 85, 73, 68, 55, 34, -52, 74, 28, -68, 13, 92, 50, 16, -56, -4, -32, 96, 91, -106, -114, -128, 26, 71, -50, 106, -52, -69, -36, -109, 53, 75, 0, 0, 0, 2, 3, 2, 0, 1, 4, 9, 0, 0, 0, 36, 111, 114, 103, 46, 105, 110, 102, 105, 110, 105, 115, 112, 97, 110, 46, 100, 105, 115, 116, 114, 105, 98, 117, 116, 105, 111, 110, 46, 77, 97, 103, 105, 99, 75, 101, 121, -12, 104, -127, 32, 29, 91, -126, -98, 0, 0, 0, 3, 0, 0, 0, 7, 97, 100, 100, 114, 101, 115, 115, 20, 0, 0, 0, 0, 8, 104, 97, 115, 104, 99, 111, 100, 101, 35, 0, 0, 0, 0, 4, 110, 97, 109, 101, 20, 0, 22, 62, 11, 78, 111, 100, 101, 65, 45, 51, 50, 54, 50, 56, 122, -66, -70, -47, 62, 2, 107, 50, 3, 14, 62, 2, 118, 50, 3, 51, 0, 0, 0, 1, 3, 73, 83, 2, 95, 3, 39, 4, 59, -2, 50, 16, -56, -4, -32, 96, 91, -106, -114, -128, 26, 71, -50, 106, -52, -69, -36, -109, 53, 3, 39, 4, 59, -2, 50, 16, 73, -73, 104, 36, -62, 59, 74, 125, 126, 57, -12, 55, 10, -121, -44, -82, 53, 3, 51, 0, 0, 0, 1, 3, 73, 83, 3, 95, 3, 39, 4, 59, -2, 50, 16, -56, -4, -32, 96, 91, -106, -114, -128, 26, 71, -50, 106, -52, -69, -36, -109, 53, 3, 39, 4, 59, -2, 50, 16, 73, -73, 104, 36, -62, 59, 74, 125, 126, 57, -12, 55, 10, -121, -44, -82, 53, 3, 39, 4, 59, -2, 50, 16, 19, 93, 117, 78, -28, -19, -41, 13, 38, 93, -96, -106, -106, -6, 0, 68, 53};
+      marshaller.objectFromByteBuffer(bytes);
+   }
+
+   public void testMultiRpcCommand() throws Exception {
+      String cacheName = EmbeddedCacheManager.DEFAULT_CACHE_NAME;
+      ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName, Collections.<Flag>emptySet());
+      PutKeyValueCommand c5 = new PutKeyValueCommand("k", "v", false, null, 0, 0, Collections.<Flag>emptySet());
+      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(c2, c5), cacheName);
       marshallAndAssertEquality(c99);
    }
 

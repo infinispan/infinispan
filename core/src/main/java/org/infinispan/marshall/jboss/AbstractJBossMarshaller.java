@@ -46,11 +46,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
    private final ConcurrentMap<Class, Boolean> isMarshallableMap = new ConcurrentWeakKeyHashMap<Class, Boolean>();
 
    public AbstractJBossMarshaller() {
-      factory = Marshalling.getMarshallerFactory("river", Marshalling.class.getClassLoader());
-      if (factory == null)
-         throw new IllegalStateException(
-            "River marshaller factory not found.  Verify that the JBoss Marshalling River jar archive is in the classpath.");
-
+      factory = new JBossMarshallerFactory();
       // Class resolver now set when marshaller/unmarshaller will be created
       baseCfg = new MarshallingConfiguration();
       baseCfg.setCreator(new SunReflectiveCreator());

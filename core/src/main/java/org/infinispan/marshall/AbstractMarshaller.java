@@ -38,14 +38,6 @@ public abstract class AbstractMarshaller implements Marshaller {
 
    protected static final int DEFAULT_BUF_SIZE = 512;
 
-   private ThreadLocal<BufferSizePredictor> bufferSizePredictorTL =
-      new ThreadLocal<BufferSizePredictor>() {
-         @Override
-         protected BufferSizePredictor initialValue() {
-            return new AdaptiveBufferSizePredictor();
-         }
-      };
-
    /**
     * This is a convenience method for converting an object into a {@link org.infinispan.io.ByteBuffer} which takes
     * an estimated size as parameter. A {@link org.infinispan.io.ByteBuffer} allows direct access to the byte
@@ -60,7 +52,7 @@ public abstract class AbstractMarshaller implements Marshaller {
 
    @Override
    public ByteBuffer objectToBuffer(Object obj) throws IOException, InterruptedException {
-      BufferSizePredictor sizePredictor = bufferSizePredictorTL.get();
+      BufferSizePredictor sizePredictor = BufferSizePredictorFactory.getBufferSizePredictor();
       int estimatedSize = sizePredictor.nextSize(obj);
       ByteBuffer byteBuffer = objectToBuffer(obj, estimatedSize);
       int length = byteBuffer.getLength();
@@ -75,7 +67,7 @@ public abstract class AbstractMarshaller implements Marshaller {
 
    @Override
    public byte[] objectToByteBuffer(Object o) throws IOException, InterruptedException {
-      BufferSizePredictor sizePredictor = bufferSizePredictorTL.get();
+      BufferSizePredictor sizePredictor = BufferSizePredictorFactory.getBufferSizePredictor();
       byte[] bytes = objectToByteBuffer(o, sizePredictor.nextSize(o));
       sizePredictor.recordSize(bytes.length);
       return bytes;

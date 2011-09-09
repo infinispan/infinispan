@@ -50,7 +50,7 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
    private InvocationContextContainer icc;
    ExternalizerTable externalizerTable;
 
-   public void start(ExternalizerTable externalizerTable, ClassLoader cl, InvocationContextContainer icc) {
+   public void inject(ExternalizerTable externalizerTable, ClassLoader cl, InvocationContextContainer icc) {
       if (log.isDebugEnabled()) log.debug("Using JBoss Marshalling");
       this.icc = icc;
       this.externalizerTable = externalizerTable;
