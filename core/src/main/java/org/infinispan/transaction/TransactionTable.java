@@ -281,7 +281,8 @@ public class TransactionTable {
             if (keys.size() > 0) {
                if (trace) log.tracef("Unlocking keys %s for remote transaction %s as we are no longer an owner", keys, gtx);
                Set<Flag> flags = EnumSet.of(Flag.CACHE_MODE_LOCAL);
-               LockControlCommand unlockCmd = new LockControlCommand(keys, configuration.getName(), flags, false);
+               String cacheName = configuration.getName();
+               LockControlCommand unlockCmd = new LockControlCommand(keys, cacheName, flags, false);
                unlockCmd.init(invoker, icc, TransactionTable.this);
                unlockCmd.attachGlobalTransaction(gtx);
                unlockCmd.setUnlock(true);
@@ -295,7 +296,7 @@ public class TransactionTable {
                // if the transaction doesn't touch local keys any more, we can roll it back
                if (!txHasLocalKeys) {
                   if (trace) log.tracef("Killing remote transaction without any local keys %s", gtx);
-                  RollbackCommand rc = new RollbackCommand(gtx);
+                  RollbackCommand rc = new RollbackCommand(cacheName, gtx);
                   rc.init(invoker, icc, TransactionTable.this);
                   try {
                      rc.perform(null);
@@ -345,7 +346,7 @@ public class TransactionTable {
 
       for (GlobalTransaction gtx : toKill) {
          if (trace) log.tracef("Killing remote transaction originating on leaver %s", gtx);
-         RollbackCommand rc = new RollbackCommand(gtx);
+         RollbackCommand rc = new RollbackCommand(configuration.getName(), gtx);
          rc.init(invoker, icc, TransactionTable.this);
          try {
             rc.perform(null);

@@ -1,0 +1,36 @@
+# ByteMan rules to debug JBoss Marshalling - This could be handy in the future
+
+RULE debug marshaller
+CLASS org.jboss.marshalling.AbstractObjectOutput
+METHOD writeObject(Object)
+AT ENTRY
+BIND nullobj : java.lang.Object = null
+IF TRUE
+DO   System.out.println("Write type=" + ($1 == nullobj ? "NULL" : $1.getClass().getName()))
+ENDRULE
+
+RULE debug unmarshaller
+CLASS org.jboss.marshalling.AbstractObjectInput
+METHOD readObject()
+AT EXIT
+BIND nullobj : java.lang.Object = null
+IF TRUE
+DO   System.out.println("Read type=" + ($! == nullobj ? "NULL" : $!.getClass().getName()))
+ENDRULE
+
+RULE debug unmarshaller lead byte
+CLASS org.jboss.marshalling.river.RiverUnmarshaller
+METHOD doReadObject(int, boolean)
+AT ENTRY
+IF TRUE
+DO   System.out.println("Lead byte=" + $1)
+ENDRULE
+
+RULE debug unmarshaller buffer position and lead byte
+CLASS org.jboss.marshalling.SimpleDataInput
+METHOD readUnsignedByteDirect()
+AT EXIT
+BIND input = $this
+IF TRUE
+DO   System.out.println("Unsigned byte=" + $! + ". Read buffer position=" + input.position)
+ENDRULE

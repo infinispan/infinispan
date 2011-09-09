@@ -23,11 +23,14 @@
 package org.infinispan.factories;
 
 import org.infinispan.CacheException;
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.marshall.CacheMarshaller;
 import org.infinispan.marshall.GlobalMarshaller;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.util.Util;
 
 import static org.infinispan.factories.KnownComponentNames.*;
 
@@ -44,9 +47,9 @@ public class MarshallerFactory extends NamedComponentFactory implements AutoInst
    public <T> T construct(Class<T> componentType, String componentName) {
       Object comp;
       if (componentName.equals(GLOBAL_MARSHALLER))
-         comp = new GlobalMarshaller();
+         comp = new GlobalMarshaller(createMarshaller());
       else if (componentName.equals(CACHE_MARSHALLER))
-         comp = new CacheMarshaller();
+         comp = new CacheMarshaller(createMarshaller());
       else
          throw new CacheException("Don't know how to handle type " + componentType);
 
@@ -55,6 +58,11 @@ public class MarshallerFactory extends NamedComponentFactory implements AutoInst
       } catch (Exception e) {
          throw new CacheException("Problems casting bootstrap component " + comp.getClass() + " to type " + componentType, e);
       }
+   }
+
+   protected VersionAwareMarshaller createMarshaller() {
+      return (VersionAwareMarshaller) Util.getInstance(
+            globalConfiguration.getMarshallerClass(), globalConfiguration.getClassLoader());
    }
 
 }

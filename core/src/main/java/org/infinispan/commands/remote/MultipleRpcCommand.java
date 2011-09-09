@@ -51,12 +51,17 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
 
    private ReplicableCommand[] commands;
 
+   private MultipleRpcCommand() {
+      super(null); // For command id uniqueness test
+   }
+
    public MultipleRpcCommand(List<ReplicableCommand> modifications, String cacheName) {
       super(cacheName);
       commands = modifications.toArray(new ReplicableCommand[modifications.size()]);
    }
 
-   public MultipleRpcCommand() {
+   public MultipleRpcCommand(String cacheName) {
+      super(cacheName);
    }
 
    /**
@@ -84,18 +89,16 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
 
    public Object[] getParameters() {
       int numCommands = commands.length;
-      Object[] retval = new Object[numCommands + 1];
-      retval[0] = cacheName;
-      System.arraycopy(commands, 0, retval, 1, numCommands);
+      Object[] retval = new Object[numCommands];
+      System.arraycopy(commands, 0, retval, 0, numCommands);
       return retval;
    }
 
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] args) {
-      cacheName = (String) args[0];
-      int numCommands = args.length - 1;
+      int numCommands = args.length;
       commands = new ReplicableCommand[numCommands];
-      System.arraycopy(args, 1, commands, 0, numCommands);
+      System.arraycopy(args, 0, commands, 0, numCommands);
    }
 
    @Override

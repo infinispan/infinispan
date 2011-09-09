@@ -35,7 +35,8 @@ public abstract class RecoveryCommand extends BaseRpcCommand {
 
    protected RecoveryManager recoveryManager;
 
-   public RecoveryCommand() {
+   private RecoveryCommand() {
+      super(null); // For command id uniqueness test
    }
 
    protected RecoveryCommand(String cacheName) {

@@ -65,19 +65,26 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       this.recoveryManager = recoveryManager;
    }
 
-   public PrepareCommand(GlobalTransaction gtx, boolean onePhaseCommit, WriteCommand... modifications) {
+   private PrepareCommand() {
+      super(null); // For command id uniqueness test
+   }
+
+   public PrepareCommand(String cacheName, GlobalTransaction gtx, boolean onePhaseCommit, WriteCommand... modifications) {
+      super(cacheName);
       this.globalTx = gtx;
       this.modifications = modifications;
       this.onePhaseCommit = onePhaseCommit;
    }
 
-   public PrepareCommand(GlobalTransaction gtx, List<WriteCommand> commands, boolean onePhaseCommit) {
+   public PrepareCommand(String cacheName, GlobalTransaction gtx, List<WriteCommand> commands, boolean onePhaseCommit) {
+      super(cacheName);
       this.globalTx = gtx;
       this.modifications = commands == null || commands.isEmpty() ? null : commands.toArray(new WriteCommand[commands.size()]);
       this.onePhaseCommit = onePhaseCommit;
    }
 
-   public PrepareCommand() {
+   public PrepareCommand(String cacheName) {
+      super(cacheName);
    }
 
    public Object perform(InvocationContext ignored) throws Throwable {
@@ -142,30 +149,31 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    @Override
    public Object[] getParameters() {
       int numMods = modifications == null ? 0 : modifications.length;
-      Object[] retval = new Object[numMods + 4];
-      retval[0] = globalTx;
-      retval[1] = cacheName;
-      retval[2] = onePhaseCommit;
-      retval[3] = numMods;
-      if (numMods > 0) System.arraycopy(modifications, 0, retval, 4, numMods);
+      int i = 0;
+      final int params = 3;
+      Object[] retval = new Object[numMods + params];
+      retval[i++] = globalTx;
+      retval[i++] = onePhaseCommit;
+      retval[i++] = numMods;
+      if (numMods > 0) System.arraycopy(modifications, 0, retval, params, numMods);
       return retval;
    }
 
    @Override
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] args) {
-      globalTx = (GlobalTransaction) args[0];
-      cacheName = (String) args[1];
-      onePhaseCommit = (Boolean) args[2];
-      int numMods = (Integer) args[3];
+      int i = 0;
+      globalTx = (GlobalTransaction) args[i++];
+      onePhaseCommit = (Boolean) args[i++];
+      int numMods = (Integer) args[i++];
       if (numMods > 0) {
          modifications = new WriteCommand[numMods];
-         System.arraycopy(args, 4, modifications, 0, numMods);
+         System.arraycopy(args, i, modifications, 0, numMods);
       }
    }
 
    public PrepareCommand copy() {
-      PrepareCommand copy = new PrepareCommand();
+      PrepareCommand copy = new PrepareCommand(cacheName);
       copy.globalTx = globalTx;
       copy.modifications = modifications == null ? null : modifications.clone();
       copy.onePhaseCommit = onePhaseCommit;

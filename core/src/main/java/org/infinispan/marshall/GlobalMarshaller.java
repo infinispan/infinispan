@@ -1,8 +1,6 @@
 package org.infinispan.marshall;
 
-import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -19,16 +17,13 @@ import org.infinispan.marshall.jboss.ExternalizerTable;
 @Scope(Scopes.GLOBAL)
 public class GlobalMarshaller extends AbstractDelegatingMarshaller {
 
-   @Inject
-   public void inject(ClassLoader loader, GlobalConfiguration globalCfg, ExternalizerTable extTable) {
-      super.inject(extTable);
-      this.marshaller = createMarshaller(globalCfg, loader);
-      this.marshaller.inject(null, loader, null);
+   public GlobalMarshaller(VersionAwareMarshaller marshaller) {
+      this.marshaller = marshaller;
    }
 
-   @Start(priority = 9) // Should start before Transport component
-   public void start() {
-      super.start();
+   @Inject
+   public void inject(ClassLoader loader, ExternalizerTable extTable) {
+      this.marshaller.inject(null, loader, null, extTable);
    }
 
    @Stop(priority = 11) // Stop after transport to avoid send/receive and marshaller not being ready

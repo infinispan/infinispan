@@ -26,6 +26,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.ClassFinder;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +42,17 @@ public class CommandIdUniquenessTest extends AbstractInfinispanTest {
       for (Class<?> c : commands) {
          if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers()) && !LocalCommand.class.isAssignableFrom(c)) {
             System.out.println("Testing " + c.getSimpleName());
-            ReplicableCommand cmd = (ReplicableCommand) c.newInstance();
+            Constructor<?>[] declaredCtors = c.getDeclaredConstructors();
+            Constructor<?> constructor = null;
+            for (Constructor<?> declaredCtor : declaredCtors) {
+               if (declaredCtor.getParameterTypes().length == 0) {
+                  constructor = declaredCtor;
+                  constructor.setAccessible(true);
+                  break;
+               }
+            }
+
+            ReplicableCommand cmd = (ReplicableCommand) constructor.newInstance(null);
             byte b = cmd.getCommandId();
             assert b > 0 : "Command " + c.getSimpleName() + " has a command id of " + b + " and does not implement LocalCommand!";
             assert !cmdIds.containsKey(b) : "Command ID [" + b + "] is duplicated in " + c.getSimpleName() + " and " + cmdIds.get(b);

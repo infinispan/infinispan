@@ -35,12 +35,12 @@ public class GetInDoubtTxInfoCommand extends RecoveryCommand {
 
    public static final int COMMAND_ID = 23;
 
-   public GetInDoubtTxInfoCommand(String cacheName) {
-      super();
-      this.cacheName = cacheName;
+   private GetInDoubtTxInfoCommand() {
+      super(null); // For command id uniqueness test
    }
 
-   public GetInDoubtTxInfoCommand() {
+   public GetInDoubtTxInfoCommand(String cacheName) {
+      super(cacheName);
    }
 
    @Override
@@ -55,14 +55,14 @@ public class GetInDoubtTxInfoCommand extends RecoveryCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{cacheName};
+      return new Object[0];
    }
 
    @Override
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID)
          throw new IllegalStateException("Expected " + COMMAND_ID + "and received " + commandId);
-      cacheName = (String) parameters[0];
+      // No parameters
    }
 
    @Override

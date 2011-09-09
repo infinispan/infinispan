@@ -22,14 +22,8 @@
  */
 package org.infinispan.marshall;
 
-import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.marshall.jboss.ExternalizerTable;
@@ -72,7 +66,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
       defaultMarshaller = new JBossMarshaller();
    }
 
-   public void inject(Configuration cfg, ClassLoader loader, InvocationContextContainer icc) {
+   public void inject(Configuration cfg, ClassLoader loader, InvocationContextContainer icc, ExternalizerTable extTable) {
       if (cfg == null) {
          this.loader = loader;
          this.cacheName = null;
@@ -82,10 +76,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
       }
 
       this.icc = icc;
-   }
-
-   public void start(ExternalizerTable externalizerTable) {
-      defaultMarshaller.start(externalizerTable, loader, icc);
+      this.defaultMarshaller.inject(extTable, this.loader, this.icc);
    }
 
    public void stop() {

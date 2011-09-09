@@ -93,4 +93,5 @@ public interface Ids {
    int MURMURHASH_2_COMPAT = 72;
    int MURMURHASH_3 = 73;
 
+   int CACHE_RPC_COMMAND = 74;
 }
