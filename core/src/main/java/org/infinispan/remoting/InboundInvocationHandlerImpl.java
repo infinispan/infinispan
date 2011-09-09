@@ -281,19 +281,22 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       String cacheName = cmd.getCacheName();
       try {
          // We want to retry put operations after the cache has started up
-         // We ignore read calls and distributed tasks before the cache has been started
-         // as in both cases a a late response won't be useful to the caller.
+         // We can't queue read calls and distributed tasks before the cache has been started
+         // as in both cases a the caller needs the response.
          // RehashControlCommands are the mechanism used for joining the cluster,
          // so they need to go through immediately (they also ignore the processing lock).
          boolean isRehashCommand = cmd instanceof RehashControlCommand;
          boolean isClusteredGetCommand = cmd instanceof ClusteredGetCommand;
          boolean isDistributedExecuteCommand = cmd instanceof SingleRpcCommand && ((SingleRpcCommand)cmd).getCommand() instanceof DistributedExecuteCommand;
-         boolean needRetry = !(isRehashCommand || isClusteredGetCommand || isDistributedExecuteCommand);
+
+         boolean needRetry = !(isRehashCommand || isDistributedExecuteCommand);
          if (!needRetry) {
             try {
                if (!isRehashCommand) {
                   distributedSync.acquireProcessingLock(false, distributedSyncTimeout, MILLISECONDS);
                   unlock = true;
+
+                  waitForStart(cmd);
                }
                return handleWithWaitForBlocks(cmd, distributedSyncTimeout);
             } catch (TimeoutException te) {
