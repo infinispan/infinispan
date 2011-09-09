@@ -208,21 +208,15 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    public PrepareCommand buildPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit) {
-      PrepareCommand command = new PrepareCommand(gtx, modifications, onePhaseCommit);
-      command.setCacheName(cacheName);
-      return command;
+      return new PrepareCommand(cacheName, gtx, modifications, onePhaseCommit);
    }
 
    public CommitCommand buildCommitCommand(GlobalTransaction gtx) {
-      CommitCommand commitCommand = new CommitCommand(gtx);
-      commitCommand.setCacheName(cacheName);
-      return commitCommand;
+      return new CommitCommand(cacheName, gtx);
    }
 
    public RollbackCommand buildRollbackCommand(GlobalTransaction gtx) {
-      RollbackCommand rollbackCommand = new RollbackCommand(gtx);
-      rollbackCommand.setCacheName(cacheName);
-      return rollbackCommand;
+      return new RollbackCommand(cacheName, gtx);
    }
 
    public MultipleRpcCommand buildReplicateCommand(List<ReplicableCommand> toReplicate) {

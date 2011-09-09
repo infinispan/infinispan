@@ -38,17 +38,22 @@ public class RemoveRecoveryInfoCommand extends RecoveryCommand {
    private Xid xid;
    private long internalId;
 
-   public RemoveRecoveryInfoCommand(Xid xid, String cacheName) {
-      this.xid = xid;
-      this.cacheName = cacheName;
+   private RemoveRecoveryInfoCommand() {
+      super(null); // For command id uniqueness test
    }
 
-   public RemoveRecoveryInfoCommand() {
+   public RemoveRecoveryInfoCommand(Xid xid, String cacheName) {
+      super(cacheName);
+      this.xid = xid;
    }
 
    public RemoveRecoveryInfoCommand(long internalId, String cacheName) {
+      super(cacheName);
       this.internalId = internalId;
-      this.cacheName = cacheName;
+   }
+
+   public RemoveRecoveryInfoCommand(String cacheName) {
+      super(cacheName);
    }
 
    @Override
@@ -68,14 +73,7 @@ public class RemoveRecoveryInfoCommand extends RecoveryCommand {
 
    @Override
    public Object[] getParameters() {
-      Object[] result = new Object[2];
-      if (xid != null) {
-         result[0] = xid;
-      } else {
-         result[0] = internalId;
-      }
-      result[1] = cacheName;
-      return result;
+      return new Object[]{xid != null ? xid : internalId};
    }
 
    @Override
@@ -88,7 +86,6 @@ public class RemoveRecoveryInfoCommand extends RecoveryCommand {
       } else {
          internalId = (Long) parameters[0];
       }
-      cacheName = (String) parameters[1];
    }
 
    @Override

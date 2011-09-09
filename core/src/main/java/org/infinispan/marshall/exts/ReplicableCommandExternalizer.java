@@ -24,24 +24,10 @@ package org.infinispan.marshall.exts;
 
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.RemoteCommandsFactory;
-import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.MapReduceCommand;
-import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
-import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
-import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
-import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -55,6 +41,8 @@ import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -69,7 +57,7 @@ import java.util.Set;
  * @since 4.0
  */
 public class ReplicableCommandExternalizer extends AbstractExternalizer<ReplicableCommand> {
-   private RemoteCommandsFactory cmdFactory;
+   RemoteCommandsFactory cmdFactory;
    
    public void inject(RemoteCommandsFactory cmdFactory) {
       this.cmdFactory = cmdFactory;
@@ -77,19 +65,15 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
 
    @Override
    public void writeObject(ObjectOutput output, ReplicableCommand command) throws IOException {
-      Collection<Class<? extends ReplicableCommand>> moduleCommands = getModuleCommands();
-      // Write an indexer to separate commands defined external to the
-      // infinispan core module from the ones defined via module commands
-      if (moduleCommands.contains(command.getClass()))
-         output.writeByte(1);
-      else
-         output.writeByte(0);
+      writeCommandHeader(output, command);
+      writeCommandParameters(output, command);
+   }
 
-      output.writeShort(command.getCommandId());
+   protected void writeCommandParameters(ObjectOutput output, ReplicableCommand command) throws IOException {
       Object[] args = command.getParameters();
       int numArgs = (args == null ? 0 : args.length);
 
-      UnsignedNumeric.writeUnsignedInt(output,numArgs);
+      UnsignedNumeric.writeUnsignedInt(output, numArgs);
       for (int i = 0; i < numArgs; i++) {
          Object arg = args[i];
          if (arg instanceof DeltaAware) {
@@ -102,10 +86,27 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       }
    }
 
+   protected void writeCommandHeader(ObjectOutput output, ReplicableCommand command) throws IOException {
+      Collection<Class<? extends ReplicableCommand>> moduleCommands = getModuleCommands();
+      // Write an indexer to separate commands defined external to the
+      // infinispan core module from the ones defined via module commands
+      if (moduleCommands.contains(command.getClass()))
+         output.writeByte(1);
+      else
+         output.writeByte(0);
+
+      output.writeShort(command.getCommandId());
+   }
+
    @Override
    public ReplicableCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       byte type = input.readByte();
       short methodId = input.readShort();
+      Object[] args = readParameters(input);
+      return cmdFactory.fromStream((byte) methodId, args, type);
+   }
+
+   protected Object[] readParameters(ObjectInput input) throws IOException, ClassNotFoundException {
       int numArgs = UnsignedNumeric.readUnsignedInt(input);
       Object[] args = null;
       if (numArgs > 0) {
@@ -115,7 +116,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
          // Instead, merge in PutKeyValueCommand.perform
          for (int i = 0; i < numArgs; i++) args[i] = input.readObject();
       }
-      return cmdFactory.fromStream((byte) methodId, args, type);
+      return args;
    }
 
    @Override
@@ -126,18 +127,12 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    @Override
    public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
        Set<Class<? extends ReplicableCommand>> coreCommands = Util.asSet(
-            MapReduceCommand.class, DistributedExecuteCommand.class,    
-            LockControlCommand.class, RehashControlCommand.class,
+            DistributedExecuteCommand.class,
             StateTransferControlCommand.class, GetKeyValueCommand.class,
-            ClusteredGetCommand.class, MultipleRpcCommand.class,
-            SingleRpcCommand.class, CommitCommand.class,
-            PrepareCommand.class, RollbackCommand.class,
             ClearCommand.class, EvictCommand.class,
             InvalidateCommand.class, InvalidateL1Command.class,
             PutKeyValueCommand.class, PutMapCommand.class,
-            RemoveCommand.class, ReplaceCommand.class,
-            RemoveCacheCommand.class, RemoveRecoveryInfoCommand.class, GetInDoubtTransactionsCommand.class,
-            GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class);
+            RemoveCommand.class, ReplaceCommand.class);
       Collection<Class<? extends ReplicableCommand>> moduleCommands = getModuleCommands();
       if (moduleCommands != null && !moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);
       return coreCommands;

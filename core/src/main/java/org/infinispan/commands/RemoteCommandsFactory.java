@@ -30,6 +30,7 @@ import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.MapReduceCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
@@ -55,6 +56,9 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
 
@@ -107,9 +111,6 @@ public class RemoteCommandsFactory {
             case PutKeyValueCommand.COMMAND_ID:
                command = new PutKeyValueCommand();
                break;
-            case LockControlCommand.COMMAND_ID:
-               command = new LockControlCommand();
-               break;
             case PutMapCommand.COMMAND_ID:
                command = new PutMapCommand();
                break;
@@ -125,21 +126,6 @@ public class RemoteCommandsFactory {
             case ClearCommand.COMMAND_ID:
                command = new ClearCommand();
                break;
-            case PrepareCommand.COMMAND_ID:
-               command = new PrepareCommand();
-               break;
-            case CommitCommand.COMMAND_ID:
-               command = new CommitCommand();
-               break;
-            case RollbackCommand.COMMAND_ID:
-               command = new RollbackCommand();
-               break;
-            case MultipleRpcCommand.COMMAND_ID:
-               command = new MultipleRpcCommand();
-               break;
-            case SingleRpcCommand.COMMAND_ID:
-               command = new SingleRpcCommand();
-               break;
             case InvalidateCommand.COMMAND_ID:
                command = new InvalidateCommand();
                break;
@@ -150,32 +136,8 @@ public class RemoteCommandsFactory {
                command = new StateTransferControlCommand();
                ((StateTransferControlCommand) command).init(transport);
                break;
-            case ClusteredGetCommand.COMMAND_ID:
-               command = new ClusteredGetCommand();
-               break;
-            case RehashControlCommand.COMMAND_ID:
-               command = new RehashControlCommand(transport);
-               break;
-            case RemoveCacheCommand.COMMAND_ID:
-               command = new RemoveCacheCommand(cacheManager, registry);
-               break;
-            case RemoveRecoveryInfoCommand.COMMAND_ID:
-               command = new RemoveRecoveryInfoCommand();
-               break;
-            case GetInDoubtTransactionsCommand.COMMAND_ID:
-               command = new GetInDoubtTransactionsCommand();
-               break;
-            case MapReduceCommand.COMMAND_ID:
-               command = new MapReduceCommand();
-               break;
             case DistributedExecuteCommand.COMMAND_ID:
                command = new DistributedExecuteCommand<Object>();
-               break;
-            case GetInDoubtTxInfoCommand.COMMAND_ID:
-               command = new GetInDoubtTxInfoCommand();
-               break;
-            case CompleteTransactionCommand.COMMAND_ID:
-               command = new CompleteTransactionCommand();
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
@@ -184,6 +146,75 @@ public class RemoteCommandsFactory {
          ModuleCommandFactory mcf = commandFactories.get(id);
          if (mcf != null)
             return mcf.fromStream(id, parameters);
+         else
+            throw new CacheException("Unknown command id " + id + "!");
+      }
+      command.setParameters(id, parameters);
+      return command;
+   }
+
+   /**
+    * Resolve an {@link CacheRpcCommand} from the stream.
+    *
+    * @param id            id of the command
+    * @param parameters    parameters to be set
+    * @param type          type of command (whether internal or user defined)
+    * @param cacheName     cache name at which this command is directed
+    * @return              an instance of {@link CacheRpcCommand}
+    */
+   public CacheRpcCommand fromStream(byte id, Object[] parameters, byte type, String cacheName) {
+      CacheRpcCommand command;
+      if (type == 0) {
+         switch (id) {
+            case LockControlCommand.COMMAND_ID:
+               command = new LockControlCommand(cacheName);
+               break;
+            case PrepareCommand.COMMAND_ID:
+               command = new PrepareCommand(cacheName);
+               break;
+            case CommitCommand.COMMAND_ID:
+               command = new CommitCommand(cacheName);
+               break;
+            case RollbackCommand.COMMAND_ID:
+               command = new RollbackCommand(cacheName);
+               break;
+            case MultipleRpcCommand.COMMAND_ID:
+               command = new MultipleRpcCommand(cacheName);
+               break;
+            case SingleRpcCommand.COMMAND_ID:
+               command = new SingleRpcCommand(cacheName);
+               break;
+            case ClusteredGetCommand.COMMAND_ID:
+               command = new ClusteredGetCommand(cacheName);
+               break;
+            case RehashControlCommand.COMMAND_ID:
+               command = new RehashControlCommand(cacheName, transport);
+               break;
+            case RemoveCacheCommand.COMMAND_ID:
+               command = new RemoveCacheCommand(cacheName, cacheManager, registry);
+               break;
+            case RemoveRecoveryInfoCommand.COMMAND_ID:
+               command = new RemoveRecoveryInfoCommand(cacheName);
+               break;
+            case GetInDoubtTransactionsCommand.COMMAND_ID:
+               command = new GetInDoubtTransactionsCommand(cacheName);
+               break;
+            case MapReduceCommand.COMMAND_ID:
+               command = new MapReduceCommand(cacheName);
+               break;
+            case GetInDoubtTxInfoCommand.COMMAND_ID:
+               command = new GetInDoubtTxInfoCommand(cacheName);
+               break;
+            case CompleteTransactionCommand.COMMAND_ID:
+               command = new CompleteTransactionCommand(cacheName);
+               break;
+            default:
+               throw new CacheException("Unknown command id " + id + "!");
+         }
+      } else {
+         ModuleCommandFactory mcf = commandFactories.get(id);
+         if (mcf != null)
+            return (CacheRpcCommand) mcf.fromStream(id, parameters);
          else
             throw new CacheException("Unknown command id " + id + "!");
       }

@@ -67,10 +67,15 @@ public class MapReduceCommand extends BaseRpcCommand {
    protected DistributionManager dm;
    protected Address localAddress;
 
-   public MapReduceCommand() {
+   private MapReduceCommand() {
+      super(null); // For command id uniqueness test
    }
 
-   public MapReduceCommand( Mapper m, Reducer r, String cacheName, Object... inputKeys) {
+   public MapReduceCommand(String cacheName) {
+      super(cacheName);
+   }
+
+   public MapReduceCommand(Mapper m, Reducer r, String cacheName, Object... inputKeys) {
       super(cacheName);
       if (inputKeys == null || inputKeys.length == 0) {
          this.keys = new HashSet<Object>();
@@ -82,7 +87,7 @@ public class MapReduceCommand extends BaseRpcCommand {
       this.reducer = r;
    }
 
-   public MapReduceCommand( Mapper m, Reducer r, String cacheName, Collection<Object> inputKeys) {
+   public MapReduceCommand(Mapper m, Reducer r, String cacheName, Collection<Object> inputKeys) {
       super(cacheName);
       if (inputKeys == null || inputKeys.isEmpty())
          this.keys = new HashSet<Object>();
@@ -160,8 +165,7 @@ public class MapReduceCommand extends BaseRpcCommand {
 
    @Override
    public Object[] getParameters() {
-      
-      return new Object[] { cacheName, keys, mapper, reducer};
+      return new Object[] {keys, mapper, reducer};
    }
 
    @Override
@@ -169,7 +173,6 @@ public class MapReduceCommand extends BaseRpcCommand {
       if (commandId != COMMAND_ID)
          throw new IllegalStateException("Invalid method id");
       int i = 0;
-      cacheName = (String) args[i++];
       keys = (Set<Object>) args[i++];
       mapper = (Mapper)args[i++];
       reducer = (Reducer) args[i++];

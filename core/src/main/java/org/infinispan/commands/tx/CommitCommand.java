@@ -44,11 +44,17 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
     */
    public static final byte RESEND_PREPARE = 1;
 
-   public CommitCommand(GlobalTransaction gtx) {
+   private CommitCommand() {
+      super(null); // For command id uniqueness test
+   }
+
+   public CommitCommand(String cacheName, GlobalTransaction gtx) {
+      super(cacheName);
       this.globalTx = gtx;
    }
 
-   public CommitCommand() {
+   public CommitCommand(String cacheName) {
+      super(cacheName);
    }
 
    @Override

@@ -66,12 +66,17 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
 
    private DistributionManager distributionManager;
 
-   public ClusteredGetCommand() {
+   private ClusteredGetCommand() {
+      super(null); // For command id uniqueness test
+   }
+
+   public ClusteredGetCommand(String cacheName) {
+      super(cacheName);
    }
 
    public ClusteredGetCommand(Object key, String cacheName, Set<Flag> flags) {
+      super(cacheName);
       this.key = key;
-      this.cacheName = cacheName;
       this.flags = flags;
    }
 
@@ -123,15 +128,13 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    }
 
    public Object[] getParameters() {
-      return new Object[]{key, cacheName, flags};
+      return new Object[]{key, flags};
    }
 
    public void setParameters(int commandId, Object[] args) {
-      key = args[0];
-      cacheName = (String) args[1];
-      if (args.length>2) {
-         this.flags = (Set<Flag>) args[2];
-      }
+      int i = 0;
+      key = args[i++];
+      flags = (Set<Flag>) args[i++];
    }
 
    @Override
@@ -159,10 +162,6 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
          .append(", flags=").append(flags)
          .append("}")
          .toString();
-   }
-
-   public String getCacheName() {
-      return cacheName;
    }
 
    public Object getKey() {

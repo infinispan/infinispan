@@ -67,8 +67,8 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
          PutKeyValueCommand putCommand = new PutKeyValueCommand();
          putCommand.setKey(key);
          putCommand.setValue(value);
-         SingleRpcCommand rpcCommand = new SingleRpcCommand();
-         Object[] params = new Object[]{"replSync", putCommand};
+         SingleRpcCommand rpcCommand = new SingleRpcCommand("replSync");
+         Object[] params = new Object[]{putCommand};
          rpcCommand.setParameters(SingleRpcCommand.COMMAND_ID, params);
          expect(mockMarshaller1.objectToBuffer(anyObject())).andReturn(originalMarshaller1.objectToBuffer(rpcCommand));
          expect(mockMarshaller2.objectFromByteBuffer((byte[]) anyObject(), anyInt(), anyInt())).andThrow(new EOFException());

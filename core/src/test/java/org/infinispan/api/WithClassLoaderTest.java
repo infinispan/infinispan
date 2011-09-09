@@ -46,16 +46,16 @@ public class WithClassLoaderTest extends MultipleCacheManagersTest {
       cacheManagers.add(cm1);
    }
 
-   public void testReadingWithCorrectClassLoader() {
+   public void testReadingWithCorrectClassLoaderAfterReplication() {
       Cache<Integer, Car> cache0 = cache(0);
+      Cache<Integer, Car> cache1 = cache(1);
+
       Car value = new Car().plateNumber("1234");
       cache0.put(1, value);
 
-      Cache<Integer, Car> cache1 = cache(1);
-
       try {
          cache1.get(1);
-         fail("Expected a class ClassNotFoundException");
+         fail("Expected a ClassNotFoundException");
       } catch (CacheException e) {
          if (!(e.getCause() instanceof ClassNotFoundException))
             throw e;
@@ -63,6 +63,9 @@ public class WithClassLoaderTest extends MultipleCacheManagersTest {
 
       assertEquals(value, cache1.getAdvancedCache().with(systemCl).get(1));
    }
+
+   // TODO: Add test where contents come from state transfer rather than replication
+   // TODO: For that to work, memory state might need wrapping in a cache rpc command (i.e. state transfer command)
 
    public static class Car implements Serializable {
       String plateNumber;

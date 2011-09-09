@@ -42,7 +42,6 @@ import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.distribution.RemoteTransactionLogDetails;
-import org.infinispan.distribution.ch.AbstractWheelConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.ch.UnionConsistentHash;
@@ -57,8 +56,8 @@ import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.exts.ArrayListExternalizer;
+import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
 import org.infinispan.marshall.exts.LinkedListExternalizer;
 import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
@@ -160,6 +159,7 @@ public class ExternalizerTable implements ObjectTable {
       internalExternalizers.add(new UnsureResponse.Externalizer());
 
       internalExternalizers.add(new ReplicableCommandExternalizer());
+      internalExternalizers.add(new CacheRpcCommandExternalizer());
 
       internalExternalizers.add(new ImmortalCacheEntry.Externalizer());
       internalExternalizers.add(new MortalCacheEntry.Externalizer());
@@ -281,6 +281,8 @@ public class ExternalizerTable implements ObjectTable {
       for (AdvancedExternalizer ext : internalExternalizers) {
          if (ext instanceof ReplicableCommandExternalizer)
             ((ReplicableCommandExternalizer) ext).inject(cmdFactory);
+         if (ext instanceof CacheRpcCommandExternalizer)
+            ((CacheRpcCommandExternalizer) ext).inject(cmdFactory, gcr);
          if (ext instanceof MarshalledValue.Externalizer)
             ((MarshalledValue.Externalizer) ext).inject(gcr);
 

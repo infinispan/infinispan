@@ -49,13 +49,17 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    private static boolean trace = log.isTraceEnabled();
 
    protected GlobalTransaction globalTx;
-   protected String cacheName;
+   protected final String cacheName;
    protected InterceptorChain invoker;
    protected InvocationContextContainer icc;
    protected TransactionTable txTable;
    protected Configuration configuration;
    protected ComponentRegistry componentRegistry;
    private Address origin;
+
+   public AbstractTransactionBoundaryCommand(String cacheName) {
+      this.cacheName = cacheName;
+   }
 
    public void injectComponents(Configuration configuration, ComponentRegistry componentRegistry) {
       this.configuration = configuration;
@@ -78,10 +82,6 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
 
    public String getCacheName() {
       return cacheName;
-   }
-
-   public void setCacheName(String cacheName) {
-      this.cacheName = cacheName;
    }
 
    public GlobalTransaction getGlobalTransaction() {
@@ -125,12 +125,11 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    }
 
    public Object[] getParameters() {
-      return new Object[]{globalTx, cacheName};
+      return new Object[]{globalTx};
    }
 
    public void setParameters(int commandId, Object[] args) {
       globalTx = (GlobalTransaction) args[0];
-      cacheName = (String) args[1];
    }
 
    public boolean shouldInvoke(InvocationContext ctx) {

@@ -28,6 +28,7 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.util.logging.Log;
@@ -279,4 +280,19 @@ public class ModuleProperties extends Properties {
          moduleCommandsGuard.unlock();
       }
    }
+
+   public static Collection<Class<? extends CacheRpcCommand>> moduleCacheRpcCommands() {
+      Collection<Class<? extends ReplicableCommand>> cmds = moduleCommands(null);
+      Collection<Class<? extends CacheRpcCommand>> cacheRpcCmds = new HashSet<Class<? extends CacheRpcCommand>>();
+      if (cmds == null || cmds.isEmpty())
+         return Collections.emptySet();
+
+      for (Class<? extends ReplicableCommand> moduleCmdClass : cmds) {
+         if (CacheRpcCommand.class.isAssignableFrom(moduleCmdClass))
+            cacheRpcCmds.add((Class<? extends CacheRpcCommand>) moduleCmdClass);
+      }
+
+      return cacheRpcCmds;
+   }
+
 }

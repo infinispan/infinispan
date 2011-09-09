@@ -48,9 +48,6 @@ public abstract class BaseRpcInvokingCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   BaseRpcInvokingCommand() {
-   }
-
    public void init(InterceptorChain interceptorChain, InvocationContextContainer icc) {
       this.interceptorChain = interceptorChain;
       this.icc = icc;

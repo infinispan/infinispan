@@ -37,11 +37,17 @@ import org.infinispan.transaction.RemoteTransaction;
 public class RollbackCommand extends AbstractTransactionBoundaryCommand {
    public static final byte COMMAND_ID = 13;
 
-   public RollbackCommand(GlobalTransaction globalTransaction) {
+   private RollbackCommand() {
+      super(null); // For command id uniqueness test
+   }
+
+   public RollbackCommand(String cacheName, GlobalTransaction globalTransaction) {
+      super(cacheName);
       this.globalTx = globalTransaction;
    }
 
-   public RollbackCommand() {
+   public RollbackCommand(String cacheName) {
+      super(cacheName);
    }
 
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {

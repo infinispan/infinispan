@@ -80,11 +80,11 @@ public class RehashControlCommand extends BaseRpcCommand {
    CommandsFactory commandsFactory;
    private static final Log log = LogFactory.getLog(RehashControlCommand.class);
 
-   public RehashControlCommand() {
+   private RehashControlCommand() {
+      super(null); // For command id uniqueness test
    }
 
-
-   public RehashControlCommand(String cacheName, Type type, Address sender, int viewId, Map<Object, InternalCacheValue> state,ConsistentHash oldConsistentHash,
+   public RehashControlCommand(String cacheName, Type type, Address sender, int viewId, Map<Object, InternalCacheValue> state, ConsistentHash oldConsistentHash,
                                 ConsistentHash consistentHash) {
       super(cacheName);
       this.type = type;
@@ -102,7 +102,8 @@ public class RehashControlCommand extends BaseRpcCommand {
       this.viewId = viewId;
    }
 
-   public RehashControlCommand(Transport transport) {
+   public RehashControlCommand(String cacheName, Transport transport) {
+      super(cacheName);
       this.transport = transport;
    }
 
@@ -147,13 +148,12 @@ public class RehashControlCommand extends BaseRpcCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{cacheName, (byte) type.ordinal(), sender, viewId, state, oldCH, newCH};
+      return new Object[]{(byte) type.ordinal(), sender, viewId, state, oldCH, newCH};
    }
 
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       int i = 0;
-      cacheName = (String) parameters[i++];
       type = Type.values()[(Byte) parameters[i++]];
       sender = (Address) parameters[i++];
       viewId = (Integer) parameters[i++];
