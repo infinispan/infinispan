@@ -84,8 +84,13 @@ public enum Flag {
     */
    CACHE_MODE_LOCAL,
    /**
-    * Bypasses lock acquisition for this invocation altogether.  A potentially dangerous flag, as it can lead to
-    * inconsistent data.
+    * Bypasses lock acquisition for this invocation altogether. A potentially dangerous flag, as it can lead to
+    * inconsistent data: a Lock is needed to make sure the same value is written to each node replica; a lock
+    * is also needed to guarantee that several writes on the same key are not applied out of order to an async CacheLoader
+    * storage engine.
+    * So this flag is useful only as an optimization when the same key is written once and never again, or as
+    * an unsafe optimisation if the period between writes on the same key is large enough to make a race condition
+    * never happen in practice. If this is unclear, avoid it.
     */
    SKIP_LOCKING,
    /**
