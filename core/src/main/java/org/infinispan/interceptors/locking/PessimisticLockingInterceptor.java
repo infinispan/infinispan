@@ -49,7 +49,6 @@ import java.util.Set;
 public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private CommandsFactory cf;
-   EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
 
    @Inject
    public void init(CommandsFactory factory) {
@@ -60,12 +59,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       try {
          abortIfRemoteTransactionInvalid(ctx, command);
-         //just apply the changes, no need to acquire locks as this has already happened
-         if (!ctx.isOriginLocal()) {
-            for (WriteCommand c : command.getModifications()) {
-               c.acceptVisitor(ctx, entryWrappingVisitor);
-            }
-         }
          return invokeNextAndCommitIf1Pc(ctx, command);
       } catch (Throwable t) {
          lockManager.releaseLocks(ctx);
@@ -78,7 +71,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       try {
          assertNoRemoteContext(ctx);
          acquireRemoteIfNeeded(ctx, Collections.singleton(command.getKey()));
-         entryFactory.wrapEntryForPut(ctx, command.getKey(), !command.isPutIfAbsent());
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
          }
@@ -114,7 +106,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
          }
-         entryFactory.wrapEntryForRemove(ctx, command.getKey());
          invokeNextInterceptor(ctx, command);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -130,7 +121,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
          }
-         entryFactory.wrapEntryForReplace(ctx, command.getKey());
          invokeNextInterceptor(ctx, command);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -147,46 +137,5 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    private void assertNoRemoteContext(InvocationContext ctx) {
       if (!ctx.isOriginLocal()) throw new IllegalStateException("This shouldn't be called with a remote context!");
-   }
-
-   private final class EntryWrappingVisitor extends AbstractVisitor {
-
-      @Override
-      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-         for (Object key : command.getMap().keySet()) {
-            if (cll.localNodeIsOwner(key)) {
-               entryFactory.wrapEntryForPut(ctx, key, true);
-               invokeNextInterceptor(ctx, command);
-            }
-         }
-         return null;
-      }
-
-      @Override
-      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-         if (cll.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForRemove(ctx, command.getKey());
-            invokeNextInterceptor(ctx, command);
-         }
-         return null;
-      }
-
-      @Override
-      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         if (cll.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForPut(ctx, command.getKey(), !command.isPutIfAbsent());
-            invokeNextInterceptor(ctx, command);
-         }
-         return null;
-      }
-
-      @Override
-      public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-         if (cll.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForReplace(ctx, command.getKey());
-            invokeNextInterceptor(ctx, command);
-         }
-         return null;
-      }
    }
 }

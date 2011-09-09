@@ -752,9 +752,4 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Could not complete injected transaction.", id = 157)
    void couldNotCompleteInjectedTransaction(@Cause Throwable t);
-   
-   @LogMessage(level = WARN)
-   @Message(value = "FORCE_WRITE_LOCK doesn't work with optimistic transactions. Not acquiring lock for key: %s", id = 158)
-   void warnForceLockAndOptimistic(Object key);
-   
 }

@@ -45,9 +45,6 @@ public class OptimisticEntryFactory extends EntryFactoryImpl {
 
 
    public final CacheEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException {
-      if (ctx.hasFlag(Flag.FORCE_WRITE_LOCK)) {
-         log.warnForceLockAndOptimistic(key);
-      }
       CacheEntry cacheEntry = getFromContext(ctx, key);
       if (cacheEntry == null) {
          cacheEntry = getFromContainer(key);

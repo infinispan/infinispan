@@ -71,7 +71,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       try {
-         entryFactory.wrapEntryForPut(ctx, command.getKey(), !command.isPutIfAbsent());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          return cleanLocksAndRethrow(ctx, te);
@@ -81,9 +80,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       try {
-         for (Object key : command.getMap().keySet()) {
-            entryFactory.wrapEntryForPut(ctx, key, true);
-         }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          return cleanLocksAndRethrow(ctx, te);
@@ -93,7 +89,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
-         entryFactory.wrapEntryForRemove(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          return cleanLocksAndRethrow(ctx, te);
@@ -103,7 +98,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
-         entryFactory.wrapEntryForReplace(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          return cleanLocksAndRethrow(ctx, te);

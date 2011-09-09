@@ -153,6 +153,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(NonTransactionalLockingInterceptor.class));
       }
 
+      interceptorChain.appendInterceptor(createInterceptor(EntryWrappingInterceptor.class));
+
       if (configuration.isEnableDeadlockDetection()) {
          interceptorChain.appendInterceptor(createInterceptor(DeadlockDetectingInterceptor.class));
       }

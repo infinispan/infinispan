@@ -43,7 +43,6 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       try {
          lockKey(ctx, command.getKey());
-         entryFactory.wrapEntryForPut(ctx, command.getKey(), !command.isPutIfAbsent());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          return cleanLocksAndRethrow(ctx, te);
@@ -58,7 +57,6 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
       try {
          for (Object key : command.getMap().keySet()) {
             lockKey(ctx, key);
-            entryFactory.wrapEntryForPut(ctx, key, true);
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -73,7 +71,6 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
          lockKey(ctx, command.getKey());
-         entryFactory.wrapEntryForRemove(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          return cleanLocksAndRethrow(ctx, te);
@@ -86,7 +83,6 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
          lockKey(ctx, command.getKey());
-         entryFactory.wrapEntryForReplace(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          return cleanLocksAndRethrow(ctx, te);

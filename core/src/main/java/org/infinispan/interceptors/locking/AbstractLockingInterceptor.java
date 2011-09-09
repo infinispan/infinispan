@@ -74,9 +74,10 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
    @Override
    public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       try {
-         entryFactory.wrapEntryForReading(ctx, command.getKey());
+         //todo - check force write lock
          return invokeNextInterceptor(ctx, command);
       } finally {
+         //todo - modify to release locks
          releaseLocksIfNeeded(ctx);
       }
    }
@@ -84,12 +85,10 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
    @Override
    public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
       try {
-         if (command.getKeys() != null) {
-            for (Object key : command.getKeys())
-               entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false, false);
-         }
+         //todo - acquire locks
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
+         //todo only release locks
          return cleanLocksAndRethrow(ctx, te);
       }
       finally {
@@ -101,6 +100,7 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       try {
          // get a snapshot of all keys in the data container
+         //todo - revisit!
          lockForClear(ctx);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -115,21 +115,7 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
    public final Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
       Object keys [] = command.getKeys();
       try {
-         if (keys != null && keys.length>=1) {
-            ArrayList<Object> keysCopy = new ArrayList<Object>(Arrays.asList(keys));
-            for (Object key : command.getKeys()) {
-               ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
-               try {
-                  entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false, false);
-               } catch (TimeoutException te){
-            	   log.unableToLockToInvalidate(key,transport.getAddress());
-                  keysCopy.remove(key);
-                  if(keysCopy.isEmpty())
-                     return null;
-               }
-            }
-            command.setKeys(keysCopy.toArray());
-         }
+         //todo acquire locks
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          return cleanLocksAndRethrow(ctx, te);
@@ -179,8 +165,7 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
    }
 
    protected final void lockForClear(InvocationContext ctx) throws InterruptedException {
-      for (InternalCacheEntry entry : dataContainer.entrySet())
-         entryFactory.wrapEntryForClear(ctx, entry.getKey());
+      //todo - acqurie locks for clear
    }
 
    protected final void lockKey(InvocationContext ctx, Object key) throws InterruptedException {
