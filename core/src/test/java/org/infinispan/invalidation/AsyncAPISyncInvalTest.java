@@ -42,7 +42,7 @@ public class AsyncAPISyncInvalTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(
                sync() ? Configuration.CacheMode.INVALIDATION_SYNC
-                        : Configuration.CacheMode.INVALIDATION_ASYNC, true);
+                        : Configuration.CacheMode.INVALIDATION_ASYNC, false);
       createClusteredCaches(2, getClass().getSimpleName(), c);
    }
 

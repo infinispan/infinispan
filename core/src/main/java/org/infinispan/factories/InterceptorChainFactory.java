@@ -143,6 +143,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          }
       }
 
+      if (configuration.isUseEagerLocking()) {
+         configuration.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
+      }
+
       if (configuration.isTransactionalCache()) {
          if (configuration.getTransactionLockingMode() == LockingMode.PESSIMISTIC) {
             interceptorChain.appendInterceptor(createInterceptor(PessimisticLockingInterceptor.class));

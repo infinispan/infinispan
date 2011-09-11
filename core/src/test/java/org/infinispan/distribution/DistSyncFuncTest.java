@@ -82,29 +82,30 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
    public void testBasicDistribution() throws Throwable {
       for (Cache<Object, String> c : caches) assert c.isEmpty();
 
-      getOwners("k1")[0].put("k1", "value");
+      final Object k1 = getKeyForCache(caches.get(1));
+      getOwners(k1)[0].put(k1, "value");
 
       // No non-owners have requested the key, so no invalidations
-      asyncWait("k1", PutKeyValueCommand.class);
+      asyncWait(k1, PutKeyValueCommand.class);
 
       for (Cache<Object, String> c : caches) {
-         if (isOwner(c, "k1")) {
-            assertIsInContainerImmortal(c, "k1");
+         if (isOwner(c, k1)) {
+            assertIsInContainerImmortal(c, k1);
          } else {
-            assertIsNotInL1(c, "k1");
+            assertIsNotInL1(c, k1);
          }
       }
 
       // should be available everywhere!
-      assertOnAllCachesAndOwnership("k1", "value");
+      assertOnAllCachesAndOwnership(k1, "value");
 
       // and should now be in L1
 
       for (Cache<Object, String> c : caches) {
-         if (isOwner(c, "k1")) {
-            assertIsInContainerImmortal(c, "k1");
+         if (isOwner(c, k1)) {
+            assertIsInContainerImmortal(c, k1);
          } else {
-            assertIsInL1(c, "k1");
+            assertIsInL1(c, k1);
          }
       }
    }

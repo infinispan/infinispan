@@ -30,6 +30,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -53,6 +54,7 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(true);
       cfg.setSyncCommitPhase(true);
       cfg.setSyncRollbackPhase(true);
+      cfg.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
       createClusteredCaches(1, "timestamps", cfg);
    }
 
@@ -96,7 +98,7 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
 
       for (Throwable thr : throwables) thr.printStackTrace();
       assert throwables.get(0) instanceof CacheException;
-      assert ((CacheException) throwables.get(0)).getCause() instanceof InterruptedException;
+      assert throwables.get(0).getCause() instanceof InterruptedException;
    }
 
 

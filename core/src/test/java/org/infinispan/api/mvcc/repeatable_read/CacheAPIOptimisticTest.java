@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -25,6 +25,9 @@ package org.infinispan.api.mvcc.repeatable_read;
 import org.infinispan.api.CacheAPITest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
+
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
 
 @Test(groups = "functional", testName = "api.mvcc.repeatable_read.CacheAPIOptimisticTest")
 public class CacheAPIOptimisticTest extends CacheAPITest {

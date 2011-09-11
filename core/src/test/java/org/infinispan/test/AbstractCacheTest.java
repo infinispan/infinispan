@@ -91,6 +91,7 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
 
    public static Configuration getDefaultClusteredConfig(Configuration.CacheMode mode, boolean transactional) {
       Configuration configuration = TestCacheManagerFactory.getDefaultConfiguration(transactional);
+      configuration.fluent().transaction().cacheStopTimeout(0);
       configuration.setCacheMode(mode);
       configuration.setSyncCommitPhase(true);
       configuration.setSyncRollbackPhase(true);

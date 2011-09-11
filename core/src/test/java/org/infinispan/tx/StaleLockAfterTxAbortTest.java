@@ -86,7 +86,7 @@ public class StaleLockAfterTxAbortTest extends SingleCacheManagerTest {
 
       // now release the lock
       icc.resume(ctx);
-      lockManager.releaseLocks(ctx);
+      lockManager.unlock(ctx);
       transactionThread.join();
 
       assertNotLocked(cache, k);

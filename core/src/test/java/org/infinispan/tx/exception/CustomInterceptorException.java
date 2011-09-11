@@ -34,6 +34,8 @@ import org.testng.annotations.Test;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
+import static org.testng.Assert.assertEquals;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.2
@@ -61,7 +63,8 @@ public class CustomInterceptorException extends SingleCacheManagerTest {
          cache.put("k", "v");
          assert false;
       } catch (Exception e) {
-         assert transactionManager.getTransaction().getStatus() == Status.STATUS_MARKED_ROLLBACK;
+         e.printStackTrace();
+         assertEquals(transactionManager.getTransaction().getStatus(), Status.STATUS_MARKED_ROLLBACK);
       }
    }
 }

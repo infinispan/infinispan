@@ -1765,7 +1765,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setUseEagerLocking(Boolean useEagerLocking) {
          testImmutability("useEagerLocking");
-         transaction().lockingMode(useEagerLocking ? LockingMode.PESSIMISTIC : LockingMode.OPTIMISTIC);
          this.useEagerLocking = useEagerLocking;
       }
 

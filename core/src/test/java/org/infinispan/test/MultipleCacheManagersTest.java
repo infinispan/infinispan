@@ -405,11 +405,16 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @param nodeIndex the index of tha cache where to be the main data owner of the returned key
     */
    protected Object getKeyForNode(int nodeIndex) {
+      final Cache<Object, Object> cache = cache(nodeIndex);
+      return getKeyForCache(cache);
+   }
+
+   protected Object getKeyForCache(Cache cache) {
       ExecutorService ex = Executors.newSingleThreadExecutor();
-      KeyAffinityService<Object> kas = KeyAffinityServiceFactory.newKeyAffinityService(cache(nodeIndex), ex,
+      KeyAffinityService<Object> kas = KeyAffinityServiceFactory.newKeyAffinityService(cache, ex,
                                                                                        new RndKeyGenerator(), 5, true);
       try {
-         return kas.getKeyForAddress(address(nodeIndex));
+         return kas.getKeyForAddress(cache.getAdvancedCache().getAdvancedCache().getRpcManager().getAddress());
       } finally {
          ex.shutdown();
       }

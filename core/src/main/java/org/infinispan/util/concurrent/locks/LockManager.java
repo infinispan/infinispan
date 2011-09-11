@@ -108,11 +108,6 @@ public interface LockManager {
    boolean possiblyLocked(CacheEntry entry);
 
    /**
-    * Cleanups the locks within the given context.
-    */
-   void releaseLocks(InvocationContext ctx);
-
-   /**
     * Retrieves the number of locks currently held.
     * @return an integer
     */

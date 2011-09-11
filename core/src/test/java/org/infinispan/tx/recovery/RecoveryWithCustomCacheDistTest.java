@@ -46,7 +46,7 @@ public class RecoveryWithCustomCacheDistTest extends RecoveryWithDefaultCacheDis
       registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(configuration, false));
 
       recoveryCache = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
-      recoveryCache.fluent().transaction().transactionManagerLookupClass(JBossTransactionManagerLookup.class);
+      recoveryCache.fluent().transaction().transactionManagerLookupClass(null);
       // Explicitly disable recovery in recovery cache per se.
       recoveryCache.fluent().transaction().recovery().disable();
       manager(0).defineConfiguration(CUSTOM_CACHE, recoveryCache);

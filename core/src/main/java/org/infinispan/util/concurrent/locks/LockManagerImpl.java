@@ -32,7 +32,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.util.ReversibleOrderedSet;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.containers.*;
@@ -41,10 +40,8 @@ import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 
-import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -153,32 +150,6 @@ public class LockManagerImpl implements LockManager {
 
    public final boolean possiblyLocked(CacheEntry entry) {
       return entry == null || entry.isChanged() || entry.isNull() || entry.isLockPlaceholder();
-   }
-
-   public void releaseLocks(InvocationContext ctx) {
-      Object owner = ctx.getLockOwner();
-      // clean up.
-      // unlocking needs to be done in reverse order.
-      ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
-      Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
-      if (trace) log.tracef("Number of entries in context: %s", entries.size());
-
-      while (it.hasNext()) {
-         Map.Entry<Object, CacheEntry> e = it.next();
-         CacheEntry entry = e.getValue();
-         Object key = e.getKey();
-         boolean needToUnlock = possiblyLocked(entry);
-         // could be null with read-committed
-         if (entry != null && entry.isChanged()) entry.rollback();
-         else {
-            if (trace) log.tracef("Entry for key %s is null, not calling rollbackUpdate", key);
-         }
-         // and then unlock
-         if (needToUnlock) {
-            if (trace) log.tracef("Releasing lock on [%s] for owner %s", key, owner);
-            unlock(key);
-         }
-      }
    }
 
    @ManagedAttribute(description = "The concurrency level that the MVCC Lock Manager has been configured with.")

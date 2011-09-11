@@ -45,13 +45,19 @@ import java.util.concurrent.Future;
 @Test(groups = "functional", testName = "replication.AsyncAPISyncReplTest")
 public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
 
+   private static final String NO_TX = "noTx";
+
    @SuppressWarnings("unchecked")
    protected void createCacheManagers() throws Throwable {
       Configuration c = getConfig(true);
       createClusteredCaches(2, c);
+      c.fluent().transaction().autoCommit(false);
       c = getConfig(false);
-      c.fluent().transactionManagerLookup(null).transactionManagerLookupClass(null);
-      defineConfigurationOnAllManagers("noTx", c);
+      defineConfigurationOnAllManagers(NO_TX , c);
+      assert c.getTransactionManagerLookup() == null;
+      assert c.getTransactionManagerLookupClass() == null;
+      assert cache(0, NO_TX).getConfiguration().getTransactionManagerLookup() == null;
+      assert cache(0, NO_TX).getConfiguration().getTransactionManagerLookupClass() == null;
    }
 
    private Configuration getConfig(boolean txEnabled) {
@@ -75,7 +81,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
    }
 
    public void testAsyncMethods() throws ExecutionException, InterruptedException {
-      Cache c1 = cache(0, "noTx");
+      Cache c1 = cache(0, NO_TX);
       Cache c2 = cache(1, "noTx");
 
 
