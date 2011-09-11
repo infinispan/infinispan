@@ -99,6 +99,7 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    public void reset() {
       super.reset();
       clearLookedUpEntries();
+      if (lockedKeys != null) lockedKeys.clear();
    }
 
    @Override
