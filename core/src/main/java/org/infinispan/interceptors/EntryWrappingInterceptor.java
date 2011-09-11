@@ -24,6 +24,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.AbstractVisitor;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -38,7 +39,6 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
-import org.infinispan.container.OptimisticEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -47,12 +47,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.ReversibleOrderedSet;
-import org.infinispan.util.concurrent.TimeoutException;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -64,14 +60,14 @@ import java.util.Map;
  */
 public class EntryWrappingInterceptor extends CommandInterceptor {
 
-   private OptimisticEntryFactory entryFactory;
+   private EntryFactory entryFactory;
    private DataContainer dataContainer;
    private ClusteringDependentLogic cll;
    private final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
 
    @Inject
    public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cll) {
-      this.entryFactory = (OptimisticEntryFactory) entryFactory;
+      this.entryFactory =  entryFactory;
       this.dataContainer = dataContainer;
       this.cll = cll;
    }
@@ -102,15 +98,20 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    @Override
    public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      entryFactory.wrapEntryForReading(ctx, command.getKey());
-      return invokeNextInterceptor(ctx, command);
+      try {
+         entryFactory.wrapEntryForReading(ctx, command.getKey());
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         //needed because entries might be added in L1
+         invokeNextAndApplyChanges(ctx, command);
+      }
    }
 
    @Override
    public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
       if (command.getKeys() != null) {
          for (Object key : command.getKeys())
-            entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false, false);
+            entryFactory.wrapEntryForReplace(ctx, key);
       }
       return invokeNextAndApplyChanges(ctx, command);
    }
@@ -125,14 +126,14 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    @Override
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
       for (Object key : command.getKeys()) {
-         entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false, false);
+         entryFactory.wrapEntryForReplace(ctx, key);
       }
       return invokeNextAndApplyChanges(ctx, command);
    }
 
    @Override
    public final Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      entryFactory.wrapEntryForPut(ctx, command.getKey(), !command.isPutIfAbsent());
+      entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent());
       return invokeNextAndApplyChanges(ctx, command);
    }
 
@@ -151,7 +152,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       for (Object key : command.getMap().keySet()) {
-         entryFactory.wrapEntryForPut(ctx, key, true);
+         entryFactory.wrapEntryForPut(ctx, key, null, true);
       }
       return invokeNextAndApplyChanges(ctx, command);
    }
@@ -176,7 +177,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       }
    }
 
-   private Object invokeNextAndApplyChanges(InvocationContext ctx, WriteCommand command) throws Throwable {
+   private Object invokeNextAndApplyChanges(InvocationContext ctx, VisitableCommand command) throws Throwable {
       final Object result = invokeNextInterceptor(ctx, command);
       if (!ctx.isInTxScope()) commitContextEntries(ctx);
       return result;
@@ -188,10 +189,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
          boolean notWrapped = false;
          for (Object key : dataContainer.keySet()) {
-            if (notWrapped(ctx, key)) {
-               entryFactory.wrapEntryForClear(ctx, key);
-               notWrapped = true;
-            }
+            entryFactory.wrapEntryForClear(ctx, key);
+            notWrapped = true;
          }
          if (notWrapped)
             invokeNextInterceptor(ctx, command);
@@ -203,10 +202,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          boolean notWrapped = false;
          for (Object key : command.getMap().keySet()) {
             if (cll.localNodeIsOwner(key)) { //todo - try to avoid this repeated call to localNodeIs. This also takes place in the locking interceptor
-               if (notWrapped(ctx, key)) {
-                  entryFactory.wrapEntryForPut(ctx, key, true);
-                  notWrapped = true;
-               }
+               entryFactory.wrapEntryForPut(ctx, key, null, true);
+               notWrapped = true;
             }
          }
          if (notWrapped)
@@ -217,10 +214,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
-            if (notWrapped(ctx, command.getKey())) {
-               entryFactory.wrapEntryForRemove(ctx, command.getKey());
-               invokeNextInterceptor(ctx, command);
-            }
+            entryFactory.wrapEntryForRemove(ctx, command.getKey());
+            invokeNextInterceptor(ctx, command);
          }
          return null;
       }
@@ -228,10 +223,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
-            if (notWrapped(ctx, command.getKey())) {
-               entryFactory.wrapEntryForPut(ctx, command.getKey(), !command.isPutIfAbsent());
-               invokeNextInterceptor(ctx, command);
-            }
+            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent());
+            invokeNextInterceptor(ctx, command);
          }
          return null;
       }
@@ -239,21 +232,10 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
-            if (notWrapped(ctx, command.getKey())) {
-               entryFactory.wrapEntryForReplace(ctx, command.getKey());
-               invokeNextInterceptor(ctx, command);
-            }
+            entryFactory.wrapEntryForReplace(ctx, command.getKey());
+            invokeNextInterceptor(ctx, command);
          }
          return null;
       }
-
-      /**
-       * this is needed for recovery, as prepare and commit is replayed and entries are not wrapped in the context.
-       * //todo - revisit and check if it is needed
-       */
-      private boolean notWrapped(InvocationContext ctx, Object key) {
-         return ctx.isOriginLocal() && !ctx.getLookedUpEntries().containsKey(key);
-      }
    }
-
 }

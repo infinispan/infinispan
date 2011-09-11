@@ -26,7 +26,7 @@ package org.infinispan.factories;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.container.EntryFactory;
-import org.infinispan.container.OptimisticEntryFactory;
+import org.infinispan.container.EntryFactoryImpl;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
@@ -70,7 +70,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             VersionAwareMarshaller versionAwareMarshaller = getInstance(VersionAwareMarshaller.class);
             return componentType.cast(versionAwareMarshaller);
          } else if (componentType.equals(EntryFactory.class)) {
-            return componentType.cast(getInstance(OptimisticEntryFactory.class));
+            return componentType.cast(getInstance(EntryFactoryImpl.class));
          } else {
             // add an "Impl" to the end of the class name and try again
             componentImpl = loadClass(componentType.getName() + "Impl", configuration.getClassLoader());

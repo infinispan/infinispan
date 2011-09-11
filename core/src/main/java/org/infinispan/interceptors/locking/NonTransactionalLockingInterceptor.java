@@ -23,6 +23,7 @@
 
 package org.infinispan.interceptors.locking;
 
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -38,6 +39,15 @@ import org.infinispan.context.InvocationContext;
  * @since 5.1
  */
 public class NonTransactionalLockingInterceptor extends AbstractLockingInterceptor {
+
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         lockManager.unlock(ctx);//possibly needed because of L1 locks being acquired
+      }
+   }
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {

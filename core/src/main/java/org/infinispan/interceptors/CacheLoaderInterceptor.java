@@ -22,8 +22,6 @@
  */
 package org.infinispan.interceptors;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -45,9 +43,12 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
 public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
@@ -59,13 +60,16 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    protected CacheLoader loader;
    private DataContainer dataContainer;
    private EntryFactory entryFactory;
+   private LockManager lockManager;
 
    @Inject
-   protected void injectDependencies(CacheLoaderManager clm, DataContainer dataContainer, EntryFactory entryFactory, CacheNotifier notifier) {
+   protected void injectDependencies(CacheLoaderManager clm, DataContainer dataContainer, EntryFactory entryFactory, CacheNotifier notifier,
+                                     LockManager lockManager) {
       this.clm = clm;
       this.dataContainer = dataContainer;
       this.notifier = notifier;
       this.entryFactory = entryFactory;
+      this.lockManager = lockManager;
    }
 
    @Start(priority = 15)
@@ -130,7 +134,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       if (e == null || e.isNull()) {
 
          // Obtain a temporary lock to verify the key is not being concurrently added
-         boolean keyLocked = entryFactory.acquireLock(ctx, key);
+         boolean keyLocked = lockManager.acquireLock(ctx, key);
          boolean unlockOnWayOut = false;
          try {
             // check again, in case there is a concurrent addition
@@ -141,7 +145,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
             }
          } finally {
             if (keyLocked && unlockOnWayOut) {
-               entryFactory.releaseLock(key);
+               lockManager.unlock(key);
             }
          }
 
@@ -152,13 +156,14 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
                log.trace("No need to load.  Key doesn't exist in the loader.");
             }
             if (keyLocked) {
-               entryFactory.releaseLock(key);
+               lockManager.unlock(key);
             }
             return false;
          }
 
          // Reuse the lock and create a new entry for loading
-         MVCCEntry n = entryFactory.wrapEntryForWriting(ctx, key, true, false, keyLocked, false, true);
+         if (!keyLocked) lockManager.lockAndRecord(key, ctx);
+         MVCCEntry n = entryFactory.wrapEntryForPut(ctx, key, null, false);
          recordLoadedEntry(ctx, key, n, loaded);
          return true;
       } else {

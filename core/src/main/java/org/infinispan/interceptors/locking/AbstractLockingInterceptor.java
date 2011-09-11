@@ -28,22 +28,17 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
-import org.infinispan.container.OptimisticEntryFactory;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.ReversibleOrderedSet;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * Base class for various locking interceptors in this package.
@@ -55,7 +50,7 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
 
    LockManager lockManager;
    DataContainer dataContainer;
-   OptimisticEntryFactory entryFactory;
+   EntryFactory entryFactory;
    Transport transport;
    ClusteringDependentLogic cll;
 
@@ -63,7 +58,7 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
    public void setDependencies(LockManager lockManager, DataContainer dataContainer, EntryFactory entryFactory, Transport transport, ClusteringDependentLogic cll) {
       this.lockManager = lockManager;
       this.dataContainer = dataContainer;
-      this.entryFactory = (OptimisticEntryFactory) entryFactory;
+      this.entryFactory = entryFactory;
       this.transport = transport;
       this.cll = cll;
    }
@@ -133,7 +128,7 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
    }
 
    protected final Throwable cleanLocksAndRethrow(InvocationContext ctx, Throwable te) {
-      lockManager.releaseLocks(ctx);
+      lockManager.unlock(ctx);
       return te;
    }
 

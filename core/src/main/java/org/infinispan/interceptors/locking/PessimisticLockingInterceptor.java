@@ -23,7 +23,6 @@
 
 package org.infinispan.interceptors.locking;
 
-import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -33,7 +32,6 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -65,7 +63,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable t) {
-         lockManager.releaseLocks(ctx);
+         lockManager.unlock(ctx);
          throw t;
       }
    }
@@ -76,7 +74,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          abortIfRemoteTransactionInvalid(ctx, command);
          return invokeNextAndCommitIf1Pc(ctx, command);
       } catch (Throwable t) {
-         lockManager.releaseLocks(ctx);
+         lockManager.unlock(ctx);
          throw t;
       }
    }
@@ -105,7 +103,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             if (cll.localNodeIsOwner(key)) {
                lockKey(ctx, key);
             }
-            entryFactory.wrapEntryForPut(ctx, key, true);
+            entryFactory.wrapEntryForPut(ctx, key, null, true);
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {

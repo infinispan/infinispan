@@ -58,7 +58,7 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         lockManager.releaseLocks(ctx);
+         lockManager.unlock(ctx);
       }
    }
 
@@ -91,7 +91,7 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
          }
 
          if (c.isUnlock()) {
-            lockManager.releaseLocks(ctx);
+            lockManager.unlock(ctx);
             if (log.isTraceEnabled()) log.trace("Lock released for: " + ctx.getLockOwner());
             return false;
          }

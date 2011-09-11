@@ -33,7 +33,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.EntryFactory;
-import org.infinispan.container.OptimisticEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -47,13 +46,13 @@ import org.infinispan.factories.annotations.Inject;
  */
 public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
-   OptimisticEntryFactory entryFactory;
+   EntryFactory entryFactory;
 
    private final LockAquisitionVisitor lockAquisitionVisitor = new LockAquisitionVisitor();
 
    @Inject
    public void setDependencies(EntryFactory entryFactory) {
-      this.entryFactory = (OptimisticEntryFactory) entryFactory;
+      this.entryFactory = entryFactory;
    }
 
    @Override
@@ -65,7 +64,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          }
          return invokeNextAndCommitIf1Pc(ctx, command);
       } catch (Throwable te) {
-         lockManager.releaseLocks(ctx);
+         lockManager.unlock(ctx);
          throw te;
       }
    }
@@ -153,7 +152,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
             if (cll.localNodeIsOwner(key)) {
                lockKey(ctx, key);
                if (notWrapped(ctx, key)) {
-                  entryFactory.wrapEntryForPut(ctx, key, true);
+                  entryFactory.wrapEntryForPut(ctx, key, null, true);
                   notWrapped = true;
                }
             }
@@ -180,7 +179,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
             if (notWrapped(ctx, command.getKey())) {
-               entryFactory.wrapEntryForPut(ctx, command.getKey(), !command.isPutIfAbsent());
+               entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent());
                invokeNextInterceptor(ctx, command);
             }
          }
