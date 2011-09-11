@@ -131,8 +131,13 @@ public class TestCacheManagerFactory {
       minimizeThreads(globalConfiguration);
       Configuration c = new Configuration();
       if (lockAcquisitionTimeout > -1) c.setLockAcquisitionTimeout(lockAcquisitionTimeout);
-      if (transactional) amendJTA(c);
+      updateTransactionSupport(transactional, c);
       return newDefaultCacheManager(true, globalConfiguration, c, false);
+   }
+
+   private static void updateTransactionSupport(boolean transactional, Configuration c) {
+      if (transactional) amendJTA(c);
+      c.fluent().transaction().transactionalCache(transactional);
    }
 
    private static void amendJTA(Configuration c) {
@@ -167,7 +172,7 @@ public class TestCacheManagerFactory {
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
       amendTransport(globalConfiguration, withFD);
-      if (transactional) amendJTA(defaultCacheConfig);
+      updateTransactionSupport(transactional, defaultCacheConfig);
       return newDefaultCacheManager(true, globalConfiguration, defaultCacheConfig, false);
    }
 
@@ -232,7 +237,7 @@ public class TestCacheManagerFactory {
       }
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
-      if (transactional) amendJTA(defaultCacheConfig);
+      updateTransactionSupport(transactional, defaultCacheConfig);
 
       // we stop caches during transactions all the time
       // so wait at most 1 second for ongoing transactions when stopping
@@ -249,7 +254,7 @@ public class TestCacheManagerFactory {
       minimizeThreads(configuration);
       amendMarshaller(configuration);
       amendTransport(configuration);
-      if (transactional) amendJTA(defaultCfg);
+      updateTransactionSupport(transactional, defaultCfg);
       return newDefaultCacheManager(true, configuration, defaultCfg, false);
    }
 
@@ -261,7 +266,7 @@ public class TestCacheManagerFactory {
       minimizeThreads(configuration);
       amendMarshaller(configuration);
       if (!dontFixTransport) amendTransport(configuration);
-      if (transactional) amendJTA(defaultCfg);
+      updateTransactionSupport(transactional, defaultCfg);
       return newDefaultCacheManager(true, configuration, defaultCfg, keepJmxDomainName);
    }
 
@@ -296,13 +301,13 @@ public class TestCacheManagerFactory {
 
    public static Configuration getDefaultConfiguration(boolean transactional) {
       Configuration c = new Configuration();
-      if (transactional) amendJTA(c);
+      updateTransactionSupport(transactional, c);
       return c;
    }
 
    public static Configuration getDefaultConfiguration(boolean transactional, Configuration.CacheMode cacheMode) {
       Configuration c = new Configuration();
-      if (transactional) amendJTA(c);
+      updateTransactionSupport(transactional, c);
       c.setCacheMode(cacheMode);
       if (cacheMode.isClustered()) {
          c.setSyncRollbackPhase(true);

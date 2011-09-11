@@ -38,7 +38,6 @@ import org.testng.annotations.Test;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -53,11 +52,10 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       createClusteredCaches(2, c);
       c.fluent().transaction().autoCommit(false);
       c = getConfig(false);
-      defineConfigurationOnAllManagers(NO_TX , c);
-      assert c.getTransactionManagerLookup() == null;
-      assert c.getTransactionManagerLookupClass() == null;
-      assert cache(0, NO_TX).getConfiguration().getTransactionManagerLookup() == null;
-      assert cache(0, NO_TX).getConfiguration().getTransactionManagerLookupClass() == null;
+      c.fluent().transaction().transactionalCache(false);
+      defineConfigurationOnAllManagers(NO_TX, c);
+      assert !c.isTransactionalCache();
+      assert !cache(0, NO_TX).getConfiguration().isTransactionalCache();
    }
 
    private Configuration getConfig(boolean txEnabled) {

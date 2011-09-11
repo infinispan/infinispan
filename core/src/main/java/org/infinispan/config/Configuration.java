@@ -1585,7 +1585,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @see #isTransactionAutoCommit()
     */
    public boolean isTransactionalCache() {
-      return getTransactionManagerLookup() != null || getTransactionManagerLookupClass() != null || isInvocationBatchingEnabled();
+      return transaction.transactionalCache;
    }
 
 
@@ -1645,6 +1645,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @XmlElement
       protected RecoveryType recovery = new RecoveryType();
 
+      @ConfigurationDoc(desc = "Defines whether this is a transactional(default) cache or not.")
+      @XmlAttribute (name = "transactionalCache", required = false)
+      protected boolean transactionalCache = true;
+
+
       public TransactionType(String transactionManagerLookupClass) {
          this.transactionManagerLookupClass = transactionManagerLookupClass;
       }
@@ -1664,12 +1669,20 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return transactionManagerLookupClass;
       }
 
+      @Override
+      public FluentConfiguration.TransactionConfig transactionalCache(boolean isTransactionalCache) {
+         testImmutability("transactionalCache");
+         this.transactionalCache = isTransactionalCache;
+         return this;
+      }
+
       /**
        * @deprecated The visibility of this will be reduced, use {@link #transactionManagerLookupClass(Class)} instead
        */
       @Deprecated
       public void setTransactionManagerLookupClass(String transactionManagerLookupClass) {
          testImmutability("transactionManagerLookupClass");
+         if (transactionManagerLookupClass != null) transactionalCache = true;
          this.transactionManagerLookupClass = transactionManagerLookupClass;
       }
 
@@ -1678,7 +1691,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          setTransactionManagerLookupClass(transactionManagerLookupClass == null ? null : transactionManagerLookupClass.getName());
          return this;
       }
-
 
       @XmlAttribute
       public Boolean isSyncCommitPhase() {
@@ -1778,6 +1790,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public TransactionConfig transactionManagerLookup(TransactionManagerLookup transactionManagerLookup) {
          testImmutability("transactionManagerLookup");
          this.transactionManagerLookup = transactionManagerLookup;
+         if (transactionManagerLookup != null) transactionalCache = true;
          return this;
       }
 
@@ -1785,6 +1798,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public TransactionConfig transactionSynchronizationRegistryLookup(TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup) {
          testImmutability("transactionSynchronizationRegistryLookup");
          this.transactionSynchronizationRegistryLookup = transactionSynchronizationRegistryLookup;
+         if (transactionSynchronizationRegistryLookup != null) transactionalCache = true;
          return this;
       }
 
@@ -2143,6 +2157,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public TransactionConfig autoCommit(boolean enabled) {
          return transaction().autoCommit(enabled);
+      }
+
+      @Override
+      public TransactionConfig transactionalCache(boolean isTransactionalCache) {
+         return transaction().transactionalCache(isTransactionalCache);
       }
    }
 

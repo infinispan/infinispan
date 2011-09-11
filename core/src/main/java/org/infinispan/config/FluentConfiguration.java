@@ -227,6 +227,11 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       TransactionConfig useEagerLocking(Boolean useEagerLocking);
 
       /**
+       * Configures whether this cache is transactional or not.
+       */
+      FluentConfiguration.TransactionConfig transactionalCache(boolean isTransactionalCache);
+
+      /**
        * Only has effect for DIST mode and when useEagerLocking is set to true. When this is
        * enabled, then only one node is locked in the cluster, disregarding numOwners config. On the
        * opposite, if this is false, then on all cache.lock() calls numOwners RPCs are being
