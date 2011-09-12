@@ -70,7 +70,7 @@ public class OptimisticReplTxTest extends AbstractClusteredTxTest {
       k = "k";
       final Configuration conf = getDefaultClusteredConfig(cacheMode, true);
       conf.fluent().transaction().lockingMode(LockingMode.OPTIMISTIC);
-      createCluster(conf, true, 2);
+      createCluster(conf, 2);
       waitForClusterToForm();
    }
 

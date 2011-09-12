@@ -33,7 +33,6 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -72,7 +71,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       defaultCfg.setIsolationLevel(repeatableRead ? IsolationLevel.REPEATABLE_READ : IsolationLevel.READ_COMMITTED);
       defaultCfg.setLockAcquisitionTimeout(200); // 200 ms
       defaultCfg.fluent().transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
-      cm = TestCacheManagerFactory.createCacheManager(defaultCfg, true);
+      cm = TestCacheManagerFactory.createCacheManager(defaultCfg);
       tl.cache = cm.getCache();
       tl.lockManager = TestingUtil.extractComponentRegistry(tl.cache).getComponent(LockManager.class);
       tl.icc = TestingUtil.extractComponentRegistry(tl.cache).getComponent(InvocationContextContainer.class);

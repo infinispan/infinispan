@@ -53,6 +53,7 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
       c.setSyncCommitPhase(true);
       c.setSyncRollbackPhase(true);
       c.setUseLockStriping(false);
+      c.fluent().transaction().transactionalCache(true);
 
       CacheContainer container = TestCacheManagerFactory.createClusteredCacheManager(c);
       container.start();

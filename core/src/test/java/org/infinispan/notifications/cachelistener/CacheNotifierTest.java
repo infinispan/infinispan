@@ -36,7 +36,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.transaction.TransactionManager;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -65,7 +64,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
       c.fluent().transaction().transactionManagerLookupClass(null).transactionManagerLookup(null);
       c.setCacheMode(Configuration.CacheMode.LOCAL);
       c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-      cm = TestCacheManagerFactory.createCacheManager(c, false);
+      cm = TestCacheManagerFactory.createCacheManager(c);
 
       cache = cm.getCache();
       mockNotifier = createMock(CacheNotifier.class);

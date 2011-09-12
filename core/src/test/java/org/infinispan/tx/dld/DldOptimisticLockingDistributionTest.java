@@ -47,8 +47,8 @@ public class DldOptimisticLockingDistributionTest extends BaseDldOptimisticLocki
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration config = updatedConfig();
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(config, true);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(config, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(config);
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(config);
       registerCacheManager(cm1);
       registerCacheManager(cm2);
       waitForClusterToForm();

@@ -63,8 +63,8 @@ public class ClusterFileCacheStoreFunctionalTest extends MultipleCacheManagersTe
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), new Configuration(), true);
-      EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), new Configuration(), true);
+      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), new Configuration());
+      EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), new Configuration());
       registerCacheManager(cacheManager1, cacheManager2);
 
       Configuration config1 = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);

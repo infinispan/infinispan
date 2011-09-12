@@ -45,7 +45,7 @@ public class EagerLockSingleLockNodeCrashTest extends MultipleCacheManagersTest 
       Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
       config.fluent().hash().numOwners(3).transaction().useEagerLocking(true).eagerLockSingleNode(true);
       config.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
-      createCluster(config, true, 3);
+      createCluster(config, 3);
       waitForClusterToForm();
    }
 

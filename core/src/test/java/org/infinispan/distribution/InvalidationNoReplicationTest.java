@@ -41,11 +41,12 @@ import static org.testng.Assert.assertEquals;
 @Test(groups = "functional", testName = "distribution.InvalidationNoReplicationTest")
 public class InvalidationNoReplicationTest extends MultipleCacheManagersTest {
 
-   private Object k0;
+   protected Object k0;
+   protected boolean transactional = true;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
+      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, transactional);
       config.setL1CacheEnabled(true);
       config.setNumOwners(1);
       createCluster(config, 2);
@@ -56,7 +57,7 @@ public class InvalidationNoReplicationTest extends MultipleCacheManagersTest {
       service.stop();
    }
 
-   public void testInvalidationWithTx() throws Exception {
+   public void testInvalidation() throws Exception {
       advancedCache(1).put(k0, "k1");
       assert advancedCache(1).getDataContainer().containsKey(k0);
       assert advancedCache(0).getDataContainer().containsKey(k0);
@@ -66,20 +67,6 @@ public class InvalidationNoReplicationTest extends MultipleCacheManagersTest {
       tm(0).commit();
 
       assert !advancedCache(1).getDataContainer().containsKey(k0);
-   }
-
-   public void testInvalidationNoTx() throws Exception {
-      cache(1).put(k0, "v0");
-      assert advancedCache(0).getDataContainer().containsKey(k0);
-      assert advancedCache(1).getDataContainer().containsKey(k0);
-
-      log.info("Here is the put!");
-      log.infof("Cache 0=%s cache 1=%s", address(0), address(1));
-      cache(0).put(k0, "v1");
-
-      log.info("before assertions!");
-      assertEquals(advancedCache(1).getDataContainer().get(k0), null);
-      assertEquals(advancedCache(0).getDataContainer().get(k0).getValue(), "v1");
    }
 
 }

@@ -49,10 +49,10 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
    @SuppressWarnings("unchecked")
    protected void createCacheManagers() throws Throwable {
       Configuration c = getConfig(true);
-      createClusteredCaches(2, c);
       c.fluent().transaction().autoCommit(false);
+      createClusteredCaches(2, c);
+
       c = getConfig(false);
-      c.fluent().transaction().transactionalCache(false);
       defineConfigurationOnAllManagers(NO_TX, c);
       assert !c.isTransactionalCache();
       assert !cache(0, NO_TX).getConfiguration().isTransactionalCache();
@@ -80,7 +80,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
 
    public void testAsyncMethods() throws ExecutionException, InterruptedException {
       Cache c1 = cache(0, NO_TX);
-      Cache c2 = cache(1, "noTx");
+      Cache c2 = cache(1, NO_TX);
 
 
       String v = "v";
@@ -346,8 +346,11 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       tm.commit();
       assertOnAllCaches(key, null, c1, c2);
 
+
+      tm.begin();
       c1.put(key, v);
       asyncWait(false, PutKeyValueCommand.class);
+      tm.commit();
 
       tm.begin();
       f = c1.replaceAsync(key, v5);

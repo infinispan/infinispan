@@ -45,7 +45,7 @@ public class LocalPessimisticTxTest extends AbstractLocalTest {
       final Configuration config = getDefaultStandaloneConfig(true);
       config.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC)
             .transactionManagerLookup(new DummyTransactionManagerLookup());
-      return TestCacheManagerFactory.createCacheManager(config, true);
+      return TestCacheManagerFactory.createCacheManager(config);
    }
 
    @Override

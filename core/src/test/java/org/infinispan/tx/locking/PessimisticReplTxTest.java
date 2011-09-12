@@ -26,8 +26,6 @@ package org.infinispan.tx.locking;
 import org.infinispan.config.Configuration;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -48,7 +46,7 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
    protected void createCacheManagers() throws Throwable {
       conf.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
       conf.fluent().locking().lockAcquisitionTimeout(10l);//fail fast
-      createCluster(conf, true, 2);
+      createCluster(conf, 2);
       assert conf.isTransactionalCache();
       waitForClusterToForm();
       System.out.println("PessimisticReplTxTest.createCacheManagers");

@@ -54,7 +54,7 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
          .transactionManagerLookupClass(DummyTransactionManagerLookup.class);
       configuration.fluent().clustering().hash().rehashEnabled(false);
       configuration.fluent().clustering().hash().numOwners(3);
-      createCluster(configuration, false, 4);
+      createCluster(configuration, 4);
       waitForClusterToForm();
    }
 

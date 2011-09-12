@@ -72,9 +72,9 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
             .clustering().hash().numOwners(3)
             .clustering().l1().disable()
             .build();
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, false, true);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, false, true);
-      EmbeddedCacheManager cm3 = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, false, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, true);
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, true);
+      EmbeddedCacheManager cm3 = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, true);
       registerCacheManager(cm1);
       registerCacheManager(cm2);
       registerCacheManager(cm3);

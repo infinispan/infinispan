@@ -55,13 +55,13 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
    
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration cfg = getDefaultStandaloneConfig(false);
+      Configuration cfg = getDefaultStandaloneConfig(true);
       cfg.setInvocationBatchingEnabled(true);
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       clmc.addCacheLoaderConfig(new CountingCacheStoreConfig());
       clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
       cfg.setCacheLoaderManagerConfig(clmc);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg, true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
       return cm;

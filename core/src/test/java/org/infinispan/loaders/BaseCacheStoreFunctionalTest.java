@@ -184,7 +184,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    private CacheContainer getContainerWithCacheLoader() {
       Configuration cfg = new Configuration();
       cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
-      return TestCacheManagerFactory.createCacheManager(cfg, true);
+      return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
    private void assertCacheEntry(Cache cache, String key, String value, long lifespanMillis, long maxIdleMillis) {

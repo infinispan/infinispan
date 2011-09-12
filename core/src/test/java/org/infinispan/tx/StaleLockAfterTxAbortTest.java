@@ -56,7 +56,7 @@ public class StaleLockAfterTxAbortTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultStandaloneConfig(true);
-      return TestCacheManagerFactory.createCacheManager(c, true);
+      return TestCacheManagerFactory.createCacheManager(c);
    }
 
    public void doTest() throws InterruptedException, SystemException, InvalidTransactionException {

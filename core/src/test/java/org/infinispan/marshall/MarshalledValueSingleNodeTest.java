@@ -44,7 +44,7 @@ public class MarshalledValueSingleNodeTest extends SingleCacheManagerTest {
       Configuration c = getDefaultStandaloneConfig(true);
       c.setInvocationBatchingEnabled(true);
       c.setUseLazyDeserialization(true);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       cache = cm.getCache();
       return cm;
    }

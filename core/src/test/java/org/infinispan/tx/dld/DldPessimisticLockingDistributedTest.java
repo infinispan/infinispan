@@ -48,8 +48,8 @@ public class DldPessimisticLockingDistributedTest extends BaseDldPessimisticLock
    protected void createCacheManagers() throws Throwable {
       Configuration config = createConfiguration();
 
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(config, true);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(config, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(config);
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(config);
       registerCacheManager(cm1);
       registerCacheManager(cm2);
       waitForClusterToForm();

@@ -71,7 +71,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
             .addCacheLoader(new DummyInMemoryCacheStore.Cfg()
                .storeName(this.getClass().getName())) // in order to use the same store
          .build();
-      cm = TestCacheManagerFactory.createCacheManager(cfg, true);
+      cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
       tm = TestingUtil.getTransactionManager(cache);

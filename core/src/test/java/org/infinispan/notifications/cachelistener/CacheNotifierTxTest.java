@@ -28,11 +28,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
@@ -63,7 +58,7 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
       c.fluent().transaction().autoCommit(false);
       c.setCacheMode(Configuration.CacheMode.LOCAL);
       c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-      cm = TestCacheManagerFactory.createCacheManager(c, true);
+      cm = TestCacheManagerFactory.createCacheManager(c);
 
       cache = cm.getCache();
       tm = TestingUtil.getTransactionManager(cache);

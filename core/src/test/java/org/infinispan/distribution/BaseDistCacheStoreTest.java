@@ -46,7 +46,7 @@ public abstract class BaseDistCacheStoreTest extends BaseDistFunctionalTest {
       int idToUse = shared ? 999 : id++;
       clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg(getClass().getSimpleName() + "_" + idToUse));
       cfg.setCacheLoaderManagerConfig(clmc);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(withFD, cfg, false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(withFD, cfg);
       cacheManagers.add(cm);
       return cm;
    }

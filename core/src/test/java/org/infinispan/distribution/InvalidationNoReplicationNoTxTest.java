@@ -21,28 +21,37 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.config;
+package org.infinispan.distribution;
 
-import org.infinispan.test.AbstractCacheTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
+import static org.testng.Assert.assertEquals;
+
 /**
+ * // TODO: Document this
+ *
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "config.TransactionalCacheConfigTest")
-public class TransactionalCacheConfigTest extends AbstractCacheTest {
+@Test (groups = "functional", testName = "distribution.InvalidationNoReplicationNoTxTest")
+public class InvalidationNoReplicationNoTxTest extends InvalidationNoReplicationTest {
 
-   public void test() {
-      final Configuration c = TestCacheManagerFactory.getDefaultConfiguration(false);
-      assert !c.isTransactionalCache();
-      c.fluent().transaction().transactionalCache(true);
-      assert c.isTransactionalCache();
-      c.fluent().transaction().transactionalCache(false);
-      assert !c.isTransactionalCache();
-      c.fluent().transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
-      assert c.isTransactionalCache();
+   public InvalidationNoReplicationNoTxTest() {
+      transactional = false;
    }
+
+   public void testInvalidation() throws Exception {
+      cache(1).put(k0, "v0");
+      assert advancedCache(0).getDataContainer().containsKey(k0);
+      assert advancedCache(1).getDataContainer().containsKey(k0);
+
+      log.info("Here is the put!");
+      log.infof("Cache 0=%s cache 1=%s", address(0), address(1));
+      cache(0).put(k0, "v1");
+
+      log.info("before assertions!");
+      assertEquals(advancedCache(1).getDataContainer().get(k0), null);
+      assertEquals(advancedCache(0).getDataContainer().get(k0).getValue(), "v1");
+   }
+
 }

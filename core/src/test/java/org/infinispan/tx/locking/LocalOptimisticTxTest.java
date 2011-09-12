@@ -45,7 +45,7 @@ public class LocalOptimisticTxTest extends AbstractLocalTest {
       final Configuration config = getDefaultStandaloneConfig(true);
       config.fluent().transaction().lockingMode(LockingMode.OPTIMISTIC)
             .transactionManagerLookup(new DummyTransactionManagerLookup());
-      return TestCacheManagerFactory.createCacheManager(config, true);
+      return TestCacheManagerFactory.createCacheManager(config);
    }
 
    protected void assertLocking() {

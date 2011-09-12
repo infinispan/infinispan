@@ -64,7 +64,7 @@ public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
       c.setLockAcquisitionTimeout(500);
       // these 2 need to be set to use the AtomicMapCache
       c.setInvocationBatchingEnabled(true);
-      cm = TestCacheManagerFactory.createCacheManager(c, true);
+      cm = TestCacheManagerFactory.createCacheManager(c);
       cache = cm.getCache();
       tm = TestingUtil.getTransactionManager(cache);
    }
