@@ -23,8 +23,6 @@
 
 package org.infinispan.config;
 
-import java.util.List;
-
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.group.Group;
@@ -39,6 +37,7 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.hash.Hash;
 
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -371,6 +370,13 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @param wakeUpInterval
        */
       ExpirationConfig wakeUpInterval(Long wakeUpInterval);
+
+      /**
+       * Sets whether the background reaper thread is enabled to test entries for expiration.  Regardless of whether
+       * a reaper is used, entries are tested for expiration lazily when they are touched.
+       * @param enabled whether a reaper thread is used or not
+       */
+      ExpirationConfig reaperEnabled(Boolean enabled);
    }
 
    /**

@@ -30,5 +30,5 @@ package org.infinispan.eviction;
  */
 public enum EvictionThreadPolicy {
    PIGGYBACK,
-   DEFAULT;  
+   DEFAULT
 }
