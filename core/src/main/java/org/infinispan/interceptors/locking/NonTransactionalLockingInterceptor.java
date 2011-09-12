@@ -23,6 +23,7 @@
 
 package org.infinispan.interceptors.locking;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -42,6 +43,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      assertNonTransactional(ctx);
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
@@ -51,7 +53,9 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      assertNonTransactional(ctx);
       try {
+         assertNonTransactional(ctx);
          lockKey(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -64,6 +68,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      assertNonTransactional(ctx);
       try {
          for (Object key : command.getMap().keySet()) {
             lockKey(ctx, key);
@@ -79,6 +84,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      assertNonTransactional(ctx);
       try {
          lockKey(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
@@ -91,6 +97,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      assertNonTransactional(ctx);
       try {
          lockKey(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
@@ -107,5 +114,12 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
       // ensure keys are properly locked for evict commands
       ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
       return visitRemoveCommand(ctx, command);
+   }
+
+   private void assertNonTransactional(InvocationContext ctx) {
+      //this only happens if the cache is used in a transaction's scope
+      if (ctx.isInTxScope()) {
+         throw new CacheException("This is a non-transactional cache and cannot be accessed within a transaction's scope.");
+      }
    }
 }
