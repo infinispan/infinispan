@@ -28,6 +28,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.query.ModuleCommandIds;
 import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker;
 
 /**
@@ -38,7 +39,7 @@ import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker
  */
 public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableCommand {
 
-   public static final byte COMMAND_ID = 33;
+   public static final byte COMMAND_ID = ModuleCommandIds.CLUSTERED_QUERY;
 
    private ClusteredQueryCommandType commandType;
 
