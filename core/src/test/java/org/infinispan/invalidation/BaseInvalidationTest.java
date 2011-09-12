@@ -57,10 +57,16 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC, true);
+      Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC, false);
       c.setStateRetrievalTimeout(1000);
       c.setLockAcquisitionTimeout(500);
       createClusteredCaches(2, "invalidation", c);
+
+      c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC, true);
+      c.setStateRetrievalTimeout(1000);
+      c.setLockAcquisitionTimeout(500);
+      defineConfigurationOnAllManagers("invalidationTx", c);
+      waitForClusterToForm("invalidationTx");
 
    }
 
@@ -119,14 +125,16 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testDeleteNonExistentEntry() throws Exception {
-      AdvancedCache cache1 = cache(0,"invalidation").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidation").getAdvancedCache();
+      AdvancedCache cache1 = cache(0,"invalidationTx").getAdvancedCache();
+      AdvancedCache cache2 = cache(1,"invalidationTx").getAdvancedCache();
       
       assertNull("Should be null", cache1.get("key"));
       assertNull("Should be null", cache2.get("key"));
 
+      log.info("before...");
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.put("key", "value");
+      log.info("after...");
       replListener(cache2).waitForRpc();
 
       assertEquals("value", cache1.get("key"));
@@ -146,8 +154,8 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testTxSyncUnableToInvalidate() throws Exception {
-      AdvancedCache cache1 = cache(0,"invalidation").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"invalidation").getAdvancedCache();
+      AdvancedCache cache1 = cache(0,"invalidationTx").getAdvancedCache();
+      AdvancedCache cache2 = cache(1,"invalidationTx").getAdvancedCache();
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.put("key", "value");
       replListener(cache2).waitForRpc();

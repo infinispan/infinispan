@@ -32,7 +32,6 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
 
    public DistSkipRemoteLookupTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
-      batchingEnabled = true;
    }
 
    public void testSkipLookupOnGet() {
@@ -49,22 +48,6 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
       assertOwnershipAndNonOwnership(k1, false);
    }
    
-   public void testSkipLookupOnGetWhileBatching() {
-      MagicKey k1 = new MagicKey(c1);
-      c1.put(k1, "batchingMagicValue-h1");
-
-      assertIsInContainerImmortal(c1, k1);
-      assertIsInContainerImmortal(c2, k1);
-      assertIsNotInL1(c3, k1);
-      assertIsNotInL1(c4, k1);
-
-      c4.startBatch();
-      assert c4.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k1) == null;
-      c4.endBatch(true);
-
-      assertOwnershipAndNonOwnership(k1, false);
-   }
-
    public void testCorrectFunctionalityOnConditionalWrite() {
       MagicKey k1 = new MagicKey(c1);
       c1.put(k1, "value");

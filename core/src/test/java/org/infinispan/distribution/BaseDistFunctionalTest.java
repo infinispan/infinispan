@@ -39,6 +39,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 
@@ -70,11 +71,15 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected int numVirtualNodes = 1;
    protected boolean groupsEnabled = false;
    protected List<Grouper<?>> groupers;
+   protected LockingMode lockingMode;
 
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
       configuration = getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, tx);
       configuration.setRehashEnabled(performRehashing);
+      if (lockingMode != null) {
+         configuration.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
+      }
       configuration.setNumOwners(numOwners);
       if (!testRetVals) {
          configuration.setUnsafeUnreliableReturnValues(true);
