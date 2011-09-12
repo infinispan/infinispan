@@ -132,17 +132,20 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       CyclicBarrier barrier = new CyclicBarrier(nbWriters + 1);
       List<Future<Void>> futures = new ArrayList<Future<Void>>(nbWriters);
       ExecutorService executorService = Executors.newCachedThreadPool();
-      for (int i = 0; i < nbWriters; i++) {
-         log.debug("Schedule execution");
-         Future<Void> future = executorService.submit(new EntryWriter(barrier));
-         futures.add(future);
-      }
-      barrier.await(); // wait for all threads to be ready
-      barrier.await(); // wait for all threads to finish
+      try {
+         for (int i = 0; i < nbWriters; i++) {
+            log.debug("Schedule execution");
+            Future<Void> future = executorService.submit(new EntryWriter(barrier));
+            futures.add(future);
+         }
+         barrier.await(); // wait for all threads to be ready
+         barrier.await(); // wait for all threads to finish
 
-      log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported");
-      for (Future<Void> future : futures) future.get();
-      executorService.shutdownNow();
+         log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported");
+         for (Future<Void> future : futures) future.get();
+      } finally {
+         executorService.shutdownNow();
+      }
    }
 
 
