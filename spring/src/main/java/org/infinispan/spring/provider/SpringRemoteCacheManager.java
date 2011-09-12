@@ -37,6 +37,7 @@ import org.springframework.util.Assert;
  * </p>
  * 
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Marius Bogoevici
  * 
  */
 public class SpringRemoteCacheManager implements org.springframework.cache.CacheManager {
@@ -56,8 +57,8 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
     * @see org.springframework.cache.CacheManager#getCache(java.lang.String)
     */
    @Override
-   public <K, V> Cache<K, V> getCache(final String name) {
-      return new SpringCache<K, V>(this.nativeCacheManager.<K, V> getCache(name));
+   public Cache getCache(final String name) {
+      return new SpringCache(this.nativeCacheManager.getCache(name));
    }
 
    /**

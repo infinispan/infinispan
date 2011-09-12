@@ -31,6 +31,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.spring.support.embedded.InfinispanNamedEmbeddedCacheFactoryBean;
 import org.springframework.cache.Cache;
+import org.springframework.cache.interceptor.DefaultValueWrapper;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -46,6 +47,7 @@ import org.testng.annotations.Test;
  * </p>
  * 
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Marius Bogoevici
  * 
  */
 @Test(testName = "spring.provider.SpringCacheCacheTest", groups = "unit")
@@ -57,7 +59,7 @@ public class SpringCacheCacheTest {
 
    private org.infinispan.Cache<Object, Object> nativeCache;
 
-   private Cache<Object, Object> cache;
+   private Cache cache;
 
    @BeforeMethod
    public void setUp() throws Exception {
@@ -91,7 +93,7 @@ public class SpringCacheCacheTest {
 
       assertNull(this.cache.get(key));
       this.cache.put(key, value);
-      assertEquals(value, this.cache.get(key));
+      assertEquals(value, this.cache.get(key).get());
    }
 
    @Test
@@ -101,18 +103,7 @@ public class SpringCacheCacheTest {
 
       this.cache.put(key, value);
 
-      assertTrue(this.cache.containsKey(key));
-   }
-
-   @Test
-   public void testCacheRemove() throws Exception {
-      final Object key = "enescu";
-      final Object value = "george";
-
-      assertNull(this.cache.get(key));
-      this.cache.put(key, value);
-      assertEquals(value, this.cache.remove(key));
-      assertNull(this.cache.get(key));
+      assertTrue(this.cache.get(key) != null);
    }
 
    @Test
@@ -126,66 +117,7 @@ public class SpringCacheCacheTest {
       assertNull(this.cache.get("enescu"));
    }
 
-   @Test
-   public void testPutIfAbsent() throws Exception {
-      final Object key = "enescu";
-      final Object value1 = "george";
-      final Object value2 = "geo";
 
-      assertNull(this.cache.get(key));
-      this.cache.put(key, value1);
-      this.cache.putIfAbsent(key, value2);
-      assertEquals(value1, this.cache.get(key));
-   }
-
-   @Test
-   public void testConcurrentRemove() throws Exception {
-      final Object key = "enescu";
-      final Object value1 = "george";
-      final Object value2 = "geo";
-
-      assertNull(this.cache.get(key));
-      this.cache.put(key, value1);
-      // no remove
-      this.cache.remove(key, value2);
-      assertEquals(value1, this.cache.get(key));
-      // one remove
-      this.cache.remove(key, value1);
-      assertNull(this.cache.get(key));
-   }
-
-   @Test
-   public void testConcurrentReplace() throws Exception {
-      final Object key = "enescu";
-      final Object value1 = "george";
-      final Object value2 = "geo";
-
-      assertNull(this.cache.get(key));
-      this.cache.put(key, value1);
-      this.cache.replace(key, value2);
-      assertEquals(value2, this.cache.get(key));
-      this.cache.remove(key);
-      this.cache.replace(key, value1);
-      assertNull(this.cache.get(key));
-   }
-
-   @Test
-   public void testConcurrentReplaceIfEqual() throws Exception {
-      final Object key = "enescu";
-      final Object value1 = "george";
-      final Object value2 = "geo";
-
-      assertNull(this.cache.get(key));
-      this.cache.put(key, value1);
-      assertEquals(value1, this.cache.get(key));
-      // no replace
-      this.cache.replace(key, value2, value1);
-      assertEquals(value1, this.cache.get(key));
-      this.cache.replace(key, value1, value2);
-      assertEquals(value2, this.cache.get(key));
-      this.cache.replace(key, value2, value1);
-      assertEquals(value1, this.cache.get(key));
-   }
 
    private org.infinispan.Cache<Object, Object> createNativeCache() throws Exception {
       this.fb.setInfinispanEmbeddedCacheManager(new DefaultCacheManager());
@@ -195,8 +127,8 @@ public class SpringCacheCacheTest {
       return this.fb.getObject();
    }
 
-   private Cache<Object, Object> createCache(final org.infinispan.Cache<Object, Object> nativeCache) {
-      return new SpringCache<Object, Object>(nativeCache);
+   private Cache createCache(final org.infinispan.Cache<Object, Object> nativeCache) {
+      return new SpringCache(nativeCache);
    }
 
 }
