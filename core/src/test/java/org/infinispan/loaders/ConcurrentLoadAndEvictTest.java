@@ -68,6 +68,7 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
             .addCacheLoader(new DummyInMemoryCacheStore.Cfg())
          .customInterceptors()
             .add(sdi).after(CacheLoaderInterceptor.class)
+         .transaction().transactionalCache(false)
          .build();
 
       return TestCacheManagerFactory.createCacheManager(config);
