@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Knows how to build and manage an chain of interceptors. Also in charge with invoking methods on the chain.
@@ -54,6 +55,8 @@ public class InterceptorChain {
     * reference to the first interceptor in the chain
     */
    private volatile CommandInterceptor firstInChain;
+
+   final ReentrantLock lock = new ReentrantLock();
 
    /**
     * Constructs an interceptor chain having the supplied interceptor as first.
@@ -90,25 +93,31 @@ public class InterceptorChain {
     * @throws IllegalArgumentException if the position is invalid (e.g. 5 and there are only 2 interceptors in the
     *                                  chain)
     */
-   public synchronized void addInterceptor(CommandInterceptor interceptor, int position) {
-      assertNotAdded(interceptor.getClass());
-      if (position == 0) {
-         interceptor.setNext(firstInChain);
-         firstInChain = interceptor;
-         return;
-      }
-      if (firstInChain == null) return;
-      CommandInterceptor it = firstInChain;
-      int index = 0;
-      while (it != null) {
-         if (++index == position) {
-            interceptor.setNext(it.getNext());
-            it.setNext(interceptor);
+   public void addInterceptor(CommandInterceptor interceptor, int position) {
+      final ReentrantLock lock = this.lock;
+      lock.lock();
+      try {
+         assertNotAdded(interceptor.getClass());
+         if (position == 0) {
+            interceptor.setNext(firstInChain);
+            firstInChain = interceptor;
             return;
          }
-         it = it.getNext();
+         if (firstInChain == null) return;
+         CommandInterceptor it = firstInChain;
+         int index = 0;
+         while (it != null) {
+            if (++index == position) {
+               interceptor.setNext(it.getNext());
+               it.setNext(interceptor);
+               return;
+            }
+            it = it.getNext();
+         }
+         throw new IllegalArgumentException("Invalid index: " + index + " !");
+      } finally {
+         lock.unlock();
       }
-      throw new IllegalArgumentException("Invalid index: " + index + " !");
    }
 
    /**
@@ -118,22 +127,28 @@ public class InterceptorChain {
     *                                  chain)
     */
    public void removeInterceptor(int position) {
-      if (firstInChain == null) return;
-      if (position == 0) {
-         firstInChain = firstInChain.getNext();
-         return;
-      }
-      CommandInterceptor it = firstInChain;
-      int index = 0;
-      while (it != null) {
-         if (++index == position) {
-            if (it.getNext() == null) return; //nothing to remove
-            it.setNext(it.getNext().getNext());
+      final ReentrantLock lock = this.lock;
+      lock.lock();
+      try {
+         if (firstInChain == null) return;
+         if (position == 0) {
+            firstInChain = firstInChain.getNext();
             return;
          }
-         it = it.getNext();
+         CommandInterceptor it = firstInChain;
+         int index = 0;
+         while (it != null) {
+            if (++index == position) {
+               if (it.getNext() == null) return; //nothing to remove
+               it.setNext(it.getNext().getNext());
+               return;
+            }
+            it = it.getNext();
+         }
+         throw new IllegalArgumentException("Invalid position: " + position + " !");
+      } finally {
+         lock.unlock();
       }
-      throw new IllegalArgumentException("Invalid position: " + position + " !");
    }
 
    /**
@@ -172,18 +187,28 @@ public class InterceptorChain {
     * Removes all the occurences of supplied interceptor type from the chain.
     */
    public void removeInterceptor(Class<? extends CommandInterceptor> clazz) {
-      if (firstInChain.getClass() == clazz) {
-         firstInChain = firstInChain.getNext();
-      }
-      CommandInterceptor it = firstInChain.getNext();
-      CommandInterceptor prevIt = firstInChain;
-      while (it != null) {
-         if (it.getClass() == clazz) {
-            prevIt.setNext(it.getNext());
+      final ReentrantLock lock = this.lock;
+      lock.lock();
+      try {
+         if (isFirstInChain(clazz)) {
+            firstInChain = firstInChain.getNext();
          }
-         prevIt = it;
-         it = it.getNext();
+         CommandInterceptor it = firstInChain.getNext();
+         CommandInterceptor prevIt = firstInChain;
+         while (it != null) {
+            if (it.getClass() == clazz) {
+               prevIt.setNext(it.getNext());
+            }
+            prevIt = it;
+            it = it.getNext();
+         }
+      } finally {
+         lock.unlock();
       }
+   }
+
+   protected boolean isFirstInChain(Class<? extends CommandInterceptor> clazz) {
+      return firstInChain.getClass() == clazz;
    }
 
    /**
@@ -192,16 +217,22 @@ public class InterceptorChain {
     * @return true if the interceptor was added; i.e. the afterInterceptor exists
     */
    public boolean addInterceptorAfter(CommandInterceptor toAdd, Class<? extends CommandInterceptor> afterInterceptor) {
-      CommandInterceptor it = firstInChain;
-      while (it != null) {
-         if (it.getClass().equals(afterInterceptor)) {
-            toAdd.setNext(it.getNext());
-            it.setNext(toAdd);
-            return true;
+      final ReentrantLock lock = this.lock;
+      lock.lock();
+      try {
+         CommandInterceptor it = firstInChain;
+         while (it != null) {
+            if (it.getClass().equals(afterInterceptor)) {
+               toAdd.setNext(it.getNext());
+               it.setNext(toAdd);
+               return true;
+            }
+            it = it.getNext();
          }
-         it = it.getNext();
+         return false;
+      } finally {
+         lock.unlock();
       }
-      return false;
    }
 
    /**
@@ -210,21 +241,27 @@ public class InterceptorChain {
     * @return true if the interceptor was added; i.e. the afterInterceptor exists
     */
    public boolean addInterceptorBefore(CommandInterceptor toAdd, Class<? extends CommandInterceptor> beforeInterceptor) {
-      if (firstInChain.getClass().equals(beforeInterceptor)) {
-         toAdd.setNext(firstInChain);
-         firstInChain = toAdd;
-         return true;
-      }
-      CommandInterceptor it = firstInChain;
-      while (it.getNext() != null) {
-         if (it.getNext().getClass().equals(beforeInterceptor)) {
-            toAdd.setNext(it.getNext());
-            it.setNext(toAdd);
+      final ReentrantLock lock = this.lock;
+      lock.lock();
+      try {
+         if (firstInChain.getClass().equals(beforeInterceptor)) {
+            toAdd.setNext(firstInChain);
+            firstInChain = toAdd;
             return true;
          }
-         it = it.getNext();
+         CommandInterceptor it = firstInChain;
+         while (it.getNext() != null) {
+            if (it.getNext().getClass().equals(beforeInterceptor)) {
+               toAdd.setNext(it.getNext());
+               it.setNext(toAdd);
+               return true;
+            }
+            it = it.getNext();
+         }
+         return false;
+      } finally {
+         lock.unlock();
       }
-      return false;
    }
 
    /**
@@ -235,30 +272,37 @@ public class InterceptorChain {
     * @return true if the interceptor was replaced
     */
    public boolean replaceInterceptor(CommandInterceptor replacingInterceptor, Class<? extends CommandInterceptor> toBeReplacedInterceptorType) {
-      if (firstInChain.getClass().equals(toBeReplacedInterceptorType)) {
-         replacingInterceptor.setNext(firstInChain.getNext());
-         firstInChain = replacingInterceptor;
-         return true;
-      }
-      CommandInterceptor it = firstInChain;
-      CommandInterceptor previous = firstInChain;
-      while (it.getNext() != null) {
-         CommandInterceptor current = it.getNext();
-         if (current.getClass().equals(toBeReplacedInterceptorType)) {
-            replacingInterceptor.setNext(current.getNext());
-            previous.setNext(replacingInterceptor);
+      final ReentrantLock lock = this.lock;
+      lock.lock();
+      try {
+         if (firstInChain.getClass().equals(toBeReplacedInterceptorType)) {
+            replacingInterceptor.setNext(firstInChain.getNext());
+            firstInChain = replacingInterceptor;
             return true;
          }
-         previous = current;
-         it = current;
+         CommandInterceptor it = firstInChain;
+         CommandInterceptor previous = firstInChain;
+         while (it.getNext() != null) {
+            CommandInterceptor current = it.getNext();
+            if (current.getClass().equals(toBeReplacedInterceptorType)) {
+               replacingInterceptor.setNext(current.getNext());
+               previous.setNext(replacingInterceptor);
+               return true;
+            }
+            previous = current;
+            it = current;
+         }
+         return false;
+      } finally {
+         lock.unlock();
       }
-      return false;
    }
 
    /**
     * Appends at the end.
     */
-   public synchronized void appendInterceptor(CommandInterceptor ci) {
+   public void appendInterceptor(CommandInterceptor ci) {
+      // Called when building interceptor chain and so concurrent start calls are protected already
       CommandInterceptor it = firstInChain;
       while (it.hasNext()) it = it.getNext();
       it.setNext(ci);
@@ -319,6 +363,7 @@ public class InterceptorChain {
     * name.
     */
    public List<CommandInterceptor> getInterceptorsWithClassName(String name) {
+      // Called when building interceptor chain and so concurrent start calls are protected already
       CommandInterceptor iterator = firstInChain;
       List<CommandInterceptor> result = new ArrayList<CommandInterceptor>(2);
       while (iterator != null) {
@@ -351,7 +396,8 @@ public class InterceptorChain {
       return false;
    }
 
-   public synchronized boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType) {
+   public boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType) {
+      // Called when building interceptor chain and so concurrent start calls are protected already
       CommandInterceptor it = firstInChain;
       while (it != null) {
          if (it.getClass().equals(interceptorType)) return true;
