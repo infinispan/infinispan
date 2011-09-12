@@ -178,11 +178,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       try {
          replListener(cache2).expect(InvalidateCommand.class);
          mgr1.commit();
-         if (isSync) {
-            assert false: "isSync should be false";
-         } else {
-            replListener(cache2).waitForRpc();
-         }
+         replListener(cache2).waitForRpc();
       } catch (RollbackException roll) {
          assert isSync : "isSync should be true";
       }
