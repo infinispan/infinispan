@@ -75,7 +75,7 @@ public class EvictionManagerImpl implements EvictionManager {
    // make sure this starts after the CacheLoaderManager
    public void start() {
       // first check if eviction is enabled!
-      enabled = configuration.getEvictionStrategy() != EvictionStrategy.NONE;
+      enabled = configuration.isExpirationReaperEnabled();
       if (enabled) {
          if (cacheLoaderManager != null && cacheLoaderManager.isEnabled()) {
             cacheStore = cacheLoaderManager.getCacheStore();

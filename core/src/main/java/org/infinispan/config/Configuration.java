@@ -1551,7 +1551,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return !getCacheMode().isSynchronous();
    }
 
-
+   public boolean isExpirationReaperEnabled() {
+      return expiration.reaperEnabled;
+   }
 
 
    /**
@@ -2512,6 +2514,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @XmlAttribute
       protected Long wakeUpInterval = TimeUnit.MINUTES.toMillis(1);
 
+      @ConfigurationDocRef(bean = ExpirationConfig.class, targetElement = "reaperEnabled")
+      @XmlAttribute
+      protected Boolean reaperEnabled = true;
+
       public void accept(ConfigurationBeanVisitor v) {
          v.visitExpirationType(this);
       }
@@ -2564,6 +2570,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
 
       @Override
+      public ExpirationConfig reaperEnabled(Boolean enabled) {
+         testImmutability("reaperEnabled");
+         this.reaperEnabled = enabled;
+         return this;
+      }
+
+      @Override
       protected ExpirationType setConfiguration(Configuration config) {
          super.setConfiguration(config);
          return this;
@@ -2576,10 +2589,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
          ExpirationType that = (ExpirationType) o;
 
-         if (lifespan != null ? !lifespan.equals(that.lifespan) : that.lifespan != null) return false;
-         if (maxIdle != null ? !maxIdle.equals(that.maxIdle) : that.maxIdle != null) return false;
-         if (wakeUpInterval != null ? !wakeUpInterval.equals(that.wakeUpInterval) : that.wakeUpInterval != null)
-            return false;
+         if (!Util.safeEquals(lifespan, that.lifespan)) return false;
+         if (!Util.safeEquals(maxIdle, that.maxIdle)) return false;
+         if (!Util.safeEquals(wakeUpInterval, that.wakeUpInterval)) return false;
+         if (!Util.safeEquals(reaperEnabled, that.reaperEnabled)) return false;
 
          return true;
       }
@@ -2589,6 +2602,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          int result = lifespan != null ? lifespan.hashCode() : 0;
          result = 31 * result + (maxIdle != null ? maxIdle.hashCode() : 0);
          result = 31 * result + (wakeUpInterval != null ? wakeUpInterval.hashCode() : 0);
+         result = 31 * result + (reaperEnabled != null ? reaperEnabled.hashCode() : 0);
          return result;
       }
    }
