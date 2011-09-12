@@ -38,13 +38,13 @@ public class ReplaceTest extends SingleCacheManagerTest {
          .indexing()
          .indexLocalOnly(false)
          .addProperty("hibernate.search.default.directory_provider", "ram");
-      return TestCacheManagerFactory.createCacheManager(c, true);
+      return TestCacheManagerFactory.createCacheManager(c);
    }
 
    @Test
    public void testReplaceSimple() {
       //for comparison we use a non-indexing cache here:
-      EmbeddedCacheManager simpleCacheManager = TestCacheManagerFactory.createCacheManager(getDefaultStandaloneConfig(true), true);
+      EmbeddedCacheManager simpleCacheManager = TestCacheManagerFactory.createCacheManager(getDefaultStandaloneConfig(true));
       try {
          Cache<Object, Object> simpleCache = simpleCacheManager.getCache();
          TestEntity se1 = new TestEntity("name1", "surname1", 10, "note");

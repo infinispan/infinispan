@@ -49,7 +49,7 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
       try {
          Configuration c = SingleCacheManagerTest.getDefaultClusteredConfig(LOCAL, true);
          c.fluent().indexing().indexLocalOnly(false);
-         cc = TestCacheManagerFactory.createCacheManager(c, true);
+         cc = TestCacheManagerFactory.createCacheManager(c);
          Cache<?, ?> cache = cc.getCache();
          SearchFactoryIntegrator sfi = TestingUtil.extractComponent(cache, SearchFactoryIntegrator.class);
 

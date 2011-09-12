@@ -49,7 +49,7 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
          .indexing()
          .indexLocalOnly(false)
          .addProperty("hibernate.search.default.directory_provider", "ram");
-      m_cacheManager = TestCacheManagerFactory.createCacheManager(c, true);
+      m_cacheManager = TestCacheManagerFactory.createCacheManager(c);
       m_cache = m_cacheManager.getCache();
       m_transactionManager = m_cache.getAdvancedCache().getTransactionManager();
       return m_cacheManager;

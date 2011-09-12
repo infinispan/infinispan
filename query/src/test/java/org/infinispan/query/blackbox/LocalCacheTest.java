@@ -332,7 +332,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
             .indexLocalOnly(false)
             .addProperty("hibernate.search.default.directory_provider", "ram");
       enhanceConfig(cfg);
-      return TestCacheManagerFactory.createCacheManager(cfg.build(), true);
+      return TestCacheManagerFactory.createCacheManager(cfg.build());
    }
    
    public void testEntityDiscovery() {

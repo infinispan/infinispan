@@ -60,7 +60,7 @@ public class NodeAPITest extends SingleCacheManagerTest {
       // start a single cache instance
       Configuration c = getDefaultStandaloneConfig(true);
       c.setInvocationBatchingEnabled(true);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       cache = new TreeCacheImpl(cm.getCache());
       tm = TestingUtil.getTransactionManager(cache.getCache());
       return cm;

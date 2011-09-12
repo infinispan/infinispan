@@ -117,7 +117,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
             .indexing()
                .addProperty("hibernate.search.default.directory_provider", "ram")
       .build();
-      cm = TestCacheManagerFactory.createCacheManager(cfg, true);
+      cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class)
             .getCacheStore();

@@ -60,7 +60,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
          .indexing()
          .indexLocalOnly(false)
          .addProperty("hibernate.search.default.directory_provider", "ram");
-      cacheManager = TestCacheManagerFactory.createCacheManager(c, true);
+      cacheManager = TestCacheManagerFactory.createCacheManager(c);
 
       person1 = new Person();
       person1.setName("Navin");

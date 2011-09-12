@@ -54,7 +54,7 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
             .loaders()
                .addCacheLoader(new DummyInMemoryCacheStore.Cfg(getClass().getName()))
             .build();
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       cache = new TreeCacheImpl<String, String>(cm.getCache());
       CacheLoaderManager m = TestingUtil.extractComponent(cache.getCache(), CacheLoaderManager.class);
       store = m.getCacheStore();
