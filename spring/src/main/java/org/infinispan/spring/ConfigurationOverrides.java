@@ -28,6 +28,7 @@ import java.util.List;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.CustomInterceptorConfig;
+import org.infinispan.config.FluentConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
@@ -82,7 +83,7 @@ public final class ConfigurationOverrides {
 
    private String cacheModeString;
 
-   private Long evictionWakeUpInterval;
+   private Long expirationWakeUpInterval;
 
    private EvictionStrategy evictionStrategy;
 
@@ -291,11 +292,11 @@ public final class ConfigurationOverrides {
    }
 
    /**
-    * @param evictionWakeUpInterval
-    *           the evictionWakeUpInterval to set
+    * @param expirationWakeUpInterval
+    *           the expiration expirationWakeUpInterval to set
     */
-   public void setEvictionWakeUpInterval(final Long evictionWakeUpInterval) {
-      this.evictionWakeUpInterval = evictionWakeUpInterval;
+   public void setExpirationWakeUpInterval(final Long expirationWakeUpInterval) {
+      this.expirationWakeUpInterval = expirationWakeUpInterval;
    }
 
    /**
@@ -669,10 +670,11 @@ public final class ConfigurationOverrides {
                   + this.cacheModeString + "]");
          configurationToOverride.setCacheModeString(this.cacheModeString);
       }
-      if (this.evictionWakeUpInterval != null) {
-         this.logger.debug("Overriding property [evictionWakeUpInterval] with value ["
-                  + this.evictionWakeUpInterval + "]");
-         configurationToOverride.setEvictionWakeUpInterval(this.evictionWakeUpInterval);
+      if (this.expirationWakeUpInterval != null) {
+         this.logger.debug("Overriding property [expirationWakeUpInterval] with value ["
+                  + this.expirationWakeUpInterval + "]");
+         FluentConfiguration fluentConfiguration = new FluentConfiguration(configurationToOverride);
+         fluentConfiguration.expiration().wakeUpInterval(expirationWakeUpInterval);
       }
       if (this.evictionStrategy != null) {
          this.logger.debug("Overriding property [evictionStrategy] with value ["

@@ -48,6 +48,7 @@ import org.testng.annotations.Test;
  * </p>
  * 
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Marius Bogoevici
  * 
  */
 @Test(testName = "spring.provider.SpringRemoteCacheManagerTest", groups = "functional")
@@ -98,7 +99,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
       final SpringRemoteCacheManager objectUnderTest = new SpringRemoteCacheManager(
                remoteCacheManager);
 
-      final Cache<Object, Object> defaultCache = objectUnderTest.getCache(TEST_CACHE_NAME);
+      final Cache defaultCache = objectUnderTest.getCache(TEST_CACHE_NAME);
 
       assertNotNull("getCache(" + TEST_CACHE_NAME
                + ") should have returned a default cache. However, it returned null.", defaultCache);

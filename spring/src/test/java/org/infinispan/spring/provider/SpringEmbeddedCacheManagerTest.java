@@ -42,6 +42,7 @@ import org.testng.annotations.Test;
  * </p>
  * 
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Marius Bogoevici
  * 
  */
 @Test(testName = "spring.provider.SpringEmbeddedCacheManagerTest", groups = "unit")
@@ -75,7 +76,7 @@ public class SpringEmbeddedCacheManagerTest {
       final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
                nativeCacheManager);
 
-      final Cache<Object, Object> cacheExpectedToHaveTheProvidedName = objectUnderTest
+      final Cache cacheExpectedToHaveTheProvidedName = objectUnderTest
                .getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
 
       assertEquals(
@@ -106,7 +107,7 @@ public class SpringEmbeddedCacheManagerTest {
       final org.infinispan.Cache<Object, Object> infinispanCacheAddedLater = nativeCacheManager
                .getCache(nameOfInfinispanCacheAddedLater);
 
-      final Cache<Object, Object> springCacheAddedLater = objectUnderTest
+      final Cache springCacheAddedLater = objectUnderTest
                .getCache(nameOfInfinispanCacheAddedLater);
 
       assertEquals(

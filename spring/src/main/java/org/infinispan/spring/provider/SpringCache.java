@@ -24,6 +24,7 @@
 package org.infinispan.spring.provider;
 
 import org.springframework.cache.Cache;
+import org.springframework.cache.interceptor.DefaultValueWrapper;
 import org.springframework.util.Assert;
 
 /**
@@ -34,16 +35,17 @@ import org.springframework.util.Assert;
  * </p>
  * 
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author <a href="mailto:marius.bogoevici@gmail.com">Marius Bogoevici</a>
  * 
  */
-public class SpringCache<K, V> implements Cache<K, V> {
+public class SpringCache implements Cache {
 
-   private final org.infinispan.Cache<K, V> nativeCache;
+   private final org.infinispan.Cache<Object, Object> nativeCache;
 
    /**
     * @param nativeCache
     */
-   public SpringCache(final org.infinispan.Cache<K, V> nativeCache) {
+   public SpringCache(final org.infinispan.Cache<Object, Object> nativeCache) {
       Assert.notNull(nativeCache, "A non-null Infinispan cache implementation is required");
       this.nativeCache = nativeCache;
    }
@@ -60,74 +62,35 @@ public class SpringCache<K, V> implements Cache<K, V> {
     * @see org.springframework.cache.Cache#getNativeCache()
     */
    @Override
-   public org.infinispan.Cache<K, V> getNativeCache() {
+   public org.infinispan.Cache<?, ?> getNativeCache() {
       return this.nativeCache;
-   }
-
-   /**
-    * @see org.springframework.cache.Cache#containsKey(java.lang.Object)
-    */
-   @Override
-   public boolean containsKey(final Object key) {
-      return this.nativeCache.containsKey(key);
    }
 
    /**
     * @see org.springframework.cache.Cache#get(java.lang.Object)
     */
    @Override
-   public V get(final Object key) {
-      return this.nativeCache.get(key);
+   public ValueWrapper get(final Object key) {
+      Object v = nativeCache.get(key);
+	  return (v != null ? new DefaultValueWrapper(v) : null);
    }
 
    /**
     * @see org.springframework.cache.Cache#put(java.lang.Object, java.lang.Object)
     */
    @Override
-   public V put(final K key, final V value) {
-      return this.nativeCache.put(key, value);
+   public void put(final Object key, final Object value) {
+      this.nativeCache.put(key, value);
    }
 
    /**
-    * @see org.springframework.cache.Cache#putIfAbsent(java.lang.Object, java.lang.Object)
+    * @see org.springframework.cache.Cache#evict(java.lang.Object)
     */
    @Override
-   public V putIfAbsent(final K key, final V value) {
-      return this.nativeCache.putIfAbsent(key, value);
+   public void evict(final Object key) {
+     this.nativeCache.remove(key);
    }
 
-   /**
-    * @see org.springframework.cache.Cache#remove(java.lang.Object)
-    */
-   @Override
-   public V remove(final Object key) {
-      return this.nativeCache.remove(key);
-   }
-
-   /**
-    * @see org.springframework.cache.Cache#remove(java.lang.Object, java.lang.Object)
-    */
-   @Override
-   public boolean remove(final Object key, final Object value) {
-      return this.nativeCache.remove(key, value);
-   }
-
-   /**
-    * @see org.springframework.cache.Cache#replace(java.lang.Object, java.lang.Object,
-    *      java.lang.Object)
-    */
-   @Override
-   public boolean replace(final K key, final V oldValue, final V newValue) {
-      return this.nativeCache.replace(key, oldValue, newValue);
-   }
-
-   /**
-    * @see org.springframework.cache.Cache#replace(java.lang.Object, java.lang.Object)
-    */
-   @Override
-   public V replace(final K key, final V value) {
-      return this.nativeCache.replace(key, value);
-   }
 
    /**
     * @see org.springframework.cache.Cache#clear()
