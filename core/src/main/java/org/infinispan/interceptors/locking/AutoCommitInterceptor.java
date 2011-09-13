@@ -116,6 +116,7 @@ public class AutoCommitInterceptor extends CommandInterceptor {
             throw new IllegalStateException("Future calls cannot run in auto-commit mode.");
          transactionManager.begin();
          InvocationContext txContext = icc.createInvocationContext();
+         txContext.setClassLoader(ctx.getClassLoader());
          txContext.setFlags(ctx.getFlags());
          try {
             final Object result = invokeNextInterceptor(txContext, command);
