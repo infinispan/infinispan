@@ -246,7 +246,7 @@ public abstract class DataManipulationHelper {
          rs.setFetchSize(tableManipulation.getFetchSize());
          Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>(maxEntries);
          while (rs.next()) {
-            loadAllProcess(rs, result);
+            loadAllProcess(rs, result, maxEntries);
          }
          return result;
       } catch (SQLException e) {
@@ -266,6 +266,8 @@ public abstract class DataManipulationHelper {
    protected abstract String getLoadAllKeysSql();
 
    protected abstract void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException;
+
+   protected abstract void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result, int maxEntries) throws SQLException, CacheLoaderException;
 
    protected abstract void loadAllKeysProcess(ResultSet rs, Set<Object> keys, Set<Object> keysToExclude) throws SQLException, CacheLoaderException;
 

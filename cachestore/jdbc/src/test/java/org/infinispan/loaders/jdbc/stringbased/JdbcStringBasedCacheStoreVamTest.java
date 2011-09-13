@@ -26,7 +26,8 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
@@ -39,21 +40,24 @@ import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
  */
 @Test(groups = "functional", testName = "loaders.jdbc.stringbased.JdbcStringBasedCacheStoreVamTest")
 public class JdbcStringBasedCacheStoreVamTest extends JdbcStringBasedCacheStoreTest {
-   private EmbeddedCacheManager cm;
+
+   EmbeddedCacheManager cm;
+   StreamingMarshaller marshaller;
+
+   @BeforeClass(alwaysRun = true)
+   public void setUpClass() {
+      cm = TestCacheManagerFactory.createLocalCacheManager();
+      marshaller = extractCacheMarshaller(cm.getCache());
+   }
+
+   @AfterClass(alwaysRun = true)
+   public void tearDownClass() throws CacheLoaderException {
+      cm.stop();
+   }
 
    @Override
    protected StreamingMarshaller getMarshaller() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
-      return extractCacheMarshaller(cm.getCache());
+      return marshaller;
    }
 
-   @AfterMethod(alwaysRun = true)
-   @Override
-   public void tearDown() throws CacheLoaderException {
-      try {
-         super.tearDown();
-      } finally {
-         cm.stop();
-      }
-   }
 }
