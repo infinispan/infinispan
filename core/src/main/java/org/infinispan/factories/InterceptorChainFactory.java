@@ -125,6 +125,22 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       interceptorChain.appendInterceptor(createInterceptor(NotificationInterceptor.class));
 
+      if (configuration.isUseEagerLocking()) {
+         configuration.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
+      }
+
+      if (configuration.isTransactionalCache()) {
+         if (configuration.getTransactionLockingMode() == LockingMode.PESSIMISTIC) {
+            interceptorChain.appendInterceptor(createInterceptor(PessimisticLockingInterceptor.class));
+         } else {
+            interceptorChain.appendInterceptor(createInterceptor(OptimisticLockingInterceptor.class));
+         }
+      } else {
+         interceptorChain.appendInterceptor(createInterceptor(NonTransactionalLockingInterceptor.class));
+      }
+
+      interceptorChain.appendInterceptor(createInterceptor(EntryWrappingInterceptor.class));
+
       if (configuration.isUsingCacheLoaders()) {
          if (configuration.getCacheLoaderManagerConfig().isPassivation()) {
             interceptorChain.appendInterceptor(createInterceptor(ActivationInterceptor.class));
@@ -142,22 +158,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             }
          }
       }
-
-      if (configuration.isUseEagerLocking()) {
-         configuration.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
-      }
-
-      if (configuration.isTransactionalCache()) {
-         if (configuration.getTransactionLockingMode() == LockingMode.PESSIMISTIC) {
-            interceptorChain.appendInterceptor(createInterceptor(PessimisticLockingInterceptor.class));
-         } else {
-            interceptorChain.appendInterceptor(createInterceptor(OptimisticLockingInterceptor.class));
-         }
-      } else {
-         interceptorChain.appendInterceptor(createInterceptor(NonTransactionalLockingInterceptor.class));
-      }
-
-      interceptorChain.appendInterceptor(createInterceptor(EntryWrappingInterceptor.class));
 
       if (configuration.isEnableDeadlockDetection()) {
          interceptorChain.appendInterceptor(createInterceptor(DeadlockDetectingInterceptor.class));
