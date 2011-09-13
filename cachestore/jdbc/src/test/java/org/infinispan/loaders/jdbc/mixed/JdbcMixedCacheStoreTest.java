@@ -39,6 +39,7 @@ import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -64,7 +65,7 @@ public class JdbcMixedCacheStoreTest {
    private static final Person MIRCEA = new Person("Mircea", "Markus", 28);
    private static final Person MANIK = new Person("Manik", "Surtani", 18);
 
-   @BeforeTest
+   @BeforeMethod
    public void createCacheStore() throws CacheLoaderException {
       stringsTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       stringsTm.setTableNamePrefix("STRINGS_TABLE");
