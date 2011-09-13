@@ -103,7 +103,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          return invokeNextInterceptor(ctx, command);
       } finally {
          //needed because entries might be added in L1
-         invokeNextAndApplyChanges(ctx, command);
+         if (!ctx.isInTxScope()) commitContextEntries(ctx);
       }
    }
 
