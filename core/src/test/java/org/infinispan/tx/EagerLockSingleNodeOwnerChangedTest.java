@@ -62,7 +62,7 @@ public class EagerLockSingleNodeOwnerChangedTest extends MultipleCacheManagersTe
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+      c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
       c.fluent()
             .transaction().useEagerLocking(true).eagerLockSingleNode(true)
             .clustering().hash().numOwners(3);

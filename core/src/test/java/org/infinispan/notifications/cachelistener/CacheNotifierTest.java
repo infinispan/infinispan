@@ -45,8 +45,6 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea Markus
  * @since 5.1
  */
@@ -61,7 +59,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
    @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
       Configuration c = new Configuration();
-      c.fluent().transaction().transactionManagerLookupClass(null).transactionManagerLookup(null);
+      c.fluent().transaction().transactionalCache(false);
       c.setCacheMode(Configuration.CacheMode.LOCAL);
       c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
       cm = TestCacheManagerFactory.createCacheManager(c);

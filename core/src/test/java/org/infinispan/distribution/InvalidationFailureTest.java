@@ -67,8 +67,8 @@ public class InvalidationFailureTest extends MultipleCacheManagersTest {
       tm(1).begin();
       cache(1).put(k0,"v");
       cache(1, "second").put(k0,"v");
-      assert lockManager(1).isLocked(k0);
-      assert lockManager(1,"second").isLocked(k0);
+      assert !lockManager(1).isLocked(k0);
+      assert !lockManager(1,"second").isLocked(k0);
       Transaction transaction = tm(1).suspend();
 
       tm(0).begin();

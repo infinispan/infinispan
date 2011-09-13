@@ -42,7 +42,7 @@ public class EagerLockSingleLockNodeCrashTest extends MultipleCacheManagersTest 
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
       config.fluent().hash().numOwners(3).transaction().useEagerLocking(true).eagerLockSingleNode(true);
       config.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
       createCluster(config, 3);
