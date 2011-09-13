@@ -27,7 +27,6 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
-import org.infinispan.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Ids;
@@ -47,7 +46,6 @@ import java.io.ObjectOutput;
 import java.util.Set;
 
 import static org.infinispan.marshall.AdvancedExternalizerTest.*;
-import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
@@ -64,7 +62,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager(false);
    }
 
    @AfterTest
@@ -158,7 +156,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
    }
 
    private void withExpectedInternalFailure(final AdvancedExternalizer ext, String message) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          cm.getCache();
          ExternalizerTable extTable = TestingUtil.extractExtTable(cm);

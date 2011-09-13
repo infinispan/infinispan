@@ -70,7 +70,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    }
 
    public void testTwoCachesSameCacheStore() {
-      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          CacheLoaderManagerConfig clmConfig = new CacheLoaderManagerConfig();
          clmConfig.addCacheLoader(csConfig);

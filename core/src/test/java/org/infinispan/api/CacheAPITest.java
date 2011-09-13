@@ -23,11 +23,7 @@
 package org.infinispan.api;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,12 +33,9 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.ObjectDuplicator;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -65,7 +58,7 @@ public abstract class CacheAPITest extends TestAPINonTxTest {
       c.setIsolationLevel(getIsolationLevel());
       c = addEviction(c);
       amend(c);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       cm.defineConfiguration("test", c);
       cache = cm.getCache("test");
       return cm;

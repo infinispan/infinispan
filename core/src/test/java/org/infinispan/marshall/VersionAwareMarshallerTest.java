@@ -113,7 +113,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager(false);
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 

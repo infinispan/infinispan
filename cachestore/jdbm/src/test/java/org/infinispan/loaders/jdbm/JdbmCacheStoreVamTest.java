@@ -43,7 +43,7 @@ public class JdbmCacheStoreVamTest extends JdbmCacheStoreTest {
 
    @Override
    protected StreamingMarshaller getMarshaller() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager(false);
       return extractCacheMarshaller(cm.getCache());
    }
 

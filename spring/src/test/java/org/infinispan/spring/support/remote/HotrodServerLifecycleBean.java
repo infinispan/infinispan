@@ -53,7 +53,7 @@ public class HotrodServerLifecycleBean implements InitializingBean, DisposableBe
 
    @Override
    public void afterPropertiesSet() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       cacheManager.getCache(remoteCacheName);
 
       hotrodServer = TestHelper.startHotRodServer(cacheManager);

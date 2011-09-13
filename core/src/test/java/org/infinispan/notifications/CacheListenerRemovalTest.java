@@ -45,7 +45,7 @@ public class CacheListenerRemovalTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setUp() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager(false);
       cache = cm.getCache();
    }
 

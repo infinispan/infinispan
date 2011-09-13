@@ -85,8 +85,8 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       // The caches are not configured to form a cluster
       // so the client will have to use round-robin for balancing.
       // This means requests will alternate between server 1 and server 2.
-      c1 = TestCacheManagerFactory.createLocalCacheManager().getCache();
-      c2 = TestCacheManagerFactory.createLocalCacheManager().getCache();
+      c1 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
+      c2 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
       registerCacheManager(c1.getCacheManager(), c2.getCacheManager());
 
       hotRodServer1 = TestHelper.startHotRodServer((EmbeddedCacheManager) c1.getCacheManager());

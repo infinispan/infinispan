@@ -20,7 +20,7 @@ import java.util.List;
 public class ConfigurationOverridesTest extends AbstractInfinispanTest {
 
    public void testConfigOverrides() {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          Configuration c = new Configuration().fluent().clustering().hash()
                .consistentHashClass(TopologyAwareConsistentHash.class).build();

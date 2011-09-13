@@ -54,7 +54,7 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
    private Object response2;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       Configuration configuration = createConfig();
       configuration.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
       cacheManager.defineConfiguration("test", configuration);

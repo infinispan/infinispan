@@ -110,13 +110,6 @@ public class TestCacheManagerFactory {
    }
 
    /**
-    * Creates an cache manager that does not support clustering or transactions.
-    */
-   public static EmbeddedCacheManager createLocalCacheManager() {
-      return createLocalCacheManager(false);
-   }
-
-   /**
     * Creates an cache manager that does not support clustering.
     *
     * @param transactional if true, the cache manager will support transactions by default.

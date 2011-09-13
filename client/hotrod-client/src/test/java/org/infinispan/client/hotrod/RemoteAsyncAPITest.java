@@ -48,7 +48,7 @@ public class RemoteAsyncAPITest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       cache = cm.getCache();
       hotrodServer = TestHelper.startHotRodServer(cm);
       Properties props = new Properties();

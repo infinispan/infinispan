@@ -59,7 +59,7 @@ public class ServerErrorTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
 
       remoteCacheManager = getRemoteCacheManager();

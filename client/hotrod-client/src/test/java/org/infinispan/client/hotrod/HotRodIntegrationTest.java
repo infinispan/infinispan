@@ -69,7 +69,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration standaloneConfig = getDefaultStandaloneConfig(false);
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       cacheManager.defineConfiguration(CACHE_NAME, standaloneConfig);
       defaultCache = cacheManager.getCache();
       cache = cacheManager.getCache(CACHE_NAME);

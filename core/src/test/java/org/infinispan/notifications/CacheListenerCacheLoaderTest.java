@@ -50,7 +50,7 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setUp() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager(false);
       Configuration c = new Configuration();
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       DummyInMemoryCacheStore.Cfg clc = new DummyInMemoryCacheStore.Cfg("no_passivation");

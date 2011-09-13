@@ -37,7 +37,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
    Cache<String, String> c;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       c = cm.getCache();
       return cm;
    }

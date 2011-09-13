@@ -67,10 +67,10 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       conf.fluent().hash().numOwners(2);
       conf.fluent().hash().rehashEnabled(false);
 
-      addClusterEnabledCacheManager(conf, true);
-      addClusterEnabledCacheManager(conf, true);
-      addClusterEnabledCacheManager(conf, true);
-      addClusterEnabledCacheManager(conf, true);
+      addClusterEnabledCacheManager(conf);
+      addClusterEnabledCacheManager(conf);
+      addClusterEnabledCacheManager(conf);
+      addClusterEnabledCacheManager(conf);
 
       hotRodServer1 = TestHelper.startHotRodServer(manager(0));
       hotRodServer2 = TestHelper.startHotRodServer(manager(1));

@@ -42,7 +42,7 @@ public class JdbcMixedCacheStoreVamTest extends JdbcMixedCacheStoreTest {
 
    @Override
    protected StreamingMarshaller getMarshaller() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager(false);
       return extractCacheMarshaller(cm.getCache());
    }
 

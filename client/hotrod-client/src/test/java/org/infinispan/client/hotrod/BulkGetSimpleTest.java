@@ -50,7 +50,7 @@ public class BulkGetSimpleTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       cache = cacheManager.getCache();
 
       hotRodServer = TestHelper.startHotRodServer(cacheManager);

@@ -50,7 +50,7 @@ public class TestAPINonTxTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
       Configuration c = getDefaultStandaloneConfig(false);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       cm.defineConfiguration("test", c);
       cache = cm.getCache("test");
       return cm;

@@ -85,7 +85,7 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
    }
 
    public void testMockCacheStartedAndStopped() {
-      cm1 = TestCacheManagerFactory.createLocalCacheManager();
+      cm1 = TestCacheManagerFactory.createLocalCacheManager(false);
       cm1.getCache();
       CacheManagerNotifier mockNotifier = createMock(CacheManagerNotifier.class);
       CacheManagerNotifier origNotifier = TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, mockNotifier, true);

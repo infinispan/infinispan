@@ -61,7 +61,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       cache = cacheManager.getCache();
 
       // make sure all operations take at least 100 msecs
