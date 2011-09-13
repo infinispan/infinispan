@@ -34,7 +34,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-@Test(groups = "functional", testName = "distribution.rehash.ConcurrentJoinTest")
+@Test(groups = "functional", testName = "distribution.rehash.ConcurrentJoinTest", enabled = false, description = "See ISPN-1123")
 public class ConcurrentJoinTest extends RehashTestBase {
 
    List<EmbeddedCacheManager> joinerManagers;

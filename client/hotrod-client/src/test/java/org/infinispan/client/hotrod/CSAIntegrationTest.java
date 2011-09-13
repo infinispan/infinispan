@@ -56,7 +56,7 @@ import static org.testng.AssertJUnit.assertNotNull;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(groups = "functional", testName = "client.hotrod.CSAIntegrationTest")
+@Test(groups = "functional", testName = "client.hotrod.CSAIntegrationTest", enabled = false, description = "See ISPN-1123")
 public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
 
    private HotRodServer hotRodServer1;

@@ -36,8 +36,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.ViewChangeListener;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -52,7 +50,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Test(groups = "functional", testName = "loaders.decorators.SingletonStoreTest")
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
+@Test(groups = "functional", testName = "loaders.decorators.SingletonStoreTest", enabled = false, description = "See ISPN-1123")
 public class SingletonStoreTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(SingletonStoreTest.class);
    private static final AtomicInteger storeCounter = new AtomicInteger(0);
