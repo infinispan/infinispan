@@ -39,21 +39,24 @@ import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
  */
 @Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreIntegrationVamTest")
 public class CloudCacheStoreIntegrationVamTest extends CloudCacheStoreIntegrationTest {
-   private EmbeddedCacheManager cm;
+
+   EmbeddedCacheManager cm;
+   StreamingMarshaller marshaller;
+
+   @BeforeClass(alwaysRun = true)
+   public void setUpClass() {
+      cm = TestCacheManagerFactory.createLocalCacheManager();
+      marshaller = extractCacheMarshaller(cm.getCache());
+   }
+
+   @AfterClass(alwaysRun = true)
+   public void tearDownClass() throws CacheLoaderException {
+      cm.stop();
+   }
 
    @Override
    protected StreamingMarshaller getMarshaller() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
-      return extractCacheMarshaller(cm.getCache());
+      return marshaller;
    }
 
-   @AfterMethod(alwaysRun = true)
-   @Override
-   public void tearDown() throws CacheLoaderException {
-      try {
-         super.tearDown();
-      } finally {
-         cm.stop();
-      }
-   }
 }

@@ -147,6 +147,11 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
          }
 
          @Override
+         public void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result, int maxEntries) throws SQLException, CacheLoaderException {
+            loadAllProcess(rs, result);
+         }
+
+         @Override
          public void loadAllKeysProcess(ResultSet rs, Set<Object> keys, Set<Object> keysToExclude) throws SQLException, CacheLoaderException {
             String keyStr = rs.getString(1);
             Object key = ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);

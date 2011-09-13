@@ -46,6 +46,7 @@ import java.io.*;
 import java.util.*;
 
 import static java.util.Collections.emptySet;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * This is a base class containing various unit tests for each and every different CacheStore implementations. If you
@@ -443,7 +444,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       Set<InternalCacheEntry> set = cs.load(2);
 
-      assert set.size() == 2;
+      assertEquals(2, set.size());
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
