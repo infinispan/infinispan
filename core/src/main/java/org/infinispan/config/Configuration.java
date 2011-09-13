@@ -1645,8 +1645,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @XmlElement
       protected RecoveryType recovery = new RecoveryType();
 
-      @ConfigurationDoc(desc = "Defines whether this is a transactional(default) cache or not.")
-      @XmlAttribute (name = "transactionalCache", required = false)
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "isTransactionalCache")
       protected boolean transactionalCache = true;
 
 
@@ -1695,6 +1694,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @XmlAttribute
       public Boolean isSyncCommitPhase() {
          return syncCommitPhase;
+      }
+
+      @XmlAttribute
+      public Boolean isAutoCommit() {
+         return autoCommit;
+      }
+
+      @XmlAttribute
+      public Boolean isTransactionalCache() {
+         return transactionalCache;
       }
 
       /**
