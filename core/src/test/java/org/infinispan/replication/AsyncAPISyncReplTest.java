@@ -58,7 +58,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !cache(0, NO_TX).getConfiguration().isTransactionalCache();
    }
 
-   private Configuration getConfig(boolean txEnabled) {
+   protected Configuration getConfig(boolean txEnabled) {
       return getDefaultClusteredConfig(sync() ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.REPL_ASYNC, txEnabled);
    }
 
@@ -79,18 +79,18 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
    }
 
    public void testAsyncMethods() throws ExecutionException, InterruptedException {
-      Cache c1 = cache(0, NO_TX);
-      Cache c2 = cache(1, NO_TX);
+      final Cache c1 = cache(0, NO_TX);
+      final Cache c2 = cache(1, NO_TX);
 
 
-      String v = "v";
+      final String v = "v";
       String v2 = "v2";
       String v3 = "v3";
       String v4 = "v4";
       String v5 = "v5";
       String v6 = "v6";
       String v_null = "v_nonexistent";
-      Key key = new Key("k", true);
+      final Key key = new Key("k", true);
 
       // put
       Future<String> f = c1.putAsync(key, v);
@@ -184,10 +184,18 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert f.isDone();
       assertOnAllCaches(key, null, c1, c2);
 
+      log.trace("Before put(k,v) " + key + ", " + v);
       key.allowSerialization();
       resetListeners();
       c1.put(key, v);
-      asyncWait(false, PutKeyValueCommand.class);
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return v.equals(c1.get(key)) && v.equals(c2.get(key));
+         }
+      });
+
+      log.trace("After put(k,v) " + key + ", " + v);
 
       f = c1.replaceAsync(key, v5);
       assert f != null;
@@ -349,8 +357,8 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
 
       tm.begin();
       c1.put(key, v);
-      asyncWait(false, PutKeyValueCommand.class);
       tm.commit();
+      asyncWait(true, PutKeyValueCommand.class);
 
       tm.begin();
       f = c1.replaceAsync(key, v5);

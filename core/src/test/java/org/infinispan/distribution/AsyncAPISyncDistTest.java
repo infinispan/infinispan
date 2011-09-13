@@ -36,17 +36,10 @@ import java.util.concurrent.TimeUnit;
 @Test(groups = "functional", testName = "distribution.AsyncAPISyncDistTest")
 public class AsyncAPISyncDistTest extends AsyncAPISyncReplTest {
 
-   @SuppressWarnings("unchecked")
-   @Override
-   protected void createCacheManagers() throws Throwable {
-      Configuration c =
-            getDefaultClusteredConfig(sync() ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, true);
-      c.setLockAcquisitionTimeout(30, TimeUnit.SECONDS);
-      List<Cache<Key, String>> l = createClusteredCaches(2, getClass().getSimpleName(), c);
-
-      // wait for any rehashing to complete
-      waitForClusterToForm();
+   protected Configuration getConfig(boolean txEnabled) {
+      return getDefaultClusteredConfig(sync() ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, txEnabled);
    }
+
 
    @Override
    protected void assertOnAllCaches(Key k, String v, Cache c1, Cache c2) {

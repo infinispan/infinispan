@@ -42,7 +42,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
- * // TODO: Document this
  *
  * @author Galder Zamarreño
  * @since 4.1
@@ -67,12 +66,12 @@ public class ClusterFileCacheStoreFunctionalTest extends MultipleCacheManagersTe
       EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), new Configuration());
       registerCacheManager(cacheManager1, cacheManager2);
 
-      Configuration config1 = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+      Configuration config1 = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       CacheLoaderManagerConfig clMngrConfig = new CacheLoaderManagerConfig();
       clMngrConfig.addCacheLoaderConfig(createCacheStoreConfig(1));
       config1.setCacheLoaderManagerConfig(clMngrConfig);
 
-      Configuration config2 = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+      Configuration config2 = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       CacheLoaderManagerConfig clMngrConfig2 = new CacheLoaderManagerConfig();
       clMngrConfig2.addCacheLoaderConfig(createCacheStoreConfig(2));
       config2.setCacheLoaderManagerConfig(clMngrConfig2);
