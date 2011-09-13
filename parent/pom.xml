@@ -1,32 +1,9 @@
-<?xml version="1.0"?>
-<!--
-  ~ JBoss, Home of Professional Open Source
-  ~ Copyright 2009 Red Hat Inc. and/or its affiliates and other
-  ~ contributors as indicated by the @author tags. All rights reserved.
-  ~ See the copyright.txt in the distribution for a full listing of
-  ~ individual contributors.
-  ~
-  ~ This is free software; you can redistribute it and/or modify it
-  ~ under the terms of the GNU Lesser General Public License as
-  ~ published by the Free Software Foundation; either version 2.1 of
-  ~ the License, or (at your option) any later version.
-  ~
-  ~ This software is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  ~ Lesser General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU Lesser General Public
-  ~ License along with this software; if not, write to the Free
-  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
-  -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-parent</artifactId>
-   <version>5.1.0-SNAPSHOT</version>
+   <version>5.1.0.ALPHA1</version>
    <name>Infinispan Common Parent</name>
    <description>Infinispan common parent POM module</description>
    <url>http://www.infinispan.org</url>
@@ -99,7 +76,7 @@
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
       <packaging>jar</packaging>
 
-      <!-- Versions for dependencies -->
+      
       <version.apacheds.jdbm>1.5.7</version.apacheds.jdbm>
       <version.arquillian>1.0.0.CR1</version.arquillian>
       <version.bdbje>4.0.92</version.bdbje>
@@ -158,13 +135,7 @@
       <version.xsom>20081112</version.xsom>
       <version.xstream>1.3.1</version.xstream>
       <version.javassist>3.12.1.GA</version.javassist>
-      <!-- 
-         The Felix Bundle plugin used has an incompatibility with Maven's Source plugin. 
-         Hence this workaround to use an older version of the Bundle plugin.  See
-
-            http://comments.gmane.org/gmane.comp.apache.felix.devel/22887
-
-         for details. -->
+      
       <version.maven.bundle>2.3.4</version.maven.bundle>
       <version.maven.source>2.1.2</version.maven.source>
    </properties>
@@ -368,7 +339,7 @@
          <scope>provided</scope>
       </dependency>
 
-      <!-- used to serialize non-serializable objects for a dummy marshaller -->
+      
       <dependency>
          <groupId>com.thoughtworks.xstream</groupId>
          <artifactId>xstream</artifactId>
@@ -398,7 +369,7 @@
       <directory>${buildDirectory}</directory>
 
       <plugins>
-         <!-- by default, compile to JDK 1.6 compatibility (individual modules and/or user can override) -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
@@ -426,7 +397,7 @@
             </configuration>
          </plugin>
 
-         <!-- ensure parallel test execution -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
@@ -468,7 +439,7 @@
                <argLine>-Xmx1024m -XX:MaxPermSize=1024m</argLine>
             </configuration>
          </plugin>
-         <!-- eclipse project file generation -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-eclipse-plugin</artifactId>
@@ -478,7 +449,7 @@
                <buildOutputDirectory>${basedir}/eclipse-output</buildOutputDirectory>
             </configuration>
          </plugin>
-         <!-- IntelliJ project file generation -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-idea-plugin</artifactId>
@@ -563,7 +534,7 @@
                <artifactId>ideauidesigner-maven-plugin</artifactId>
                <version>1.0-beta-1</version>
             </plugin>
-            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+            
             <plugin>
                <groupId>org.eclipse.m2e</groupId>
                <artifactId>lifecycle-mapping</artifactId>
@@ -585,7 +556,7 @@
                               </goals>
                            </pluginExecutionFilter>
                            <action>
-                              <ignore></ignore>
+                              <ignore />
                            </action>
                         </pluginExecution>
                         <pluginExecution>
@@ -602,7 +573,7 @@
                               </goals>
                            </pluginExecutionFilter>
                            <action>
-                              <ignore></ignore>
+                              <ignore />
                            </action>
                         </pluginExecution>
                         <pluginExecution>
@@ -616,7 +587,7 @@
                               </goals>
                            </pluginExecutionFilter>
                            <action>
-                              <ignore></ignore>
+                              <ignore />
                            </action>
                         </pluginExecution>
                         <pluginExecution>
@@ -631,7 +602,7 @@
                               </goals>
                            </pluginExecutionFilter>
                            <action>
-                              <ignore></ignore>
+                              <ignore />
                            </action>
                         </pluginExecution>
                      </pluginExecutions>
@@ -649,7 +620,7 @@
             <artifactId>maven-surefire-report-plugin</artifactId>
             <version>2.4.3-JBOSS</version>
          </plugin>
-         <!-- Findbugs report -->
+         
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>findbugs-maven-plugin</artifactId>
@@ -719,12 +690,12 @@
             <activeByDefault>true</activeByDefault>
          </activation>
          <properties>
-            <!-- By default create OSGI bundles -->
+            
             <packaging>bundle</packaging>
          </properties>
          <build>
             <plugins>
-               <!-- enforce java 1.6 and maven 2.1.0 -->
+               
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-enforcer-plugin</artifactId>
@@ -748,7 +719,7 @@
                      </execution>
                   </executions>
                </plugin>
-               <!-- Make sure we generate src jars too -->
+               
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-source-plugin</artifactId>
@@ -824,7 +795,7 @@
          </properties>
       </profile>
       <profile>
-         <!-- we are still likely compatible with the 2.9.x Lucene version: test for that -->
+         
          <id>useOlderLuceneVersion</id>
          <activation>
             <activeByDefault>false</activeByDefault>
