@@ -678,6 +678,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
          if (inStack) {
             queue.remove(e);
+            currentLIRSize++;
             e.transitionToLIRResident();
             switchBottomostLIRtoHIRAndPrune(evicted);
          } else {
@@ -752,6 +753,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                if (!seenFirstLIR) {
                   seenFirstLIR = true;
                   i.remove();
+                  currentLIRSize--;
                   next.transitionLIRResidentToHIRResident();
                   queue.addLast(next);
                } else {
