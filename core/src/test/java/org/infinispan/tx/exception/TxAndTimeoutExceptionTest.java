@@ -27,6 +27,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -52,6 +53,7 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration config = getDefaultStandaloneConfig(true);
+      config.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
       config.setUseLockStriping(false);
       config.setLockAcquisitionTimeout(1000);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
