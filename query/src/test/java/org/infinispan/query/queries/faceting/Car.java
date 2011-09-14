@@ -23,8 +23,8 @@
 
 package org.infinispan.query.queries.faceting;
 
+import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.ProvidedId;
 import org.hibernate.search.annotations.Store;
@@ -36,13 +36,13 @@ import org.hibernate.search.annotations.Store;
 @ProvidedId
 public class Car {
 
-   @Field(index = Index.UN_TOKENIZED)
+   @Field(analyze=Analyze.NO)
    private String color;
 
    @Field(store = Store.YES)
    private String make;
 
-   @Field(index = Index.UN_TOKENIZED)
+   @Field(analyze=Analyze.NO)
    private int cubicCapacity;
 
    public Car(String make, String color, int cubicCapacity) {
