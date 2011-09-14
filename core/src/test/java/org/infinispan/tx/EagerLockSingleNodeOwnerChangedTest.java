@@ -62,11 +62,11 @@ public class EagerLockSingleNodeOwnerChangedTest extends MultipleCacheManagersTe
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+      c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
       c.fluent()
             .transaction().useEagerLocking(true).eagerLockSingleNode(true)
             .clustering().hash().numOwners(3);
-      createCluster(c, true, 2);
+      createCluster(c, 2);
       waitForClusterToForm();
       ex = Executors.newSingleThreadExecutor();
       kaf = KeyAffinityServiceFactory.newKeyAffinityService(this.cache(0), ex, new RndKeyGenerator(), 100, true);
@@ -168,7 +168,7 @@ public class EagerLockSingleNodeOwnerChangedTest extends MultipleCacheManagersTe
 
    private void addNewClusterMember() {
       //now add the new cache
-      addClusterEnabledCacheManager(c, true);
+      addClusterEnabledCacheManager(c);
       waitForClusterToForm();
    }
 }

@@ -26,6 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -115,6 +116,14 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
       } catch (SystemException e) {
          throw new RuntimeException(e);
       }
+   }
+
+   protected LockManager lockManager(String cacheName) {
+      return TestingUtil.extractLockManager(cacheManager.getCache(cacheName));
+   }
+
+   protected LockManager lockManager() {
+      return TestingUtil.extractLockManager(cache);
    }
 
 

@@ -39,7 +39,7 @@ public class BatchWithoutTMTest extends AbstractBatchTest {
 
    @BeforeClass
    public void createCacheManager() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager(true);
    }
 
    @AfterClass

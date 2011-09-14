@@ -47,7 +47,7 @@ public class LazyCacheAPITest extends SingleCacheManagerTest {
       // start a single cache instance
       Configuration c = getDefaultStandaloneConfig(true);
       c.setUseLazyDeserialization(true);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       cm.defineConfiguration("lazy-cache-test", c);
       cache = cm.getCache("lazy-cache-test");
       return cm;

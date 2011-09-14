@@ -83,7 +83,7 @@ public class FailureDuringPrepareTest extends MultipleCacheManagersTest {
          tm(0).getTransaction().enlistResource(new XAResourceAdapter());
       }
 
-      assertEquals(lockManager(0).getNumberOfLocksHeld(), 1);
+      assertEquals(lockManager(0).getNumberOfLocksHeld(), 0);
       assertEquals(lockManager(1).getNumberOfLocksHeld(), 0);
       assertEquals(lockManager(2).getNumberOfLocksHeld(), 0);
 

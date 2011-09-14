@@ -72,7 +72,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
 
       assert ctx instanceof LocalTxInvocationContext;
 
-      assert ctx.getLookedUpEntries().size() == 1 : "Looked up key should now be in the transactional invocation context";
+      assert ctx.getLookedUpEntries().size() == 0 : "Looked up key should now be in the transactional invocation context";
       assert lockManager.getNumberOfLocksHeld() == 1 : "Only one lock should be held";
 
       c.put(new Key("k"), "v2");

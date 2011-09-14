@@ -44,4 +44,8 @@ public class DummyInMemoryCacheStoreFunctionalTest extends BaseCacheStoreFunctio
       return cfg;
    }
 
+   @Override
+   public void testPreloadAndExpiry() {
+      super.testPreloadAndExpiry();
+   }
 }

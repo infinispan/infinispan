@@ -44,16 +44,16 @@ public class InvalidationExceptionTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration invalidAsync = getDefaultClusteredConfig(
-            Configuration.CacheMode.INVALIDATION_ASYNC, true);
+            Configuration.CacheMode.INVALIDATION_ASYNC, false);
       createClusteredCaches(2, "invalidAsync", invalidAsync);
 
       Configuration replQueue = getDefaultClusteredConfig(
-            Configuration.CacheMode.INVALIDATION_ASYNC, true);
+            Configuration.CacheMode.INVALIDATION_ASYNC, false);
       replQueue.setUseReplQueue(true);
       defineConfigurationOnAllManagers("invalidReplQueueCache", replQueue);
 
       Configuration asyncMarshall = getDefaultClusteredConfig(
-            Configuration.CacheMode.INVALIDATION_ASYNC, true);
+            Configuration.CacheMode.INVALIDATION_ASYNC, false);
       asyncMarshall.setUseAsyncMarshalling(true);
       defineConfigurationOnAllManagers("invalidAsyncMarshallCache", asyncMarshall);
    }

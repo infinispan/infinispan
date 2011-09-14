@@ -58,7 +58,7 @@ public class SimpleFacetingTest extends SingleCacheManagerTest {
          .indexing()
          .indexLocalOnly(false)
          .addProperty("hibernate.search.default.directory_provider", "ram");
-      return TestCacheManagerFactory.createCacheManager(c, true);
+      return TestCacheManagerFactory.createCacheManager(c);
    }
    
    @BeforeClass

@@ -55,6 +55,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.util.concurrent.locks.LockManager;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -79,6 +80,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    boolean isL1CacheEnabled, needReliableReturnValues;
    EntryFactory entryFactory;
    L1Manager l1Manager;
+   LockManager lockManager;
 
    static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
       public List<Address> generateRecipients() {
@@ -92,12 +94,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Inject
    public void injectDependencies(DistributionManager distributionManager, CommandsFactory cf,
-                                  DataContainer dataContainer, EntryFactory entryFactory, L1Manager l1Manager) {
+                                  DataContainer dataContainer, EntryFactory entryFactory, L1Manager l1Manager, LockManager lockManager) {
       this.dm = distributionManager;
       this.cf = cf;
       this.dataContainer = dataContainer;
       this.entryFactory = entryFactory;
       this.l1Manager = l1Manager;
+      this.lockManager = lockManager;
    }
 
    @Start
@@ -187,7 +190,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                if (trace) log.tracef("Caching remotely retrieved entry for key %s in L1", key);
                long lifespan = ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(), configuration.getL1Lifespan());
                PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1, ctx.getFlags());
-               entryFactory.wrapEntryForWriting(ctx, key, true, false, ctx.hasLockedKey(key), false, false);
+               lockAndWrap(ctx, key, ice);
                invokeNextInterceptor(ctx, put);
             } else {
                CacheEntry ce = ctx.lookupEntry(key);
@@ -196,7 +199,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                      ce.setValue(ice.getValue());
                   } else {
                      if (isWrite)
-                        entryFactory.wrapEntryForWriting(ctx, ice, true, false, ctx.hasLockedKey(key), false, false);
+                        lockAndWrap(ctx, key, ice);
                      else
                         ctx.putLookedUpEntry(key, ice);
                   }
@@ -208,6 +211,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          return ice.getValue();
       }
       return null;
+   }
+
+   private void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice) throws InterruptedException {
+      lockManager.acquireLock(ctx, key);
+      entryFactory.wrapEntryForPut(ctx, key, ice, false);
    }
 
    /**

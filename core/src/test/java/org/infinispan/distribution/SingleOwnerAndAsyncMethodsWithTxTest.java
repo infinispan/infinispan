@@ -25,6 +25,7 @@ package org.infinispan.distribution;
 
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
@@ -59,6 +60,7 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
       tx = true;
       l1CacheEnabled = true;
       lockTimeout = 5;
+      lockingMode = LockingMode.PESSIMISTIC;
    }
 
    public void testAsyncGetsWithinTx(Method m) throws Exception {

@@ -146,7 +146,7 @@ public abstract class CacheTestSupport {
       cfg.setL1CacheEnabled(false);
       cfg.setWriteSkewCheck(false);
       cfg.setInvocationBatchingEnabled(true);
-      return TestCacheManagerFactory.createCacheManager(globalConfiguration, cfg, true);
+      return TestCacheManagerFactory.createCacheManager(globalConfiguration, cfg);
    }
    
    public static void initializeDirectory(Directory directory) throws IOException {

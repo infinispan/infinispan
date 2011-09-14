@@ -30,6 +30,7 @@ import org.testng.annotations.Test;
 public class AsyncAPIAsyncReplTest extends AsyncAPISyncReplTest {
 
    ReplListener rl;
+   ReplListener rlNoTx;
 
    public AsyncAPIAsyncReplTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -38,7 +39,8 @@ public class AsyncAPIAsyncReplTest extends AsyncAPISyncReplTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       super.createCacheManagers();
-      rl = new ReplListener(c2, true);
+      rl = new ReplListener(cache(1), true);
+      rlNoTx = new ReplListener(cache(1, "noTx"), true);
    }
 
    @Override
@@ -58,14 +60,16 @@ public class AsyncAPIAsyncReplTest extends AsyncAPISyncReplTest {
             rl.expectAnyWithTx();
          else
             rl.expectWithTx(cmds);
+         rl.waitForRpc();
       } else {
          if (cmds == null || cmds.length == 0)
-            rl.expectAny();
+            rlNoTx.expectAny();
          else
-            rl.expect(cmds);
+            rlNoTx.expect(cmds);
+         rlNoTx.waitForRpc();
       }
 
 
-      rl.waitForRpc();
+
    }
 }

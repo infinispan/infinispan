@@ -59,7 +59,7 @@ public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
       Configuration c = new Configuration();
       // these 2 need to be set to use the AtomicMapCache
       c.setInvocationBatchingEnabled(true);
-      cm = TestCacheManagerFactory.createCacheManager(c, true);
+      cm = TestCacheManagerFactory.createCacheManager(c);
       cache = cm.getCache();
       tm = TestingUtil.getTransactionManager(cache);
    }

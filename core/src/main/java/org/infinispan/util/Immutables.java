@@ -505,6 +505,11 @@ public class Immutables {
          throw new UnsupportedOperationException();
       }
 
+      @Override
+      public boolean undelete(boolean doUndelete) {
+         throw new UnsupportedOperationException();
+      }
+
       public void reincarnate() {
          throw new UnsupportedOperationException();
       }

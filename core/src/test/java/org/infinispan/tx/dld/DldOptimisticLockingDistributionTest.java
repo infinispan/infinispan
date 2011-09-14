@@ -40,15 +40,15 @@ import java.util.concurrent.Executor;
  * @since 4.2
  */
 @Test(groups = "functional", testName = "tx.dld.DldLazyLockingDistributionTest")
-public class DldLazyLockingDistributionTest extends BaseDldLazyLockingTest {
+public class DldOptimisticLockingDistributionTest extends BaseDldOptimisticLockingTest {
 
    private KeyAffinityService cas;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration config = updatedConfig();
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(config, true);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(config, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(config);
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(config);
       registerCacheManager(cm1);
       registerCacheManager(cm2);
       waitForClusterToForm();
@@ -59,8 +59,8 @@ public class DldLazyLockingDistributionTest extends BaseDldLazyLockingTest {
          }
       }, new RndKeyGenerator(), 2, true);
 
-      rpcManager0 = DldLazyLockingReplicationTest.replaceRpcManager(cache(0));
-      rpcManager1 = DldLazyLockingReplicationTest.replaceRpcManager(cache(1));
+      rpcManager0 = DldOptimisticLockingReplicationTest.replaceRpcManager(cache(0));
+      rpcManager1 = DldOptimisticLockingReplicationTest.replaceRpcManager(cache(1));
    }
 
    protected Configuration updatedConfig() {

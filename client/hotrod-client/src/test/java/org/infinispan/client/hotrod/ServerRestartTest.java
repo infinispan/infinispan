@@ -50,7 +50,7 @@ public class ServerRestartTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       cacheManager.getCache();
 
 

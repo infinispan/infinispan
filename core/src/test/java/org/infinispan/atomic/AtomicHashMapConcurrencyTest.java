@@ -29,6 +29,9 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.ValueFuture;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -64,7 +67,11 @@ public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
       c.setLockAcquisitionTimeout(500);
       // these 2 need to be set to use the AtomicMapCache
       c.setInvocationBatchingEnabled(true);
-      cm = TestCacheManagerFactory.createCacheManager(c, true);
+      c.fluent()
+            .transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
+            .lockingMode(LockingMode.PESSIMISTIC);
+
+      cm = TestCacheManagerFactory.createCacheManager(c);
       cache = cm.getCache();
       tm = TestingUtil.getTransactionManager(cache);
    }
@@ -81,7 +88,7 @@ public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
    public void testConcurrentCreate() throws Exception {
       tm.begin();
       AtomicMapLookup.getAtomicMap(cache, KEY);
-      
+
       final AtomicBoolean gotTimeoutException = new AtomicBoolean();
       fork(new Runnable() {
          @Override

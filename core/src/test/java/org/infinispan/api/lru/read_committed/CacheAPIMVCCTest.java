@@ -29,6 +29,9 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
+
 @Test(groups = "functional", testName = "api.lru.read_committed.CacheAPIMVCCTest")
 public class CacheAPIMVCCTest extends CacheAPITest {
    @Override
@@ -42,6 +45,11 @@ public class CacheAPIMVCCTest extends CacheAPITest {
       cfg.setEvictionWakeUpInterval(60000);
       cfg.setEvictionMaxEntries(1000);
       return cfg;
+   }
+
+   @Override
+   public void testConcurrentMapMethods() {
+      super.testConcurrentMapMethods();    // TODO: Customise this generated block
    }
 
    public void testRollbackAfterClear() throws Exception {

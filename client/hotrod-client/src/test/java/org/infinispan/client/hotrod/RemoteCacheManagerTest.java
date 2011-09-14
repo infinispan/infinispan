@@ -22,7 +22,6 @@
  */
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -47,7 +46,7 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
       port = hotrodServer.getPort();
       return cacheManager;

@@ -30,8 +30,13 @@ import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.*;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.locking.AutoCommitInterceptor;
+import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
+import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
+import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheStoreConfig;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.Util;
 
 import java.util.List;
@@ -40,6 +45,7 @@ import java.util.List;
  * Factory class that builds an interceptor chain based on cache configuration.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 @DefaultFactoryFor(classes = InterceptorChain.class)
@@ -74,7 +80,14 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       boolean invocationBatching = configuration.isInvocationBatchingEnabled();
       // load the icInterceptor first
 
-      CommandInterceptor first = invocationBatching ? createInterceptor(BatchingInterceptor.class) : createInterceptor(InvocationContextInterceptor.class);
+      boolean autoCommit = configuration.isTransactionAutoCommit() && configuration.isTransactionalCache();
+
+      CommandInterceptor first;
+      if (invocationBatching) {
+         first = createInterceptor(BatchingInterceptor.class);
+      } else {
+         first = autoCommit ? createInterceptor(AutoCommitInterceptor.class) : createInterceptor(InvocationContextInterceptor.class);
+      }
 
       InterceptorChain interceptorChain = new InterceptorChain(first);
 
@@ -87,30 +100,46 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(IsMarshallableInterceptor.class));
 
       // NOW add the ICI if we are using batching!
-      if (invocationBatching)
+      if (invocationBatching) {
+         if (autoCommit)
+            interceptorChain.appendInterceptor(createInterceptor(AutoCommitInterceptor.class));
          interceptorChain.appendInterceptor(createInterceptor(InvocationContextInterceptor.class));
+      } else if (autoCommit) {
+         interceptorChain.appendInterceptor(createInterceptor(InvocationContextInterceptor.class));
+      }
 
       // load the cache management interceptor next
       if (configuration.isExposeJmxStatistics())
          interceptorChain.appendInterceptor(createInterceptor(CacheMgmtInterceptor.class));
 
       // load the tx interceptor
-      if (configuration.getCacheMode().isDistributed())
-         interceptorChain.appendInterceptor(createInterceptor(DistTxInterceptor.class));
-      else
-         interceptorChain.appendInterceptor(createInterceptor(TxInterceptor.class));
-
-      if (configuration.isUseEagerLocking())
-         interceptorChain.appendInterceptor(createInterceptor(ImplicitEagerLockingInterceptor.class));
+      if (configuration.isTransactionalCache()) {
+         if (configuration.getCacheMode().isDistributed())
+            interceptorChain.appendInterceptor(createInterceptor(DistTxInterceptor.class));
+         else
+            interceptorChain.appendInterceptor(createInterceptor(TxInterceptor.class));
+      }
 
       if (isUsingMarshalledValues(configuration))
          interceptorChain.appendInterceptor(createInterceptor(MarshalledValueInterceptor.class));
 
       interceptorChain.appendInterceptor(createInterceptor(NotificationInterceptor.class));
 
-      if (configuration.isEnableDeadlockDetection()) {
-         interceptorChain.appendInterceptor(createInterceptor(DeadlockDetectingInterceptor.class));
+      if (configuration.isUseEagerLocking()) {
+         configuration.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
       }
+
+      if (configuration.isTransactionalCache()) {
+         if (configuration.getTransactionLockingMode() == LockingMode.PESSIMISTIC) {
+            interceptorChain.appendInterceptor(createInterceptor(PessimisticLockingInterceptor.class));
+         } else {
+            interceptorChain.appendInterceptor(createInterceptor(OptimisticLockingInterceptor.class));
+         }
+      } else {
+         interceptorChain.appendInterceptor(createInterceptor(NonTransactionalLockingInterceptor.class));
+      }
+
+      interceptorChain.appendInterceptor(createInterceptor(EntryWrappingInterceptor.class));
 
       if (configuration.isUsingCacheLoaders()) {
          if (configuration.getCacheLoaderManagerConfig().isPassivation()) {
@@ -130,11 +159,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          }
       }
 
-
-      if (configuration.getCacheMode().isDistributed())
-         interceptorChain.appendInterceptor(createInterceptor(DistLockingInterceptor.class));
-      else
-         interceptorChain.appendInterceptor(createInterceptor(LockingInterceptor.class));
+      if (configuration.isEnableDeadlockDetection()) {
+         interceptorChain.appendInterceptor(createInterceptor(DeadlockDetectingInterceptor.class));
+      }
 
       switch (configuration.getCacheMode()) {
          case REPL_SYNC:

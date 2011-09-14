@@ -44,7 +44,7 @@ public class ForceReturnValueTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       cache = cacheManager.getCache();
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
 

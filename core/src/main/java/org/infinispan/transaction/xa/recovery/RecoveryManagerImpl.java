@@ -28,6 +28,8 @@ import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -83,7 +85,6 @@ public class RecoveryManagerImpl implements RecoveryManager {
    private TransactionCoordinator txCoordinator;
 
    private TransactionFactory txFactory;
-
    /**
     * we only broadcast the first time when node is started, then we just return the local cached prepared
     * transactions.
@@ -318,6 +319,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    private String completeTransaction(LocalTransaction localTx, boolean commit, Xid xid) {
       if (commit) {
          try {
+            localTx.clearLookedUpEntries();
             txCoordinator.prepare(localTx);
             txCoordinator.commit(localTx, false);
          } catch (XAException e) {

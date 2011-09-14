@@ -43,7 +43,7 @@ public class ConfigurationCheckTest extends SingleCacheManagerTest {
       Configuration configuration = new Configuration();
       configuration.setEvictionStrategy(EvictionStrategy.FIFO);
       configuration.setEvictionMaxEntries(10);
-      return TestCacheManagerFactory.createCacheManager(configuration, false);
+      return TestCacheManagerFactory.createCacheManager(configuration);
    }
    
    @Test(expectedExceptions = IllegalArgumentException.class)

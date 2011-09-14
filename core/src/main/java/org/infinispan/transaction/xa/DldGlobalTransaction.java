@@ -107,14 +107,6 @@ public class DldGlobalTransaction extends GlobalTransaction {
             "} " + super.toString();
    }
 
-   public boolean isMarkedForRollback() {
-      return isMarkedForRollback;
-   }
-
-   public void setMarkedForRollback(boolean markedForRollback) {
-      isMarkedForRollback = markedForRollback;
-   }
-
    /**
     * Returns the key this transaction intends to lock. 
     */
@@ -122,18 +114,13 @@ public class DldGlobalTransaction extends GlobalTransaction {
       return localLockIntention;
    }
 
-   public void setLockIntention(Object lockIntention) {                                                                                                       
+   public void setLockIntention(Object lockIntention) {
+      if (trace) log.tracef("Setting local lock intention to %s", lockIntention);
       this.localLockIntention = lockIntention;
    }
 
    public boolean wouldLose(DldGlobalTransaction other) {
       return this.coinToss < other.coinToss;
-   }
-
-   public boolean isAcquiringRemoteLock(Object key, Address address) {
-      boolean contains = remoteLockIntention.contains(key);
-      if (trace) log.tracef("Intention check: does %s contain %s? %b", remoteLockIntention, key, contains);
-      return contains; //this works for replication
    }
 
    public void setRemoteLockIntention(Collection<Object> remoteLockIntention) {

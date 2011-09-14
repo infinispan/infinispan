@@ -48,7 +48,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
    @Override
    protected void createCacheManagers() throws Throwable {
       configuration = configure();
-      createCluster(configuration, false, 2);
+      createCluster(configuration, 2);
       waitForClusterToForm();
 
       //check that a default cache has been created
@@ -130,7 +130,8 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       assert inDoubtTransactions.contains(new SerializableXid(t1_2.getXid()));
       assert inDoubtTransactions.contains(new SerializableXid(t1_3.getXid()));
 
-      addClusterEnabledCacheManager(configuration, false);
+      configuration.fluent().transaction().transactionalCache(false);
+      addClusterEnabledCacheManager(configuration);
       defineRecoveryCache(1);
       TestingUtil.blockUntilViewsReceived(60000, cache(0), cache(1));
       DummyTransaction t1_4 = beginAndSuspendTx(cache(1));

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,16 +20,19 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.api.mvcc.read_committed;
+package org.infinispan.api.mvcc.repeatable_read;
 
 import org.infinispan.api.CacheAPITest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "api.mvcc.read_committed.CacheAPIMVCCTest")
-public class CacheAPIMVCCTest extends CacheAPITest {
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
+
+@Test(groups = "functional", testName = "api.mvcc.repeatable_read.CacheAPIOptimisticTest")
+public class CacheAPIOptimisticTest extends CacheAPITest {
    @Override
    protected IsolationLevel getIsolationLevel() {
-      return IsolationLevel.READ_COMMITTED;
+      return IsolationLevel.REPEATABLE_READ;
    }
 }

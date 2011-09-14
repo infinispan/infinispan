@@ -51,7 +51,7 @@ public interface TxInvocationContext extends InvocationContext {
    Set<Object> getAffectedKeys();
 
    /**
-    * Returns the id of the transaction assoctiated  with the current call.
+    * Returns the id of the transaction associated  with the current call.
     */
    GlobalTransaction getGlobalTransaction();
 

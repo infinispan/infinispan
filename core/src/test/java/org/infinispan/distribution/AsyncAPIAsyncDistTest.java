@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 public class AsyncAPIAsyncDistTest extends AsyncAPISyncDistTest {
 
    ReplListener rl;
+   ReplListener rlNoTx;
 
    public AsyncAPIAsyncDistTest() {
       cleanup = AbstractCacheTest.CleanupPhase.AFTER_METHOD;
@@ -41,7 +42,8 @@ public class AsyncAPIAsyncDistTest extends AsyncAPISyncDistTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       super.createCacheManagers();
-      rl = new ReplListener(c2, true);
+      rl = new ReplListener(cache(1), true);
+      rlNoTx = new ReplListener(cache(1, "noTx"), true);
    }
 
    @Override
@@ -61,14 +63,15 @@ public class AsyncAPIAsyncDistTest extends AsyncAPISyncDistTest {
             rl.expectAnyWithTx();
          else
             rl.expectWithTx(cmds);
+         rl.waitForRpc(240, TimeUnit.SECONDS);
       } else {
          if (cmds == null || cmds.length == 0)
-            rl.expectAny();
+            rlNoTx.expectAny();
          else
-            rl.expect(cmds);
+            rlNoTx.expect(cmds);
+         rlNoTx.waitForRpc(240, TimeUnit.SECONDS);
       }
 
 
-      rl.waitForRpc(240, TimeUnit.SECONDS);
    }
 }

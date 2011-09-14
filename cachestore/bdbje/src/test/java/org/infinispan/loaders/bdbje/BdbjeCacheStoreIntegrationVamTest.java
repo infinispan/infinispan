@@ -47,7 +47,7 @@ public class BdbjeCacheStoreIntegrationVamTest extends BdbjeCacheStoreIntegratio
 
    @BeforeClass(alwaysRun = true)
    public void setUpClass() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager(false);
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 

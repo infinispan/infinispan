@@ -25,6 +25,7 @@ package org.infinispan.tx;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -42,7 +43,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Mircea Markus
  */
-@Test(groups = "functional", testName = "tx.recovery.ParticipantFailsAfterPrepareTest")
+@Test(groups = "functional", testName = "tx.ParticipantFailsAfterPrepareTest")
 public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest {
 
    @Override
@@ -53,7 +54,7 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
          .transactionManagerLookupClass(DummyTransactionManagerLookup.class);
       configuration.fluent().clustering().hash().rehashEnabled(false);
       configuration.fluent().clustering().hash().numOwners(3);
-      createCluster(configuration, false, 4);
+      createCluster(configuration, 4);
       waitForClusterToForm();
    }
 
@@ -73,10 +74,11 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
       assert indexToKill > 0;
       System.out.println("indexToKill = " + indexToKill);
 
+      Address toKill = address(indexToKill);
       TestingUtil.killCacheManagers(manager(indexToKill));
 
       List<Cache> participants;
-      participants = getParticipants(indexToKill);
+      participants = getAliveParticipants(indexToKill);
 
       TestingUtil.blockUntilViewsReceived(60000, false, participants);
 
@@ -87,11 +89,12 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
       }
       assert noLocks;
 
-      log.trace("mmmm: About to commit");
+      log.trace("About to commit. Killed node is: " + toKill);
 
       try {
          commitTransaction(dummyTransaction);
       } catch (Throwable t) {
+         t.printStackTrace();
          assert false; //this should not have failed
       } finally {
          //now check weather all caches have the same content and no locks acquired
@@ -102,7 +105,7 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
       }
    }
 
-   private List<Cache> getParticipants(int indexToKill) {
+   private List<Cache> getAliveParticipants(int indexToKill) {
       List<Cache> participants = new ArrayList<Cache>();
       for (int i = 0; i < 4; i++) {
          if (i == indexToKill) continue;

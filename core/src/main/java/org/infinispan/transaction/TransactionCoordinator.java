@@ -26,6 +26,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -174,9 +175,5 @@ public class TransactionCoordinator {
          rollback(localTransaction);
          throw new XAException(XAException.XA_RBROLLBACK);
       }
-   }
-
-   private List<Address> getClusterMembers() {
-      return rpcManager != null ? rpcManager.getTransport().getMembers() : Collections.<Address>emptyList();
    }
 }

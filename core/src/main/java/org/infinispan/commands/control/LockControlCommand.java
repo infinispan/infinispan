@@ -156,6 +156,10 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       if (flags != null && !flags.isEmpty()) {
          ctx = new TransactionalInvocationContextFlagsOverride(ctxt, flags);
       }
+      if (log.isTraceEnabled()) log.tracef("Global transaction received is %s (%s)", globalTx,
+                                           System.identityHashCode(globalTx));
+      if (log.isTraceEnabled()) log.tracef("Lock owner is %s(%s)", ctx.getLockOwner(),
+                                           System.identityHashCode(ctx.getLockOwner()));
       return invoker.invoke(ctx, this);
    }
 

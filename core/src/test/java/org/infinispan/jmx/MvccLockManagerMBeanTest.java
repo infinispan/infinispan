@@ -28,6 +28,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
@@ -64,6 +66,8 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
             .locking()
                .concurrencyLevel(CONCURRENCY_LEVEL)
                .useLockStriping(true)
+            .transaction()
+               .transactionManagerLookup(new DummyTransactionManagerLookup())
             .build();
 
       cacheManager.defineConfiguration("test", configuration);
@@ -79,21 +83,22 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
    }
 
    public void testNumberOfLocksHeld() throws Exception {
-      TransactionManager tm = TestingUtil.extractComponent(cache, TransactionManager.class);
+      DummyTransactionManager tm = (DummyTransactionManager) TestingUtil.extractComponent(cache, TransactionManager.class);
       tm.begin();
       cache.put("key", "value");
+      tm.getTransaction().runPrepare();
       assertAttributeValue("NumberOfLocksHeld", 1);
-      cache.put("key2", "value2");
-      assertAttributeValue("NumberOfLocksHeld", 2);
-      tm.commit();
+      tm.getTransaction().runCommitTx();
       assertAttributeValue("NumberOfLocksHeld", 0);
    }
 
    public void testNumberOfLocksAvailable() throws Exception {
-      TransactionManager tm = TestingUtil.extractComponent(cache, TransactionManager.class);
+      DummyTransactionManager tm = (DummyTransactionManager) TestingUtil.extractComponent(cache, TransactionManager.class);
       int initialAvailable = getAttrValue("NumberOfLocksAvailable");
       tm.begin();
       cache.put("key", "value");
+      tm.getTransaction().runPrepare();
+
       assertAttributeValue("NumberOfLocksHeld", 1);
       assertAttributeValue("NumberOfLocksAvailable", initialAvailable - 1);
       tm.rollback();

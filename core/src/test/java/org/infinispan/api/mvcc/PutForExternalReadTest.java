@@ -108,40 +108,6 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       return null;
    }
 
-   public void testAsyncForce() throws Exception {
-      Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
-
-      Transport mockTransport = createNiceMock(Transport.class);
-      RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
-      Transport originalTransport = TestingUtil.extractComponent(cache1, Transport.class);
-      try {
-
-         Address mockAddress1 = createNiceMock(Address.class);
-         Address mockAddress2 = createNiceMock(Address.class);
-
-         List<Address> memberList = new ArrayList<Address>(2);
-         memberList.add(mockAddress1);
-         memberList.add(mockAddress2);
-
-         expect(mockTransport.getMembers()).andReturn(memberList).anyTimes();
-         rpcManager.setTransport(mockTransport);
-         // specify what we expectWithTx called on the mock Rpc Manager.  For params we don't care about, just use ANYTHING.
-         // setting the mock object to expectWithTx the "sync" param to be false.
-         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRpcCommand) anyObject(),
-                                             eq(ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING), anyLong(), anyBoolean(), (ResponseFilter) isNull(), anyBoolean())).andReturn(null);
-
-         replay(mockAddress1, mockAddress2, mockTransport);
-
-         // now try a simple replication.  Since the RpcManager is a mock object it will not actually replicate anything.
-         cache1.putForExternalRead(key, value);
-         verify(mockTransport);
-
-      } finally {
-         if (rpcManager != null) rpcManager.setTransport(originalTransport);
-      }
-   }
-
    public void testTxSuspension() throws Exception {
       final Cache cache1 = cache(0, "replSync");
       final Cache cache2 = cache(1, "replSync");

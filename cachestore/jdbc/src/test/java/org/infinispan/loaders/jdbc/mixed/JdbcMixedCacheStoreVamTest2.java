@@ -47,7 +47,7 @@ public class JdbcMixedCacheStoreVamTest2 extends JdbcMixedCacheStoreTest2 {
 
    @BeforeClass(alwaysRun = true)
    public void setUpClass() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager(false);
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 

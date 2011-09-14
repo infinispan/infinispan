@@ -24,7 +24,7 @@
 package org.infinispan.tx.synchronisation;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.tx.dld.DldLazyLockingReplicationTest;
+import org.infinispan.tx.dld.DldOptimisticLockingReplicationTest;
 import org.testng.annotations.Test;
 
 /**
@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
  * @since 5.0
  */
 @Test (groups = "functional", testName = "tx.synchronization.DldLazyLockingReplicationWithSyncTest")
-public class DldLazyLockingReplicationWithSyncTest extends DldLazyLockingReplicationTest {
+public class DldLazyLockingReplicationWithSyncTest extends DldOptimisticLockingReplicationTest {
 
    @Override
    protected Configuration createConfiguration() {

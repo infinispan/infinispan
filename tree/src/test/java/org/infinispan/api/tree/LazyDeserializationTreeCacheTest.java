@@ -47,7 +47,7 @@ public class LazyDeserializationTreeCacheTest extends SingleCacheManagerTest {
       Configuration c = getDefaultStandaloneConfig(true);
       c.setInvocationBatchingEnabled(true);
       c.setUseLazyDeserialization(true);
-      return TestCacheManagerFactory.createCacheManager(c, true);
+      return TestCacheManagerFactory.createCacheManager(c);
    }
 
    public void testStartTreeCache() {

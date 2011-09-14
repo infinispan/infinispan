@@ -88,12 +88,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
       Configuration config = new Configuration();
       //the recovery cache should not participate in main cache's transactions, especially because removals
       // from this cache are executed in the context of a finalised transaction and cause issues.
-      config.fluent().transaction().transactionManagerLookup(new TransactionManagerLookup() {
-         @Override
-         public TransactionManager getTransactionManager() throws Exception {
-            return null;
-         }
-      });
+      config.fluent().transaction().transactionalCache(false);
       config.fluent().clustering().mode(Configuration.CacheMode.LOCAL);
       config.fluent().expiration().lifespan(DEFAULT_EXPIRY);
       config.fluent().recovery().disable();
@@ -103,11 +98,9 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
    private RecoveryManager buildRecoveryManager(String cacheName, String recoveryCacheName, EmbeddedCacheManager cm, boolean isDefault) {
       if (log.isTraceEnabled()) log.tracef("About to obtain a reference to the recovery cache: %s", recoveryCacheName);
       Cache recoveryCache = cm.getCache(recoveryCacheName);
-      String txLookup = recoveryCache.getConfiguration().getTransactionManagerLookupClass();
-      if (!isDefault && txLookup.equals(configuration.getTransactionManagerLookupClass())) {
+      if (recoveryCache.getConfiguration().isTransactionalCache()) {
          //see comment in getDefaultRecoveryCacheConfig
-         throw new ConfigurationException("Same transaction manager lookup(" + txLookup +" used by both recovery cache ("
-                                                + recoveryCacheName +") and main cache(" + cacheName + "). This is not allowed!");
+         throw new ConfigurationException("The recovery cache shouldn't be transactional.");
       }
       if (log.isTraceEnabled()) log.tracef("Obtained a reference to the recovery cache: %s", recoveryCacheName);
       return new RecoveryManagerImpl(recoveryCache,  cacheName);

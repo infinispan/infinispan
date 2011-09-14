@@ -37,7 +37,7 @@ import static junit.framework.Assert.assertEquals;
 public class ServerShutdownTest {
 
    public void testServerShutdownWithConnectedClient() {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       HotRodServer hotrodServer = TestHelper.startHotRodServer(cacheManager);
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager("localhost", hotrodServer.getPort());
       RemoteCache remoteCache = remoteCacheManager.getCache();
@@ -51,7 +51,7 @@ public class ServerShutdownTest {
    }
 
    public void testServerShutdownWithoutConnectedClient() {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       HotRodServer hotrodServer = TestHelper.startHotRodServer(cacheManager);
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager("localhost", hotrodServer.getPort());
       RemoteCache remoteCache = remoteCacheManager.getCache();

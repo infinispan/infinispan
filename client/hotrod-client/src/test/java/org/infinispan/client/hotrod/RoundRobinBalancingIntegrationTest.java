@@ -71,9 +71,9 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      c1 = TestCacheManagerFactory.createLocalCacheManager().getCache();
-      c2 = TestCacheManagerFactory.createLocalCacheManager().getCache();
-      c3 = TestCacheManagerFactory.createLocalCacheManager().getCache();
+      c1 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
+      c2 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
+      c3 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
       registerCacheManager(c1.getCacheManager(), c2.getCacheManager(), c3.getCacheManager());
 
       hotRodServer1 = TestHelper.startHotRodServer((EmbeddedCacheManager) c1.getCacheManager());
@@ -124,7 +124,7 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
 
    @Test(dependsOnMethods = "testRoundRobinLoadBalancing")
    public void testAddNewHotrodServer() {
-      c4 = TestCacheManagerFactory.createLocalCacheManager().getCache();
+      c4 = TestCacheManagerFactory.createLocalCacheManager(false).getCache();
       hotRodServer4 = TestHelper.startHotRodServer((EmbeddedCacheManager) c4.getCacheManager());
       registerCacheManager(c4.getCacheManager());
 

@@ -69,18 +69,6 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
       assert CACHE_SIZE >= cache.size() : "cache size too big: " + cache.size();
    }
    
-   public void testEvictionDuringBatchOperations() throws Exception {
-      AdvancedCache<Object,Object> advancedCache = cache.getAdvancedCache();
-      for (int i = 0; i < 512; i++) {
-         advancedCache.startBatch();
-         cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MINUTES);
-         advancedCache.endBatch(true);
-      }
-      Thread.sleep(1000); // sleep long enough to allow the thread to wake-up
-      assert 0 < cache.size() : "no data in cache! all state lost? ";
-      assert CACHE_SIZE >= cache.size() : "cache size too big: " + cache.size();
-   }
-
    public void testSimpleExpirationMaxIdle() throws Exception {
 
       for (int i = 0; i < 512; i++) {
@@ -153,7 +141,7 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
    }
    
    @Listener
-   public class EvictionListener {
+   public static class EvictionListener {
       
       @CacheEntriesEvicted
       public void nodeEvicted(CacheEntriesEvictedEvent e){

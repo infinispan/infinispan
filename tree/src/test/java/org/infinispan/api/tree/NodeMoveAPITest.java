@@ -71,7 +71,7 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
    DataContainer dc;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       Configuration c = new Configuration();
       c.setFetchInMemoryState(false);
       c.setInvocationBatchingEnabled(true);

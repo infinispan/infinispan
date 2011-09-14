@@ -38,7 +38,7 @@ import java.util.concurrent.Executor;
  * @since 4.2
  */
 @Test (groups = "functional", testName = "tx.dld.DldEagerLockingDistributedTest")
-public class DldEagerLockingDistributedTest extends BaseDldEagerLockingTest {
+public class DldPessimisticLockingDistributedTest extends BaseDldPessimisticLockingTest {
 
    private KeyAffinityService cas;
    private Object k0;
@@ -48,8 +48,8 @@ public class DldEagerLockingDistributedTest extends BaseDldEagerLockingTest {
    protected void createCacheManagers() throws Throwable {
       Configuration config = createConfiguration();
 
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(config, true);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(config, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(config);
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(config);
       registerCacheManager(cm1);
       registerCacheManager(cm2);
       waitForClusterToForm();

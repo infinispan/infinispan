@@ -25,17 +25,19 @@ package org.infinispan.factories;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.container.EntryFactory;
+import org.infinispan.container.EntryFactoryImpl;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionLog;
-import org.infinispan.container.EntryFactory;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 
 import static org.infinispan.util.Util.getInstance;
@@ -50,7 +52,7 @@ import static org.infinispan.util.Util.loadClass;
 @DefaultFactoryFor(classes = {CacheNotifier.class, EntryFactory.class, CommandsFactory.class,
         CacheLoaderManager.class, InvocationContextContainer.class, PassivationManager.class,
         BatchContainer.class, TransactionLog.class, EvictionManager.class, InvocationContextContainer.class,
-        TransactionCoordinator.class, RecoveryAdminOperations.class})
+        TransactionCoordinator.class, RecoveryAdminOperations.class, ClusteringDependentLogic.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -58,9 +60,17 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
    public <T> T construct(Class<T> componentType) {
       if (componentType.isInterface()) {
          Class componentImpl;
-         if (componentType.equals(StreamingMarshaller.class)) {
+         if (componentType.equals(ClusteringDependentLogic.class)) {
+            if (configuration.getCacheMode().isReplicated() || !configuration.getCacheMode().isClustered() || configuration.getCacheMode().isInvalidation()) {
+               return componentType.cast(new ClusteringDependentLogic.ReplicationLogic());
+            } else {
+               return componentType.cast(new ClusteringDependentLogic.DistributionLogic());
+            }
+         } else if (componentType.equals(StreamingMarshaller.class)) {
             VersionAwareMarshaller versionAwareMarshaller = getInstance(VersionAwareMarshaller.class);
             return componentType.cast(versionAwareMarshaller);
+         } else if (componentType.equals(EntryFactory.class)) {
+            return componentType.cast(getInstance(EntryFactoryImpl.class));
          } else {
             // add an "Impl" to the end of the class name and try again
             componentImpl = loadClass(componentType.getName() + "Impl", configuration.getClassLoader());

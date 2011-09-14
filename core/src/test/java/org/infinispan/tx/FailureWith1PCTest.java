@@ -40,11 +40,13 @@ import static org.testng.Assert.assertNull;
 @Test (groups = "functional", testName = "tx.FailureWith1PCTest")
 public class FailureWith1PCTest extends MultipleCacheManagersTest {
 
+   boolean fail = true;
+
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
       c.fluent().hash().numOwners(3);
-      createCluster(c, true, 3);
+      createCluster(c, 3);
       waitForClusterToForm();
    }
 
@@ -54,7 +56,10 @@ public class FailureWith1PCTest extends MultipleCacheManagersTest {
 
          @Override
          public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-            throw new RuntimeException("Induced exception");
+            if (fail)
+               throw new RuntimeException("Induced exception");
+            else
+               return invokeNextInterceptor(ctx, command);
          }
       }, 1);
 
@@ -68,6 +73,8 @@ public class FailureWith1PCTest extends MultipleCacheManagersTest {
          //expected
          e.printStackTrace();
       }
+
+      fail = false;
 
       assertExpectedState(0);
       assertExpectedState(1);

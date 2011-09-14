@@ -36,7 +36,7 @@ import javax.transaction.TransactionManager;
  * @since 4.1
  */
 @Test(groups = "functional", testName = "tx.dld.DldEagerLockingReplicationTest")
-public class DldEagerLockingReplicationTest extends BaseDldEagerLockingTest {
+public class DldPessimisticLockingReplicationTest extends BaseDldPessimisticLockingTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {

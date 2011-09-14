@@ -28,6 +28,7 @@ import org.infinispan.test.PerCacheExecutorThread;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import static org.testng.Assert.assertEquals;
@@ -53,8 +54,9 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
    private Object response2;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       Configuration configuration = createConfig();
+      configuration.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
       cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
       lockManager = (DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache);
