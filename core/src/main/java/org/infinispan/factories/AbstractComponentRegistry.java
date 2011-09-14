@@ -23,7 +23,6 @@
 package org.infinispan.factories;
 
 import org.infinispan.CacheException;
-import org.infinispan.Version;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.ComponentName;
@@ -685,7 +684,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
       addShutdownHook();
 
-      getLog().version(Version.printVersion());
       state = ComponentStatus.RUNNING;
    }
 

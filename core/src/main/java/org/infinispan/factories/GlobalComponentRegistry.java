@@ -23,6 +23,7 @@
 package org.infinispan.factories;
 
 import org.infinispan.CacheException;
+import org.infinispan.Version;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -174,6 +175,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
             }
          }
          super.start();
+         log.version(Version.printVersion());
          if (needToNotify && state == ComponentStatus.RUNNING) {
             for (ModuleLifecycle l : moduleLifecycles) {
                l.cacheManagerStarted(this);
