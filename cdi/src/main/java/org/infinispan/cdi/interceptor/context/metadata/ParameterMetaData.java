@@ -20,52 +20,57 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.interceptor;
+package org.infinispan.cdi.interceptor.context.metadata;
 
-import javax.cache.interceptor.CacheKey;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.util.Set;
 
-import static java.util.Arrays.deepEquals;
-import static java.util.Arrays.deepHashCode;
-import static java.util.Arrays.deepToString;
+import static java.util.Collections.unmodifiableSet;
 
 /**
- * Default {@link CacheKey} implementation.
+ * Contains the metadata for a parameter of a method annotated with A JCACHE annotation.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class DefaultCacheKey implements CacheKey {
+public class ParameterMetaData {
 
-   private static final long serialVersionUID = 4410523928649671768L;
+   private final Type baseType;
+   private final Class<?> rawType;
+   private final int position;
+   private final Set<Annotation> annotations;
 
-   private final Object[] parameters;
-   private final int hashCode;
-
-   public DefaultCacheKey(Object[] parameters) {
-      this.parameters = parameters;
-      this.hashCode = deepHashCode(parameters);
+   public ParameterMetaData(Class<?> type, int position, Set<Annotation> annotations) {
+      this.baseType = type.getGenericSuperclass();
+      this.rawType = type;
+      this.position = position;
+      this.annotations = unmodifiableSet(annotations);
    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      DefaultCacheKey that = (DefaultCacheKey) o;
-
-      return deepEquals(parameters, that.parameters);
+   public Type getBaseType() {
+      return baseType;
    }
 
-   @Override
-   public int hashCode() {
-      return this.hashCode;
+   public Class<?> getRawType() {
+      return rawType;
+   }
+
+   public int getPosition() {
+      return position;
+   }
+
+   public Set<Annotation> getAnnotations() {
+      return annotations;
    }
 
    @Override
    public String toString() {
       return new StringBuilder()
-            .append("DefaultCacheKey{")
-            .append("parameters=").append(parameters == null ? null : deepToString(parameters))
-            .append(", hashCode=").append(hashCode)
+            .append("ParameterMetaData{")
+            .append("baseType=").append(baseType)
+            .append(", rawType=").append(rawType)
+            .append(", position=").append(position)
+            .append(", annotations=").append(annotations)
             .append('}')
             .toString();
    }

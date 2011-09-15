@@ -23,18 +23,18 @@
 package org.infinispan.cdi.interceptor.literal;
 
 import javax.cache.interceptor.CacheKeyGenerator;
-import javax.cache.interceptor.CacheRemoveEntry;
+import javax.cache.interceptor.CachePut;
 import javax.cache.interceptor.CacheResolverFactory;
 import javax.enterprise.util.AnnotationLiteral;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class CacheRemoveEntryLiteral extends AnnotationLiteral<CacheRemoveEntry> implements CacheRemoveEntry {
+public class CachePutLiteral extends AnnotationLiteral<CachePut> implements CachePut {
 
-   public final static CacheRemoveEntryLiteral INSTANCE = new CacheRemoveEntryLiteral();
+   public final static CachePutLiteral INSTANCE = new CachePutLiteral();
 
-   private CacheRemoveEntryLiteral() {
+   private CachePutLiteral() {
    }
 
    @Override

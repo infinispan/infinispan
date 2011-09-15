@@ -24,25 +24,22 @@ package org.infinispan.cdi.interceptor;
 
 import org.infinispan.Cache;
 
-import java.lang.reflect.Method;
+import javax.cache.interceptor.CacheInvocationContext;
+import java.lang.annotation.Annotation;
 
 /**
- * This is the cache resolver contract used by interceptors to resolve a cache in function of it's name and the
- * annotated method.
+ * This is the cache resolver contract used by interceptors to resolve a {@link Cache}.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public interface CacheResolver {
    /**
-    * Resolves a cache in function of it's name and the annotated method (see {@linkplain
-    * javax.cache.interceptor.CacheResult CacheResult}, {@linkplain javax.cache.interceptor.CacheRemoveEntry
-    * CacheRemoveEntry} and {@linkplain javax.cache.interceptor.CacheRemoveAll CacheRemoveAll}).
+    * Resolve the {@link Cache} to use for this {@link CacheInvocationContext}.
     *
-    * @param cacheName the cache name to resolve.
-    * @param method    the method annotated with a cache annotation.
-    * @param <K>       the cache key type.
-    * @param <V>       the cache value type.
+    * @param cacheInvocationContext the cache invocation context.
+    * @param <K>                    the cache key type.
+    * @param <V>                    the cache value type.
     * @return the resolved cache.
     */
-   <K, V> Cache<K, V> resolveCache(String cacheName, Method method);
+   <K, V> Cache<K, V> resolveCache(CacheInvocationContext<? extends Annotation> cacheInvocationContext);
 }

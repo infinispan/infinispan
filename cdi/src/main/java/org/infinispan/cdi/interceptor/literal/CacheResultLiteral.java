@@ -23,7 +23,7 @@
 package org.infinispan.cdi.interceptor.literal;
 
 import javax.cache.interceptor.CacheKeyGenerator;
-import javax.cache.interceptor.CacheResolver;
+import javax.cache.interceptor.CacheResolverFactory;
 import javax.cache.interceptor.CacheResult;
 import javax.enterprise.util.AnnotationLiteral;
 
@@ -35,7 +35,6 @@ public class CacheResultLiteral extends AnnotationLiteral<CacheResult> implement
    public final static CacheResultLiteral INSTANCE = new CacheResultLiteral();
 
    private CacheResultLiteral() {
-
    }
 
    @Override
@@ -49,8 +48,8 @@ public class CacheResultLiteral extends AnnotationLiteral<CacheResult> implement
    }
 
    @Override
-   public Class<? extends CacheResolver> cacheResolver() {
-      return CacheResolver.class;
+   public Class<? extends CacheResolverFactory> cacheResolverFactory() {
+      return CacheResolverFactory.class;
    }
 
    @Override

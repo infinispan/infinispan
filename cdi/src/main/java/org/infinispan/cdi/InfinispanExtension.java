@@ -23,9 +23,11 @@
 package org.infinispan.cdi;
 
 import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
+import org.infinispan.cdi.interceptor.CachePutInterceptor;
 import org.infinispan.cdi.interceptor.CacheRemoveAllInterceptor;
 import org.infinispan.cdi.interceptor.CacheRemoveEntryInterceptor;
 import org.infinispan.cdi.interceptor.CacheResultInterceptor;
+import org.infinispan.cdi.interceptor.literal.CachePutLiteral;
 import org.infinispan.cdi.interceptor.literal.CacheRemoveAllLiteral;
 import org.infinispan.cdi.interceptor.literal.CacheRemoveEntryLiteral;
 import org.infinispan.cdi.interceptor.literal.CacheResultLiteral;
@@ -34,6 +36,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.seam.solder.bean.Beans;
 import org.jboss.seam.solder.reflection.annotated.AnnotatedTypeBuilder;
 
+import javax.cache.interceptor.CachePut;
 import javax.cache.interceptor.CacheRemoveAll;
 import javax.cache.interceptor.CacheRemoveEntry;
 import javax.cache.interceptor.CacheResult;
@@ -71,6 +74,7 @@ public class InfinispanExtension implements Extension {
 
    void registerInterceptorBindings(@Observes BeforeBeanDiscovery event) {
       event.addInterceptorBinding(CacheResult.class);
+      event.addInterceptorBinding(CachePut.class);
       event.addInterceptorBinding(CacheRemoveEntry.class);
       event.addInterceptorBinding(CacheRemoveAll.class);
    }
@@ -79,6 +83,13 @@ public class InfinispanExtension implements Extension {
       event.setAnnotatedType(new AnnotatedTypeBuilder<CacheResultInterceptor>()
                                    .readFromType(event.getAnnotatedType())
                                    .addToClass(CacheResultLiteral.INSTANCE)
+                                   .create());
+   }
+
+   void registerCachePutInterceptor(@Observes ProcessAnnotatedType<CachePutInterceptor> event) {
+      event.setAnnotatedType(new AnnotatedTypeBuilder<CachePutInterceptor>()
+                                   .readFromType(event.getAnnotatedType())
+                                   .addToClass(CachePutLiteral.INSTANCE)
                                    .create());
    }
 

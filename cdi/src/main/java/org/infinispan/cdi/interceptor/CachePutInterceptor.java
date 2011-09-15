@@ -29,52 +29,47 @@ import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextImpl;
 import javax.cache.interceptor.CacheKey;
 import javax.cache.interceptor.CacheKeyGenerator;
 import javax.cache.interceptor.CacheKeyInvocationContext;
-import javax.cache.interceptor.CacheRemoveEntry;
+import javax.cache.interceptor.CachePut;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
 
 /**
- * <p>{@link CacheRemoveEntry} interceptor implementation.This interceptor uses the following algorithm describes in
- * JSR-107.</p>
- *
- * <p>The interceptor that intercepts method annotated with {@code @CacheRemoveEntry} must do the following, generate a
- * key based on InvocationContext using the specified {@link CacheKeyGenerator}, use this key to remove the entry in the
- * cache. The remove occurs after the method body is executed. This can be overridden by specifying a afterInvocation
- * attribute value of false. If afterInvocation is true and the annotated method throws an exception the remove will not
- * happen.</p>
+ * {@link CachePut} interceptor implementation.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @Interceptor
-public class CacheRemoveEntryInterceptor {
+public class CachePutInterceptor {
 
    private final CacheResolver cacheResolver;
    private final CacheKeyInvocationContextFactory contextFactory;
 
    @Inject
-   public CacheRemoveEntryInterceptor(CacheResolver cacheResolver, CacheKeyInvocationContextFactory contextFactory) {
+   public CachePutInterceptor(CacheResolver cacheResolver, CacheKeyInvocationContextFactory contextFactory) {
       this.cacheResolver = cacheResolver;
       this.contextFactory = contextFactory;
    }
 
    @AroundInvoke
-   public Object cacheRemoveEntry(InvocationContext invocationContext) throws Exception {
-      final CacheKeyInvocationContext<CacheRemoveEntry> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
+   public Object cacheResult(InvocationContext invocationContext) throws Exception {
+      final CacheKeyInvocationContext<CachePut> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
       final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
-      final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
-      final CacheRemoveEntry cacheRemoveEntry = cacheKeyInvocationContext.getCacheAnnotation();
+      final CachePut cacheResult = cacheKeyInvocationContext.getCacheAnnotation();
       final CacheKey cacheKey = cacheKeyGenerator.generateCacheKey((CacheKeyInvocationContext) cacheKeyInvocationContext);
+      final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
 
-      if (!cacheRemoveEntry.afterInvocation()) {
-         cache.remove(cacheKey);
+      final Object valueToCache = cacheKeyInvocationContext.getValueParameter().getValue();
+
+      if (!cacheResult.afterInvocation() && valueToCache != null) {
+         cache.put(cacheKey, valueToCache);
       }
 
       final Object result = invocationContext.proceed();
 
-      if (cacheRemoveEntry.afterInvocation()) {
-         cache.remove(cacheKey);
+      if (cacheResult.afterInvocation() && valueToCache != null) {
+         cache.put(cacheKey, valueToCache);
       }
 
       return result;

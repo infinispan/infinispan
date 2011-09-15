@@ -52,7 +52,6 @@ public class CacheEntryEvictedAdapter<K, V> extends AbstractAdapter<CacheEntryEv
       }
 
       public boolean isOriginLocal() {
-         // TODO Auto-generated method stub
          return false;
       }
 

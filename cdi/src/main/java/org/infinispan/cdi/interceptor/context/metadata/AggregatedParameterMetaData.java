@@ -20,52 +20,51 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.interceptor;
+package org.infinispan.cdi.interceptor.context.metadata;
 
-import javax.cache.interceptor.CacheKey;
+import java.util.List;
 
-import static java.util.Arrays.deepEquals;
-import static java.util.Arrays.deepHashCode;
-import static java.util.Arrays.deepToString;
+import static java.util.Collections.unmodifiableList;
 
 /**
- * Default {@link CacheKey} implementation.
+ * Contains all parameters metadata for a method annotated with a cache annotation.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class DefaultCacheKey implements CacheKey {
+public class AggregatedParameterMetaData {
 
-   private static final long serialVersionUID = 4410523928649671768L;
+   private final List<ParameterMetaData> parameters;
+   private final List<ParameterMetaData> keyParameters;
+   private final ParameterMetaData valueParameter;
 
-   private final Object[] parameters;
-   private final int hashCode;
+   public AggregatedParameterMetaData(List<ParameterMetaData> parameters,
+                                      List<ParameterMetaData> keyParameters,
+                                      ParameterMetaData valueParameter) {
 
-   public DefaultCacheKey(Object[] parameters) {
-      this.parameters = parameters;
-      this.hashCode = deepHashCode(parameters);
+      this.parameters = unmodifiableList(parameters);
+      this.keyParameters = unmodifiableList(keyParameters);
+      this.valueParameter = valueParameter;
    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      DefaultCacheKey that = (DefaultCacheKey) o;
-
-      return deepEquals(parameters, that.parameters);
+   public List<ParameterMetaData> getParameters() {
+      return parameters;
    }
 
-   @Override
-   public int hashCode() {
-      return this.hashCode;
+   public List<ParameterMetaData> getKeyParameters() {
+      return keyParameters;
+   }
+
+   public ParameterMetaData getValueParameter() {
+      return valueParameter;
    }
 
    @Override
    public String toString() {
       return new StringBuilder()
-            .append("DefaultCacheKey{")
-            .append("parameters=").append(parameters == null ? null : deepToString(parameters))
-            .append(", hashCode=").append(hashCode)
+            .append("AggregatedParameterMetaData{")
+            .append("parameters=").append(parameters)
+            .append(", keyParameters=").append(keyParameters)
+            .append(", valueParameter=").append(valueParameter)
             .append('}')
             .toString();
    }

@@ -28,7 +28,6 @@ package org.infinispan.cdi.util;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public final class Contracts {
-
    /**
     * Disable instantiation.
     */
@@ -36,11 +35,11 @@ public final class Contracts {
    }
 
    /**
-    * Asserts that the given parameter is not {@code null}. If the given parameter is {@code null} a {@link
-    * NullPointerException} is thrown.
+    * Asserts that the given parameter is not {@code null}.
     *
     * @param param   the parameter to check.
     * @param message the exception message used if the parameter to check is {@code null}.
+    * @throws NullPointerException if the given parameter is {@code null}.
     */
    public static void assertNotNull(Object param, String message) {
       if (param == null) {
