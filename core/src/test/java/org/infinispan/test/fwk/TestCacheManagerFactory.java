@@ -144,11 +144,11 @@ public class TestCacheManagerFactory {
     * Creates an cache manager that does support clustering.
     */
    public static EmbeddedCacheManager createClusteredCacheManager() {
-      return createClusteredCacheManager(false);
+      return createClusteredCacheManager(new TransportFlags());
    }
 
-   public static EmbeddedCacheManager createClusteredCacheManager(boolean withFD) {
-      return createClusteredCacheManager(withFD, new Configuration(), false);
+   public static EmbeddedCacheManager createClusteredCacheManager(TransportFlags flags) {
+      return createClusteredCacheManager(new Configuration(), false, flags);
    }
 
    /**
@@ -159,15 +159,14 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig, boolean transactional) {
-      return createClusteredCacheManager(false, defaultCacheConfig, transactional);
+      return createClusteredCacheManager(defaultCacheConfig, transactional, new TransportFlags());
    }
 
-   public static EmbeddedCacheManager createClusteredCacheManager(
-         boolean withFD, Configuration defaultCacheConfig, boolean transactional) {
+   public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig, boolean transactional, TransportFlags flags) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
-      amendTransport(globalConfiguration, withFD);
+      amendTransport(globalConfiguration, flags);
       if (transactional) amendJTA(defaultCacheConfig);
       return newDefaultCacheManager(true, globalConfiguration, defaultCacheConfig, false);
    }
@@ -318,10 +317,10 @@ public class TestCacheManagerFactory {
    }
 
    private static void amendTransport(GlobalConfiguration cfg) {
-      amendTransport(cfg, false);
+      amendTransport(cfg, new TransportFlags());
    }
 
-   private static void amendTransport(GlobalConfiguration configuration, boolean withFD) {
+   private static void amendTransport(GlobalConfiguration configuration, TransportFlags flags) {
       if (configuration.getTransportClass() != null) { //this is local
          Properties newTransportProps = new Properties();
          Properties previousSettings = configuration.getTransportProperties();
@@ -349,7 +348,7 @@ public class TestCacheManagerFactory {
          }
 
          newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING,
-            getJGroupsConfig(fullTestName, withFD));
+            getJGroupsConfig(fullTestName, flags));
 
          configuration.setTransportProperties(newTransportProps);
          configuration.setTransportNodeName(nextCacheName);

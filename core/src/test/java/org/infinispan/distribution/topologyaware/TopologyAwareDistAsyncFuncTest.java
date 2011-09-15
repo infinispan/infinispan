@@ -26,6 +26,7 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.distribution.DistAsyncFuncTest;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
 /**
@@ -36,8 +37,8 @@ import org.testng.annotations.Test;
 public class TopologyAwareDistAsyncFuncTest extends DistAsyncFuncTest {
 
    @Override
-   protected EmbeddedCacheManager addClusterEnabledCacheManager(boolean withFD) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(withFD);
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(flags);
       int index = cacheManagers.size();
       String rack;
       String machine;

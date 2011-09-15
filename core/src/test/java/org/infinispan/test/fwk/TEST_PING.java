@@ -75,8 +75,12 @@ public class TEST_PING extends Discovery {
                   boolean traceEnabled = log.isTraceEnabled();
                   if (discovery != this) {
                      boolean remoteDiscardEnabled = isDiscardEnabled(discovery);
-                     if (!remoteDiscardEnabled) {
+                     if (!remoteDiscardEnabled && !discovery.stopped) {
                         addPingRsp(returnViewsOnly, rsps, discovery);
+                     } else if (discovery.stopped) {
+                        log.debug(String.format(
+                              "%s is stopped, so no ping responses will be received",
+                              discovery.getLocalAddr()));
                      } else {
                         if (traceEnabled)
                            log.trace("Skipping sending response cos DISCARD is on");
@@ -179,6 +183,7 @@ public class TEST_PING extends Discovery {
 
    @Override
    public void stop() {
+      log.debug(String.format("Stop discovery for %s", local_addr));
       super.stop();
       DiscoveryKey key = new DiscoveryKey(testName, group_addr);
       Map<Address, TEST_PING> discoveries = all.get(key);
