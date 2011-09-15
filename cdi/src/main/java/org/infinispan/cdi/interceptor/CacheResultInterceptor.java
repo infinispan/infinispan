@@ -23,26 +23,25 @@
 package org.infinispan.cdi.interceptor;
 
 import org.infinispan.Cache;
+import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextFactory;
+import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextImpl;
 
 import javax.cache.interceptor.CacheKey;
+import javax.cache.interceptor.CacheKeyGenerator;
+import javax.cache.interceptor.CacheKeyInvocationContext;
 import javax.cache.interceptor.CacheResult;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
-import java.lang.reflect.Method;
-
-import static org.infinispan.cdi.util.CacheHelper.generateCacheKey;
-import static org.infinispan.cdi.util.CacheHelper.getDefaultMethodCacheName;
 
 /**
- * <p>Implementation class of the {@link CacheResult} interceptor. This interceptor uses the following algorithm
- * describes in JSR-107.</p>
+ * <p>{@link CacheResult} interceptor implementation. This interceptor uses the following algorithm describes in
+ * JSR-107.</p>
  *
- * <p>When a method annotated with @CacheResult is invoked the following must occur.
+ * <p>When a method annotated with {@link CacheResult} is invoked the following must occur.
  * <ol>
- *    <li>Generate a key based on InvocationContext using the specified {@linkplain javax.cache.interceptor.CacheKeyGenerator
- *    CacheKeyGenerator}.</li>
+ *    <li>Generate a key based on InvocationContext using the specified {@linkplain CacheKeyGenerator}.</li>
  *    <li>Use this key to look up the entry in the cache.</li>
  *    <li>If an entry is found return it as the result and do not call the annotated method.</li>
  *    <li>If no entry is found invoke the method.</li>
@@ -59,33 +58,35 @@ import static org.infinispan.cdi.util.CacheHelper.getDefaultMethodCacheName;
 public class CacheResultInterceptor {
 
    private final CacheResolver cacheResolver;
+   private final CacheKeyInvocationContextFactory contextFactory;
 
    @Inject
-   public CacheResultInterceptor(CacheResolver cacheResolver) {
+   public CacheResultInterceptor(CacheResolver cacheResolver, CacheKeyInvocationContextFactory contextFactory) {
       this.cacheResolver = cacheResolver;
+      this.contextFactory = contextFactory;
    }
 
    @AroundInvoke
-   public Object cacheResult(InvocationContext context) throws Exception {
-      final Method method = context.getMethod();
-      final CacheResult cacheResult = method.getAnnotation(CacheResult.class);
-      final String cacheName = cacheResult.cacheName().trim().isEmpty() ? getDefaultMethodCacheName(method) : cacheResult.cacheName();
-      final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheName, context.getMethod());
-      final CacheKey cacheKey = generateCacheKey(cacheResult.cacheKeyGenerator(), context);
+   public Object cacheResult(InvocationContext invocationContext) throws Exception {
+      final CacheKeyInvocationContext<CacheResult> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
+      final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
+      final CacheResult cacheResult = cacheKeyInvocationContext.getCacheAnnotation();
+      final CacheKey cacheKey = cacheKeyGenerator.generateCacheKey((CacheKeyInvocationContext) cacheKeyInvocationContext);
+      final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
 
-      Object methodResult = null;
+      Object result = null;
 
       if (!cacheResult.skipGet()) {
-         methodResult = cache.get(cacheKey);
+         result = cache.get(cacheKey);
       }
 
-      if (methodResult == null) {
-         methodResult = context.proceed();
-         if (methodResult != null) {
-            cache.put(cacheKey, methodResult);
+      if (result == null) {
+         result = invocationContext.proceed();
+         if (result != null) {
+            cache.put(cacheKey, result);
          }
       }
 
-      return methodResult;
+      return result;
    }
 }

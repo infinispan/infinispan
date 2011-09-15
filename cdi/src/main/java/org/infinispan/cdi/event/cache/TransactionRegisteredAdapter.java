@@ -48,7 +48,6 @@ public class TransactionRegisteredAdapter<K, V> extends AbstractAdapter<Transact
       }
 
       public boolean isOriginLocal() {
-         // TODO Auto-generated method stub
          return false;
       }
 

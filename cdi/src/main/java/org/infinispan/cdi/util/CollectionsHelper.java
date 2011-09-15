@@ -20,40 +20,37 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.interceptor.literal;
+package org.infinispan.cdi.util;
 
-import javax.cache.interceptor.CacheKeyGenerator;
-import javax.cache.interceptor.CacheRemoveEntry;
-import javax.cache.interceptor.CacheResolverFactory;
-import javax.enterprise.util.AnnotationLiteral;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import static java.util.Collections.addAll;
 
 /**
+ * An helper class providing useful methods to work with JDK collections.
+ *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class CacheRemoveEntryLiteral extends AnnotationLiteral<CacheRemoveEntry> implements CacheRemoveEntry {
-
-   public final static CacheRemoveEntryLiteral INSTANCE = new CacheRemoveEntryLiteral();
-
-   private CacheRemoveEntryLiteral() {
+public final class CollectionsHelper {
+   /**
+    * Disable instantiation.
+    */
+   private CollectionsHelper() {
    }
 
-   @Override
-   public String cacheName() {
-      return "";
-   }
+   /**
+    * Creates a {@link Set} with the given elements.
+    *
+    * @param elements the elements.
+    * @param <T>      the element type.
+    * @return a new {@link Set} instance containing the given elements.
+    * @throws NullPointerException if parameter elements is {@code null}.
+    */
+   public static <T> Set<T> asSet(T... elements) {
+      final Set<T> resultSet = new LinkedHashSet<T>();
+      addAll(resultSet, elements);
 
-   @Override
-   public boolean afterInvocation() {
-      return false;
-   }
-
-   @Override
-   public Class<? extends CacheResolverFactory> cacheResolverFactory() {
-      return CacheResolverFactory.class;
-   }
-
-   @Override
-   public Class<? extends CacheKeyGenerator> cacheKeyGenerator() {
-      return CacheKeyGenerator.class;
+      return resultSet;
    }
 }

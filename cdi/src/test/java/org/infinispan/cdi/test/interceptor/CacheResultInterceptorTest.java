@@ -18,7 +18,6 @@ import javax.inject.Inject;
 import java.lang.reflect.Method;
 
 import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
-import static org.infinispan.cdi.util.CacheHelper.getDefaultMethodCacheName;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -59,8 +58,11 @@ public class CacheResultInterceptorTest extends Arquillian {
    }
 
    public void testDefaultCacheResult() throws NoSuchMethodException {
-      Method method = GreetingService.class.getMethod("sayMorning", String.class);
-      Cache<CacheKey, String> cache = cacheManager.getCache(getDefaultMethodCacheName(method));
+      final StringBuilder cacheName = new StringBuilder()
+            .append(GreetingService.class.getName())
+            .append(".sayMorning(java.lang.String)");
+
+      Cache<CacheKey, String> cache = cacheManager.getCache(cacheName.toString());
 
       String message = service.sayMorning("Foo");
       assertEquals("Morning Foo", message);
@@ -89,8 +91,12 @@ public class CacheResultInterceptorTest extends Arquillian {
    }
 
    public void testCacheResultWithCustomCacheKeyGenerator() throws NoSuchMethodException {
+      final StringBuilder cacheName = new StringBuilder()
+            .append(GreetingService.class.getName())
+            .append(".sayHello(java.lang.String)");
+
       Method method = GreetingService.class.getMethod("sayHello", String.class);
-      Cache<CacheKey, String> cache = cacheManager.getCache(getDefaultMethodCacheName(method));
+      Cache<CacheKey, String> cache = cacheManager.getCache(cacheName.toString());
 
       String message = service.sayHello("Kevin");
       assertEquals("Hello Kevin", message);
@@ -105,8 +111,11 @@ public class CacheResultInterceptorTest extends Arquillian {
    }
 
    public void testCacheResultWithSkipGet() throws NoSuchMethodException {
-      Method method = GreetingService.class.getMethod("sayHey", String.class);
-      Cache<CacheKey, String> cache = cacheManager.getCache(getDefaultMethodCacheName(method));
+      final StringBuilder cacheName = new StringBuilder()
+            .append(GreetingService.class.getName())
+            .append(".sayHey(java.lang.String)");
+
+      Cache<CacheKey, String> cache = cacheManager.getCache(cacheName.toString());
 
       String message = service.sayHey("Manik");
 

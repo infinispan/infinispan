@@ -22,20 +22,29 @@
  */
 package org.infinispan.cdi.interceptor;
 
+import javax.cache.interceptor.CacheInvocationParameter;
 import javax.cache.interceptor.CacheKey;
 import javax.cache.interceptor.CacheKeyGenerator;
-import javax.interceptor.InvocationContext;
+import javax.cache.interceptor.CacheKeyInvocationContext;
+import java.lang.annotation.Annotation;
 
 /**
- * This is the default cache key generator implementation. By default all parameters of the method intercepted compose
- * the {@link CacheKey}.
+ * Default {@link CacheKeyGenerator} implementation. By default all key parameters of the intercepted method compose the
+ * {@link CacheKey}.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class DefaultCacheKeyGenerator implements CacheKeyGenerator {
 
    @Override
-   public CacheKey generateCacheKey(InvocationContext context) {
-      return new DefaultCacheKey(context.getParameters());
+   public CacheKey generateCacheKey(CacheKeyInvocationContext<Annotation> cacheKeyInvocationContext) {
+      final CacheInvocationParameter[] keyParameters = cacheKeyInvocationContext.getKeyParameters();
+      final Object[] keyValues = new Object[keyParameters.length];
+
+      for (int i = 0 ; i < keyParameters.length ; i++) {
+         keyValues[i] = keyParameters[i].getValue();
+      }
+
+      return new DefaultCacheKey(keyValues);
    }
 }
