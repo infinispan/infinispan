@@ -25,6 +25,7 @@ package org.infinispan.distribution.rehash;
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -47,7 +48,8 @@ public class ConcurrentJoinTest extends RehashTestBase {
       joiners = new CopyOnWriteArrayList<Cache<Object, String>>(new Cache[numJoiners]);
 
       for (int i = 0; i < numJoiners; i++) {
-         EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager(true);
+         EmbeddedCacheManager joinerManager =
+               addClusterEnabledCacheManager(new TransportFlags().withFD(true));
          joinerManager.defineConfiguration(cacheName, configuration);
          joinerManagers.add(joinerManager);
          joiners.set(i, null);

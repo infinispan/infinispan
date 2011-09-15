@@ -27,6 +27,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 
 /**
  * DistSyncCacheStoreTest.
@@ -39,14 +40,14 @@ public abstract class BaseDistCacheStoreTest extends BaseDistFunctionalTest {
    static int id;
 
    @Override
-   protected EmbeddedCacheManager addClusterEnabledCacheManager(boolean withFD) {
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
       Configuration cfg = new Configuration();
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       clmc.setShared(shared);
       int idToUse = shared ? 999 : id++;
       clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg(getClass().getSimpleName() + "_" + idToUse));
       cfg.setCacheLoaderManagerConfig(clmc);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(withFD, cfg, false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(cfg, false, flags);
       cacheManagers.add(cm);
       return cm;
    }

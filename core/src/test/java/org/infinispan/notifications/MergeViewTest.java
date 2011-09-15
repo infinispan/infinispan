@@ -29,6 +29,7 @@ import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.protocols.DISCARD;
@@ -51,14 +52,16 @@ public class MergeViewTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      addClusterEnabledCacheManager(Configuration.CacheMode.REPL_SYNC, true);
+      addClusterEnabledCacheManager(Configuration.CacheMode.REPL_SYNC, true,
+                                    new TransportFlags().withMerge(true));
 
       ml0 = new MergeListener();
       manager(0).addListener(ml0);
 
       discard();
 
-      addClusterEnabledCacheManager(Configuration.CacheMode.REPL_SYNC, true);
+      addClusterEnabledCacheManager(Configuration.CacheMode.REPL_SYNC, true,
+                                    new TransportFlags().withMerge(true));
       ml1 = new MergeListener();
       manager(1).addListener(ml1);
 

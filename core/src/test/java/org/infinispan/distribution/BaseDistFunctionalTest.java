@@ -39,6 +39,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 
@@ -94,7 +95,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);
       if (l1CacheEnabled) configuration.setL1InvalidationThreshold(l1Threshold);
       // Create clustered caches with failure detection protocols on
-      caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration, true);
+      caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration,
+                                     new TransportFlags().withFD(true));
 
       reorderBasedOnCHPositions();
 

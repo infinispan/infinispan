@@ -28,6 +28,7 @@ import org.infinispan.distribution.DistSyncFuncTest;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
 /**
@@ -42,8 +43,8 @@ public class VNodesTachFunctionalTest extends DistSyncFuncTest {
    }
 
    @Override
-   protected EmbeddedCacheManager addClusterEnabledCacheManager(boolean withFD) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(withFD);
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(flags);
       int index = cacheManagers.size();
       String rack;
       String machine;
