@@ -24,17 +24,13 @@ package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TransportFlags;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = "functional", testName =  "distribution.rehash.RehashAfterPartitionMergeTest")
 public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
@@ -46,7 +42,8 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       caches = createClusteredCaches(2, "test",
-         getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC), true);
+            getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC),
+                  new TransportFlags().withFD(true).withMerge(true));
 
       c1 = caches.get(0);
       c2 = caches.get(1);

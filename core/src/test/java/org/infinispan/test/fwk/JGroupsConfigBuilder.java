@@ -90,20 +90,23 @@ public class JGroupsConfigBuilder {
       System.out.println("Transport protocol stack used = " + JGROUPS_STACK);
    }
 
-   public static String getJGroupsConfig(String fullTestName, boolean withFD) {
-      if (JGROUPS_STACK.equalsIgnoreCase("tcp")) return getTcpConfig(fullTestName, withFD);
-      if (JGROUPS_STACK.equalsIgnoreCase("udp")) return getUdpConfig(fullTestName, withFD);
+   public static String getJGroupsConfig(String fullTestName, TransportFlags flags) {
+      if (JGROUPS_STACK.equalsIgnoreCase("tcp")) return getTcpConfig(fullTestName, flags);
+      if (JGROUPS_STACK.equalsIgnoreCase("udp")) return getUdpConfig(fullTestName, flags);
       throw new IllegalStateException("Unknown protocol stack : " + JGROUPS_STACK);
    }
 
-   public static String getTcpConfig(String fullTestName, boolean withFD) {
+   public static String getTcpConfig(String fullTestName, TransportFlags flags) {
       // With the XML already parsed, make a safe copy of the
       // protocol stack configurator and use that accordingly.
       JGroupsProtocolCfg jgroupsCfg =
             getJGroupsProtocolCfg(tcpConfigurator.getProtocolStack());
 
-      if (!withFD)
+      if (!flags.withFD())
          removeFailureDetectionTcp(jgroupsCfg);
+
+      if (!flags.withMerge())
+         removeMerge(jgroupsCfg);
 
       if (jgroupsCfg.containsProtocol(TEST_PING)) {
          replaceTcpStartPort(jgroupsCfg);
@@ -116,12 +119,19 @@ public class JGroupsConfigBuilder {
       }
    }
 
-   public static String getUdpConfig(String fullTestName, boolean withFD) {
+   private static void removeMerge(JGroupsProtocolCfg jgroupsCfg) {
+      jgroupsCfg.removeProtocol(MERGE2);
+   }
+
+   public static String getUdpConfig(String fullTestName, TransportFlags flags) {
       JGroupsProtocolCfg jgroupsCfg =
             getJGroupsProtocolCfg(udpConfigurator.getProtocolStack());
 
-      if (!withFD)
+      if (!flags.withFD())
          removeFailureDetectionUdp(jgroupsCfg);
+
+      if (!flags.withMerge())
+         removeMerge(jgroupsCfg);
 
       if (jgroupsCfg.containsProtocol(TEST_PING)) {
          if (fullTestName != null)
