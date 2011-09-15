@@ -22,33 +22,35 @@
  */
 package org.infinispan.test.fwk;
 
-import org.infinispan.config.parsing.JGroupsStackParser;
-import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.util.LegacyKeySupportSystemProperties;
-import org.jgroups.util.Util;
-import org.w3c.dom.Element;
+import org.jgroups.ChannelException;
+import org.jgroups.conf.ConfiguratorFactory;
+import org.jgroups.conf.ProtocolConfiguration;
+import org.jgroups.conf.ProtocolStackConfigurator;
+import org.jgroups.conf.XmlConfigurator;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.*;
+import static org.infinispan.util.Immutables.immutableMapCopy;
 
 /**
  * This class owns the logic of associating network resources(i.e. ports) with threads, in order to make sure that there
  * won't be any clashes between multiple clusters running in parallel on same host. Used for parallel test suite.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  */
 public class JGroupsConfigBuilder {
 
    public static final String JGROUPS_STACK;
-
-   private static String bind_addr = "127.0.0.1";
-   private static String tcpConfig = loadTcp();
-   private static String udpConfig = loadUdp();
+   // Load the XML just once
+   private static final ProtocolStackConfigurator tcpConfigurator = loadTcp();
+   private static final ProtocolStackConfigurator udpConfigurator = loadUdp();
 
    private static final ThreadLocal<String> threadTcpStartPort = new ThreadLocal<String>() {
       private final AtomicInteger uniqueAddr = new AtomicInteger(7900);
@@ -83,24 +85,9 @@ public class JGroupsConfigBuilder {
       }
    };
 
-   private static final Pattern TCP_START_PORT = Pattern.compile("bind_port=[^;]*");
-   private static final Pattern TCP_INITIAL_HOST = Pattern.compile("initial_hosts=[^;]*");
-   private static final Pattern UDP_MCAST_ADDRESS = Pattern.compile("mcast_addr=[^;]*");
-   private static final Pattern UDP_MCAST_PORT = Pattern.compile("mcast_port=[^;]*");
-   private static final Pattern TEST_NAME = Pattern.compile("testName=[^;]");
-   private static final Pattern FD_PROT = Pattern.compile(":FD\\(max_tries=[0-9]+;timeout=[0-9]+\\)");
-   private static final Pattern FD_SOCK_PROT = Pattern.compile(":FD_SOCK");
-   private static final Pattern VER_SUSPECT_PROT = Pattern.compile(":VERIFY_SUSPECT\\(timeout=[0-9]+\\)");
-   private static final Pattern FD_ALL_PROT = Pattern.compile(":FD_ALL");
-
    static {
       JGROUPS_STACK = LegacyKeySupportSystemProperties.getProperty("infinispan.test.jgroups.protocol", "protocol.stack", "tcp");
       System.out.println("Transport protocol stack used = " + JGROUPS_STACK);
-
-      try {
-         bind_addr = Util.getBindAddress(null).getHostAddress();
-      } catch (Exception e) {
-      }
    }
 
    public static String getJGroupsConfig(String fullTestName, boolean withFD) {
@@ -110,151 +97,190 @@ public class JGroupsConfigBuilder {
    }
 
    public static String getTcpConfig(String fullTestName, boolean withFD) {
-      // Make a safe local copy to avoid modifying the shared base TCP config
-      String config = new String(tcpConfig);
+      // With the XML already parsed, make a safe copy of the
+      // protocol stack configurator and use that accordingly.
+      JGroupsProtocolCfg jgroupsCfg =
+            getJGroupsProtocolCfg(tcpConfigurator.getProtocolStack());
 
       if (!withFD)
-         config = removeFailureDetectionTcp(config);
+         removeFailureDetectionTcp(jgroupsCfg);
 
-      if (config.contains("TCPPING")) {
-         return getTcpConfigWithTCPPINGDiscovery(config);
-      } if (config.contains("TEST_PING")) {
-         String cfg = replaceTcpStartPort(config, threadTcpStartPort.get());
+      if (jgroupsCfg.containsProtocol(TEST_PING)) {
+         replaceTcpStartPort(jgroupsCfg);
          if (fullTestName == null)
-            return cfg; // IDE run of test
+            return jgroupsCfg.toString(); // IDE run of test
          else
-            return getTestPingDiscovery(fullTestName, cfg); // Cmd line test run
+            return getTestPingDiscovery(fullTestName, jgroupsCfg); // Cmd line test run
       } else {
-         return replaceMCastAddressAndPort(config);
+         return replaceMCastAddressAndPort(jgroupsCfg);
       }
+   }
+
+   public static String getUdpConfig(String fullTestName, boolean withFD) {
+      JGroupsProtocolCfg jgroupsCfg =
+            getJGroupsProtocolCfg(udpConfigurator.getProtocolStack());
+
+      if (!withFD)
+         removeFailureDetectionUdp(jgroupsCfg);
+
+      if (jgroupsCfg.containsProtocol(TEST_PING)) {
+         if (fullTestName != null)
+            return getTestPingDiscovery(fullTestName, jgroupsCfg); // Cmd line test run
+      }
+
+      return replaceMCastAddressAndPort(jgroupsCfg);
    }
 
    /**
     * Remove all failure detection related
     * protocols from the given JGroups TCP stack.
     */
-   private static String removeFailureDetectionTcp(String transportCfg) {
-      return removePattern(FD_PROT.matcher(
-               removePattern(FD_SOCK_PROT.matcher(
-                  removePattern(VER_SUSPECT_PROT.matcher(transportCfg))))));
+   private static void removeFailureDetectionTcp(JGroupsProtocolCfg jgroupsCfg) {
+      jgroupsCfg.removeProtocol(FD)
+            .removeProtocol(FD_SOCK)
+            .removeProtocol(VERIFY_SUSPECT);
    }
 
-   private static String removePattern(Matcher m) {
-      return m.replaceFirst("");
+   private static String getTestPingDiscovery(String fullTestName, JGroupsProtocolCfg jgroupsCfg) {
+      ProtocolType type = TEST_PING;
+      Map<String, String> props = jgroupsCfg.getProtocol(type).getProperties();
+      props.put("testName", fullTestName);
+      return replaceProperties(jgroupsCfg, props, type);
    }
 
-   private static String getTestPingDiscovery(String fullTestName, String transportCfg) {
-      Matcher m = TEST_NAME.matcher(transportCfg);
-      if (m.find()) {
-         return m.replaceFirst("testName=" + fullTestName + ")");
-      } else {
-         throw new IllegalStateException();
-      }
+   private static void removeFailureDetectionUdp(JGroupsProtocolCfg jgroupsCfg) {
+      jgroupsCfg.removeProtocol(FD_SOCK).removeProtocol(FD_ALL);
    }
 
-   private static String getTcpConfigWithTCPPINGDiscovery(String config) {
-      String newStartPort = threadTcpStartPort.get();
-      String cfg = replaceTcpStartPort(config, newStartPort);
-      if (cfg.indexOf("TCPGOSSIP") < 0) // onluy adjust for TCPPING
-      {
-         Matcher m = TCP_INITIAL_HOST.matcher(cfg);
-         if (m.find()) {
-            cfg = m.replaceFirst("initial_hosts=" + bind_addr + "[" + newStartPort + "]");
-         }
-      }
-      return cfg;
+   private static String replaceMCastAddressAndPort(JGroupsProtocolCfg jgroupsCfg) {
+      ProtocolType type = UDP;
+      Map<String, String> props = jgroupsCfg.getProtocol(type).getProperties();
+      props.put("mcast_addr", threadMcastIP.get());
+      props.put("mcast_port", threadMcastPort.get().toString());
+      return replaceProperties(jgroupsCfg, props, type);
    }
 
-   private static String replaceTcpStartPort(String transportCfg, String newStartPort) {
-      // replace tcp start port
-      Matcher m = TCP_START_PORT.matcher(transportCfg);
-      if (m.find()) {
-         newStartPort = threadTcpStartPort.get();
-         return m.replaceFirst("bind_port=" + newStartPort);
-      } else {
-         System.out.println("Config is:" + transportCfg);
-         Thread.dumpStack();
-         throw new IllegalStateException();
-      }
+   private static String replaceTcpStartPort(JGroupsProtocolCfg jgroupsCfg) {
+      ProtocolType type = TCP;
+      Map<String, String> props = jgroupsCfg.getProtocol(type).getProperties();
+      props.put("bind_port", threadTcpStartPort.get());
+      return replaceProperties(jgroupsCfg, props, type);
    }
 
-   public static String getUdpConfig(String fullTestName, boolean withFD) {
-      // Make a safe local copy to avoid modifying the shared base UDP config
-      String config = new String(udpConfig);
-
-      if (!withFD)
-         config = removeFailureDetectionUdp(config);
-
-      if (config.contains("TEST_PING")) {
-         if (fullTestName != null)
-            config = getTestPingDiscovery(fullTestName, config); // Cmd line test run
-      }
-
-      return replaceMCastAddressAndPort(config);
+   private static String replaceProperties(
+         JGroupsProtocolCfg cfg, Map<String, String> newProps, ProtocolType type) {
+      ProtocolConfiguration protocol = cfg.getProtocol(type);
+      ProtocolConfiguration newProtocol =
+            new ProtocolConfiguration(protocol.getProtocolName(), newProps);
+      cfg.replaceProtocol(type, newProtocol);
+      return cfg.toString();
    }
 
-   private static String removeFailureDetectionUdp(String transportCfg) {
-      return removePattern(FD_SOCK_PROT.matcher(
-            removePattern(FD_ALL_PROT.matcher(transportCfg))));
-   }
-
-   private static String replaceMCastAddressAndPort(String config) {
-      Matcher m = UDP_MCAST_ADDRESS.matcher(config);
-      String result;
-      if (m.find()) {
-         String newAddr = threadMcastIP.get();
-         result = m.replaceFirst("mcast_addr=" + newAddr);
-      } else {
-         Thread.dumpStack();
-         throw new IllegalStateException();
-      }
-
-      // replace mcast_port
-      m = UDP_MCAST_PORT.matcher(result);
-      if (m.find()) {
-         String newPort = threadMcastPort.get().toString();
-         result = m.replaceFirst("mcast_port=" + newPort);
-      }
-      return result;
-   }
-
-   private static String loadTcp() {
-      String xmlString = readFile("stacks/tcp.xml");
-      return getJgroupsConfig(xmlString);
-   }
-
-   private static String loadUdp() {
-      String xmlString = readFile("stacks/udp.xml");
-      return getJgroupsConfig(xmlString);
-   }
-
-   private static String getJgroupsConfig(String xmlString) {
+   private static ProtocolStackConfigurator loadTcp() {
       try {
-         Element e = XmlConfigHelper.stringToElement(xmlString);
-         JGroupsStackParser parser = new JGroupsStackParser();
-         return parser.parseClusterConfigXml(e);
-      } catch (Exception ex) {
-         throw new RuntimeException("Unexpected!", ex);
+         return ConfiguratorFactory.getStackConfigurator("stacks/tcp.xml");
+      } catch (ChannelException e) {
+         throw new RuntimeException(e);
       }
    }
 
-   private static String readFile(String fileName) {
-      ClassLoader cl = Thread.currentThread().getContextClassLoader();
-      InputStream is = cl.getResourceAsStream(fileName);
-      BufferedReader bf = new BufferedReader(new InputStreamReader(is));
-      StringBuilder result = new StringBuilder();
-      String line;
+   private static ProtocolStackConfigurator loadUdp() {
       try {
-         while ((line = bf.readLine()) != null) result.append(line);
-      } catch (IOException e) {
-         throw new RuntimeException("Unexpected!", e);
-      } finally {
-         try {
-            bf.close();
-         } catch (IOException e) {
-            e.printStackTrace();
-         }
+         return ConfiguratorFactory.getStackConfigurator("stacks/udp.xml");
+      } catch (ChannelException e) {
+         throw new RuntimeException(e);
       }
-      return result.toString();
    }
+
+   private static JGroupsProtocolCfg getJGroupsProtocolCfg(List<ProtocolConfiguration> baseStack) {
+      JGroupsXmxlConfigurator configurator = new JGroupsXmxlConfigurator(baseStack);
+      List<ProtocolConfiguration> protoStack = configurator.getProtocolStack();
+      Map<ProtocolType, ProtocolConfiguration> protoMap =
+            new HashMap<ProtocolType, ProtocolConfiguration>(protoStack.size());
+      for (ProtocolConfiguration cfg : protoStack)
+         protoMap.put(getProtocolType(cfg.getProtocolName()), cfg);
+
+      return new JGroupsProtocolCfg(protoMap, configurator);
+   }
+
+   private static ProtocolType getProtocolType(String name) {
+      int dotIndex = name.lastIndexOf(".");
+      return ProtocolType.valueOf(
+            dotIndex == -1 ? name : name.substring(dotIndex + 1, name.length()));
+   }
+
+   static class JGroupsXmxlConfigurator extends XmlConfigurator {
+      protected JGroupsXmxlConfigurator(List<ProtocolConfiguration> protocols) {
+         super(copy(protocols));
+      }
+
+      static List<ProtocolConfiguration> copy(List<ProtocolConfiguration> protocols) {
+         // Make a safe copy of the protocol stack to avoid concurrent modification issues
+         List<ProtocolConfiguration> copy =
+               new ArrayList<ProtocolConfiguration>(protocols.size());
+         for (ProtocolConfiguration p : protocols)
+            copy.add(new ProtocolConfiguration(
+                  p.getProtocolName(), immutableMapCopy(p.getProperties())));
+
+         return copy;
+      }
+   }
+
+   static class JGroupsProtocolCfg {
+      final Map<ProtocolType, ProtocolConfiguration> protoMap;
+      final ProtocolStackConfigurator configurator;
+
+      JGroupsProtocolCfg(Map<ProtocolType, ProtocolConfiguration> protoMap,
+                         ProtocolStackConfigurator configurator) {
+         this.protoMap = protoMap;
+         this.configurator = configurator;
+      }
+
+      JGroupsProtocolCfg addProtocol(ProtocolType type, ProtocolConfiguration cfg, int position) {
+         protoMap.put(type, cfg);
+         configurator.getProtocolStack().add(position, cfg);
+         return this;
+      }
+
+      JGroupsProtocolCfg removeProtocol(ProtocolType type) {
+         // Update the stack and map
+         configurator.getProtocolStack().remove(protoMap.remove(type));
+         return this;
+      }
+
+      ProtocolConfiguration getProtocol(ProtocolType type) {
+         return protoMap.get(type);
+      }
+
+      boolean containsProtocol(ProtocolType type) {
+         return getProtocol(type) != null;
+      }
+
+      JGroupsProtocolCfg replaceProtocol(ProtocolType type, ProtocolConfiguration newCfg) {
+         ProtocolConfiguration oldCfg = protoMap.get(type);
+         int position = configurator.getProtocolStack().indexOf(oldCfg);
+         // Remove protocol and put new configuration in same position
+         return removeProtocol(type).addProtocol(type, newCfg, position);
+      }
+
+      @Override
+      public String toString() {
+         return configurator.getProtocolStackString();
+      }
+   }
+
+   enum ProtocolType {
+      TCP, UDP,
+      MPING, PING, TCPPING, TEST_PING,
+      MERGE2,
+      FD_SOCK, FD, VERIFY_SUSPECT, FD_ALL,
+      BARRIER,
+      NAKACK, UNICAST,
+      STABLE,
+      GMS,
+      UFC, MFC, FC,
+      FRAG2,
+      STREAMING_STATE_TRANSFER;
+   }
+
 }
