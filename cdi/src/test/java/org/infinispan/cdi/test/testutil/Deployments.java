@@ -59,7 +59,7 @@ public final class Deployments {
             )
             .addAsLibraries(
                   DependencyResolvers.use(MavenDependencyResolver.class)
-                        .loadReposFromPom("pom.xml")
+                        .loadMetadataFromPom("pom.xml")
                         .artifact("org.jboss.seam.solder:seam-solder")
                         .resolveAs(JavaArchive.class)
             );
