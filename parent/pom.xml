@@ -155,7 +155,7 @@
       <version.spymemcached>2.5</version.spymemcached>
       <version.testng>5.11</version.testng>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
-      <version.weld>1.1.1.Final</version.weld>
+      <version.weld>1.1.2.Final</version.weld>
       <version.xsom>20081112</version.xsom>
       <version.xstream>1.4.1</version.xstream>
       <version.javassist>3.12.1.GA</version.javassist>
