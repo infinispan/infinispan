@@ -217,8 +217,6 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          dispatcher.stop();
       }
 
-      asyncExecutor.shutdown();
-
       members = Collections.emptyList();
       coordinator = false;
       dispatcher = null;
