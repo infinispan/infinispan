@@ -111,7 +111,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 //         assertSupportedConfig();
          log.debug("*** Test method complete; clearing contents on all caches.");
          if (cacheManagers.isEmpty())
-            throw new IllegalStateException("No caches registered! Use registerCacheManager(Cache... caches) do that!");
+            throw new IllegalStateException("No caches registered! Use registerCacheManager(Cache... caches) to do that!");
          TestingUtil.clearContent(cacheManagers);
       } else {
          TestingUtil.killCacheManagers(cacheManagers);
