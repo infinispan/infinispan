@@ -32,6 +32,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.TransactionManager;
 import java.util.concurrent.TimeUnit;
@@ -44,6 +46,8 @@ import java.util.concurrent.TimeUnit;
  */
 @DefaultFactoryFor(classes = {RecoveryManager.class})
 public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+
+   private static final Log log = LogFactory.getLog(RecoveryManagerFactory.class);
 
    private static final long DEFAULT_EXPIRY = TimeUnit.HOURS.toMillis(6);
 

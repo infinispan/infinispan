@@ -29,7 +29,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.ReflectionCache;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 
 /**
@@ -53,14 +52,14 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
     * @param configuration           to use
     * @param globalComponentRegistry global component registry to attach the cache to
     * @param cacheName               name of the cache
-    * @param reflectionCache
     * @return a cache
     * @throws ConfigurationException if there are problems with the cfg
     */
-   public Cache<K, V> createCache(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
-                                  String cacheName, ReflectionCache reflectionCache) throws ConfigurationException {
+   public Cache<K, V> createCache(Configuration configuration,
+                                  GlobalComponentRegistry globalComponentRegistry,
+                                  String cacheName) throws ConfigurationException {
       try {
-         return createAndWire(configuration, globalComponentRegistry, cacheName, reflectionCache);
+         return createAndWire(configuration, globalComponentRegistry, cacheName);
       }
       catch (ConfigurationException ce) {
          throw ce;
@@ -74,9 +73,9 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    }
 
    protected AdvancedCache<K, V> createAndWire(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
-                                               String cacheName, ReflectionCache reflectionCache) throws Exception {
+                                               String cacheName) throws Exception {
       AdvancedCache<K, V> cache = new CacheImpl<K, V>(cacheName);
-      bootstrap(cacheName, cache, configuration, globalComponentRegistry, reflectionCache);
+      bootstrap(cacheName, cache, configuration, globalComponentRegistry);
       return cache;
    }
 
@@ -84,11 +83,11 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
     * Bootstraps this factory with a Configuration and a ComponentRegistry.
     */
    private void bootstrap(String cacheName, AdvancedCache cache, Configuration configuration,
-                          GlobalComponentRegistry globalComponentRegistry, ReflectionCache reflectionCache) {
+                          GlobalComponentRegistry globalComponentRegistry) {
       this.configuration = configuration;
 
       // injection bootstrap stuff
-      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, reflectionCache);
+      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry);
       componentRegistry.registerDefaultClassLoader(defaultClassLoader);
 
       // Notify any registered module lifecycle listeners that the cache is starting.

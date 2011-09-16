@@ -127,6 +127,7 @@
       <version.jbossjta>4.15.1.Final</version.jbossjta>
       <version.org.jboss.logging>3.0.0.GA</version.org.jboss.logging>
       <version.osgi>4.3.0</version.osgi>
+      <version.jboss.jandex>1.0.3.Final</version.jboss.jandex>
       <version.jboss.logging>3.0.0.GA</version.jboss.logging>
       <version.jboss.logging.processor>1.0.0.Beta7</version.jboss.logging.processor>
       <version.jboss.spec>1.0.0.Final</version.jboss.spec>
