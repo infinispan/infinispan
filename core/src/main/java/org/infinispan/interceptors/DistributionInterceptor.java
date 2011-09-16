@@ -121,20 +121,24 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      boolean isRehashInProgress = dm.isRehashInProgress();
-      Object returnValue = invokeNextInterceptor(ctx, command);
+      try {
+         Object returnValue = invokeNextInterceptor(ctx, command);
 
-      // If L1 caching is enabled, this is a remote command, and we found a value in our cache
-      // we store it so that we can later invalidate it
-      if (isL1CacheEnabled && !ctx.isOriginLocal() && returnValue != null) {
-      	l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
+         // If L1 caching is enabled, this is a remote command, and we found a value in our cache
+         // we store it so that we can later invalidate it
+         if (isL1CacheEnabled && !ctx.isOriginLocal() && returnValue != null) {
+           l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
+         }
+
+         // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
+         // available.  It could just have been removed in the same tx beforehand.
+         if (needsRemoteGet(ctx, command.getKey(), returnValue == null))
+            returnValue = remoteGetAndStoreInL1(ctx, command.getKey(), false);
+         return returnValue;
+      } catch (SuspectException e) {
+         // retry
+         return visitGetKeyValueCommand(ctx, command);
       }
-
-      // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
-      // available.  It could just have been removed in the same tx beforehand.
-      if (needsRemoteGet(ctx, command.getKey(), returnValue == null))
-         returnValue = remoteGetAndStoreInL1(ctx, command.getKey(), false);
-      return returnValue;
    }
 
    private boolean needsRemoteGet(InvocationContext ctx, Object key, boolean retvalCheck) {
