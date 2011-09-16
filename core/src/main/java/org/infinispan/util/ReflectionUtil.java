@@ -92,6 +92,23 @@ public class ReflectionUtil {
       return fields;
    }
 
+   public static Method findMethod(Class<?> type, String methodName, Class[] parameters) {
+      return findRecursively(type, methodName, parameters);
+   }
+
+   private static Method findRecursively(Class<?> type, String methodName, Class[] parameters) {
+      try {
+         return type.getDeclaredMethod(methodName, parameters);
+      } catch (NoSuchMethodException e) {
+         if (!type.equals(Object.class)) {
+            if (!type.isInterface()) {
+               return findRecursively(type.getSuperclass(), methodName, parameters);
+            }
+         }
+      }
+      return null;
+   }
+
    /**
     * Inspects a class and its superclasses (all the way to {@link Object} for method instances that contain a given
     * annotation. This even identifies private, package and protected methods, not just public ones.

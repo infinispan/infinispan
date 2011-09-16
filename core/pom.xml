@@ -77,7 +77,13 @@
          <artifactId>jboss-logging</artifactId>
          <version>${version.jboss.logging}</version>
       </dependency>
-      
+
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>jandex</artifactId>
+         <version>${version.jboss.jandex}</version>
+      </dependency>
+
       <dependency>
          <groupId>org.osgi</groupId>
          <artifactId>org.osgi.core</artifactId>
@@ -92,8 +98,8 @@
          <version>${version.org.jboss.naming}</version>
          <exclusions>
             <exclusion>
-                <groupId>org.jboss.logging</groupId>
-                <artifactId>jboss-logging-spi</artifactId>
+               <groupId>org.jboss.logging</groupId>
+               <artifactId>jboss-logging-spi</artifactId>
             </exclusion>
          </exclusions>
       </dependency>
@@ -105,8 +111,8 @@
          <version>${version.org.jboss.naming}</version>
          <exclusions>
             <exclusion>
-                <groupId>org.jboss.logging</groupId>
-                <artifactId>jboss-logging-spi</artifactId>
+               <groupId>org.jboss.logging</groupId>
+               <artifactId>jboss-logging-spi</artifactId>
             </exclusion>
          </exclusions>
       </dependency>
@@ -152,35 +158,85 @@
                </arguments>
             </configuration>
          </plugin>
+
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.1</version>
+            <executions>
+               <execution>
+                  <id>generate_annotation_index</id>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>java</goal>
+                  </goals>
+                  <configuration>
+                     <mainClass>org.jboss.jandex.Main</mainClass>
+                     <arguments>
+                        <argument>-o</argument>
+                        <argument>${basedir}/src/main/resources/infinispan-core-jandex.idx</argument>
+                        <argument>${project.build.outputDirectory}</argument>
+                     </arguments>
+                  </configuration>
+               </execution>
+            </executions>
+            <dependencies>
+               <dependency>
+                  <groupId>org.jboss</groupId>
+                  <artifactId>jandex</artifactId>
+                  <version>${version.jboss.jandex}</version>
+               </dependency>
+            </dependencies>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.3</version>
+            <executions>
+               <execution>
+                  <id>copy_indexes</id>
+                  <phase>process-test-resources</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <tasks>
+                        <copy file="${basedir}/src/main/resources/infinispan-core-jandex.idx" todir="${project.build.outputDirectory}"/>
+                     </tasks>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
       <pluginManagement>
-        <plugins>
+         <plugins>
             <plugin>
-                <!-- This plugin's configuration is used in m2e only. -->
-                <groupId>org.eclipse.m2e</groupId>
-                <artifactId>lifecycle-mapping</artifactId>
-                <version>1.0.0</version>
-                <configuration>
-                    <lifecycleMappingMetadata>
-                        <pluginExecutions>
-                            <pluginExecution>
-                                <pluginExecutionFilter>
-                                    <groupId>org.codehaus.mojo</groupId>
-                                    <artifactId>exec-maven-plugin</artifactId>
-                                    <versionRange>[1.0.2,)</versionRange>
-                                    <goals>
-                                        <goal>java</goal>
-                                    </goals>
-                                </pluginExecutionFilter>
-                                <action>
-                                    <ignore></ignore>
-                                </action>
-                            </pluginExecution>
-                        </pluginExecutions>
-                    </lifecycleMappingMetadata>
-                </configuration>
+               <!-- This plugin's configuration is used in m2e only. -->
+               <groupId>org.eclipse.m2e</groupId>
+               <artifactId>lifecycle-mapping</artifactId>
+               <version>1.0.0</version>
+               <configuration>
+                  <lifecycleMappingMetadata>
+                     <pluginExecutions>
+                        <pluginExecution>
+                           <pluginExecutionFilter>
+                              <groupId>org.codehaus.mojo</groupId>
+                              <artifactId>exec-maven-plugin</artifactId>
+                              <versionRange>[1.0.2,)</versionRange>
+                              <goals>
+                                 <goal>java</goal>
+                              </goals>
+                           </pluginExecutionFilter>
+                           <action>
+                              <ignore></ignore>
+                           </action>
+                        </pluginExecution>
+                     </pluginExecutions>
+                  </lifecycleMappingMetadata>
+               </configuration>
             </plugin>
-        </plugins>
+         </plugins>
       </pluginManagement>
    </build>
 </project>
