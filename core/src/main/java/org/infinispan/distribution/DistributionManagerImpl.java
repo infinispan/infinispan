@@ -34,6 +34,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.factories.annotations.Inject;
@@ -364,7 +365,8 @@ public class DistributionManagerImpl implements DistributionManager {
 
       for (Map.Entry<Object, InternalCacheValue> e : state.entrySet()) {
          InternalCacheValue v = e.getValue();
-         InvocationContext ctx = icc.createInvocationContext();
+         NonTxInvocationContext ctx = (NonTxInvocationContext) icc.createInvocationContext(false);
+         ctx.setOriginLocal(false);
          // locking not necessary in the case of a join since the node isn't doing anything else
          // TODO what if the node is already running?
          ctx.setFlags(CACHE_MODE_LOCAL, SKIP_CACHE_LOAD, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING,
@@ -582,7 +584,7 @@ public class DistributionManagerImpl implements DistributionManager {
          try {
             // this is a remotely originating tx
             cf.initializeReplicableCommand(cmd, true);
-            InvocationContext ctx = icc.createInvocationContext();
+            InvocationContext ctx = icc.createInvocationContext(true);
             ctx.setFlags(SKIP_REMOTE_LOOKUP, CACHE_MODE_LOCAL, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING);
             interceptorChain.invoke(ctx, cmd);
          } catch (Exception e) {

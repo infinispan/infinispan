@@ -126,6 +126,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
    public void testForceRollbackInternalId() {
       List<Long> ids = getInternalIds(showInDoubtTransactions(0));
+      log.tracef("test:: invoke rollback for %s", ids);
       String result = invokeForceWithId("forceRollback", 0, ids.get(0));
 
       System.out.println("result = " + result);

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -28,7 +28,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.InvocationContextContainerImpl;
+import org.infinispan.context.NonTransactionalInvocationContextContainer;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.notifications.cachelistener.event.*;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -53,7 +53,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       n = new CacheNotifierImpl();
       mockCache = createNiceMock(Cache.class);
       EasyMock.replay(mockCache);
-      InvocationContextContainer icc = new InvocationContextContainerImpl();
+      InvocationContextContainer icc = new NonTransactionalInvocationContextContainer();
       n.injectDependencies(icc, mockCache);
       cl = new CacheListener();
       n.start();

@@ -27,11 +27,13 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -65,6 +67,8 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       } catch (Throwable t) {
          lockManager.unlock(ctx);
          throw t;
+      } finally {
+         releaseLocksIfNoTransaction(ctx);
       }
    }
 
@@ -150,6 +154,17 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       } finally {
          //evict doesn't get called within a tx scope, so we should apply the changes before returning
          lockManager.unlock(ctx);
+      }
+   }
+
+   @Override
+   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      try {
+         for (InternalCacheEntry entry : dataContainer.entrySet())
+            lockKey(ctx, entry.getKey());
+         return invokeNextInterceptor(ctx, command);
+      } catch (Throwable te) {
+         throw cleanLocksAndRethrow(ctx, te);
       }
    }
 

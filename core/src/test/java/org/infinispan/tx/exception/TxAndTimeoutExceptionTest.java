@@ -124,6 +124,7 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
       cache.put("k2", "v2");
       assert lm.isLocked("k2");
       assertEquals(2, txTable.getLocalTxCount());
+      assert tm.getTransaction() != null;
       try {
          op.execute();
          assert false : "Timeout exception expected";

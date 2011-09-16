@@ -28,6 +28,8 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.EntryFactoryImpl;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.NonTransactionalInvocationContextContainer;
+import org.infinispan.context.TransactionalInvocationContextContainer;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
@@ -71,7 +73,11 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return componentType.cast(versionAwareMarshaller);
          } else if (componentType.equals(EntryFactory.class)) {
             return componentType.cast(getInstance(EntryFactoryImpl.class));
-         } else {
+         } else if(componentType.equals(InvocationContextContainer.class)) {
+            componentImpl = configuration.isTransactionalCache() ? TransactionalInvocationContextContainer.class
+                  : NonTransactionalInvocationContextContainer.class;
+            return componentType.cast(getInstance(componentImpl));
+         }else {
             // add an "Impl" to the end of the class name and try again
             componentImpl = loadClass(componentType.getName() + "Impl", configuration.getClassLoader());
          }

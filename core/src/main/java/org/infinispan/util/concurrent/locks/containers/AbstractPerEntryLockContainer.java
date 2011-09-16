@@ -73,8 +73,7 @@ public abstract class AbstractPerEntryLockContainer implements LockContainer {
             safeRelease(lock);
             throw ie;
          } catch (Throwable th) {
-            safeRelease(lock);
-            locked = false;
+             locked = false;
          }
          if (locked) {
             // lock acquired.  Now check if it is the *correct* lock!

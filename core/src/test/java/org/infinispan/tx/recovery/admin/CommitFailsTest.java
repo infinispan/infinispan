@@ -29,17 +29,11 @@ import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
 import org.infinispan.interceptors.InvocationContextInterceptor;
-import org.infinispan.interceptors.locking.AutoCommitInterceptor;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
 import javax.transaction.xa.XAException;
 import java.util.List;
 import java.util.concurrent.Executors;

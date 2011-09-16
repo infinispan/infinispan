@@ -30,6 +30,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
+import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -67,7 +68,7 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
          .loaders()
             .addCacheLoader(new DummyInMemoryCacheStore.Cfg())
          .customInterceptors()
-            .add(sdi).after(CacheLoaderInterceptor.class)
+            .add(sdi).after(InvocationContextInterceptor.class)
          .transaction().transactionalCache(false)
          .build();
 
@@ -87,9 +88,15 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       // clear the cache
       cache.getAdvancedCache().withFlags(SKIP_CACHE_STORE).clear();
 
+      se = cl.load("a");
+      assert se != null;
+      assert se.getValue().equals("b");
+
       // now attempt a concurrent get and evict.
       ExecutorService e = Executors.newFixedThreadPool(1);
       sdi.enabled = true;
+
+      log.info("test::doing the get");
 
       // call the get
       Future<String> future = e.submit(new Callable<String>() {
@@ -99,7 +106,9 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       });
 
       // now run the evict.
+      log.info("test::before the evict");
       cache.evict("a");
+      log.info("test::after the evict");
 
       // make sure the get call, which would have gone past the cache loader interceptor first, gets the correct value.
       assert future.get().equals("b");

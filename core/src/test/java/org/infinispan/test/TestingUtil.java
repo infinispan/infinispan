@@ -643,7 +643,6 @@ public class TestingUtil {
             clearReplicationQueues(cache);
             clearCacheLoader(cache);
             removeInMemoryData(cache);
-            ((AdvancedCache) cache).getInvocationContextContainer().createInvocationContext();
          }
       }
    }
@@ -902,7 +901,7 @@ public class TestingUtil {
       ComponentRegistry cr = extractComponentRegistry(cache);
       InterceptorChain ic = cr.getComponent(InterceptorChain.class);
       InvocationContextContainer icc = cr.getComponent(InvocationContextContainer.class);
-      InvocationContext ctxt = icc.createInvocationContext();
+      InvocationContext ctxt = icc.createInvocationContext(true);
       ic.invoke(ctxt, command);
    }
 

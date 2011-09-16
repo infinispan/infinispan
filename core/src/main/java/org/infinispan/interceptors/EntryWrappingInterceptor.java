@@ -171,6 +171,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          CacheEntry entry = e.getValue();
          if (entry != null && entry.isChanged()) {
             cll.commitEntry(entry, ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK));
+            if (trace) log.tracef("Committed entry %s", entry);
          } else {
             if (trace) log.tracef("Entry for key %s is null or not changed(%s), not calling commitUpdate", e.getKey(), entry);
          }

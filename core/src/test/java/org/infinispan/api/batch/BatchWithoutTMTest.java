@@ -28,9 +28,13 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
 
 @Test(groups = "functional", testName = "api.batch.BatchWithoutTMTest")
 public class BatchWithoutTMTest extends AbstractBatchTest {
@@ -39,7 +43,10 @@ public class BatchWithoutTMTest extends AbstractBatchTest {
 
    @BeforeClass
    public void createCacheManager() {
-      cm = TestCacheManagerFactory.createLocalCacheManager(true);
+      final Configuration defaultConfiguration = TestCacheManagerFactory.getDefaultConfiguration(true);
+      defaultConfiguration.fluent().invocationBatching().enabled(true);
+      defaultConfiguration.fluent().transaction().autoCommit(false);
+      cm = TestCacheManagerFactory.createCacheManager(defaultConfiguration);
    }
 
    @AfterClass
@@ -97,16 +104,22 @@ public class BatchWithoutTMTest extends AbstractBatchTest {
       assert "v2".equals(cache.get("k2"));
    }
 
+
+   private static Log log = LogFactory.getLog(BatchWithoutTMTest.class);
+
    public void testBatchVisibility() throws InterruptedException {
       Cache<String, String> cache = null;
       cache = createCache(true, "testBatchVisibility");
+
+      log.info("Here it starts...");
+
       cache.startBatch();
       cache.put("k", "v");
-      assert getOnDifferentThread(cache, "k") == null : "Other thread should not see batch update till batch completes!";
+      assertEquals(getOnDifferentThread(cache, "k"), null , "Other thread should not see batch update till batch completes!");
 
       cache.endBatch(true);
 
-      assert "v".equals(getOnDifferentThread(cache, "k"));
+      assertEquals("v", getOnDifferentThread(cache, "k"));
    }
 
    public void testBatchRollback() throws Exception {

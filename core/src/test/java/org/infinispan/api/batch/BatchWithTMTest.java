@@ -34,6 +34,8 @@ import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 
+import static org.testng.Assert.assertEquals;
+
 
 @Test(groups = {"functional", "transaction"}, testName = "api.batch.BatchWithTMTest")
 public class BatchWithTMTest extends AbstractBatchTest {
@@ -105,7 +107,7 @@ public class BatchWithTMTest extends AbstractBatchTest {
       cache.put("k", "v");
       cache.put("k2", "v2");
 
-      assert getOnDifferentThread(cache, "k") == null;
+      assertEquals(getOnDifferentThread(cache, "k"), null);
       assert getOnDifferentThread(cache, "k2") == null;
 
       cache.endBatch(false);

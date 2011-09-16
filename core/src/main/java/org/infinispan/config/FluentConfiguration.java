@@ -798,7 +798,9 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
 
    public static interface JmxStatisticsConfig extends FluentTypes {}
 
-   public static interface InvocationBatchingConfig extends FluentTypes {}
+   public static interface InvocationBatchingConfig extends FluentTypes {
+      Configuration.InvocationBatching enabled(Boolean enabled);
+   }
 }
 
 interface FluentTypes {

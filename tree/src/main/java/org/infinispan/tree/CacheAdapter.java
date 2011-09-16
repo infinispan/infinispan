@@ -369,7 +369,7 @@ public class CacheAdapter implements Cache {
 
    private Cache withFlags() {
       if (tcc.getTreeContext() != null)
-         icc.createInvocationContext().setFlags(tcc.getTreeContext().getFlags());
+         icc.createInvocationContext(true).setFlags(tcc.getTreeContext().getFlags());
       return cache;
    }
 }

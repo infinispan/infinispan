@@ -76,21 +76,6 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      try {
-         for (InternalCacheEntry entry : dataContainer.entrySet())
-            lockKey(ctx, entry.getKey());
-
-         return invokeNextInterceptor(ctx, command);
-      } catch (Throwable te) {
-         throw cleanLocksAndRethrow(ctx, te);
-      } finally {
-         // for non-transactional stuff.
-         releaseLocksIfNoTransaction(ctx);
-      }
-   }
-
-   @Override
    public final Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
       Object keys [] = command.getKeys();
       try {
@@ -119,7 +104,7 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
       }
    }
 
-   private void releaseLocksIfNoTransaction(InvocationContext ctx) {
+   protected final void releaseLocksIfNoTransaction(InvocationContext ctx) {
       if (!ctx.isInTxScope()) {
          lockManager.unlock(ctx);
       } else {

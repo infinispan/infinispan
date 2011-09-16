@@ -47,7 +47,7 @@ import static org.testng.Assert.assertEquals;
 public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
 
    protected Configuration defaultRecoveryConfig() {
-      return getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, false).fluent()
+      return getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true).fluent()
             .transaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class).recovery()
             .locking().useLockStriping(false)
             .clustering().hash().numOwners(2).rehashEnabled(false)

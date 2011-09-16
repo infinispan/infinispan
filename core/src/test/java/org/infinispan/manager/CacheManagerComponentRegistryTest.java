@@ -58,6 +58,7 @@ public class CacheManagerComponentRegistryTest extends AbstractInfinispanTest {
       Configuration defaultCfg = new Configuration();
       defaultCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
       defaultCfg.setFetchInMemoryState(false);
+      defaultCfg.fluent().transaction().transactionalCache(false);
       defaultCfg.setFetchInMemoryState(false);
 
       // cache manager with default configuration

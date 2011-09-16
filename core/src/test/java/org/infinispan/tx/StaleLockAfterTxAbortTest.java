@@ -24,21 +24,14 @@ package org.infinispan.tx;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.InvocationContextContainerImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
-import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
 
-import javax.transaction.InvalidTransactionException;
-import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.concurrent.CountDownLatch;

@@ -86,6 +86,11 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       if (lookedUpEntries != null) lookedUpEntries.clear();
    }
 
+   @Override
+   public boolean ownsLock(Object key) {
+      return getLockedKeys().contains(key);
+   }
+
    public void setLookedUpEntries(BidirectionalMap<Object, CacheEntry> lookedUpEntries) {
       this.lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(lookedUpEntries);
    }

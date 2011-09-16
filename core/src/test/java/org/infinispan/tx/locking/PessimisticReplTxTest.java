@@ -58,7 +58,12 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
    }
 
    public void testTxInProgress1() throws Exception {
-      test(0, 0);
+      log.info("test :: start");
+      try {
+         test(0, 0);
+      } finally {
+         log.info("test :: end");
+      }
    }
 
    public void testTxInProgress2() throws Exception {
@@ -94,6 +99,8 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
       assert cache(0).get(k).equals("v1");
 
       log.info("Before get...");
+      assert !lockManager(0).isLocked(k);
+      assert !lockManager(1).isLocked(k);
       assert cache(1).get(k).equals("v1");
       assert !lockManager(0).isLocked(k);
       assert !lockManager(1).isLocked(k);

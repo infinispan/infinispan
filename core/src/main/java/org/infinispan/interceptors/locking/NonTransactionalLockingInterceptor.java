@@ -119,7 +119,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    private void assertNonTransactional(InvocationContext ctx) {
       //this only happens if the cache is used in a transaction's scope
       if (ctx.isInTxScope()) {
-         throw new CacheException("This is a non-transactional cache and cannot be accessed within a transaction's scope.");
+         throw new CacheException("This is a non-transactional cache and cannot be accessed with a transactional InvocationContext.");
       }
    }
 }

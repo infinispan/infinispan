@@ -102,7 +102,7 @@ public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
       AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "key");
       assert map.isEmpty();
       InvocationContextContainer icc = TestingUtil.extractComponent(cache, InvocationContextContainer.class);
-      InvocationContext ic = icc.createInvocationContext();
+      InvocationContext ic = icc.createInvocationContext(false);
       ic.setFlags(SKIP_LOCKING);
       log.debug("Doing a put");
       assert icc.getInvocationContext().hasFlag(SKIP_LOCKING);
@@ -118,7 +118,7 @@ public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
       AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "key");
       tm.begin();
       assert map.isEmpty();
-      TestingUtil.extractComponent(cache, InvocationContextContainer.class).createInvocationContext().setFlags(SKIP_LOCKING);
+      TestingUtil.extractComponent(cache, InvocationContextContainer.class).createInvocationContext(true).setFlags(SKIP_LOCKING);
       map.put("a", "b");
       assert map.get("a").equals("b");
       Transaction t = tm.suspend();
@@ -137,7 +137,7 @@ public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
       assert map.isEmpty();
       map.put("x", "y");
       assert map.get("x").equals("y");
-      TestingUtil.extractComponent(cache, InvocationContextContainer.class).createInvocationContext().setFlags(SKIP_LOCKING);
+      TestingUtil.extractComponent(cache, InvocationContextContainer.class).createInvocationContext(false).setFlags(SKIP_LOCKING);
       log.debug("Doing a put");
       map.put("a", "b");
       log.debug("Put complete");

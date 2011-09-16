@@ -56,4 +56,7 @@ public interface CacheTransaction {
    public void removeLookedUpEntry(Object key);
 
    public void clearLookedUpEntries();
+
+   public abstract boolean ownsLock(Object key);
+
 }

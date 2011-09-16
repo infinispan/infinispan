@@ -30,7 +30,6 @@ import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.*;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.interceptors.locking.AutoCommitInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
@@ -80,13 +79,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       boolean invocationBatching = configuration.isInvocationBatchingEnabled();
       // load the icInterceptor first
 
-      boolean autoCommit = configuration.isTransactionAutoCommit() && configuration.isTransactionalCache();
-
       CommandInterceptor first;
       if (invocationBatching) {
          first = createInterceptor(BatchingInterceptor.class);
       } else {
-         first = autoCommit ? createInterceptor(AutoCommitInterceptor.class) : createInterceptor(InvocationContextInterceptor.class);
+         first = createInterceptor(InvocationContextInterceptor.class);
       }
 
       InterceptorChain interceptorChain = new InterceptorChain(first);
@@ -101,10 +98,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       // NOW add the ICI if we are using batching!
       if (invocationBatching) {
-         if (autoCommit)
-            interceptorChain.appendInterceptor(createInterceptor(AutoCommitInterceptor.class));
-         interceptorChain.appendInterceptor(createInterceptor(InvocationContextInterceptor.class));
-      } else if (autoCommit) {
          interceptorChain.appendInterceptor(createInterceptor(InvocationContextInterceptor.class));
       }
 

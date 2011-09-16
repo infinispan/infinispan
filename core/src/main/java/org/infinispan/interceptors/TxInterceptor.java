@@ -271,6 +271,6 @@ public class TxInterceptor extends CommandInterceptor {
    }
 
    private void assertInTxScope(InvocationContext ctx) {
-      if (!ctx.isInTxScope()) throw new IllegalStateException("This is a transactional cache and this operation is out of a transaction's scope");
+      if (ctx.isOriginLocal() && !ctx.isInTxScope()) throw new IllegalStateException("This is a transactional cache and this operation is out of a transaction's scope");
    }
 }

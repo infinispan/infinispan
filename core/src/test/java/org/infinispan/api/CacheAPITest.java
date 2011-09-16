@@ -158,7 +158,13 @@ public abstract class CacheAPITest extends TestAPINonTxTest {
       assert cache.keySet().contains(key);
       assert cache.values().contains(value);
 
-      TestingUtil.getTransactionManager(cache).begin();
+
+      final TransactionManager transactionManager = cache.getAdvancedCache().getTransactionManager();
+      transactionManager.begin();
+      log.trace("Here is where it begins: " + transactionManager.getTransaction());
+
+      cache.size();
+
       cache.clear();
       assert cache.get(key) == null;
       size = 0;

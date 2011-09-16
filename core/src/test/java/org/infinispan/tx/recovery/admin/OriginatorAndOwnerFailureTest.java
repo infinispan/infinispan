@@ -52,6 +52,7 @@ public class OriginatorAndOwnerFailureTest extends AbstractRecoveryTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration configuration = defaultRecoveryConfig();
+      assert configuration.isTransactionalCache();
       createCluster(configuration, 3);
       waitForClusterToForm();
 
@@ -90,6 +91,9 @@ public class OriginatorAndOwnerFailureTest extends AbstractRecoveryTest {
    }
 
    protected void runTest(int index) {
+
+      assert cache(0).getConfiguration().isTransactionalCache();
+
       List<Long> internalIds = getInternalIds(recoveryOps(index).showInDoubtTransactions());
       assertEquals(internalIds.size(), 1);
 
