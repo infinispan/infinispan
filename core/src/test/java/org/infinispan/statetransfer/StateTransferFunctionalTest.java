@@ -177,6 +177,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       logTestEnd(m);
    }
 
+   @Test(enabled = false, description = "Assymetric caches are *really* not supported in this version")
    public void testInitialStateTransferCacheNotPresent(Method m) throws Exception {
       testCount++;
       logTestStart(m);
@@ -274,6 +275,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       logTestEnd(m);
    }
 
+   @Test(enabled = false, description = "The new state transfer doesn't work with cache or cache manager restarts (yet)")
    public void testInitialStateTransferAfterRestart(Method m) throws Exception {
       testCount++;
       logTestStart(m);
