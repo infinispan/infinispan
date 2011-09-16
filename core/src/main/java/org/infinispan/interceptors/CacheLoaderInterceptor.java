@@ -58,18 +58,13 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    protected CacheLoaderManager clm;
    protected CacheNotifier notifier;
    protected CacheLoader loader;
-   private DataContainer dataContainer;
    private EntryFactory entryFactory;
-   private LockManager lockManager;
 
    @Inject
-   protected void injectDependencies(CacheLoaderManager clm, DataContainer dataContainer, EntryFactory entryFactory, CacheNotifier notifier,
-                                     LockManager lockManager) {
+   protected void injectDependencies(CacheLoaderManager clm, EntryFactory entryFactory, CacheNotifier notifier) {
       this.clm = clm;
-      this.dataContainer = dataContainer;
       this.notifier = notifier;
       this.entryFactory = entryFactory;
-      this.lockManager = lockManager;
    }
 
    @Start(priority = 15)
@@ -141,7 +136,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
             return false;
          }
       } else {
-         return false;
+         return true;
       }
    }
 
