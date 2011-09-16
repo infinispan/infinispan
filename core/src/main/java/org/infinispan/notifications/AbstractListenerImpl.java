@@ -80,7 +80,6 @@ public abstract class AbstractListenerImpl {
       }
 
       if (syncProcessor != null) syncProcessor.shutdownNow();
-      if (asyncProcessor != null) asyncProcessor.shutdownNow();
    }
 
    protected abstract Log getLog();

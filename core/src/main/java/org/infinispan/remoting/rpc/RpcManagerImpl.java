@@ -115,11 +115,6 @@ public class RpcManagerImpl implements RpcManager {
       statisticsEnabled = configuration.isExposeJmxStatistics();
    }
 
-   @Stop(priority = 9)
-   private void stop() {
-      asyncExecutor.shutdown();
-   }
-
    private boolean useReplicationQueue(boolean sync) {
       return !sync && replicationQueue != null && replicationQueue.isEnabled();
    }

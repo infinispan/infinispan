@@ -100,6 +100,13 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       }
    }
 
+   public void stop() {
+      if (notificationExecutor != null) notificationExecutor.shutdownNow();
+      if (asyncTransportExecutor != null) asyncTransportExecutor.shutdownNow();
+      if (asyncReplicationExecutor != null) asyncReplicationExecutor.shutdownNow();
+      if (evictionExecutor != null) evictionExecutor.shutdownNow();
+   }
+
    private ExecutorService buildAndConfigureExecutorService(String factoryName, Properties p, String componentName) throws Exception {
       Properties props = new Properties(p); // defensive copy
       if (p != null && !p.isEmpty()) props.putAll(p);
