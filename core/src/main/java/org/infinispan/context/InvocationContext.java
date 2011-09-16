@@ -103,4 +103,12 @@ public interface InvocationContext extends EntryLookup, FlagContainer, Cloneable
    void setClassLoader(ClassLoader classLoader);
 
    void registerLockedKey(Object key);
+
+   /**
+    * Using this method should always ensure locks checked in the appropriate scope.
+    *
+    * @param key lock to test
+    * @return true if the lock being tested is already held in the current scope, false otherwise.
+    */
+   boolean hasLockedKey(Object key);
 }

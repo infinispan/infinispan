@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -22,11 +22,8 @@
  */
 package org.infinispan.context;
 
-import java.util.Set;
-
 import org.infinispan.CacheException;
-import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.VisitableCommand;
+import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
@@ -40,27 +37,36 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 /**
- * Default implementation for {@link org.infinispan.context.InvocationContextContainer}.
+ * Default implementation for {@link InvocationContextContainer}.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class InvocationContextContainerImpl implements InvocationContextContainer {
+public class TransactionalInvocationContextContainer extends AbstractInvocationContextContainer {
 
    private TransactionManager tm;
    private TransactionTable transactionTable;
-
-   ThreadLocal<InvocationContext> icTl = new ThreadLocal<InvocationContext>();
+   private BatchContainer batchContainer;
 
    @Inject
-   public void init(TransactionManager tm, TransactionTable transactionTable) {
+   public void init(TransactionManager tm, TransactionTable transactionTable, BatchContainer batchContainer) {
       this.tm = tm;
       this.transactionTable = transactionTable;
+      this.batchContainer = batchContainer;
    }
 
-   public InvocationContext createInvocationContext() {
-      return createInvocationContext(getRunningTx());
+   @Override
+   public NonTxInvocationContext createNonTxInvocationContext() {
+      return newNonTxInvocationContext(true);
+   }
+
+   public InvocationContext createInvocationContext(boolean isWrite) {
+      final Transaction runningTx = getRunningTx();
+      if (runningTx == null && !isWrite) {
+         return newNonTxInvocationContext(true);
+      }
+      return createInvocationContext(runningTx);
    }
 
    @Override
@@ -79,15 +85,7 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
          localContext.setTransaction(tx);
          return localContext;
       } else {
-         NonTxInvocationContext nonTxContext;
-         if ((existing == null) || !(existing instanceof NonTxInvocationContext)) {
-            nonTxContext = new NonTxInvocationContext();
-            icTl.set(nonTxContext);
-         } else {
-            nonTxContext = (NonTxInvocationContext) existing;
-         }
-         nonTxContext.setOriginLocal(true);
-         return nonTxContext;
+         throw new IllegalStateException("This is a tx cache!");
       }
    }
 
@@ -112,44 +110,23 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
       return remoteTxContext;
    }
 
-   public NonTxInvocationContext createNonTxInvocationContext() {
-      InvocationContext existing = icTl.get();
-      if (existing != null && existing instanceof NonTxInvocationContext) {
-         NonTxInvocationContext context = (NonTxInvocationContext) existing;
-         context.setOriginLocal(true);
-         return context;
-      }
-      NonTxInvocationContext remoteTxContext = new NonTxInvocationContext();
-      icTl.set(remoteTxContext);
-      return remoteTxContext;
-   }
-   
-   @Override
-   public InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand, Address origin) {
-      InvocationContext context = createRemoteInvocationContext(origin);
-      if (cacheCommand != null && cacheCommand instanceof FlagAffectedCommand) {
-         FlagAffectedCommand command = (FlagAffectedCommand) cacheCommand;
-         Set<Flag> flags = command.getFlags();
-         if (flags != null && !flags.isEmpty()) {
-            return new InvocationContextFlagsOverride(context, flags);
-         }
-      }
-      return context;
+   public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
+      final NonTxInvocationContext nonTxInvocationContext = newNonTxInvocationContext(false);
+      nonTxInvocationContext.setOrigin(origin);
+      return nonTxInvocationContext;
    }
 
-   public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
-      InvocationContext existing = icTl.get();
+   private NonTxInvocationContext newNonTxInvocationContext(boolean local) {
+      final InvocationContext existing = icTl.get();
+      NonTxInvocationContext ctx;
       if (existing != null && existing instanceof NonTxInvocationContext) {
-         NonTxInvocationContext context = (NonTxInvocationContext) existing;
-         context.setOriginLocal(false);
-         context.setOrigin(origin);
-         return context;
+         ctx = (NonTxInvocationContext) existing;
+      } else {
+         ctx = new NonTxInvocationContext();
+         icTl.set(ctx);
       }
-      NonTxInvocationContext remoteNonTxContext = new NonTxInvocationContext();
-      remoteNonTxContext.setOriginLocal(false);
-      remoteNonTxContext.setOrigin(origin);
-      icTl.set(remoteNonTxContext);
-      return remoteNonTxContext;
+      ctx.setOriginLocal(local);
+      return ctx;
    }
 
    public InvocationContext getInvocationContext() {
@@ -159,27 +136,12 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
       return invocationContext;
    }
 
-   public InvocationContext suspend() {
-      InvocationContext invocationContext = icTl.get();
-      icTl.remove();
-      return invocationContext;
-   }
-
-   public void resume(InvocationContext ctxt) {
-      if (ctxt != null) icTl.set(ctxt);
-   }
-
-   @Override
-   public InvocationContext peekInvocationContext() {
-      return icTl.get();
-   }
 
    private Transaction getRunningTx() {
       try {
-         return tm == null ? null : tm.getTransaction();
+         return tm.getTransaction();
       } catch (SystemException e) {
          throw new CacheException(e);
       }
    }
-
 }

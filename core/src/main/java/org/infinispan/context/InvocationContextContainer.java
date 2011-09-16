@@ -53,8 +53,9 @@ public interface InvocationContextContainer {
     * marked as local, i.e. {@link InvocationContext#isOriginLocal()} will be true. The context is
     * also associated with the current thread, so further calls to {@link #getInvocationContext()}
     * will return same instance.
+    * @param isWrite
     */
-   InvocationContext createInvocationContext();
+   InvocationContext createInvocationContext(boolean isWrite);
 
    /**
     * Creates an invocation context

@@ -113,7 +113,7 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
 
    @Override
    public boolean hasLockedKey(Object key) {
-      return localTransaction != null && super.hasLockedKey(key);
+      return localTransaction != null && localTransaction.ownsLock(key);
    }
 
    public void remoteLocksAcquired(Collection<Address> nodes) {

@@ -41,6 +41,8 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
 
    private Transaction transaction;
 
+   private boolean txInjected;
+
    public boolean hasModifications() {
       return getModifications() != null && !getModifications().isEmpty();
    }
@@ -58,6 +60,22 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
          affectedKeys.addAll(keys);
          getCacheTrasaction().setAffectedKeys(affectedKeys);
       }
+   }
+
+   @Override
+   public void setTransactionInjected(boolean injected) {
+      this.txInjected = injected;
+   }
+
+   @Override
+   public boolean isTransactionInjected() {
+      return this.txInjected;
+   }
+
+   @Override
+   public void reset() {
+      super.reset();
+      txInjected = false;
    }
 
    public boolean isInTxScope() {

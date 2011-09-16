@@ -149,12 +149,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    }
 
    public boolean hasLockedKey(Object key) {
-      CacheEntry e = lookupEntry(key);
-      if (e == null) {
-         return getLookedUpEntries().containsKey(key); // this will chk if the key is present even if the value is null
-      } else {
-         return e.isChanged();
-      }
+      return getLockedKeys().contains(key);
    }
 
 

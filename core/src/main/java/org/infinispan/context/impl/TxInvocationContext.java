@@ -27,6 +27,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.transaction.Transaction;
+import java.security.PrivateKey;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -79,4 +80,9 @@ public interface TxInvocationContext extends InvocationContext {
     * or false otherwise.
     */
    boolean isTransactionValid();
+
+   void setTransactionInjected(boolean injected);
+
+   boolean isTransactionInjected();
+
 }
