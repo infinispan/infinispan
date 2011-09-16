@@ -105,6 +105,8 @@ class PushConfirmationsMap {
          lastViewId = viewId;
          membersCount = members.size();
          actualConfirmationsCount = 0;
+         pushConfirmations.clear();
+         joinConfirmations.clear();
       } finally {
          lock.unlock();
       }
