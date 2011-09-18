@@ -84,61 +84,14 @@ public class AnnotatedMethodCache {
          }
 
          // Scan for Inject methods
-         for (AnnotationInstance ai : annotationIndex.getAnnotations(INJECT_ANNOTATION)) {
-            if (ai.target() instanceof MethodInfo) {
-               MethodInfo methodInfo = (MethodInfo) ai.target();
-               ClassInfo classInfo = methodInfo.declaringClass();
-               String clazz = classInfo.name().toString();
-               List<CachedMethod> methodList = INJECT_METHODS.get(clazz);
-               if (methodList == null) {
-                  methodList = new LinkedList<CachedMethod>();
-                  INJECT_METHODS.put(clazz, methodList);
-               }
-               try {
-                  methodList.add(new CachedMethod(ai, classLoader, methodInfo));
-               } catch (Exception e) {
-                  log.fatal("Caught exception scanning annotations on " + methodInfo, e);
-               }
-            }
-         }
+         collectAndCacheMethodAnnotations(annotationIndex, classLoader, INJECT_ANNOTATION, INJECT_METHODS);
 
          // Scan for Start methods
-         for (AnnotationInstance ai : annotationIndex.getAnnotations(START_ANNOTATION)) {
-            if (ai.target() instanceof MethodInfo) {
-               MethodInfo methodInfo = (MethodInfo) ai.target();
-               ClassInfo classInfo = methodInfo.declaringClass();
-               String clazz = classInfo.name().toString();
-               List<CachedMethod> methodList = START_METHODS.get(clazz);
-               if (methodList == null) {
-                  methodList = new LinkedList<CachedMethod>();
-                  START_METHODS.put(clazz, methodList);
-               }
-               try {
-                  methodList.add(new CachedMethod(ai, classLoader, methodInfo));
-               } catch (Exception e) {
-                  log.fatal("Caught exception scanning annotations on " + methodInfo, e);
-               }
-            }
-         }
+         collectAndCacheMethodAnnotations(annotationIndex, classLoader, START_ANNOTATION, START_METHODS);
 
          // Scan for Stop methods
-         for (AnnotationInstance ai : annotationIndex.getAnnotations(STOP_ANNOTATION)) {
-            if (ai.target() instanceof MethodInfo) {
-               MethodInfo methodInfo = (MethodInfo) ai.target();
-               ClassInfo classInfo = methodInfo.declaringClass();
-               String clazz = classInfo.name().toString();
-               List<CachedMethod> methodList = STOP_METHODS.get(clazz);
-               if (methodList == null) {
-                  methodList = new LinkedList<CachedMethod>();
-                  STOP_METHODS.put(clazz, methodList);
-               }
-               try {
-                  methodList.add(new CachedMethod(ai, classLoader, methodInfo));
-               } catch (Exception e) {
-                  log.fatal("Caught exception scanning annotations on " + methodInfo, e);
-               }
-            }
-         }
+         collectAndCacheMethodAnnotations(annotationIndex, classLoader, STOP_ANNOTATION, STOP_METHODS);
+
       } catch (IOException e) {
          log.fatal("Cannot load annotation index!", e);
       }
@@ -150,6 +103,27 @@ public class AnnotatedMethodCache {
       } catch (ClassNotFoundException e) {
          log.warn("Cannot load class " + className, e);
          return false;
+      }
+   }
+
+   private static void collectAndCacheMethodAnnotations(Index annotationIndex, ClassLoader classLoader,
+         DotName annotationType, Map<String, List<CachedMethod>> targetCache) {
+      for (AnnotationInstance ai : annotationIndex.getAnnotations(annotationType)) {
+         if (ai.target() instanceof MethodInfo) {
+            MethodInfo methodInfo = (MethodInfo) ai.target();
+            ClassInfo classInfo = methodInfo.declaringClass();
+            String clazz = classInfo.name().toString();
+            List<CachedMethod> methodList = targetCache.get(clazz);
+            if (methodList == null) {
+               methodList = new LinkedList<CachedMethod>();
+               targetCache.put(clazz, methodList);
+            }
+            try {
+               methodList.add(new CachedMethod(ai, classLoader, methodInfo));
+            } catch (Exception e) {
+               log.fatal("Caught exception scanning annotations on " + methodInfo, e);
+            }
+         }
       }
    }
 
