@@ -130,7 +130,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    private final ConcurrentMap<String, Configuration> configurationOverrides = new ConcurrentHashMap<String, Configuration>();
    private final GlobalComponentRegistry globalComponentRegistry;
    private final ReentrantLock cacheCreateLock;
-   private final ReflectionCache reflectionCache = new ReflectionCache();
    private volatile boolean stopping;
 
    private static final boolean SUPPRESS_CACHE_CREATION_WARNING = Boolean.getBoolean("infinispan.suppress_cache_creation_warning");
@@ -221,7 +220,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
               .clone();
       this.globalConfiguration.accept(configurationValidator);
       this.defaultConfiguration = defaultConfiguration == null ? new Configuration() : defaultConfiguration.clone();
-      this.globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, reflectionCache, caches.keySet());
+      this.globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());
       this.cacheCreateLock = new ReentrantLock();
       if (start)
          start();
@@ -263,7 +262,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             c.applyOverrides(entry.getValue());
             configurationOverrides.put(entry.getKey(), c);
          }
-         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, reflectionCache, caches.keySet());
+         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
          cacheCreateLock = new ReentrantLock();
       } catch (RuntimeException re) {
          throw new ConfigurationException(re);
@@ -308,7 +307,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             c.applyOverrides(entry.getValue());
             configurationOverrides.put(entry.getKey(), c);
          }
-         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, reflectionCache, caches.keySet());
+         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
          cacheCreateLock = new ReentrantLock();
       } catch (ConfigurationException ce) {
          throw ce;
@@ -362,7 +361,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
             }
          }
 
-         globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, reflectionCache, caches.keySet());
+         globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());
          cacheCreateLock = new ReentrantLock();
       } catch (RuntimeException re) {
          throw new ConfigurationException(re);
@@ -604,7 +603,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          c.setGlobalConfiguration(globalConfiguration);
          c.accept(configurationValidator);
          c.assertValid();
-         Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName, reflectionCache);
+         Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName);
          CacheWrapper cw = new CacheWrapper(cache);
          existingCache = caches.put(cacheName, cw);
          if (existingCache != null) {
@@ -667,8 +666,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
                globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
                globalComponentRegistry.stop();
 
-               // Clear the reflection cache to avoid leaks
-               reflectionCache.stop();
             } else {
                if (log.isTraceEnabled())
                   log.trace("Ignore call to stop as the cache manager is stopping");

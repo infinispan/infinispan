@@ -34,7 +34,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
-import org.infinispan.manager.ReflectionCache;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
 import org.infinispan.util.ModuleProperties;
@@ -84,9 +83,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
     *
     * @param configuration configuration with which this is created
     */
-   public GlobalComponentRegistry(GlobalConfiguration configuration, EmbeddedCacheManager cacheManager,
-                                  ReflectionCache reflectionCache, Set<String> createdCaches) {
-      super(reflectionCache);
+   public GlobalComponentRegistry(GlobalConfiguration configuration,
+                                  EmbeddedCacheManager cacheManager,
+                                  Set<String> createdCaches) {
       if (configuration == null) throw new NullPointerException("GlobalConfiguration cannot be null!");
       try {
          // this order is important ... 

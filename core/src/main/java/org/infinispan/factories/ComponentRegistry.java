@@ -32,7 +32,6 @@ import org.infinispan.factories.scopes.ScopeDetector;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.manager.ReflectionCache;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.logging.Log;
@@ -73,8 +72,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
     * @param globalComponents Shared Component Registry to delegate to
     */
    public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache cache,
-                            GlobalComponentRegistry globalComponents, ReflectionCache reflectionCache) {
-      super(reflectionCache);
+                            GlobalComponentRegistry globalComponents) {
       try {
          this.cacheName = cacheName;
          if (cacheName == null) throw new ConfigurationException("Cache name cannot be null!");
@@ -123,7 +121,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   protected final Map<Class, Class<? extends AbstractComponentFactory>> getDefaultFactoryMap() {
+   protected final Map<String, Class<? extends AbstractComponentFactory>> getDefaultFactoryMap() {
       // delegate to parent.  No sense maintaining multiple copies of this map.
       return globalComponents.getDefaultFactoryMap();
    }
