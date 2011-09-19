@@ -17,8 +17,9 @@
  * 02110-1301 USA
  */
 
-package org.infinispan;
+package org.infinispan.stress;
 
+import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;

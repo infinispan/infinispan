@@ -44,7 +44,7 @@ public class CachedMethod {
    private final Annotation[][] paramAnnotations;
    private final static Map<ClassInfo, Class<?>> CLASS_CACHE = new ConcurrentHashMap<ClassInfo, Class<?>>();
 
-   CachedMethod(AnnotationInstance annotationInstance, ClassLoader classLoader, MethodInfo methodInfo) throws ClassNotFoundException, NoSuchMethodException {
+   CachedMethod(AnnotationInstance annotationInstance, ClassLoader classLoader, MethodInfo methodInfo) throws ClassNotFoundException {
       this.annotationInstance = annotationInstance;
       ClassInfo classInfo = methodInfo.declaringClass();
       Class<?> c;
