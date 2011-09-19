@@ -72,7 +72,7 @@ public class QueryInterceptor extends CommandInterceptor {
    private final Lock mutating = new ReentrantLock();
    protected TransactionManager transactionManager;
    protected TransactionSynchronizationRegistry transactionSynchronizationRegistry;
-   private ExecutorService asyncExecutor;
+   protected ExecutorService asyncExecutor;
 
    public QueryInterceptor(SearchFactoryIntegrator searchFactory) {
       this.searchFactory = searchFactory;
