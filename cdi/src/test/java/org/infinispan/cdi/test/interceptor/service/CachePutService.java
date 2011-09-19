@@ -23,37 +23,32 @@
 package org.infinispan.cdi.test.interceptor.service;
 
 import javax.cache.interceptor.CacheKeyParam;
-import javax.cache.interceptor.CacheRemoveEntry;
-
-import static org.infinispan.cdi.util.Contracts.assertNotNull;
+import javax.cache.interceptor.CachePut;
+import javax.cache.interceptor.CacheValue;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class CacheRemoveEntryService {
+public class CachePutService {
 
-   @CacheRemoveEntry
-   public void removeEntry(String login) {
-      assertNotNull(login, "login parameter cannot be null");
+   @CachePut
+   public void put(long id, @CacheValue String name) {
    }
 
-   @CacheRemoveEntry(cacheName = "custom")
-   public void removeEntryWithCacheName(String login) {
-      assertNotNull(login, "login parameter cannot be null");
+   @CachePut(cacheName = "custom")
+   public void putWithCacheName(long id, @CacheValue String name) {
    }
 
-   @CacheRemoveEntry(cacheName = "custom")
-   public void removeEntryWithCacheKeyParam(@CacheKeyParam String login, String unused) {
-      assertNotNull(login, "login parameter cannot be null");
+   @CachePut(cacheName = "custom")
+   public void putWithCacheKeyParam(@CacheKeyParam long id, long id2, @CacheValue String name) {
    }
 
-   @CacheRemoveEntry(cacheName = "custom", afterInvocation = false)
-   public void removeEntryBeforeInvocationWithException(String login) {
-      assertNotNull(login, "login parameter cannot be null");
+   @CachePut(cacheName = "custom", afterInvocation = false)
+   public void putBeforeInvocation(long id, @CacheValue String name) {
+      throw new RuntimeException();
    }
 
-   @CacheRemoveEntry(cacheName = "custom", cacheKeyGenerator = CustomCacheKeyGenerator.class)
-   public void removeEntryWithCacheKeyGenerator(String login) {
-      assertNotNull(login, "login parameter cannot be null");
+   @CachePut(cacheName = "custom", cacheKeyGenerator = CustomCacheKeyGenerator.class)
+   public void putWithCacheKeyGenerator(long id, @CacheValue String name) {
    }
 }
