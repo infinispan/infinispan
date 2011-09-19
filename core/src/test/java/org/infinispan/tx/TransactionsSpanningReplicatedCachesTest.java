@@ -25,6 +25,7 @@ package org.infinispan.tx;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -39,7 +40,7 @@ import static org.testng.AssertJUnit.assertFalse;
 @Test(groups = "functional", sequential=true, testName = "tx.TransactionsSpanningReplicatedCachesTest")
 public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManagersTest {
 
-   CacheContainer cm1, cm2;
+   EmbeddedCacheManager cm1, cm2;
 
    public TransactionsSpanningReplicatedCachesTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -53,17 +54,8 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       defineConfigurationOnAllManagers("c1", c);
       defineConfigurationOnAllManagers("c2", c);
 
-      cache(0, "c1");
-      cache(0, "c2");
-      cache(1, "c1");
-      cache(1, "c2");
-      cache(0, "cache1");
-      cache(0, "cache2");
-      cache(1, "cache1");
-      cache(1, "cache2");
-      cache(0);
-      cache(1);
-
+      cm1.startCaches("c1", "c2", "cache1", "cache2", CacheContainer.DEFAULT_CACHE_NAME);
+      cm2.startCaches("c1", "c2", "cache1", "cache2", CacheContainer.DEFAULT_CACHE_NAME);
    }
 
    protected Configuration getConfiguration() {

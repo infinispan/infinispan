@@ -26,6 +26,7 @@ import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -49,6 +50,8 @@ public class InvalidationFailureTest extends MultipleCacheManagersTest {
       createCluster(config, 2);
       manager(0).defineConfiguration("second", config);
       manager(1).defineConfiguration("second", config);
+      manager(0).startCaches(CacheContainer.DEFAULT_CACHE_NAME, "second");
+      manager(1).startCaches(CacheContainer.DEFAULT_CACHE_NAME, "second");
       TestingUtil.blockUntilViewsReceived(10000, cache(0), cache(1));
       TestingUtil.blockUntilViewsReceived(10000, cache(0, "second"), cache(1, "second"));
       cache(0).put("k","v");
