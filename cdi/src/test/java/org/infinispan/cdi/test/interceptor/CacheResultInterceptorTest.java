@@ -74,7 +74,7 @@ public class CacheResultInterceptorTest extends Arquillian {
       assertEquals("Morning Foo", message);
       assertEquals(cache.size(), 1);
 
-      assertEquals(service.getCacheResult(), 1);
+      assertEquals(service.getNbCall(), 1);
    }
 
    public void testCacheResultWithCacheName() {
@@ -90,7 +90,23 @@ public class CacheResultInterceptorTest extends Arquillian {
       assertEquals("Hi Pete", message);
       assertEquals(customCache.size(), 1);
 
-      assertEquals(service.getCacheResultWithCacheName(), 1);
+      assertEquals(service.getNbCall(), 1);
+   }
+
+   public void testCacheResultWithCacheKeyParam() {
+      String message = service.cacheResultWithCacheKeyParam("Pete", "foo");
+
+      assertNotNull(message);
+      assertEquals("Hola Pete", message);
+      assertEquals(customCache.size(), 1);
+
+      message = service.cacheResultWithCacheKeyParam("Pete", "foo2");
+
+      assertNotNull(message);
+      assertEquals("Hola Pete", message);
+      assertEquals(customCache.size(), 1);
+
+      assertEquals(service.getNbCall(), 1);
    }
 
    public void testCacheResultWithCustomCacheKeyGenerator() throws NoSuchMethodException {
@@ -111,7 +127,7 @@ public class CacheResultInterceptorTest extends Arquillian {
       assertEquals("Hello Kevin", message);
       assertEquals(customCache.size(), 1);
 
-      assertEquals(service.getCacheResultWithCacheKeyGenerator(), 1);
+      assertEquals(service.getNbCall(), 1);
    }
 
    public void testCacheResultWithSkipGet() throws NoSuchMethodException {
@@ -127,7 +143,7 @@ public class CacheResultInterceptorTest extends Arquillian {
       assertEquals("Hey Manik", message);
       assertEquals(customCache.size(), 1);
 
-      assertEquals(service.getCacheResultSkipGet(), 2);
+      assertEquals(service.getNbCall(), 2);
    }
 
    public void testCacheResultWithSpecificCacheManager() {
@@ -143,7 +159,7 @@ public class CacheResultInterceptorTest extends Arquillian {
       assertEquals("Bonjour Pete", message);
       assertEquals(smallCache.size(), 1);
 
-      assertEquals(service.getCacheResultWithSpecificCacheManager(), 1);
+      assertEquals(service.getNbCall(), 1);
       assertEquals(smallCache.size(), 1);
       assertEquals(smallCache.getConfiguration().getEvictionMaxEntries(), 4);
    }

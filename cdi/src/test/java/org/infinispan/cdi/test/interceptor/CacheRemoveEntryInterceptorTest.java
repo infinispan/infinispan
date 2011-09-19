@@ -89,6 +89,19 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
       assertEquals(customCache.size(), 0);
    }
 
+   public void testCacheRemoveEntryWithCacheKeyParam() {
+      final CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
+
+      customCache.put(cacheKey, "Hello Kevin");
+
+      assertEquals(customCache.size(), 1);
+      assertTrue(customCache.containsKey(cacheKey));
+
+      service.removeEntryWithCacheKeyParam("Kevin", "foo");
+
+      assertEquals(customCache.size(), 0);
+   }
+
    public void testCacheRemoveEntryAfterInvocationWithException() {
       final CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
 
