@@ -144,7 +144,6 @@ public class InvalidateCommand extends RemoveCommand {
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       switch (status) {
          case FAILED:
-         case INITIALIZING:
          case STOPPING:
          case TERMINATED:
             return true;
