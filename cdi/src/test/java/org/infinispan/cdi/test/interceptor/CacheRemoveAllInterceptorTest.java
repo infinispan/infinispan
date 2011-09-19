@@ -23,10 +23,9 @@
 package org.infinispan.cdi.test.interceptor;
 
 import org.infinispan.Cache;
-import org.infinispan.cdi.test.interceptor.service.CacheRemoveService;
-import org.infinispan.cdi.test.interceptor.service.Custom;
-import org.infinispan.cdi.test.interceptor.service.CustomCacheKeyGenerator;
-import org.infinispan.cdi.test.interceptor.service.GreetingService;
+import org.infinispan.cdi.test.interceptor.config.Config;
+import org.infinispan.cdi.test.interceptor.config.Custom;
+import org.infinispan.cdi.test.interceptor.service.CacheRemoveAllService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -50,53 +49,58 @@ public class CacheRemoveAllInterceptorTest extends Arquillian {
    @Deployment
    public static Archive<?> deployment() {
       return baseDeployment()
-            .addPackage(GreetingService.class.getPackage())
-            .addPackage(CustomCacheKeyGenerator.class.getPackage())
-            .addPackage(CacheRemoveAllInterceptorTest.class.getPackage());
+            .addClass(CacheRemoveAllInterceptorTest.class)
+            .addPackage(CacheRemoveAllService.class.getPackage())
+            .addPackage(Config.class.getPackage());
    }
 
    @Inject
-   private CacheRemoveService service;
+   private CacheRemoveAllService service;
 
    @Inject
    @Custom
    private Cache<String, String> customCache;
 
    @BeforeMethod
-   public void setUp() {
+   public void beforeMethod() {
       customCache.clear();
       assertTrue(customCache.isEmpty());
    }
 
    @Test(expectedExceptions = CacheException.class)
-   public void testDefaultCacheRemoveAll() {
+   public void testCacheRemoveAll() {
       customCache.put("Kevin", "Hi Kevin");
       customCache.put("Pete", "Hi Pete");
+
       assertEquals(customCache.size(), 2);
 
       service.removeAll();
+
       assertEquals(customCache.size(), 0);
    }
 
    public void testCacheRemoveAllWithCacheName() {
       customCache.put("Kevin", "Hi Kevin");
       customCache.put("Pete", "Hi Pete");
+
       assertEquals(customCache.size(), 2);
 
       service.removeAllWithCacheName();
+
       assertEquals(customCache.size(), 0);
    }
 
    public void testCacheRemoveAllAfterInvocationWithException() {
       customCache.put("Kevin", "Hi Kevin");
       customCache.put("Pete", "Hi Pete");
+
       assertEquals(customCache.size(), 2);
 
       try {
 
          service.removeAllAfterInvocationWithException();
 
-      } catch (IllegalArgumentException e) {
+      } catch (RuntimeException e) {
          assertEquals(customCache.size(), 2);
       }
    }
@@ -104,13 +108,14 @@ public class CacheRemoveAllInterceptorTest extends Arquillian {
    public void testCacheRemoveAllBeforeInvocationWithException() {
       customCache.put("Kevin", "Hi Kevin");
       customCache.put("Pete", "Hi Pete");
+
       assertEquals(customCache.size(), 2);
 
       try {
 
          service.removeAllBeforeInvocationWithException();
 
-      } catch (IllegalArgumentException e) {
+      } catch (RuntimeException e) {
          assertEquals(customCache.size(), 0);
       }
    }

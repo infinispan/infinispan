@@ -24,11 +24,10 @@ package org.infinispan.cdi.test.interceptor;
 
 import org.infinispan.Cache;
 import org.infinispan.cdi.interceptor.DefaultCacheKey;
-import org.infinispan.cdi.test.interceptor.service.CacheRemoveService;
-import org.infinispan.cdi.test.interceptor.service.Custom;
+import org.infinispan.cdi.test.interceptor.config.Config;
+import org.infinispan.cdi.test.interceptor.config.Custom;
+import org.infinispan.cdi.test.interceptor.service.CacheRemoveEntryService;
 import org.infinispan.cdi.test.interceptor.service.CustomCacheKey;
-import org.infinispan.cdi.test.interceptor.service.CustomCacheKeyGenerator;
-import org.infinispan.cdi.test.interceptor.service.GreetingService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -54,75 +53,84 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
    @Deployment
    public static Archive<?> deployment() {
       return baseDeployment()
-            .addPackage(GreetingService.class.getPackage())
-            .addPackage(CustomCacheKeyGenerator.class.getPackage())
-            .addPackage(CacheRemoveEntryInterceptorTest.class.getPackage());
+            .addClass(CacheRemoveEntryInterceptorTest.class)
+            .addPackage(CacheRemoveEntryService.class.getPackage())
+            .addPackage(Config.class.getPackage());
    }
 
    @Inject
-   private CacheRemoveService service;
+   private CacheRemoveEntryService service;
 
    @Inject
    @Custom
    private Cache<CacheKey, String> customCache;
 
    @BeforeMethod
-   public void setUp() {
+   public void beforeMethod() {
       customCache.clear();
       assertTrue(customCache.isEmpty());
    }
 
    @Test(expectedExceptions = CacheException.class)
-   public void testDefaultCacheRemoveEntry() {
-      service.removeUser("Kevin");
+   public void testCacheRemoveEntry() {
+      service.removeEntry("Kevin");
    }
 
    public void testCacheRemoveEntryWithCacheName() {
-      CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
+      final CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
+
       customCache.put(cacheKey, "Hello Kevin");
+
       assertEquals(customCache.size(), 1);
       assertTrue(customCache.containsKey(cacheKey));
 
-      service.removeUserWithCacheName("Kevin");
+      service.removeEntryWithCacheName("Kevin");
+
       assertEquals(customCache.size(), 0);
    }
 
    public void testCacheRemoveEntryAfterInvocationWithException() {
-      CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
+      final CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
+
       customCache.put(cacheKey, "Hello Kevin");
+
       assertEquals(customCache.size(), 1);
       assertTrue(customCache.containsKey(cacheKey));
 
       try {
 
-         service.removeUserWithCacheName(null);
+         service.removeEntryWithCacheName(null);
 
       } catch (NullPointerException e) {
          assertEquals(customCache.size(), 1);
       }
    }
 
-   public void testCacheRemoveEntryWithCustomCacheKeyGenerator() throws NoSuchMethodException {
-      Method method = CacheRemoveService.class.getMethod("removeUserWithCustomCacheKeyGenerator", String.class);
+   public void testCacheRemoveEntryWithCacheKeyGenerator() throws NoSuchMethodException {
+      final Method method = CacheRemoveEntryService.class.getMethod("removeEntryWithCacheKeyGenerator", String.class);
+      final CacheKey cacheKey = new CustomCacheKey(method, "Kevin");
 
-      CacheKey cacheKey = new CustomCacheKey(method, "Kevin");
       customCache.put(cacheKey, "Hello Kevin");
+
       assertEquals(customCache.size(), 1);
       assertTrue(customCache.containsKey(cacheKey));
 
-      service.removeUserWithCustomCacheKeyGenerator("Kevin");
+      service.removeEntryWithCacheKeyGenerator("Kevin");
+
       assertEquals(customCache.size(), 0);
    }
 
    public void testCacheRemoveEntryBeforeInvocationWithException() {
-      CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
+      final CacheKey cacheKey = new DefaultCacheKey(new Object[]{"Kevin"});
+
       customCache.put(cacheKey, "Hello Kevin");
+
       assertEquals(customCache.size(), 1);
       assertTrue(customCache.containsKey(cacheKey));
 
       try {
 
-         service.removeUserBeforeInvocationWithException("Kevin");
+         service.removeEntryBeforeInvocationWithException("Kevin");
 
       } catch (NullPointerException e) {
          assertEquals(customCache.size(), 0);
