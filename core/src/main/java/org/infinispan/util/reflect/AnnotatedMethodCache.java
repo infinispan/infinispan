@@ -23,6 +23,7 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.jandex.AnnotationInstance;
@@ -34,6 +35,8 @@ import org.jboss.jandex.MethodInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -127,27 +130,27 @@ public class AnnotatedMethodCache {
    }
 
    public static List<CachedMethod> getInjectMethods(Class<?> clazz, ClassLoader classLoader) {
-      return getCachedMethods(clazz, classLoader, INJECT_METHODS, INJECT_METHODS_INC_SUB);
+      return getCachedMethods(clazz, classLoader, INJECT_METHODS, INJECT_METHODS_INC_SUB, Inject.class);
    }
 
    public static List<CachedMethod> getStartMethods(Class<?> clazz, ClassLoader classLoader) {
-      return getCachedMethods(clazz, classLoader, START_METHODS, START_METHODS_INC_SUB);
+      return getCachedMethods(clazz, classLoader, START_METHODS, START_METHODS_INC_SUB, Start.class);
    }
 
    public static List<CachedMethod> getStopMethods(Class<?> clazz, ClassLoader classLoader) {
-      return getCachedMethods(clazz, classLoader, STOP_METHODS, STOP_METHODS_INC_SUB);
+      return getCachedMethods(clazz, classLoader, STOP_METHODS, STOP_METHODS_INC_SUB, Stop.class);
    }
 
    private static List<CachedMethod> getCachedMethods(Class<?> clazz, ClassLoader classLoader,
                                                       Map<String, List<CachedMethod>> basicMethodCache,
-                                                      Map<String, List<CachedMethod>> richMethodCache) {
+                                                      Map<String, List<CachedMethod>> richMethodCache,
+                                                      Class<? extends Annotation> annotation) {
       String className = clazz.getName();
       List<CachedMethod> l = richMethodCache.get(className);
       if (l == null) {
          synchronized (AnnotatedMethodCache.class) {
             l = richMethodCache.get(className);
             if (l == null) {
-
                l = basicMethodCache.get(className);
                if (l != null) {
                   // check superclasses/interfaces
@@ -155,9 +158,18 @@ public class AnnotatedMethodCache {
                      if (match(clazz, e.getKey(), classLoader)) l.addAll(e.getValue());
                   }
                } else {
+                  // check using vanilla JDK reflection.
                   l = new LinkedList<CachedMethod>();
+
                   for (Map.Entry<String, List<CachedMethod>> e : basicMethodCache.entrySet()) {
                      if (match(clazz, e.getKey(), classLoader)) l.addAll(e.getValue());
+                  }
+
+                  // Now see if the class itself has anything on it, using reflection.  This is to deal with
+                  // annotated components declared in modules other than core, that aren't indexed using Jandex.
+                  for (Method m: ReflectionUtil.getAllMethodsShallow(clazz, annotation)) {
+                     CachedMethod cm = new CachedMethod(m);
+                     if (!l.contains(cm)) l.add(cm);
                   }
                }
                richMethodCache.put(className, l);

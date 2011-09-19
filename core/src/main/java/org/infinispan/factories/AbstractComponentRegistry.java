@@ -39,7 +39,6 @@ import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.reflect.AnnotatedMethodCache;
 import org.infinispan.util.reflect.CachedMethod;
-import org.jboss.jandex.AnnotationValue;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -473,7 +472,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             PrioritizedMethod em = new PrioritizedMethod();
             em.component = c;
             em.method = m;
-            em.priority = getAnnotationValue(m.getMethodAnnotation().value("priority"));
+            em.priority = m.getAnnotationValueAsInt("priority");
             c.startMethods.add(em);
          }
 
@@ -481,17 +480,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             PrioritizedMethod em = new PrioritizedMethod();
             em.component = c;
             em.method = m;
-            em.priority = getAnnotationValue(m.getMethodAnnotation().value("priority"));
+            em.priority = m.getAnnotationValueAsInt("priority");
             c.stopMethods.add(em);
          }
       }
-   }
-
-   private int getAnnotationValue(AnnotationValue value) {
-      if (value == null)
-         return 10;
-      else
-         return value.asInt();
    }
 
    /**
