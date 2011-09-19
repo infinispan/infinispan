@@ -20,25 +20,26 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.test.util;
+package org.infinispan.cdi.test.interceptor.config;
 
-import org.testng.annotations.Test;
+import javax.inject.Qualifier;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-import static org.infinispan.cdi.util.Contracts.assertNotNull;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-@Test(groups = "unit", testName = "cdi.test.util.ContractsTest")
-public class ContractsTest {
+@Qualifier
+@Target({TYPE, METHOD, PARAMETER, FIELD})
+@Retention(RUNTIME)
+@Documented
+public @interface Custom {
 
-   @Test(expectedExceptions = NullPointerException.class,
-         expectedExceptionsMessageRegExp = "This parameter cannot be null")
-   public void testAssertNotNullOnNullParameter() {
-      assertNotNull(null, "This parameter cannot be null");
-   }
-
-   public void testAssertNotNullOnNotNullParameter() {
-      assertNotNull("not null", "This parameter cannot be null");
-   }
 }

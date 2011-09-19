@@ -22,24 +22,32 @@
  */
 package org.infinispan.cdi.test.interceptor.service;
 
-import javax.inject.Qualifier;
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import javax.cache.interceptor.CacheRemoveEntry;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static org.infinispan.cdi.util.Contracts.assertNotNull;
 
 /**
- * @author @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-@Qualifier
-@Target({TYPE, METHOD, PARAMETER, FIELD})
-@Retention(RUNTIME)
-@Documented
-public @interface Custom {
+public class CacheRemoveEntryService {
 
+   @CacheRemoveEntry
+   public void removeEntry(String login) {
+      assertNotNull(login, "login parameter cannot be null");
+   }
+
+   @CacheRemoveEntry(cacheName = "custom")
+   public void removeEntryWithCacheName(String login) {
+      assertNotNull(login, "login parameter cannot be null");
+   }
+
+   @CacheRemoveEntry(cacheName = "custom", afterInvocation = false)
+   public void removeEntryBeforeInvocationWithException(String login) {
+      assertNotNull(login, "login parameter cannot be null");
+   }
+
+   @CacheRemoveEntry(cacheName = "custom", cacheKeyGenerator = CustomCacheKeyGenerator.class)
+   public void removeEntryWithCacheKeyGenerator(String login) {
+      assertNotNull(login, "login parameter cannot be null");
+   }
 }

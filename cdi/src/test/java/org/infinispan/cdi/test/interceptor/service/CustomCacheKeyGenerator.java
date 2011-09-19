@@ -34,6 +34,10 @@ public class CustomCacheKeyGenerator implements CacheKeyGenerator {
 
    @Override
    public CacheKey generateCacheKey(CacheKeyInvocationContext<Annotation> cacheKeyInvocationContext) {
-      return new CustomCacheKey(cacheKeyInvocationContext.getMethod(), cacheKeyInvocationContext.getAllParameters()[0].getValue());
+
+      return new CustomCacheKey(
+            cacheKeyInvocationContext.getMethod(),
+            cacheKeyInvocationContext.getAllParameters()[0].getValue()
+      );
    }
 }
