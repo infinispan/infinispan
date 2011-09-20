@@ -22,10 +22,6 @@
  */
 package org.infinispan.remoting;
 
-import static org.easymock.EasyMock.*;
-
-import java.io.EOFException;
-
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -37,8 +33,12 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.jgroups.blocks.RpcDispatcher.Marshaller2;
+import org.jgroups.blocks.RpcDispatcher;
 import org.testng.annotations.Test;
+
+import java.io.EOFException;
+
+import static org.easymock.EasyMock.*;
 
 @Test(groups = "functional", testName = "remoting.TransportSenderExceptionHandlingTest")
 public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersTest {
@@ -57,13 +57,13 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
       Cache cache2 = cache(1, "replSync");
       JGroupsTransport transport1 = (JGroupsTransport) TestingUtil.extractComponent(cache1, Transport.class);
       CommandAwareRpcDispatcher dispatcher1 = transport1.getCommandAwareRpcDispatcher();
-      Marshaller2 originalMarshaller1 = (Marshaller2) dispatcher1.getMarshaller();
+      RpcDispatcher.Marshaller originalMarshaller1 = dispatcher1.getMarshaller();
       JGroupsTransport transport2 = (JGroupsTransport) TestingUtil.extractComponent(cache2, Transport.class);
       CommandAwareRpcDispatcher dispatcher2 = transport2.getCommandAwareRpcDispatcher();
-      Marshaller2 originalMarshaller2 = (Marshaller2) dispatcher2.getMarshaller();
+      RpcDispatcher.Marshaller originalMarshaller = dispatcher2.getMarshaller();
       try {
-         Marshaller2 mockMarshaller1 = createMock(Marshaller2.class);
-         Marshaller2 mockMarshaller2 = createMock(Marshaller2.class);
+         RpcDispatcher.Marshaller mockMarshaller1 = createMock(RpcDispatcher.Marshaller.class);
+         RpcDispatcher.Marshaller mockMarshaller = createMock(RpcDispatcher.Marshaller.class);
          PutKeyValueCommand putCommand = new PutKeyValueCommand();
          putCommand.setKey(key);
          putCommand.setValue(value);
@@ -71,10 +71,10 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
          Object[] params = new Object[]{putCommand};
          rpcCommand.setParameters(SingleRpcCommand.COMMAND_ID, params);
          expect(mockMarshaller1.objectToBuffer(anyObject())).andReturn(originalMarshaller1.objectToBuffer(rpcCommand));
-         expect(mockMarshaller2.objectFromByteBuffer((byte[]) anyObject(), anyInt(), anyInt())).andThrow(new EOFException());
+         expect(mockMarshaller.objectFromBuffer((byte[]) anyObject(), anyInt(), anyInt())).andThrow(new EOFException());
          dispatcher1.setRequestMarshaller(mockMarshaller1);
-         dispatcher2.setRequestMarshaller(mockMarshaller2);
-         replay(mockMarshaller1, mockMarshaller2);
+         dispatcher2.setRequestMarshaller(mockMarshaller);
+         replay(mockMarshaller1, mockMarshaller);
          cache1.put(key, value);
          assert false : "Should have thrown an exception";
       } catch(CacheException ce) {
@@ -82,7 +82,7 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
          assert ce.getCause() instanceof EOFException;
       } finally {
          dispatcher1.setMarshaller(originalMarshaller1);
-         dispatcher2.setMarshaller(originalMarshaller2);
+         dispatcher2.setMarshaller(originalMarshaller);
       }
    }
 }

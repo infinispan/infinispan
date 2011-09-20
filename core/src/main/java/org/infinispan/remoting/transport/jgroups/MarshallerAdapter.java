@@ -33,27 +33,21 @@ import org.jgroups.util.Buffer;
  * @author Manik Surtani
  * @since 4.0
  */
-public class MarshallerAdapter implements RpcDispatcher.Marshaller2 {
+public class MarshallerAdapter implements RpcDispatcher.Marshaller {
    StreamingMarshaller m;
 
    public MarshallerAdapter(StreamingMarshaller m) {
       this.m = m;
    }
 
+   @Override
    public Buffer objectToBuffer(Object obj) throws Exception {
       return toBuffer(m.objectToBuffer(obj));
    }
 
-   public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws Exception {
+   @Override
+   public Object objectFromBuffer(byte[] buf, int offset, int length) throws Exception {
       return m.objectFromByteBuffer(buf, offset, length);
-   }
-
-   public byte[] objectToByteBuffer(Object obj) throws Exception {
-      return m.objectToByteBuffer(obj);
-   }
-
-   public Object objectFromByteBuffer(byte[] buf) throws Exception {
-      return m.objectFromByteBuffer(buf);
    }
 
    private Buffer toBuffer(ByteBuffer bb) {

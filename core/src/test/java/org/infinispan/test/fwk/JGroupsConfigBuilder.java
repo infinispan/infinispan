@@ -23,7 +23,6 @@
 package org.infinispan.test.fwk;
 
 import org.infinispan.util.LegacyKeySupportSystemProperties;
-import org.jgroups.ChannelException;
 import org.jgroups.conf.ConfiguratorFactory;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
@@ -189,7 +188,7 @@ public class JGroupsConfigBuilder {
    private static ProtocolStackConfigurator loadTcp() {
       try {
          return ConfiguratorFactory.getStackConfigurator("stacks/tcp.xml");
-      } catch (ChannelException e) {
+      } catch (Exception e) {
          throw new RuntimeException(e);
       }
    }
@@ -197,7 +196,7 @@ public class JGroupsConfigBuilder {
    private static ProtocolStackConfigurator loadUdp() {
       try {
          return ConfiguratorFactory.getStackConfigurator("stacks/udp.xml");
-      } catch (ChannelException e) {
+      } catch (Exception e) {
          throw new RuntimeException(e);
       }
    }

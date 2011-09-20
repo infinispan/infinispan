@@ -42,13 +42,11 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.Channel;
-import org.jgroups.ChannelException;
 import org.jgroups.Event;
-import org.jgroups.ExtendedMembershipListener;
 import org.jgroups.JChannel;
+import org.jgroups.MembershipListener;
 import org.jgroups.MergeView;
 import org.jgroups.View;
-import org.jgroups.blocks.Request;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.jmx.JmxConfigurator;
 import org.jgroups.stack.AddressGenerator;
@@ -85,7 +83,7 @@ import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class JGroupsTransport extends AbstractTransport implements ExtendedMembershipListener {
+public class JGroupsTransport extends AbstractTransport implements MembershipListener {
    public static final String CONFIGURATION_STRING = "configurationString";
    public static final String CONFIGURATION_XML = "configurationXml";
    public static final String CONFIGURATION_FILE = "configurationFile";
@@ -162,10 +160,14 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
    protected void startJGroupsChannelIfNeeded() {
       if (startChannel) {
+         String clusterName = configuration.getClusterName();
          try {
-            String clusterName = configuration.getClusterName();
             channel.connect(clusterName);
+         } catch (Exception e) {
+            throw new CacheException("Unable to start JGroups Channel", e);
+         }
 
+         try {
             // Normally this would be done by CacheManagerJmxRegistration but
             // the channel is not started when the cache manager starts but
             // when first cache starts, so it's safer to do it here.
@@ -176,8 +178,6 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
                domain = JmxUtil.buildJmxDomain(configuration, mbeanServer, groupName);
                JmxConfigurator.registerChannel((JChannel) channel, mbeanServer, domain, clusterName, true);
             }
-         } catch (ChannelException e) {
-            throw new CacheException("Unable to start JGroups Channel", e);
          } catch (Exception e) {
             throw new CacheException("Channel connected, but unable to register MBeans", e);
          }
@@ -242,7 +242,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          }
       }
 
-      channel.setOpt(Channel.LOCAL, false);
+      channel.setDiscardOwnMessages(true);
 
       // if we have a TopologyAwareConsistentHash, we need to set our own address generator in JGroups:
       if(configuration.hasTopologyInfo()) {
@@ -324,7 +324,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          log.unableToUseJGroupsPropertiesProvided(props);
          try {
             channel = new JChannel(FileLookupFactory.newInstance().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.getClassLoader()));
-         } catch (ChannelException e) {
+         } catch (Exception e) {
             throw new CacheException("Unable to start JGroups channel", e);
          }
       }
@@ -370,7 +370,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
    public List<Address> getPhysicalAddresses() {
       if (physicalAddress == null && channel != null) {
-         org.jgroups.Address addr = (org.jgroups.Address) channel.downcall(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
+         org.jgroups.Address addr = (org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
          physicalAddress = new JGroupsAddress(addr);
       }
       return Collections.singletonList(physicalAddress);
@@ -398,7 +398,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
       if (!usePriorityQueue && ResponseMode.SYNCHRONOUS == mode) usePriorityQueue = true;
 
-      RspList rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode),
+      RspList<Object> rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode),
               timeout, recipients != null, usePriorityQueue,
               toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, recipients == null || recipients.size() == members.size());
 
@@ -409,7 +409,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       Map<Address, Response> retval = new HashMap<Address, Response>(rsps.size());
 
       boolean noValidResponses = true;
-      for (Rsp rsp : rsps.values()) {
+      for (Rsp<Object> rsp : rsps.values()) {
          noValidResponses = parseResponseAndAddToResponseList(rsp.getValue(), retval, rsp.wasSuspected(), rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()), responseFilter != null) && noValidResponses;
       }
 
@@ -417,15 +417,15 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       return retval;
    }
 
-   private static int toJGroupsMode(ResponseMode mode) {
+   private static org.jgroups.blocks.ResponseMode toJGroupsMode(ResponseMode mode) {
       switch (mode) {
          case ASYNCHRONOUS:
          case ASYNCHRONOUS_WITH_SYNC_MARSHALLING:
-            return Request.GET_NONE;
+            return org.jgroups.blocks.ResponseMode.GET_NONE;
          case SYNCHRONOUS:
-            return Request.GET_ALL;
+            return org.jgroups.blocks.ResponseMode.GET_ALL;
          case WAIT_FOR_VALID_RESPONSE:
-            return Request.GET_MAJORITY;
+            return org.jgroups.blocks.ResponseMode.GET_MAJORITY;
       }
       throw new CacheException("Unknown response mode " + mode);
    }
@@ -460,7 +460,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          notifier.notifyMerge(members, oldMembers, address, viewId, getSubgroups(mv.getSubgroups()));
       }
 
-      private List<List<Address>> getSubgroups(Vector<View> subviews) {
+      private List<List<Address>> getSubgroups(List<View> subviews) {
          List<List<Address>> l = new ArrayList<List<Address>>(subviews.size());
          for (View v: subviews) l.add(fromJGroupsAddressList(v.getMembers()));
          return l;         
@@ -469,7 +469,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
    public void viewAccepted(View newView) {
       log.debugf("New view accepted: %s", newView);
-      Vector<org.jgroups.Address> newMembers = newView.getMembers();
+      List<org.jgroups.Address> newMembers = newView.getMembers();
       if (newMembers == null || newMembers.isEmpty()) {
          log.debugf("Received null or empty member list from JGroups channel: " + newView);
          return;
