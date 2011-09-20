@@ -73,8 +73,6 @@ import static org.infinispan.util.Util.*;
 public class CommandAwareRpcDispatcher extends RpcDispatcher {
    ExecutorService asyncExecutor;
    InboundInvocationHandler inboundInvocationHandler;
-   JGroupsDistSync distributedSync;
-   long distributedSyncTimeout;
    private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean FORCE_MCAST = Boolean.getBoolean("infinispan.unsafe.force_multicast");
@@ -82,13 +80,10 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    public CommandAwareRpcDispatcher(Channel channel,
                                     JGroupsTransport transport,
                                     ExecutorService asyncExecutor,
-                                    InboundInvocationHandler inboundInvocationHandler,
-                                    JGroupsDistSync distributedSync, long distributedSyncTimeout) {
-      super(channel, transport, transport, transport);
+                                    InboundInvocationHandler inboundInvocationHandler) {
+      super(channel, null, transport, transport);
       this.asyncExecutor = asyncExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
-      this.distributedSync = distributedSync;
-      this.distributedSyncTimeout = distributedSyncTimeout;
    }
 
    protected final boolean isValid(Message req) {

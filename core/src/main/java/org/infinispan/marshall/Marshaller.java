@@ -34,10 +34,6 @@ import java.io.IOException;
  * response values, as well as any other arbitraty Object <--> byte[] conversions, such as those used in client/server
  * communications.
  * <p/>
- * The interface is also used by the {@link org.infinispan.loaders.CacheStore} framework to efficiently serialize data
- * to be persisted, as well as the {@link org.infinispan.statetransfer.StateTransferManager} when serializing the cache
- * for transferring state en-masse.
- * <p/>
  * A single instance of any implementation is shared by multiple threads, so implementations <i>need</i> to be threadsafe,
  * and preferably immutable.
  *

@@ -27,7 +27,6 @@ import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
 import java.util.Collection;
@@ -84,17 +83,6 @@ public interface RpcManager {
     * @throws Exception in the event of problems.
     */
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout);
-
-   /**
-    * Initiates a state retrieval process from neighbouring caches.  This method will block until it either times out,
-    * or state is retrieved and applied.
-    *
-    * @param cacheName name of cache requesting state
-    * @param timeout   length of time to try to retrieve state on each peer
-    * @throws org.infinispan.statetransfer.StateTransferException
-    *          in the event of problems
-    */
-   void retrieveState(String cacheName, long timeout) throws StateTransferException;
 
    /**
     * Broadcasts an RPC command to the entire cluster.
@@ -198,16 +186,6 @@ public interface RpcManager {
     * @return a reference to the underlying transport.
     */
    Transport getTransport();
-
-   /**
-    * If {@link #retrieveState(String, long)} has been invoked and hasn't yet returned (i.e., a state transfer is in
-    * progress), this method will return the current Address from which a state transfer is being attempted.  Otherwise,
-    * this method returns a null.
-    *
-    * @return the current Address from which a state transfer is being attempted, if a state transfer is in progress, or
-    *         a null otherwise.
-    */
-   Address getCurrentStateTransferSource();
 
    /**
     * Returns the address associated with this RpcManager or null if not part of the cluster.

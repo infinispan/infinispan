@@ -55,19 +55,6 @@ import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.testng.Assert.assertEquals;
 
 /**
- * TODO: For some reason, if you add to any of the methods below 'assert false;'
- * Eclipse 3.5 and org.testng.eclipse_5.9.0.4.jar combination will indicate that 
- * the test passes correctly. Command line mvn execution does show the failure.
- * Need to show this to Max either in the office or via a screencast to see how 
- * to debug it.
- * 
- * More information: Seems to be a problem with enabling java assertion. If no -ea is
- * passed, the command line does show '-ea' but no assertions are checked. If -ear is 
- * explicitly passed, you see '-ea -ea' in the command line and then assertions are 
- * enabled.
- * 
- * A workaround in Eclipse is to add -ea to the default VM parameters used.
- * 
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  */
@@ -117,13 +104,16 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       assert mBeanServer.getAttribute(rpcManager1, "StatisticsEnabled").equals(Boolean.TRUE);
       assert mBeanServer.getAttribute(rpcManager2, "StatisticsEnabled").equals(Boolean.TRUE);
 
+      // The initial state transfer uses cache commands, so it also increases the ReplicationCount value
+      long initialReplicationCount1 = (Long) mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
+
       cache1.put("key", "value2");
       assert cache2.get("key").equals("value2");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 1) : "Expected 1, was " + mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(initialReplicationCount1 + 1)
+            : "Expected " + (initialReplicationCount1 + 1) + ", was " + mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
-      mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) -1);
 
-      // now resume statistics
+      // now reset statistics
       mBeanServer.invoke(rpcManager1, "resetStatistics", new Object[0], new String[0]);
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 0);
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
@@ -145,7 +135,8 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       Cache cache2 = manager(1).getCache(cachename);
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       ObjectName rpcManager1 = getCacheObjectName(JMX_DOMAIN, cachename + "(repl_sync)", "RpcManager");
-      
+
+      // the previous test has reset the statistics
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 0);
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
       assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("N/A");
