@@ -4,6 +4,7 @@ import org.jgroups.Address;
 import org.jgroups.Event;
 import org.jgroups.PhysicalAddress;
 import org.jgroups.View;
+import org.jgroups.ViewId;
 import org.jgroups.annotations.Property;
 import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.protocols.DISCARD;
@@ -16,6 +17,7 @@ import org.jgroups.util.Tuple;
 import org.jgroups.util.UUID;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -57,8 +59,8 @@ public class TEST_PING extends Discovery {
    }
 
    @Override
-   protected List<PingData> findInitialMembers(Promise<JoinRsp> promise,
-         int numExpectedRsps, boolean breakOnCoord, boolean returnViewsOnly) {
+   protected List<PingData> findMembers(Promise<JoinRsp> promise,
+         int numExpectedRsps, boolean breakOnCoord, ViewId viewId) {
 
       if (!stopped) {
          Map<Address, TEST_PING> discoveries = registerInDiscoveries();
@@ -76,7 +78,7 @@ public class TEST_PING extends Discovery {
                   if (discovery != this) {
                      boolean remoteDiscardEnabled = isDiscardEnabled(discovery);
                      if (!remoteDiscardEnabled && !discovery.stopped) {
-                        addPingRsp(returnViewsOnly, rsps, discovery);
+                        addPingRsp(rsps, discovery);
                      } else if (discovery.stopped) {
                         log.debug(String.format(
                               "%s is stopped, so no ping responses will be received",
@@ -119,8 +121,7 @@ public class TEST_PING extends Discovery {
       return discovery.discard != null && discovery.discard.isDiscardAll();
    }
 
-   private void addPingRsp(boolean returnViewsOnly, LinkedList<PingData> rsps,
-                           TEST_PING discovery) {
+   private void addPingRsp(LinkedList<PingData> rsps, TEST_PING discovery) {
       // Rather than relying on transport (PING) or your own multicast channel
       // (MPING), talk to other discovery instances directly via Java method
       // calls and discover the other nodes in the cluster.
@@ -132,9 +133,8 @@ public class TEST_PING extends Discovery {
       mapAddrWithPhysicalAddr(discovery, this);
 
       Address localAddr = discovery.getLocalAddr();
-      List<PhysicalAddress> physicalAddrs = returnViewsOnly ? null :
-         Arrays.asList((PhysicalAddress) discovery.down(
-               new Event(Event.GET_PHYSICAL_ADDRESS, localAddr)));
+      List<PhysicalAddress> physicalAddrs = Arrays.asList((PhysicalAddress)
+            discovery.down(new Event(Event.GET_PHYSICAL_ADDRESS, localAddr)));
       String logicalName = UUID.get(localAddr);
       PingData pingRsp = new PingData(localAddr, discovery.getJGroupsView(),
          discovery.isServer(), logicalName, physicalAddrs);
@@ -221,8 +221,15 @@ public class TEST_PING extends Discovery {
    }
 
    @Override
-   public void sendGetMembersRequest(String cluster_name, Promise promise, boolean return_views_only) throws Exception {
-      // No-op because it won't get called
+   public Collection<PhysicalAddress> fetchClusterMembers(String cluster_name) {
+      // findMembers overriden, so no callback to this method
+      return null;
+   }
+
+   @Override
+   public boolean sendDiscoveryRequestsInParallel() {
+      // findMembers overriden, so no callback to this method
+      return false;
    }
 
    @Override
