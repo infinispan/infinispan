@@ -21,9 +21,11 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 /**
- * This package contains the literal implementations of JCACHE annotations {@linkplain javax.cache.interceptor.CacheResult CacheResult},
- * {@linkplain javax.cache.interceptor.CacheRemoveEntry CacheRemoveEntry} and {@linkplain javax.cache.interceptor.CacheRemoveAll CacheRemoveAll}.
- * The extension uses these literals to annotate programmatically the interceptor implementation with the corresponding
- * interceptor binding.
+ * <p>This package contains the literal implementations of JCACHE annotations {@linkplain javax.cache.interceptor.CacheResult CacheResult},
+ * {@linkplain javax.cache.interceptor.CacheRemoveEntry CacheRemoveEntry}, {@linkplain javax.cache.interceptor.CachePut CachePut}
+ * and {@linkplain javax.cache.interceptor.CacheRemoveAll CacheRemoveAll}.</p>
+ *
+ * <p>The CDI extension uses these literals to annotate programmatically the interceptor implementation with the
+ * corresponding interceptor binding.</p>
  */
 package org.infinispan.cdi.interceptor.literal;

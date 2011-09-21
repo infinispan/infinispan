@@ -4,6 +4,7 @@
 
    <interceptors>
       <class>org.infinispan.cdi.interceptor.CacheResultInterceptor</class>
+      <class>org.infinispan.cdi.interceptor.CachePutInterceptor</class>
       <class>org.infinispan.cdi.interceptor.CacheRemoveEntryInterceptor</class>
       <class>org.infinispan.cdi.interceptor.CacheRemoveAllInterceptor</class>
    </interceptors>

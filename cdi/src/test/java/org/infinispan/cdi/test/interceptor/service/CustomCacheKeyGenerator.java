@@ -24,7 +24,8 @@ package org.infinispan.cdi.test.interceptor.service;
 
 import javax.cache.interceptor.CacheKey;
 import javax.cache.interceptor.CacheKeyGenerator;
-import javax.interceptor.InvocationContext;
+import javax.cache.interceptor.CacheKeyInvocationContext;
+import java.lang.annotation.Annotation;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
@@ -32,7 +33,11 @@ import javax.interceptor.InvocationContext;
 public class CustomCacheKeyGenerator implements CacheKeyGenerator {
 
    @Override
-   public CacheKey generateCacheKey(InvocationContext invocationContext) {
-      return new CustomCacheKey(invocationContext.getMethod(), invocationContext.getParameters()[0]);
+   public CacheKey generateCacheKey(CacheKeyInvocationContext<Annotation> cacheKeyInvocationContext) {
+
+      return new CustomCacheKey(
+            cacheKeyInvocationContext.getMethod(),
+            cacheKeyInvocationContext.getAllParameters()[0].getValue()
+      );
    }
 }

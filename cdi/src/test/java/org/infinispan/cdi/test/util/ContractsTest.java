@@ -22,8 +22,9 @@
  */
 package org.infinispan.cdi.test.util;
 
-import org.infinispan.cdi.util.Contracts;
 import org.testng.annotations.Test;
+
+import static org.infinispan.cdi.util.Contracts.assertNotNull;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
@@ -34,10 +35,10 @@ public class ContractsTest {
    @Test(expectedExceptions = NullPointerException.class,
          expectedExceptionsMessageRegExp = "This parameter cannot be null")
    public void testAssertNotNullOnNullParameter() {
-      Contracts.assertNotNull(null, "This parameter cannot be null");
+      assertNotNull(null, "This parameter cannot be null");
    }
 
    public void testAssertNotNullOnNotNullParameter() {
-      Contracts.assertNotNull("not null", "This parameter cannot be null");
+      assertNotNull("not null", "This parameter cannot be null");
    }
 }

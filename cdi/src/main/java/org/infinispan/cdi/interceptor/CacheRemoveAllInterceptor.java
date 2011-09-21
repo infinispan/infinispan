@@ -23,19 +23,19 @@
 package org.infinispan.cdi.interceptor;
 
 import org.infinispan.Cache;
+import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextFactory;
 
-import javax.cache.CacheException;
 import javax.cache.interceptor.CacheKey;
+import javax.cache.interceptor.CacheKeyInvocationContext;
 import javax.cache.interceptor.CacheRemoveAll;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
-import java.lang.reflect.Method;
 
 /**
- * <p>Implementation class of the {@link CacheRemoveAll} interceptor. This interceptor uses the following algorithm
- * describes in JSR-107.</p>
+ * <p>{@link CacheRemoveAll} interceptor implementation. This interceptor uses the following algorithm describes in
+ * JSR-107.</p>
  *
  * <p>The interceptor that intercepts method annotated with {@code @CacheRemoveAll} must do the following, remove all
  * entries associated with the cache. The removeAll occurs after the method body is executed. This can be overridden by
@@ -48,31 +48,25 @@ import java.lang.reflect.Method;
 public class CacheRemoveAllInterceptor {
 
    private final CacheResolver cacheResolver;
+   private final CacheKeyInvocationContextFactory contextFactory;
 
    @Inject
-   public CacheRemoveAllInterceptor(CacheResolver cacheResolver) {
+   public CacheRemoveAllInterceptor(CacheResolver cacheResolver, CacheKeyInvocationContextFactory contextFactory) {
       this.cacheResolver = cacheResolver;
+      this.contextFactory = contextFactory;
    }
 
    @AroundInvoke
-   public Object cacheRemoveAll(InvocationContext context) throws Exception {
-      final Method method = context.getMethod();
-      final CacheRemoveAll cacheRemoveAll = method.getAnnotation(CacheRemoveAll.class);
-      final String cacheName = cacheRemoveAll.cacheName();
-
-      //TODO KP: is it the expected behavior? nothing about this in the spec.
-      if (cacheName.trim().isEmpty()) {
-         throw new CacheException("Method named '" + method.getName() + "' annotated with CacheRemoveAll " +
-                                        "doesn't specify a cache name");
-      }
-
-      final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheName, method);
+   public Object cacheRemoveAll(InvocationContext invocationContext) throws Exception {
+      final CacheKeyInvocationContext<CacheRemoveAll> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
+      final CacheRemoveAll cacheRemoveAll = cacheKeyInvocationContext.getCacheAnnotation();
+      final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
 
       if (!cacheRemoveAll.afterInvocation()) {
          cache.clear();
       }
 
-      final Object result = context.proceed();
+      final Object result = invocationContext.proceed();
 
       if (cacheRemoveAll.afterInvocation()) {
          cache.clear();

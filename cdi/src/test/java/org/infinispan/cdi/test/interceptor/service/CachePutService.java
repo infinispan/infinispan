@@ -22,24 +22,33 @@
  */
 package org.infinispan.cdi.test.interceptor.service;
 
-import javax.inject.Qualifier;
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import javax.cache.interceptor.CacheKeyParam;
+import javax.cache.interceptor.CachePut;
+import javax.cache.interceptor.CacheValue;
 
 /**
- * @author @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
+ * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-@Qualifier
-@Target({TYPE, METHOD, PARAMETER, FIELD})
-@Retention(RUNTIME)
-@Documented
-public @interface Custom {
+public class CachePutService {
 
+   @CachePut
+   public void put(long id, @CacheValue String name) {
+   }
+
+   @CachePut(cacheName = "custom")
+   public void putWithCacheName(long id, @CacheValue String name) {
+   }
+
+   @CachePut(cacheName = "custom")
+   public void putWithCacheKeyParam(@CacheKeyParam long id, long id2, @CacheValue String name) {
+   }
+
+   @CachePut(cacheName = "custom", afterInvocation = false)
+   public void putBeforeInvocation(long id, @CacheValue String name) {
+      throw new RuntimeException();
+   }
+
+   @CachePut(cacheName = "custom", cacheKeyGenerator = CustomCacheKeyGenerator.class)
+   public void putWithCacheKeyGenerator(long id, @CacheValue String name) {
+   }
 }

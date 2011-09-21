@@ -105,7 +105,11 @@
       <dependency>
          <groupId>org.jboss.arquillian.testng</groupId>
          <artifactId>arquillian-testng-container</artifactId>
-         <version>${version.arquillian}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.shrinkwrap.resolver</groupId>
+         <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>
@@ -143,13 +147,7 @@
             <dependency>
                <groupId>org.jboss.arquillian.container</groupId>
                <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
-               <version>${version.arquillian}</version>
-               <scope>test</scope>
-            </dependency>
-            <dependency>
-               <groupId>org.jboss.shrinkwrap</groupId>
-               <artifactId>shrinkwrap-impl-base</artifactId>
-               <version>${version.shrinkwrap}</version>
+               <version>${version.arquillian.container.weld}</version>
                <scope>test</scope>
             </dependency>
             <dependency>

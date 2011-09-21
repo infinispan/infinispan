@@ -23,34 +23,11 @@
 package org.infinispan.cdi.test.interceptor.service;
 
 import javax.cache.interceptor.CacheRemoveAll;
-import javax.cache.interceptor.CacheRemoveEntry;
-
-import static org.infinispan.cdi.util.Contracts.assertNotNull;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class CacheRemoveService {
-
-   @CacheRemoveEntry
-   public void removeUser(String login) {
-      assertNotNull(login, "login parameter cannot be null");
-   }
-
-   @CacheRemoveEntry(cacheName = "custom")
-   public void removeUserWithCacheName(String login) {
-      assertNotNull(login, "login parameter cannot be null");
-   }
-
-   @CacheRemoveEntry(cacheName = "custom", afterInvocation = false)
-   public void removeUserBeforeInvocationWithException(String login) {
-      assertNotNull(login, "login parameter cannot be null");
-   }
-
-   @CacheRemoveEntry(cacheName = "custom", cacheKeyGenerator = CustomCacheKeyGenerator.class)
-   public void removeUserWithCustomCacheKeyGenerator(String login) {
-      assertNotNull(login, "login parameter cannot be null");
-   }
+public class CacheRemoveAllService {
 
    @CacheRemoveAll
    public void removeAll() {
@@ -62,11 +39,11 @@ public class CacheRemoveService {
 
    @CacheRemoveAll(cacheName = "custom")
    public void removeAllAfterInvocationWithException() {
-      throw new IllegalArgumentException();
+      throw new RuntimeException();
    }
 
    @CacheRemoveAll(cacheName = "custom", afterInvocation = false)
    public void removeAllBeforeInvocationWithException() {
-      throw new IllegalArgumentException();
+      throw new RuntimeException();
    }
 }

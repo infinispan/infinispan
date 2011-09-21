@@ -20,40 +20,40 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.interceptor.literal;
+package org.infinispan.cdi.test.interceptor.service;
 
-import javax.cache.interceptor.CacheKeyGenerator;
+import javax.cache.interceptor.CacheKeyParam;
 import javax.cache.interceptor.CacheRemoveEntry;
-import javax.cache.interceptor.CacheResolverFactory;
-import javax.enterprise.util.AnnotationLiteral;
+
+import static org.infinispan.cdi.util.Contracts.assertNotNull;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class CacheRemoveEntryLiteral extends AnnotationLiteral<CacheRemoveEntry> implements CacheRemoveEntry {
+public class CacheRemoveEntryService {
 
-   public final static CacheRemoveEntryLiteral INSTANCE = new CacheRemoveEntryLiteral();
-
-   private CacheRemoveEntryLiteral() {
+   @CacheRemoveEntry
+   public void removeEntry(String login) {
+      assertNotNull(login, "login parameter cannot be null");
    }
 
-   @Override
-   public String cacheName() {
-      return "";
+   @CacheRemoveEntry(cacheName = "custom")
+   public void removeEntryWithCacheName(String login) {
+      assertNotNull(login, "login parameter cannot be null");
    }
 
-   @Override
-   public boolean afterInvocation() {
-      return false;
+   @CacheRemoveEntry(cacheName = "custom")
+   public void removeEntryWithCacheKeyParam(@CacheKeyParam String login, String unused) {
+      assertNotNull(login, "login parameter cannot be null");
    }
 
-   @Override
-   public Class<? extends CacheResolverFactory> cacheResolverFactory() {
-      return CacheResolverFactory.class;
+   @CacheRemoveEntry(cacheName = "custom", afterInvocation = false)
+   public void removeEntryBeforeInvocationWithException(String login) {
+      assertNotNull(login, "login parameter cannot be null");
    }
 
-   @Override
-   public Class<? extends CacheKeyGenerator> cacheKeyGenerator() {
-      return CacheKeyGenerator.class;
+   @CacheRemoveEntry(cacheName = "custom", cacheKeyGenerator = CustomCacheKeyGenerator.class)
+   public void removeEntryWithCacheKeyGenerator(String login) {
+      assertNotNull(login, "login parameter cannot be null");
    }
 }

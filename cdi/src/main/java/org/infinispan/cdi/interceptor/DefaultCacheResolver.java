@@ -25,17 +25,18 @@ package org.infinispan.cdi.interceptor;
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 
+import javax.cache.interceptor.CacheInvocationContext;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
-import java.lang.reflect.Method;
+import java.lang.annotation.Annotation;
 
 import static org.infinispan.cdi.util.Contracts.assertNotNull;
 
 /**
- * This is the default cache resolver implementation.
+ * Default {@link CacheResolver} implementation.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
@@ -51,9 +52,10 @@ public class DefaultCacheResolver implements CacheResolver {
    }
 
    @Override
-   public <K, V> Cache<K, V> resolveCache(String cacheName, Method method) {
-      assertNotNull(cacheName, "cacheName parameter cannot be null");
-      assertNotNull(method, "method parameter cannot be null");
+   public <K, V> Cache<K, V> resolveCache(CacheInvocationContext<? extends Annotation> cacheInvocationContext) {
+      assertNotNull(cacheInvocationContext, "cacheInvocationContext parameter cannot be null");
+
+      final String cacheName = cacheInvocationContext.getCacheName();
 
       // if the cache name is empty the default cache of the default cache manager is returned.
       if (cacheName.trim().isEmpty()) {
