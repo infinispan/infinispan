@@ -1,36 +1,12 @@
-<!--
-  ~ JBoss, Home of Professional Open Source.
-  ~ Copyright 2000 - 2011, Red Hat Middleware LLC, and individual contributors
-  ~ as indicated by the @author tags. See the copyright.txt file in the
-  ~ distribution for a full listing of individual contributors.
-  ~
-  ~ This is free software; you can redistribute it and/or modify it
-  ~ under the terms of the GNU Lesser General Public License as
-  ~ published by the Free Software Foundation; either version 2.1 of
-  ~ the License, or (at your option) any later version.
-  ~
-  ~ This software is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  ~ Lesser General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU Lesser General Public
-  ~ License along with this software; if not, write to the Free
-  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
-  -->
-<project
-      xmlns="http://maven.apache.org/POM/4.0.0"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"
-      >
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>5.1.0-SNAPSHOT</version>
+      <version>5.1.0.ALPHA2</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
@@ -74,14 +50,7 @@
          <scope>provided</scope>
       </dependency>
       
-<!--  
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-pluginGen</artifactId>
-         <version>${version.rhq.plugingen}</version>
-         <scope>provided</scope>
-      </dependency>
- -->  
+  
 
       <dependency>
          <groupId>mc4j</groupId>
@@ -90,7 +59,7 @@
          <scope>provided</scope>
       </dependency>
 
-      <!-- TODO: This is beyond horrible.  Surely we don't need these dependencies!! -->
+      
 
       <dependency>
          <groupId>org.hibernate</groupId>
@@ -113,7 +82,7 @@
          <scope>provided</scope>
       </dependency>
 
-      <!-- END unnenessary deps -->
+      
 
       <dependency>
          <groupId>${project.groupId}</groupId>
@@ -185,7 +154,7 @@
                      </goals>
                      <configuration>
                          <artifactItems>
-                             <!-- TODO include other needed external jars that should go into your jar file -->
+                             
                              <artifactItem>
                                  <groupId>org.infinispan</groupId>
                                  <artifactId>infinispan-core</artifactId>
@@ -225,24 +194,7 @@
             </executions>
          </plugin>
          
-         <!--
-         <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>1.1</version>
-            <executions>
-               <execution>
-                  <phase>process-classes</phase>
-                  <goals>
-                     <goal>java</goal>
-                  </goals>
-               </execution>
-            </executions>
-            <configuration>
-               <mainClass>org.infinispan.rhq.util.RhqPluginDescriptorGenerator</mainClass>
-            </configuration>
-         </plugin>
-         -->
+         
 
       </plugins>
    </build>
@@ -272,11 +224,10 @@
                         <phase>compile</phase>
                         <configuration>
                            <tasks>
-                              <mkdir dir="${rhq.deploymentDir}"/>
-                              <property name="deployment.file"
-                                        location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                              <mkdir dir="${rhq.deploymentDir}" />
+                              <property location="${rhq.deploymentDir}/${project.build.finalName}.jar" name="deployment.file" />
                               <echo>*** Updating ${deployment.file}...</echo>
-                              <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
+                              <jar basedir="${project.build.outputDirectory}" destfile="${deployment.file}" />
                            </tasks>
                         </configuration>
                         <goals>
@@ -289,18 +240,14 @@
                         <phase>package</phase>
                         <configuration>
                            <tasks>
-                              <property name="deployment.file"
-                                        location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                              <property location="${rhq.deploymentDir}/${project.build.finalName}.jar" name="deployment.file" />
                               <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
-                              <unjar src="${project.build.directory}/${project.build.finalName}.jar"
-                                     dest="${project.build.outputDirectory}">
+                              <unjar dest="${project.build.outputDirectory}" src="${project.build.directory}/${project.build.finalName}.jar">
                                  <patternset>
-                                    <include name="META-INF/**"/>
+                                    <include name="META-INF/**" />
                                  </patternset>
                               </unjar>
-                              <jar destfile="${deployment.file}"
-                                   manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF"
-                                   update="true">
+                              <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
                               </jar>
                            </tasks>
                         </configuration>
@@ -314,10 +261,9 @@
                         <phase>clean</phase>
                         <configuration>
                            <tasks>
-                              <property name="deployment.file"
-                                        location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                              <property location="${rhq.deploymentDir}/${project.build.finalName}.jar" name="deployment.file" />
                               <echo>*** Deleting ${deployment.file}...</echo>
-                              <delete file="${deployment.file}"/>
+                              <delete file="${deployment.file}" />
                            </tasks>
                         </configuration>
                         <goals>
