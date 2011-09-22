@@ -23,6 +23,7 @@
 package org.infinispan.loaders.remote;
 
 import org.infinispan.Cache;
+import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
@@ -56,7 +57,7 @@ public class RemoteCacheStoreConfigTest {
    public void startUp() {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       assertEquals(cacheManager.getCache().size(), 0);
-      hotRodServer = HotRodTestingUtil.startHotRodServer(cacheManager, 19711);
+      hotRodServer = TestHelper.startHotRodServer(cacheManager);
    }
 
    public void simpleTest() throws IOException {
