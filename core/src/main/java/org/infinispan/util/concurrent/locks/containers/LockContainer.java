@@ -22,6 +22,8 @@
  */
 package org.infinispan.util.concurrent.locks.containers;
 
+import org.infinispan.context.InvocationContext;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
@@ -31,7 +33,7 @@ import java.util.concurrent.locks.Lock;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface LockContainer {
+public interface LockContainer<L extends Lock> {
    /**
     * Tests if a give owner owns a lock on a specified object.
     *
@@ -51,7 +53,7 @@ public interface LockContainer {
     * @param key object
     * @return the lock for a specific object
     */
-   Lock getLock(Object key);
+   L getLock(Object key);
 
    /**
     * @return number of locks held
@@ -73,14 +75,14 @@ public interface LockContainer {
     * @return If lock was acquired it returns the corresponding Lock object. If lock was not acquired, it returns null
     * @throws InterruptedException If the lock acquisition was interrupted
     */
-   Lock acquireLock(Object key, long timeout, TimeUnit unit) throws InterruptedException;
+   L acquireLock(InvocationContext ctx, Object key, long timeout, TimeUnit unit) throws InterruptedException;
 
    /**
     * Release lock on the given key.
     *
     * @param key Object on which lock is to be removed  
     */
-   void releaseLock(Object key);
+   void releaseLock(InvocationContext ctx, Object key);
 
    /**
     * Returns the 'id' of the lock that will be used to guard access to a given key in the cache.  Particularly useful
