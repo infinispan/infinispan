@@ -362,7 +362,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          allowRehashToComplete(ctx);
 
          if (retries > 0) {
-            sendCommitCommand(ctx, command, preparedOn, retries);
+            sendCommitCommand(ctx, command, preparedOn, retries - 1);
          } else {
             throw e;
          }
@@ -373,7 +373,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          allowRehashToComplete(ctx);
 
          if (retries > 0) {
-            sendCommitCommand(ctx, command, preparedOn, retries);
+            sendCommitCommand(ctx, command, preparedOn, retries - 1);
          } else {
             throw e;
          }
