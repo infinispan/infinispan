@@ -34,8 +34,8 @@
 
    <artifactId>infinispan-server-core</artifactId>
    <packaging>${packaging}</packaging>
-   <name>Infinispan Server Core Module</name>
-   <description>Infinispan server core module</description>
+   <name>Infinispan Server - Core Components</name>
+   <description>Infinispan Server - Core Components</description>
 
    <dependencies>
       <dependency>

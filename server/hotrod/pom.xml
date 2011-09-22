@@ -34,8 +34,8 @@
 
    <artifactId>infinispan-server-hotrod</artifactId>
    <packaging>${packaging}</packaging>
-   <name>Infinispan Server Hotrod Module</name>
-   <description>Infinispan server hotrod  module</description>
+   <name>Infinispan Hot Rod Server</name>
+   <description>Infinispan Hot Rod Server</description>
 
    <dependencies>
        <dependency>
