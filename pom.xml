@@ -70,7 +70,7 @@
       <module>demos/directory</module>
       <module>demos/lucene-directory-demo</module>
       <module>demos/gridfs-webdav</module>
-      <module>cdi</module>
+      <module>cdi/extension</module>
    </modules>
 
    <profiles>
