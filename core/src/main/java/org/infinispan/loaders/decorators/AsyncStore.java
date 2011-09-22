@@ -347,9 +347,9 @@ public class AsyncStore extends AbstractDelegatingStore {
                // will never be overwritten (putIfAbsent below)
                for (Object key : swap.keySet()) {
                   if (trace) log.tracef("Going to process mod key: %s", key);
-                  boolean acquired = false;
+                  boolean acquired;
                   try {
-                     acquired = lockContainer.acquireLock(key, 0, TimeUnit.NANOSECONDS) != null;
+                     acquired = lockContainer.acquireLock(null, key, 0, TimeUnit.NANOSECONDS) != null;
                   } catch (InterruptedException e) {
                      log.interruptedAcquiringLock(0, e);
                      Thread.currentThread().interrupt();
@@ -374,7 +374,7 @@ public class AsyncStore extends AbstractDelegatingStore {
             }
 
             if (swap.isEmpty()) {
-               if (lastAsyncProcessorShutsDownExecutor && runAgainAfterWaiting == false) {
+               if (lastAsyncProcessorShutsDownExecutor && !runAgainAfterWaiting) {
                   executor.shutdown();
                }
                return;
@@ -424,7 +424,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       void releaseLocks(Set<Object> keys) {
          for (Object key : keys) {
             if (trace) log.tracef("Release lock for key %s", key);
-            releaseLock(key);
+            releaseLock(null, key);
          }
       }
    }

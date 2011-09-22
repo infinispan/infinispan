@@ -373,7 +373,7 @@ public class LockingInterceptor extends CommandInterceptor {
             // and then unlock
             if (needToUnlock && !ctx.hasFlag(Flag.SKIP_LOCKING)) {
                if (trace) log.tracef("Releasing lock on [%s] for owner %s", key, owner);
-               lockManager.unlock(key);
+               lockManager.unlock(ctx, key);
             }
          }
       } else {

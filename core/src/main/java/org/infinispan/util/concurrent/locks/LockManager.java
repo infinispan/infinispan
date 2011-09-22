@@ -49,9 +49,10 @@ public interface LockManager {
    /**
     * Releases the lock passed in, held by the specified owner
     *
-    * @param owner lock owner
+    * @param ctx invocation context
+    * @param key key to unlock
     */
-   void unlock(Object key);
+   void unlock(InvocationContext ctx, Object key);
 
    /**
     * Releases locks present in an invocation context and transaction entry, if one is available.
