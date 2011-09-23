@@ -71,6 +71,7 @@
       <module>demos/lucene-directory-demo</module>
       <module>demos/gridfs-webdav</module>
       <module>cdi/extension</module>
+      <module>cdi/tck-runner</module>
    </modules>
 
    <profiles>
