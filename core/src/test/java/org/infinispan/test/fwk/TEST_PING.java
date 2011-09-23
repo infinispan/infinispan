@@ -19,7 +19,6 @@ import org.jgroups.util.UUID;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -51,8 +50,8 @@ public class TEST_PING extends Discovery {
    // work, so we're sticking to an static solution
 
    // <Test Name, Cluster Name -> <Node Name -> Discovery>>
-   private static ConcurrentMap<DiscoveryKey, Map<Address, TEST_PING>> all =
-         new ConcurrentHashMap<DiscoveryKey, Map<Address, TEST_PING>>();
+   private static ConcurrentMap<DiscoveryKey, ConcurrentMap<Address, TEST_PING>> all =
+         new ConcurrentHashMap<DiscoveryKey, ConcurrentMap<Address, TEST_PING>>();
 
    static {
       ClassConfigurator.addProtocol((short) 1320, TEST_PING.class);
@@ -71,26 +70,29 @@ public class TEST_PING extends Discovery {
          if (!discardEnabled) {
             if (!discoveries.isEmpty()) {
                LinkedList<PingData> rsps = new LinkedList<PingData>();
-               for (TEST_PING discovery : discoveries.values()) {
-                  // Avoid sending to self! Since there are single instances of
-                  // discovery protocol in each node, just compare them by ref.
-                  boolean traceEnabled = log.isTraceEnabled();
-                  if (discovery != this) {
-                     boolean remoteDiscardEnabled = isDiscardEnabled(discovery);
-                     if (!remoteDiscardEnabled && !discovery.stopped) {
-                        addPingRsp(rsps, discovery);
-                     } else if (discovery.stopped) {
-                        log.debug(String.format(
-                              "%s is stopped, so no ping responses will be received",
-                              discovery.getLocalAddr()));
+               // Make sure that concurrent startups within a test won't mess up discovery
+               synchronized (discoveries) {
+                  for (TEST_PING discovery : discoveries.values()) {
+                     // Avoid sending to self! Since there are single instances of
+                     // discovery protocol in each node, just compare them by ref.
+                     boolean traceEnabled = log.isTraceEnabled();
+                     if (discovery != this) {
+                        boolean remoteDiscardEnabled = isDiscardEnabled(discovery);
+                        if (!remoteDiscardEnabled && !discovery.stopped) {
+                           addPingRsp(rsps, discovery);
+                        } else if (discovery.stopped) {
+                           log.debug(String.format(
+                                 "%s is stopped, so no ping responses will be received",
+                                 discovery.getLocalAddr()));
+                        } else {
+                           if (traceEnabled)
+                              log.trace("Skipping sending response cos DISCARD is on");
+                           return Collections.emptyList();
+                        }
                      } else {
                         if (traceEnabled)
-                           log.trace("Skipping sending response cos DISCARD is on");
-                        return Collections.emptyList();
+                           log.trace("Skipping sending discovery to self");
                      }
-                  } else {
-                     if (traceEnabled)
-                        log.trace("Skipping sending discovery to self");
                   }
                }
                return rsps;
@@ -158,26 +160,22 @@ public class TEST_PING extends Discovery {
 
    private Map<Address, TEST_PING> registerInDiscoveries() {
       DiscoveryKey key = new DiscoveryKey(testName, group_addr);
-      Map<Address, TEST_PING> discoveries = all.get(key);
+      ConcurrentMap<Address, TEST_PING> discoveries = all.get(key);
       if (discoveries == null) {
-         discoveries = new HashMap<Address, TEST_PING>();
-         Map ret = all.putIfAbsent(key, discoveries);
+         discoveries = new ConcurrentHashMap<Address, TEST_PING>();
+         ConcurrentMap ret = all.putIfAbsent(key, discoveries);
          if (ret != null)
             discoveries = ret;
       }
       boolean traceEnabled = log.isTraceEnabled();
       if (traceEnabled)
-         log.trace(String.format(
-               "Discoveries for %s are : %s", key, discoveries));
+         log.trace(sf("Discoveries for %s are : %s", key, discoveries));
 
-      if (!discoveries.containsKey(local_addr)) {
-         discoveries.put(local_addr, this);
+      TEST_PING prev = discoveries.putIfAbsent(local_addr, this);
+      if (prev == null && traceEnabled)
+         log.trace(sf("Add discovery for %s to cache.  The cache now contains: %s",
+               local_addr, discoveries));
 
-         if (traceEnabled)
-            log.trace(String.format(
-                  "Add discovery for %s to cache.  The cache now contains: %s",
-                  local_addr, discoveries));
-      }
       return discoveries;
    }
 
@@ -240,6 +238,10 @@ public class TEST_PING extends Discovery {
    @Override
    public String toString() {
       return "TEST_PING@" + local_addr;
+   }
+
+   private static String sf(String format, Object ... args) {
+      return String.format(format, args);
    }
 
    private class DiscoveryKey {
