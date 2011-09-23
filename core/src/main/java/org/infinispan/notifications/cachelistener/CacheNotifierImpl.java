@@ -25,7 +25,6 @@ package org.infinispan.notifications.cachelistener;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
@@ -52,7 +51,7 @@ import static org.infinispan.util.InfinispanCollections.transformCollectionToMap
 /**
  * Helper class that handles all notifications to registered listeners.
  *
- * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
+ * @author Manik Surtani (manik AT infinispan DOT org)
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
@@ -97,7 +96,6 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    // For backward compat
    final List<ListenerInvocation> cacheEntryEvictedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
 
-   private InvocationContextContainer icc;
    private Cache<Object, Object> cache;
 
    public CacheNotifierImpl() {
@@ -122,8 +120,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
 
    @Inject
    @SuppressWarnings("unchecked")
-   void injectDependencies(InvocationContextContainer icc, Cache cache) {
-      this.icc = icc;
+   void injectDependencies(Cache cache) {
       this.cache = cache;
    }
 
@@ -141,17 +138,12 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryCreated(Object key, boolean pre, InvocationContext ctx) {
       if (!cacheEntryCreatedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         InvocationContext contexts = icc.suspend();
-         try {
-            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
-            e.setOriginLocal(originLocal);
-            e.setPre(pre);
-            e.setKey(key);
-            setTx(ctx, e);
-            for (ListenerInvocation listener : cacheEntryCreatedListeners) listener.invoke(e);
-         } finally {
-            icc.resume(contexts);
-         }
+         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
+         e.setOriginLocal(originLocal);
+         e.setPre(pre);
+         e.setKey(key);
+         setTx(ctx, e);
+         for (ListenerInvocation listener : cacheEntryCreatedListeners) listener.invoke(e);
       }
    }
 
@@ -159,18 +151,13 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryModified(Object key, Object value, boolean pre, InvocationContext ctx) {
       if (!cacheEntryModifiedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         InvocationContext contexts = icc.suspend();
-         try {
-            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_MODIFIED);
-            e.setOriginLocal(originLocal);
-            e.setValue(value);
-            e.setPre(pre);
-            e.setKey(key);
-            setTx(ctx, e);
-            for (ListenerInvocation listener : cacheEntryModifiedListeners) listener.invoke(e);
-         } finally {
-            icc.resume(contexts);
-         }
+         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_MODIFIED);
+         e.setOriginLocal(originLocal);
+         e.setValue(value);
+         e.setPre(pre);
+         e.setKey(key);
+         setTx(ctx, e);
+         for (ListenerInvocation listener : cacheEntryModifiedListeners) listener.invoke(e);
       }
    }
 
@@ -178,35 +165,25 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryRemoved(Object key, Object value, boolean pre, InvocationContext ctx) {
       if (!cacheEntryRemovedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         InvocationContext contexts = icc.suspend();
-         try {
-            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_REMOVED);
-            e.setOriginLocal(originLocal);
-            e.setValue(value);
-            e.setPre(pre);
-            e.setKey(key);
-            setTx(ctx, e);
-            for (ListenerInvocation listener : cacheEntryRemovedListeners) listener.invoke(e);
-         } finally {
-            icc.resume(contexts);
-         }
+         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_REMOVED);
+         e.setOriginLocal(originLocal);
+         e.setValue(value);
+         e.setPre(pre);
+         e.setKey(key);
+         setTx(ctx, e);
+         for (ListenerInvocation listener : cacheEntryRemovedListeners) listener.invoke(e);
       }
    }
 
    @Override
    public void notifyCacheEntryVisited(Object key, Object value, boolean pre, InvocationContext ctx) {
       if (!cacheEntryVisitedListeners.isEmpty()) {
-         InvocationContext contexts = icc.suspend();
-         try {
-            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_VISITED);
-            e.setPre(pre);
-            e.setKey(key);
-            e.setValue(value);
-            setTx(ctx, e);
-            for (ListenerInvocation listener : cacheEntryVisitedListeners) listener.invoke(e);
-         } finally {
-            icc.resume(contexts);
-         }
+         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_VISITED);
+         e.setPre(pre);
+         e.setKey(key);
+         e.setValue(value);
+         setTx(ctx, e);
+         for (ListenerInvocation listener : cacheEntryVisitedListeners) listener.invoke(e);
       }
    }
 
@@ -214,52 +191,42 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntriesEvicted(Collection<InternalCacheEntry> entries, InvocationContext ctx) {
       if (!entries.isEmpty()) {
          if (!cacheEntriesEvictedListeners.isEmpty()) {
-            InvocationContext contexts = icc.suspend();
-            try {
-               EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
-               Map<Object, Object> evictedKeysAndValues = transformCollectionToMap(entries,
-                                                                                   new InfinispanCollections.MapMakerFunction<Object, Object, InternalCacheEntry>() {
-                                                                                      public Map.Entry<Object, Object> transform(final InternalCacheEntry input) {
-                                                                                         return new Map.Entry<Object, Object>() {
+            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
+            Map<Object, Object> evictedKeysAndValues = transformCollectionToMap(entries,
+                                                                                new InfinispanCollections.MapMakerFunction<Object, Object, InternalCacheEntry>() {
+                                                                                   public Map.Entry<Object, Object> transform(final InternalCacheEntry input) {
+                                                                                      return new Map.Entry<Object, Object>() {
 
-                                                                                            @Override
-                                                                                            public Object getKey() {
-                                                                                               return input.getKey();
-                                                                                            }
+                                                                                         @Override
+                                                                                         public Object getKey() {
+                                                                                            return input.getKey();
+                                                                                         }
 
-                                                                                            @Override
-                                                                                            public Object getValue() {
-                                                                                               return input.getValue();
-                                                                                            }
+                                                                                         @Override
+                                                                                         public Object getValue() {
+                                                                                            return input.getValue();
+                                                                                         }
 
-                                                                                            @Override
-                                                                                            public Object setValue(Object value) {
-                                                                                               throw new UnsupportedOperationException();
-                                                                                            }
-                                                                                         };
-                                                                                      }
+                                                                                         @Override
+                                                                                         public Object setValue(Object value) {
+                                                                                            throw new UnsupportedOperationException();
+                                                                                         }
+                                                                                      };
                                                                                    }
-               );
+                                                                                }
+            );
 
-               e.setEntries(evictedKeysAndValues);
-               for (ListenerInvocation listener : cacheEntriesEvictedListeners) listener.invoke(e);
-            } finally {
-               icc.resume(contexts);
-            }
+            e.setEntries(evictedKeysAndValues);
+            for (ListenerInvocation listener : cacheEntriesEvictedListeners) listener.invoke(e);
          }
 
          // For backward compat
          if (!cacheEntryEvictedListeners.isEmpty()) {
-            InvocationContext contexts = icc.suspend();
             for (InternalCacheEntry ice : entries) {
-               try {
-                  EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
-                  e.setKey(ice.getKey());
-                  e.setValue(ice.getValue());
-                  for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e);
-               } finally {
-                  icc.resume(contexts);
-               }
+               EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
+               e.setKey(ice.getKey());
+               e.setValue(ice.getValue());
+               for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e);
             }
          }
       }
@@ -268,27 +235,17 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    @Override
    public void notifyCacheEntryEvicted(Object key, Object value, InvocationContext ctx) {
       if (!cacheEntriesEvictedListeners.isEmpty()) {
-         InvocationContext contexts = icc.suspend();
-         try {
-            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
-            e.setEntries(Collections.singletonMap(key, value));
-            for (ListenerInvocation listener : cacheEntriesEvictedListeners) listener.invoke(e);
-         } finally {
-            icc.resume(contexts);
-         }
+         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
+         e.setEntries(Collections.singletonMap(key, value));
+         for (ListenerInvocation listener : cacheEntriesEvictedListeners) listener.invoke(e);
       }
 
       // For backward compat
       if (!cacheEntryEvictedListeners.isEmpty()) {
-         InvocationContext contexts = icc.suspend();
-         try {
-            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
-            e.setKey(key);
-            e.setValue(value);
-            for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e);
-         } finally {
-            icc.resume(contexts);
-         }
+         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
+         e.setKey(key);
+         e.setValue(value);
+         for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e);
       }
    }
 
@@ -296,18 +253,13 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryInvalidated(final Object key, Object value, final boolean pre, InvocationContext ctx) {
       if (!cacheEntryInvalidatedListeners.isEmpty()) {
          final boolean originLocal = ctx.isOriginLocal();
-         InvocationContext contexts = icc.suspend();
-         try {
-            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_INVALIDATED);
-            e.setOriginLocal(originLocal);
-            e.setPre(pre);
-            e.setKey(key);
-            e.setValue(value);
-            setTx(ctx, e);
-            for (ListenerInvocation listener : cacheEntryInvalidatedListeners) listener.invoke(e);
-         } finally {
-            icc.resume(contexts);
-         }
+         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_INVALIDATED);
+         e.setOriginLocal(originLocal);
+         e.setPre(pre);
+         e.setKey(key);
+         e.setValue(value);
+         setTx(ctx, e);
+         for (ListenerInvocation listener : cacheEntryInvalidatedListeners) listener.invoke(e);
       }
    }
 
@@ -315,18 +267,13 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryLoaded(Object key, Object value, boolean pre, InvocationContext ctx) {
       if (!cacheEntryLoadedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         InvocationContext contexts = icc.suspend();
-         try {
-            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_LOADED);
-            e.setOriginLocal(originLocal);
-            e.setPre(pre);
-            e.setKey(key);
-            e.setValue(value);
-            setTx(ctx, e);
-            for (ListenerInvocation listener : cacheEntryLoadedListeners) listener.invoke(e);
-         } finally {
-            icc.resume(contexts);
-         }
+         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_LOADED);
+         e.setOriginLocal(originLocal);
+         e.setPre(pre);
+         e.setKey(key);
+         e.setValue(value);
+         setTx(ctx, e);
+         for (ListenerInvocation listener : cacheEntryLoadedListeners) listener.invoke(e);
       }
    }
 
@@ -334,18 +281,13 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryActivated(Object key, Object value, boolean pre, InvocationContext ctx) {
       if (!cacheEntryActivatedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         InvocationContext contexts = icc.suspend();
-         try {
-            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_ACTIVATED);
-            e.setOriginLocal(originLocal);
-            e.setPre(pre);
-            e.setKey(key);
-            e.setValue(value);
-            setTx(ctx, e);
-            for (ListenerInvocation listener : cacheEntryActivatedListeners) listener.invoke(e);
-         } finally {
-            icc.resume(contexts);
-         }
+         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_ACTIVATED);
+         e.setOriginLocal(originLocal);
+         e.setPre(pre);
+         e.setKey(key);
+         e.setValue(value);
+         setTx(ctx, e);
+         for (ListenerInvocation listener : cacheEntryActivatedListeners) listener.invoke(e);
       }
    }
 
@@ -359,16 +301,11 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    @Override
    public void notifyCacheEntryPassivated(Object key, Object value, boolean pre, InvocationContext ctx) {
       if (!cacheEntryPassivatedListeners.isEmpty()) {
-         InvocationContext contexts = icc.suspend();
-         try {
-            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_PASSIVATED);
-            e.setPre(pre);
-            e.setKey(key);
-            e.setValue(value);
-            for (ListenerInvocation listener : cacheEntryPassivatedListeners) listener.invoke(e);
-         } finally {
-            icc.resume(contexts);
-         }
+         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_PASSIVATED);
+         e.setPre(pre);
+         e.setKey(key);
+         e.setValue(value);
+         for (ListenerInvocation listener : cacheEntryPassivatedListeners) listener.invoke(e);
       }
    }
 
@@ -376,16 +313,11 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyTransactionCompleted(GlobalTransaction transaction, boolean successful, InvocationContext ctx) {
       if (!transactionCompletedListeners.isEmpty()) {
          boolean isOriginLocal = ctx.isOriginLocal();
-         InvocationContext contexts = icc.suspend();
-         try {
-            EventImpl<Object, Object> e = EventImpl.createEvent(cache, TRANSACTION_COMPLETED);
-            e.setOriginLocal(isOriginLocal);
-            e.setTransactionId(transaction);
-            e.setTransactionSuccessful(successful);
-            for (ListenerInvocation listener : transactionCompletedListeners) listener.invoke(e);
-         } finally {
-            icc.resume(contexts);
-         }
+         EventImpl<Object, Object> e = EventImpl.createEvent(cache, TRANSACTION_COMPLETED);
+         e.setOriginLocal(isOriginLocal);
+         e.setTransactionId(transaction);
+         e.setTransactionSuccessful(successful);
+         for (ListenerInvocation listener : transactionCompletedListeners) listener.invoke(e);
       }
    }
 
@@ -393,15 +325,10 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyTransactionRegistered(GlobalTransaction globalTransaction, InvocationContext ctx) {
       if (!transactionRegisteredListeners.isEmpty()) {
          boolean isOriginLocal = ctx.isOriginLocal();
-         InvocationContext contexts = icc.suspend();
-         try {
-            EventImpl<Object, Object> e = EventImpl.createEvent(cache, TRANSACTION_REGISTERED);
-            e.setOriginLocal(isOriginLocal);
-            e.setTransactionId(globalTransaction);
-            for (ListenerInvocation listener : transactionRegisteredListeners) listener.invoke(e);
-         } finally {
-            icc.resume(contexts);
-         }
+         EventImpl<Object, Object> e = EventImpl.createEvent(cache, TRANSACTION_REGISTERED);
+         e.setOriginLocal(isOriginLocal);
+         e.setTransactionId(globalTransaction);
+         for (ListenerInvocation listener : transactionRegisteredListeners) listener.invoke(e);
       }
    }
 

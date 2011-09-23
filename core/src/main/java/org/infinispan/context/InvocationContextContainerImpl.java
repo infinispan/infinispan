@@ -22,8 +22,6 @@
  */
 package org.infinispan.context;
 
-import java.util.Set;
-
 import org.infinispan.CacheException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -38,11 +36,12 @@ import org.infinispan.transaction.TransactionTable;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import java.util.Set;
 
 /**
  * Default implementation for {@link org.infinispan.context.InvocationContextContainer}.
  *
- * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Manik Surtani (manik AT infinispan DOT org)
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
@@ -51,12 +50,26 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
    private TransactionManager tm;
    private TransactionTable transactionTable;
 
-   ThreadLocal<InvocationContext> icTl = new ThreadLocal<InvocationContext>();
+   // See ISPN-1397.  There is no real need to store the InvocationContext in a thread local at all, since it is passed
+   // as a parameter to any component that requires it - except for two components at the moment that require reading
+   // the InvocationContext from a thread local.  These two are the ClusterCacheLoader and the JBossMarshaller.  The
+   // former can be fixed once the CacheStore SPI is changed to accept an InvocationContext (see ISPN-xxxx) and the
+   // latter can be fixed once the CacheManager architecture is changed to be associated with a ClassLoader per
+   // CacheManager (see ISPN-xxxx), after which this thread local can be removed and the getInvocationContext() method
+   // can also be removed.
+   private final ThreadLocal<InvocationContext> ctxHolder = new ThreadLocal<InvocationContext>();
 
    @Inject
    public void init(TransactionManager tm, TransactionTable transactionTable) {
       this.tm = tm;
       this.transactionTable = transactionTable;
+   }
+
+   @Deprecated
+   public InvocationContext getInvocationContext() {
+      InvocationContext ctx = ctxHolder.get();
+      if (ctx == null) throw new IllegalStateException("No InvocationContext associated with current thread!");
+      return ctx;
    }
 
    public InvocationContext createInvocationContext() {
@@ -65,63 +78,41 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
 
    @Override
    public InvocationContext createInvocationContext(Transaction tx) {
-      InvocationContext existing = icTl.get();
+      InvocationContext ctx;
       if (tx != null) {
          LocalTxInvocationContext localContext;
-         if ((existing == null) || !(existing instanceof LocalTxInvocationContext)) {
-            localContext = new LocalTxInvocationContext();
-            icTl.set(localContext);
-         } else {
-            localContext = (LocalTxInvocationContext) existing;
-         }
+         localContext = new LocalTxInvocationContext();
          LocalTransaction localTransaction = transactionTable.getLocalTransaction(tx);
          localContext.setLocalTransaction(localTransaction);
          localContext.setTransaction(tx);
-         return localContext;
+         ctx = localContext;
       } else {
          NonTxInvocationContext nonTxContext;
-         if ((existing == null) || !(existing instanceof NonTxInvocationContext)) {
-            nonTxContext = new NonTxInvocationContext();
-            icTl.set(nonTxContext);
-         } else {
-            nonTxContext = (NonTxInvocationContext) existing;
-         }
+         nonTxContext = new NonTxInvocationContext();
          nonTxContext.setOriginLocal(true);
-         return nonTxContext;
+         ctx = nonTxContext;
       }
+      ctxHolder.set(ctx);
+      return ctx;
    }
 
    public LocalTxInvocationContext createTxInvocationContext() {
-      InvocationContext existing = icTl.get();
-      if (existing != null && existing instanceof LocalTxInvocationContext) {
-         return (LocalTxInvocationContext) existing;
-      }
-      LocalTxInvocationContext localTxContext = new LocalTxInvocationContext();
-      icTl.set(localTxContext);
-      return localTxContext;
+      LocalTxInvocationContext ctx = new LocalTxInvocationContext();
+      ctxHolder.set(ctx);
+      return ctx;
    }
 
    public RemoteTxInvocationContext createRemoteTxInvocationContext(Address origin) {
-      InvocationContext existing = icTl.get();
-      if (existing != null && existing instanceof RemoteTxInvocationContext) {
-         return (RemoteTxInvocationContext) existing;
-      }
-      RemoteTxInvocationContext remoteTxContext = new RemoteTxInvocationContext();
-      icTl.set(remoteTxContext);
-      remoteTxContext.setOrigin(origin);
-      return remoteTxContext;
+      RemoteTxInvocationContext ctx = new RemoteTxInvocationContext();
+      ctx.setOrigin(origin);
+      ctxHolder.set(ctx);
+      return ctx;
    }
 
    public NonTxInvocationContext createNonTxInvocationContext() {
-      InvocationContext existing = icTl.get();
-      if (existing != null && existing instanceof NonTxInvocationContext) {
-         NonTxInvocationContext context = (NonTxInvocationContext) existing;
-         context.setOriginLocal(true);
-         return context;
-      }
-      NonTxInvocationContext remoteTxContext = new NonTxInvocationContext();
-      icTl.set(remoteTxContext);
-      return remoteTxContext;
+      NonTxInvocationContext ctx = new NonTxInvocationContext();
+      ctxHolder.set(ctx);
+      return ctx;
    }
    
    @Override
@@ -131,47 +122,19 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
          FlagAffectedCommand command = (FlagAffectedCommand) cacheCommand;
          Set<Flag> flags = command.getFlags();
          if (flags != null && !flags.isEmpty()) {
-            return new InvocationContextFlagsOverride(context, flags);
+            context = new InvocationContextFlagsOverride(context, flags);
+            ctxHolder.set(context);
          }
       }
       return context;
    }
 
    public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
-      InvocationContext existing = icTl.get();
-      if (existing != null && existing instanceof NonTxInvocationContext) {
-         NonTxInvocationContext context = (NonTxInvocationContext) existing;
-         context.setOriginLocal(false);
-         context.setOrigin(origin);
-         return context;
-      }
       NonTxInvocationContext remoteNonTxContext = new NonTxInvocationContext();
       remoteNonTxContext.setOriginLocal(false);
       remoteNonTxContext.setOrigin(origin);
-      icTl.set(remoteNonTxContext);
+      ctxHolder.set(remoteNonTxContext);
       return remoteNonTxContext;
-   }
-
-   public InvocationContext getInvocationContext() {
-      InvocationContext invocationContext = icTl.get();
-      if (invocationContext == null)
-         throw new IllegalStateException("This method can only be called after associating the current thread with a context");
-      return invocationContext;
-   }
-
-   public InvocationContext suspend() {
-      InvocationContext invocationContext = icTl.get();
-      icTl.remove();
-      return invocationContext;
-   }
-
-   public void resume(InvocationContext ctxt) {
-      if (ctxt != null) icTl.set(ctxt);
-   }
-
-   @Override
-   public InvocationContext peekInvocationContext() {
-      return icTl.get();
    }
 
    private Transaction getRunningTx() {
@@ -181,5 +144,4 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
          throw new CacheException(e);
       }
    }
-
 }
