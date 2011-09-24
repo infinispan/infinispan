@@ -53,9 +53,9 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
    // See ISPN-1397.  There is no real need to store the InvocationContext in a thread local at all, since it is passed
    // as a parameter to any component that requires it - except for two components at the moment that require reading
    // the InvocationContext from a thread local.  These two are the ClusterCacheLoader and the JBossMarshaller.  The
-   // former can be fixed once the CacheStore SPI is changed to accept an InvocationContext (see ISPN-xxxx) and the
+   // former can be fixed once the CacheStore SPI is changed to accept an InvocationContext (see ISPN-1416) and the
    // latter can be fixed once the CacheManager architecture is changed to be associated with a ClassLoader per
-   // CacheManager (see ISPN-xxxx), after which this thread local can be removed and the getInvocationContext() method
+   // CacheManager (see ISPN-1413), after which this thread local can be removed and the getInvocationContext() method
    // can also be removed.
    private final ThreadLocal<InvocationContext> ctxHolder = new ThreadLocal<InvocationContext>();
 

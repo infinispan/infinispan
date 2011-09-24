@@ -23,7 +23,6 @@
 package org.infinispan;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.context.Flag;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -48,6 +47,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
 
    public AbstractDelegatingCache(Cache<K, V> cache) {
       this.cache = cache;
+      if (cache == null) throw new IllegalArgumentException("Delegate cache cannot be null!");
    }
 
    public void putForExternalRead(K key, V value) {
