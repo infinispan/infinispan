@@ -211,12 +211,15 @@ public class FileCacheStore extends BucketBasedCacheStore {
                   @Override
                   public void run() {
                      Integer bucketKey = Integer.valueOf(bucketFile.getName());
+                     boolean lockAcquired = false;
                      try {
                         Bucket bucket = loadBucket(bucketFile);
 
                         if (bucket != null) {
-                           if (bucket.removeExpiredEntries())
+                           if (bucket.removeExpiredEntries()) {
                               lockForWriting(bucketKey);
+                              lockAcquired = true;
+                           }
                            updateBucket(bucket);
                         }
                      } catch (InterruptedException ie) {
@@ -226,22 +229,28 @@ public class FileCacheStore extends BucketBasedCacheStore {
                      } catch (CacheLoaderException e) {
                         log.problemsPurgingFile(bucketFile, e);
                      } finally {
-                        unlock(bucketKey);
+                        if (lockAcquired)
+                           unlock(bucketKey);
                      }
                   }
                });
             } else {
                Integer bucketKey = Integer.valueOf(bucketFile.getName());
+               boolean lockAcquired = false;
                try {
                   Bucket bucket = loadBucket(bucketFile);
 
                   if (bucket != null) {
-                     if (bucket.removeExpiredEntries())
+                     if (bucket.removeExpiredEntries()) {
                         lockForWriting(bucketKey);
+                        lockAcquired = true;
+                     }
                      updateBucket(bucket);
                   }
                } finally {
-                  unlock(bucketKey);
+                  if (lockAcquired) {
+                     unlock(bucketKey);
+                  }
                }
             }
          }
