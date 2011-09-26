@@ -44,7 +44,7 @@ public class ReplicationTxExceptionTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       registerCacheManager(TestCacheManagerFactory.createCacheManager(config));
       registerCacheManager(TestCacheManagerFactory.createCacheManager(config));
       TestingUtil.blockUntilViewsReceived(10000, cache(0), cache(1));

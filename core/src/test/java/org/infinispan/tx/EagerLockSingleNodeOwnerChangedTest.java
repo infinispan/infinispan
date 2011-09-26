@@ -46,6 +46,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static org.testng.Assert.assertEquals;
+
 /**
  * Test for https://issues.jboss.org/browse/ISPN-1007.
  *
@@ -158,17 +160,19 @@ public class EagerLockSingleNodeOwnerChangedTest extends MultipleCacheManagersTe
          //expected
       }
 
-      assert cache(0).get(o).equals(oldValue(o));
-      assert cache(1).get(o).equals(oldValue(o));
-      assert cache(2).get(o).equals(oldValue(o));
+      assertEquals(cache(0).get(o), oldValue(o));
+      assertEquals(cache(1).get(o), oldValue(o));
+      assertEquals(cache(2).get(o), oldValue(o));
       assert !lockManager(0).isLocked(o);
       assert !lockManager(1).isLocked(o);
       assert !lockManager(2).isLocked(o);
    }
 
    private void addNewClusterMember() {
+      log.info("Adding new cluster member");
       //now add the new cache
       addClusterEnabledCacheManager(c);
       waitForClusterToForm();
+      log.info("New cluster member added");
    }
 }

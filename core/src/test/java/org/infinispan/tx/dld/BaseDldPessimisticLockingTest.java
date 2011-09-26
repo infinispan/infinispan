@@ -97,8 +97,6 @@ public abstract class BaseDldPessimisticLockingTest extends BaseDldTest {
       boolean b1 = resp0 instanceof Exception;
       final Object resp1 = ex1.lastResponse();
       boolean b2 = resp1 instanceof Exception;
-      log.info("resp0:", (Throwable)resp0);
-      log.info("resp1:", (Throwable)resp1);
       assert xor(b1, b2) : "Both are " + (b1 || b2);
 
       assert xor(ex0.getOngoingTransaction().getStatus() == Status.STATUS_MARKED_ROLLBACK,

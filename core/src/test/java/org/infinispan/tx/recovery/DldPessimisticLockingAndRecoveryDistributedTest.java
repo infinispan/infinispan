@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "tx.recovery.DldEagerLockingAndRecoveryDistributedTest")
-public class DldEagerLockingAndRecoveryDistributedTest extends DldPessimisticLockingDistributedTest {
+public class DldPessimisticLockingAndRecoveryDistributedTest extends DldPessimisticLockingDistributedTest {
    @Override
    protected Configuration createConfiguration() {
       return super.createConfiguration().fluent().transaction().recovery().build();

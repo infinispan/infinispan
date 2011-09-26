@@ -65,7 +65,7 @@ public class DldPessimisticLockingDistributedTest extends BaseDldPessimisticLock
    }
 
    protected Configuration createConfiguration() {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
       config.setUnsafeUnreliableReturnValues(true);
       config.setNumOwners(1);
       config.setEnableDeadlockDetection(true);

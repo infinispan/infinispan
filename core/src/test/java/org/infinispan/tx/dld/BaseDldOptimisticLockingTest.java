@@ -52,8 +52,8 @@ public abstract class BaseDldOptimisticLockingTest extends BaseDldTest {
       PerCacheExecutorThread t0 = new PerCacheExecutorThread(cache(0), 0);
       PerCacheExecutorThread t1 = new PerCacheExecutorThread(cache(1), 1);
 
-      assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t0.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
-      assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t1.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
+      assertEquals(PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK, t0.execute(PerCacheExecutorThread.Operations.BEGGIN_TX));
+      assertEquals(PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK, t1.execute(PerCacheExecutorThread.Operations.BEGGIN_TX));
 
       t0.setKeyValue(k0, "k0_0");
       t1.setKeyValue(k1, "k1_1");
