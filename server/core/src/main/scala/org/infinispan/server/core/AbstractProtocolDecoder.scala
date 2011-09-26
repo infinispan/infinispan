@@ -176,6 +176,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
       // Reset parameters to avoid leaking previous params
       // into a request that has no params
       params = null.asInstanceOf[SuitableParameters]
+      rawValue = null.asInstanceOf[Array[Byte]] // Clear reference to value
       null
    }
 
