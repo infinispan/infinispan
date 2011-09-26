@@ -22,7 +22,9 @@
  */
 package org.infinispan.util.concurrent.locks.containers;
 
-import java.util.concurrent.locks.Lock;
+import org.infinispan.context.InvocationContext;
+
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -31,17 +33,17 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Manik Surtani
  * @since 4.0
  */
-public class ReentrantPerEntryLockContainer extends AbstractPerEntryLockContainer {
+public class ReentrantPerEntryLockContainer extends AbstractPerEntryLockContainer<ReentrantLock> {
 
    public ReentrantPerEntryLockContainer(int concurrencyLevel) {
       super(concurrencyLevel);
    }
 
-   protected Lock newLock() {
+   protected ReentrantLock newLock() {
       return new ReentrantLock();
    }
 
-   public boolean ownsLock(Object key, Object owner) {
+   public boolean ownsLock(Object key, Object ignored) {
       ReentrantLock l = getLockFromMap(key);
       return l != null && l.isHeldByCurrentThread();
    }
@@ -52,6 +54,16 @@ public class ReentrantPerEntryLockContainer extends AbstractPerEntryLockContaine
    }
 
    private ReentrantLock getLockFromMap(Object key) {
-      return (ReentrantLock) locks.get(key);
+      return locks.get(key);
+   }
+
+   @Override
+   protected void unlock(ReentrantLock l, InvocationContext unused) {
+      l.unlock();
+   }
+
+   @Override
+   protected boolean tryLock(ReentrantLock lock, long timeout, TimeUnit unit, InvocationContext unused) throws InterruptedException {
+      return lock.tryLock(timeout, unit);
    }
 }

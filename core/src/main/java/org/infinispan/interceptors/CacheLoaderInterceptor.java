@@ -22,8 +22,6 @@
  */
 package org.infinispan.interceptors;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -48,6 +46,8 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
 public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
@@ -141,7 +141,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
             }
          } finally {
             if (keyLocked && unlockOnWayOut) {
-               entryFactory.releaseLock(key);
+               entryFactory.releaseLock(ctx, key);
             }
          }
 
@@ -152,7 +152,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
                log.trace("No need to load.  Key doesn't exist in the loader.");
             }
             if (keyLocked) {
-               entryFactory.releaseLock(key);
+               entryFactory.releaseLock(ctx, key);
             }
             return false;
          }

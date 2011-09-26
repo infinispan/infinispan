@@ -26,7 +26,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -63,38 +62,36 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @MBean(objectName = "LockManager", description = "Manager that handles MVCC locks for entries")
 public class LockManagerImpl implements LockManager {
    protected Configuration configuration;
-   protected volatile LockContainer lockContainer;
+   protected volatile LockContainer<? extends Lock> lockContainer;
    private TransactionManager transactionManager;
-   private InvocationContextContainer invocationContextContainer;
    private static final Log log = LogFactory.getLog(LockManagerImpl.class);
    protected static final boolean trace = log.isTraceEnabled();
    private static final String ANOTHER_THREAD = "(another thread)";
 
    @Inject
-   public void injectDependencies(Configuration configuration, TransactionManager transactionManager, InvocationContextContainer invocationContextContainer) {
+   public void injectDependencies(Configuration configuration, TransactionManager transactionManager) {
       this.configuration = configuration;
       this.transactionManager = transactionManager;
-      this.invocationContextContainer = invocationContextContainer;
    }
 
    @Start (priority = 8)
    public void startLockManager() {
       lockContainer = configuration.isUseLockStriping() ?
-      transactionManager == null ? new ReentrantStripedLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantStripedLockContainer(configuration.getConcurrencyLevel(), invocationContextContainer) :
-      transactionManager == null ? new ReentrantPerEntryLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantPerEntryLockContainer(configuration.getConcurrencyLevel(), invocationContextContainer);
+      transactionManager == null ? new ReentrantStripedLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantStripedLockContainer(configuration.getConcurrencyLevel()) :
+      transactionManager == null ? new ReentrantPerEntryLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantPerEntryLockContainer(configuration.getConcurrencyLevel());
    }
 
    public boolean lockAndRecord(Object key, InvocationContext ctx) throws InterruptedException {
       long lockTimeout = getLockAcquisitionTimeout(ctx);
       if (trace) log.tracef("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
-      if (lockContainer.acquireLock(key, lockTimeout, MILLISECONDS) != null) {
+      if (lockContainer.acquireLock(ctx, key, lockTimeout, MILLISECONDS) != null) {
          // successfully locked!
          if (ctx instanceof TxInvocationContext) {
             TxInvocationContext tctx = (TxInvocationContext) ctx;
             if (!tctx.isTransactionValid()) {
                Transaction tx = tctx.getTransaction();
                log.debugf("Successfully acquired lock, but the transaction %s is no longer valid!  Releasing lock.", tx);
-               lockContainer.releaseLock(key);
+               lockContainer.releaseLock(ctx, key);
                throw new IllegalStateException("Transaction "+tx+" appears to no longer be valid!");
             }
          }
@@ -124,9 +121,9 @@ public class LockManagerImpl implements LockManager {
             0 : configuration.getLockAcquisitionTimeout();
    }
 
-   public void unlock(Object key) {
+   public void unlock(InvocationContext ctx, Object key) {
       if (trace) log.tracef("Attempting to unlock %s", key);
-      lockContainer.releaseLock(key);
+      lockContainer.releaseLock(ctx, key);
    }
 
    @SuppressWarnings("unchecked")
@@ -142,7 +139,7 @@ public class LockManagerImpl implements LockManager {
                // has been locked!
                Object k = e.getKey();
                if (trace) log.tracef("Attempting to unlock %s", k);
-               lockContainer.releaseLock(k);
+               lockContainer.releaseLock(ctx, k);
             }
          }
       }
@@ -198,7 +195,7 @@ public class LockManagerImpl implements LockManager {
          // and then unlock
          if (needToUnlock) {
             if (trace) log.tracef("Releasing lock on [%s] for owner %s", key, owner);
-            unlock(key);
+            unlock(ctx, key);
          }
       }
    }

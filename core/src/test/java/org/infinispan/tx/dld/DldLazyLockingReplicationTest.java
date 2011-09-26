@@ -201,7 +201,7 @@ public class DldLazyLockingReplicationTest extends BaseDldLazyLockingTest {
       LockManager lm1 = TestingUtil.extractComponent(cache(0), LockManager.class);
       assert !lm1.isLocked("key") : "It is locked by " + lm1.getOwner("key");
 
-      lm2.unlock("key");
+      lm2.unlock(ctx, "key");
       assert !lm2.isLocked("key");
       assert !lm1.isLocked("key");
    }
@@ -224,7 +224,7 @@ public class DldLazyLockingReplicationTest extends BaseDldLazyLockingTest {
       replicationLatch.countDown();
 
       Thread.sleep(3000); //just to make sure the remote tx thread managed to spin around for some times.
-      lm2.unlock("key");
+      lm2.unlock(ctx, "key");
 
       t1.waitForResponse();
 

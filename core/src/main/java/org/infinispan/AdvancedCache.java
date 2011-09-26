@@ -53,6 +53,10 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *   cache.withFlags(Flag.FORCE_WRITE_LOCK).get(key);
     * </pre>
     * will invoke a cache.get() with a write lock forced.
+    *
+    * As an alternative to setting this on every
+    * invocation, users could also consider using the {@link DecoratedCache} wrapper.
+    *
     * @param flags a set of flags to apply.  See the {@link Flag} documentation.
     * @return a cache on which a real operation is to be invoked.
     */
@@ -214,7 +218,8 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    XAResource getXAResource();
    
    /**
-    * Returns the cache loader associated associated with this cache.
+    * Returns the cache loader associated associated with this cache.  As an alternative to setting this on every
+    * invocation, users could also consider using the {@link DecoratedCache} wrapper.
     *
     * @return this cache's cache loader
     */

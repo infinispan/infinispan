@@ -23,8 +23,10 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import net.jcip.annotations.ThreadSafe;
+import org.infinispan.context.InvocationContext;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -35,7 +37,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 4.0
  */
 @ThreadSafe
-public class ReentrantStripedLockContainer extends AbstractStripedLockContainer {
+public class ReentrantStripedLockContainer extends AbstractStripedLockContainer<ReentrantLock> {
    ReentrantLock[] sharedLocks;
 
    /**
@@ -71,7 +73,7 @@ public class ReentrantStripedLockContainer extends AbstractStripedLockContainer 
       return sharedLocks.length;
    }
 
-   public final boolean ownsLock(Object object, Object owner) {
+   public final boolean ownsLock(Object object, Object ignored) {
       ReentrantLock lock = getLock(object);
       return lock.isHeldByCurrentThread();
    }
@@ -85,5 +87,15 @@ public class ReentrantStripedLockContainer extends AbstractStripedLockContainer 
       return "ReentrantStripedLockContainer{" +
             "sharedLocks=" + (sharedLocks == null ? null : Arrays.asList(sharedLocks)) +
             '}';
+   }
+
+   @Override
+   protected void unlock(ReentrantLock l, InvocationContext unused) {
+      l.unlock();
+   }
+
+   @Override
+   protected boolean tryLock(ReentrantLock lock, long timeout, TimeUnit unit, InvocationContext unused) throws InterruptedException {
+      return lock.tryLock(timeout, unit);
    }
 }

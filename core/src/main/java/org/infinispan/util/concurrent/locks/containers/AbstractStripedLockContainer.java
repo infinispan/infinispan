@@ -23,13 +23,10 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.context.InvocationContext;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
-
-import static org.infinispan.util.Util.safeRelease;
 
 /**
  * A container for locks.  Used with lock striping.
@@ -38,10 +35,7 @@ import static org.infinispan.util.Util.safeRelease;
  * @since 4.0
  */
 @ThreadSafe
-public abstract class AbstractStripedLockContainer implements LockContainer {
-   
-   private static final Log log = LogFactory.getLog(AbstractStripedLockContainer.class);
-   
+public abstract class AbstractStripedLockContainer<L extends Lock> extends AbstractLockContainer<L> {
    private int lockSegmentMask;
    private int lockSegmentShift;
 
@@ -71,9 +65,6 @@ public abstract class AbstractStripedLockContainer implements LockContainer {
     */
    final int hash(Object object) {
       int h = object.hashCode();
-//      h ^= (h >>> 20) ^ (h >>> 12);
-//      return h ^ (h >>> 7) ^ (h >>> 4);
-
       h += ~(h << 9);
       h ^= (h >>> 14);
       h += (h << 4);
@@ -84,30 +75,24 @@ public abstract class AbstractStripedLockContainer implements LockContainer {
 
    protected abstract void initLocks(int numLocks);
 
-   public Lock acquireLock(Object key, long timeout, TimeUnit unit) throws InterruptedException {
-      Lock lock = getLock(key);
-      boolean locked = false;
+   public L acquireLock(InvocationContext ctx, Object key, long timeout, TimeUnit unit) throws InterruptedException {
+      L lock = getLock(key);
+      boolean locked;
       try {
-         locked = lock.tryLock(timeout, unit);
+         locked = tryLock(lock, timeout, unit, ctx);
       } catch (InterruptedException ie) {
-         safeRelease(lock);
+         safeRelease(lock, ctx);
          throw ie;
       } catch (Throwable th) {
-         safeRelease(lock);
+         safeRelease(lock, ctx);
          locked = false;
       }
       return locked ? lock : null;
    }
 
-   public void releaseLock(Object key) {
-      final Lock lock = getLock(key);
-      try {
-         lock.unlock();
-      } catch (IllegalMonitorStateException imse) {
-         // See javadoc of org.infinispan.util.concurrent.locks.LockManager.possiblyLocked(CacheEntry):
-         // it's possible that we attempt to unlock Locks which we didn't actually obtain.
-         log.debug("Attempted to unlock a lock we didn't own - swallowing an IllegalMonitorStateException");
-      }
+   public void releaseLock(InvocationContext ctx, Object key) {
+      final L lock = getLock(key);
+      safeRelease(lock, ctx);
    }
 
    public int getLockId(Object key) {

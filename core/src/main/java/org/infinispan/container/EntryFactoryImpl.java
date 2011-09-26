@@ -176,7 +176,7 @@ public class EntryFactoryImpl implements EntryFactory {
                   // If any exception, release the lock cos the locking
                   // interceptor cannot do it due to the key not being in the
                   // ctx looked up entries yet
-                  releaseLock(key);
+                  releaseLock(ctx, key);
                   throw e;
                }
                mvccEntry = createWrappedEntry(key, null, true, false, -1);
@@ -186,7 +186,7 @@ public class EntryFactoryImpl implements EntryFactory {
                notifier.notifyCacheEntryCreated(key, false, ctx);
             } else {
                if (lockAcquired) {
-                  releaseLock(key);
+                  releaseLock(ctx, key);
                }
             }
          }
@@ -200,7 +200,7 @@ public class EntryFactoryImpl implements EntryFactory {
          return mvccEntry;
       } catch (InvalidTransactionException ite) {
          try {
-            releaseLock(key);
+            releaseLock(ctx, key);
          } catch (Exception e) {
             // may not be necessary?
          }
@@ -258,7 +258,7 @@ public class EntryFactoryImpl implements EntryFactory {
             0 : configuration.getLockAcquisitionTimeout();
    }
 
-   public final void releaseLock(Object key) {
-      lockManager.unlock(key);
+   public final void releaseLock(InvocationContext ctx, Object key) {
+      lockManager.unlock(ctx, key);
    }
 }

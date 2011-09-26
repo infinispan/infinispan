@@ -39,7 +39,8 @@ import org.infinispan.util.concurrent.TimeoutException;
  * @since 4.0
  */
 public interface EntryFactory {
-   void releaseLock(Object key);
+
+   void releaseLock(InvocationContext ctx, Object key);
 
    /**
     * Attempts to lock an entry if the lock isn't already held in the current scope, and records the lock in the

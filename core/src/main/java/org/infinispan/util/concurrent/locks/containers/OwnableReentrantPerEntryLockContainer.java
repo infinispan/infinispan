@@ -22,10 +22,11 @@
  */
 package org.infinispan.util.concurrent.locks.containers;
 
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
 
-import java.util.concurrent.locks.Lock;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A per-entry lock container for OwnableReentrantLocks
@@ -33,17 +34,14 @@ import java.util.concurrent.locks.Lock;
  * @author Manik Surtani
  * @since 4.0
  */
-public class OwnableReentrantPerEntryLockContainer extends AbstractPerEntryLockContainer {
+public class OwnableReentrantPerEntryLockContainer extends AbstractPerEntryLockContainer<OwnableReentrantLock> {
 
-   private InvocationContextContainer icc;
-
-   public OwnableReentrantPerEntryLockContainer(int concurrencyLevel, InvocationContextContainer icc) {
+   public OwnableReentrantPerEntryLockContainer(int concurrencyLevel) {
       super(concurrencyLevel);
-      this.icc = icc;
    }
 
-   protected Lock newLock() {
-      return new OwnableReentrantLock(icc);
+   protected OwnableReentrantLock newLock() {
+      return new OwnableReentrantLock();
    }
 
    public boolean ownsLock(Object key, Object owner) {
@@ -57,6 +55,16 @@ public class OwnableReentrantPerEntryLockContainer extends AbstractPerEntryLockC
    }
 
    private OwnableReentrantLock getLockFromMap(Object key) {
-      return (OwnableReentrantLock) locks.get(key);
+      return locks.get(key);
+   }
+
+   @Override
+   protected boolean tryLock(OwnableReentrantLock lock, long timeout, TimeUnit unit, InvocationContext ctx) throws InterruptedException {
+      return lock.tryLock(ctx.getLockOwner(), timeout, unit);
+   }
+
+   @Override
+   protected void unlock(OwnableReentrantLock l, InvocationContext ctx) {
+      l.unlock(ctx.getLockOwner());
    }
 }
