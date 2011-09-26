@@ -48,6 +48,7 @@ import java.util.Set;
  * @author Mircea Markus
  * @since 5.1
  */
+//todo mmarkus - always acquire locks locally before going remote so that to fail fast ...
 public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private CommandsFactory cf;
@@ -68,7 +69,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          lockManager.unlock(ctx);
          throw t;
       } finally {
-         releaseLocksIfNoTransaction(ctx);
+         if (!ctx.isInTxScope()) lockManager.unlock(ctx);
       }
    }
 
@@ -88,7 +89,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       try {
          assertNoRemoteContext(ctx);
          acquireRemoteIfNeeded(ctx, Collections.singleton(command.getKey()));
-         if (cll.localNodeIsOwner(command.getKey())) {
+         if (cll.localNodeIsOwner(command.getKey()) || ctx.isOriginLocal()) {
             lockKey(ctx, command.getKey());
          }
          return invokeNextInterceptor(ctx, command);
@@ -168,14 +169,18 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       }
    }
 
-   private void acquireRemoteIfNeeded(InvocationContext ctx, Set<Object> singleton) throws Throwable {
+   //todo - mmarkus - add a method to reveive a single
+   private void acquireRemoteIfNeeded(InvocationContext ctx, Set<Object> keys) throws Throwable {
       if (!ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         LockControlCommand lcc = cf.buildLockControlCommand(singleton, true, ctx.getFlags());
+         LockControlCommand lcc = cf.buildLockControlCommand(keys, true, ctx.getFlags());
          visitLockControlCommand((TxInvocationContext) ctx, lcc);
       }
    }
 
+   //todo remove eventually as this is more of an invariant
    private void assertNoRemoteContext(InvocationContext ctx) {
-      if (!ctx.isOriginLocal()) throw new IllegalStateException("This shouldn't be called with a remote context!");
+      if (!ctx.isOriginLocal() && !ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK)) {
+         throw new IllegalStateException("This shouldn't be called with a remote context!");
+      }
    }
 }

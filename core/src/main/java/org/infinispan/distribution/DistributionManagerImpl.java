@@ -366,7 +366,6 @@ public class DistributionManagerImpl implements DistributionManager {
       for (Map.Entry<Object, InternalCacheValue> e : state.entrySet()) {
          InternalCacheValue v = e.getValue();
          NonTxInvocationContext ctx = (NonTxInvocationContext) icc.createInvocationContext(false);
-         ctx.setOriginLocal(false);
          // locking not necessary in the case of a join since the node isn't doing anything else
          // TODO what if the node is already running?
          ctx.setFlags(CACHE_MODE_LOCAL, SKIP_CACHE_LOAD, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING,

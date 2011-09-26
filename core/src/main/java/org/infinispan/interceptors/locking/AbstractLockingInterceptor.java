@@ -23,12 +23,10 @@
 
 package org.infinispan.interceptors.locking;
 
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -46,7 +44,7 @@ import java.util.Arrays;
  * @author Mircea Markus
  * @since 5.1
  */
-public class AbstractLockingInterceptor extends CommandInterceptor {
+public abstract class AbstractLockingInterceptor extends CommandInterceptor {
 
    LockManager lockManager;
    DataContainer dataContainer;
@@ -71,7 +69,7 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
          }
          return invokeNextInterceptor(ctx, command);
       } finally {
-         releaseLocksIfNoTransaction(ctx);
+         if (!ctx.isInTxScope()) lockManager.unlock(ctx);
       }
    }
 
@@ -100,15 +98,7 @@ public class AbstractLockingInterceptor extends CommandInterceptor {
       }
       finally {
          command.setKeys(keys);
-         releaseLocksIfNoTransaction(ctx);
-      }
-   }
-
-   protected final void releaseLocksIfNoTransaction(InvocationContext ctx) {
-      if (!ctx.isInTxScope()) {
-         lockManager.unlock(ctx);
-      } else {
-         if (trace) log.trace("Transactional.  Not cleaning up locks till the transaction ends.");
+         if (!ctx.isInTxScope()) lockManager.unlock(ctx);
       }
    }
 

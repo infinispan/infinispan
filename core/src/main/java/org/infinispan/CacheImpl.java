@@ -218,7 +218,7 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
 
    public final int size() {
       SizeCommand command = commandsFactory.buildSizeCommand();
-      return (Integer) invoker.invoke(getInvocationContextForWrite(), command);
+      return (Integer) invoker.invoke(getInvocationContextForRead(null), command);
    }
 
    public final boolean isEmpty() {

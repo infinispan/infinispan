@@ -270,7 +270,8 @@ public class TxInterceptor extends CommandInterceptor {
       return rollbacks.get();
    }
 
+   //todo - remove assertion when done fixing tests
    private void assertInTxScope(InvocationContext ctx) {
-      if (ctx.isOriginLocal() && !ctx.isInTxScope()) throw new IllegalStateException("This is a transactional cache and this operation is out of a transaction's scope");
+      if (ctx.isOriginLocal() && (!ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK)) && !ctx.isInTxScope()) throw new IllegalStateException("This is a transactional cache and this operation is out of a transaction's scope");
    }
 }

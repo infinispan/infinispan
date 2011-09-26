@@ -44,7 +44,7 @@ public class FailureWith1PCTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
       c.fluent().hash().numOwners(3);
       createCluster(c, 3);
       waitForClusterToForm();

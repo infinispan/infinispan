@@ -198,6 +198,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          return null;
       }
 
+      //todo mmarkus when can it be not wrapped?
       private boolean notWrapped(InvocationContext ctx, Object key) {
          return !ctx.getLookedUpEntries().containsKey(key);
       }
