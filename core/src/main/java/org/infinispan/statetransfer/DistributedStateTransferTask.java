@@ -29,7 +29,6 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.Util;
@@ -68,6 +67,10 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
 
    private final DistributionManager dm;
    private final DistributedStateTransferManagerImpl stateTransferManager;
+   private List<Object> keysToRemove;
+   private Collection<Address> oldCacheSet;
+   private Collection<Address> newCacheSet;
+   private long stateTransferStartMillis;
 
    public DistributedStateTransferTask(RpcManager rpcManager, Configuration configuration, DataContainer dataContainer,
                                        DistributedStateTransferManagerImpl stateTransferManager,
@@ -77,97 +80,88 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
       super(stateTransferManager, rpcManager, stateTransferLock, cacheNotifier, configuration, dataContainer, members, newViewId, chNew, chOld, initialView);
       this.dm = dm;
       this.stateTransferManager = stateTransferManager;
+
+      // Cache sets for notification
+      oldCacheSet = chOld != null ? Immutables.immutableCollectionWrap(chOld.getCaches()) : Collections.<Address>emptySet();
+      newCacheSet = Immutables.immutableCollectionWrap(chNew.getCaches());
    }
 
 
    @Override
-   protected void performRehash() throws Exception {
+   protected void performStateTransfer() throws Exception {
       if (!stateTransferManager.startStateTransfer(newViewId, members, initialView))
          return;
 
-      long start = System.currentTimeMillis();
+      stateTransferStartMillis = System.currentTimeMillis();
       if (log.isDebugEnabled())
          log.debugf("Commencing rehash %d on node: %s. Before start, data container had %d entries",
                newViewId, self, dataContainer.size());
-      Collection<Address> oldCacheSet = Collections.emptySet(), newCacheSet = Collections.emptySet();
-      List<Object> keysToRemove = new ArrayList<Object>();
+      newCacheSet = Collections.emptySet();
+      oldCacheSet = Collections.emptySet();
+      keysToRemove = new ArrayList<Object>();
 
-      boolean unblockTransactions = true;
+      // Don't need to log anything, all transactions will be blocked
+      //distributionManager.getTransactionLogger().enable();
+      stateTransferLock.blockNewTransactions();
+
+      if (trace) {
+         log.tracef("Rebalancing: chOld = %s, chNew = %s", chOld, chNew);
+      }
+
+      if (configuration.isRehashEnabled() && !initialView) {
+
+         // notify listeners that a rehash is about to start
+         cacheNotifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, true);
+
+         int numOwners = configuration.getNumOwners();
+
+         // Contains the state to be pushed to various servers. The state is a hashmap of keys and values
+         final Map<Address, Collection<InternalCacheEntry>> states = new HashMap<Address, Collection<InternalCacheEntry>>();
+
+         for (InternalCacheEntry ice : dataContainer) {
+            rebalance(ice.getKey(), ice, numOwners, chOld, chNew, null, states, keysToRemove);
+         }
+
+         stateTransferManager.checkIfCancelled(newViewId);
+
+         // Only fetch the data from the cache store if the cache store is not shared
+         CacheStore cacheStore = stateTransferManager.getCacheStoreForStateTransfer();
+         if (cacheStore != null) {
+            for (Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
+               rebalance(key, null, numOwners, chOld, chNew, cacheStore, states, keysToRemove);
+            }
+         } else {
+            if (trace) log.trace("No cache store or cache store is shared, not rebalancing stored keys");
+         }
+
+         stateTransferManager.checkIfCancelled(newViewId);
+
+         // Now for each server S in states.keys(): push states.get(S) to S via RPC
+         pushState(states);
+      } else {
+         if (!initialView) log.trace("Rehash not enabled, so not pushing state");
+      }
+   }
+
+   public void commitStateTransfer() {
+      // update the distribution manager's consistent hash
+      dm.setConsistentHash(chNew);
+
+      if (configuration.isRehashEnabled() && !initialView) {
+         // now we can invalidate the keys
+         stateTransferManager.invalidateKeys(keysToRemove, newViewId);
+
+         cacheNotifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, false);
+      }
 
       try {
-         // Don't need to log anything, all transactions will be blocked
-         //distributionManager.getTransactionLogger().enable();
-         stateTransferLock.blockNewTransactions();
-
-         // Update the CH
-         dm.setConsistentHash(chNew);
-
-         if (trace) {
-            log.tracef("Rebalancing: chOld = %s, chNew = %s", chOld, chNew);
-         }
-
-         if (configuration.isRehashEnabled() && !initialView) {
-            // Cache sets for notification
-            oldCacheSet = Immutables.immutableCollectionWrap(chOld.getCaches());
-            newCacheSet = Immutables.immutableCollectionWrap(chNew.getCaches());
-
-            // notify listeners that a rehash is about to start
-            cacheNotifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, true);
-
-            int numOwners = configuration.getNumOwners();
-
-            // Contains the state to be pushed to various servers. The state is a hashmap of keys and values
-            final Map<Address, Collection<InternalCacheEntry>> states = new HashMap<Address, Collection<InternalCacheEntry>>();
-
-            for (InternalCacheEntry ice : dataContainer) {
-               rebalance(ice.getKey(), ice, numOwners, chOld, chNew, null, states, keysToRemove);
-            }
-
-            // Only fetch the data from the cache store if the cache store is not shared
-            CacheStore cacheStore = stateTransferManager.getCacheStoreForStateTransfer();
-            if (cacheStore != null) {
-               for (Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
-                  rebalance(key, null, numOwners, chOld, chNew, cacheStore, states, keysToRemove);
-               }
-            } else {
-               if (trace) log.trace("No cache store or cache store is shared, not rebalancing stored keys");
-            }
-
-            // Now for each server S in states.keys(): push states.get(S) to S via RPC
-            pushState(states);
-         } else {
-            if (!initialView) log.trace("Rehash not enabled, so not pushing state");
-         }
-
-         // now we can inform the other nodes that we have finished our push
-         stateTransferManager.signalPushCompleted(newViewId);
-
-         if (configuration.isRehashEnabled() && !initialView) {
-            // now we can invalidate the keys
-            stateTransferManager.invalidateKeys(keysToRemove, newViewId);
-
-            cacheNotifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, false);
-         }
-      } catch (PendingStateTransferException e) {
-         log.debugf("Another rehash is pending, keeping the transactions blocked");
-         unblockTransactions = false;
-      } catch (SuspectException e) {
-         log.debugf("A member left during rehash, keeping the transactions blocked");
-         unblockTransactions = false;
-      } finally {
-         // check again that there isn't another view that would start another state transfer
-         boolean isLastView = stateTransferManager.isLastViewId(newViewId);
-         if (unblockTransactions && isLastView) {
-            try {
-               stateTransferLock.unblockNewTransactions();
-            } catch (Exception e) {
-               log.errorUnblockingTransactions(e);
-            }
-            stateTransferManager.endStateTransfer();
-         }
+         stateTransferLock.unblockNewTransactions();
+      } catch (Exception e) {
+         log.errorUnblockingTransactions(e);
       }
+      stateTransferManager.endStateTransfer();
       log.debugf("Node %s completed rehash for view %d in %s!", self, newViewId,
-            Util.prettyPrintTime(System.currentTimeMillis() - start));
+            Util.prettyPrintTime(System.currentTimeMillis() - stateTransferStartMillis));
    }
 
 

@@ -26,13 +26,13 @@ package org.infinispan.test;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
+import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
@@ -51,6 +51,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -150,14 +151,18 @@ public class TestingUtil {
    }
 
    public static void waitForRehashToComplete(Cache... caches) {
+      // give it 1 second to start rehashing
+      // TODO Should look at the last committed view instead and check if it contains all the caches
+      LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
       int gracetime = 30000; // 30 seconds?
       long giveup = System.currentTimeMillis() + gracetime;
       for (Cache c : caches) {
-         StateTransferManager stateTransferManager = TestingUtil.extractComponent(c, StateTransferManager.class);
+         CacheViewsManager cacheViewsManager = TestingUtil.extractGlobalComponent(c.getCacheManager(), CacheViewsManager.class);
          RpcManager rpcManager = TestingUtil.extractComponent(c, RpcManager.class);
-         while (stateTransferManager.isStateTransferInProgress()) {
+         while (cacheViewsManager.getCommittedView(c.getName()).getMembers().size() != caches.length) {
             if (System.currentTimeMillis() > giveup) {
-               String message = "Timed out waiting for rehash to complete on node " + rpcManager.getAddress() + " !";
+               String message = String.format("Timed out waiting for rehash to complete on node %s, expected member list is %s, current member list is %s!",
+                     rpcManager.getAddress(), Arrays.toString(caches), cacheViewsManager.getCommittedView(c.getName()));
                log.error(message);
                throw new RuntimeException(message);
             }

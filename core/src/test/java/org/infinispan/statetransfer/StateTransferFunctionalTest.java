@@ -30,6 +30,7 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
@@ -177,7 +178,6 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       logTestEnd(m);
    }
 
-   @Test(enabled = false, description = "Assymetric caches are *really* not supported in this version")
    public void testInitialStateTransferCacheNotPresent(Method m) throws Exception {
       testCount++;
       logTestStart(m);
@@ -340,6 +340,8 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected void verifyInitialData(Cache<Object, Object> c) {
+      Address address = c.getAdvancedCache().getRpcManager().getAddress();
+      log.debugf("Checking values on cache " + address);
       assert JOE.equals(c.get(A_B_NAME)) : "Incorrect value for key " + A_B_NAME;
       assert TWENTY.equals(c.get(A_B_AGE)) : "Incorrect value for key " + A_B_AGE;
       assert BOB.equals(c.get(A_C_NAME)) : "Incorrect value for key " + A_C_NAME;

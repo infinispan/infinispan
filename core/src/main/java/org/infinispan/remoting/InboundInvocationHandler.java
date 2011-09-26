@@ -50,11 +50,4 @@ public interface InboundInvocationHandler {
     * @throws Throwable in the event of problems executing the command
     */
    Response handle(CacheRpcCommand command, Address origin) throws Throwable;
-
-   /**
-    * Calling this method should block if the invocation handler implementation has been queueing commands for a given
-    * named cache and is in the process of flushing this queue.  It would block until the queue has been drained.
-    * @param cacheName name of the cache for which the handler would be queueing requests.
-    */
-   void blockTillNoLongerRetrying(String cacheName);
 }

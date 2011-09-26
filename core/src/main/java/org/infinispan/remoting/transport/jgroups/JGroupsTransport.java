@@ -113,7 +113,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    // these members are not valid until we have received the first view on a second thread
    // and channelConnectedLatch is signaled
    protected volatile List<Address> members = null;
-   protected volatile boolean coordinator = false;
+   protected volatile Address coordinator = null;
+   protected volatile boolean isCoordinator = false;
    protected CountDownLatch channelConnectedLatch = new CountDownLatch(1);
 
    /**
@@ -223,7 +224,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       }
 
       members = Collections.emptyList();
-      coordinator = false;
+      coordinator = null;
+      isCoordinator = false;
       dispatcher = null;
    }
 
@@ -335,11 +337,11 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    // ------------------------------------------------------------------------------------------------------------------
 
    public boolean isCoordinator() {
-      return coordinator;
+      return isCoordinator;
    }
 
    public Address getCoordinator() {
-      return members.isEmpty() ? null : members.get(0);
+      return coordinator;
    }
 
    public void waitForChannelToConnect() {
@@ -392,12 +394,18 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       if (trace) log.tracef("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
 
-      if (recipients != null && !getMembers().containsAll(recipients)) {
+      if (!mode.isAsynchronous() && recipients != null && !getMembers().containsAll(recipients)) {
          throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
       }
       boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
       if (!usePriorityQueue && ResponseMode.SYNCHRONOUS == mode) usePriorityQueue = true;
 
+      if (dispatcher == null) {
+         throw new IllegalStateException("dispatcher is null!!!!!");
+      }
+      if (members == null) {
+         throw new IllegalStateException("members is null!!!!!");
+      }
       RspList<Object> rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode),
               timeout, recipients != null, usePriorityQueue,
               toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, recipients == null || recipients.size() == members.size());
@@ -479,14 +487,15 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       // we need a defensive copy anyway
       members = fromJGroupsAddressList(newMembers);
 
-      // Now that we have a view, figure out if we are the coordinator
-      coordinator = members.get(0).equals(getAddress());
+      // Now that we have a view, figure out if we are the isCoordinator
+      coordinator = fromJGroupsAddress(newView.getCreator());
+      isCoordinator = coordinator != null && coordinator.equals(getAddress());
 
-      // Wake up any threads that are waiting to know about who the coordinator is
+      // Wake up any threads that are waiting to know about who the isCoordinator is
       // do it before the notifications, so if a listener throws an exception we can still start
       channelConnectedLatch.countDown();
 
-      // now notify listeners - *after* updating the coordinator. - JBCACHE-662
+      // now notify listeners - *after* updating the isCoordinator. - JBCACHE-662
       boolean hasNotifier = notifier != null;
       if (hasNotifier) {
          Notify n = null;

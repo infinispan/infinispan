@@ -29,7 +29,6 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.MembershipArithmetic;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -64,6 +63,7 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
    private static final Log log = LogFactory.getLog(ReplicatedStateTransferTask.class);
 
    private final ReplicatedStateTransferManagerImpl stateTransferManager;
+   private long stateTransferStartMillis;
 
    public ReplicatedStateTransferTask(RpcManager rpcManager, Configuration configuration, DataContainer dataContainer,
                                       ReplicatedStateTransferManagerImpl stateTransferManager, StateTransferLock stateTransferLock,
@@ -75,81 +75,67 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
 
 
    @Override
-   protected void performRehash() throws Exception {
+   protected void performStateTransfer() throws Exception {
       if (!stateTransferManager.startStateTransfer(newViewId, members, initialView))
          return;
 
-      long start = System.currentTimeMillis();
+      stateTransferStartMillis = System.currentTimeMillis();
       if (log.isDebugEnabled())
          log.debugf("Commencing state transfer %d on node: %s. Before start, data container had %d entries",
                newViewId, self, dataContainer.size());
       boolean unblockTransactions = true;
 
-      try {
-         // Don't need to log anything, all transactions will be blocked
-         //distributionManager.getTransactionLogger().enable();
-         stateTransferLock.blockNewTransactions();
+      // Don't need to log anything, all transactions will be blocked
+      //distributionManager.getTransactionLogger().enable();
+      stateTransferLock.blockNewTransactions();
 
-         Set<Address> joiners = MembershipArithmetic.getMembersJoined(chOld.getCaches(), chNew.getCaches());
-         if (joiners.isEmpty()) {
-            log.tracef("No joiners in view %s, skipping replication", newViewId);
-         } else {
-            log.tracef("Replicating: chOld = %s, chNew = %s", chOld, chNew);
+      Set<Address> joiners = chOld != null ? MembershipArithmetic.getMembersJoined(chOld.getCaches(), chNew.getCaches()) : chNew.getCaches();
+      if (joiners.isEmpty()) {
+         log.tracef("No joiners in view %s, skipping replication", newViewId);
+      } else {
+         log.tracef("Replicating: chOld = %s, chNew = %s", chOld, chNew);
 
-            if (configuration.isStateTransferEnabled() && !initialView) {
-               // Contains the state to be pushed to various servers. The state is a hashmap of keys and values
-               final Collection<InternalCacheEntry> state = new ArrayList<InternalCacheEntry>();
+         if (configuration.isStateTransferEnabled() && !initialView) {
+            // Contains the state to be pushed to various servers. The state is a hashmap of keys and values
+            final Collection<InternalCacheEntry> state = new ArrayList<InternalCacheEntry>();
 
-               for (InternalCacheEntry ice : dataContainer) {
-                  replicate(ice.getKey(), ice, chOld, chNew, null, state);
+            for (InternalCacheEntry ice : dataContainer) {
+               replicate(ice.getKey(), ice, chOld, chNew, null, state);
+            }
+
+            // Only fetch the data from the cache store if the cache store is not shared
+            CacheStore cacheStore = stateTransferManager.getCacheStoreForStateTransfer();
+            if (cacheStore != null) {
+               for (Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
+                  replicate(key, null, chOld, chNew, cacheStore, state);
                }
-
-               // Only fetch the data from the cache store if the cache store is not shared
-               CacheStore cacheStore = stateTransferManager.getCacheStoreForStateTransfer();
-               if (cacheStore != null) {
-                  for (Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
-                     replicate(key, null, chOld, chNew, cacheStore, state);
-                  }
-               } else {
-                  if (trace) log.trace("No cache store or cache store is shared, not replicating stored keys");
-               }
-
-               // Now for each joiner S : push state to S via RPC
-               // TODO We are sending the same stuff to all the joiners, we should use multicast instead
-               final Map<Address, Collection<InternalCacheEntry>> states = new HashMap<Address, Collection<InternalCacheEntry>>();
-               for (Address joiner : joiners) {
-                  states.put(joiner, state);
-               }
-               pushState(states);
             } else {
-               if (!initialView) log.trace("State transfer not enabled, so not pushing state");
+               if (trace) log.trace("No cache store or cache store is shared, not replicating stored keys");
             }
-         }
 
-         // Now we can inform the other nodes that we have finished our push
-         // We have to do it even if state transfer is disabled, this is how we tell the others
-         // that we know about the new view.
-         stateTransferManager.signalPushCompleted(newViewId);
-      } catch (PendingStateTransferException e) {
-         log.debugf("Another rehash is pending, keeping the transactions blocked");
-         unblockTransactions = false;
-      } catch (SuspectException e) {
-         log.debugf("A member left during rehash, keeping the transactions blocked");
-         unblockTransactions = false;
-      } finally {
-         // check again that there isn't another view that would start another state transfer
-         boolean isLastView = stateTransferManager.isLastViewId(newViewId);
-         if (unblockTransactions && isLastView) {
-            try {
-               stateTransferLock.unblockNewTransactions();
-            } catch (Exception e) {
-               log.errorUnblockingTransactions(e);
+            // Now for each joiner S : push state to S via RPC
+            // TODO We are sending the same stuff to all the joiners, we should use multicast instead
+            final Map<Address, Collection<InternalCacheEntry>> states = new HashMap<Address, Collection<InternalCacheEntry>>();
+            for (Address joiner : joiners) {
+               states.put(joiner, state);
             }
-            stateTransferManager.endStateTransfer();
+            pushState(states);
+         } else {
+            if (!initialView) log.trace("State transfer not enabled, so not pushing state");
          }
       }
+   }
+
+   public void commitStateTransfer() {
+      try {
+         stateTransferLock.unblockNewTransactions();
+      } catch (Exception e) {
+         log.errorUnblockingTransactions(e);
+      }
+      stateTransferManager.endStateTransfer();
+
       log.debugf("Node %s completed rehash for view %d in %s!", self, newViewId,
-            Util.prettyPrintTime(System.currentTimeMillis() - start));
+            Util.prettyPrintTime(System.currentTimeMillis() - stateTransferStartMillis));
    }
 
 

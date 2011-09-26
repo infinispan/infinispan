@@ -48,7 +48,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
    @Override
    public boolean isKeyLocalToAddress(Address target, Object key, int replCount) {
-      return locateInternal(key, replCount, target).contains(target);
+      return locateInternal(key, replCount, target) == null;
    }
 
    /**
@@ -64,7 +64,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
          Address a = it.next().getValue();
          // if virtual nodes are enabled we have to avoid duplicate addresses
          if (!(isVirtualNodesEnabled() && owners.contains(a))) {
-            if (a == target)
+            if (target != null && target.equals(a))
                return null;
 
             owners.add(a);

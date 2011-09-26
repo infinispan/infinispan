@@ -28,10 +28,13 @@ import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.util.Util;
 import org.infinispan.util.hash.Hash;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Consistent hash that is aware of cluster topology. Design described here: http://community.jboss.org/wiki/DesigningServerHinting.
@@ -192,17 +195,6 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
       @Override
       protected TopologyAwareConsistentHash instance() {
          return new TopologyAwareConsistentHash();
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, TopologyAwareConsistentHash topologyAwareConsistentHash) throws IOException {
-         super.writeObject(output, topologyAwareConsistentHash);
-      }
-
-      @Override
-      public TopologyAwareConsistentHash readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         TopologyAwareConsistentHash ch = super.readObject(unmarshaller);
-         return ch;
       }
 
       @Override

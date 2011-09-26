@@ -27,6 +27,7 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
+import org.infinispan.commands.tx.CommitCommand;
 
 /**
  * The default response generator for most cache modes
@@ -46,6 +47,7 @@ public class DefaultResponseGenerator implements ResponseGenerator {
 
    private boolean requiresResponse(byte commandId) {
       return commandId == ClusteredGetCommand.COMMAND_ID || commandId == GetInDoubtTransactionsCommand.COMMAND_ID
-            || commandId == GetInDoubtTxInfoCommand.COMMAND_ID || commandId == CompleteTransactionCommand.COMMAND_ID;
+            || commandId == GetInDoubtTxInfoCommand.COMMAND_ID || commandId == CompleteTransactionCommand.COMMAND_ID
+            || commandId == CommitCommand.COMMAND_ID;
    }
 }

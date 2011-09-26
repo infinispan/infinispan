@@ -30,7 +30,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -219,7 +218,7 @@ public class RpcManagerImpl implements RpcManager {
          public Object call() throws Exception {
             Object result = null;
             try {
-               result = invokeRemotely(recipients, rpc, true, usePriorityQueue, timeout);           
+               result = invokeRemotely(recipients, rpc, true, usePriorityQueue, timeout);
             } finally {
                try {
                   futureSet.await();
@@ -250,6 +249,7 @@ public class RpcManagerImpl implements RpcManager {
    private void checkResponses(Map<Address, Response> rsps) {
       if (rsps != null) {
          for (Map.Entry<Address, Response> rsp : rsps.entrySet()) {
+            // TODO Double-check this logic, rsp.getValue() is a Response so it's 100% not Throwable
             if (rsp != null && rsp.getValue() instanceof Throwable) {
                Throwable throwable = (Throwable) rsp.getValue();
                if (trace)

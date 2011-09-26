@@ -26,7 +26,6 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.decorators.SingletonStore;
@@ -381,8 +380,8 @@ public interface Log extends BasicLogger {
    void namedCacheDoesNotExist(String cacheName);
 
    @LogMessage(level = INFO)
-   @Message(value = "Cache named [%s] exists but isn't in a state to handle invocations. Its state is %s.", id = 69)
-   void cacheCanNotHandleInvocations(String cacheName, ComponentStatus status);
+   @Message(value = "Cache named [%s] exists but isn't in a state to handle remote invocations", id = 69)
+   void cacheCanNotHandleInvocations(String cacheName);
 
    @LogMessage(level = INFO)
    @Message(value = "Quietly ignoring clustered get call %s since unable to acquire processing lock, even after %s", id = 70)
@@ -745,11 +744,6 @@ public interface Log extends BasicLogger {
    void asymmetricClusterWarning();
 
    @LogMessage(level = WARN)
-   @Message(value = "You are not starting all your caches at the same time. This can lead to problems as asymmetric clusters are not supported, see ISPN-658. " +
-         "We recommend using EmbeddedCacheManager.startCaches() to start all your caches upfront.", id = 156)
-   void shouldBeUsingStartCache(String cacheName);
-
-   @LogMessage(level = WARN)
    @Message(value = "Timed out waiting for all cluster members to confirm pushing data for view %d, received confirmations %s. Cancelling state transfer", id = 157)
    void stateTransferTimeoutWaitingForPushConfirmations(int viewId, Map<Address, Integer> pushConfirmations);
 
@@ -777,4 +771,27 @@ public interface Log extends BasicLogger {
    @Message(value = "FileCacheStore ignored an unexpected file %2$s in path %1$s. The store path should be dedicated!", id = 163)
    void chacheLoaderIgnoringUnexpectedFile(String parentPath, String name);
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Rolling back to cache view %d, but last committed view is %d", id = 164)
+   void cacheViewRollbackIdMismatch(int committedViewId, int committedView);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error triggering a view installation for cache %s", id = 165)
+   void errorTriggeringViewInstallation(@Cause RuntimeException e, String cacheName);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "View installation failed for cache %s", id = 166)
+   void viewInstallationFailure(Exception e, String cacheName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Rejecting state pushed by node %s for view %d, there is no state transfer in progress (we are at view %d)", id = 167)
+   void remoteStateRejected(Address sender, int viewId, int installedViewId);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Error rolling back to cache view %2$d for cache %1$s", id = 168)
+   void cacheViewRollbackFailure(@Cause Exception e, String cacheName, int committedViewId);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Error committing cache view %2$d for cache %1$s", id = 168)
+   void cacheViewCommitFailure(@Cause Exception e, String cacheName, int committedViewId);
 }

@@ -61,7 +61,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
       distCfg.setRehashEnabled(true);
    }
 
-   @Test(timeOut = 60000, enabled = false, description = "Because caches are created sequentially we are getting asymmetric caches and that doesn't work yet")
+   @Test(timeOut = 60000)
    public void testSequence1() throws ExecutionException, InterruptedException {
       /*
 
