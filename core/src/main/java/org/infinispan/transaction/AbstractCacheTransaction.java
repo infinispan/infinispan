@@ -80,7 +80,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    public void clearLookedUpEntries() {
-      if (lookedUpEntries != null) lookedUpEntries.clear();
+      lookedUpEntries = null;
    }
 
    public void setLookedUpEntries(BidirectionalMap<Object, CacheEntry> lookedUpEntries) {
