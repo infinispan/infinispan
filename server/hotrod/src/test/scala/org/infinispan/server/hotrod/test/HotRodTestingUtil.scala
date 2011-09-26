@@ -33,7 +33,7 @@ import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.Main._
 import java.util.{Properties, Arrays}
 import org.infinispan.util.{TypedProperties, Util}
-import org.infinispan.config.{GlobalConfiguration, Configuration}
+import org.infinispan.config.Configuration
 
 /**
  * Test utils for Hot Rod tests.
