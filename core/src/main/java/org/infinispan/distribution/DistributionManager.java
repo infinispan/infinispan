@@ -154,5 +154,11 @@ public interface DistributionManager {
     * @return a list of addresses which represent a combined set of all addresses affected by the set of keys.
     */
    Collection<Address> getAffectedNodes(Collection<Object> affectedKeys);
+
+   /**
+    * Maintain a list of nodes that should not be returned by {@link #locate(Object)} and its siblings.
+    * @param leavers List of invalid nodes
+    */
+   void setLeavers(Collection<Address> leavers);
 }
 

@@ -162,6 +162,8 @@ public class StateTransferLockImpl implements StateTransferLock {
          txLockLatch.close();
          // we want to ensure that all the modifications that passed through the tx gate have ended
          txLock.writeLock().lockInterruptibly();
+         // need to unlock here because the unlock call may arrive on a different thread
+         txLock.writeLock().unlock();
       } else {
          if (trace) log.debug("New transactions were not unblocked by the previous rehash");
       }
@@ -170,7 +172,6 @@ public class StateTransferLockImpl implements StateTransferLock {
    @Override
    public void unblockNewTransactions() {
       if (trace) log.debug("Unblocking new transactions");
-      txLock.writeLock().unlock();
       // only for lock commands
       txLockLatch.open();
    }

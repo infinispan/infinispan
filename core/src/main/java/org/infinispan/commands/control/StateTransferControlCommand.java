@@ -51,14 +51,8 @@ public class StateTransferControlCommand extends BaseRpcCommand {
 
    /* For a detailed description of the interactions involved here, please visit http://community.jboss.org/wiki/DesignOfDynamicRehashing */
    public enum Type {
-      // a joiner is requesting to join the cluster
-      REQUEST_JOIN,
-      // a member is signaling that it wants to leave the cluster
-      //REQUEST_LEAVE,
       // receive a map of keys and add them to the data container
       APPLY_STATE,
-      // a node has completed pushing data for a view id
-      PUSH_COMPLETED
    }
 
    Type type;
@@ -109,20 +103,18 @@ public class StateTransferControlCommand extends BaseRpcCommand {
       stateTransferManager.waitForJoinToStart();
       try {
          switch (type) {
-            case REQUEST_JOIN:
-               stateTransferManager.requestJoin(sender, viewId);
-               return null;
             case APPLY_STATE:
                stateTransferManager.applyState(state, sender, viewId);
                return null;
-            case PUSH_COMPLETED:
-               stateTransferManager.nodeCompletedPush(sender, viewId);
-               return null;
+            default:
+               throw new CacheException("Unknown rehash control command type " + type);
          }
+      } catch (Throwable t) {
+         log.exceptionHandlingCommand(this, t);
+         return null;
       } finally {
          LogFactory.popNDC(log.isTraceEnabled());
       }
-      throw new CacheException("Unknown rehash control command type " + type);
    }
 
    public Type getType() {

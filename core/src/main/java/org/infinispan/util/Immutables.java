@@ -255,7 +255,7 @@ public class Immutables {
       return new ImmutableInternalCacheEntry(entry);
    }
 
-   public interface Immutable {
+   public interface  Immutable {
    }
 
    /*

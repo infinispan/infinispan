@@ -21,8 +21,9 @@ package org.infinispan.marshall.exts;
 
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.RemoveCacheCommand;
-import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.control.CacheViewControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -79,7 +80,8 @@ public class CacheRpcCommandExternalizer extends AbstractExternalizer<CacheRpcCo
             MultipleRpcCommand.class, SingleRpcCommand.class, CommitCommand.class,
             PrepareCommand.class, RollbackCommand.class, RemoveCacheCommand.class,
             RemoveRecoveryInfoCommand.class, GetInDoubtTransactionsCommand.class,
-            GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class);
+            GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class,
+            CacheViewControlCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;
@@ -92,8 +94,16 @@ public class CacheRpcCommandExternalizer extends AbstractExternalizer<CacheRpcCo
       String cacheName = command.getCacheName();
       output.writeUTF(cacheName);
       ComponentRegistry registry = gcr.getNamedComponentRegistry(cacheName);
-      StreamingMarshaller marshaller = registry.getComponent(
-            StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+      StreamingMarshaller marshaller;
+      if (registry == null) {
+         // TODO This is a hack to support global commands CacheViewControlCommand
+         // but they should not be CacheRpcCommands at all
+         marshaller = gcr.getComponent(
+               StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
+      } else {
+         marshaller = registry.getComponent(
+               StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+      }
       // Take the cache marshaller and generate the payload for the rest of
       // the command using that cache marshaller and the write the bytes in
       // the original payload.

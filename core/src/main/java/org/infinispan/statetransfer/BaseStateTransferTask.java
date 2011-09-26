@@ -33,14 +33,15 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Push state from the existing members of the cluster to the new members.
  * This is a base class, extended by the distributed an replicated versions.
  */
-public abstract class BaseStateTransferTask implements Callable {
+public abstract class BaseStateTransferTask {
    private static final Log log = LogFactory.getLog(BaseStateTransferTask.class);
 
    protected final Configuration configuration;
@@ -70,39 +71,25 @@ public abstract class BaseStateTransferTask implements Callable {
       this.chOld = chOld;
    }
 
-   protected abstract void performRehash() throws Exception;
+   protected abstract void performStateTransfer() throws Exception;
 
-   public Void call() throws Exception {
-      try {
-         performRehash();
-      }
-      catch (InterruptedException e) {
-         log.debugf("Rehash was interrupted because the cache is shutting down");
-      }
-      catch (Throwable th) {
-         // there is no one else to handle the exception below us
-         log.errorDuringRehash(th);
-      }
-      return null;
-   }
+   protected abstract void commitStateTransfer();
 
    protected void pushState(Map<Address, Collection<InternalCacheEntry>> states)
-         throws InterruptedException, ExecutionException, PendingStateTransferException {
+         throws InterruptedException, ExecutionException, PendingStateTransferException, TimeoutException {
       NotifyingNotifiableFuture<Object> stateTransferFuture = new AggregatingNotifyingFutureImpl(null, states.size());
       for (Map.Entry<Address, Collection<InternalCacheEntry>> entry : states.entrySet()) {
          final Address target = entry.getKey();
+         if (stateTransferManager.getLeavers().contains(target)) {
+            log.debugf("Not sending state to node %s, it has already left the cluster", target);
+            continue;
+         }
          Collection<InternalCacheEntry> state = entry.getValue();
          stateTransferManager.pushStateToNode(stateTransferFuture, newViewId, target, state);
       }
 
       // wait to see if all servers received the new state
-      // TODO we might want to retry the state transfer operation if it failed on some of the nodes and the view hasn't changed
-      try {
-         stateTransferFuture.get();
-      } catch (ExecutionException e) {
-         log.errorTransferringState(e);
-         throw e;
-      }
+      stateTransferFuture.get(configuration.getRehashRpcTimeout(), TimeUnit.MILLISECONDS);
       log.debugf("Node finished pushing data for rehash %d.", newViewId);
    }
 }

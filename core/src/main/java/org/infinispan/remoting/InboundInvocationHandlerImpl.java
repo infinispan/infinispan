@@ -22,12 +22,11 @@
  */
 package org.infinispan.remoting;
 
+import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.control.CacheViewControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
-import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
@@ -43,26 +42,15 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.NamedCacheNotFoundException;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.responses.ExceptionResponse;
-import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
+import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.StateTransferManager;
-import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
 /**
@@ -80,30 +68,31 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    private EmbeddedCacheManager embeddedCacheManager;
    private GlobalConfiguration globalConfiguration;
    private Transport transport;
+   private CacheViewsManager cacheViewsManager;
 
    // TODO this timeout needs to be configurable.  Should be shorter than your typical lockAcquisitionTimeout/SyncReplTimeout with some consideration for network latency bothfor req and response.
    private static final long timeBeforeWeEnqueueCallForRetry = 10000;
 
-   private final Map<String, RetryQueue> retryThreadMap = Collections.synchronizedMap(new HashMap<String, RetryQueue>());
    private volatile boolean stopping;
 
    /**
     * How to handle an invocation based on the join status of a given cache *
     */
    private enum JoinHandle {
-      QUEUE, OK, IGNORE
+      OK, IGNORE
    }
 
    @Inject
    public void inject(GlobalComponentRegistry gcr,
                       @ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
                       EmbeddedCacheManager embeddedCacheManager, Transport transport,
-                      GlobalConfiguration globalConfiguration) {
+                      GlobalConfiguration globalConfiguration, CacheViewsManager cacheViewsManager) {
       this.gcr = gcr;
       this.marshaller = marshaller;
       this.embeddedCacheManager = embeddedCacheManager;
       this.transport = transport;
       this.globalConfiguration = globalConfiguration;
+      this.cacheViewsManager = cacheViewsManager;
    }
 
    @Start
@@ -114,48 +103,53 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    @Stop
    public void stop() {
       stopping = true;
-      for (Map.Entry<String, RetryQueue> retryThread : retryThreadMap.entrySet()) {
-         retryThread.getValue().interrupt();
-      }
    }
 
    private boolean isDefined(String cacheName) {
       return CacheContainer.DEFAULT_CACHE_NAME.equals(cacheName) || embeddedCacheManager.getCacheNames().contains(cacheName);
    }
 
-   public void waitForStart(CacheRpcCommand cmd) throws InterruptedException {
-      if (cmd.getConfiguration().getCacheMode().isDistributed()) {
-         cmd.getComponentRegistry().getComponent(StateTransferManager.class).waitForJoinToComplete();
+   public void waitForStart(ComponentRegistry componentRegistry) throws InterruptedException {
+      StateTransferManager stateTransferManager = componentRegistry.getComponent(StateTransferManager.class);
+      if (stateTransferManager != null) {
+         stateTransferManager.waitForJoinToComplete();
+      }
+   }
+
+   public boolean hasJoinStarted(ComponentRegistry componentRegistry) throws InterruptedException {
+      StateTransferManager stateTransferManager = componentRegistry.getComponent(StateTransferManager.class);
+      if (stateTransferManager != null) {
+         return stateTransferManager.hasJoinStarted();
+      } else {
+         return true;
       }
    }
 
    @Override
    public Response handle(final CacheRpcCommand cmd, Address origin) throws Throwable {
-   	cmd.setOrigin(origin);
+      cmd.setOrigin(origin);
+
+      // TODO Support global commands separately
+      if (cmd instanceof CacheViewControlCommand) {
+         ((CacheViewControlCommand) cmd).init(cacheViewsManager);
+         try {
+            return new SuccessfulResponse(cmd.perform(null));
+         } catch (Exception e) {
+            return new ExceptionResponse(e);
+         }
+      }
+
       String cacheName = cmd.getCacheName();
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
 
       if (cr == null) {
-         if (embeddedCacheManager.getGlobalConfiguration().isStrictPeerToPeer()) {
-            // lets see if the cache is *defined* and perhaps just not started.
-            if (isDefined(cacheName)) {
-               log.waitForCacheToStart(cacheName);
-               long giveupTime = System.currentTimeMillis() + 30000; // arbitrary (?) wait time for caches to start
-               while (cr == null && System.currentTimeMillis() < giveupTime && !stopping) {
-                  Thread.sleep(100);
-                  cr = gcr.getNamedComponentRegistry(cacheName);
-               }
-            }
-         }
-
-         if (cr == null) {
-            if (log.isInfoEnabled()) log.namedCacheDoesNotExist(cacheName);
-            return new ExceptionResponse(new NamedCacheNotFoundException(cacheName, "Cannot process command " + cmd + " on node " + transport.getAddress()));
-         }
+         log.namedCacheDoesNotExist(cacheName);
+         return new ExceptionResponse(new NamedCacheNotFoundException(cacheName, "Cache has not been started on node " + transport.getAddress()));
       }
 
       final Configuration localConfig = cr.getComponent(Configuration.class);
       cmd.injectComponents(localConfig, cr);
+
       return handleWithRetry(cmd);
    }
 
@@ -192,188 +186,21 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       return resp;
    }
 
-   public JoinHandle howToHandle(CacheRpcCommand cmd) {
-      Configuration localConfig = cmd.getConfiguration();
-      ComponentRegistry cr = cmd.getComponentRegistry();
-
-      StateTransferManager stm = cr.getComponent(StateTransferManager.class);
-      if (stm != null) {
-         // we are either in distributed mode or in replicated mode
-         if (stm.isJoinComplete())
-            return JoinHandle.OK;
-         else {
-            // no point in enqueueing clustered GET commands - just ignore these and hope someone else in the cluster responds.
-            if (!(cmd instanceof ClusteredGetCommand))
-               return JoinHandle.QUEUE;
-            else
-               return JoinHandle.IGNORE;
-         }
-      } else {
-         long giveupTime = System.currentTimeMillis() + localConfig.getStateRetrievalTimeout();
-         while (cr.getStatus().startingUp() && System.currentTimeMillis() < giveupTime)
-            LockSupport.parkNanos(MILLISECONDS.toNanos(100));
-         if (!cr.getStatus().allowInvocations()) {
-            log.cacheCanNotHandleInvocations(cmd.getCacheName(), cr.getStatus());
-            return JoinHandle.IGNORE;
-         }
-
-         return JoinHandle.OK;
-      }
-   }
-
-   @Override
-   public void blockTillNoLongerRetrying(String cacheName) {
-      RetryQueue rq = getRetryQueue(cacheName);
-      rq.blockUntilNoLongerRetrying();
-   }
-
    private Response handleWithRetry(final CacheRpcCommand cmd) throws Throwable {
-      boolean unlock = false;
-      String cacheName = cmd.getCacheName();
-
-      // We want to retry put operations after the cache has started up
-      // We can't queue read calls and distributed tasks before the cache has been started
-      // as in both cases a the caller needs the response.
       // RehashControlCommands are the mechanism used for joining the cluster,
-      // so they need to go through immediately (they also ignore the processing lock).
-      boolean isRehashCommand = cmd instanceof StateTransferControlCommand;
-      boolean isClusteredGetCommand = cmd instanceof ClusteredGetCommand;
-      boolean isDistributedExecuteCommand = cmd instanceof SingleRpcCommand && ((SingleRpcCommand)cmd).getCommand() instanceof DistributedExecuteCommand;
-
-      boolean needRetry = !(isRehashCommand || isDistributedExecuteCommand);
-      if (!needRetry) {
-         try {
-            if (!isRehashCommand) {
-               waitForStart(cmd);
-            }
-            return handleWithWaitForBlocks(cmd);
-         } catch (TimeoutException te) {
-            return RequestIgnoredResponse.INSTANCE;
+      // so they don't need to wait until the cache starts up.
+      boolean isStateTransferCommand = cmd instanceof StateTransferControlCommand;
+      if (!isStateTransferCommand) {
+         // For normal commands, reject them if we didn't start joining yet
+         if (!hasJoinStarted(cmd.getComponentRegistry())) {
+            log.cacheCanNotHandleInvocations(cmd.getCacheName());
+            return new ExceptionResponse(new NamedCacheNotFoundException(cmd.getCacheName(),
+                  "Cache has not been started joined the cluster on node " + transport.getAddress()));
          }
-      } else {
-         boolean unlockRQLock;
-         getRetryQueue(cacheName).retryQueueLock.lock();
-         unlockRQLock = true;
-
-         if (enqueueing(cacheName)) {
-            return enqueueCommand(cmd);
-         } else {
-            try {
-               getRetryQueue(cacheName).retryQueueLock.unlock();
-               unlockRQLock = false;
-               switch (howToHandle(cmd)) {
-                  case OK:
-                     return handleWithWaitForBlocks(cmd);
-                  case QUEUE:
-                     return enqueueCommand(cmd);
-                  default:
-                     return RequestIgnoredResponse.INSTANCE;
-               }
-
-            } catch (TimeoutException te) {
-               // Enqueue this request rather than wait for this lock...
-               return enqueueCommand(cmd);
-            } finally {
-               if (unlockRQLock) getRetryQueue(cacheName).retryQueueLock.unlock();
-            }
-         }
+         // if we did start joining, the StateTransferLockInterceptor will make it wait until the state transfer is complete
+         // TODO There is a small window between starting the join and blocking the transactions, we need to eliminate it
+         //waitForStart(cmd.getComponentRegistry());
       }
-   }
-
-   RetryQueue getRetryQueue(String cacheName) {
-      synchronized (retryThreadMap) {
-         if (retryThreadMap.containsKey(cacheName))
-            return retryThreadMap.get(cacheName);
-         else {
-            RetryQueue rq = new RetryQueue(cacheName, transport.getAddress().toString());
-            retryThreadMap.put(cacheName, rq);
-            return rq;
-         }
-      }
-   }
-
-   private boolean enqueueing(String cacheName) {
-      return getRetryQueue(cacheName).enqueueing;
-   }
-
-   private Response enqueueCommand(CacheRpcCommand command) throws Throwable {
-      return getRetryQueue(command.getCacheName()).enqueue(command);
-   }
-
-   private class RetryQueue extends Thread {
-      boolean enqueueing = false;
-      final BlockingQueue<CacheRpcCommand> queue = new LinkedBlockingQueue<CacheRpcCommand>();
-      final ReentrantLock retryQueueLock = new ReentrantLock();
-      final ReclosableLatch enqueuedBlocker = new ReclosableLatch(true);
-
-      private RetryQueue(String cacheName, String cacheAddress) {
-         super("RetryQueueProcessor-" + (cacheName.equals(CacheContainer.DEFAULT_CACHE_NAME) ? "DEFAULT" : cacheName) + "@" + cacheAddress);
-         setDaemon(true);
-         setPriority(Thread.MAX_PRIORITY);
-         super.start();
-      }
-
-      public Response enqueue(CacheRpcCommand command) throws Throwable {
-         retryQueueLock.lock();
-
-         try {
-            if (enqueueing) {
-               log.tracef("Enqueueing command %s since we are enqueueing.", command);
-               queue.add(command);
-               return RequestIgnoredResponse.INSTANCE;
-            } else {
-               try {
-                  if (howToHandle(command) == JoinHandle.QUEUE) {
-                     enqueueing = true;
-                     enqueuedBlocker.close();
-                     return enqueue(command);
-                  } else {
-                     return handleWithWaitForBlocks(command);
-                  }
-               } catch (TimeoutException te) {
-                  enqueueing = true;
-                  enqueuedBlocker.close();
-                  return enqueue(command);
-               }
-            }
-         } finally {
-            retryQueueLock.unlock();
-         }
-      }
-
-      @Override
-      public void run() {
-         while (!interrupted()) {
-            CacheRpcCommand c = null;
-            boolean unlock = false;
-            try {
-               c = queue.take();
-               waitForStart(c);
-
-               handleInternal(c);
-               retryQueueLock.lock();
-               if (queue.isEmpty()) {
-                  enqueueing = false;
-                  enqueuedBlocker.open();
-               }
-               retryQueueLock.unlock();
-            } catch (InterruptedException e) {
-               enqueueing = false;
-               enqueuedBlocker.open();
-               // set the interrupted flag
-               interrupt();
-            } catch (Throwable throwable) {
-               log.exceptionHandlingCommand(c, throwable);
-            }
-         }
-      }
-
-      public void blockUntilNoLongerRetrying() {
-         try {
-            enqueuedBlocker.await();
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-         }
-      }
+      return handleWithWaitForBlocks(cmd);
    }
 }

@@ -97,7 +97,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    public RspList invokeRemoteCommands(Vector<Address> dests, ReplicableCommand command, ResponseMode mode, long timeout,
                                        boolean anycasting, boolean oob, RspFilter filter, boolean supportReplay, boolean asyncMarshalling,
-                                       boolean broadcast) {
+                                       boolean broadcast) throws InterruptedException {
 
       ReplicationTask task = new ReplicationTask(command, oob, dests, mode, timeout, anycasting, filter, supportReplay, broadcast);
 
@@ -108,6 +108,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          RspList response;
          try {
             response = task.call();
+         } catch (InterruptedException e) {
+            throw e;
          } catch (Exception e) {
             throw rewrapAsCacheException(e);
          }
@@ -414,7 +416,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                   else if (e.getCause() instanceof Exception)
                      exception = (Exception) e.getCause();
                   else
-                     log.info("Caught a Throwable.", e.getCause());
+                     exception = new CacheException("Caught a throwable", e.getCause());
 
                   if (log.isDebugEnabled())
                      log.debugf("Caught exception %s from sender %s.  Will skip this response.", exception.getClass().getName(), sender);

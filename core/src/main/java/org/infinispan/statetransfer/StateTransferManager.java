@@ -45,23 +45,21 @@ public interface StateTransferManager {
    @Metric(displayName = "Is join completed?", dataType = DataType.TRAIT)
    boolean isJoinComplete();
 
-   public void waitForJoinToComplete() throws InterruptedException;
+   void waitForJoinToComplete() throws InterruptedException;
 
    boolean hasJoinStarted();
 
-   public void waitForJoinToStart() throws InterruptedException;
+   void waitForJoinToStart() throws InterruptedException;
 
    @ManagedAttribute(description = "Checks whether there is a pending state transfer in the cluster.")
    @Metric(displayName = "Is state transfer in progress?", dataType = DataType.TRAIT)
    boolean isStateTransferInProgress();
 
-   public void waitForStateTransferToComplete() throws InterruptedException;
+   void waitForStateTransferToComplete() throws InterruptedException;
+
+   void pruneInvalidMembers(Collection<Address> targets);
 
    void applyState(Collection<InternalCacheEntry> state, Address sender, int viewId) throws InterruptedException;
-
-   void nodeCompletedPush(Address sender, int viewId);
-
-   void requestJoin(Address sender, int viewId);
 
    /**
     * @return <code>true</code> if the key should be local but has not yet been copied to the local node

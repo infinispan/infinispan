@@ -341,7 +341,7 @@ public class TestCacheManagerFactory {
 
    public static void minimizeThreads(GlobalConfiguration gc) {
       Properties p = new Properties();
-      p.setProperty("maxThreads", "1");
+      p.setProperty("maxThreads", "2");
       gc.setAsyncTransportExecutorProperties(p);
    }
 

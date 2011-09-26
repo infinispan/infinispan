@@ -448,8 +448,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          return cw.getCache();
       }
 
-      if (caches.size() > 0 && !SUPPRESS_CACHE_CREATION_WARNING) log.shouldBeUsingStartCache(cacheName);
-
       return createCache(cacheName);
    }
 

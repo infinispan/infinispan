@@ -19,6 +19,9 @@
 
 package org.infinispan.statetransfer;
 
+import org.infinispan.cacheviews.CacheMembershipListener;
+import org.infinispan.cacheviews.CacheView;
+import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -34,16 +37,10 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
@@ -54,10 +51,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -67,7 +60,7 @@ import static org.infinispan.context.Flag.*;
  * State transfer manager.
  * Base class for the distributed and replicated implementations.
  */
-public abstract class BaseStateTransferManagerImpl implements StateTransferManager {
+public abstract class BaseStateTransferManagerImpl implements StateTransferManager, CacheMembershipListener {
    private static final Log log = LogFactory.getLog(BaseStateTransferManagerImpl.class);
 
    private static final boolean trace = log.isTraceEnabled();
@@ -81,43 +74,29 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    protected InterceptorChain interceptorChain;
    protected InvocationContextContainer icc;
    protected CacheNotifier cacheNotifier;
+   private CacheViewsManager cacheViewsManager;
    protected StateTransferLock stateTransferLock;
-   protected final ViewChangeListener listener;
-   protected final ExecutorService rehashExecutor;
-   protected final PushConfirmationsMap pushConfirmations;
    protected volatile ConsistentHash chOld;
-   private volatile int oldViewId;
+   private volatile CacheView oldView;
    protected volatile ConsistentHash chNew;
-   private volatile int newViewId;
+   private volatile CacheView newView;
+   private volatile Collection<Address> leavers = Collections.emptySet();
    // closed before the component has been started, open afterwards
    private final CountDownLatch joinStartedLatch = new CountDownLatch(1);
    // closed before the initial state transfer has completed, open afterwards
    private final CountDownLatch joinCompletedLatch = new CountDownLatch(1);
    // closed during state transfer, open the rest of the time
    private final ReclosableLatch stateTransferInProgressLatch = new ReclosableLatch(false);
+   private volatile BaseStateTransferTask stateTransferTask;
 
    public BaseStateTransferManagerImpl() {
-      listener = new ViewChangeListener();
-      pushConfirmations = new PushConfirmationsMap();
-
-      LinkedBlockingQueue<Runnable> rehashQueue = new LinkedBlockingQueue<Runnable>(1);
-      ThreadFactory tf = new ThreadFactory() {
-         public Thread newThread(Runnable r) {
-            Thread t = new Thread(r);
-            t.setDaemon(true);
-            t.setName("Rehasher," + configuration.getName()
-                  + "," + rpcManager.getTransport().getAddress());
-            return t;
-         }
-      };
-      rehashExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, rehashQueue, tf,
-                                              new ThreadPoolExecutor.DiscardOldestPolicy());
    }
 
    @Inject
    public void init(Configuration configuration, RpcManager rpcManager, CacheManagerNotifier notifier, CommandsFactory cf,
                     DataContainer dataContainer, InterceptorChain interceptorChain, InvocationContextContainer icc,
-                    CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier, StateTransferLock stateTransferLock) {
+                    CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier, StateTransferLock stateTransferLock,
+                    CacheViewsManager cacheViewsManager) {
       this.cacheLoaderManager = cacheLoaderManager;
       this.configuration = configuration;
       this.rpcManager = rpcManager;
@@ -128,23 +107,16 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       this.interceptorChain = interceptorChain;
       this.icc = icc;
       this.cacheNotifier = cacheNotifier;
+      this.cacheViewsManager = cacheViewsManager;
    }
 
    // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
-   @Start(priority = 21)
+   @Start(priority = 60)
    private void start() throws Exception {
-      if (trace) log.tracef("Starting distribution manager on " + getAddress());
-      notifier.addListener(listener);
+      if (trace) log.tracef("Starting state transfer manager on " + getAddress());
 
-      // set up the old CH so that the rebalance task can start and wait for the
-      Transport transport = rpcManager.getTransport();
-      oldViewId = transport.getViewId();
-      List<Address> members = transport.getMembers();
-      chOld = createConsistentHash(members);
-
-      newViewReceived(oldViewId, members, true, false);
-
-      joinStartedLatch.countDown();
+      // set up the old CH, but it shouldn't be used until we get the prepare call
+      cacheViewsManager.join(configuration.getName(), this);
    }
 
    protected abstract ConsistentHash createConsistentHash(List<Address> members);
@@ -157,8 +129,9 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    @Stop(priority = 20)
    public void stop() {
-      notifier.removeListener(listener);
-      rehashExecutor.shutdownNow();
+      chOld = null;
+      chNew = null;
+      cacheViewsManager.leave(configuration.getName());
       joinStartedLatch.countDown();
       joinCompletedLatch.countDown();
       stateTransferInProgressLatch.open();
@@ -166,6 +139,10 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    protected Address getAddress() {
       return rpcManager.getAddress();
+   }
+
+   protected Collection<Address> getLeavers() {
+      return leavers;
    }
 
    @Override
@@ -190,7 +167,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    public void waitForStateTransferToStart(int viewId) throws InterruptedException {
       // TODO Add another latch for this, or maybe use a lock with condition variables instead
-      while (isLatchOpen(stateTransferInProgressLatch) && newViewId < viewId) {
+      while (newView == null || newView.getViewId() < viewId) {
          Thread.sleep(1);
       }
    }
@@ -219,21 +196,15 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    }
 
    @Override
-   public void nodeCompletedPush(Address sender, int viewId) {
-      pushConfirmations.confirmPush(sender, viewId);
-   }
-
-   @Override
-   public void requestJoin(Address sender, int viewId) {
-      pushConfirmations.confirmJoin(sender, viewId);
-   }
-
-   @Override
    public void applyState(Collection<InternalCacheEntry> state,
                           Address sender, int viewId) throws InterruptedException {
       waitForStateTransferToStart(viewId);
-      if (viewId < newViewId) {
-         log.debugf("Rejecting state pushed by node %s for old rehash %d (last view id we know is %d)", sender, viewId, newViewId);
+      if (newView == oldView) {
+         log.remoteStateRejected(sender, viewId, oldView.getViewId());
+         return;
+      }
+      if (viewId != newView.getViewId()) {
+         log.debugf("Rejecting state pushed by node %s for rehash %d (last view id we know is %d)", sender, viewId, newView.getViewId());
          return;
       }
 
@@ -269,62 +240,30 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
     * @return <code>true</code> if the state transfer started successfully, <code>false</code> otherwise
     */
    public boolean startStateTransfer(int viewId, Collection<Address> members, boolean initialView) throws TimeoutException, InterruptedException, PendingStateTransferException {
-      // if this is not our first view, we'll send a push completed request afterwards
-      if (initialView) {
-         signalJoinStarted(viewId);
-      }
-
-      boolean clusterJoinConfirmed = pushConfirmations.waitForClusterToConfirmJoin(viewId, configuration.getRehashWaitTime());
-      if (!clusterJoinConfirmed) {
+      if (newView == null || viewId != newView.getViewId()) {
+         log.debugf("Cannot start state transfer for view %d, we should be starting state transfer for view %s", viewId, newView);
          return false;
       }
-
       stateTransferInProgressLatch.close();
       return true;
    }
 
    public void endStateTransfer() {
       // we can now use the new CH as the baseline for the next rehash
-      oldViewId = newViewId;
+      oldView = newView;
       chOld = chNew;
 
       stateTransferInProgressLatch.open();
       joinCompletedLatch.countDown();
    }
 
-   void signalJoinStarted(int viewId) throws InterruptedException, TimeoutException, PendingStateTransferException {
-      Address self = getAddress();
-
-      if (trace) log.tracef("Node %s joining the cluster, broadcasting join request.", self, viewId);
-
-      // the broadcast won't include the local node, call the method directly
-      pushConfirmations.confirmJoin(self, viewId);
-      // then broadcast to the entire cluster
-      final StateTransferControlCommand cmd = cf.buildStateTransferCommand(StateTransferControlCommand.Type.REQUEST_JOIN, self, viewId);
-      rpcManager.invokeRemotely(null, cmd, ResponseMode.SYNCHRONOUS, configuration.getRehashRpcTimeout());
-   }
-
-   public void signalPushCompleted(int viewId) throws InterruptedException, TimeoutException, PendingStateTransferException {
-      Address self = getAddress();
-
-      if (trace) log.tracef("Node %s finished pushing state for view %s, broadcasting push complete signal.", self, viewId);
-
-      // the broadcast won't include the local node, call the method directly
-      pushConfirmations.confirmPush(self, viewId);
-      // then broadcast to the entire cluster
-      final StateTransferControlCommand cmd = cf.buildStateTransferCommand(StateTransferControlCommand.Type.PUSH_COMPLETED, self, viewId);
-      rpcManager.invokeRemotely(null, cmd, ResponseMode.SYNCHRONOUS, configuration.getRehashRpcTimeout());
-
-      boolean clusterPushCompleted = pushConfirmations.waitForClusterToCompletePush(viewId, configuration.getRehashWaitTime());
-      if (!clusterPushCompleted) {
-         throw new PendingStateTransferException();
-      }
-   }
-
    public abstract CacheStore getCacheStoreForStateTransfer();
 
    public void pushStateToNode(NotifyingNotifiableFuture<Object> stateTransferFuture, int viewId, Address target, Collection<InternalCacheEntry> state) throws PendingStateTransferException {
-      checkForPendingRehash(viewId);
+      if (leavers.contains(target)) {
+         log.debugf("Not pushing state to node %s since it has already left", target);
+         return;
+      }
 
       log.debugf("Pushing to node %s %d keys", target, state.size());
       log.tracef("Pushing to node %s keys: %s", target, keys(state));
@@ -336,38 +275,53 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    }
 
    public boolean isLastViewId(int viewId) {
-      return viewId == newViewId;
+      return viewId == newView.getViewId();
    }
 
-   protected void checkForPendingRehash(int viewId) throws PendingStateTransferException {
-      if (viewId != newViewId) {
+   protected void checkIfCancelled(int viewId) throws PendingStateTransferException {
+      if (viewId != newView.getViewId()) {
          throw new PendingStateTransferException();
       }
    }
 
-   private void newViewReceived(int viewId, List<Address> members, boolean initialView, boolean mergeView) {
-      log.tracef("Received new cluster view: %d %s", viewId, members);
-      if (initialView) {
-         pushConfirmations.initialViewReceived(viewId, members);
-      } else {
-         pushConfirmations.newViewReceived(viewId, members, mergeView);
-      }
+   @Override
+   public void prepareView(CacheView pendingView, CacheView committedView) throws Exception {
+      log.tracef("Received new cache view: %s %s", configuration.getName(), pendingView);
 
-      newViewId = viewId;
-      chNew = createConsistentHash(members);
+      joinStartedLatch.countDown();
 
-      BaseStateTransferTask task = createStateTransferTask(viewId, members, initialView);
-      rehashExecutor.submit(task);
+      newView = pendingView;
+      chNew = createConsistentHash(pendingView.getMembers());
+
+      stateTransferTask = createStateTransferTask(pendingView.getViewId(), pendingView.getMembers(), chOld == null);
+      stateTransferTask.performStateTransfer();
+   }
+
+   @Override
+   public void commitView(int viewId) {
+      stateTransferTask.commitStateTransfer();
+      endStateTransfer();
+   }
+
+   @Override
+   public void rollbackView(int committedViewId) {
+      // TODO Use the new view id
+      newView = oldView;
+      chNew = chOld;
+
+      stateTransferInProgressLatch.open();
+      joinCompletedLatch.countDown();
+   }
+
+   @Override
+   public void updateLeavers(Collection<Address> leavers) {
+      this.leavers = leavers;
+   }
+
+   @Override
+   public void pruneInvalidMembers(Collection<Address> targets) {
+      targets.removeAll(leavers);
    }
 
    protected abstract BaseStateTransferTask createStateTransferTask(int viewId, List<Address> members, boolean initialView);
-
-   @Listener
-   public class ViewChangeListener {
-      @Merged
-      @ViewChanged
-      public void handleViewChange(ViewChangedEvent e) {
-         newViewReceived(e.getViewId(), e.getNewMembers(), false, e.isMergeView());
-      }
-   }
 }
