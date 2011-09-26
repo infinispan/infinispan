@@ -916,11 +916,21 @@ public class TestingUtil {
    }
 
    public static void blockUntilViewsReceived(int timeout, Collection caches) {
-      blockUntilViewsReceived(timeout, (Cache[]) caches.toArray(new Cache[]{}));
+      Object first = caches.iterator().next();
+      if (first instanceof Cache) {
+         blockUntilViewsReceived(timeout, (Cache[]) caches.toArray(new Cache[]{}));
+      } else {
+         blockUntilViewsReceived(timeout, (CacheContainer[]) caches.toArray(new CacheContainer[]{}));
+      }
    }
 
    public static void blockUntilViewsReceived(int timeout, boolean barfIfTooManyMembers, Collection caches) {
-      blockUntilViewsReceived(timeout, barfIfTooManyMembers, (Cache[]) caches.toArray(new Cache[caches.size()]));
+      Object first = caches.iterator().next();
+      if (first instanceof Cache) {
+         blockUntilViewsReceived(timeout, barfIfTooManyMembers, (Cache[]) caches.toArray(new Cache[]{}));
+      } else {
+         blockUntilViewsReceived(timeout, barfIfTooManyMembers, (CacheContainer[]) caches.toArray(new CacheContainer[]{}));
+      }
    }
 
    public static CommandsFactory extractCommandsFactory(Cache<Object, Object> cache) {

@@ -63,6 +63,7 @@ public class StateTransferLockImpl implements StateTransferLock {
    private ReclosableLatch txLockLatch = new ReclosableLatch(true);
 
    private long lockTimeout;
+   private boolean eagerLockingEnabled;
 
    public StateTransferLockImpl() {
    }
@@ -75,7 +76,7 @@ public class StateTransferLockImpl implements StateTransferLock {
    @Override
    public void releaseForCommand(InvocationContext ctx, WriteCommand command) {
       // for transactions the real work starts with the prepare command, so don't log anything here
-      if (ctx.isInTxScope())
+      if (ctx.isInTxScope() && !eagerLockingEnabled)
          return;
 
       if (!ctx.hasFlag(Flag.SKIP_LOCKING))
@@ -108,7 +109,7 @@ public class StateTransferLockImpl implements StateTransferLock {
    @Override
    public boolean acquireForCommand(InvocationContext ctx, WriteCommand command) throws InterruptedException, TimeoutException {
       // for transactions the real work starts with the prepare command, so don't block here
-      if (ctx.isInTxScope() || ctx.hasFlag(Flag.SKIP_LOCKING))
+      if ((ctx.isInTxScope() && !eagerLockingEnabled) || ctx.hasFlag(Flag.SKIP_LOCKING))
          return true;
 
       return acquireLockForTx(ctx);

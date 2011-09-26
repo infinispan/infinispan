@@ -138,6 +138,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
                });
                t1.commit();
             } catch (Exception e) {
+               log.error("Error committing transaction", e);
                rollback.set(true);
                throw new RuntimeException(e);
             }

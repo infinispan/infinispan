@@ -196,8 +196,9 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       Configuration localConfig = cmd.getConfiguration();
       ComponentRegistry cr = cmd.getComponentRegistry();
 
-      if (localConfig.getCacheMode().isDistributed()) {
-         StateTransferManager stm = cr.getComponent(StateTransferManager.class);
+      StateTransferManager stm = cr.getComponent(StateTransferManager.class);
+      if (stm != null) {
+         // we are either in distributed mode or in replicated mode
          if (stm.isJoinComplete())
             return JoinHandle.OK;
          else {
@@ -314,26 +315,29 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
 
       public Response enqueue(CacheRpcCommand command) throws Throwable {
          retryQueueLock.lock();
-         boolean unlock = false;
 
-         if (enqueueing) {
-            log.tracef("Enqueueing command %s since we are enqueueing.", command);
-            queue.add(command);
-            return RequestIgnoredResponse.INSTANCE;
-         } else {
-            try {
-               if (howToHandle(command) == JoinHandle.QUEUE) {
+         try {
+            if (enqueueing) {
+               log.tracef("Enqueueing command %s since we are enqueueing.", command);
+               queue.add(command);
+               return RequestIgnoredResponse.INSTANCE;
+            } else {
+               try {
+                  if (howToHandle(command) == JoinHandle.QUEUE) {
+                     enqueueing = true;
+                     enqueuedBlocker.close();
+                     return enqueue(command);
+                  } else {
+                     return handleWithWaitForBlocks(command);
+                  }
+               } catch (TimeoutException te) {
                   enqueueing = true;
                   enqueuedBlocker.close();
                   return enqueue(command);
-               } else {
-                  return handleWithWaitForBlocks(command);
                }
-            } catch (TimeoutException te) {
-               enqueueing = true;
-               enqueuedBlocker.close();
-               return enqueue(command);
             }
+         } finally {
+            retryQueueLock.unlock();
          }
       }
 

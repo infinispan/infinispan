@@ -214,6 +214,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
                   + addressOf(c) + "] but was [" + realVal + "]";
          }
       }
+      // Allow some time for all ClusteredGetCommands to finish executing
+      TestingUtil.sleepThread(1000);
    }
 
    protected void assertOwnershipAndNonOwnership(Object key, boolean allowL1) {

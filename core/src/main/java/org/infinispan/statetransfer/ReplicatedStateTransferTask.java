@@ -93,37 +93,37 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
          Set<Address> joiners = MembershipArithmetic.getMembersJoined(chOld.getCaches(), chNew.getCaches());
          if (joiners.isEmpty()) {
             log.tracef("No joiners in view %s, skipping replication", newViewId);
-            return;
-         }
-         log.tracef("Replicating: chOld = %s, chNew = %s", chOld, chNew);
-
-         if (configuration.isStateTransferEnabled() && !initialView) {
-            // Contains the state to be pushed to various servers. The state is a hashmap of keys and values
-            final Collection<InternalCacheEntry> state = new ArrayList<InternalCacheEntry>();
-
-            for (InternalCacheEntry ice : dataContainer) {
-               replicate(ice.getKey(), ice, chOld, chNew, null, state);
-            }
-
-            // Only fetch the data from the cache store if the cache store is not shared
-            CacheStore cacheStore = stateTransferManager.getCacheStoreForStateTransfer();
-            if (cacheStore != null) {
-               for (Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
-                  replicate(key, null, chOld, chNew, cacheStore, state);
-               }
-            } else {
-               if (trace) log.trace("No cache store or cache store is shared, not replicating stored keys");
-            }
-
-            // Now for each joiner S : push state to S via RPC
-            // TODO We are sending the same stuff to all the joiners, we should use multicast instead
-            final Map<Address, Collection<InternalCacheEntry>> states = new HashMap<Address, Collection<InternalCacheEntry>>();
-            for (Address joiner : joiners) {
-               states.put(joiner, state);
-            }
-            pushState(states);
          } else {
-            if (!initialView) log.trace("State transfer not enabled, so not pushing state");
+            log.tracef("Replicating: chOld = %s, chNew = %s", chOld, chNew);
+
+            if (configuration.isStateTransferEnabled() && !initialView) {
+               // Contains the state to be pushed to various servers. The state is a hashmap of keys and values
+               final Collection<InternalCacheEntry> state = new ArrayList<InternalCacheEntry>();
+
+               for (InternalCacheEntry ice : dataContainer) {
+                  replicate(ice.getKey(), ice, chOld, chNew, null, state);
+               }
+
+               // Only fetch the data from the cache store if the cache store is not shared
+               CacheStore cacheStore = stateTransferManager.getCacheStoreForStateTransfer();
+               if (cacheStore != null) {
+                  for (Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
+                     replicate(key, null, chOld, chNew, cacheStore, state);
+                  }
+               } else {
+                  if (trace) log.trace("No cache store or cache store is shared, not replicating stored keys");
+               }
+
+               // Now for each joiner S : push state to S via RPC
+               // TODO We are sending the same stuff to all the joiners, we should use multicast instead
+               final Map<Address, Collection<InternalCacheEntry>> states = new HashMap<Address, Collection<InternalCacheEntry>>();
+               for (Address joiner : joiners) {
+                  states.put(joiner, state);
+               }
+               pushState(states);
+            } else {
+               if (!initialView) log.trace("State transfer not enabled, so not pushing state");
+            }
          }
 
          // Now we can inform the other nodes that we have finished our push

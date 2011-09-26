@@ -31,6 +31,8 @@ import org.infinispan.remoting.ReplicationQueueImpl;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
@@ -54,7 +56,7 @@ public class ConcurrentFlushReplQueueTest extends MultipleCacheManagersTest {
       Configuration cfg = new Configuration();
       cfg.setCacheMode(Configuration.CacheMode.REPL_ASYNC);
       cfg.setUseReplQueue(true);
-      cfg.setReplQueueInterval(100);
+      cfg.setReplQueueInterval(1000);
       cfg.setReplQueueMaxElements(2);
       cfg.setReplQueueClass(MockReplQueue.class.getName());
       CacheContainer first = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), cfg);
@@ -80,7 +82,7 @@ public class ConcurrentFlushReplQueueTest extends MultipleCacheManagersTest {
       cache1.put("k-blah","v-blah");
       cache1.remove(k);
       // Wait for remove to go over draining the queue
-      removeCompletedLatch.await();
+      removeCompletedLatch.await(1000, TimeUnit.MILLISECONDS);
       // Once remove executed, now let the interval flush continue
       intervalFlushLatch.countDown();
       // Wait for periodic flush to send modifications over the wire
@@ -89,21 +91,25 @@ public class ConcurrentFlushReplQueueTest extends MultipleCacheManagersTest {
    }
 
    public static class MockReplQueue extends ReplicationQueueImpl {
+      static final Log log = LogFactory.getLog(MockReplQueue.class);
       static CountDownLatch intervalFlushLatch;
       static CountDownLatch secondPutLatch;
       static CountDownLatch removeCompletedLatch;
 
       @Override
       protected List<ReplicableCommand> drainReplQueue() {
+         log.debugf("drainReplQueue called");
          List<ReplicableCommand> drained = super.drainReplQueue();
          try {
             if (drained.size() > 0 && Thread.currentThread().getName().startsWith("Scheduled-")) {
+               log.debugf("Drained the put command on the replication thread: %s", drained);
                secondPutLatch.countDown();
                 // Wait a max of 5 seconds, because if a remove could have gone through,
                // it would have done it in that time. If it hasn't and the test passes,
                // it means that correct synchronization is in place.
                intervalFlushLatch.await(5, TimeUnit.SECONDS);
             } else if (drained.size() > 0) {
+               log.debugf("Drained the put+remove commands on the main thread: %s", drained);
                removeCompletedLatch.countDown();
             }
          } catch (InterruptedException e) {

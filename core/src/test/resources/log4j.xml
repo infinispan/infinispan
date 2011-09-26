@@ -70,6 +70,10 @@
       <priority value="DEBUG"/>
    </category>
 
+   <category name="org.infinispan.marshall">
+      <priority value="WARN"/>
+   </category>
+
    <category name="org.infinispan.profiling">
       <priority value="WARN"/>
    </category>
