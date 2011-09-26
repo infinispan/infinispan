@@ -137,7 +137,7 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
    }
 
    private boolean isLocalCall() {
-      InvocationContext invocationContext = cache.getInvocationContextContainer().getInvocationContext();
+      InvocationContext invocationContext = cache.getInvocationContextContainer().getInvocationContext(false);
       return invocationContext.isOriginLocal();
    }
 

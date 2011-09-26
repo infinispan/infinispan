@@ -53,9 +53,11 @@ public interface InvocationContextContainer {
     * @throws IllegalStateException if there is no context associated with the current thread.
     *
     * @deprecated see implementation for notes
+    * @param quiet
     */
    @Deprecated
-   InvocationContext getInvocationContext();
+   InvocationContext getInvocationContext(boolean quiet);
+
 
    /**
     * If we are in a tx scope this will return an {@link org.infinispan.context.impl.TxInvocationContext}. Otherwise it

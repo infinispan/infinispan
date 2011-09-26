@@ -66,9 +66,9 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
    }
 
    @Deprecated
-   public InvocationContext getInvocationContext() {
+   public InvocationContext getInvocationContext(boolean quiet) {
       InvocationContext ctx = ctxHolder.get();
-      if (ctx == null) throw new IllegalStateException("No InvocationContext associated with current thread!");
+      if (ctx == null && !quiet) throw new IllegalStateException("No InvocationContext associated with current thread!");
       return ctx;
    }
 

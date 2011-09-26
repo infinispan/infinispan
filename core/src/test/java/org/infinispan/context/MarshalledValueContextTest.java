@@ -24,8 +24,6 @@ package org.infinispan.context;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -68,7 +66,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
       InvocationContextContainer icc = TestingUtil.extractComponent(c, InvocationContextContainer.class);
 
       LockManager lockManager = TestingUtil.extractComponent(c, LockManager.class);
-      InvocationContext ctx = icc.getInvocationContext();
+      InvocationContext ctx = icc.getInvocationContext(true);
 
       assert ctx instanceof LocalTxInvocationContext;
 

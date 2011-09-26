@@ -105,7 +105,7 @@ public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
       InvocationContext ic = icc.createInvocationContext();
       ic.setFlags(SKIP_LOCKING);
       log.debug("Doing a put");
-      assert icc.getInvocationContext().hasFlag(SKIP_LOCKING);
+      assert icc.getInvocationContext(true).hasFlag(SKIP_LOCKING);
       map.put("a", "b");
       log.debug("Put complete");
       assert map.get("a").equals("b");
