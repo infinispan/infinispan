@@ -99,52 +99,23 @@ public class TableManipulation implements Cloneable {
    }
 
    public boolean tableExists(Connection connection, String tableName) throws CacheLoaderException {
-      assertNotNull(getTableName(), "table name is mandatory");
-      ResultSet rs = null;
-      try {
-         // (a j2ee spec compatible jdbc driver has to fully
-         // implement the DatabaseMetaData)
-         DatabaseMetaData dmd = connection.getMetaData();
-         String catalog = connection.getCatalog();
-         String schema = null;
-         String quote = dmd.getIdentifierQuoteString();
-         if (tableName.startsWith(quote)) {
-            if (!tableName.endsWith(quote)) {
-               throw new IllegalStateException("Mismatched quote in table name: " + tableName);
-            }
-            int quoteLength = quote.length();
-            tableName = tableName.substring(quoteLength, tableName.length() - quoteLength);
-            if (dmd.storesLowerCaseQuotedIdentifiers()) {
-               tableName = toLowerCase(tableName);
-            } else if (dmd.storesUpperCaseQuotedIdentifiers()) {
-               tableName = toUpperCase(tableName);
-            }
-         } else {
-            if (dmd.storesLowerCaseIdentifiers()) {
-               tableName = toLowerCase(tableName);
-            } else if (dmd.storesUpperCaseIdentifiers()) {
-               tableName = toUpperCase(tableName);
-            }
-         }
-
-         int dotIndex;
-         if ((dotIndex = tableName.indexOf('.')) != -1) {
-            // Yank out schema name ...
-            schema = tableName.substring(0, dotIndex);
-            tableName = tableName.substring(dotIndex + 1);
-         }
-
-         rs = dmd.getTables(catalog, schema, tableName, null);
-         return rs.next();
-      }
-      catch (SQLException e) {
-         // This should not happen. A J2EE compatible JDBC driver is
-         // required fully support meta data.
-         throw new CacheLoaderException("Error while checking if table already exists " + tableName, e);
-      }
-      finally {
-         JdbcUtil.safeClose(rs);
-      }
+     assertNotNull(getTableName(), "table name is mandatory");
+     Statement stmt = null;
+     ResultSet rs = null;
+     try {
+        stmt = connection.createStatement();
+        // Use implicit DB schema mapped to a particular user
+        // It makes environments where DBs are shared easier to support
+        rs = stmt.executeQuery("SELECT count(*) FROM " + tableName);
+        return rs.next();
+     } catch (SQLException e) {
+        if (log.isTraceEnabled())
+           log.tracef(e, "SQLException occurs while checking the table %s", tableName);
+        return false;
+     } finally {
+        JdbcUtil.safeClose(rs);
+        JdbcUtil.safeClose(stmt);
+     }
    }
 
    public void createTable(Connection conn) throws CacheLoaderException {
