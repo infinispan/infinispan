@@ -57,6 +57,8 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    private static final Log log = LogFactory.getLog(LockControlCommand.class);
 
    public static final int COMMAND_ID = 3;
+
+   //todo - consider two commands as most of the time this is a single key?
    private List<Object> keys;
    private boolean implicit = false;
    private boolean unlock = false;
@@ -75,6 +77,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    public LockControlCommand(Collection<Object> keys, String cacheName, Set<Flag> flags, boolean implicit) {
+      //todo - why defensive copies???
       super(cacheName);
       if (keys != null) {
          // defensive copy
