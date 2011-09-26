@@ -28,6 +28,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -53,7 +54,7 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
       c.setSyncCommitPhase(true);
       c.setSyncRollbackPhase(true);
       c.setUseLockStriping(false);
-      c.fluent().transaction().transactionalCache(true);
+      c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
 
       CacheContainer container = TestCacheManagerFactory.createClusteredCacheManager(c);
       container.start();

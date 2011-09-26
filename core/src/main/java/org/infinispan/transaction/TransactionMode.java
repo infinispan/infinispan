@@ -21,29 +21,15 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.config;
-
-import org.infinispan.test.AbstractCacheTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.testng.annotations.Test;
+package org.infinispan.transaction;
 
 /**
+ * Enumeration containing the available transaction modes for a cache.
+ *
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "config.TransactionalCacheConfigTest")
-public class TransactionalCacheConfigTest extends AbstractCacheTest {
-
-   public void test() {
-      final Configuration c = TestCacheManagerFactory.getDefaultConfiguration(false);
-      assert !c.isTransactionalCache();
-      c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      assert c.isTransactionalCache();
-      c.fluent().transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
-      assert !c.isTransactionalCache();
-      c.fluent().transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
-      assert c.isTransactionalCache();
-   }
+public enum TransactionMode {
+   NON_TRANSACTIONAL,
+   TRANSACTIONAL
 }

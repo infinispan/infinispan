@@ -33,6 +33,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.AfterMethod;
@@ -58,7 +59,7 @@ public class CacheManagerComponentRegistryTest extends AbstractInfinispanTest {
       Configuration defaultCfg = new Configuration();
       defaultCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
       defaultCfg.setFetchInMemoryState(false);
-      defaultCfg.fluent().transaction().transactionalCache(false);
+      defaultCfg.fluent().transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
       defaultCfg.setFetchInMemoryState(false);
 
       // cache manager with default configuration

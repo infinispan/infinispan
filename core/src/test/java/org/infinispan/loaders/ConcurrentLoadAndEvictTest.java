@@ -37,6 +37,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
@@ -69,7 +70,7 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
             .addCacheLoader(new DummyInMemoryCacheStore.Cfg())
          .customInterceptors()
             .add(sdi).after(InvocationContextInterceptor.class)
-         .transaction().transactionalCache(false)
+         .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
          .build();
 
       return TestCacheManagerFactory.createCacheManager(config);

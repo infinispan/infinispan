@@ -29,7 +29,7 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
 
@@ -88,7 +88,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
       Configuration config = new Configuration();
       //the recovery cache should not participate in main cache's transactions, especially because removals
       // from this cache are executed in the context of a finalised transaction and cause issues.
-      config.fluent().transaction().transactionalCache(false);
+      config.fluent().transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
       config.fluent().clustering().mode(Configuration.CacheMode.LOCAL);
       config.fluent().expiration().lifespan(DEFAULT_EXPIRY);
       config.fluent().recovery().disable();

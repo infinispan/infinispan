@@ -33,6 +33,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -226,11 +227,6 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       TransactionConfig useEagerLocking(Boolean useEagerLocking);
 
       /**
-       * Configures whether this cache is transactional or not.
-       */
-      FluentConfiguration.TransactionConfig transactionalCache(boolean isTransactionalCache);
-
-      /**
        * Only has effect for DIST mode and when useEagerLocking is set to true. When this is
        * enabled, then only one node is locked in the cluster, disregarding numOwners config. On the
        * opposite, if this is false, then on all cache.lock() calls numOwners RPCs are being
@@ -267,6 +263,12 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @see org.infinispan.config.Configuration#isTransactionalCache()
        */
       TransactionConfig lockingMode(LockingMode lockingMode);
+
+      /**
+       * Configures whether the cache is transactional or not.
+       * @see TransactionMode
+       */
+      TransactionConfig transactionMode(TransactionMode transactionMode);
 
       /**
        * @see org.infinispan.config.Configuration#isTransactionAutoCommit().

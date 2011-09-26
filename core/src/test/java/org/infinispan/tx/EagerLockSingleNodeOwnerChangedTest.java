@@ -132,7 +132,6 @@ public class EagerLockSingleNodeOwnerChangedTest extends MultipleCacheManagersTe
          List<Address> owners = advancedCache(2).getDistributionManager().getConsistentHash().locate(o, 2);
          boolean mainOwnerChanged = owners.get(0).equals(address(2));
          if (mainOwnerChanged) {
-            System.out.println("Found local! " + o);
             log.infof("Found local! %s", o);
             testCommitFailsAndOldValues(o, suspend);
             return;
@@ -156,7 +155,7 @@ public class EagerLockSingleNodeOwnerChangedTest extends MultipleCacheManagersTe
          assert false;
          //fail
       } catch (Exception e) {
-         e.printStackTrace();
+//         e.printStackTrace();
          //expected
       }
 

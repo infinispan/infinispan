@@ -30,6 +30,7 @@ import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.LegacyKeySupportSystemProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -131,7 +132,7 @@ public class TestCacheManagerFactory {
    }
 
    private static void markAsTransactional(boolean transactional, Configuration c) {
-      c.fluent().transaction().transactionalCache(transactional);
+      c.fluent().transaction().transactionMode(transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL);
    }
 
    private static void updateTransactionSupport(Configuration c) {

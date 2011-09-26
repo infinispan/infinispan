@@ -28,6 +28,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransactionSetup;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -120,7 +121,7 @@ public class BatchWithTMTest extends AbstractBatchTest {
       Configuration c = new Configuration();
       c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
       c.setInvocationBatchingEnabled(true);
-      c.fluent().transaction().transactionalCache(true);
+      c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       assert c.getTransactionManagerLookupClass() != null : "Should have a transaction manager lookup class attached!!";
       cm.defineConfiguration(name, c);
       return cm.getCache(name);

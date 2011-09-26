@@ -30,6 +30,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -59,7 +60,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
    @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
       Configuration c = new Configuration();
-      c.fluent().transaction().transactionalCache(false);
+      c.fluent().transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
       c.setCacheMode(Configuration.CacheMode.LOCAL);
       c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
       cm = TestCacheManagerFactory.createCacheManager(c);

@@ -40,6 +40,7 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.ReplicationQueueImpl;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
@@ -1163,6 +1164,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
+    * Returns cache's transaction mode.
+    * @see TransactionMode
+    */
+   public TransactionMode getTransactionMode() {
+      return transaction.transactionMode;
+   }
+
+   /**
     * If the cache is transactional (i.e. {@link #isTransactionalCache()} == true) and transactionAutoCommit is enabled
     * then for single operation transactions the user doesn't need to manually start a transaction, but a transactions
     * is injected by the system. Defaults to true.
@@ -1585,7 +1594,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @see #isTransactionAutoCommit()
     */
    public boolean isTransactionalCache() {
-      return transaction.transactionalCache;
+      return transaction.transactionMode.equals(TransactionMode.TRANSACTIONAL);
    }
 
    public boolean isExpirationReaperEnabled() {
@@ -1642,6 +1651,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "getTransactionLockingMode")
       protected LockingMode lockingMode = LockingMode.OPTIMISTIC;
 
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "getTransactionMode")
+      protected TransactionMode transactionMode = TransactionMode.TRANSACTIONAL;
+
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "isTransactionAutoCommit")
       protected boolean autoCommit = true;
 
@@ -1672,9 +1684,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
 
       @Override
-      public FluentConfiguration.TransactionConfig transactionalCache(boolean isTransactionalCache) {
-         testImmutability("transactionalCache");
-         this.transactionalCache = isTransactionalCache;
+      public TransactionConfig transactionMode(TransactionMode txMode) {
+         testImmutability("transactionMode");
+         this.transactionMode = txMode;
          return this;
       }
 
@@ -2172,8 +2184,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
 
       @Override
-      public TransactionConfig transactionalCache(boolean isTransactionalCache) {
-         return transaction().transactionalCache(isTransactionalCache);
+      public TransactionConfig transactionMode(TransactionMode transactionMode) {
+         return transaction().transactionMode(transactionMode);
       }
    }
 
