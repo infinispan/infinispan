@@ -257,7 +257,7 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
             } catch (Throwable e) {
                log.couldNotCompleteInjectedTransaction(e);
                tryRollback();
-               throw new CacheException("Could not commit injected transactions", e);
+               throw new CacheException("Could not commit injected transaction", e);
             }
          }
       } catch (RuntimeException e) {
@@ -270,9 +270,8 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
    private void tryRollback() {
       try {
          if (transactionManager != null) transactionManager.rollback();
-      } catch (SystemException e1) {
-         if (log.isTraceEnabled()) log.trace("Could not rollback", e1);
-         //best effort
+      } catch (Throwable e1) {
+         if (log.isTraceEnabled()) log.trace("Could not rollback", e1);//best effort
       }
    }
 
@@ -395,6 +394,7 @@ public class CacheImpl<K, V> extends CacheSupport<K,V> implements AdvancedCache<
                transactionManager.begin();
                transaction = transactionManager.getTransaction();
                txInjected = true;
+               if (log.isTraceEnabled()) log.trace("Transaction injected!");
             } catch (Exception e) {
                throw new CacheException("Could not start transaction", e);
             }
