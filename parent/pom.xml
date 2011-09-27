@@ -150,7 +150,7 @@
       <version.rhq.pluginAnnotations>3.0.1</version.rhq.pluginAnnotations>
       <version.rhq.plugingen>3.0.1</version.rhq.plugingen>
       <version.rhq>3.0.0</version.rhq>
-      <version.scala>2.8.1</version.scala>
+      <version.scala>2.9.1</version.scala>
       <version.slf4j>1.6.1</version.slf4j>
       <version.solder>3.0.0.Final</version.solder>
       <version.spymemcached>2.5</version.spymemcached>
