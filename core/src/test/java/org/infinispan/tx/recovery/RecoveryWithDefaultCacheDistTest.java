@@ -131,7 +131,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       assert inDoubtTransactions.contains(new SerializableXid(t1_2.getXid()));
       assert inDoubtTransactions.contains(new SerializableXid(t1_3.getXid()));
 
-      configuration.fluent().transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+      configuration.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       addClusterEnabledCacheManager(configuration);
       defineRecoveryCache(1);
       TestingUtil.blockUntilViewsReceived(60000, cache(0), cache(1));

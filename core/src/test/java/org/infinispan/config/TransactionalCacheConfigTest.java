@@ -23,18 +23,26 @@
 
 package org.infinispan.config;
 
-import org.infinispan.test.AbstractCacheTest;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mircea Markus
  * @since 5.1
  */
 @Test (groups = "functional", testName = "config.TransactionalCacheConfigTest")
-public class TransactionalCacheConfigTest extends AbstractCacheTest {
+public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
+
+   @Override
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      return new DefaultCacheManager(getDefaultStandaloneConfig(true));
+   }
 
    public void test() {
       final Configuration c = TestCacheManagerFactory.getDefaultConfiguration(false);
@@ -43,7 +51,13 @@ public class TransactionalCacheConfigTest extends AbstractCacheTest {
       assert c.isTransactionalCache();
       c.fluent().transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
       assert !c.isTransactionalCache();
-      c.fluent().transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
-      assert c.isTransactionalCache();
+   }
+
+   public void testTransactionModeOverride() {
+      Configuration c = new Configuration();
+      c.fluent().transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+      assertEquals(cacheManager.getCache().getConfiguration().getTransactionMode(), TransactionMode.TRANSACTIONAL);
+      cacheManager.defineConfiguration("nonTx", c);
+      assertEquals(cacheManager.getCache("nonTx").getConfiguration().getTransactionMode(), TransactionMode.NON_TRANSACTIONAL);
    }
 }
