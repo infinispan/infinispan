@@ -23,7 +23,6 @@
 package org.infinispan.lucene.locking;
 
 import org.apache.lucene.store.Lock;
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.lucene.FileCacheKey;
@@ -43,15 +42,14 @@ import org.infinispan.util.logging.LogFactory;
 class BaseLuceneLock extends Lock {
 
    private static final Log log = LogFactory.getLog(BaseLuceneLock.class);
-   private static final Flag[] lockFlags = new Flag[]{Flag.SKIP_CACHE_STORE};
 
-   private final AdvancedCache cache;
+   private final Cache noCacheStoreCache;
    private final String lockName;
    private final String indexName;
    private final FileCacheKey keyOfLock;
 
    BaseLuceneLock(Cache cache, String indexName, String lockName) {
-      this.cache = cache.getAdvancedCache();
+      this.noCacheStoreCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE);
       this.lockName = lockName;
       this.indexName = indexName;
       this.keyOfLock = new FileCacheKey(indexName, lockName);
@@ -62,7 +60,7 @@ class BaseLuceneLock extends Lock {
     */
    @Override
    public boolean obtain() {
-      Object previousValue = cache.withFlags(lockFlags).putIfAbsent(keyOfLock, keyOfLock);
+      Object previousValue = noCacheStoreCache.putIfAbsent(keyOfLock, keyOfLock);
       if (previousValue == null) {
          if (log.isTraceEnabled()) {
             log.tracef("Lock: %s acquired for index: %s", lockName, indexName);
@@ -89,7 +87,7 @@ class BaseLuceneLock extends Lock {
     * Used by Lucene at Directory creation: we expect the lock to not exist in this case.
     */
    public void clearLock() {
-      Object previousValue = cache.withFlags(lockFlags).remove(keyOfLock);
+      Object previousValue = noCacheStoreCache.remove(keyOfLock);
       if (previousValue!=null && log.isTraceEnabled()) {
          log.tracef("Lock removed for index: %s", indexName);
       }
@@ -97,7 +95,7 @@ class BaseLuceneLock extends Lock {
    
    @Override
    public boolean isLocked() {
-      boolean locked = cache.withFlags(lockFlags).containsKey(keyOfLock);
+      boolean locked = noCacheStoreCache.containsKey(keyOfLock);
       return locked;
    }
    
