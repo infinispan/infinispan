@@ -28,7 +28,6 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.apache.lucene.store.Lock;
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.context.Flag;
@@ -50,16 +49,15 @@ import org.infinispan.util.logging.LogFactory;
 class TransactionalSharedLuceneLock extends Lock {
 
    private static final Log log = LogFactory.getLog(TransactionalSharedLuceneLock.class, Log.class);
-   private static final Flag[] lockFlags = new Flag[]{Flag.SKIP_CACHE_STORE};
 
-   private final AdvancedCache cache;
+   private final Cache noCacheStoreCache;
    private final String lockName;
    private final String indexName;
    private final TransactionManager tm;
    private final FileCacheKey keyOfLock;
 
    TransactionalSharedLuceneLock(Cache cache, String indexName, String lockName, TransactionManager tm) {
-      this.cache = cache.getAdvancedCache();
+      this.noCacheStoreCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE);
       this.lockName = lockName;
       this.indexName = indexName;
       this.tm = tm;
@@ -71,7 +69,7 @@ class TransactionalSharedLuceneLock extends Lock {
     */
    @Override
    public boolean obtain() throws IOException {
-      Object previousValue = cache.withFlags(lockFlags).putIfAbsent(keyOfLock, keyOfLock);
+      Object previousValue = noCacheStoreCache.putIfAbsent(keyOfLock, keyOfLock);
       if (previousValue == null) {
          if (log.isTraceEnabled()) {
             log.tracef("Lock: %s acquired for index: %s", lockName, indexName);
@@ -105,7 +103,7 @@ class TransactionalSharedLuceneLock extends Lock {
     * at Directory creation: we expect the lock to not exist in this case.
     */
    private void clearLock() {
-      Object previousValue = cache.withFlags(lockFlags).remove(keyOfLock);
+      Object previousValue = noCacheStoreCache.remove(keyOfLock);
       if (previousValue!=null && log.isTraceEnabled()) {
          log.tracef("Lock removed for index: %s", indexName);
       }
@@ -120,7 +118,7 @@ class TransactionalSharedLuceneLock extends Lock {
          if ((tx = tm.getTransaction()) != null) {
             tm.suspend();
          }
-         locked = cache.withFlags(lockFlags).containsKey(keyOfLock);
+         locked = noCacheStoreCache.containsKey(keyOfLock);
       } catch (Exception e) {
          log.errorSuspendingTransaction(e);
       } finally {
