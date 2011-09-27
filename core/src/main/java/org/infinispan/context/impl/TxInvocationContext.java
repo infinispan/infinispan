@@ -85,4 +85,6 @@ public interface TxInvocationContext extends InvocationContext {
 
    boolean isTransactionInjected();
 
+   boolean isReplayEntryWrapping();
+
 }

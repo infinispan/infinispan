@@ -77,7 +77,11 @@ public class TransactionCoordinator {
       this.rpcManager = rpcManager;
    }
 
-   public int prepare(LocalTransaction localTransaction) throws XAException {
+   public final int prepare(LocalTransaction localTransaction) throws XAException {
+      return prepare(localTransaction, false);
+   }
+
+   public final int prepare(LocalTransaction localTransaction, boolean replayEntryWrapping) throws XAException {
       validateNotMarkedForRollback(localTransaction);
 
       if (configuration.isOnePhaseCommit()) {
@@ -89,6 +93,7 @@ public class TransactionCoordinator {
       if (trace) log.tracef("Sending prepare command through the chain: %s", prepareCommand);
 
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
+      ctx.setReplayEntryWrapping(replayEntryWrapping);
       ctx.setLocalTransaction(localTransaction);
       try {
          invoker.invoke(ctx, prepareCommand);

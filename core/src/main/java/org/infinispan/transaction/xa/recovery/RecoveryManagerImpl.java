@@ -310,7 +310,6 @@ public class RecoveryManagerImpl implements RecoveryManager {
             localTx.setModifications(tx.getModifications());
             localTx.setXid(xid);
             localTx.setAffectedKeys(((RecoveryAwareRemoteTransaction) tx).getAffectedKeys());
-            localTx.setLookedUpEntries(tx.getLookedUpEntries());
             for (Object lk : ((RecoveryAwareRemoteTransaction) tx).getLockedKeys()) localTx.registerLockedKey(lk);
             return completeTransaction(localTx, commit, xid);
          }
@@ -321,7 +320,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       if (commit) {
          try {
             localTx.clearLookedUpEntries();
-            txCoordinator.prepare(localTx);
+            txCoordinator.prepare(localTx, true);
             txCoordinator.commit(localTx, false);
          } catch (XAException e) {
             log.warn("Could not commit local tx " + localTx, e);

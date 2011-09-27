@@ -94,4 +94,9 @@ public class TransactionalInvocationContextFlagsOverride extends InvocationConte
    public boolean isTransactionInjected() {
       return delegate.isTransactionInjected();
    }
+
+   @Override
+   public boolean isReplayEntryWrapping() {
+      return delegate.isReplayEntryWrapping();
+   }
 }

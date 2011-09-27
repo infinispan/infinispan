@@ -52,6 +52,8 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
 
    private LocalTransaction localTransaction;
 
+   private boolean replayEntryWrapping;
+
    public boolean isTransactionValid() {
       Transaction t = getTransaction();
       int status = -1;
@@ -137,5 +139,14 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
    @Override
    public void registerLockedKey(Object key) {
       localTransaction.registerLockedKey(key);
+   }
+
+   @Override
+   public final boolean isReplayEntryWrapping() {
+      return replayEntryWrapping;
+   }
+
+   public final void setReplayEntryWrapping(boolean replayEntryWrapping) {
+      this.replayEntryWrapping = replayEntryWrapping;
    }
 }

@@ -73,6 +73,11 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
    }
 
    @Override
+   public boolean isReplayEntryWrapping() {
+      return false;
+   }
+
+   @Override
    public void reset() {
       super.reset();
       txInjected = false;
