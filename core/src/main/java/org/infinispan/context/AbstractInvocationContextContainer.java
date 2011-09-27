@@ -25,14 +25,12 @@ package org.infinispan.context;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.context.impl.NonTxInvocationContext;
-import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Set;
 
 /**
- * // TODO: Document this
+ * Base class for InvocationContextContainer implementations.
  *
  * @author Mircea Markus
  * @since 5.1

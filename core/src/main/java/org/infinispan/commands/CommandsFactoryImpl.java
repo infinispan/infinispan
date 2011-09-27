@@ -367,6 +367,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new LockControlCommand(keys, cacheName, flags, implicit);
    }
 
+   public LockControlCommand buildLockControlCommand(Object key, boolean implicit, Set<Flag> flags) {
+      return new LockControlCommand(key, cacheName, flags, implicit);
+   }
+
    public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type, Address sender, int viewId) {
       return new RehashControlCommand(cacheName, type, sender, viewId);
    }

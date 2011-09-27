@@ -39,16 +39,18 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
  * Locking interceptor to be used by pessimistic caches.
  *
+ * Implementation note: current implementation acquires locks remotely first and then locally. This is required
+ * by the deadlock detection logic, but might not be optimal: acquiring locks locally first might help to fail fast the
+ * in the case of keys being locked.
+ *
  * @author Mircea Markus
  * @since 5.1
  */
-//todo mmarkus - always acquire locks locally before going remote so that to fail fast ...
 public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private CommandsFactory cf;
@@ -87,8 +89,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       try {
-         assertNoRemoteContext(ctx);
-         acquireRemoteIfNeeded(ctx, Collections.singleton(command.getKey()));
+         acquireRemoteIfNeeded(ctx, command.getKey());
          if (cll.localNodeIsOwner(command.getKey()) || ctx.isOriginLocal()) {
             lockKey(ctx, command.getKey());
          }
@@ -119,8 +120,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
-         assertNoRemoteContext(ctx);
-         acquireRemoteIfNeeded(ctx, Collections.singleton(command.getKey()));
+         acquireRemoteIfNeeded(ctx, command.getKey());
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
          }
@@ -134,8 +134,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
-         assertNoRemoteContext(ctx);
-         acquireRemoteIfNeeded(ctx, Collections.singleton(command.getKey()));
+         acquireRemoteIfNeeded(ctx, command.getKey());
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
          }
@@ -169,7 +168,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       }
    }
 
-   //todo - mmarkus - add a method to reveive a single
    private void acquireRemoteIfNeeded(InvocationContext ctx, Set<Object> keys) throws Throwable {
       if (!ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
          LockControlCommand lcc = cf.buildLockControlCommand(keys, true, ctx.getFlags());
@@ -177,10 +175,10 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       }
    }
 
-   //todo remove eventually as this is more of an invariant
-   private void assertNoRemoteContext(InvocationContext ctx) {
-      if (!ctx.isOriginLocal() && !ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK)) {
-         throw new IllegalStateException("This shouldn't be called with a remote context!");
+   private void acquireRemoteIfNeeded(InvocationContext ctx, Object key) throws Throwable {
+      if (!ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+         LockControlCommand lcc = cf.buildLockControlCommand(key, true, ctx.getFlags());
+         visitLockControlCommand((TxInvocationContext) ctx, lcc);
       }
    }
 }

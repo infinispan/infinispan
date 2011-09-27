@@ -53,7 +53,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * // TODO: Document this
+ * Interceptor in charge with wrapping entries and add them in caller's context.
  *
  * @author Mircea Markus
  * @since 5.1
@@ -202,7 +202,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
          boolean notWrapped = false;
          for (Object key : command.getMap().keySet()) {
-            if (cll.localNodeIsOwner(key)) { //todo - try to avoid this repeated call to localNodeIs. This also takes place in the locking interceptor
+            if (cll.localNodeIsOwner(key)) {
                entryFactory.wrapEntryForPut(ctx, key, null, true);
                notWrapped = true;
             }

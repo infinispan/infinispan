@@ -28,8 +28,6 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea Markus
  * @since 5.1
  */

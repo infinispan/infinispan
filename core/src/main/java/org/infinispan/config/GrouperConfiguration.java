@@ -12,7 +12,6 @@ public class GrouperConfiguration extends AbstractNamedCacheConfigurationBean{
    String clazz;
    
    public GrouperConfiguration() {
-      // TODO Auto-generated constructor stub
    }
    
    GrouperConfiguration(Class<?> clazz) {

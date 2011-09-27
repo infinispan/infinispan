@@ -258,6 +258,11 @@ public interface CommandsFactory {
    LockControlCommand buildLockControlCommand(Collection keys, boolean implicit, Set<Flag> flags);
 
    /**
+    * Same as {@link #buildLockControlCommand(java.util.Collection, boolean, java.util.Set)} but for a single key.
+    */
+   LockControlCommand buildLockControlCommand(Object key, boolean implicit, Set<Flag> flags);
+
+   /**
     * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a simple
     * control command with just a command type and sender.
     * @param subtype type of RehashControlCommand

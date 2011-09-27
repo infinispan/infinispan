@@ -58,7 +58,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
    public static final int COMMAND_ID = 3;
 
-   //todo - consider two commands as most of the time this is a single key?
    private List<Object> keys;
    private boolean implicit = false;
    private boolean unlock = false;
@@ -77,14 +76,22 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    public LockControlCommand(Collection<Object> keys, String cacheName, Set<Flag> flags, boolean implicit) {
-      //todo - why defensive copies???
       super(cacheName);
       if (keys != null) {
-         // defensive copy
+         //building defensive copies in order to support replaceKey operation
+
          this.keys = new ArrayList<Object>(keys);
       } else {
          this.keys = Collections.emptyList();
       }
+      this.flags = flags;
+      this.implicit = implicit;
+   }
+
+   public LockControlCommand(Object key, String cacheName, Set<Flag> flags, boolean implicit) {
+      this(cacheName);
+      this.keys = new ArrayList<Object>();
+      this.keys.add(key);
       this.flags = flags;
       this.implicit = implicit;
    }
@@ -178,7 +185,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    public void setParameters(int commandId, Object[] args) {
       // TODO: Check duplicated in all commands? A better solution is needed.
       if (commandId != COMMAND_ID)
-         throw new IllegalStateException("Unusupported command id:" + commandId);
+         throw new IllegalStateException("Unsupported command id:" + commandId);
       int i = 0;
       globalTx = (GlobalTransaction) args[i++];
       unlock = (Boolean) args[i++];

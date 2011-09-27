@@ -135,10 +135,8 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          boolean notWrapped = false;
          for (Object key : dataContainer.keySet()) {
             lockKey(ctx, key);
-            if (notWrapped(ctx, key)) {
-               entryFactory.wrapEntryForClear(ctx, key);
-               notWrapped = true;
-            }
+            entryFactory.wrapEntryForClear(ctx, key);
+            notWrapped = true;
          }
          if (notWrapped)
             invokeNextInterceptor(ctx, command);
@@ -151,10 +149,8 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          for (Object key : command.getMap().keySet()) {
             if (cll.localNodeIsOwner(key)) {
                lockKey(ctx, key);
-               if (notWrapped(ctx, key)) {
-                  entryFactory.wrapEntryForPut(ctx, key, null, true);
-                  notWrapped = true;
-               }
+               entryFactory.wrapEntryForPut(ctx, key, null, true);
+               notWrapped = true;
             }
          }
          if (notWrapped)
@@ -166,10 +162,8 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
-            if (notWrapped(ctx, command.getKey())) {
-               entryFactory.wrapEntryForRemove(ctx, command.getKey());
-               invokeNextInterceptor(ctx, command);
-            }
+            entryFactory.wrapEntryForRemove(ctx, command.getKey());
+            invokeNextInterceptor(ctx, command);
          }
          return null;
       }
@@ -178,10 +172,8 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
-            if (notWrapped(ctx, command.getKey())) {
-               entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent());
-               invokeNextInterceptor(ctx, command);
-            }
+            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent());
+            invokeNextInterceptor(ctx, command);
          }
          return null;
       }
@@ -190,17 +182,10 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
-            if (notWrapped(ctx, command.getKey())) {
-               entryFactory.wrapEntryForReplace(ctx, command.getKey());
-               invokeNextInterceptor(ctx, command);
-            }
+            entryFactory.wrapEntryForReplace(ctx, command.getKey());
+            invokeNextInterceptor(ctx, command);
          }
          return null;
-      }
-
-      //todo mmarkus when can it be not wrapped?
-      private boolean notWrapped(InvocationContext ctx, Object key) {
-         return !ctx.getLookedUpEntries().containsKey(key);
       }
    }
 }
