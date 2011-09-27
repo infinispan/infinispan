@@ -34,21 +34,20 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * A decorator to a cache, which can be built with a specific {@link ClassLoader} and a set of {@link Flag}s.  This
  * {@link ClassLoader} and set of {@link Flag}s will be applied to all cache invocations made via this decorator.
- * <p />
- * In addition to cleaner and more readable code, this approach offers a performance benefit to using {@link AdvancedCache#with(ClassLoader)}
- * or {@link AdvancedCache#withFlags(org.infinispan.context.Flag...)} APIs, thanks to internal optimizations that can
- * be made when the {@link ClassLoader} and {@link Flag} set is unchanging.
+ * <p/>
+ * In addition to cleaner and more readable code, this approach offers a performance benefit to using {@link
+ * AdvancedCache#with(ClassLoader)} or {@link AdvancedCache#withFlags(org.infinispan.context.Flag...)} APIs, thanks to
+ * internal optimizations that can be made when the {@link ClassLoader} and {@link Flag} set is unchanging.
  *
  * @author Manik Surtani
- * @since 5.1
- *
  * @see AdvancedCache#with(ClassLoader)
  * @see AdvancedCache#withFlags(org.infinispan.context.Flag...)
+ * @since 5.1
  */
 public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
-   private final EnumSet<Flag> flags;
-   private final ClassLoader classLoader;
+   private EnumSet<Flag> flags;
+   private ClassLoader classLoader;
    private final CacheImpl<K, V> cacheImplementation;
 
 
@@ -79,18 +78,18 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      if (this.classLoader == null)
-         return super.with(classLoader);
-      else
-         throw new UnsupportedOperationException("The purpose of a DecoratedCache when used with a ClassLoader is to avoid calling the with(ClassLoader) API.");
+      if (classLoader == null) throw new NullPointerException("ClassLoader passed in cannot be null!");
+      this.classLoader = classLoader;
+      return this;
    }
 
    @Override
    public AdvancedCache<K, V> withFlags(Flag... flags) {
-      if (this.flags == null)
-         return super.withFlags(flags);
-      else
-         throw new UnsupportedOperationException("The purpose of a DecoratedCache when used with Flags is to avoid calling the withFlags(Flag) API.");
+      if (flags == null) throw new NullPointerException("Flags cannot be null!");
+      if (this.flags == null) this.flags = EnumSet.noneOf(Flag.class);
+      this.flags.addAll(Arrays.asList(flags));
+
+      return this;
    }
 
    @Override
@@ -260,7 +259,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public NotifyingFuture<V> getAsync(K key) {
-      return cacheImplementation.getAsync(key, flags,classLoader);
+      return cacheImplementation.getAsync(key, flags, classLoader);
    }
 
    @Override
@@ -290,7 +289,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public V remove(Object key) {
-      return cacheImplementation.remove(key,flags, classLoader);
+      return cacheImplementation.remove(key, flags, classLoader);
    }
 
    @Override
