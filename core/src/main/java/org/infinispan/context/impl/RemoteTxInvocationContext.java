@@ -127,7 +127,7 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    @Override
-   public AbstractCacheTransaction getCacheTrasaction() {
+   public AbstractCacheTransaction getCacheTransaction() {
       return remoteTransaction;
    }
 
@@ -137,7 +137,7 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    @Override
-   public void registerLockedKey(Object key) {
+   public void addLockedKey(Object key) {
       remoteTransaction.registerLockedKey(key);
    }
 }

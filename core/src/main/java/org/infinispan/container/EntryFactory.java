@@ -46,20 +46,33 @@ public interface EntryFactory {
     * levels and the presence of an ongoing JTA transaction may force this to be a proper, wrapped MVCCEntry.  The entry
     * is also typically placed in the invocation context.
     *
-    *
-    *
     * @param ctx current invocation context
     * @param key key to look up and wrap
-    * @return an entry for reading
     * @throws InterruptedException when things go wrong, usually trying to acquire a lock
     */
    CacheEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException;
 
+   /**
+    * Used for wrapping individual keys when clearing the cache. The wrapped entry is added to the
+    * supplied InvocationContext.
+    */
    MVCCEntry wrapEntryForClear(InvocationContext ctx, Object key) throws InterruptedException;
 
+   /**
+    * Used for wrapping a cache entry for replacement. The wrapped entry is added to the
+    * supplied InvocationContext.
+    */
    MVCCEntry wrapEntryForReplace(InvocationContext ctx, Object key) throws InterruptedException;
 
+   /**
+    * Used for wrapping a cache entry for removal. The wrapped entry is added to the
+    * supplied InvocationContext.
+    */
    MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key) throws InterruptedException;
 
+   /**
+    * Used for wrapping a cache entry for addition to cache. The wrapped entry is added to the
+    * supplied InvocationContext.
+    */
    MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry ice, boolean undeleteIfNeeded) throws InterruptedException;
 }

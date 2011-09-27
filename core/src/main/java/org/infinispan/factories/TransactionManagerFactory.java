@@ -23,9 +23,9 @@
 package org.infinispan.factories;
 
 import javax.transaction.TransactionManager;
+
 import org.infinispan.CacheException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.util.Util;
@@ -45,6 +45,11 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
    private static final Log log = LogFactory.getLog(TransactionManagerFactory.class);
 
    public <T> T construct(Class<T> componentType) {
+
+      if (!configuration.isTransactionalCache()) {
+         return null;
+      }
+
       // See if we had a TransactionManager injected into our config
       TransactionManager transactionManager = null;
       TransactionManagerLookup lookup = configuration.getTransactionManagerLookup();
@@ -52,42 +57,30 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
       if (lookup == null) {
          // Nope. See if we can look it up from JNDI
          if (configuration.getTransactionManagerLookupClass() != null) {
-            lookup = instantiateLookup(configuration.getTransactionManagerLookupClass());
+            lookup = (TransactionManagerLookup) Util.getInstance(configuration.getTransactionManagerLookupClass(), configuration.getClassLoader());
          }
       }
 
-      if (lookup != null) {
-         transactionManager = extractTxManager(lookup);
+      try {
+         if (lookup != null) {
+            componentRegistry.wireDependencies(lookup);
+            transactionManager = lookup.getTransactionManager();
+         }
+      }
+      catch (Exception e) {
+         log.couldNotInstantiateTransactionManager(e);
       }
 
       if (transactionManager == null && configuration.isInvocationBatchingEnabled()) {
-         log.info("Using a batchMode transaction manager");
+         log.usingBatchModeTransactionManager();
          transactionManager = BatchModeTransactionManager.getInstance();
       }
 
-      if (configuration.isTransactionalCache() && transactionManager == null) {
-         log.noTransactionManagerLookupForTransactionalCache();
-         try {
-            final TransactionManagerLookup transactionManagerLookup = instantiateLookup(GenericTransactionManagerLookup.class.getName());
-            transactionManager = extractTxManager(transactionManagerLookup);
-         } catch (Exception e) {
-            throw new CacheException("Could not find a transaction manager", e);
-         }
+      if (transactionManager == null) {
+         throw new CacheException("This is transactional cache but no transaction manager could be found. " +
+                                        "Configure the transaction manager lookup properly.");
       }
+
       return componentType.cast(transactionManager);
-   }
-
-   private TransactionManager extractTxManager(TransactionManagerLookup lookup) {
-      try {
-         componentRegistry.wireDependencies(lookup);
-         return lookup.getTransactionManager();
-      }
-      catch (Exception e) {
-         throw new CacheException("Could not lookup the transaction manager", e);
-      }
-   }
-
-   private TransactionManagerLookup instantiateLookup(String clazz) {
-      return (TransactionManagerLookup) Util.getInstance(clazz, configuration.getClassLoader());
    }
 }

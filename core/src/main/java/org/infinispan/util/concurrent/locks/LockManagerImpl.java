@@ -196,7 +196,7 @@ public class LockManagerImpl implements LockManager {
 
    private boolean lock(InvocationContext ctx, Object key) throws InterruptedException {
       if (lockAndRecord(key, ctx)) {
-         ctx.registerLockedKey(key);
+         ctx.addLockedKey(key);
          return true;
       } else {
          Object owner = getOwner(key);

@@ -28,9 +28,6 @@ import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
-
-import static org.infinispan.context.Flag.*;
-
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.ComponentName;
@@ -50,8 +47,9 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collections;
 import java.util.Set;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
+import static org.infinispan.context.Flag.*;
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 public class CacheLoaderManagerImpl implements CacheLoaderManager {
@@ -204,7 +202,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             CacheStore store = getCacheStore();
             if (store != null) {
                InvocationContext ctx = icc.createNonTxInvocationContext();
-               if (ctx.hasFlag(REMOVE_DATA_ON_STOP)) {
+               if (ctx != null && ctx.hasFlag(REMOVE_DATA_ON_STOP)) {
                   if (log.isTraceEnabled()) log.trace("Requested removal of data on stop, so clear cache store");
                   store.clear();
                }

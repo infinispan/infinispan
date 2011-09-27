@@ -50,7 +50,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = new DefaultCacheManager();
+      cacheManager = new DefaultCacheManager(getDefaultStandaloneConfig(true));
 
       for (EvictionStrategy s : EvictionStrategy.values()) {
          for (EvictionThreadPolicy p : EvictionThreadPolicy.values()) {

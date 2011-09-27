@@ -24,7 +24,6 @@
 /**
  * JTA transaction support.
  */
-// this annotation is needed since the IsolationLevel enumeration is in this package.
 @XmlSchema(
       namespace =ISPN_NS,
       elementFormDefault = QUALIFIED,

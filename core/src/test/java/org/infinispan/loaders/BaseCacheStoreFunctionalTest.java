@@ -34,6 +34,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.Util;
 import org.testng.annotations.BeforeMethod;
@@ -183,6 +184,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
 
    private CacheContainer getContainerWithCacheLoader() {
       Configuration cfg = new Configuration();
+      cfg.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }

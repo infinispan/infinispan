@@ -45,7 +45,7 @@ public class ConcurrentLoadAndEvictTxTest extends SingleCacheManagerTest {
    TransactionManager tm;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration config = new Configuration().fluent()
+      Configuration config = getDefaultStandaloneConfig(true).fluent()
          .eviction().strategy(EvictionStrategy.FIFO).maxEntries(10)
          .expiration().wakeUpInterval(10L)
          .loaders().addCacheLoader(new DummyInMemoryCacheStore.Cfg())

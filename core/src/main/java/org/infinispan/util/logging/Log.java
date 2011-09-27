@@ -766,6 +766,10 @@ public interface Log extends BasicLogger {
    void couldNotCompleteInjectedTransaction(@Cause Throwable t);
 
    @LogMessage(level = INFO)
-   @Message(value = "This is a transactional cache with no transaction manager lookup configured. Trying the GenericTransactionManagerLookup...", id = 161)
-   void noTransactionManagerLookupForTransactionalCache();
+   @Message(value = "Using a batchMode transaction manager", id = 161)
+   void usingBatchModeTransactionManager();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Could not instantiate transaction manager", id = 162)
+   void couldNotInstantiateTransactionManager(@Cause Exception e);
 }

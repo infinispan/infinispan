@@ -87,7 +87,7 @@ public class TransactionCoordinator {
       if (trace) log.tracef("Sending prepare command through the chain: %s", prepareCommand);
 
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-      ctx.setReplayEntryWrapping(replayEntryWrapping);
+      prepareCommand.setReplayEntryWrapping(replayEntryWrapping);
       ctx.setLocalTransaction(localTransaction);
       try {
          invoker.invoke(ctx, prepareCommand);

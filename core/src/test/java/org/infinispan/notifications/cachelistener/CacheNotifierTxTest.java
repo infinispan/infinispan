@@ -54,7 +54,7 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
 
    @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
-      Configuration c = new Configuration();
+      Configuration c = TestCacheManagerFactory.getDefaultConfiguration(true);
       c.fluent().transaction().autoCommit(false);
       c.setCacheMode(Configuration.CacheMode.LOCAL);
       c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);

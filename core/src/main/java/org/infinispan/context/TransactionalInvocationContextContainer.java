@@ -20,6 +20,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.infinispan.context;
 
 import org.infinispan.CacheException;
@@ -38,9 +39,8 @@ import javax.transaction.TransactionManager;
 import java.util.Set;
 
 /**
- * Default implementation for {@link InvocationContextContainer}.
+ * Invocation context to be used for transactional caches.
  *
- * @author Manik Surtani (manik AT infinispan DOT org)
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */

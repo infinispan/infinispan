@@ -58,7 +58,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      cfg = new Configuration();
+      cfg = TestCacheManagerFactory.getDefaultConfiguration(true);
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       clmc.setPassivation(true);
       clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());

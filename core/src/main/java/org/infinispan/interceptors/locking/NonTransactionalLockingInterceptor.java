@@ -55,7 +55,6 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       assertNonTransactional(ctx);
       try {
-         assertNonTransactional(ctx);
          lockKey(ctx, command.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {

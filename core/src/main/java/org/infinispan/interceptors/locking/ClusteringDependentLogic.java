@@ -43,7 +43,11 @@ public interface ClusteringDependentLogic {
 
    void commitEntry(CacheEntry entry, boolean skipOwnershipCheck);
 
-   public static final class ReplicationLogic implements ClusteringDependentLogic {
+   /**
+    * This logic is used when a changing a key affects all the nodes in the cluster, e.g. int the replicated,
+    * invalidated and local cache modes.
+    */
+   public static final class AllNodesLogic implements ClusteringDependentLogic {
 
       private DataContainer dataContainer;
 

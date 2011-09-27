@@ -44,7 +44,7 @@ public class BatchWithoutTMTest extends AbstractBatchTest {
    @BeforeClass
    public void createCacheManager() {
       final Configuration defaultConfiguration = TestCacheManagerFactory.getDefaultConfiguration(true);
-      defaultConfiguration.fluent().invocationBatching().enabled(true);
+      defaultConfiguration.fluent().invocationBatching();
       defaultConfiguration.fluent().transaction().autoCommit(false);
       cm = TestCacheManagerFactory.createCacheManager(defaultConfiguration);
    }

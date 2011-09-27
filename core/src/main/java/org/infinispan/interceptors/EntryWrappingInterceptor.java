@@ -74,7 +74,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      if (!ctx.isOriginLocal() || ctx.isReplayEntryWrapping()) {
+      if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
          for (WriteCommand c : command.getModifications()) {
             c.acceptVisitor(ctx, entryWrappingVisitor);
          }

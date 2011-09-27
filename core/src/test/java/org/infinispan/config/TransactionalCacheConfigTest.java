@@ -23,11 +23,14 @@
 
 package org.infinispan.config;
 
+import org.infinispan.Cache;
+import org.infinispan.CacheException;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -59,5 +62,103 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
       assertEquals(cacheManager.getCache().getConfiguration().getTransactionMode(), TransactionMode.TRANSACTIONAL);
       cacheManager.defineConfiguration("nonTx", c);
       assertEquals(cacheManager.getCache("nonTx").getConfiguration().getTransactionMode(), TransactionMode.NON_TRANSACTIONAL);
+   }
+
+   public void testDefaults() {
+      Configuration c = new Configuration();
+      assert !c.isTransactionalCache();
+      assertTmLookupSet(c, false);
+
+      c = TestCacheManagerFactory.getDefaultConfiguration(false);
+      assert !c.isTransactionalCache();
+      assertTmLookupSet(c, false);
+
+      c = TestCacheManagerFactory.getDefaultConfiguration(true);
+      assert c.isTransactionalCache();
+      assertTmLookupSet(c, true);
+
+      c = TestCacheManagerFactory.getDefaultConfiguration(false, Configuration.CacheMode.DIST_SYNC);
+      assert !c.isTransactionalCache();
+      assertTmLookupSet(c, false);
+
+      c = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.DIST_SYNC);
+      assert c.isTransactionalCache();
+      assertTmLookupSet(c, true);
+   }
+
+   public void testTransactionalityInduced() {
+      Configuration c = new Configuration();
+      assert !c.isTransactionalCache();
+
+      c.setTransactionManagerLookup(new DummyTransactionManagerLookup());
+      assert c.isTransactionalCache();
+
+      c = new Configuration();
+      assert !c.isTransactionalCache();
+
+      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+      assert c.isTransactionalCache();
+
+      c = new Configuration();
+      assert !c.isTransactionalCache();
+
+      c.fluent().transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+      assert c.isTransactionalCache();
+
+      c = new Configuration();
+      assert !c.isTransactionalCache();
+
+      c.fluent().transaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class);
+      assert c.isTransactionalCache();
+
+      c = new Configuration();
+      assert !c.isTransactionalCache();
+
+      c.fluent().invocationBatching();
+      assert c.isTransactionalCache();
+
+      c = new Configuration();
+      assert !c.isTransactionalCache();
+
+      c.setInvocationBatchingEnabled(true);
+      assert c.isTransactionalCache();
+   }
+
+   public void testTransactionalCacheWithoutTransactionManagerLookup() {
+      Configuration c = new Configuration();
+      assert !c.isTransactionalCache();
+      c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+
+      DefaultCacheManager dcm = new DefaultCacheManager(c);
+      try {
+         dcm.getCache();
+         assert false : "This should not start as the cache doesn't have a TM configured.";
+      } catch (CacheException e) {
+         e.printStackTrace();
+      }
+   }
+
+   public void testInvocationBatchingAndInducedTm() {
+      Configuration c = new Configuration();
+      c.setInvocationBatchingEnabled(true);
+      assert c.isTransactionalCache();
+      DefaultCacheManager dcm = new DefaultCacheManager(c);
+      assert  dcm.getCache().getAdvancedCache().getTransactionManager() != null;
+   }
+
+   public void testOverride() {
+      Configuration c = new Configuration();
+      c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL)
+            .transactionManagerLookup(new DummyTransactionManagerLookup());
+
+      DefaultCacheManager cm = new DefaultCacheManager();
+      cm.defineConfiguration("transactional", c);
+      Cache cache = cm.getCache("transactional");
+      assert cache.getConfiguration().isTransactionalCache();
+   }
+
+
+   private void assertTmLookupSet(Configuration c, boolean b) {
+      assert b == (c.getTransactionManagerLookup() != null || c.getTransactionManagerLookupClass() != null);
    }
 }

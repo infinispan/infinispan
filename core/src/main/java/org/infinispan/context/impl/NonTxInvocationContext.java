@@ -112,7 +112,7 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    }
 
    @Override
-   public void registerLockedKey(Object key) {
+   public void addLockedKey(Object key) {
       if (lockedKeys == null) lockedKeys = new HashSet<Object>(INITIAL_CAPACITY);
       lockedKeys.add(key);
    }

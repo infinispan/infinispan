@@ -81,10 +81,11 @@ public interface TxInvocationContext extends InvocationContext {
     */
    boolean isTransactionValid();
 
-   void setTransactionInjected(boolean injected);
+   /**
+    * Marks this transaction as implicit; implicit transactions are started for transactional caches that have the autoCommit enabled.
+    */
+   void setImplicitTransaction(boolean implicit);
 
-   boolean isTransactionInjected();
 
-   boolean isReplayEntryWrapping();
-
+   boolean isImplicitTransaction();
 }

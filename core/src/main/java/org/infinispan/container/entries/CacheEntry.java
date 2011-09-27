@@ -140,7 +140,8 @@ public interface CacheEntry extends Map.Entry<Object, Object> {
    boolean isLockPlaceholder();
 
    /**
-    * If the entry is marked as removed and doUndelete==true then the removed and valid flags are set to true.
+    * If the entry is marked as removed and doUndelete==true then the "valid" flag is set to true and "removed"
+    * flag is set to false.
     */
    boolean undelete(boolean doUndelete);
 }

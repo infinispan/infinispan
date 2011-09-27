@@ -44,7 +44,7 @@ import javax.transaction.TransactionManager;
 public class ReadOnlyTxCleanupTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration c = new Configuration();
+      Configuration c = TestCacheManagerFactory.getDefaultConfiguration(true);
       return TestCacheManagerFactory.createCacheManager(c);
    }
 

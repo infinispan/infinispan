@@ -48,17 +48,28 @@ import java.util.List;
 public interface AdvancedCache<K, V> extends Cache<K, V> {
 
    /**
-    * A builder-style method that adds flags to any API call.  For example, consider the following code snippet:
+    * A method that adds flags to any API call.  For example, consider the following code snippet:
     * <pre>
     *   cache.withFlags(Flag.FORCE_WRITE_LOCK).get(key);
     * </pre>
     * will invoke a cache.get() with a write lock forced.
-    *
+    * <p />
+    * <b>Note</b> that for the flag to take effect, the cache operation <b>must</b> be invoked on the instance returned by
+    * this method.
+    * <p />
     * As an alternative to setting this on every
-    * invocation, users could also consider using the {@link DecoratedCache} wrapper.
+    * invocation, users could also consider using the {@link DecoratedCache} wrapper, as this allows for more readable
+    * code.  E.g.:
+    * <pre>
+    *    Cache forceWriteLockCache = new DecoratedCache(cache, Flag.FORCE_WRITE_LOCK);
+    *    forceWriteLockCache.get(key1);
+    *    forceWriteLockCache.get(key2);
+    *    forceWriteLockCache.get(key3);
+    * </pre>
     *
     * @param flags a set of flags to apply.  See the {@link Flag} documentation.
-    * @return a cache on which a real operation is to be invoked.
+    * @return an {@link AdvancedCache} instance on which a real operation is to be invoked, if the flags are
+    * to be applied.
     */
    AdvancedCache<K, V> withFlags(Flag... flags);
 
@@ -227,10 +238,10 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    
    /**
     * Using this operation, users can call any {@link AdvancedCache} operation
-    * with a given class loader. This means that any class loading happening
-    * as a result of the cache operation will be done using the class loader
-    * given. For example: </p>
-    *
+    * with a given {@link ClassLoader}. This means that any {@link ClassLoader} happening
+    * as a result of the cache operation will be done using the {@link ClassLoader}
+    * given. For example:
+    * <p />
     * When users store POJO instances in caches configured with {@link org.infinispan.config.Configuration#storeAsBinary},
     * these instances are transformed into byte arrays. When these entries are
     * read from the cache, a lazy unmarshalling process happens where these byte
@@ -238,9 +249,24 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * when reading that enables users to provide the class loader that should
     * be used when trying to locate the classes that are constructed as a result
     * of the unmarshalling process.
+    * <pre>
+    *    cache.with(classLoader).get(key);
+    * </pre>
+    * <b>Note</b> that for the flag to take effect, the cache operation <b>must</b> be invoked on the instance
+    * returned by this method.
+    * <p />
+    * As an alternative to setting this on every
+    * invocation, users could also consider using the {@link DecoratedCache} wrapper, as this allows for more readable
+    * code.  E.g.:
+    * <pre>
+    *    Cache classLoaderSpecificCache = new DecoratedCache(cache, classLoader);
+    *    classLoaderSpecificCache.get(key1);
+    *    classLoaderSpecificCache.get(key2);
+    *    classLoaderSpecificCache.get(key3);
+    * </pre>
     *
-    * @return an advanced cache instance upon which operations can be called
-    * with a particular cache loader.
+    * @return an {@link AdvancedCache} instance upon which operations can be called
+    * with a particular {@link ClassLoader}.
     */
    AdvancedCache<K, V> with(ClassLoader classLoader);
 }

@@ -231,7 +231,6 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       }
 
       private void incrementLoads() {
-         System.out.println("Increasing numLoads to = " + (numLoads + 1));
          numLoads++;
       }
    }

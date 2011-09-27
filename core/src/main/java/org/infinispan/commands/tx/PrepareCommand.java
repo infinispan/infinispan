@@ -59,6 +59,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    protected boolean onePhaseCommit;
    protected CacheNotifier notifier;
    protected RecoveryManager recoveryManager;
+   private transient boolean replayEntryWrapping  = false;
 
    public void initialize(CacheNotifier notifier, RecoveryManager recoveryManager) {
       this.notifier = notifier;
@@ -208,5 +209,19 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       Set<Object> keys = new HashSet<Object>();
       for (WriteCommand wc: modifications) keys.addAll(wc.getAffectedKeys());
       return keys;
+   }
+
+   /**
+    * If set to true, then the keys touched by this transaction are to be wrapped again and original ones discarded.
+    */
+   public boolean isReplayEntryWrapping() {
+      return replayEntryWrapping;
+   }
+
+   /**
+    * @see #isReplayEntryWrapping()
+    */
+   public void setReplayEntryWrapping(boolean replayEntryWrapping) {
+      this.replayEntryWrapping = replayEntryWrapping;
    }
 }

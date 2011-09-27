@@ -412,6 +412,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @Deprecated
    public void setInvocationBatchingEnabled(boolean enabled) {
+      if (enabled) transaction.transactionMode = TransactionMode.TRANSACTIONAL;
       invocationBatching.setEnabled(enabled);
    }
 
@@ -689,7 +690,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * Fully qualified class name of a class that looks up a reference to a {@link javax.transaction.TransactionManager}.
     * The default provided is capable of locating the default TransactionManager in most popular Java EE systems, using
-    * a JNDI lookup.
+    * a JNDI lookup. Calling this method marks the cache as transactional.
     *
     * @param transactionManagerLookupClass
     * @deprecated Use {@link FluentConfiguration.TransactionConfig#transactionManagerLookupClass(Class)} instead
@@ -1164,7 +1165,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
-    * Returns cache's transaction mode.
+    * Returns cache's transaction mode. By default a cache is not transactinal, i.e. the transaction mode
+    * is {@link TransactionMode#NON_TRANSACTIONAL}
     * @see TransactionMode
     */
    public TransactionMode getTransactionMode() {
@@ -1588,8 +1590,15 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * Returns true if the cache is configured to run in transactional mode, false otherwise. Starting with Infinispan
     * version 5.1 a cache doesn't support mixed access: i.e.won't support transactional and non-transactional
-    * operations. A cache is transactional if one the following: a transactionManagerLookup is configured for the cache
-    * or if batching is enabled.
+    * operations.
+    * A cache is transactional if one the following:
+    * <pre>
+    * - a transactionManagerLookup is configured for the cache
+    * - batching is enabled
+    * - it is explicitly marked as transactional: config.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL).
+    *   In this last case a transactionManagerLookup needs to be explicitly set
+    * </pre>
+    * By default a cache is not transactional.
     *
     * @see #isTransactionAutoCommit()
     */
@@ -1652,8 +1661,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       protected LockingMode lockingMode = LockingMode.OPTIMISTIC;
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "getTransactionMode")
-      @XmlAttribute
-      protected TransactionMode transactionMode = TransactionMode.TRANSACTIONAL;
+      protected TransactionMode transactionMode = TransactionMode.NON_TRANSACTIONAL;
 
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "isTransactionAutoCommit")
@@ -1661,9 +1669,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @XmlElement
       protected RecoveryType recovery = new RecoveryType();
-
-      @ConfigurationDocRef(bean = Configuration.class, targetElement = "isTransactionalCache")
-      protected boolean transactionalCache = true;
 
 
       public TransactionType(String transactionManagerLookupClass) {
@@ -1698,7 +1703,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setTransactionManagerLookupClass(String transactionManagerLookupClass) {
          testImmutability("transactionManagerLookupClass");
-         if (transactionManagerLookupClass != null) transactionalCache = true;
+         if (transactionManagerLookupClass != null) transactionMode = TransactionMode.TRANSACTIONAL;
          this.transactionManagerLookupClass = transactionManagerLookupClass;
       }
 
@@ -1716,11 +1721,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @XmlAttribute
       public Boolean isAutoCommit() {
          return autoCommit;
-      }
-
-      @XmlAttribute
-      public Boolean isTransactionalCache() {
-         return transactionalCache;
       }
 
       /**
@@ -1816,7 +1816,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public TransactionConfig transactionManagerLookup(TransactionManagerLookup transactionManagerLookup) {
          testImmutability("transactionManagerLookup");
          this.transactionManagerLookup = transactionManagerLookup;
-         if (transactionManagerLookup != null) transactionalCache = true;
+         if (transactionManagerLookup != null) transactionMode = TransactionMode.TRANSACTIONAL;
          return this;
       }
 
@@ -1824,7 +1824,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public TransactionConfig transactionSynchronizationRegistryLookup(TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup) {
          testImmutability("transactionSynchronizationRegistryLookup");
          this.transactionSynchronizationRegistryLookup = transactionSynchronizationRegistryLookup;
-         if (transactionSynchronizationRegistryLookup != null) transactionalCache = true;
+         if (transactionSynchronizationRegistryLookup != null) transactionMode = TransactionMode.TRANSACTIONAL;
          return this;
       }
 
@@ -1887,6 +1887,15 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return this;
       }
 
+      public TransactionMode getTransactionMode() {
+         return transactionMode;
+      }
+
+      @XmlAttribute
+      public void setTransactionMode(TransactionMode transactionMode) {
+         this.transactionMode = transactionMode;
+      }
+
       @Override
       public boolean equals(Object o) {
          if (this == o) return true;
@@ -1905,6 +1914,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (useEagerLocking != null ? !useEagerLocking.equals(that.useEagerLocking) : that.useEagerLocking != null)
             return false;
          if (cacheStopTimeout != null ? !cacheStopTimeout.equals(that.cacheStopTimeout) : that.cacheStopTimeout != null)
+            return false;
+         if (transactionMode != null ? !transactionMode.equals(that.transactionMode) : that.transactionMode != null)
             return false;
 
          return true;
@@ -3907,6 +3918,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public InvocationBatching enabled(Boolean enabled) {
          super.enabled(enabled);
+         if (enabled) transaction().transactionMode(TransactionMode.TRANSACTIONAL);
          return this;
       }
 

@@ -172,7 +172,8 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       TransactionConfig transactionManagerLookupClass(Class<? extends TransactionManagerLookup> transactionManagerLookupClass);
 
       /**
-       * Configure Transaction manager lookup directly using an instance of TransactionManagerLookup
+       * Configure Transaction manager lookup directly using an instance of TransactionManagerLookup. Calling this
+       * method marks the cache as transactional.
        *
        * @param transactionManagerLookup instance to use as lookup
        * @return this TransactionConfig
@@ -180,7 +181,8 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       TransactionConfig transactionManagerLookup(TransactionManagerLookup transactionManagerLookup);
 
       /**
-       * Configure Transaction Synchronization Registry lookup directly using an instance of TransactionManagerLookup
+       * Configure Transaction Synchronization Registry lookup directly using an instance of TransactionManagerLookup.
+       * Calling this method marks the cache as transactional.
        *
        * @param transactionSynchronizationRegistryLookup instance to use as lookup
        * @return this TransactionConfig
@@ -801,7 +803,6 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    public static interface JmxStatisticsConfig extends FluentTypes {}
 
    public static interface InvocationBatchingConfig extends FluentTypes {
-      Configuration.InvocationBatching enabled(Boolean enabled);
    }
 }
 

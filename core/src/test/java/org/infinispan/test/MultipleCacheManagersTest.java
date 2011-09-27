@@ -415,7 +415,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       KeyAffinityService<Object> kas = KeyAffinityServiceFactory.newKeyAffinityService(cache, ex,
                                                                                        new RndKeyGenerator(), 5, true);
       try {
-         return kas.getKeyForAddress(cache.getAdvancedCache().getAdvancedCache().getRpcManager().getAddress());
+         return kas.getKeyForAddress(cache.getAdvancedCache().getRpcManager().getAddress());
       } finally {
          ex.shutdown();
       }

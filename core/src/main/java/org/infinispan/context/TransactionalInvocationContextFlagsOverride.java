@@ -86,17 +86,12 @@ public class TransactionalInvocationContextFlagsOverride extends InvocationConte
    }
 
    @Override
-   public void setTransactionInjected(boolean injected) {
-      delegate.setTransactionInjected(injected);
+   public void setImplicitTransaction(boolean implicit) {
+      delegate.setImplicitTransaction(implicit);
    }
 
    @Override
-   public boolean isTransactionInjected() {
-      return delegate.isTransactionInjected();
-   }
-
-   @Override
-   public boolean isReplayEntryWrapping() {
-      return delegate.isReplayEntryWrapping();
+   public boolean isImplicitTransaction() {
+      return delegate.isImplicitTransaction();
    }
 }

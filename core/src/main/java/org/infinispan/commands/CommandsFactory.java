@@ -249,7 +249,8 @@ public interface CommandsFactory {
    LockControlCommand buildLockControlCommand(Collection keys, boolean implicit, Set<Flag> flags);
 
    /**
-    * Same as {@link #buildLockControlCommand(java.util.Collection, boolean, java.util.Set)} but for a single key.
+    * Same as {@link #buildLockControlCommand(java.util.Collection, boolean, java.util.Set)} but for locking a single key
+    * vs a collection of keys.
     */
    LockControlCommand buildLockControlCommand(Object key, boolean implicit, Set<Flag> flags);
 

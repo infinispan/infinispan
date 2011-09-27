@@ -180,7 +180,7 @@ public class InvocationContextFlagsOverride implements InvocationContext {
    }
 
    @Override
-   public void registerLockedKey(Object key) {
-      delegate.registerLockedKey(key);
+   public void addLockedKey(Object key) {
+      delegate.addLockedKey(key);
    }
 }

@@ -71,6 +71,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
 
       // test the "transactional" cache
       c = cm.getCache("transactional");
+      assert c.getConfiguration().isTransactionalCache();
       assert c.getConfiguration().getConcurrencyLevel() == 100;
       assert c.getConfiguration().getLockAcquisitionTimeout() == 1000;
       assert TestingUtil.extractComponent(c, TransactionManager.class) != null;
