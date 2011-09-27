@@ -79,9 +79,12 @@ public class RemoteCacheStoreConfigTest {
       assertEquals("v", cache.get("k"));
    }
 
-   @AfterTest
+   @AfterTest(alwaysRun = true)
    public void tearDown() {
-      hotRodServer.stop();
-      cacheManager.stop();
+      try {
+         if (hotRodServer != null) hotRodServer.stop();
+      } finally {
+         if (cacheManager != null) cacheManager.stop();
+      }
    }
 }
