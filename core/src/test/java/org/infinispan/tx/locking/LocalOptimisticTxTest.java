@@ -55,9 +55,4 @@ public class LocalOptimisticTxTest extends AbstractLocalTest {
       commit();
       assertFalse(lockManager().isLocked("k"));
    }
-
-   @Override
-   public void testReplace() throws Exception {
-      super.testReplace();    // TODO: Customise this generated block
-   }
 }

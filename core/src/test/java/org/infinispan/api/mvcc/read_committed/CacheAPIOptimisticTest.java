@@ -34,9 +34,4 @@ public class CacheAPIOptimisticTest extends CacheAPITest {
    protected IsolationLevel getIsolationLevel() {
       return IsolationLevel.READ_COMMITTED;
    }
-
-   @Override
-   public void testRollbackAfterClear() throws Exception {
-      super.testRollbackAfterClear();    // TODO: Customise this generated block
-   }
 }
