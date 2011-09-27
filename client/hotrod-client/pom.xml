@@ -34,8 +34,8 @@
 
    <artifactId>infinispan-client-hotrod</artifactId>
    <packaging>${packaging}</packaging>
-   <name>Infinispan Client Hotrod Module</name>
-   <description>Infinispan client hotrod module</description>
+   <name>Infinispan Hot Rod Client</name>
+   <description>Infinispan Hot Rod Client</description>
    <properties>
       <version.avro>1.3.3</version.avro>
    </properties>

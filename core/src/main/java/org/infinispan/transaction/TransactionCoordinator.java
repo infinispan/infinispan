@@ -32,15 +32,11 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
-import java.util.Collections;
-import java.util.List;
 
 import static javax.transaction.xa.XAResource.XA_OK;
 import static javax.transaction.xa.XAResource.XA_RDONLY;
@@ -61,20 +57,18 @@ public class TransactionCoordinator {
    private InterceptorChain invoker;
    private TransactionTable txTable;
    private Configuration configuration;
-   private RpcManager rpcManager;
 
    boolean trace;
 
    @Inject
    public void init(CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker,
-                    TransactionTable txTable, Configuration configuration, RpcManager rpcManager) {
+                    TransactionTable txTable, Configuration configuration) {
       this.commandsFactory = commandsFactory;
       this.icc = icc;
       this.invoker = invoker;
       this.txTable = txTable;
       this.configuration = configuration;
       trace = log.isTraceEnabled();
-      this.rpcManager = rpcManager;
    }
 
    public final int prepare(LocalTransaction localTransaction) throws XAException {
@@ -118,7 +112,6 @@ public class TransactionCoordinator {
 
    public void commit(LocalTransaction localTransaction, boolean isOnePhase) throws XAException {
       if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
-      try {
          LocalTxInvocationContext ctx = icc.createTxInvocationContext();
          ctx.setLocalTransaction(localTransaction);
          if (configuration.isOnePhaseCommit() || isOnePhase) {
@@ -146,9 +139,6 @@ public class TransactionCoordinator {
                throw new XAException(XAException.XAER_RMERR);
             }
          }
-      } finally {
-         icc.suspend();
-      }
    }
 
    public void rollback(LocalTransaction localTransaction) throws XAException {
@@ -167,8 +157,6 @@ public class TransactionCoordinator {
             txTable.failureCompletingTransaction(transaction);
          }
          throw new XAException(XAException.XAER_RMERR);
-      } finally {
-         icc.suspend();
       }
    }
 

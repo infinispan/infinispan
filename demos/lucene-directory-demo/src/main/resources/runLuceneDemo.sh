@@ -7,7 +7,7 @@ add_classpath "${ISPN_HOME}/lib"
 add_classpath "${ISPN_HOME}/modules/lucene-directory-demo"
 
 add_jvm_args $JVM_PARAMS
-add_jvm_args '-Dbind.address=127.0.0.1'
+add_jvm_args '-Djgroups.bind_addr=127.0.0.1'
 add_jvm_args '-Djava.net.preferIPv4Stack=true'
 
 # RHQ monitoring options

@@ -34,8 +34,8 @@
 
    <artifactId>infinispan-server-memcached</artifactId>
    <packaging>${packaging}</packaging>
-   <name>Infinispan Server Memcached Module</name>
-   <description>Infinispan server memcached module</description>
+   <name>Infinispan Memcached Server</name>
+   <description>Infinispan Memcached Server</description>
 
    <dependencies>
       <dependency>

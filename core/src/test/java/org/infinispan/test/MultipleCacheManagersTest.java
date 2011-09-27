@@ -32,6 +32,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -110,7 +111,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 //         assertSupportedConfig();
          log.debug("*** Test method complete; clearing contents on all caches.");
          if (cacheManagers.isEmpty())
-            throw new IllegalStateException("No caches registered! Use registerCacheManager(Cache... caches) do that!");
+            throw new IllegalStateException("No caches registered! Use registerCacheManager(Cache... caches) to do that!");
          TestingUtil.clearContent(cacheManagers);
       } else {
          TestingUtil.killCacheManagers(cacheManagers);
@@ -152,7 +153,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @return the new CacheManager
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager() {
-      return addClusterEnabledCacheManager(false);
+      return addClusterEnabledCacheManager(new TransportFlags());
    }
 
    /**
@@ -160,14 +161,24 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * cache managers on the current thread. Uses a default clustered cache
     * manager global config.
     *
-    * @param withFD boolean indicating whether the JGroups stack should be
-    *               configured with failure detection.
+    * @param flags properties that allow transport stack to be tweaked
     * @return the new CacheManager
     */
-   protected EmbeddedCacheManager addClusterEnabledCacheManager(boolean withFD) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(withFD);
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(flags);
       cacheManagers.add(cm);
       return cm;
+   }
+
+   /**
+    * Creates a new non-transactional cache manager, starts it, and adds it to the list of known cache managers on the
+    * current thread.  Uses a default clustered cache manager global config.
+    *
+    * @param defaultConfig default cfg to use
+    * @return the new CacheManager
+    */
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig) {
+      return addClusterEnabledCacheManager(defaultConfig, new TransportFlags());
    }
 
    /**
@@ -178,8 +189,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @param transactional if true, the configuration will be decorated with necessary transactional settings
     * @return the new CacheManager
     */
-   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(defaultConfig);
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig, TransportFlags flags) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(defaultConfig, flags);
       cacheManagers.add(cm);
       return cm;
    }
@@ -191,10 +202,14 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @return an embedded cache manager
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration.CacheMode mode, boolean transactional) {
-      Configuration configuration = getDefaultClusteredConfig(mode, transactional);
-      configuration.setCacheMode(mode);
-      return addClusterEnabledCacheManager(configuration);
+      return addClusterEnabledCacheManager(mode, transactional, new TransportFlags());
    }
+
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration.CacheMode mode, boolean transactional, TransportFlags flags) {
+      Configuration configuration = getDefaultClusteredConfig(mode, transactional);
+      return addClusterEnabledCacheManager(configuration, flags);
+   }
+
 
    protected void createCluster(Configuration.CacheMode mode, boolean transactional, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, transactional);
@@ -260,14 +275,14 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected <K, V> List<Cache<K, V>> createClusteredCaches(
          int numMembersInCluster, String cacheName, Configuration c) {
-      return createClusteredCaches(numMembersInCluster, cacheName, c, false);
+      return createClusteredCaches(numMembersInCluster, cacheName, c, new TransportFlags());
    }
 
    protected <K, V> List<Cache<K, V>> createClusteredCaches(
-         int numMembersInCluster, String cacheName, Configuration c, boolean withFD) {
+         int numMembersInCluster, String cacheName, Configuration c, TransportFlags flags) {
       List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
-         EmbeddedCacheManager cm = addClusterEnabledCacheManager(withFD);
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(flags);
          cm.defineConfiguration(cacheName, c);
          Cache<K, V> cache = cm.getCache(cacheName);
          caches.add(cache);

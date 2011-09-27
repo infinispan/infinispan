@@ -23,7 +23,6 @@
 package org.infinispan.commands;
 
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
@@ -33,12 +32,12 @@ import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.MultipleRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -50,11 +49,10 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
@@ -236,13 +234,6 @@ public interface CommandsFactory {
    SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call);
 
    /**
-    * Builds a StateTransferControlCommand
-    * @param block whether to start blocking or not
-    * @return a StateTransferControlCommand
-    */
-   StateTransferControlCommand buildStateTransferControlCommand(boolean block);
-
-   /**
     * Builds a ClusteredGetCommand, which is a remote lookup command
     * @param key key to look up
     * @return a ClusteredGetCommand
@@ -270,14 +261,14 @@ public interface CommandsFactory {
     * @param viewId the last view id on the sender
     * @return a RehashControlCommand
     */
-   RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender, int viewId);
+   StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type subtype, Address sender, int viewId);
 
    /**
     * Builds a RehashControlCommand for coordinating a rehash event. This particular variation of RehashControlCommand
     * coordinates rehashing of nodes when a node join or leaves
     */
-   RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender, int viewId,
-         Map<Object, InternalCacheValue> state, ConsistentHash oldCH, ConsistentHash newCH);
+   StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type subtype, Address sender, int viewId,
+                                                  Collection<InternalCacheEntry> state);
 
    /**
     * Retrieves the cache name this CommandFactory is set up to construct commands for.

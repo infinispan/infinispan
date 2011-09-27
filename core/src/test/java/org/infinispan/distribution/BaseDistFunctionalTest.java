@@ -40,6 +40,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 
@@ -99,7 +100,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);
       if (l1CacheEnabled) configuration.setL1InvalidationThreshold(l1Threshold);
       // Create clustered caches with failure detection protocols on
-      caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration, true);
+      caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration,
+                                     new TransportFlags().withFD(true));
 
       reorderBasedOnCHPositions();
 
@@ -217,6 +219,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
                   + addressOf(c) + "] but was [" + realVal + "]";
          }
       }
+      // Allow some time for all ClusteredGetCommands to finish executing
+      TestingUtil.sleepThread(1000);
    }
 
    protected void assertOwnershipAndNonOwnership(Object key, boolean allowL1) {

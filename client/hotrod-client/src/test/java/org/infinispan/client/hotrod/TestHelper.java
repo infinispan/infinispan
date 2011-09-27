@@ -42,27 +42,40 @@ public class TestHelper {
    private static final Log log = LogFactory.getLog(TestHelper.class);
 
    /**
-    * This needs to be different than the one used in the server tests in order to make sure that there's no clash.
+    * Holds unique Hot Rod server port
     */
-   private static final AtomicInteger uniquePort = new AtomicInteger(11223);
+   private static final ThreadLocal<Integer> uniquePort = new ThreadLocal<Integer>() {
+      private final AtomicInteger uniquePort = new AtomicInteger(15232);
+
+      @Override
+      protected Integer initialValue() {
+         return uniquePort.getAndAdd(25);
+      }
+   };
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager) {
       // TODO: This is very rudimentary!! HotRodTestingUtil needs a more robust solution where ports are generated randomly and retries if already bound
       HotRodServer server = null;
       int maxTries = 5;
       int currentTries = 0;
+      Integer port = uniquePort.get();
+      ChannelException lastException = null;
       while (server == null && currentTries < maxTries) {
          try {
-            server = HotRodTestingUtil.startHotRodServer(cacheManager, uniquePort.incrementAndGet());
+            server = HotRodTestingUtil.startHotRodServer(cacheManager, port++);
          } catch (ChannelException e) {
             if (!(e.getCause() instanceof BindException)) {
                throw e;
             } else {
                log.debug("Address already in use: [" + e.getMessage() + "], so let's try next port");
                currentTries++;
+               lastException = e;
             }
          }
       }
+      if (server == null && lastException != null)
+         throw lastException;
+
       return server;
    }
 

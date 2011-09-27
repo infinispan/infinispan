@@ -54,7 +54,7 @@ public class ConfigurationProperties {
    public static final String VALUE_SIZE_ESTIMATE = "infinispan.client.hotrod.value_size_estimate";
    public static final String FORCE_RETURN_VALUES = "infinispan.client.hotrod.force_return_values";
    public static final String HASH_FUNCTION_PREFIX = "infinispan.client.hotrod.hash_function_impl";
-   public static final String DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE ="infinispan.client.hotrod.default_executor_factory.queue_size";
+   public static final String DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE = "infinispan.client.hotrod.default_executor_factory.queue_size";
    public static final String SO_TIMEOUT = "infinispan.client.hotrod.socket_timeout";
 
    // defaults
@@ -87,7 +87,7 @@ public class ConfigurationProperties {
    public Collection<SocketAddress> getServerList() {
       Set<SocketAddress> addresses = new HashSet<SocketAddress>();
       String servers = props.getProperty(SERVER_LIST, "127.0.0.1:" + DEFAULT_HOTROD_PORT);
-      for (String server: servers.split(";")) {
+      for (String server : servers.split(";")) {
          String[] components = server.trim().split(":");
          String host = components[0];
          int port = DEFAULT_HOTROD_PORT;
@@ -96,7 +96,7 @@ public class ConfigurationProperties {
       }
 
       if (addresses.isEmpty()) throw new IllegalStateException("No Hot Rod servers specified!");
-      
+
       return addresses;
    }
 
@@ -109,7 +109,11 @@ public class ConfigurationProperties {
    }
 
    public int getDefaultExecutorFactoryPoolSize() {
-      return 99; // TODO
+      return props.getIntProperty(DEFAULT_EXECUTOR_FACTORY_POOL_SIZE, 99);
+   }
+
+   public int getDefaultExecutorFactoryQueueSize() {
+      return props.getIntProperty(DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE, 10000);
    }
 
    public boolean getTcpNoDelay() {
@@ -143,4 +147,6 @@ public class ConfigurationProperties {
    public int getSoTimeout() {
       return props.getIntProperty(SO_TIMEOUT, DEFAULT_SO_TIMEOUT);
    }
+
+
 }

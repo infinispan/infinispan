@@ -196,6 +196,9 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    }
 
    public void handleViewChange(TopologyChangedEvent vce) {
+      if (vce.isPre())
+         return;
+
       if (log.isTraceEnabled()) {
          log.tracef("TopologyChangedEvent received: %s", vce);
       }

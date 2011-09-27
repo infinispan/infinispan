@@ -71,7 +71,7 @@
    <FD timeout="3000" max_tries="3"/>
    <VERIFY_SUSPECT timeout="1500"/>
    <pbcast.NAKACK
-         use_mcast_xmit="false" gc_lag="0"
+         use_mcast_xmit="false"
          retransmit_timeout="300,600,1200,2400,4800"
          discard_delivered_msgs="false"/>
    <UNICAST timeout="300,600,1200"/>
@@ -81,5 +81,4 @@
    <FC max_credits="2000000"
        min_threshold="0.10"/>
    <FRAG2 frag_size="60000"/>
-   <pbcast.STREAMING_STATE_TRANSFER/>
 </config>

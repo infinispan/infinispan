@@ -32,7 +32,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -129,11 +128,6 @@ import java.util.concurrent.CountDownLatch;
    }
 
 
-   public void retrieveState(String cacheName, long timeout) throws StateTransferException {
-      failIfNeeded();
-      realOne.retrieveState(cacheName, timeout);
-   }
-
    public void broadcastRpcCommand(ReplicableCommand rpc, boolean sync) throws RpcException {
       log.trace("ControlledRpcManager.broadcastRpcCommand1");
       waitFirst(rpc);
@@ -181,10 +175,6 @@ import java.util.concurrent.CountDownLatch;
 
    public Transport getTransport() {
       return realOne.getTransport();
-   }
-
-   public Address getCurrentStateTransferSource() {
-      return realOne.getCurrentStateTransferSource();
    }
 
    public Address getAddress() {

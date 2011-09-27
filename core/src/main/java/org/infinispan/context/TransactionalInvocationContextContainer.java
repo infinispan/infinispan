@@ -35,11 +35,12 @@ import org.infinispan.transaction.TransactionTable;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import java.util.Set;
 
 /**
  * Default implementation for {@link InvocationContextContainer}.
  *
- * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Manik Surtani (manik AT infinispan DOT org)
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
@@ -47,13 +48,11 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
 
    private TransactionManager tm;
    private TransactionTable transactionTable;
-   private BatchContainer batchContainer;
 
    @Inject
-   public void init(TransactionManager tm, TransactionTable transactionTable, BatchContainer batchContainer) {
+   public void init(TransactionManager tm, TransactionTable transactionTable) {
       this.tm = tm;
       this.transactionTable = transactionTable;
-      this.batchContainer = batchContainer;
    }
 
    @Override
@@ -71,43 +70,26 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
 
    @Override
    public InvocationContext createInvocationContext(Transaction tx) {
-      InvocationContext existing = icTl.get();
-      if (tx != null) {
-         LocalTxInvocationContext localContext;
-         if ((existing == null) || !(existing instanceof LocalTxInvocationContext)) {
-            localContext = new LocalTxInvocationContext();
-            icTl.set(localContext);
-         } else {
-            localContext = (LocalTxInvocationContext) existing;
-         }
-         LocalTransaction localTransaction = transactionTable.getLocalTransaction(tx);
-         localContext.setLocalTransaction(localTransaction);
-         localContext.setTransaction(tx);
-         return localContext;
-      } else {
-         throw new IllegalStateException("This is a tx cache!");
-      }
+      if (tx == null) throw new IllegalStateException("This is a tx cache!");
+      LocalTxInvocationContext localContext = new LocalTxInvocationContext();
+      LocalTransaction localTransaction = transactionTable.getLocalTransaction(tx);
+      localContext.setLocalTransaction(localTransaction);
+      localContext.setTransaction(tx);
+      ctxHolder.set(localContext);
+      return localContext;
    }
 
    public LocalTxInvocationContext createTxInvocationContext() {
-      InvocationContext existing = icTl.get();
-      if (existing != null && existing instanceof LocalTxInvocationContext) {
-         return (LocalTxInvocationContext) existing;
-      }
-      LocalTxInvocationContext localTxContext = new LocalTxInvocationContext();
-      icTl.set(localTxContext);
-      return localTxContext;
+      LocalTxInvocationContext ctx = new LocalTxInvocationContext();
+      ctxHolder.set(ctx);
+      return ctx;
    }
 
    public RemoteTxInvocationContext createRemoteTxInvocationContext(Address origin) {
-      InvocationContext existing = icTl.get();
-      if (existing != null && existing instanceof RemoteTxInvocationContext) {
-         return (RemoteTxInvocationContext) existing;
-      }
-      RemoteTxInvocationContext remoteTxContext = new RemoteTxInvocationContext();
-      icTl.set(remoteTxContext);
-      remoteTxContext.setOrigin(origin);
-      return remoteTxContext;
+      RemoteTxInvocationContext ctx = new RemoteTxInvocationContext();
+      ctx.setOrigin(origin);
+      ctxHolder.set(ctx);
+      return ctx;
    }
 
    public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
@@ -116,26 +98,12 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
       return nonTxInvocationContext;
    }
 
-   private NonTxInvocationContext newNonTxInvocationContext(boolean local) {
-      final InvocationContext existing = icTl.get();
-      NonTxInvocationContext ctx;
-      if (existing != null && existing instanceof NonTxInvocationContext) {
-         ctx = (NonTxInvocationContext) existing;
-      } else {
-         ctx = new NonTxInvocationContext();
-         icTl.set(ctx);
-      }
-      ctx.setOriginLocal(local);
-      return ctx;
-   }
-
    public InvocationContext getInvocationContext() {
-      InvocationContext invocationContext = icTl.get();
+      InvocationContext invocationContext = this.ctxHolder.get();
       if (invocationContext == null)
          throw new IllegalStateException("This method can only be called after associating the current thread with a context");
       return invocationContext;
    }
-
 
    private Transaction getRunningTx() {
       try {
@@ -143,5 +111,12 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
       } catch (SystemException e) {
          throw new CacheException(e);
       }
+   }
+
+   protected final NonTxInvocationContext newNonTxInvocationContext(boolean local) {
+      NonTxInvocationContext ctx = new NonTxInvocationContext();
+      ctx.setOriginLocal(local);
+      ctxHolder.set(ctx);
+      return ctx;
    }
 }

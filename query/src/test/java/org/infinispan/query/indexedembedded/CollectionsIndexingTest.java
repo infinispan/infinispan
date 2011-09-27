@@ -45,6 +45,7 @@ import org.testng.annotations.Test;
 /**
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  */
+@Test(groups = "functional", testName = "query.CollectionsIndexingTest")
 public class CollectionsIndexingTest extends SingleCacheManagerTest {
 
    private SearchManager qf;
@@ -54,7 +55,8 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       c.fluent()
          .indexing()
          .indexLocalOnly(false)
-         .addProperty("hibernate.search.default.directory_provider", "ram");
+         .addProperty("hibernate.search.default.directory_provider", "ram")
+         .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(c);
    }
 

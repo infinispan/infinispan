@@ -70,7 +70,8 @@
       <module>demos/directory</module>
       <module>demos/lucene-directory-demo</module>
       <module>demos/gridfs-webdav</module>
-      <module>cdi</module>
+      <module>cdi/extension</module>
+      <module>cdi/tck-runner</module>
    </modules>
 
    <profiles>
@@ -156,8 +157,8 @@ pageTracker._trackPageview();
                          <descriptor>src/main/resources/assemblies/rest-server.xml</descriptor>
                      </descriptors>
                      <finalName>${project.artifactId}-${project.version}</finalName>
-                     <outputDirectory>target/distribution</outputDirectory>
-                     <workDirectory>target/assembly/work</workDirectory>
+                     <outputDirectory>${buildDirectory}/distribution</outputDirectory>
+                     <workDirectory>${buildDirectory}/assembly/work</workDirectory>
 
                      <!-- Do not attach ZIP files to the Maven repository -->
                      <attach>false</attach>
@@ -207,8 +208,8 @@ pageTracker._trackPageview();
                         <descriptor>src/main/resources/assemblies/all.xml</descriptor>
                      </descriptors>
                      <finalName>${project.artifactId}-${project.version}</finalName>
-                     <outputDirectory>target/distribution</outputDirectory>
-                     <workDirectory>target/assembly/work</workDirectory>
+                     <outputDirectory>${buildDirectory}/distribution</outputDirectory>
+                     <workDirectory>${buildDirectory}/assembly/work</workDirectory>
                   </configuration>
                </plugin>
             </plugins>
@@ -327,7 +328,7 @@ pageTracker._trackPageview();
                         </goals>
                         <configuration>
                            <tasks>
-                              <copy file="tools/src/main/resources/stylesheet2.css" todir="target/site/apidocs"/>
+                              <copy file="tools/src/main/resources/stylesheet2.css" todir="${buildDirectory}/site/apidocs"/>
                            </tasks>
                         </configuration>
                      </execution>

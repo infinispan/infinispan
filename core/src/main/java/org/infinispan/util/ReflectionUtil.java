@@ -57,7 +57,25 @@ public class ReflectionUtil {
       inspectRecursively(c, annotated, annotationType);
       return annotated;
    }
-   
+
+   /**
+    * Returns a set of Methods that contain the given method annotation.  This includes all public, protected, package
+    * and private methods, but not those of superclasses and interfaces.
+    *
+    * @param c              class to inspect
+    * @param annotationType the type of annotation to look for
+    * @return List of Method objects that require injection.
+    */
+   public static List<Method> getAllMethodsShallow(Class c, Class<? extends Annotation> annotationType) {
+      List<Method> annotated = new LinkedList<Method>();
+      for (Method m : c.getDeclaredMethods()) {
+         if (m.isAnnotationPresent(annotationType))
+            annotated.add(m);
+      }
+
+      return annotated;
+   }
+
    private static void getAnnotatedFieldHelper(List<Field> list, Class<?> c, Class<? extends Annotation> annotationType) {
       Field[] declaredFields = c.getDeclaredFields();
       for (Field field : declaredFields) {
@@ -66,15 +84,15 @@ public class ReflectionUtil {
          }
       }
    }
-   
-   public static List<Field> getAnnotatedFields(Class<?> c, Class<? extends Annotation> annotationType){
+
+   public static List<Field> getAnnotatedFields(Class<?> c, Class<? extends Annotation> annotationType) {
       List<Field> fields = new ArrayList<Field>();
-      for(;!c.equals(Object.class);c=c.getSuperclass()){
+      for (; !c.equals(Object.class); c = c.getSuperclass()) {
          getAnnotatedFieldHelper(fields, c, annotationType);
       }
       return fields;
    }
-   
+
    private static void getFieldsHelper(List<Field> list, Class<?> c, Class<?> type) {
       Field[] declaredFields = c.getDeclaredFields();
       for (Field field : declaredFields) {
@@ -83,13 +101,30 @@ public class ReflectionUtil {
          }
       }
    }
-   
-   public static List<Field> getFields(Class<?> c, Class<?> type){
+
+   public static List<Field> getFields(Class<?> c, Class<?> type) {
       List<Field> fields = new ArrayList<Field>();
-      for(;!c.equals(Object.class);c=c.getSuperclass()){
+      for (; !c.equals(Object.class); c = c.getSuperclass()) {
          getFieldsHelper(fields, c, type);
       }
       return fields;
+   }
+
+   public static Method findMethod(Class<?> type, String methodName, Class[] parameters) {
+      return findRecursively(type, methodName, parameters);
+   }
+
+   private static Method findRecursively(Class<?> type, String methodName, Class[] parameters) {
+      try {
+         return type.getDeclaredMethod(methodName, parameters);
+      } catch (NoSuchMethodException e) {
+         if (!type.equals(Object.class)) {
+            if (!type.isInterface()) {
+               return findRecursively(type.getSuperclass(), methodName, parameters);
+            }
+         }
+      }
+      return null;
    }
 
    /**
@@ -101,20 +136,20 @@ public class ReflectionUtil {
     * @param annotationType
     */
    private static void inspectRecursively(Class c, List<Method> s, Class<? extends Annotation> annotationType) {
-      
+
       for (Method m : c.getDeclaredMethods()) {
          // don't bother if this method has already been overridden by a subclass
          if (notFound(m, s) && m.isAnnotationPresent(annotationType)) {
             s.add(m);
          }
-      }       
-      
+      }
+
       if (!c.equals(Object.class)) {
          if (!c.isInterface()) {
             inspectRecursively(c.getSuperclass(), s, annotationType);
             for (Class ifc : c.getInterfaces()) inspectRecursively(ifc, s, annotationType);
          }
-      }      
+      }
    }
 
    /**
@@ -140,8 +175,7 @@ public class ReflectionUtil {
             throw new NoSuchMethodException("Cannot find field " + fieldName + " on " + instance.getClass() + " or superclasses");
          f.setAccessible(true);
          f.set(instance, value);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          log.unableToSetValue(e);
       }
    }
@@ -150,8 +184,7 @@ public class ReflectionUtil {
       Field f = null;
       try {
          f = c.getDeclaredField(fieldName);
-      }
-      catch (NoSuchFieldException e) {
+      } catch (NoSuchFieldException e) {
          if (!c.equals(Object.class)) f = findFieldRecursively(c.getSuperclass(), fieldName);
       }
       return f;
@@ -168,24 +201,23 @@ public class ReflectionUtil {
       try {
          method.setAccessible(true);
          return method.invoke(instance, parameters);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new CacheException("Unable to invoke method " + method + " on object " + //instance +
-               (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), e);
+                                        (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), e);
       }
    }
-   
-   public static Method findGetterForField(Class<?> c, String fieldName) throws NoSuchMethodException{      
-      for(Method m:c.getDeclaredMethods()){
+
+   public static Method findGetterForField(Class<?> c, String fieldName) throws NoSuchMethodException {
+      for (Method m : c.getDeclaredMethods()) {
          String name = m.getName();
          String s = null;
-         if(name.startsWith("get")){
-            s = name.substring(3);            
-         } else if (name.startsWith("is")){
-            s = name.substring(2);            
+         if (name.startsWith("get")) {
+            s = name.substring(3);
+         } else if (name.startsWith("is")) {
+            s = name.substring(2);
          }
-         
-         if (s!= null && s.equalsIgnoreCase(fieldName)){
+
+         if (s != null && s.equalsIgnoreCase(fieldName)) {
             return m;
          }
       }
@@ -205,8 +237,7 @@ public class ReflectionUtil {
       try {
          f.setAccessible(true);
          return f.get(instance);
-      }
-      catch (IllegalAccessException iae) {
+      } catch (IllegalAccessException iae) {
          throw new CacheException("Cannot access field " + f, iae);
       }
    }

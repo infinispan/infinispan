@@ -47,7 +47,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         lockManager.unlock(ctx);//possibly needed because of L1 locks being acquired
+         lockManager.unlockAll(ctx);//possibly needed because of L1 locks being acquired
       }
    }
 
@@ -62,7 +62,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
          throw cleanLocksAndRethrow(ctx, te);
       }
       finally {
-         lockManager.unlock(ctx);
+         lockManager.unlockAll(ctx);
       }
    }
 
@@ -78,7 +78,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
          throw cleanLocksAndRethrow(ctx, te);
       }
       finally {
-         lockManager.unlock(ctx);
+         lockManager.unlockAll(ctx);
       }
    }
 
@@ -91,7 +91,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
       } finally {
-         lockManager.unlock(ctx);
+         lockManager.unlockAll(ctx);
       }
    }
 
@@ -105,7 +105,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
          throw cleanLocksAndRethrow(ctx, te);
       }
       finally {
-         lockManager.unlock(ctx);
+         lockManager.unlockAll(ctx);
       }
    }
 

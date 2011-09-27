@@ -28,9 +28,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.concurrent.locks.LockManager;
 
 import java.util.Set;
 
@@ -90,13 +90,14 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
    }
 
    public static Configuration getDefaultClusteredConfig(Configuration.CacheMode mode, boolean transactional) {
-      Configuration configuration = TestCacheManagerFactory.getDefaultConfiguration(transactional);
-      configuration.fluent().transaction().cacheStopTimeout(0);
-      configuration.setCacheMode(mode);
-      configuration.setSyncCommitPhase(true);
-      configuration.setSyncRollbackPhase(true);
-      configuration.setFetchInMemoryState(false);
-      return configuration;
+      return TestCacheManagerFactory.getDefaultConfiguration(transactional).fluent()
+         .mode(mode)
+         .clustering()
+            .sync()
+               .stateRetrieval().fetchInMemoryState(false)
+            .transaction().syncCommitPhase(true).syncRollbackPhase(true)
+               .cacheStopTimeout(0)
+         .build();
    }
 
    protected boolean xor(boolean b1, boolean b2) {

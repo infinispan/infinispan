@@ -37,6 +37,8 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.List;
 
@@ -49,6 +51,8 @@ import java.util.List;
  */
 @DefaultFactoryFor(classes = InterceptorChain.class)
 public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+
+   private static final Log log = LogFactory.getLog(InterceptorChainFactory.class);
 
    public CommandInterceptor createInterceptor(Class<? extends CommandInterceptor> clazz) {
       CommandInterceptor chainedInterceptor = componentRegistry.getComponent(clazz);
@@ -104,6 +108,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       // load the cache management interceptor next
       if (configuration.isExposeJmxStatistics())
          interceptorChain.appendInterceptor(createInterceptor(CacheMgmtInterceptor.class));
+
+      // load the state transfer lock interceptor
+      if ((configuration.getCacheMode().isDistributed() && configuration.isRehashEnabled())
+            || (configuration.getCacheMode().isReplicated() && configuration.isStateTransferEnabled()))
+         interceptorChain.appendInterceptor(createInterceptor(StateTransferLockInterceptor.class));
 
       // load the tx interceptor
       if (configuration.isTransactionalCache()) {

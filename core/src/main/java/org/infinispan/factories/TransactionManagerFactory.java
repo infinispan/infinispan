@@ -23,14 +23,14 @@
 package org.infinispan.factories;
 
 import javax.transaction.TransactionManager;
-
 import org.infinispan.CacheException;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Uses a number of mechanisms to retrieve a transaction manager.
@@ -41,6 +41,9 @@ import org.infinispan.util.Util;
  */
 @DefaultFactoryFor(classes = {TransactionManager.class})
 public class TransactionManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+
+   private static final Log log = LogFactory.getLog(TransactionManagerFactory.class);
+
    public <T> T construct(Class<T> componentType) {
       // See if we had a TransactionManager injected into our config
       TransactionManager transactionManager = null;

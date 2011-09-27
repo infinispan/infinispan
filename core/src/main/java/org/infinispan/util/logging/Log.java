@@ -750,10 +750,22 @@ public interface Log extends BasicLogger {
    void shouldBeUsingStartCache(String cacheName);
 
    @LogMessage(level = WARN)
-   @Message(value = "Could not complete injected transaction.", id = 157)
+   @Message(value = "Timed out waiting for all cluster members to confirm pushing data for view %d, received confirmations %s. Cancelling state transfer", id = 157)
+   void stateTransferTimeoutWaitingForPushConfirmations(int viewId, Map<Address, Integer> pushConfirmations);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Timed out waiting for all cluster members to confirm joining for view %d, joined %s. Cancelling state transfer", id = 158)
+   void stateTransferTimeoutWaitingForJoinConfirmations(int viewId, Map<Address, Integer> joinConfirmations);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unblocking transactions failed", id = 159)
+   void errorUnblockingTransactions(@Cause Exception e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Could not complete injected transaction.", id = 160)
    void couldNotCompleteInjectedTransaction(@Cause Throwable t);
 
    @LogMessage(level = INFO)
-   @Message(value = "This is a transactional cache with no transaction manager lookup configured. Trying the GenericTransactionManagerLookup...", id = 158)
+   @Message(value = "This is a transactional cache with no transaction manager lookup configured. Trying the GenericTransactionManagerLookup...", id = 161)
    void noTransactionManagerLookupForTransactionalCache();
 }

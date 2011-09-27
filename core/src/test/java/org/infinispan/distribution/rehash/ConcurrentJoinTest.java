@@ -23,8 +23,10 @@
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -34,27 +36,27 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-@Test(groups = "functional", testName = "distribution.rehash.ConcurrentJoinTest", enabled = false, description = "See ISPN-1123")
+@Test(groups = "functional", testName = "distribution.rehash.ConcurrentJoinTest", description = "See ISPN-1123")
 public class ConcurrentJoinTest extends RehashTestBase {
 
    List<EmbeddedCacheManager> joinerManagers;
    List<Cache<Object, String>> joiners;
 
-   final int numJoiners = 4;
+   static final int NUM_JOINERS = 4;
 
    void performRehashEvent(boolean offline) {
       joinerManagers = new CopyOnWriteArrayList<EmbeddedCacheManager>();
-      joiners = new CopyOnWriteArrayList<Cache<Object, String>>(new Cache[numJoiners]);
+      joiners = new CopyOnWriteArrayList<Cache<Object, String>>(new Cache[NUM_JOINERS]);
 
-      for (int i = 0; i < numJoiners; i++) {
-         EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager(true);
+      for (int i = 0; i < NUM_JOINERS; i++) {
+         EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager(new TransportFlags().withFD(true));
          joinerManager.defineConfiguration(cacheName, configuration);
          joinerManagers.add(joinerManager);
          joiners.set(i, null);
       }
 
-      Thread[] threads = new Thread[numJoiners];
-      for (int i = 0; i < numJoiners; i++) {
+      Thread[] threads = new Thread[NUM_JOINERS];
+      for (int i = 0; i < NUM_JOINERS; i++) {
          final int ii = i;
          threads[i] = new Thread(new Runnable() {
             public void run() {
@@ -65,10 +67,10 @@ public class ConcurrentJoinTest extends RehashTestBase {
          }, "ConcurrentJoinTest-Worker-" + i);
       }
 
-      for (int i = 0; i < numJoiners; i++) {
+      for (int i = 0; i < NUM_JOINERS; i++) {
          threads[i].start();
       }
-      for (int i = 0; i < numJoiners; i++) {
+      for (int i = 0; i < NUM_JOINERS; i++) {
          try {
             threads[i].join();
          } catch (InterruptedException e) {
@@ -79,15 +81,15 @@ public class ConcurrentJoinTest extends RehashTestBase {
 
    @SuppressWarnings("unchecked")
    void waitForRehashCompletion() {
-      List<Cache> allCaches = new ArrayList<Cache>(caches);
-      allCaches.addAll(joiners);
-      TestingUtil.blockUntilViewsReceived(60000, false, allCaches);
-      waitForJoinTasksToComplete(SECONDS.toMillis(480), joiners.toArray(new Cache[numJoiners]));
-      int[] joinersPos = new int[numJoiners];
-      for (int i = 0; i < numJoiners; i++) joinersPos[i] = locateJoiner(joinerManagers.get(i).getAddress());
+      List<CacheContainer> allCacheManagers = new ArrayList<CacheContainer>(cacheManagers);
+      allCacheManagers.addAll(joinerManagers);
+      TestingUtil.blockUntilViewsReceived(60000, false, allCacheManagers);
+      waitForJoinTasksToComplete(SECONDS.toMillis(480), joiners.toArray(new Cache[NUM_JOINERS]));
+      int[] joinersPos = new int[NUM_JOINERS];
+      for (int i = 0; i < NUM_JOINERS; i++) joinersPos[i] = locateJoiner(joinerManagers.get(i).getAddress());
 
       log.info("***>>> Joiners are in positions " + Arrays.toString(joinersPos));
-      for (int i = 0; i < numJoiners; i++) {
+      for (int i = 0; i < NUM_JOINERS; i++) {
          if (joinersPos[i] > caches.size())
             caches.add(joiners.get(i));
          else

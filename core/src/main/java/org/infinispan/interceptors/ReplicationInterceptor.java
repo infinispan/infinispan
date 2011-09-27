@@ -22,6 +22,7 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -34,9 +35,21 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.RehashInProgressException;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Takes care of replicating modifications to other caches in a cluster. Also listens for prepare(), commit() and
@@ -47,19 +60,90 @@ import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
  */
 public class ReplicationInterceptor extends BaseRpcInterceptor {
 
+   private StateTransferLock stateTransferLock;
+   private CommandsFactory cf;
+
+   @Inject
+   public void init(StateTransferLock stateTransferLock, CommandsFactory cf) {
+      this.stateTransferLock = stateTransferLock;
+      this.cf = cf;
+   }
+
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!ctx.isInTxScope()) throw new IllegalStateException("This should not be possible!");
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         rpcManager.broadcastRpcCommand(command, configuration.isSyncCommitPhase(), true);
+         allowStateTransferToComplete(ctx);
+         sendCommitCommand(ctx, command, 3);
       }
       return invokeNextInterceptor(ctx, command);
+   }
+
+   /**
+    * If the response to a commit is a request to resend the prepare, respond accordingly *
+    */
+   private boolean needToResendPrepare(Response r) {
+      return r instanceof SuccessfulResponse && Byte.valueOf(CommitCommand.RESEND_PREPARE).equals(((SuccessfulResponse) r).getResponseValue());
+   }
+
+   private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command, int retries)
+         throws TimeoutException, InterruptedException {
+      try {
+         // may need to resend, so make the commit command synchronous
+         // TODO keep the list of prepared nodes or the view id when the prepare command was sent to know whether we need to resend the prepare info
+         Map<Address, Response> responses = rpcManager.invokeRemotely(null, command, configuration.isSyncCommitPhase(), true);
+         if (!responses.isEmpty()) {
+            List<Address> resendTo = new LinkedList<Address>();
+            for (Map.Entry<Address, Response> r : responses.entrySet()) {
+               if (needToResendPrepare(r.getValue()))
+                  resendTo.add(r.getKey());
+            }
+
+            if (!resendTo.isEmpty()) {
+               log.debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
+               // Make sure this is 1-Phase!!
+               PrepareCommand pc = cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
+               rpcManager.invokeRemotely(resendTo, pc, true, true);
+            }
+         }
+      } catch (RehashInProgressException e) {
+         // we are assuming the current node is also trying to start the rehash, but it can't
+         // because we're holding the tx lock
+         // there is no problem if some nodes already applied the commit
+         allowStateTransferToComplete(ctx);
+
+         if (retries > 0) {
+            sendCommitCommand(ctx, command, retries - 1);
+         } else {
+            throw e;
+         }
+      } catch (SuspectException e) {
+         // we are assuming the current node is also trying to start the rehash, but it can't
+         // because we're holding the tx lock
+         // there is no problem if some nodes already applied the commit
+         allowStateTransferToComplete(ctx);
+
+         if (retries > 0) {
+            sendCommitCommand(ctx, command, retries - 1);
+         } else {
+            throw e;
+         }
+      }
+   }
+
+   /**
+    * If there is a pending rehash, suspend the tx lock and wait until the rehash is completed.
+    * Otherwise, do nothing.
+    */
+   private void allowStateTransferToComplete(InvocationContext ctx) throws TimeoutException, InterruptedException {
+      stateTransferLock.waitForStateTransferToEnd(ctx, null);
    }
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
       if (shouldInvokeRemoteTxCommand(ctx)) {
+         allowStateTransferToComplete(ctx);
          boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
          rpcManager.broadcastRpcCommand(command, !async, false);
       }
@@ -108,6 +192,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       final Object returnValue = invokeNextInterceptor(ctx, command);
       populateCommandFlags(command, ctx);
       if (!isLocalModeForced(ctx) && command.isSuccessful() && ctx.isOriginLocal() && !ctx.isInTxScope()) {
+         allowStateTransferToComplete(ctx);
          if (ctx.isUseFutureReturnType()) {
             NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl(returnValue);
             rpcManager.broadcastRpcCommandInFuture(command, future);

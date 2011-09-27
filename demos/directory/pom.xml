@@ -43,7 +43,7 @@
                <mainClass>org.infinispan.demos.directory.FilesystemDirectory</mainClass>
                <systemProperties>
                   <systemProperty>
-                     <key>bind.address</key>
+                     <key>jgroups.bind_addr</key>
                      <value>127.0.0.1</value>
                   </systemProperty>
                   <systemProperty>

@@ -55,6 +55,7 @@ import org.springframework.core.io.Resource;
  * </p>
  * 
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Marius Bogoevici
  * 
  */
 public class AbstractEmbeddedCacheManagerFactory {
@@ -522,11 +523,11 @@ public class AbstractEmbeddedCacheManagerFactory {
    }
 
    /**
-    * @param evictionWakeUpInterval
-    * @see org.infinispan.spring.ConfigurationOverrides#setEvictionWakeUpInterval(java.lang.Long)
+    * @param expirationWakeUpInterval
+    * @see org.infinispan.spring.ConfigurationOverrides#setExpirationWakeUpInterval(Long) (java.lang.Long)
     */
-   public void setEvictionWakeUpInterval(final Long evictionWakeUpInterval) {
-      this.configurationOverrides.setEvictionWakeUpInterval(evictionWakeUpInterval);
+   public void setExpirationWakeUpInterval(final Long expirationWakeUpInterval) {
+      this.configurationOverrides.setExpirationWakeUpInterval(expirationWakeUpInterval);
    }
 
    /**

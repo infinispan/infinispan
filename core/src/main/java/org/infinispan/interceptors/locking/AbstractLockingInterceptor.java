@@ -69,7 +69,7 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
          }
          return invokeNextInterceptor(ctx, command);
       } finally {
-         if (!ctx.isInTxScope()) lockManager.unlock(ctx);
+         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
       }
    }
 
@@ -98,12 +98,12 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
       }
       finally {
          command.setKeys(keys);
-         if (!ctx.isInTxScope()) lockManager.unlock(ctx);
+         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
       }
    }
 
    protected final Throwable cleanLocksAndRethrow(InvocationContext ctx, Throwable te) {
-      lockManager.unlock(ctx);
+      lockManager.unlockAll(ctx);
       return te;
    }
 

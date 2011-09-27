@@ -32,6 +32,7 @@ import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -85,7 +86,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected EmbeddedCacheManager createCacheManager() {
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager();
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(new TransportFlags().withMerge(true));
       cm.defineConfiguration(cacheName, config.clone());
       return cm;
    }
@@ -176,6 +177,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       logTestEnd(m);
    }
 
+   @Test(enabled = false, description = "Assymetric caches are *really* not supported in this version")
    public void testInitialStateTransferCacheNotPresent(Method m) throws Exception {
       testCount++;
       logTestStart(m);
@@ -273,6 +275,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       logTestEnd(m);
    }
 
+   @Test(enabled = false, description = "The new state transfer doesn't work with cache or cache manager restarts (yet)")
    public void testInitialStateTransferAfterRestart(Method m) throws Exception {
       testCount++;
       logTestStart(m);

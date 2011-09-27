@@ -30,6 +30,7 @@ import org.infinispan.container.EntryFactoryImpl;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.NonTransactionalInvocationContextContainer;
 import org.infinispan.context.TransactionalInvocationContextContainer;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
@@ -54,7 +55,7 @@ import static org.infinispan.util.Util.loadClass;
 @DefaultFactoryFor(classes = {CacheNotifier.class, EntryFactory.class, CommandsFactory.class,
         CacheLoaderManager.class, InvocationContextContainer.class, PassivationManager.class,
         BatchContainer.class, TransactionLog.class, EvictionManager.class, InvocationContextContainer.class,
-        TransactionCoordinator.class, RecoveryAdminOperations.class, ClusteringDependentLogic.class})
+        TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class, ClusteringDependentLogic.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override

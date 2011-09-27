@@ -24,15 +24,15 @@ package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResult;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.marshall.Marshaller;
-import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.LogFactory;
@@ -153,7 +153,7 @@ public class RemoteCacheManager implements CacheContainer {
    ConfigurationProperties config;
    private TransportFactory transportFactory;
    private Marshaller marshaller;
-   private boolean started = false;
+   private volatile boolean started = false;
    private boolean forceReturnValueDefault = false;
    private ExecutorService asyncExecutorService;
    private final Map<String, RemoteCacheImpl> cacheName2RemoteCache = new HashMap<String, RemoteCacheImpl>();
@@ -170,7 +170,7 @@ public class RemoteCacheManager implements CacheContainer {
     * @param start      weather or not to start the manager on return from the constructor.
     */
    public RemoteCacheManager(Marshaller marshaller, Properties props, boolean start) {
-      this(marshaller, props, start, Thread.currentThread().getContextClassLoader());
+      this(marshaller, props, start, Thread.currentThread().getContextClassLoader(), null);
    }
    
    /**
@@ -181,8 +181,8 @@ public class RemoteCacheManager implements CacheContainer {
     * @param props      other properties
     * @param start      weather or not to start the manager on return from the constructor.
     */
-   public RemoteCacheManager(Marshaller marshaller, Properties props, boolean start, ClassLoader classLoader) {
-      this(props, start);
+   public RemoteCacheManager(Marshaller marshaller, Properties props, boolean start, ClassLoader classLoader, ExecutorFactory asyncExecutorFactory) {
+      this(props, start, classLoader, asyncExecutorFactory);
       setMarshaller(marshaller);
       if (log.isTraceEnabled())
          log.tracef("Using explicitly set marshaller type: %s", marshaller.getClass().getName());
@@ -199,23 +199,31 @@ public class RemoteCacheManager implements CacheContainer {
    /**
     * Same as {@link #RemoteCacheManager(Marshaller, java.util.Properties, boolean)} with start = true.
     */
+   public RemoteCacheManager(Marshaller marshaller, Properties props, ExecutorFactory asyncExecutorFactory) {
+      this(marshaller, props, true, Thread.currentThread().getContextClassLoader(), asyncExecutorFactory);
+   }
+
+   /**
+    * Same as {@link #RemoteCacheManager(Marshaller, java.util.Properties, boolean)} with start = true.
+    */
    public RemoteCacheManager(Marshaller marshaller, Properties props, ClassLoader classLoader) {
-      this(marshaller, props, true, classLoader);
+      this(marshaller, props, true, classLoader, null);
    }
 
    /**
     * Build a cache manager based on supplied properties.
     */
    public RemoteCacheManager(Properties props, boolean start) {
-	   this(props, start, Thread.currentThread().getContextClassLoader());
+	   this(props, start, Thread.currentThread().getContextClassLoader(), null);
    }
    
    /**
     * Build a cache manager based on supplied properties.
     */
-   public RemoteCacheManager(Properties props, boolean start, ClassLoader classLoader) {
+   public RemoteCacheManager(Properties props, boolean start, ClassLoader classLoader, ExecutorFactory asyncExecutorFactory) {
       this.config = new ConfigurationProperties(props);
       this.classLoader = classLoader;
+      if (asyncExecutorFactory != null) this.asyncExecutorService = asyncExecutorFactory.getExecutor(props);
       if (start) start();
    }
 
@@ -230,8 +238,9 @@ public class RemoteCacheManager implements CacheContainer {
     * Same as {@link #RemoteCacheManager(java.util.Properties, boolean)}, and it also starts the cache (start==true).
     */
    public RemoteCacheManager(Properties props, ClassLoader classLoader) {
-      this(props, true, classLoader);
+      this(props, true, classLoader, null);
    }
+
 
    /**
     * Retrieves a clone of the properties currently in use.  Note that making any changes to the properties instance
@@ -446,9 +455,11 @@ public class RemoteCacheManager implements CacheContainer {
          setMarshaller((Marshaller) getInstance(marshallerName, classLoader));
       }
 
-      String asyncExecutorClass = config.getAsyncExecutorFactory();
-      ExecutorFactory executorFactory = (ExecutorFactory) getInstance(asyncExecutorClass, classLoader);
-      asyncExecutorService = executorFactory.getExecutor(config.getProperties());
+      if (asyncExecutorService == null) {
+         String asyncExecutorClass = config.getAsyncExecutorFactory();
+         ExecutorFactory executorFactory = (ExecutorFactory) getInstance(asyncExecutorClass, classLoader);
+         asyncExecutorService = executorFactory.getExecutor(config.getProperties());
+      }
 
       forceReturnValueDefault = config.getForceReturnValues();
 

@@ -66,7 +66,7 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    }
 
    public void clearLookedUpEntries() {
-      if (lookedUpEntries != null) lookedUpEntries.clear();
+      lookedUpEntries = null;
    }
 
    @SuppressWarnings("unchecked")

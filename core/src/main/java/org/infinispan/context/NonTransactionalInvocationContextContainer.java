@@ -44,53 +44,27 @@ public class NonTransactionalInvocationContextContainer extends AbstractInvocati
 
    @Override
    public InvocationContext createInvocationContext(Transaction tx) {
-      NonTxInvocationContext existing = (NonTxInvocationContext) icTl.get();
-      NonTxInvocationContext nonTxContext;
-      if (existing == null) {
-         nonTxContext = new NonTxInvocationContext();
-         icTl.set(nonTxContext);
-      } else {
-         nonTxContext = existing;
-      }
-      nonTxContext.setOriginLocal(true);
-      return nonTxContext;
+      return createNonTxInvocationContext();
    }
 
    public NonTxInvocationContext createNonTxInvocationContext() {
-      InvocationContext existing = icTl.get();
-      if (existing != null) {
-         NonTxInvocationContext context = (NonTxInvocationContext) existing;
-         context.setOriginLocal(true);
-         return context;
-      }
-      NonTxInvocationContext remoteTxContext = new NonTxInvocationContext();
-      icTl.set(remoteTxContext);
-      return remoteTxContext;
+      NonTxInvocationContext ctx = new NonTxInvocationContext();
+      ctx.setOriginLocal(true);
+      ctxHolder.set(ctx);
+      return ctx;
    }
 
    public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
-      NonTxInvocationContext existing = (NonTxInvocationContext) icTl.get();
-      if (existing != null) {
-         existing.setOriginLocal(false);
-         existing.setOrigin(origin);
-         return existing;
-      }
-      NonTxInvocationContext remoteNonTxContext = new NonTxInvocationContext();
-      remoteNonTxContext.setOriginLocal(false);
-      remoteNonTxContext.setOrigin(origin);
-      icTl.set(remoteNonTxContext);
-      return remoteNonTxContext;
+      NonTxInvocationContext ctx = new NonTxInvocationContext();
+      ctxHolder.set(ctx);
+      return ctx;
    }
 
    public InvocationContext getInvocationContext() {
-      InvocationContext invocationContext = icTl.get();
+      InvocationContext invocationContext = ctxHolder.get();
       if (invocationContext == null)
          throw new IllegalStateException("This method can only be called after associating the current thread with a context");
       return invocationContext;
-   }
-
-   private IllegalStateException exception() {
-      return new IllegalStateException("This is a non-transactional cache - why need to build a transactional context for it!");
    }
 
    public LocalTxInvocationContext createTxInvocationContext() {
@@ -99,5 +73,9 @@ public class NonTransactionalInvocationContextContainer extends AbstractInvocati
 
    public RemoteTxInvocationContext createRemoteTxInvocationContext(Address origin) {
       throw exception();
+   }
+
+   private IllegalStateException exception() {
+      return new IllegalStateException("This is a non-transactional cache - why need to build a transactional context for it!");
    }
 }

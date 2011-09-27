@@ -4,7 +4,7 @@
 # Helper script to start a profile test on a remote node
 ########################
 
-JVM_OPTS="$JVM_OPTS -Xms512M -Xmx512M -Dbind.address=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dprotocol.stack=udp"
+JVM_OPTS="$JVM_OPTS -Xms512M -Xmx512M -Djgroups.bind_addr=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dprotocol.stack=udp"
 
 PROFILED=false
 if [ $1 = "-p" ] ; then

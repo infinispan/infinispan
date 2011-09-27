@@ -38,8 +38,8 @@ import org.infinispan.util.logging.LogFactory;
 import org.jgroups.Address;
 import org.jgroups.Channel;
 import org.jgroups.Message;
-import org.jgroups.blocks.GroupRequest;
 import org.jgroups.blocks.RequestOptions;
+import org.jgroups.blocks.ResponseMode;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.util.Buffer;
@@ -73,8 +73,6 @@ import static org.infinispan.util.Util.*;
 public class CommandAwareRpcDispatcher extends RpcDispatcher {
    ExecutorService asyncExecutor;
    InboundInvocationHandler inboundInvocationHandler;
-   JGroupsDistSync distributedSync;
-   long distributedSyncTimeout;
    private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean FORCE_MCAST = Boolean.getBoolean("infinispan.unsafe.force_multicast");
@@ -82,13 +80,10 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    public CommandAwareRpcDispatcher(Channel channel,
                                     JGroupsTransport transport,
                                     ExecutorService asyncExecutor,
-                                    InboundInvocationHandler inboundInvocationHandler,
-                                    JGroupsDistSync distributedSync, long distributedSyncTimeout) {
-      super(channel, transport, transport, transport);
+                                    InboundInvocationHandler inboundInvocationHandler) {
+      super(channel, null, transport, transport);
       this.asyncExecutor = asyncExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
-      this.distributedSync = distributedSync;
-      this.distributedSyncTimeout = distributedSyncTimeout;
    }
 
    protected final boolean isValid(Message req) {
@@ -100,7 +95,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       return true;
    }
 
-   public RspList invokeRemoteCommands(Vector<Address> dests, ReplicableCommand command, int mode, long timeout,
+   public RspList invokeRemoteCommands(Vector<Address> dests, ReplicableCommand command, ResponseMode mode, long timeout,
                                        boolean anycasting, boolean oob, RspFilter filter, boolean supportReplay, boolean asyncMarshalling,
                                        boolean broadcast) {
 
@@ -116,7 +111,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          } catch (Exception e) {
             throw rewrapAsCacheException(e);
          }
-         if (mode == GroupRequest.GET_NONE) return null; // "Traditional" async.
+         if (mode == ResponseMode.GET_NONE) return null; // "Traditional" async.
          if (response.isEmpty() || containsOnlyNulls(response))
             return null;
          else
@@ -124,7 +119,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
-   private boolean containsOnlyNulls(RspList l) {
+   private boolean containsOnlyNulls(RspList<Object> l) {
       for (Rsp r : l.values()) {
          if (r.getValue() != null || !r.wasReceived() || r.wasSuspected()) return false;
       }
@@ -139,7 +134,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       if (isValid(req)) {
          ReplicableCommand cmd = null;
          try {
-            cmd = (ReplicableCommand) req_marshaller.objectFromByteBuffer(req.getBuffer(), req.getOffset(), req.getLength());
+            cmd = (ReplicableCommand) req_marshaller.objectFromBuffer(req.getBuffer(), req.getOffset(), req.getLength());
             if (cmd instanceof CacheRpcCommand)
                return executeCommand((CacheRpcCommand) cmd, req);
             else
@@ -175,7 +170,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       private ReplicableCommand command;
       private boolean oob;
       private Vector<Address> dests;
-      private int mode;
+      private ResponseMode mode;
       private long timeout;
       private boolean anycasting;
       private RspFilter filter;
@@ -183,7 +178,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       boolean broadcast = false;
 
       private ReplicationTask(ReplicableCommand command, boolean oob, Vector<Address> dests,
-                              int mode, long timeout,
+                              ResponseMode mode, long timeout,
                               boolean anycasting, RspFilter filter, boolean supportReplay, boolean broadcast) {
          this.command = command;
          this.oob = oob;
@@ -200,7 +195,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          Message msg = new Message();
          msg.setBuffer(buf);
          if (oob) msg.setFlag(Message.OOB);
-         if (mode != GroupRequest.GET_NONE) {
+         if (mode != ResponseMode.GET_NONE) {
             msg.setFlag(Message.DONT_BUNDLE);
             msg.setFlag(Message.NO_FC);
          }
@@ -222,11 +217,11 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          if (trace) log.tracef("Replication task sending %s to addresses %s", command, dests);
 
          // Replay capability requires responses from all members!
-         int mode = supportReplay ? GroupRequest.GET_ALL : this.mode;
+         ResponseMode mode = supportReplay ? ResponseMode.GET_ALL : this.mode;
 
-         if (filter != null) mode = GroupRequest.GET_FIRST;
+         if (filter != null) mode = ResponseMode.GET_FIRST;
 
-         RspList retval = null;
+         RspList<Object> retval = null;
          Buffer buf;
          if (broadcast || FORCE_MCAST) {
             RequestOptions opts = new RequestOptions();
@@ -257,7 +252,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                   futureCollator.watchFuture(f, a);
                }
                retval = futureCollator.getResponseList();
-            } else if (mode == GroupRequest.GET_ALL) {
+            } else if (mode == ResponseMode.GET_ALL) {
                // A SYNC call that needs to go everywhere
                Map<Address, Future<Object>> futures = new HashMap<Address, Future<Object>>(targets.size());
 
@@ -275,14 +270,14 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                   }
                }
 
-            } else if (mode == GroupRequest.GET_NONE) {
+            } else if (mode == ResponseMode.GET_NONE) {
                // An ASYNC call.  We don't care about responses.
                for (Address dest : targets) sendMessage(constructMessage(buf, dest), opts);
             }
          }
 
          // we only bother parsing responses if we are not in ASYNC mode.
-         if (mode != GroupRequest.GET_NONE) {
+         if (mode != ResponseMode.GET_NONE) {
 
             if (trace) log.tracef("Responses: %s", retval);
 
@@ -296,7 +291,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             if (supportReplay) {
                boolean replay = false;
                Vector<Address> ignorers = new Vector<Address>();
-               for (Map.Entry<Address, Rsp> entry : retval.entrySet()) {
+               for (Map.Entry<Address, Rsp<Object>> entry : retval.entrySet()) {
                   Object value = entry.getValue().getValue();
                   if (value instanceof RequestIgnoredResponse) {
                      ignorers.add(entry.getKey());
@@ -316,7 +311,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                   if (trace)
                      log.tracef("Replaying message to ignoring senders: %s", ignorers);
                   RequestOptions opts = new RequestOptions();
-                  opts.setMode(GroupRequest.GET_ALL);
+                  opts.setMode(ResponseMode.GET_ALL);
                   opts.setTimeout(timeout);
                   opts.setAnycasting(anycasting);
                   opts.setRspFilter(filter);

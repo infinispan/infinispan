@@ -24,7 +24,6 @@ package org.infinispan.client.hotrod.impl.async;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.executors.ExecutorFactory;
-import org.infinispan.util.TypedProperties;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -43,12 +42,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DefaultAsyncExecutorFactory implements ExecutorFactory {
    public static final String THREAD_NAME = "HotRod-client-async-pool";
    public static final AtomicInteger counter = new AtomicInteger(0);
-   private int poolSize = 10;
-   private int queueSize = 100000;
 
    @Override
    public ExecutorService getExecutor(Properties p) {
-      readParams(p);
+      ConfigurationProperties cp = new ConfigurationProperties(p);
       ThreadFactory tf = new ThreadFactory() {
          public Thread newThread(Runnable r) {
             Thread th = new Thread(r, THREAD_NAME + "-" + counter.getAndIncrement());
@@ -57,15 +54,9 @@ public class DefaultAsyncExecutorFactory implements ExecutorFactory {
          }
       };
 
-      return new ThreadPoolExecutor(poolSize, poolSize,
+      return new ThreadPoolExecutor(cp.getDefaultExecutorFactoryPoolSize(), cp.getDefaultExecutorFactoryPoolSize(),
                                     0L, TimeUnit.MILLISECONDS,
-                                    new LinkedBlockingQueue<Runnable>(queueSize),
+                                    new LinkedBlockingQueue<Runnable>(cp.getDefaultExecutorFactoryQueueSize()),
                                     tf);
-   }
-
-   private void readParams(Properties props) {
-      TypedProperties tp = TypedProperties.toTypedProperties(props);
-      poolSize = tp.getIntProperty(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE, 10);
-      queueSize = tp.getIntProperty(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE, 100000);
    }
 }

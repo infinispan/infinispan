@@ -83,7 +83,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    public void clearLookedUpEntries() {
-      if (lookedUpEntries != null) lookedUpEntries.clear();
+      lookedUpEntries = null;
    }
 
    @Override

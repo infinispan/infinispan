@@ -54,6 +54,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 
 @Test(groups = "functional", testName = "api.mvcc.repeatable_read.WriteSkewTest")
 public class WriteSkewTest extends AbstractInfinispanTest {
@@ -131,7 +132,15 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       int nbWriters = 10;
       CyclicBarrier barrier = new CyclicBarrier(nbWriters + 1);
       List<Future<Void>> futures = new ArrayList<Future<Void>>(nbWriters);
-      ExecutorService executorService = Executors.newCachedThreadPool();
+      ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactory() {
+         volatile int i = 0;
+         @Override
+         public Thread newThread(Runnable r) {
+            int ii = i++;
+            return new Thread(r, "EntryWriter-" + ii + ", WriteSkewTest");
+         }
+      });
+
       try {
          for (int i = 0; i < nbWriters; i++) {
             log.debug("Schedule execution");
@@ -157,7 +166,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       final CountDownLatch w2Signal = new CountDownLatch(1);
       final CountDownLatch threadSignal = new CountDownLatch(2);
 
-      Thread w1 = new Thread("Writer-1") {
+      Thread w1 = new Thread("Writer-1, WriteSkewTest") {
          public void run() {
             boolean didCoundDown = false;
             try {
@@ -178,7 +187,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
          }
       };
 
-      Thread w2 = new Thread("Writer-2") {
+      Thread w2 = new Thread("Writer-2, WriteSkewTest") {
          public void run() {
             boolean didCoundDown = false;
             try {

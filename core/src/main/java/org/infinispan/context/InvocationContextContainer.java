@@ -22,8 +22,6 @@
  */
 package org.infinispan.context;
 
-import javax.transaction.Transaction;
-
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
@@ -33,12 +31,13 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 
+import javax.transaction.Transaction;
+
 /**
- * Manages the association between an {@link org.infinispan.context.InvocationContext} and the
- * calling thread. Also acts as a factory for creating various types of
- * {@link org.infinispan.context.InvocationContext}s.
- * 
- * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * Manages the association between an {@link org.infinispan.context.InvocationContext} and the calling thread. Also acts
+ * as a factory for creating various types of {@link org.infinispan.context.InvocationContext}s.
+ *
+ * @author Manik Surtani (manik AT infinispan DOT org)
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
@@ -47,13 +46,23 @@ import org.infinispan.remoting.transport.Address;
 public interface InvocationContextContainer {
 
    /**
-    * If we are in a tx scope this will return an
-    * {@link org.infinispan.context.impl.TxInvocationContext}. Otherwise it will return an
-    * {@link org.infinispan.context.impl.NonTxInvocationContext}. Either way, both context will be
-    * marked as local, i.e. {@link InvocationContext#isOriginLocal()} will be true. The context is
-    * also associated with the current thread, so further calls to {@link #getInvocationContext()}
-    * will return same instance.
-    * @param isWrite
+    * Returns the {@link InvocationContext} that is currently associated with the calling thread. Important:
+    * implementations of this method are most likely expensive, involving thread locals. It is recommended to cache
+    * the result of this method rather than repeating the call.
+    *
+    * @throws IllegalStateException if there is no context associated with the current thread.
+    *
+    * @deprecated see implementation for notes
+    * @param quiet
+    */
+   @Deprecated
+   InvocationContext getInvocationContext(boolean quiet);
+
+
+   /**
+    * If we are in a tx scope this will return an {@link org.infinispan.context.impl.TxInvocationContext}. Otherwise it
+    * will return an {@link org.infinispan.context.impl.NonTxInvocationContext}. Either way, both context will be marked
+    * as local, i.e. {@link InvocationContext#isOriginLocal()} will be true.
     */
    InvocationContext createInvocationContext(boolean isWrite);
 
@@ -66,74 +75,38 @@ public interface InvocationContextContainer {
    InvocationContext createInvocationContext(Transaction tx);
 
    /**
-    * Will create an {@link org.infinispan.context.impl.NonTxInvocationContext} with the
-    * {@link org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} returning true.
+    * Will create an {@link org.infinispan.context.impl.NonTxInvocationContext} with the {@link
+    * org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} returning true.
     */
    NonTxInvocationContext createNonTxInvocationContext();
 
    /**
-    * Returns a {@link org.infinispan.context.impl.LocalTxInvocationContext}. The context is also
-    * associated with the current thread, so further calls to {@link #getInvocationContext()} will
-    * return same instance.
+    * Returns a {@link org.infinispan.context.impl.LocalTxInvocationContext}.
     */
    LocalTxInvocationContext createTxInvocationContext();
 
    /**
-    * Returns an {@link org.infinispan.context.impl.RemoteTxInvocationContext}. The context is also
-    * associated with the current thread, so further calls to {@link #getInvocationContext()} will
-    * return same instance.
-    * 
+    * Returns an {@link org.infinispan.context.impl.RemoteTxInvocationContext}.
+    *
     * @param origin the origin of the command, or null if local
     */
    RemoteTxInvocationContext createRemoteTxInvocationContext(Address origin);
 
    /**
-    * Returns an {@link org.infinispan.context.impl.NonTxInvocationContext} whose
-    * {@link org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} flag will be true.
-    * The context is also associated with the current thread, so further calls to
-    * {@link #getInvocationContext()} will return same instance.
-    * 
+    * Returns an {@link org.infinispan.context.impl.NonTxInvocationContext} whose {@link
+    * org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} flag will be true.
+    *
     * @param origin the origin of the command, or null if local
     */
    InvocationContext createRemoteInvocationContext(Address origin);
 
    /**
-    * As {@link #createRemoteInvocationContext(org.infinispan.remoting.transport.Address)},
-    * but returning the flags to the context from the Command if any Flag was set.
-    * 
+    * As {@link #createRemoteInvocationContext(org.infinispan.remoting.transport.Address)}, but returning the flags to
+    * the context from the Command if any Flag was set.
+    *
     * @param cacheCommand
-    * @param origin the origin of the command, or null if local
+    * @param origin       the origin of the command, or null if local
     */
    InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand, Address origin);
 
-   /**
-    * Returns the {@link InvocationContext} that is currently associated with the calling thread.
-    * Important: implementations of this method is most likely expensive (ThreadLocal.get), it is
-    * recommended to cache the result of this method rather than repeating the call.
-    * 
-    * @throws IllegalStateException
-    *            if there is no context associated with the current thread.
-    */
-   InvocationContext getInvocationContext();
-
-   /**
-    * Disassociates thread's invocation context and returns the existing value.
-    */
-   InvocationContext suspend();
-
-   /**
-    * Associates the supplied {@link InvocationContext} with the calling thread.
-    */
-   void resume(InvocationContext ic);
-
-   /**
-    * Returns the {@link InvocationContext} that is currently associated with
-    * the calling thread. <b>Important:<b/> implementations of this method is
-    * most likely expensive (ThreadLocal.get), it is recommended to cache the
-    * result of this method rather than repeating the call.
-    *
-    * @return the invocation context associated with the calling thread or
-    *         null if none has been associated yet
-    */
-   InvocationContext peekInvocationContext();
 }

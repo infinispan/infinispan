@@ -23,6 +23,7 @@
 package org.infinispan.loaders.remote;
 
 import org.infinispan.CacheException;
+import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.FileLookup;
@@ -54,6 +55,7 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
    private volatile String remoteCacheName;
    private static final Log log = LogFactory.getLog(RemoteCacheStoreConfig.class);
    private final Properties hotRodClientProperties = new Properties();
+   private ExecutorFactory asyncExecutorFactory = null;
 
    public RemoteCacheStoreConfig() {
       setCacheLoaderClassName(RemoteCacheStore.class.getName());
@@ -83,6 +85,14 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
 
    public void setHotRodClientProperties(Properties props) {
       hotRodClientProperties.putAll(props);
+   }
+
+   public ExecutorFactory getAsyncExecutorFactory() {
+      return asyncExecutorFactory;
+   }
+
+   public void setAsyncExecutorFactory(ExecutorFactory asyncExecutorFactory) {
+      this.asyncExecutorFactory = asyncExecutorFactory;
    }
 
    public void setHotRodClientPropertiesFile(String hotRodClientPropertiesFile) {

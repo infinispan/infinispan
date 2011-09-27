@@ -210,7 +210,7 @@ public class TcpMPingEnvironmentTest {
 
    private void initiChannel(JChannel channel) throws Exception {
       openedChannles.add(channel);
-      channel.setOpt(org.jgroups.Channel.LOCAL, false);
+      channel.setDiscardOwnMessages(true);
       channel.connect("someChannel");
    }
 }

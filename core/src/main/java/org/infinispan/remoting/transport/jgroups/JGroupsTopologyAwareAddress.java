@@ -19,6 +19,7 @@
 
 package org.infinispan.remoting.transport.jgroups;
 
+import org.infinispan.CacheException;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.jgroups.Address;
@@ -81,13 +82,20 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
    public static class Externalizer implements org.infinispan.marshall.AdvancedExternalizer<JGroupsTopologyAwareAddress> {
       @Override
       public void writeObject(ObjectOutput output, JGroupsTopologyAwareAddress address) throws IOException {
-         output.writeObject(address.address);
+         org.jgroups.util.Util.writeAddress(address.address, output);
       }
 
       public JGroupsTopologyAwareAddress readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         Address jgroupsAddress = (Address) unmarshaller.readObject();
-         JGroupsTopologyAwareAddress address = new JGroupsTopologyAwareAddress(jgroupsAddress);
-         return address;
+         try {
+            Address jgroupsAddress = org.jgroups.util.Util.readAddress(unmarshaller);
+            JGroupsTopologyAwareAddress address = new JGroupsTopologyAwareAddress(jgroupsAddress);
+            return address;
+         // TODO: Remove catches once JGroups removes them
+         } catch (IllegalAccessException e) {
+            throw new CacheException(e);
+         } catch (InstantiationException e) {
+            throw new CacheException(e);
+         }
       }
 
       @Override

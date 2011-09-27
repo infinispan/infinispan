@@ -94,7 +94,7 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       @Override
       protected ClassLoader getClassLoader() {
          if (icc != null) {
-            InvocationContext ctx = icc.peekInvocationContext();
+            InvocationContext ctx = icc.getInvocationContext(true);
             if (ctx != null) {
                ClassLoader cl = ctx.getClassLoader();
                if (cl != null) return cl;

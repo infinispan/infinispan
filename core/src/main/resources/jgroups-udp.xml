@@ -63,9 +63,8 @@
    <FD_SOCK/>
    <FD_ALL/>
    <BARRIER />
-   <pbcast.NAKACK use_stats_for_retransmission="false"
-                   exponential_backoff="0"
-                   use_mcast_xmit="true" gc_lag="0"
+   <pbcast.NAKACK  exponential_backoff="0"
+                   use_mcast_xmit="true"
                    retransmit_timeout="300,600,1200"
                    discard_delivered_msgs="true"/>
    <UNICAST timeout="300,600,1200"/>
@@ -74,5 +73,4 @@
    <UFC max_credits="500000" min_threshold="0.20"/>
    <MFC max_credits="500000" min_threshold="0.20"/>
    <FRAG2 frag_size="60000"  />
-   <pbcast.STREAMING_STATE_TRANSFER/>
 </config>

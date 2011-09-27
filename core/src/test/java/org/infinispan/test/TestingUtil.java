@@ -32,8 +32,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.DistributionManagerImpl;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
@@ -48,6 +47,7 @@ import org.infinispan.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.jboss.ExternalizerTable;
 import org.infinispan.remoting.ReplicationQueue;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -66,7 +66,14 @@ import javax.transaction.TransactionManager;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
@@ -146,16 +153,17 @@ public class TestingUtil {
       int gracetime = 30000; // 30 seconds?
       long giveup = System.currentTimeMillis() + gracetime;
       for (Cache c : caches) {
-         DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
-         while (dmi.isRehashInProgress()) {
+         StateTransferManager stateTransferManager = TestingUtil.extractComponent(c, StateTransferManager.class);
+         RpcManager rpcManager = TestingUtil.extractComponent(c, RpcManager.class);
+         while (stateTransferManager.isStateTransferInProgress()) {
             if (System.currentTimeMillis() > giveup) {
-               String message = "Timed out waiting for rehash to complete on node " + dmi.getRpcManager().getAddress() + " !";
+               String message = "Timed out waiting for rehash to complete on node " + rpcManager.getAddress() + " !";
                log.error(message);
                throw new RuntimeException(message);
             }
             LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
          }
-         log.trace("Node " + dmi.getRpcManager().getAddress() + " finished rehash task.");
+         log.trace("Node " + rpcManager.getAddress() + " finished rehash task.");
       }
    }
 
@@ -167,16 +175,17 @@ public class TestingUtil {
       int gracetime = 30000; // 30 seconds?
       long giveup = System.currentTimeMillis() + gracetime;
       for (Cache c : caches) {
-         DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
-         while (!dmi.isJoinComplete()) {
+         StateTransferManager stateTransferManager = TestingUtil.extractComponent(c, StateTransferManager.class);
+         RpcManager rpcManager = TestingUtil.extractComponent(c, RpcManager.class);
+         while (!stateTransferManager.isJoinComplete()) {
             if (System.currentTimeMillis() > giveup) {
-               String message = "Timed out waiting for join to complete on node " + dmi.getRpcManager().getAddress() + " !";
+               String message = "Timed out waiting for join to complete on node " + rpcManager.getAddress() + " !";
                log.error(message);
                throw new RuntimeException(message);
             }
             LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
          }
-         log.trace("Node " + dmi.getRpcManager().getAddress() + " finished join task.");
+         log.trace("Node " + rpcManager.getAddress() + " finished join task.");
       }
    }
 
@@ -906,11 +915,21 @@ public class TestingUtil {
    }
 
    public static void blockUntilViewsReceived(int timeout, Collection caches) {
-      blockUntilViewsReceived(timeout, (Cache[]) caches.toArray(new Cache[]{}));
+      Object first = caches.iterator().next();
+      if (first instanceof Cache) {
+         blockUntilViewsReceived(timeout, (Cache[]) caches.toArray(new Cache[]{}));
+      } else {
+         blockUntilViewsReceived(timeout, (CacheContainer[]) caches.toArray(new CacheContainer[]{}));
+      }
    }
 
    public static void blockUntilViewsReceived(int timeout, boolean barfIfTooManyMembers, Collection caches) {
-      blockUntilViewsReceived(timeout, barfIfTooManyMembers, (Cache[]) caches.toArray(new Cache[caches.size()]));
+      Object first = caches.iterator().next();
+      if (first instanceof Cache) {
+         blockUntilViewsReceived(timeout, barfIfTooManyMembers, (Cache[]) caches.toArray(new Cache[]{}));
+      } else {
+         blockUntilViewsReceived(timeout, barfIfTooManyMembers, (CacheContainer[]) caches.toArray(new CacheContainer[]{}));
+      }
    }
 
    public static CommandsFactory extractCommandsFactory(Cache<Object, Object> cache) {

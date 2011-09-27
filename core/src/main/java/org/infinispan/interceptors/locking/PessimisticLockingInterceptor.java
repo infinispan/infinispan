@@ -68,10 +68,10 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable t) {
-         lockManager.unlock(ctx);
+         lockManager.unlockAll(ctx);
          throw t;
       } finally {
-         if (!ctx.isInTxScope()) lockManager.unlock(ctx);
+         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
       }
    }
 
@@ -81,7 +81,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          abortIfRemoteTransactionInvalid(ctx, command);
          return invokeNextAndCommitIf1Pc(ctx, command);
       } catch (Throwable t) {
-         lockManager.unlock(ctx);
+         lockManager.unlockAll(ctx);
          throw t;
       }
    }
@@ -153,7 +153,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          return invokeNextInterceptor(ctx, command);
       } finally {
          //evict doesn't get called within a tx scope, so we should apply the changes before returning
-         lockManager.unlock(ctx);
+         lockManager.unlockAll(ctx);
       }
    }
 

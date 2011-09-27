@@ -46,7 +46,7 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         lockManager.unlock(ctx);
+         lockManager.unlockAll(ctx);
       }
    }
 
@@ -55,7 +55,7 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         lockManager.unlock(ctx);
+         lockManager.unlockAll(ctx);
       }
    }
 
@@ -71,7 +71,7 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
    protected final Object invokeNextAndCommitIf1Pc(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object result = invokeNextInterceptor(ctx, command);
       if (command.isOnePhaseCommit()) {
-         lockManager.unlock(ctx);
+         lockManager.unlockAll(ctx);
       }
       return result;
    }
@@ -88,7 +88,7 @@ public class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
          }
 
          if (c.isUnlock()) {
-            lockManager.unlock(ctx);
+            lockManager.unlockAll(ctx);
             if (log.isTraceEnabled()) log.trace("Lock released for: " + ctx.getLockOwner());
             return false;
          }

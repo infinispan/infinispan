@@ -35,33 +35,39 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractTransport;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.DistributedSync;
-import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jgroups.*;
-import org.jgroups.blocks.Request;
+import org.jgroups.Channel;
+import org.jgroups.Event;
+import org.jgroups.JChannel;
+import org.jgroups.MembershipListener;
+import org.jgroups.MergeView;
+import org.jgroups.View;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.jmx.JmxConfigurator;
-import org.jgroups.protocols.pbcast.STREAMING_STATE_TRANSFER;
 import org.jgroups.stack.AddressGenerator;
-import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 import org.jgroups.util.TopologyUUID;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
 /**
@@ -77,7 +83,7 @@ import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class JGroupsTransport extends AbstractTransport implements ExtendedMembershipListener, ExtendedMessageListener {
+public class JGroupsTransport extends AbstractTransport implements MembershipListener {
    public static final String CONFIGURATION_STRING = "configurationString";
    public static final String CONFIGURATION_XML = "configurationXml";
    public static final String CONFIGURATION_FILE = "configurationFile";
@@ -95,8 +101,6 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    protected StreamingMarshaller marshaller;
    protected ExecutorService asyncExecutor;
    protected CacheManagerNotifier notifier;
-   private final JGroupsDistSync flushTracker = new JGroupsDistSync();
-   private long distributedSyncTimeout;
 
    private boolean globalStatsEnabled;
    private MBeanServer mbeanServer;
@@ -145,7 +149,6 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
    public void start() {
       props = TypedProperties.toTypedProperties(configuration.getTransportProperties());
-      distributedSyncTimeout = configuration.getDistributedSyncTimeout();
 
       if (log.isInfoEnabled()) log.startingJGroupsChannel();
 
@@ -157,10 +160,14 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
    protected void startJGroupsChannelIfNeeded() {
       if (startChannel) {
+         String clusterName = configuration.getClusterName();
          try {
-            String clusterName = configuration.getClusterName();
             channel.connect(clusterName);
+         } catch (Exception e) {
+            throw new CacheException("Unable to start JGroups Channel", e);
+         }
 
+         try {
             // Normally this would be done by CacheManagerJmxRegistration but
             // the channel is not started when the cache manager starts but
             // when first cache starts, so it's safer to do it here.
@@ -171,8 +178,6 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
                domain = JmxUtil.buildJmxDomain(configuration, mbeanServer, groupName);
                JmxConfigurator.registerChannel((JChannel) channel, mbeanServer, domain, clusterName, true);
             }
-         } catch (ChannelException e) {
-            throw new CacheException("Unable to start JGroups Channel", e);
          } catch (Exception e) {
             throw new CacheException("Channel connected, but unable to register MBeans", e);
          }
@@ -217,8 +222,6 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          dispatcher.stop();
       }
 
-      asyncExecutor.shutdown();
-
       members = Collections.emptyList();
       coordinator = false;
       dispatcher = null;
@@ -239,7 +242,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          }
       }
 
-      channel.setOpt(Channel.LOCAL, false);
+      channel.setDiscardOwnMessages(true);
 
       // if we have a TopologyAwareConsistentHash, we need to set our own address generator in JGroups:
       if(configuration.hasTopologyInfo()) {
@@ -257,7 +260,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    private void initChannelAndRPCDispatcher() throws CacheException {
       initChannel();
       dispatcher = new CommandAwareRpcDispatcher(channel, this,
-              asyncExecutor, inboundInvocationHandler, flushTracker, distributedSyncTimeout);
+              asyncExecutor, inboundInvocationHandler);
       MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
       dispatcher.setRequestMarshaller(adapter);
       dispatcher.setResponseMarshaller(adapter);
@@ -321,7 +324,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          log.unableToUseJGroupsPropertiesProvided(props);
          try {
             channel = new JChannel(FileLookupFactory.newInstance().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.getClassLoader()));
-         } catch (ChannelException e) {
+         } catch (Exception e) {
             throw new CacheException("Unable to start JGroups channel", e);
          }
       }
@@ -353,48 +356,6 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
       return members != null ? members : Collections.<Address>emptyList();
    }
 
-   public boolean retrieveState(String cacheName, Address address, long timeout) throws StateTransferException {
-      boolean cleanup = false;
-      try {
-         StateTransferMonitor mon = new StateTransferMonitor();
-         if (stateTransfersInProgress.putIfAbsent(cacheName, mon) != null)
-            throw new StateTransferException("There already appears to be a state transfer in progress for the cache named " + cacheName);
-
-         cleanup = true;
-         ((JChannel) channel).getState(toJGroupsAddress(address), cacheName, timeout, false);
-         mon.waitForState();
-         return mon.getSetStateException() == null;
-      } catch (StateTransferException ste) {
-         throw ste;
-      } catch (Exception e) {
-         if (log.isInfoEnabled()) log.unableToRetrieveState(address, e);
-         return false;
-      } finally {
-         if (cleanup) stateTransfersInProgress.remove(cacheName);
-      }
-   }
-
-   public DistributedSync getDistributedSync() {
-      return flushTracker;
-   }
-
-
-   public boolean isSupportStateTransfer() {
-      // tests whether state transfer is supported.  We *need* STREAMING_STATE_TRANSFER.
-      ProtocolStack stack;
-      if (channel != null && (stack = channel.getProtocolStack()) != null) {
-         if (stack.findProtocol(STREAMING_STATE_TRANSFER.class) == null) {
-            log.streamingStateTransferNotPresent();
-            return false;
-         }
-      } else {
-         log.channelNotSetUp();
-         return false;
-      }
-
-      return true;
-   }
-   
    @Override
    public boolean isMulticastCapable() {
       return channel.getProtocolStack().getTransport().supportsMulticasting();
@@ -409,7 +370,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
    public List<Address> getPhysicalAddresses() {
       if (physicalAddress == null && channel != null) {
-         org.jgroups.Address addr = (org.jgroups.Address) channel.downcall(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
+         org.jgroups.Address addr = (org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
          physicalAddress = new JGroupsAddress(addr);
       }
       return Collections.singletonList(physicalAddress);
@@ -431,47 +392,40 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
       if (trace) log.tracef("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
 
-      // Acquire a "processing" lock so that any other code is made aware of a network call in progress
-      // make sure this is non-exclusive since concurrent network calls are valid for most situations.
-      flushTracker.acquireProcessingLock(false, distributedSyncTimeout, MILLISECONDS);
-      boolean unlock = true;
-      // if there is a FLUSH in progress, block till it completes
-      flushTracker.blockUntilReleased(distributedSyncTimeout, MILLISECONDS);
+      if (recipients != null && !getMembers().containsAll(recipients)) {
+         throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
+      }
       boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
       if (!usePriorityQueue && ResponseMode.SYNCHRONOUS == mode) usePriorityQueue = true;
-      try {
-         RspList rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode),
-                 timeout, recipients != null, usePriorityQueue,
-                 toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, recipients == null || recipients.size() == members.size());
 
-         if (mode.isAsynchronous()) return Collections.emptyMap();// async case
+      RspList<Object> rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode),
+              timeout, recipients != null, usePriorityQueue,
+              toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, recipients == null || recipients.size() == members.size());
 
-         // short-circuit no-return-value calls.
-         if (rsps == null) return Collections.emptyMap();
-         Map<Address, Response> retval = new HashMap<Address, Response>(rsps.size());
+      if (mode.isAsynchronous()) return Collections.emptyMap();// async case
 
-         boolean noValidResponses = true;
-         for (Rsp rsp : rsps.values()) {
-            noValidResponses = parseResponseAndAddToResponseList(rsp.getValue(), retval, rsp.wasSuspected(), rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()), responseFilter != null) && noValidResponses;
-         }
+      // short-circuit no-return-value calls.
+      if (rsps == null) return Collections.emptyMap();
+      Map<Address, Response> retval = new HashMap<Address, Response>(rsps.size());
 
-         if (noValidResponses) throw new TimeoutException("Timed out waiting for valid responses!");
-         return retval;
-      } finally {
-         // release the "processing" lock so that other threads are aware of the network call having completed
-         if (unlock) flushTracker.releaseProcessingLock(false);
+      boolean noValidResponses = true;
+      for (Rsp<Object> rsp : rsps.values()) {
+         noValidResponses = parseResponseAndAddToResponseList(rsp.getValue(), retval, rsp.wasSuspected(), rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()), responseFilter != null) && noValidResponses;
       }
+
+      if (noValidResponses) throw new TimeoutException("Timed out waiting for valid responses!");
+      return retval;
    }
 
-   private static int toJGroupsMode(ResponseMode mode) {
+   private static org.jgroups.blocks.ResponseMode toJGroupsMode(ResponseMode mode) {
       switch (mode) {
          case ASYNCHRONOUS:
          case ASYNCHRONOUS_WITH_SYNC_MARSHALLING:
-            return Request.GET_NONE;
+            return org.jgroups.blocks.ResponseMode.GET_NONE;
          case SYNCHRONOUS:
-            return Request.GET_ALL;
+            return org.jgroups.blocks.ResponseMode.GET_ALL;
          case WAIT_FOR_VALID_RESPONSE:
-            return Request.GET_MAJORITY;
+            return org.jgroups.blocks.ResponseMode.GET_MAJORITY;
       }
       throw new CacheException("Unknown response mode " + mode);
    }
@@ -506,7 +460,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
          notifier.notifyMerge(members, oldMembers, address, viewId, getSubgroups(mv.getSubgroups()));
       }
 
-      private List<List<Address>> getSubgroups(Vector<View> subviews) {
+      private List<List<Address>> getSubgroups(List<View> subviews) {
          List<List<Address>> l = new ArrayList<List<Address>>(subviews.size());
          for (View v: subviews) l.add(fromJGroupsAddressList(v.getMembers()));
          return l;         
@@ -515,7 +469,7 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
 
    public void viewAccepted(View newView) {
       log.debugf("New view accepted: %s", newView);
-      Vector<org.jgroups.Address> newMembers = newView.getMembers();
+      List<org.jgroups.Address> newMembers = newView.getMembers();
       if (newMembers == null || newMembers.isEmpty()) {
          log.debugf("Received null or empty member list from JGroups channel: " + newView);
          return;
@@ -561,62 +515,6 @@ public class JGroupsTransport extends AbstractTransport implements ExtendedMembe
    public void unblock() {
       // no-op since ISPN-83 has been resolved
    }
-
-   public void receive(Message msg) {
-      // no-op
-   }
-
-   public byte[] getState() {
-      throw new UnsupportedOperationException("Retrieving state for the entire cache system is not supported!");
-   }
-
-   public void setState(byte[] state) {
-      throw new UnsupportedOperationException("Setting state for the entire cache system is not supported!");
-   }
-
-   public byte[] getState(String state_id) {
-      throw new UnsupportedOperationException("Non-stream-based state retrieval is not supported!  Make sure you use the JGroups STREAMING_STATE_TRANSFER protocol!");
-   }
-
-   public void setState(String state_id, byte[] state) {
-      throw new UnsupportedOperationException("Non-stream-based state retrieval is not supported!  Make sure you use the JGroups STREAMING_STATE_TRANSFER protocol!");
-   }
-
-   public void getState(OutputStream ostream) {
-      throw new UnsupportedOperationException("Retrieving state for the entire cache system is not supported!");
-   }
-
-   public void getState(String cacheName, OutputStream ostream) {
-      if (trace)
-         log.tracef("Received request to generate state for cache named '%s'.  Attempting to generate state.", cacheName);
-      try {
-         inboundInvocationHandler.generateState(cacheName, ostream);
-      } catch (StateTransferException e) {
-         log.errorGeneratingState(e);
-      } finally {
-         Util.flushAndCloseStream(ostream);
-      }
-   }
-
-   public void setState(InputStream istream) {
-      throw new UnsupportedOperationException("Setting state for the entire cache system is not supported!");
-   }
-
-   public void setState(String cacheName, InputStream istream) {
-      StateTransferMonitor mon = null;
-      try {
-         if (trace) log.tracef("Received state for cache named '%s'.  Attempting to apply state.", cacheName);
-         mon = stateTransfersInProgress.get(cacheName);
-         inboundInvocationHandler.applyState(cacheName, istream);
-         mon.notifyStateReceiptSucceeded();
-      } catch (Exception e) {
-         mon.notifyStateReceiptFailed(e instanceof StateTransferException ? (StateTransferException) e : new StateTransferException(e));
-         log.errorRequestingOrApplyingState(e);
-      } finally {
-         Util.close(istream);
-      }
-   }
-
 
    // ------------------------------------------------------------------------------------------------------------------
    // Helpers to convert between Address types

@@ -60,8 +60,7 @@
     <FD_ALL />
     <VERIFY_SUSPECT timeout="1500"  />
     <BARRIER />
-    <pbcast.NAKACK use_stats_for_retransmission="false"
-                   use_mcast_xmit="true" gc_lag="0"
+    <pbcast.NAKACK use_mcast_xmit="true" gc_lag="0"
                    retransmit_timeout="100,300,600,1200"
                    discard_delivered_msgs="true"/>
     <UNICAST timeout="300,600,1200"/>

@@ -50,9 +50,9 @@ public interface LockManager {
    /**
     * Releases the lock passed in, held by the specified owner
     *
-    * @param owner lock owner
+    * @param ctx
     */
-   void unlock(Object key);
+   void unlock(InvocationContext ctx, Object key);
 
    /**
     * Releases locks present in an invocation context and transaction entry, if one is available.
@@ -62,7 +62,7 @@ public interface LockManager {
     *
     * @param ctx invocation context to inspect
     */
-   void unlock(InvocationContext ctx);
+   void unlockAll(InvocationContext ctx);
 
    /**
     * Tests whether a given owner owns a lock of lockType on a particular cache entry.

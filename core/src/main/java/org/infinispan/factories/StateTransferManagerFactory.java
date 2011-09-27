@@ -23,20 +23,27 @@
 package org.infinispan.factories;
 
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.statetransfer.StateTransferManagerImpl;
+import org.infinispan.statetransfer.DistributedStateTransferManagerImpl;
+import org.infinispan.statetransfer.ReplicatedStateTransferManagerImpl;
 import org.infinispan.statetransfer.StateTransferManager;
 
 /**
  * Constructs {@link org.infinispan.statetransfer.StateTransferManager} instances.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Dan Berindei &lt;dan@infinispan.org&gt;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = StateTransferManager.class)
 public class StateTransferManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    public <T> T construct(Class<T> componentType) {
-      if (configuration.getCacheMode().isClustered() && !configuration.getCacheMode().isDistributed())
-         return componentType.cast(new StateTransferManagerImpl());
+      if (!configuration.getCacheMode().isClustered())
+         return null;
+
+      if (configuration.getCacheMode().isDistributed())
+         return componentType.cast(new DistributedStateTransferManagerImpl());
+      else if (configuration.getCacheMode().isReplicated())
+         return componentType.cast(new ReplicatedStateTransferManagerImpl());
       else
          return null;
    }

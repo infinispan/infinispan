@@ -64,7 +64,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          }
          return invokeNextAndCommitIf1Pc(ctx, command);
       } catch (Throwable te) {
-         lockManager.unlock(ctx);
+         lockManager.unlockAll(ctx);
          throw te;
       }
    }
@@ -77,7 +77,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          return visitRemoveCommand(ctx, command);
       } finally {
          //evict doesn't get called within a tx scope, so we should apply the changes before returning
-         lockManager.unlock(ctx);
+         lockManager.unlockAll(ctx);
       }
    }
 

@@ -27,8 +27,6 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Factory that creates components used internally within Infinispan, and also wires dependencies into the components.
@@ -45,7 +43,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Scope(Scopes.GLOBAL)
 public abstract class AbstractComponentFactory {
-   protected final Log log = LogFactory.getLog(getClass());
    protected GlobalComponentRegistry globalComponentRegistry;
    protected GlobalConfiguration globalConfiguration;
 

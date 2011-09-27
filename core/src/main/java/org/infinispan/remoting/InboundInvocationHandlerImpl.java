@@ -23,14 +23,13 @@
 package org.infinispan.remoting;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.control.RehashControlCommand;
+import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
@@ -44,23 +43,16 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.NamedCacheNotFoundException;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.responses.ExceptionResponse;
-import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.statetransfer.StateTransferManager;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.InputStream;
-import java.io.ObjectOutput;
-import java.io.OutputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -71,7 +63,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.factories.KnownComponentNames.*;
+import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
 /**
  * Sets the cache interceptor chain on an RPCCommand before calling it to perform
@@ -88,8 +80,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    private EmbeddedCacheManager embeddedCacheManager;
    private GlobalConfiguration globalConfiguration;
    private Transport transport;
-   private DistributedSync distributedSync;
-   private long distributedSyncTimeout;
 
    // TODO this timeout needs to be configurable.  Should be shorter than your typical lockAcquisitionTimeout/SyncReplTimeout with some consideration for network latency bothfor req and response.
    private static final long timeBeforeWeEnqueueCallForRetry = 10000;
@@ -118,8 +108,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
 
    @Start
    public void start() {
-      distributedSync = transport.getDistributedSync();
-      distributedSyncTimeout = globalConfiguration.getDistributedSyncTimeout();
       stopping = false;
    }
 
@@ -137,7 +125,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
 
    public void waitForStart(CacheRpcCommand cmd) throws InterruptedException {
       if (cmd.getConfiguration().getCacheMode().isDistributed()) {
-         cmd.getComponentRegistry().getComponent(DistributionManager.class).waitForJoinToComplete();
+         cmd.getComponentRegistry().getComponent(StateTransferManager.class).waitForJoinToComplete();
       }
    }
 
@@ -189,18 +177,13 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       }
    }
 
-   private Response handleWithWaitForBlocks(CacheRpcCommand cmd, long distSyncTimeout) throws Throwable {
-      DistributedSync.SyncResponse sr = distributedSync.blockUntilReleased(distSyncTimeout, MILLISECONDS);
-
-      // If this thread blocked during a NBST flush, then inform the sender
-      // it needs to replay ignored messages
-      boolean replayIgnored = sr == DistributedSync.SyncResponse.STATE_ACHIEVED;
-
+   private Response handleWithWaitForBlocks(CacheRpcCommand cmd) throws Throwable {
       Response resp = handleInternal(cmd);
 
       // A null response is valid and OK ...
       if (resp == null || resp.isValid()) {
-         if (replayIgnored) resp = new ExtendedResponse(resp, true);
+         //TODO Check if message replaying is still needed without FLUSH
+         //if (replayIgnored) resp = new ExtendedResponse(resp, true);
       } else {
          // invalid response
          if (trace) log.trace("Unable to execute command, got invalid response");
@@ -213,9 +196,10 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       Configuration localConfig = cmd.getConfiguration();
       ComponentRegistry cr = cmd.getComponentRegistry();
 
-      if (localConfig.getCacheMode().isDistributed()) {
-         DistributionManager dm = cr.getComponent(DistributionManager.class);
-         if (dm.isJoinComplete())
+      StateTransferManager stm = cr.getComponent(StateTransferManager.class);
+      if (stm != null) {
+         // we are either in distributed mode or in replicated mode
+         if (stm.isJoinComplete())
             return JoinHandle.OK;
          else {
             // no point in enqueueing clustered GET commands - just ignore these and hope someone else in the cluster responds.
@@ -238,37 +222,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    }
 
    @Override
-   public void applyState(String cacheName, InputStream i) throws StateTransferException {
-      getStateTransferManager(cacheName).applyState(i);
-   }
-
-   @Override
-   public void generateState(String cacheName, OutputStream o) throws StateTransferException {
-      StateTransferManager manager = getStateTransferManager(cacheName);
-      if (manager == null) {
-         ObjectOutput oo = null;
-         try {
-            oo = marshaller.startObjectOutput(o, false);
-            // Not started yet, so send started flag false
-            marshaller.objectToObjectStream(false, oo);
-         } catch (Exception e) {
-            throw new StateTransferException(e);
-         } finally {
-            marshaller.finishObjectOutput(oo);
-         }
-      } else {
-         manager.generateState(o);
-      }
-   }
-
-   private StateTransferManager getStateTransferManager(String cacheName) {
-      ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
-      if (cr == null)
-         return null;
-      return cr.getComponent(StateTransferManager.class);
-   }
-
-   @Override
    public void blockTillNoLongerRetrying(String cacheName) {
       RetryQueue rq = getRetryQueue(cacheName);
       rq.blockUntilNoLongerRetrying();
@@ -277,63 +230,53 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    private Response handleWithRetry(final CacheRpcCommand cmd) throws Throwable {
       boolean unlock = false;
       String cacheName = cmd.getCacheName();
-      try {
-         // We want to retry put operations after the cache has started up
-         // We can't queue read calls and distributed tasks before the cache has been started
-         // as in both cases a the caller needs the response.
-         // RehashControlCommands are the mechanism used for joining the cluster,
-         // so they need to go through immediately (they also ignore the processing lock).
-         boolean isRehashCommand = cmd instanceof RehashControlCommand;
-         boolean isClusteredGetCommand = cmd instanceof ClusteredGetCommand;
-         boolean isDistributedExecuteCommand = cmd instanceof SingleRpcCommand && ((SingleRpcCommand)cmd).getCommand() instanceof DistributedExecuteCommand;
 
-         boolean needRetry = !(isRehashCommand || isDistributedExecuteCommand);
-         if (!needRetry) {
-            try {
-               if (!isRehashCommand) {
-                  distributedSync.acquireProcessingLock(false, distributedSyncTimeout, MILLISECONDS);
-                  unlock = true;
+      // We want to retry put operations after the cache has started up
+      // We can't queue read calls and distributed tasks before the cache has been started
+      // as in both cases a the caller needs the response.
+      // RehashControlCommands are the mechanism used for joining the cluster,
+      // so they need to go through immediately (they also ignore the processing lock).
+      boolean isRehashCommand = cmd instanceof StateTransferControlCommand;
+      boolean isClusteredGetCommand = cmd instanceof ClusteredGetCommand;
+      boolean isDistributedExecuteCommand = cmd instanceof SingleRpcCommand && ((SingleRpcCommand)cmd).getCommand() instanceof DistributedExecuteCommand;
 
-                  waitForStart(cmd);
-               }
-               return handleWithWaitForBlocks(cmd, distributedSyncTimeout);
-            } catch (TimeoutException te) {
-               log.ignoreClusterGetCall(cmd, Util.prettyPrintTime(distributedSyncTimeout));
-               return RequestIgnoredResponse.INSTANCE;
+      boolean needRetry = !(isRehashCommand || isDistributedExecuteCommand);
+      if (!needRetry) {
+         try {
+            if (!isRehashCommand) {
+               waitForStart(cmd);
             }
-         } else {
-            boolean unlockRQLock;
-            getRetryQueue(cacheName).retryQueueLock.lock();
-            unlockRQLock = true;
-            try {
-               if (enqueueing(cacheName)) {
-                  return enqueueCommand(cmd);
-               } else {
-                  try {
-                     getRetryQueue(cacheName).retryQueueLock.unlock();
-                     unlockRQLock = false;
-                     switch (howToHandle(cmd)) {
-                        case OK:
-                           distributedSync.acquireProcessingLock(false, timeBeforeWeEnqueueCallForRetry, MILLISECONDS);
-                           unlock = true;
-                           return handleWithWaitForBlocks(cmd, distributedSyncTimeout);
-                        case QUEUE:
-                           return enqueueCommand(cmd);
-                        default:
-                           return RequestIgnoredResponse.INSTANCE;
-                     }
+            return handleWithWaitForBlocks(cmd);
+         } catch (TimeoutException te) {
+            return RequestIgnoredResponse.INSTANCE;
+         }
+      } else {
+         boolean unlockRQLock;
+         getRetryQueue(cacheName).retryQueueLock.lock();
+         unlockRQLock = true;
 
-                  } catch (TimeoutException te) {
-                     // Enqueue this request rather than wait for this lock...
+         if (enqueueing(cacheName)) {
+            return enqueueCommand(cmd);
+         } else {
+            try {
+               getRetryQueue(cacheName).retryQueueLock.unlock();
+               unlockRQLock = false;
+               switch (howToHandle(cmd)) {
+                  case OK:
+                     return handleWithWaitForBlocks(cmd);
+                  case QUEUE:
                      return enqueueCommand(cmd);
-                  }
+                  default:
+                     return RequestIgnoredResponse.INSTANCE;
                }
+
+            } catch (TimeoutException te) {
+               // Enqueue this request rather than wait for this lock...
+               return enqueueCommand(cmd);
             } finally {
                if (unlockRQLock) getRetryQueue(cacheName).retryQueueLock.unlock();
             }
          }
-      } finally {
-         if (unlock) distributedSync.releaseProcessingLock(false);
       }
    }
 
@@ -372,7 +315,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
 
       public Response enqueue(CacheRpcCommand command) throws Throwable {
          retryQueueLock.lock();
-         boolean unlock = false;
+
          try {
             if (enqueueing) {
                log.tracef("Enqueueing command %s since we are enqueueing.", command);
@@ -385,9 +328,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
                      enqueuedBlocker.close();
                      return enqueue(command);
                   } else {
-                     distributedSync.acquireProcessingLock(false, timeBeforeWeEnqueueCallForRetry, MILLISECONDS);
-                     unlock = true;
-                     return handleWithWaitForBlocks(command, distributedSyncTimeout);
+                     return handleWithWaitForBlocks(command);
                   }
                } catch (TimeoutException te) {
                   enqueueing = true;
@@ -396,7 +337,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
                }
             }
          } finally {
-            if (unlock) distributedSync.releaseProcessingLock(false);
             retryQueueLock.unlock();
          }
       }
@@ -409,8 +349,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
             try {
                c = queue.take();
                waitForStart(c);
-               distributedSync.acquireProcessingLock(false, distributedSyncTimeout, MILLISECONDS);
-               unlock = true;
 
                handleInternal(c);
                retryQueueLock.lock();
@@ -426,8 +364,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
                interrupt();
             } catch (Throwable throwable) {
                log.exceptionHandlingCommand(c, throwable);
-            } finally {
-               if (unlock) distributedSync.releaseProcessingLock(false);
             }
          }
       }

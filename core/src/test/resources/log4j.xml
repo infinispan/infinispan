@@ -29,16 +29,12 @@
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
 
    <!-- A time/date based rolling appender -->
-   <appender name="FILE" class="org.apache.log4j.DailyRollingFileAppender">
+   <appender name="FILE" class="org.apache.log4j.FileAppender">
       <param name="File" value="infinispan.log"/>
+   <!--<appender name="FILE" class="org.infinispan.util.logging.log4j.CompressedFileAppender">-->
+      <!--<param name="File" value="infinispan.log.gz"/>-->
       <param name="Append" value="false"/>
 
-      <!-- Rollover at midnight each day -->
-      <param name="DatePattern" value="'.'yyyy-MM-dd"/>
-
-      <!-- Rollover at the top of each hour
-         <param name="DatePattern" value="'.'yyyy-MM-dd-HH"/>
-      -->
       <param name="Threshold" value="TRACE"/>
 
       <layout class="org.apache.log4j.PatternLayout">
@@ -74,6 +70,10 @@
       <priority value="DEBUG"/>
    </category>
 
+   <category name="org.infinispan.marshall">
+      <priority value="WARN"/>
+   </category>
+
    <category name="org.infinispan.profiling">
       <priority value="WARN"/>
    </category>
@@ -99,7 +99,7 @@
    </category>
 
    <category name="org.jgroups">
-      <priority value="WARN"/>
+      <priority value="DEBUG"/>
    </category>
 
    <!-- ======================= -->

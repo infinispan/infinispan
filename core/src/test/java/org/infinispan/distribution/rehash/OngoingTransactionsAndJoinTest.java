@@ -23,7 +23,7 @@
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.control.RehashControlCommand;
+import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -310,15 +310,15 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       @Override
       public Response handle(CacheRpcCommand cmd, Address origin) throws Throwable {
          boolean notifyRehashStarted = false;
-         if (cmd instanceof RehashControlCommand) {
-            RehashControlCommand rcc = (RehashControlCommand) cmd;
+         if (cmd instanceof StateTransferControlCommand) {
+            StateTransferControlCommand rcc = (StateTransferControlCommand) cmd;
             log.debugf("Intercepted command: %s", cmd);
             switch (rcc.getType()) {
                case APPLY_STATE:
                   txsReady.await();
                   notifyRehashStarted = true;
                   break;
-               case NODE_PUSH_COMPLETED:
+               case PUSH_COMPLETED:
                   joinEnded.countDown();
                   break;
             }

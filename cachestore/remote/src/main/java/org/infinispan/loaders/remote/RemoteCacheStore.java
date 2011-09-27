@@ -157,7 +157,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
       StreamingMarshaller marshaller = getMarshaller();
 
       if (marshaller == null) {throw new IllegalStateException("Null marshaller not allowed!");}
-      remoteCacheManager = new RemoteCacheManager(marshaller, config.getHotRodClientProperties());
+      remoteCacheManager = new RemoteCacheManager(marshaller, config.getHotRodClientProperties(), config.getAsyncExecutorFactory());
       if (config.getRemoteCacheName().equals(CacheContainer.DEFAULT_CACHE_NAME))
          remoteCache = remoteCacheManager.getCache();
       else

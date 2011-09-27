@@ -27,8 +27,6 @@ import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.NonTransactionalInvocationContextContainer;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.notifications.cachelistener.event.*;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -53,8 +51,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       n = new CacheNotifierImpl();
       mockCache = createNiceMock(Cache.class);
       EasyMock.replay(mockCache);
-      InvocationContextContainer icc = new NonTransactionalInvocationContextContainer();
-      n.injectDependencies(icc, mockCache);
+      n.injectDependencies(mockCache);
       cl = new CacheListener();
       n.start();
       n.addListener(cl);
