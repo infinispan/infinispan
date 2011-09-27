@@ -23,8 +23,6 @@
 
 package org.infinispan.commands;
 
-import org.infinispan.Cache;
-import org.infinispan.DecoratedCache;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -57,8 +55,7 @@ public class RemoveCacheCommand extends BaseRpcCommand {
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      Cache<?, ?> cache = new DecoratedCache<Object, Object>(cacheManager.getCache(cacheName).getAdvancedCache(), Flag.REMOVE_DATA_ON_STOP);
-      cache.stop();
+      cacheManager.getCache(cacheName).getAdvancedCache().withFlags(Flag.REMOVE_DATA_ON_STOP).stop();
       registry.removeCache(cacheName);
       return null;
    }

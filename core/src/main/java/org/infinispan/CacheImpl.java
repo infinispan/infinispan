@@ -139,12 +139,6 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    private RecoveryManager recoveryManager;
    private TransactionCoordinator txCoordinator;
 
-   private final ThreadLocal<PreInvocationContext> preInvocationContextHolder = new ThreadLocal<PreInvocationContext>() {
-      protected PreInvocationContext initialValue() {
-         return new PreInvocationContext();
-      }
-   };
-
    public CacheImpl(String name) {
       this.name = name;
    }
@@ -332,10 +326,6 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          EnumSet<Flag> flags = EnumSet.of(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ);
          if (explicitFlags != null && !explicitFlags.isEmpty()) {
             flags.addAll(explicitFlags);
-         } else {
-            // we now need to check the ThreadLocal for any flags also set with withFlag() over here.
-            PreInvocationContext pic = preInvocationContextHolder.get();
-            if (!pic.flags.isEmpty()) flags.addAll(pic.flags);
          }
 
          // if the entry exists then this should be a no-op.
@@ -390,25 +380,9 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    private InvocationContext setInvocationContextFlagsAndClassLoader(InvocationContext ctx, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      PreInvocationContext pic = null;
-      if (explicitFlags == null) {
-         // fall back to getting potential flags from ThreadLocal
-         pic = preInvocationContextHolder.get();
-         if (!pic.flags.isEmpty()) ctx.setFlags(pic.flags);
-      } else {
-         ctx.setFlags(explicitFlags);
-      }
+      if (explicitFlags != null) ctx.setFlags(explicitFlags);
+      if (explicitClassLoader != null) ctx.setClassLoader(explicitClassLoader);
 
-      if (explicitClassLoader == null) {
-         // Either set per-invocation, or configured classloader
-         if (pic == null) pic = preInvocationContextHolder.get();
-         ClassLoader cl = pic.classLoader != null ? pic.classLoader : getClassLoader();
-         ctx.setClassLoader(cl);
-      } else {
-         ctx.setClassLoader(explicitClassLoader);
-      }
-
-      if (pic != null) pic.reset();
       return ctx;
    }
 
@@ -804,7 +778,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    private EnumSet<Flag> mergeFlags(EnumSet<Flag> f) {
       if (f == null || f.isEmpty())
-         return preInvocationContextHolder.get() == null ? null : preInvocationContextHolder.get().flags;
+         return EnumSet.noneOf(Flag.class);
       else
          return f;
    }
@@ -860,12 +834,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    public AdvancedCache<K, V> withFlags(Flag... flags) {
-      if (flags != null && flags.length > 0) {
-         PreInvocationContext pic = preInvocationContextHolder.get();
-         // we will also have a valid PIC value because of initialValue()
-         pic.add(flags);
-      }
-      return this;
+      return new DecoratedCache<K, V>(this, flags);
    }
 
    private Transaction getOngoingTransaction() {
@@ -876,29 +845,6 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       }
    }
 
-   private static final class PreInvocationContext {
-      private EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
-      private ClassLoader classLoader;
-
-      private PreInvocationContext() {
-      }
-
-      private void add(Flag[] newFlags) {
-         for (Flag f : newFlags) {
-            flags.add(f);
-         }
-      }
-
-      public void reset() {
-         flags.clear();
-         classLoader = null;
-      }
-
-      public void setClassLoader(ClassLoader classLoader) {
-         this.classLoader = classLoader;
-      }
-   }
-
    @Override
    public ClassLoader getClassLoader() {
       return config.getClassLoader();
@@ -906,12 +852,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @Override
    public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      if (classLoader == null)
-         throw new NullPointerException("Class loader cannot be null");
-
-      PreInvocationContext pic = preInvocationContextHolder.get();
-      pic.setClassLoader(classLoader);
-      return this;
+      return new DecoratedCache<K, V>(this, classLoader);
    }
 
    @Override
