@@ -79,11 +79,12 @@
 
    <default>
       <locking concurrencyLevel="100" lockAcquisitionTimeout="1000"/>
+      <transaction transactionMode="NON_TRANSACTIONAL"/>
       <jmxStatistics enabled="false"/>
    </default>
 
    <namedCache name="transactional">
-      <transaction useEagerLocking="true" eagerLockSingleNode="true"/>
+      <transaction useEagerLocking="true" eagerLockSingleNode="true" transactionMode="TRANSACTIONAL"/>
    </namedCache>
 
    <namedCache name="transactional2">
