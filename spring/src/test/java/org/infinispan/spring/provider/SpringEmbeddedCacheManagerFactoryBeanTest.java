@@ -53,6 +53,7 @@ import org.testng.annotations.Test;
  * </p>
  * 
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Marius Bogoevici
  * 
  */
 @Test(testName = "spring.provider.SpringEmbeddedCacheManagerFactoryBeanTest", groups = "unit")
@@ -106,7 +107,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
                "getObject() should have returned a valid SpringEmbeddedCacheManager, configured using the configuration file "
                         + "set on SpringEmbeddedCacheManagerFactoryBean. However, it returned null.",
                springEmbeddedCacheManager);
-      final SpringCache<Object, Object> cacheDefinedInCustomConfiguration = springEmbeddedCacheManager
+      final SpringCache cacheDefinedInCustomConfiguration = springEmbeddedCacheManager
                .getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
       final Configuration configuration = cacheDefinedInCustomConfiguration.getNativeCache()
                .getConfiguration();

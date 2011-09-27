@@ -8,6 +8,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
+import org.infinispan.spring.provider.SpringCache;
 import org.infinispan.spring.provider.SpringEmbeddedCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -29,6 +30,7 @@ import org.testng.annotations.Test;
  * </p>
  * 
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Marius Bogoevici
  * @since 5.1
  */
 @Test(testName = "spring.provider.CachingBookDaoContextTest", groups = "integration")
@@ -141,7 +143,7 @@ public class CachingBookDaoContextTest extends AbstractTestNGSpringContextTests 
                + ") should have removed updated book from cache";
    }
 
-   private Cache<Object, Object> booksCache() {
+   private Cache<?,?> booksCache() {
       return this.booksCacheManager.getCache("books").getNativeCache();
    }
 }

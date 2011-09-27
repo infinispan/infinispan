@@ -422,18 +422,18 @@ public class ConfigurationOverridesTest {
    @Test
    public final void configurationOverridesShouldOverrideEvictionWakeUpIntervalPropIfExplicitlySet()
             throws Exception {
-      final long expectedEvictionWakeUpInterval = 100000L;
+      final long expectedExpirationWakeUpInterval = 100000L;
 
       final ConfigurationOverrides objectUnderTest = new ConfigurationOverrides();
-      objectUnderTest.setEvictionWakeUpInterval(expectedEvictionWakeUpInterval);
+      objectUnderTest.setExpirationWakeUpInterval(expectedExpirationWakeUpInterval);
       final Configuration defaultConfiguration = new Configuration();
       objectUnderTest.applyOverridesTo(defaultConfiguration);
 
       AssertJUnit
                .assertEquals(
                         "ConfigurationOverrides should have overridden default value with explicitly set EvictionWakeUpInterval property. However, it didn't.",
-                        expectedEvictionWakeUpInterval,
-                        defaultConfiguration.getEvictionWakeUpInterval());
+                        expectedExpirationWakeUpInterval,
+                        defaultConfiguration.getExpirationWakeUpInterval());
    }
 
    /**
