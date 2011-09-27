@@ -14,6 +14,6 @@ set CP=..\modules\memcached\infinispan-server-memcached.jar;%CP%
 set CP=..\modules\hotrod\infinispan-server-hotrod.jar;%CP%
 set CP=..\modules\websocket\infinispan-server-websocket.jar;%CP%
 
-java -classpath "%CP%" -Dbind.address=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=..\etc\log4j.xml org.infinispan.server.core.Main %*
+java -classpath "%CP%" -Djgroups.bind_addr=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=..\etc\log4j.xml org.infinispan.server.core.Main %*
 
 :fileEnd

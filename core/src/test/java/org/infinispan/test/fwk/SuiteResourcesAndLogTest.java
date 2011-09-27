@@ -44,7 +44,6 @@ public class SuiteResourcesAndLogTest {
    public void printEnvInformation() {
       log("~~~~~~~~~~~~~~~~~~~~~~~~~ ENVIRONMENT INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");      
       log("jgroups.bind_addr = " + System.getProperty("jgroups.bind_addr"));
-      log("bind.address = " + System.getProperty("bind.address"));
       log("java.runtime.version = " + System.getProperty("java.runtime.version"));
       log("java.runtime.name =" + System.getProperty("java.runtime.name"));
       log("java.vm.version = " + System.getProperty("java.vm.version"));

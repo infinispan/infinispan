@@ -19,4 +19,4 @@ for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\modules\lucene-directory-d
         )
 set my_classpath=%my_classpath:~1%
 
-java -cp "%my_classpath%" -Dbind.address=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=..\etc\log4j.xml org.infinispan.lucenedemo.DemoDriver
+java -cp "%my_classpath%" -Djgroups.bind_addr=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=..\etc\log4j.xml org.infinispan.lucenedemo.DemoDriver

@@ -451,7 +451,7 @@
                      <value>${infinispan.test.jgroups.protocol}</value>
                   </property>
                   <property>
-                     <name>bind.address</name>
+                     <name>jgroups.bind_addr</name>
                      <value>127.0.0.1</value>
                   </property>
                   <property>
