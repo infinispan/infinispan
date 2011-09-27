@@ -1652,7 +1652,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       protected LockingMode lockingMode = LockingMode.OPTIMISTIC;
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "getTransactionMode")
+      @XmlAttribute
       protected TransactionMode transactionMode = TransactionMode.TRANSACTIONAL;
+
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "isTransactionAutoCommit")
       protected boolean autoCommit = true;
