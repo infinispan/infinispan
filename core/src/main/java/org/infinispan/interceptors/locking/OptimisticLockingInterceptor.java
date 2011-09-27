@@ -132,29 +132,19 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
       @Override
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-         boolean notWrapped = false;
          for (Object key : dataContainer.keySet()) {
             lockKey(ctx, key);
-            entryFactory.wrapEntryForClear(ctx, key);
-            notWrapped = true;
          }
-         if (notWrapped)
-            invokeNextInterceptor(ctx, command);
          return null;
       }
 
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-         boolean notWrapped = false;
          for (Object key : command.getMap().keySet()) {
             if (cll.localNodeIsOwner(key)) {
                lockKey(ctx, key);
-               entryFactory.wrapEntryForPut(ctx, key, null, true);
-               notWrapped = true;
             }
          }
-         if (notWrapped)
-            invokeNextInterceptor(ctx, command);
          return null;
       }
 
@@ -162,8 +152,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
-            entryFactory.wrapEntryForRemove(ctx, command.getKey());
-            invokeNextInterceptor(ctx, command);
          }
          return null;
       }
@@ -172,8 +160,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
-            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent());
-            invokeNextInterceptor(ctx, command);
          }
          return null;
       }
@@ -182,8 +168,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
-            entryFactory.wrapEntryForReplace(ctx, command.getKey());
-            invokeNextInterceptor(ctx, command);
          }
          return null;
       }
