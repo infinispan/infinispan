@@ -26,6 +26,7 @@ import java.io.IOException;
 
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -47,7 +48,8 @@ public final class InfinispanIndexOutput extends IndexOutput {
    private static final boolean trace = log.isTraceEnabled();
 
    private final int bufferSize;
-   private final AdvancedCache chunksCache;
+   private final Cache chunksCacheLockSkipping;
+   private final Cache chunksCacheForStorage;
    private final AdvancedCache metadataCache;
    private final FileMetadata file;
    private final FileCacheKey fileKey;
@@ -66,7 +68,8 @@ public final class InfinispanIndexOutput extends IndexOutput {
 
    public InfinispanIndexOutput(final AdvancedCache metadataCache, final AdvancedCache chunksCache, final FileCacheKey fileKey, final int bufferSize, final FileListOperations fileList) {
       this.metadataCache = metadataCache;
-      this.chunksCache = chunksCache;
+      this.chunksCacheLockSkipping = chunksCache.withFlags(Flag.SKIP_LOCKING);
+      this.chunksCacheForStorage = chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING);
       this.fileKey = fileKey;
       this.bufferSize = bufferSize;
       this.fileOps = fileList;
@@ -78,12 +81,12 @@ public final class InfinispanIndexOutput extends IndexOutput {
       }
    }
    
-   private static byte[] getChunkById(AdvancedCache cache, FileCacheKey fileKey, int chunkNumber, int bufferSize, FileMetadata file) {
+   private byte[] getChunkById(FileCacheKey fileKey, int chunkNumber, int bufferSize, FileMetadata file) {
       if (file.getNumberOfChunks() <= chunkNumber) {
          return new byte[bufferSize];
       }
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
-      byte[] readBuffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
+      byte[] readBuffer = (byte[]) chunksCacheLockSkipping.get(key);
       if (readBuffer==null) {
          return new byte[bufferSize];
       }
@@ -109,7 +112,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
       storeCurrentBuffer(false);// save data first
       currentChunkNumber++;
       // check if we have to create new chunk, or get already existing in cache for modification
-      buffer = getChunkById(chunksCache, fileKey, currentChunkNumber, bufferSize, file);
+      buffer = getChunkById(fileKey, currentChunkNumber, bufferSize, file);
       positionInBuffer = 0;
    }
 
@@ -178,7 +181,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
    private void storeBufferAsChunk(final byte[] bufferToFlush, final int chunkNumber) {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
       if (trace) log.tracef("Storing segment chunk: %s", key);
-      chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(key, bufferToFlush);
+      chunksCacheForStorage.put(key, bufferToFlush);
    }
 
    private void resizeFileIfNeeded() {
@@ -189,7 +192,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
 
    @Override
    public void close() {
-      final boolean microbatch = chunksCache.startBatch();
+      final boolean microbatch = chunksCacheLockSkipping.startBatch();
       if (currentChunkNumber==0) {
          //store current chunk, possibly resizing it
          storeCurrentBuffer(true);
@@ -205,7 +208,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
       file.touch();
       metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_LOAD, Flag.SKIP_LOCKING).put(fileKey, file);
       fileOps.addFileName(this.fileKey.getFileName());
-      if (microbatch) chunksCache.endBatch(true);
+      if (microbatch) chunksCacheLockSkipping.endBatch(true);
       if (trace) {
          log.tracef("Closed IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
       }
@@ -227,7 +230,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
       if (requestedChunkNumber != currentChunkNumber) {
          storeCurrentBuffer(false);
          if (requestedChunkNumber != 0) {
-            buffer = getChunkById(chunksCache, fileKey, requestedChunkNumber, bufferSize, file);
+            buffer = getChunkById(fileKey, requestedChunkNumber, bufferSize, file);
          }
          else {
             buffer = firstChunkBuffer;

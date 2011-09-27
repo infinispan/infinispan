@@ -26,6 +26,7 @@ import java.io.IOException;
 
 import org.apache.lucene.store.IndexInput;
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
 import org.infinispan.util.logging.Log;
@@ -46,7 +47,7 @@ final public class InfinispanIndexInput extends IndexInput {
    private static final Log log = LogFactory.getLog(InfinispanIndexInput.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final AdvancedCache chunksCache;
+   private final Cache chunksCacheSkippingLocks;
    private final FileCacheKey fileKey;
    private final int chunkSize;
    private final SegmentReadLocker readLocks;
@@ -61,7 +62,7 @@ final public class InfinispanIndexInput extends IndexInput {
    private boolean isClone;
 
    public InfinispanIndexInput(final AdvancedCache chunksCache, final FileCacheKey fileKey, final FileMetadata fileMetadata, final SegmentReadLocker readLocks) {
-      this.chunksCache = chunksCache;
+      this.chunksCacheSkippingLocks = chunksCache.withFlags(Flag.SKIP_LOCKING);
       this.fileKey = fileKey;
       this.chunkSize = fileMetadata.getBufferSize();
       this.fileLength = fileMetadata.getSize();
@@ -133,7 +134,7 @@ final public class InfinispanIndexInput extends IndexInput {
 
    private void setBufferToCurrentChunk() throws IOException {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), filename, currentLoadedChunk);
-      buffer = (byte[]) chunksCache.withFlags(Flag.SKIP_LOCKING).get(key);
+      buffer = (byte[]) chunksCacheSkippingLocks.get(key);
       if (buffer == null) {
          throw new IOException("Read past EOF: Chunk value could not be found for key " + key);
       }
@@ -144,7 +145,7 @@ final public class InfinispanIndexInput extends IndexInput {
    // RAMDirectory teaches to position the cursor to the end of previous chunk in this case
    private void setBufferToCurrentChunkIfPossible() {
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), filename, currentLoadedChunk);
-      buffer = (byte[]) chunksCache.withFlags(Flag.SKIP_LOCKING).get(key);
+      buffer = (byte[]) chunksCacheSkippingLocks.get(key);
       if (buffer == null) {
          currentLoadedChunk--;
          bufferPosition = chunkSize;
