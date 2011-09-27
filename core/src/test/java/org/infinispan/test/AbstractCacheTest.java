@@ -90,13 +90,23 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
    }
 
    public static Configuration getDefaultClusteredConfig(Configuration.CacheMode mode, boolean transactional) {
-      return TestCacheManagerFactory.getDefaultConfiguration(transactional).fluent()
-         .mode(mode)
-         .clustering()
-            .sync()
-               .stateRetrieval().fetchInMemoryState(false)
-            .transaction().syncCommitPhase(true).syncRollbackPhase(true)
-         .build();
+      if (mode.isSynchronous()) {
+         return TestCacheManagerFactory.getDefaultConfiguration(transactional).fluent()
+            .mode(mode)
+            .clustering()
+               .sync()
+                  .stateRetrieval().fetchInMemoryState(false)
+               .transaction().syncCommitPhase(true).syncRollbackPhase(true)
+            .build();
+      } else {
+         return TestCacheManagerFactory.getDefaultConfiguration(transactional).fluent()
+            .mode(mode)
+            .clustering()
+               .async()
+                  .stateRetrieval().fetchInMemoryState(false)
+               .transaction().syncCommitPhase(true).syncRollbackPhase(true)
+            .build();
+      }
    }
 
    protected boolean xor(boolean b1, boolean b2) {

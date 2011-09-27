@@ -329,7 +329,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          if (ongoingTransaction != null)
             transactionManager.suspend();
 
-         Set<Flag> flags = EnumSet.of(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ);
+         EnumSet<Flag> flags = EnumSet.of(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ);
          if (explicitFlags != null && !explicitFlags.isEmpty()) {
             flags.addAll(explicitFlags);
          } else {
@@ -339,7 +339,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          }
 
          // if the entry exists then this should be a no-op.
-         putIfAbsent(key, value, defaultLifespan, TimeUnit.MILLISECONDS, defaultMaxIdleTime, TimeUnit.MILLISECONDS, explicitFlags, explicitClassLoader);
+         putIfAbsent(key, value, defaultLifespan, TimeUnit.MILLISECONDS, defaultMaxIdleTime, TimeUnit.MILLISECONDS, flags, explicitClassLoader);
       } catch (Exception e) {
          if (log.isDebugEnabled()) log.debug("Caught exception while doing putForExternalRead()", e);
       } finally {
@@ -790,10 +790,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
             @Override
             public V call() throws Exception {
                assertKeyNotNull(key);
-               InvocationContext ctx = getInvocationContext(tx, explicitFlags, explicitClassLoader);
-               if (appliedFlags != null)
-                  ctx.setFlags(appliedFlags);
-
+               InvocationContext ctx = getInvocationContext(tx, appliedFlags, explicitClassLoader);
                GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, appliedFlags);
                Object ret = invoker.invoke(ctx, command);
                f.notifyDone();
