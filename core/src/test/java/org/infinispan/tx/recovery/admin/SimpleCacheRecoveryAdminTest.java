@@ -65,7 +65,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
             .globalJmxStatistics()
             .mBeanServerLookup(new PerThreadMBeanServerLookup())
             .jmxDomain(JMX_DOMAIN).allowDuplicateDomains(true);
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, false).fluent()
+      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true).fluent()
             .transaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class).recovery()
             .jmxStatistics()
             .locking().useLockStriping(false)
@@ -81,7 +81,8 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
       cache(0, "test");
       cache(1, "test");
       cache(2, "test");
-      TestingUtil.blockUntilViewsReceived(600000, cache(0, "test"), cache(1, "test"), cache(2, "test"));
+
+      TestingUtil.waitForInitRehashToComplete(caches("test"));
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
 
@@ -92,8 +93,10 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
       tx1 = beginAndSuspendTx(cache(2, "test"));
       prepareTransaction(tx1);
 
+      log.trace("Shutting down a cache " + address(cache(2, "test")));
+
       TestingUtil.killCacheManagers(manager(2));
-      TestingUtil.blockUntilViewsReceived(600000, false, cache(0, "test"), cache(1, "test"));
+      TestingUtil.blockUntilViewsReceived(90000, false, cache(0, "test"), cache(1, "test"));
 
    }
 
