@@ -746,19 +746,18 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    NotifyingFuture<V> getAsync(final K key, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
       final Transaction tx = getOngoingTransaction();
       final NotifyingNotifiableFuture f = new DeferredReturnFuture();
-      EnumSet<Flag> flags = mergeFlags(explicitFlags);
 
       // Optimization to not start a new thread only when the operation is cheap:
-      if (asyncSkipsThread(flags, key)) {
+      if (asyncSkipsThread(explicitFlags, key)) {
          return wrapInFuture(get(key));
       } else {
          // Make sure the flags are cleared
          final EnumSet<Flag> appliedFlags;
-         if (flags == null) {
+         if (explicitFlags == null) {
             appliedFlags = null;
          } else {
-            appliedFlags = flags.clone();
-            flags.clear();
+            appliedFlags = explicitFlags.clone();
+            explicitFlags.clear();
          }
          Callable<V> c = new Callable<V>() {
             @Override
@@ -774,13 +773,6 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          f.setNetworkFuture(asyncExecutor.submit(c));
          return f;
       }
-   }
-
-   private EnumSet<Flag> mergeFlags(EnumSet<Flag> f) {
-      if (f == null || f.isEmpty())
-         return EnumSet.noneOf(Flag.class);
-      else
-         return f;
    }
 
    /**
