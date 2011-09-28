@@ -27,7 +27,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import org.infinispan.CacheException;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -82,7 +81,11 @@ public class JGroupsAddress implements Address {
    public static class Externalizer extends AbstractExternalizer<JGroupsAddress> {
       @Override
       public void writeObject(ObjectOutput output, JGroupsAddress address) throws IOException {
-         org.jgroups.util.Util.writeAddress(address.address, output);
+         try {
+            org.jgroups.util.Util.writeAddress(address.address, output);
+         } catch (Exception e) {
+            throw new IOException(e);
+         }
       }
 
       @Override
@@ -90,13 +93,10 @@ public class JGroupsAddress implements Address {
          JGroupsAddress address = new JGroupsAddress();
          try {
             address.address = org.jgroups.util.Util.readAddress(unmarshaller);
-         // TODO: Remove catches once JGroups removes them
-         } catch (IllegalAccessException e) {
-            throw new CacheException(e);
-         } catch (InstantiationException e) {
-            throw new CacheException(e);
+            return address;
+         } catch (Exception e) {
+            throw new IOException(e);
          }
-         return address;
       }
 
       @Override
