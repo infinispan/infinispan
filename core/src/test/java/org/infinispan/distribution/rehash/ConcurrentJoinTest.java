@@ -82,7 +82,7 @@ public class ConcurrentJoinTest extends RehashTestBase {
    @SuppressWarnings("unchecked")
    void waitForRehashCompletion() {
       List<CacheContainer> allCacheManagers = new ArrayList<CacheContainer>(cacheManagers);
-      allCacheManagers.addAll(joinerManagers);
+      // Collection already contains all cache managers, no need to add more
       TestingUtil.blockUntilViewsReceived(60000, false, allCacheManagers);
       waitForJoinTasksToComplete(SECONDS.toMillis(480), joiners.toArray(new Cache[NUM_JOINERS]));
       int[] joinersPos = new int[NUM_JOINERS];
