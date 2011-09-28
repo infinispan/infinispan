@@ -45,24 +45,12 @@
 
       <dependency>
          <groupId>org.hibernate</groupId>
-         <artifactId>hibernate-search</artifactId>
+         <artifactId>hibernate-search-engine</artifactId>
          <version>${version.hibernate.search}</version>
          <exclusions>
              <exclusion>
-                 <artifactId>antlr</artifactId>
-                 <groupId>antlr</groupId>
-             </exclusion>
-             <exclusion>
-                 <artifactId>hibernate-jpa-2.0-api</artifactId>
-                 <groupId>org.hibernate.javax.persistence</groupId>
-             </exclusion>
-             <exclusion>
-                 <artifactId>dom4j</artifactId>
-                 <groupId>dom4j</groupId>
-             </exclusion>
-             <exclusion>
-                 <artifactId>hibernate-search-analyzers</artifactId>
                  <groupId>org.hibernate</groupId>
+                 <artifactId>hibernate-search-analyzers</artifactId>
              </exclusion>
          </exclusions>
       </dependency>
