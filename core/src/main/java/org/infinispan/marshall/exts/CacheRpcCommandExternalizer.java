@@ -21,8 +21,8 @@ package org.infinispan.marshall.exts;
 
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.RemoveCacheCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -46,7 +46,6 @@ import org.infinispan.marshall.BufferSizePredictorFactory;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.jboss.ExtendedRiverUnmarshaller;
-import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.Util;
 
 import java.io.ByteArrayInputStream;
@@ -68,7 +67,7 @@ public class CacheRpcCommandExternalizer extends AbstractExternalizer<CacheRpcCo
    private ReplicableCommandExternalizer commandExt = new ReplicableCommandExternalizer();
 
    public void inject(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry gcr) {
-      commandExt.inject(cmdFactory);
+      commandExt.inject(cmdFactory, gcr);
       this.gcr = gcr;
    }
 
@@ -82,7 +81,7 @@ public class CacheRpcCommandExternalizer extends AbstractExternalizer<CacheRpcCo
             RemoveRecoveryInfoCommand.class, GetInDoubtTransactionsCommand.class,
             GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class);
       // Only interested in cache specific replicable commands
-      coreCommands.addAll(ModuleProperties.moduleCacheRpcCommands());
+      coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;
    }
 

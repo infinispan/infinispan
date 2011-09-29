@@ -280,7 +280,7 @@ public class ExternalizerTable implements ObjectTable {
    private void loadInternalMarshallables(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry gcr) {
       for (AdvancedExternalizer ext : internalExternalizers) {
          if (ext instanceof ReplicableCommandExternalizer)
-            ((ReplicableCommandExternalizer) ext).inject(cmdFactory);
+            ((ReplicableCommandExternalizer) ext).inject(cmdFactory, gcr);
          if (ext instanceof CacheRpcCommandExternalizer)
             ((CacheRpcCommandExternalizer) ext).inject(cmdFactory, gcr);
          if (ext instanceof MarshalledValue.Externalizer)

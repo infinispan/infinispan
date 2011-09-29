@@ -33,7 +33,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -72,21 +71,21 @@ public class ComponentRegistry extends AbstractComponentRegistry {
     * @param globalComponents Shared Component Registry to delegate to
     */
    public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache cache,
-                            GlobalComponentRegistry globalComponents) {
+                            GlobalComponentRegistry globalComponents, ClassLoader defaultClassLoader) {
+      super(defaultClassLoader); // registers the default classloader
       try {
          this.cacheName = cacheName;
          if (cacheName == null) throw new ConfigurationException("Cache name cannot be null!");
          if (globalComponents == null) throw new NullPointerException("GlobalComponentRegistry cannot be null!");
          this.globalComponents = globalComponents;
 
-         registerDefaultClassLoader(null);
          registerComponent(this, ComponentRegistry.class);
          registerComponent(configuration, Configuration.class);
          registerComponent(new BootstrapFactory(cache, configuration, this), BootstrapFactory.class);
 
          // register any module-specific command initializers
          // Modules are on the same classloader as Infinispan
-         Map<Byte, ModuleCommandInitializer> initializers = ModuleProperties.moduleCommandInitializers(null);
+         Map<Byte, ModuleCommandInitializer> initializers = globalComponents.getModuleCommandInitializers();
          if (initializers != null && !initializers.isEmpty()) {
             registerNonVolatileComponent(initializers, MODULE_COMMAND_INITIALIZERS);
             for (ModuleCommandInitializer mci: initializers.values()) registerNonVolatileComponent(mci, mci.getClass());
@@ -178,7 +177,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       super.start();
 
       if (needToNotify && state == ComponentStatus.RUNNING) {
-         for (ModuleLifecycle l : moduleLifecycles) {
+         for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
             l.cacheStarted(this, cacheName);
          } 
          cacheManagerNotifier.notifyCacheStarted(cacheName);
@@ -186,7 +185,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    void notifyCacheStarting(Configuration configuration) {
-      for (ModuleLifecycle l : moduleLifecycles) {
+      for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
          l.cacheStarting(this, configuration, cacheName);
       }
    }
@@ -196,13 +195,13 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       if (state.stopAllowed())globalComponents.unregisterNamedComponentRegistry(cacheName);
       boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
       if (needToNotify) {
-         for (ModuleLifecycle l : moduleLifecycles) {
+         for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
             l.cacheStopping(this, cacheName);
          }
       }
       super.stop();
       if (state == ComponentStatus.TERMINATED && needToNotify) {
-         for (ModuleLifecycle l : moduleLifecycles) {
+         for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
             l.cacheStopped(this, cacheName);
          }
          cacheManagerNotifier.notifyCacheStopped(cacheName);

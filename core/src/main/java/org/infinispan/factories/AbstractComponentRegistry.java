@@ -33,8 +33,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
-import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.reflect.AnnotatedMethodCache;
@@ -100,11 +98,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    // component and method containers
    private final Map<String, Component> componentLookup = new HashMap<String, Component>(1);
 
-   // Modules must be on the same classloader as Infinispan 
-   // TODO revise this assumption
-   protected static List<ModuleLifecycle> moduleLifecycles = ModuleProperties.resolveModuleLifecycles(null);
-
    protected volatile ComponentStatus state = ComponentStatus.INSTANTIATED;
+   protected final ClassLoader defaultClassLoader;
 
    /**
     * Retrieves the state of the registry
@@ -116,6 +111,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    }
 
    protected abstract Log getLog();
+
+   protected AbstractComponentRegistry(ClassLoader classLoader) {
+      defaultClassLoader = registerDefaultClassLoader(classLoader);
+   }
 
    /**
     * Wires an object instance with dependencies annotated with the {@link Inject} annotation, creating more components
@@ -434,10 +433,12 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @param loader a class loader to use by default.  If this is null, the class loader used to load this instance of
     *               ComponentRegistry is used.
     */
-   public void registerDefaultClassLoader(ClassLoader loader) {
-      registerComponent(loader == null ? getClass().getClassLoader() : loader, ClassLoader.class);
+   private ClassLoader registerDefaultClassLoader(ClassLoader loader) {
+      ClassLoader loaderToUse = loader == null ? getClass().getClassLoader() : loader;
+      registerComponent(loaderToUse, ClassLoader.class);
       // make sure the class loader is non-volatile, so it survives restarts.
       componentLookup.get(ClassLoader.class.getName()).survivesRestarts = true;
+      return loaderToUse;
    }
 
    /**

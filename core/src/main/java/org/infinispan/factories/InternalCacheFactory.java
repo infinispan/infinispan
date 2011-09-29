@@ -87,8 +87,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       this.configuration = configuration;
 
       // injection bootstrap stuff
-      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry);
-      componentRegistry.registerDefaultClassLoader(defaultClassLoader);
+      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, defaultClassLoader);
 
       // Notify any registered module lifecycle listeners that the cache is starting.
       componentRegistry.notifyCacheStarting(configuration);
