@@ -749,7 +749,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
       // Optimization to not start a new thread only when the operation is cheap:
       if (asyncSkipsThread(explicitFlags, key)) {
-         return wrapInFuture(get(key));
+         return wrapInFuture(get(key, explicitFlags, explicitClassLoader));
       } else {
          // Make sure the flags are cleared
          final EnumSet<Flag> appliedFlags;
