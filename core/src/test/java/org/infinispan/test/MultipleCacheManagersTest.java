@@ -76,7 +76,7 @@ import java.util.concurrent.Executors;
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<EmbeddedCacheManager>();
-   private IdentityHashMap<Cache, ReplListener> listeners = new IdentityHashMap<Cache, ReplListener>();
+   protected IdentityHashMap<Cache, ReplListener> listeners = new IdentityHashMap<Cache, ReplListener>();
 
    @BeforeClass (alwaysRun = true)
    public void createBeforeClass() throws Throwable {
