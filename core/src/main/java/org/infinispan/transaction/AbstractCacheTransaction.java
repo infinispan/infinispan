@@ -32,6 +32,7 @@ import org.infinispan.util.BidirectionalMap;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -51,6 +52,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    protected BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries;
    protected GlobalTransaction tx;
    protected Set<Object> affectedKeys = null;
+   private Set<Object> lockedKeys;
+
 
    protected volatile boolean prepared;
 
@@ -83,6 +86,11 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       lookedUpEntries = null;
    }
 
+   @Override
+   public boolean ownsLock(Object key) {
+      return getLockedKeys().contains(key);
+   }
+
    public void setLookedUpEntries(BidirectionalMap<Object, CacheEntry> lookedUpEntries) {
       this.lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(lookedUpEntries);
    }
@@ -93,5 +101,14 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    public void setAffectedKeys(Set<Object> affectedKeys) {
       this.affectedKeys = affectedKeys;
+   }
+
+   public void registerLockedKey(Object key) {
+      if (lockedKeys == null) lockedKeys = new HashSet<Object>(4);
+      lockedKeys.add(key);
+   }
+
+   public Set<Object> getLockedKeys() {
+      return lockedKeys == null ? Collections.emptySet() : lockedKeys;
    }
 }

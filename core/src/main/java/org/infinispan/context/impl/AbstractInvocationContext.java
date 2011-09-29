@@ -149,12 +149,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    }
 
    public boolean hasLockedKey(Object key) {
-      CacheEntry e = lookupEntry(key);
-      if (e == null) {
-         return getLookedUpEntries().containsKey(key); // this will chk if the key is present even if the value is null
-      } else {
-         return e.isChanged();
-      }
+      return getLockedKeys().contains(key);
    }
 
 
@@ -175,15 +170,6 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       } catch (CloneNotSupportedException e) {
          throw new IllegalStateException("Impossible!");
       }
-   }
-
-   public Set<Object> getLockedKeys() {
-      Set<Object> result = new HashSet<Object>();
-      for (Object key : getLookedUpEntries().keySet()) {
-         if (hasLockedKey(key))
-            result.add(key);
-      }
-      return result;
    }
 
    @Override

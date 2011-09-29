@@ -51,7 +51,7 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, false).fluent()
+      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true).fluent()
             .transaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class).recovery()
             .locking().useLockStriping(false)
             .clustering().hash().numOwners(2)

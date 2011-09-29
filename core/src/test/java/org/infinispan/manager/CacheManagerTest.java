@@ -49,7 +49,7 @@ import static org.infinispan.test.TestingUtil.v;
 @Test(groups = "functional", testName = "manager.CacheManagerTest")
 public class CacheManagerTest extends AbstractInfinispanTest {
    public void testDefaultCache() {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
 
       try {
          assert cm.getCache().getStatus() == ComponentStatus.RUNNING;
@@ -77,7 +77,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testClashingNames() {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          Configuration c = new Configuration();
          Configuration firstDef = cm.defineConfiguration("aCache", c);
@@ -89,7 +89,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testStartAndStop() {
-      CacheContainer cm = TestCacheManagerFactory.createLocalCacheManager();
+      CacheContainer cm = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          Cache c1 = cm.getCache("cache1");
          Cache c2 = cm.getCache("cache2");
@@ -110,7 +110,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testDefiningConfigurationValidation() {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          cm.defineConfiguration("cache1", null);
          assert false : "Should fail";
@@ -140,7 +140,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testDefiningConfigurationWithTemplateName() {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
 
       Configuration c = new Configuration();
       c.setIsolationLevel(IsolationLevel.NONE);
@@ -170,7 +170,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testDefiningConfigurationOverridingBooleans() {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       Configuration c = new Configuration();
       c.setUseLazyDeserialization(true);
       Configuration lazy = cm.defineConfiguration("storeAsBinary", c);
@@ -185,7 +185,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testDefineConfigurationTwice() {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          Configuration override = new Configuration();
          override.fluent().invocationBatching();
@@ -201,7 +201,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testGetCacheNames() {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          cm.defineConfiguration("one", new Configuration());
          cm.defineConfiguration("two", new Configuration());
@@ -217,7 +217,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testCacheStopTwice() {
-      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          Cache cache = localCacheManager.getCache();
          cache.put("k", "v");
@@ -229,7 +229,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testCacheManagerStopTwice() {
-      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          Cache cache = localCacheManager.getCache();
          cache.put("k", "v");
@@ -242,7 +242,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testCacheStopManagerStopFollowedByGetCache() {
-      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          Cache cache = localCacheManager.getCache();
          cache.put("k", "v");
@@ -256,7 +256,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testCacheStopManagerStopFollowedByCacheOp() {
-      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          Cache cache = localCacheManager.getCache();
          cache.put("k", "v");

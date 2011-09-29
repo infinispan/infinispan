@@ -23,14 +23,14 @@
 package org.infinispan.tx.recovery;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.tx.dld.DldEagerLockingReplicationTest;
+import org.infinispan.tx.dld.DldPessimisticLockingReplicationTest;
 import org.testng.annotations.Test;
 
 /**
  * @author Mircea.Markus@jboss.com
  */
 @Test (groups = "functional", testName = "tx.recovery.DldEagerLockingAndRecoveryReplicationTest")
-public class DldEagerLockingAndRecoveryReplicationTest extends DldEagerLockingReplicationTest {
+public class DldEagerLockingAndRecoveryReplicationTest extends DldPessimisticLockingReplicationTest {
 
    protected Configuration getConfiguration() throws Exception {
       return super.getConfiguration().fluent().transaction().recovery().build();

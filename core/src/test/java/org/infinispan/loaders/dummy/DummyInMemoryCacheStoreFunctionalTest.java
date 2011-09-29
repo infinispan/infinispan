@@ -43,5 +43,4 @@ public class DummyInMemoryCacheStoreFunctionalTest extends BaseCacheStoreFunctio
          .purgeSynchronously(true); // for more accurate unit testing
       return cfg;
    }
-
 }

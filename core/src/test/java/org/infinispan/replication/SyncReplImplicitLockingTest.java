@@ -26,6 +26,8 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -60,6 +62,7 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       Configuration cfg = getDefaultClusteredConfig(getCacheMode(), true);
+      cfg.fluent().transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
       cfg.setLockAcquisitionTimeout(500);
       cfg.setUseEagerLocking(true);
       createClusteredCaches(2, "testcache", cfg);
@@ -68,11 +71,6 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
    public void testBasicOperation() throws Exception {
       testBasicOperationHelper(false);
       testBasicOperationHelper(true);
-   }
-
-   public void testConcurrentTxLocking() throws Exception {
-      concurrentLockingHelper(false, true);
-      concurrentLockingHelper(true, true);
    }
 
    public void testLocksReleasedWithNoMods() throws Exception {
@@ -119,65 +117,6 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
 		cache1.clear();
 		cache2.clear();
 	}  
-
-   private void concurrentLockingHelper(final boolean sameNode, final boolean useTx)
-         throws Exception {
-      
-      final Cache cache1 = cache(0,"testcache");
-      final Cache cache2 = cache(1,"testcache");
-      
-      assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
-
-      assertNull("Should be null", cache1.get(k));
-      assertNull("Should be null", cache2.get(k));
-      final CountDownLatch latch = new CountDownLatch(1);
-
-      Thread t = new Thread() {
-         @Override
-         public void run() {
-            log.info("Concurrent " + (useTx ? "tx" : "non-tx") + " write started "
-                  + (sameNode ? "on same node..." : "on a different node..."));
-            TransactionManager mgr = null;
-            try {
-               if (useTx) {
-                  mgr = TestingUtil.getTransactionManager(sameNode ? cache1 : cache2);
-                  mgr.begin();
-               }
-               if (sameNode) {
-                  cache1.put(k, "JBC");
-               } else {
-                  cache2.put(k, "JBC");
-               }
-            } catch (Exception e) {
-               if (useTx) {
-                  try {
-                     mgr.commit();
-                  } catch (Exception e1) {
-                  }
-               }
-               latch.countDown();
-            }
-         }
-      };
-
-      String name = "Infinispan";
-      TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
-      mgr.begin();
-      // lock node and start other thread whose write should now block
-      cache1.put(k, name);
-      //automatically locked on another cache node
-      assertLocked(cache2, k);
-      t.start();
-
-      // wait till the put in thread t times out
-      assert latch.await(5, TimeUnit.SECONDS) : "Concurrent put didn't time out!";
-      mgr.commit();
-
-      t.join();
-
-      cache2.remove(k);
-      cache1.clear();cache2.clear();
-   }
 
    private void testBasicOperationHelper(boolean useCommit) throws Exception {
       Cache cache1 = cache(0,"testcache");
@@ -232,4 +171,35 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
       cache2.remove(key4);
    }
 
+   public void testSimpleCommit() throws Throwable{
+      tm(0, "testcache").begin();
+      cache(0, "testcache").put("k","v");
+      tm(0, "testcache").commit();
+      assertEquals(cache(0, "testcache").get("k"), "v");
+      assertEquals(cache(1, "testcache").get("k"), "v");
+      assert !lockManager(0, "testcache").isLocked("k");
+      assert !lockManager(1, "testcache").isLocked("k");
+
+
+      tm(0, "testcache").begin();
+      cache(0, "testcache").put("k","v");
+      cache(0, "testcache").remove("k");
+      tm(0, "testcache").commit();
+      assertEquals(cache(0, "testcache").get("k"), null);
+      assertEquals(cache(1, "testcache").get("k"), null);
+
+      assert !lockManager(0, "testcache").isLocked("k");
+      assert !lockManager(1, "testcache").isLocked("k");
+   }
+
+   public void testSimpleRollabck() throws Throwable{
+      tm(0, "testcache").begin();
+      cache(0, "testcache").put("k","v");
+      tm(0, "testcache").rollback();
+      assert !lockManager(1, "testcache").isLocked("k");
+
+      assertEquals(cache(0, "testcache").get("k"), null);
+      assertEquals(cache(1, "testcache").get("k"), null);
+      assert !lockManager(0, "testcache").isLocked("k");
+   }
 }

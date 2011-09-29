@@ -54,7 +54,7 @@ public class InDoubtXidReturnedOnceTest extends MultipleCacheManagersTest {
       configuration.fluent().hash().numOwners(3);
       configuration.fluent().transaction().recovery();
 
-      createCluster(configuration, false, 4);
+      createCluster(configuration, 4);
       waitForClusterToForm();
    }
 

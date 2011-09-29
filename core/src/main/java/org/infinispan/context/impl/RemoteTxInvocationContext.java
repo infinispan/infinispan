@@ -32,6 +32,7 @@ import org.infinispan.util.BidirectionalMap;
 import javax.transaction.Transaction;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Context to be used for transaction that originated remotely.
@@ -126,7 +127,17 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    @Override
-   public AbstractCacheTransaction getCacheTrasaction() {
+   public AbstractCacheTransaction getCacheTransaction() {
       return remoteTransaction;
+   }
+
+   @Override
+   public Set<Object> getLockedKeys() {
+      return remoteTransaction.getLockedKeys();
+   }
+
+   @Override
+   public void addLockedKey(Object key) {
+      remoteTransaction.registerLockedKey(key);
    }
 }

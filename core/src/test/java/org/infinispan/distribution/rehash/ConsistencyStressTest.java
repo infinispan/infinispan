@@ -92,7 +92,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
       List<EmbeddedCacheManager> cacheManagers = new LinkedList<EmbeddedCacheManager>();
 
       for (int i = 0; i < NUM_NODES; i++)
-         cacheManagers.add(createCacheManager(gc, c, true));
+         cacheManagers.add(createCacheManager(gc, c));
 
       registerCacheManager(cacheManagers.toArray(new EmbeddedCacheManager[NUM_NODES]));
    }

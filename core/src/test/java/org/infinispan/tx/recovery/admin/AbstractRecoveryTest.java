@@ -47,7 +47,7 @@ import static org.testng.Assert.assertEquals;
 public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
 
    protected Configuration defaultRecoveryConfig() {
-      return getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, false).fluent()
+      return getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true).fluent()
             .transaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class).recovery()
             .locking().useLockStriping(false)
             .clustering().hash().numOwners(2).rehashEnabled(false)
@@ -89,7 +89,7 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
    }
 
    protected void checkProperlyCleanup(int managerIndex) {
-      assertEquals(TestingUtil.extractLockManager(cache(managerIndex)).getNumberOfLocksHeld(), 0);
+      assertEquals(TestingUtil.extractLockManager(cache(managerIndex)).getNumberOfLocksHeld(), 0, "For cache " + address(managerIndex) + "(" + managerIndex + ')');
       final TransactionTable tt = TestingUtil.extractComponent(cache(managerIndex), TransactionTable.class);
       eventually(new Condition() {
          @Override

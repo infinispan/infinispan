@@ -30,6 +30,7 @@ import org.infinispan.manager.NamedCacheNotFoundException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 @Test (testName = "remoting.NonExistentCacheTest", groups = "functional")
@@ -48,6 +49,7 @@ public class NonExistentCacheTest extends AbstractInfinispanTest {
       try {
          Configuration c = new Configuration();
          c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+         c.fluent().transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
          GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
          gc.setStrictPeerToPeer(strict);
 

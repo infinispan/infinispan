@@ -69,7 +69,7 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
    }
 
    public void testRegisterLocalCache() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       cacheContainers.add(cm);
       cm.start();
       Configuration configuration = config();

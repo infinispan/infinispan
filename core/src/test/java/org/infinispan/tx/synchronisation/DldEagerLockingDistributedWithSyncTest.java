@@ -24,7 +24,7 @@
 package org.infinispan.tx.synchronisation;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.tx.dld.DldEagerLockingDistributedTest;
+import org.infinispan.tx.dld.DldPessimisticLockingDistributedTest;
 import org.testng.annotations.Test;
 
 /**
@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
  * @since 5.0
  */
 @Test (groups = "functional", testName = "tx.synchronization.DldEagerLockingDistributedWithSyncTest")
-public class DldEagerLockingDistributedWithSyncTest extends DldEagerLockingDistributedTest {
+public class DldEagerLockingDistributedWithSyncTest extends DldPessimisticLockingDistributedTest {
    @Override
    protected Configuration createConfiguration() {
       Configuration configuration = super.createConfiguration();

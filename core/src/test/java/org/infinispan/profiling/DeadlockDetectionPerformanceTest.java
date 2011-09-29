@@ -172,7 +172,7 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
    }
 
    private void runLocalTest() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          Configuration configuration = getConfiguration();
          cm.defineConfiguration("test", configuration);

@@ -1,5 +1,9 @@
 /*
- * Copyright 2011 Red Hat, Inc. and/or its affiliates.
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
+ * contributors as indicated by the @author tags. All rights reserved.
+ * See the copyright.txt in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -8,30 +12,26 @@
  *
  * This software is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301 USA
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 package org.infinispan.tx;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.InvocationContextContainerImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
 
-import javax.transaction.InvalidTransactionException;
-import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.concurrent.CountDownLatch;
@@ -52,19 +52,27 @@ public class StaleLockAfterTxAbortTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultStandaloneConfig(true);
-      return TestCacheManagerFactory.createCacheManager(c, true);
+      c.fluent().transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+      return TestCacheManagerFactory.createCacheManager(c);
    }
 
-   public void doTest() throws InterruptedException, SystemException, InvalidTransactionException {
+   public void doTest() throws Throwable {
       cache.put(k, "value"); // init value
 
       assertNotLocked(cache, k);
 
-      InvocationContextContainerImpl icc = (InvocationContextContainerImpl) TestingUtil.extractComponent(cache, InvocationContextContainer.class);
-      InvocationContext ctx = icc.getInvocationContext(true);
-      LockManager lockManager = TestingUtil.extractComponent(cache, LockManager.class);
-      lockManager.lockAndRecord(k, ctx);
-      ctx.putLookedUpEntry(k, null);
+//      InvocationContextContainerImpl icc = (InvocationContextContainerImpl) TestingUtil.extractComponent(cache, InvocationContextContainer.class);
+//      InvocationContext ctx = icc.getInvocationContext();
+//      LockManager lockManager = TestingUtil.extractComponent(cache, LockManager.class);
+//      lockManager.lockAndRecord(k, ctx);
+//      ctx.putLookedUpEntry(k, null);
+
+      DummyTransactionManager dtm = (DummyTransactionManager) tm();
+      tm().begin();
+      cache.put(k, "some");
+      final DummyTransaction transaction = dtm.getTransaction();
+      transaction.runPrepare();
+      tm().suspend();
 
       // test that the key is indeed locked.
       assertLocked(cache, k);
@@ -81,7 +89,8 @@ public class StaleLockAfterTxAbortTest extends SingleCacheManagerTest {
       transactionThread.tm.rollback();
 
       // now release the lock
-      lockManager.releaseLocks(ctx);
+      tm().resume(transaction);
+      transaction.runRollback();
       transactionThread.join();
 
       assertNotLocked(cache, k);

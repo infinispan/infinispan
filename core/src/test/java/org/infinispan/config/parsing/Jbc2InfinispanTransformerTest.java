@@ -65,6 +65,8 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
          convertor.parse(fileName, baos, XSLT_FILE, Thread.currentThread().getContextClassLoader());
 
+         //System.out.println("Output file is:\n" + baos.toString());
+
          EmbeddedCacheManager ecm = new DefaultCacheManager(new ByteArrayInputStream(baos.toByteArray()), false);
          Configuration defaultConfig = ecm.getDefaultConfiguration();
          GlobalConfiguration globalConfig = ecm.getGlobalConfiguration();

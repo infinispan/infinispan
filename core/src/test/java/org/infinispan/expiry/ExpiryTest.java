@@ -53,7 +53,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setUp() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager(false);
    }
 
    @AfterMethod
@@ -254,7 +254,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    private CacheContainer createTransactionalCacheContainer() {
-      return TestCacheManagerFactory.createCacheManager(new Configuration(), true);
+      return TestCacheManagerFactory.createCacheManager(TestCacheManagerFactory.getDefaultConfiguration(true));
    }
 
    private void doTestEntrySetAfterExpiryInPut(Method m, CacheContainer cc) throws Exception {

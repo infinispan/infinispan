@@ -45,7 +45,7 @@ public class CloudCacheStoreIntegrationVamTest extends CloudCacheStoreIntegratio
 
    @BeforeClass(alwaysRun = true)
    public void setUpClass() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager(false);
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 

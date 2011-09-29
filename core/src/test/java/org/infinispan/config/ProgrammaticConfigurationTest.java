@@ -33,6 +33,7 @@ import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.interceptors.*;
+import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.jmx.JBossMBeanServerLookup;
 import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -181,10 +182,10 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
          .deadlockDetection()
             .spinDuration(8373L)
          .customInterceptors()
-            .add(new LockingInterceptor()).first()
+            .add(new OptimisticLockingInterceptor()).first()
             .add(new DistributionInterceptor()).last()
             .add(new CallInterceptor()).atIndex(8)
-            .add(new CacheStoreInterceptor()).after(LockingInterceptor.class)
+            .add(new CacheStoreInterceptor()).after(OptimisticLockingInterceptor.class)
             .add(new CacheLoaderInterceptor()).before(CallInterceptor.class)
          .eviction()
             .maxEntries(7676).strategy(EvictionStrategy.FIFO)
@@ -272,7 +273,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
       assert 7585L == c.getExpirationWakeUpInterval();
 
       List<CustomInterceptorConfig> customInterceptors = c.getCustomInterceptors();
-      assert customInterceptors.get(0).getInterceptor() instanceof LockingInterceptor;
+      assert customInterceptors.get(0).getInterceptor() instanceof OptimisticLockingInterceptor;
       assert customInterceptors.get(1).getInterceptor() instanceof DistributionInterceptor;
       assert customInterceptors.get(2).getInterceptor() instanceof CallInterceptor;
       assert customInterceptors.get(3).getInterceptor() instanceof CacheStoreInterceptor;

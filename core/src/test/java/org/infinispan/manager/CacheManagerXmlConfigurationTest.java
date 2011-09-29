@@ -28,6 +28,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.config.Configuration;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -64,21 +65,24 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
       Cache c = cm.getCache();
       assert c.getConfiguration().getConcurrencyLevel() == 100;
       assert c.getConfiguration().getLockAcquisitionTimeout() == 1000;
-      assert TestingUtil.extractComponent(c, TransactionManager.class) == null;
+      assert !c.getConfiguration().isTransactionalCache();
+      assertEquals(c.getConfiguration().getTransactionMode(), TransactionMode.NON_TRANSACTIONAL);
       assert TestingUtil.extractComponent(c, RpcManager.class) != null : "This should not be null, since a shared RPC manager should be present";
 
       // test the "transactional" cache
       c = cm.getCache("transactional");
+      assert c.getConfiguration().isTransactionalCache();
       assert c.getConfiguration().getConcurrencyLevel() == 100;
       assert c.getConfiguration().getLockAcquisitionTimeout() == 1000;
       assert TestingUtil.extractComponent(c, TransactionManager.class) != null;
+
       assert TestingUtil.extractComponent(c, RpcManager.class) != null : "This should not be null, since a shared RPC manager should be present";
 
       // test the "replicated" cache
       c = cm.getCache("syncRepl");
       assert c.getConfiguration().getConcurrencyLevel() == 100;
       assert c.getConfiguration().getLockAcquisitionTimeout() == 1000;
-      assert TestingUtil.extractComponent(c, TransactionManager.class) == null;
+      assertEquals(c.getConfiguration().getTransactionMode(), TransactionMode.NON_TRANSACTIONAL);
       assert TestingUtil.extractComponent(c, RpcManager.class) != null : "This should not be null, since a shared RPC manager should be present";
 
       // test the "txSyncRepl" cache

@@ -85,4 +85,13 @@ public class TransactionalInvocationContextFlagsOverride extends InvocationConte
       return delegate.isTransactionValid();
    }
 
+   @Override
+   public void setImplicitTransaction(boolean implicit) {
+      delegate.setImplicitTransaction(implicit);
+   }
+
+   @Override
+   public boolean isImplicitTransaction() {
+      return delegate.isImplicitTransaction();
+   }
 }

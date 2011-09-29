@@ -62,7 +62,7 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
       // start a single cache instance
       Configuration c = new Configuration();
       c.setInvocationBatchingEnabled(true);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
 
       Cache flatcache = cm.getCache();
       cache = new TreeCacheImpl(flatcache);

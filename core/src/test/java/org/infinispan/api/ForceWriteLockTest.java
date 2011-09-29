@@ -38,7 +38,8 @@ import javax.transaction.TransactionManager;
 /**
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "api.ForceWriteLockTest")
+@Test(groups = "functional", testName = "api.ForceWriteLockTest", enabled = false,
+      description = "mmarkus: email sent on 5 Sep '11 -> optimistic locking :: Flag.FORCE_WRITE_LOCK ")
 public class ForceWriteLockTest extends SingleCacheManagerTest {
    private TransactionManager tm;
    private AdvancedCache advancedCache;

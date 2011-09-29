@@ -30,6 +30,8 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -69,6 +71,7 @@ public class TxAndInvalidationTimeoutTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration defaultConfig = getDefaultConfig();
+      defaultConfig.fluent().transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
       defaultConfig.setLockAcquisitionTimeout(500);
       defaultConfig.setUseLockStriping(false);
       addClusterEnabledCacheManager(defaultConfig);
@@ -120,13 +123,15 @@ public class TxAndInvalidationTimeoutTest extends MultipleCacheManagersTest {
       txStatus.reset();
       tm.begin();
       cache(1).put("k1", "v1");
-      Transaction k1LockOwner = tm.suspend();
+      DummyTransaction k1LockOwner = (DummyTransaction) tm.getTransaction();
+      k1LockOwner.runPrepare();
+      tm.suspend();
       assert lm1.isLocked("k1");
 
       assertEquals(1, txTable1.getLocalTxCount());
       tm.begin();
       cache(0).put("k2", "v2");
-      assert lm0.isLocked("k2");
+      assert !lm0.isLocked("k2");
       assert !lm1.isLocked("k2");
 
       operation.execute();

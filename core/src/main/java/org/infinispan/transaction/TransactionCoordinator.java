@@ -26,6 +26,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -70,7 +71,11 @@ public class TransactionCoordinator {
       trace = log.isTraceEnabled();
    }
 
-   public int prepare(LocalTransaction localTransaction) throws XAException {
+   public final int prepare(LocalTransaction localTransaction) throws XAException {
+      return prepare(localTransaction, false);
+   }
+
+   public final int prepare(LocalTransaction localTransaction, boolean replayEntryWrapping) throws XAException {
       validateNotMarkedForRollback(localTransaction);
 
       if (configuration.isOnePhaseCommit()) {
@@ -82,6 +87,7 @@ public class TransactionCoordinator {
       if (trace) log.tracef("Sending prepare command through the chain: %s", prepareCommand);
 
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
+      prepareCommand.setReplayEntryWrapping(replayEntryWrapping);
       ctx.setLocalTransaction(localTransaction);
       try {
          invoker.invoke(ctx, prepareCommand);

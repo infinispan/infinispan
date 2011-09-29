@@ -36,7 +36,7 @@ import javax.transaction.TransactionManager;
 public class MarkAsRollbackTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(new Configuration(), true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(getDefaultStandaloneConfig(true));
       cache = cm.getCache();
       return cm;
    }

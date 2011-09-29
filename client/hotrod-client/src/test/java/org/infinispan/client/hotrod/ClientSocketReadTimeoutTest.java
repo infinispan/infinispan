@@ -66,7 +66,7 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       latch = new CountDownLatch(1);
-      cacheManager = new HangingCacheManager(TestCacheManagerFactory.createLocalCacheManager(), latch);
+      cacheManager = new HangingCacheManager(TestCacheManagerFactory.createLocalCacheManager(false), latch);
       // cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       // pass the config file to the cache
       hotrodServer = TestHelper.startHotRodServer(cacheManager);

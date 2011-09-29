@@ -33,5 +33,4 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
       Configuration cfg = getDefaultClusteredConfig(getCacheMode(), true);
       createClusteredCaches(2, cacheName(), cfg);
    }
-
 }

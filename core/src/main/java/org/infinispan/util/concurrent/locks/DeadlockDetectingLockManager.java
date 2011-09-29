@@ -84,7 +84,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
          final long start = System.currentTimeMillis();
          DldGlobalTransaction thisTx = (DldGlobalTransaction) ctx.getLockOwner();
          thisTx.setLockIntention(key);
-         if (trace) log.tracef("Setting lock intention to: %s", key);
+         if (trace) log.tracef("Setting lock intention to %s for %s (%s)", key, thisTx, System.identityHashCode(thisTx));
 
          while (System.currentTimeMillis() < (start + lockTimeout)) {
             if (lockContainer.acquireLock(ctx, key, spinDuration, MILLISECONDS) != null) {
@@ -99,11 +99,11 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
                   continue;
                }
                DldGlobalTransaction lockOwnerTx = (DldGlobalTransaction) owner;
+               if (trace) log.tracef("Could not acquire lock as %s is locked by %s (%s)", key, owner, System.identityHashCode(owner));
                if (isDeadlockAndIAmLoosing(lockOwnerTx, thisTx, key)) {
                   updateStats(thisTx);
-                  String message = String.format(
-                        "Deadlock found and we %s shall not continue. Other tx is %s",
-                        thisTx, lockOwnerTx);
+                  String message = String.format("Deadlock found and we %s shall not continue. Other tx is %s",
+                                                 thisTx, lockOwnerTx);
                   if (trace) log.trace(message);
                   throw new DeadlockDetectedException(message);
                }
@@ -122,7 +122,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
       //run the lose check first as it is cheaper
       boolean wouldWeLoose = thisTx.wouldLose(lockOwnerTx);
       if (!wouldWeLoose) {
-         if (trace) log.tracef("We (%s) wouldn't lose against the other (%s) transaction, so no point running rest of DLD", thisTx, lockOwnerTx);
+         if (trace) log.tracef("We (%s) win against the other (%s) transaction, so no point running rest of DLD", thisTx, lockOwnerTx);
          return false;
       }
       //do we have lock on what other tx intends to acquire?

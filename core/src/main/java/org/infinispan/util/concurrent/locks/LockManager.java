@@ -24,6 +24,7 @@ package org.infinispan.util.concurrent.locks;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.concurrent.TimeoutException;
 
 /**
  * An interface to deal with all aspects of acquiring and releasing locks for cache entries.
@@ -49,8 +50,7 @@ public interface LockManager {
    /**
     * Releases the lock passed in, held by the specified owner
     *
-    * @param ctx invocation context
-    * @param key key to unlock
+    * @param ctx
     */
    void unlock(InvocationContext ctx, Object key);
 
@@ -62,7 +62,7 @@ public interface LockManager {
     *
     * @param ctx invocation context to inspect
     */
-   void unlock(InvocationContext ctx);
+   void unlockAll(InvocationContext ctx);
 
    /**
     * Tests whether a given owner owns a lock of lockType on a particular cache entry.
@@ -108,11 +108,6 @@ public interface LockManager {
    boolean possiblyLocked(CacheEntry entry);
 
    /**
-    * Cleanups the locks within the given context.
-    */
-   void releaseLocks(InvocationContext ctx);
-
-   /**
     * Retrieves the number of locks currently held.
     * @return an integer
     */
@@ -131,4 +126,26 @@ public interface LockManager {
     * @return the ID of the lock.
     */
    int getLockId(Object key);
+
+   /**
+    * Attempts to lock an entry if the lock isn't already held in the current scope, and records the lock in the
+    * context.
+    *
+    * @param ctx context
+    * @param key Key to lock
+    * @return true if a lock was needed and acquired, false if it didn't need to acquire the lock (i.e., lock was
+    *         already held)
+    * @throws InterruptedException if interrupted
+    * @throws org.infinispan.util.concurrent.TimeoutException
+    *                              if we are unable to acquire the lock after a specified timeout.
+    */
+   boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException;
+
+   /**
+    * Same as {@link #acquireLock(org.infinispan.context.InvocationContext, Object)}, but doesn't check whether the
+    * lock is already acquired by the caller. Useful in the case of transactions that use {@link OwnableReentrantLock}s
+    * ,as these locks already perform this check internally.
+    */
+   boolean acquireLockNoCheck(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException;
+
 }

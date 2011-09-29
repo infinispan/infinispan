@@ -30,6 +30,7 @@ import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.LegacyKeySupportSystemProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -111,13 +112,6 @@ public class TestCacheManagerFactory {
    }
 
    /**
-    * Creates an cache manager that does not support clustering or transactions.
-    */
-   public static EmbeddedCacheManager createLocalCacheManager() {
-      return createLocalCacheManager(false);
-   }
-
-   /**
     * Creates an cache manager that does not support clustering.
     *
     * @param transactional if true, the cache manager will support transactions by default.
@@ -131,13 +125,24 @@ public class TestCacheManagerFactory {
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
       Configuration c = new Configuration();
+      markAsTransactional(transactional, c);
       if (lockAcquisitionTimeout > -1) c.setLockAcquisitionTimeout(lockAcquisitionTimeout);
-      if (transactional) amendJTA(c);
+      updateTransactionSupport(c);
       return newDefaultCacheManager(true, globalConfiguration, c, false);
    }
 
+   private static void markAsTransactional(boolean transactional, Configuration c) {
+      c.fluent().transaction().transactionMode(transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL);
+   }
+
+   private static void updateTransactionSupport(Configuration c) {
+      if (c.isTransactionalCache()) amendJTA(c);
+   }
+
    private static void amendJTA(Configuration c) {
-      c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
+      if (c.isTransactionalCache() && c.getTransactionManagerLookupClass() == null && c.getTransactionManagerLookup() == null) {
+         c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
+      }
    }
 
    /**
@@ -148,26 +153,20 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createClusteredCacheManager(TransportFlags flags) {
-      return createClusteredCacheManager(new Configuration(), false, flags);
+      return createClusteredCacheManager(new Configuration(), flags);
    }
 
-   /**
-    * Creates an cache manager that does support clustering with a given default cache configuration.
-    */
+
    public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig) {
-      return createClusteredCacheManager(defaultCacheConfig, false);
+      return createClusteredCacheManager(defaultCacheConfig, new TransportFlags());
    }
 
-   public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig, boolean transactional) {
-      return createClusteredCacheManager(defaultCacheConfig, transactional, new TransportFlags());
-   }
-
-   public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig, boolean transactional, TransportFlags flags) {
+   public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig, TransportFlags flags) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
       amendTransport(globalConfiguration, flags);
-      if (transactional) amendJTA(defaultCacheConfig);
+      amendJTA(defaultCacheConfig);
       return newDefaultCacheManager(true, globalConfiguration, defaultCacheConfig, false);
    }
 
@@ -213,20 +212,7 @@ public class TestCacheManagerFactory {
       return createCacheManager(gc, fluentConfiguration.build());
    }
 
-   /**
-    * Creates a local cache manager and amends so that it won't conflict (e.g. jmx) with other managers whilst running
-    * tests in parallel.  This is a non-transactional cache manager.
-    */
    public static EmbeddedCacheManager createCacheManager(Configuration defaultCacheConfig) {
-      if (defaultCacheConfig.getTransactionManagerLookup() != null || defaultCacheConfig.getTransactionManagerLookupClass() != null) {
-         log.error("You have passed in a default configuration which has transactional elements set.  If you wish to use transactions, use the TestCacheManagerFactory.createCacheManager(Configuration defaultCacheConfig, boolean transactional) method.");
-      }
-      defaultCacheConfig.setTransactionManagerLookup(null);
-      defaultCacheConfig.setTransactionManagerLookupClass(null);
-      return createCacheManager(defaultCacheConfig, false);
-   }
-
-   public static EmbeddedCacheManager createCacheManager(Configuration defaultCacheConfig, boolean transactional) {
       GlobalConfiguration globalConfiguration;
       if (defaultCacheConfig.getCacheMode().isClustered()) {
          globalConfiguration = GlobalConfiguration.getClusteredDefault();
@@ -237,7 +223,7 @@ public class TestCacheManagerFactory {
       }
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
-      if (transactional) amendJTA(defaultCacheConfig);
+      updateTransactionSupport(defaultCacheConfig);
 
       // we stop caches during transactions all the time
       // so wait at most 1 second for ongoing transactions when stopping
@@ -247,26 +233,22 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg) {
-      return createCacheManager(configuration, defaultCfg, false, false);
-   }
-
-   public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean transactional) {
       minimizeThreads(configuration);
       amendMarshaller(configuration);
       amendTransport(configuration);
-      if (transactional) amendJTA(defaultCfg);
+      updateTransactionSupport(defaultCfg);
       return newDefaultCacheManager(true, configuration, defaultCfg, false);
    }
 
-   public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean transactional, boolean keepJmxDomainName) {
-      return createCacheManager(configuration, defaultCfg, transactional, keepJmxDomainName, false);
+   public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean keepJmxDomainName) {
+      return createCacheManager(configuration, defaultCfg, keepJmxDomainName, false);
    }
 
-   public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean transactional, boolean keepJmxDomainName, boolean dontFixTransport) {
+   public static EmbeddedCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean keepJmxDomainName, boolean dontFixTransport) {
       minimizeThreads(configuration);
       amendMarshaller(configuration);
       if (!dontFixTransport) amendTransport(configuration);
-      if (transactional) amendJTA(defaultCfg);
+      updateTransactionSupport(defaultCfg);
       return newDefaultCacheManager(true, configuration, defaultCfg, keepJmxDomainName);
    }
 
@@ -296,18 +278,20 @@ public class TestCacheManagerFactory {
       globalConfiguration.setExposeGlobalJmxStatistics(exposeGlobalJmx);
       Configuration configuration = new Configuration();
       configuration.setExposeJmxStatistics(exposeCacheJmx);
-      return createCacheManager(globalConfiguration, configuration, false, true);
+      return createCacheManager(globalConfiguration, configuration, true);
    }
 
    public static Configuration getDefaultConfiguration(boolean transactional) {
       Configuration c = new Configuration();
-      if (transactional) amendJTA(c);
+      markAsTransactional(transactional, c);
+      updateTransactionSupport(c);
       return c;
    }
 
    public static Configuration getDefaultConfiguration(boolean transactional, Configuration.CacheMode cacheMode) {
       Configuration c = new Configuration();
-      if (transactional) amendJTA(c);
+      markAsTransactional(transactional, c);
+      updateTransactionSupport(c);
       c.setCacheMode(cacheMode);
       if (cacheMode.isClustered()) {
          c.setSyncRollbackPhase(true);

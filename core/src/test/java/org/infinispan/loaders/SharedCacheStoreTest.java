@@ -46,7 +46,7 @@ public class SharedCacheStoreTest extends MultipleCacheManagersTest {
          .clustering()
             .mode(Configuration.CacheMode.REPL_SYNC)
          .build();
-      createCluster(cfg, true, 3);
+      createCluster(cfg, 3);
    }
 
    private List<CacheStore> cachestores() {

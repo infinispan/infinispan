@@ -364,8 +364,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new LockControlCommand(keys, cacheName, flags, implicit);
    }
 
-      public StateTransferControlCommand
-      buildStateTransferCommand(StateTransferControlCommand.Type type, Address sender, int viewId) {
+   public LockControlCommand buildLockControlCommand(Object key, boolean implicit, Set<Flag> flags) {
+      return new LockControlCommand(key, cacheName, flags, implicit);
+   }
+
+   public StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type type, Address sender,
+                                                                int viewId) {
       return new StateTransferControlCommand(cacheName, type, sender, viewId);
    }
 

@@ -26,6 +26,7 @@ package org.infinispan.tx;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -41,9 +42,10 @@ public class EagerLockSingleLockNodeCrashTest extends MultipleCacheManagersTest 
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
       config.fluent().hash().numOwners(3).transaction().useEagerLocking(true).eagerLockSingleNode(true);
-      createCluster(config, true, 3);
+      config.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
+      createCluster(config, 3);
       waitForClusterToForm();
    }
 

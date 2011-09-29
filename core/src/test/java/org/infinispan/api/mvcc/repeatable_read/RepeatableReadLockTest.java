@@ -24,6 +24,7 @@ package org.infinispan.api.mvcc.repeatable_read;
 
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;
+import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -127,22 +128,28 @@ public class RepeatableReadLockTest extends LockTestBase {
       tm.begin();
       cache.get("a");
       Transaction tx = tm.suspend();
+
       cache.put("a", "v2");
       assert cache.get("a").equals("v2");
+
       tm.resume(tx);
+      assert cache.get("a") == null : "expected null but received " + cache.get("a");
       cache.remove("a");
       tm.commit();
+
       assert cache.get("a") == null : "expected null but received " + cache.get("a");
    }
 
    public void testLocksOnPutKeyVal() throws Exception {
       LockTestBaseTL tl = threadLocal.get();
       Cache<String, String> cache = tl.cache;
-      TransactionManager tm = tl.tm;
+      DummyTransactionManager tm = (DummyTransactionManager) tl.tm;
       tm.begin();
       cache.put("k", "v");
+      tm.getTransaction().runPrepare();
       assertLocked("k");
-      tm.commit();
+      tm.getTransaction().runCommitTx();
+      tm.suspend();
 
       assertNoLocks();
 
@@ -157,8 +164,9 @@ public class RepeatableReadLockTest extends LockTestBase {
 
       tm.begin();
       cache.remove("k");
+      tm.getTransaction().runPrepare();
       assertLocked("k");
-      tm.commit();
+      tm.getTransaction().runCommitTx();
 
       assertNoLocks();
    }

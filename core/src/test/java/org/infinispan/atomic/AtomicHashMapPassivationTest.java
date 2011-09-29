@@ -58,7 +58,7 @@ public class AtomicHashMapPassivationTest extends SingleCacheManagerTest {
       clmc.setPassivation(true);
       clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
       c.setCacheLoaderManagerConfig(clmc);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
       return cm;
@@ -75,6 +75,7 @@ public class AtomicHashMapPassivationTest extends SingleCacheManagerTest {
       tm.commit();
       assertInCacheNotInStore(key);
 
+      log.trace("About to evict...");
       cache.evict(key);
       assertInStoreNotInCache(key);
 

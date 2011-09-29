@@ -23,6 +23,7 @@
 package org.infinispan.config;
 
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
@@ -44,7 +45,7 @@ public class TxManagerLookupConfigTest {
    public void simpleTest() {
       final DefaultCacheManager cacheManager = new DefaultCacheManager(GlobalConfiguration.getNonClusteredDefault(), new Configuration(), true);
 
-      Configuration customConfiguration = new Configuration();
+      Configuration customConfiguration = TestCacheManagerFactory.getDefaultConfiguration(true);
       customConfiguration.setTransactionManagerLookup(new TxManagerLookupA());
       Configuration definedConfiguration = cacheManager.defineConfiguration("aCache", customConfiguration);
 

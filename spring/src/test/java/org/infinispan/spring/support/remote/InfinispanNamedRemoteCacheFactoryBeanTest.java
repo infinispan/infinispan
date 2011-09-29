@@ -60,7 +60,7 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       cache = cacheManager.getCache(TEST_CACHE_NAME);
       cache = cacheManager.getCache(TEST_BEAN_NAME);
 

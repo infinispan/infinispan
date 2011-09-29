@@ -29,6 +29,7 @@ import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
 import org.infinispan.interceptors.InvocationContextInterceptor;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -57,6 +58,7 @@ public class CommitFailsTest extends AbstractRecoveryTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration configuration = defaultRecoveryConfig();
+      configuration.fluent().transaction().autoCommit(false);
       createCluster(configuration, 3);
       waitForClusterToForm();
 
@@ -109,6 +111,7 @@ public class CommitFailsTest extends AbstractRecoveryTest {
 
    public void testForceCommitNonTxParticipant() {
       int where = getTxParticipant(false);
+      System.out.println("where = " + where);
       runTest(where);
    }
 
@@ -118,7 +121,17 @@ public class CommitFailsTest extends AbstractRecoveryTest {
    }
 
    private void assertAllHaveValue(Object key, String newValue) {
-      for (Cache c : caches()) assertEquals(c.get(key), newValue);
+      for (Cache c : caches()) {
+         Object actual = null;
+         try {
+            TestingUtil.getTransactionManager(c).begin();
+            actual = c.get(key);
+            TestingUtil.getTransactionManager(c).commit();
+         } catch (Exception e) {
+            e.printStackTrace();
+         }
+         assertEquals(actual, newValue);
+      }
    }
 
 
@@ -126,6 +139,7 @@ public class CommitFailsTest extends AbstractRecoveryTest {
       List<Long> internalIds = getInternalIds(recoveryOps(where).showInDoubtTransactions());
       log.info("About to force commit!");
       recoveryOps(where).forceCommit(internalIds.get(0));
+      assertCleanup(0, 1, 2);
       assertAllHaveValue(key, "newValue");
       assertCleanup(0, 1, 2);
    }

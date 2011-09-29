@@ -760,4 +760,16 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unblocking transactions failed", id = 159)
    void errorUnblockingTransactions(@Cause Exception e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Could not complete injected transaction.", id = 160)
+   void couldNotCompleteInjectedTransaction(@Cause Throwable t);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Using a batchMode transaction manager", id = 161)
+   void usingBatchModeTransactionManager();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Could not instantiate transaction manager", id = 162)
+   void couldNotInstantiateTransactionManager(@Cause Exception e);
 }

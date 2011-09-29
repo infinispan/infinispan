@@ -31,6 +31,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -68,9 +69,10 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    @BeforeTest
    public void setUp() {
       Configuration c = new Configuration();
+      c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       c.setLockAcquisitionTimeout(200);
       c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-      cacheManager = TestCacheManagerFactory.createCacheManager(c, true);
+      cacheManager = TestCacheManagerFactory.createCacheManager(c);
    }
 
    @AfterTest

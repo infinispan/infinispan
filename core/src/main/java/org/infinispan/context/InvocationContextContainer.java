@@ -64,7 +64,7 @@ public interface InvocationContextContainer {
     * will return an {@link org.infinispan.context.impl.NonTxInvocationContext}. Either way, both context will be marked
     * as local, i.e. {@link InvocationContext#isOriginLocal()} will be true.
     */
-   InvocationContext createInvocationContext();
+   InvocationContext createInvocationContext(boolean isWrite);
 
    /**
     * Creates an invocation context

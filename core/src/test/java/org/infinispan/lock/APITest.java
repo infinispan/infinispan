@@ -28,6 +28,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
@@ -47,6 +50,8 @@ public class APITest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
+      cfg.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC).cacheStopTimeout(0);
+
       cfg.setLockAcquisitionTimeout(100);
       cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
       cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);

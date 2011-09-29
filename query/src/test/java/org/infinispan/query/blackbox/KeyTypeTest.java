@@ -61,7 +61,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
          .indexLocalOnly(false)
          .addProperty("hibernate.search.default.directory_provider", "ram")
          .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
-      cacheManager = TestCacheManagerFactory.createCacheManager(c, true);
+      cacheManager = TestCacheManagerFactory.createCacheManager(c);
 
       person1 = new Person();
       person1.setName("Navin");

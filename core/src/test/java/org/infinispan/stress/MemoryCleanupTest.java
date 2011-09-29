@@ -22,17 +22,17 @@
  */
 package org.infinispan.stress;
 
+import org.infinispan.config.Configuration;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.Cache;
 
 /**
- * // TODO: Mircea - Document this!
- *
  * @author Mircea.Markus@jboss.com
  */
-@Test
+@Test  (groups = "stress", description = "designed to be run by hand", enabled = false)
 public class MemoryCleanupTest {
 
 
@@ -41,7 +41,8 @@ public class MemoryCleanupTest {
    }
 
    public void testMemoryConsumption () throws InterruptedException {
-      DefaultCacheManager cm = new DefaultCacheManager(true);
+      final Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.LOCAL);
+      DefaultCacheManager cm = new DefaultCacheManager(config, true);
 
       Cache<Object,Object> cache = cm.getCache();
 

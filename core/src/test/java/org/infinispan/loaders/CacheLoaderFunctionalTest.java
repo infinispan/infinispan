@@ -35,6 +35,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -57,6 +60,9 @@ import static org.infinispan.test.TestingUtil.v;
  */
 @Test(groups = "functional", testName = "loaders.CacheLoaderFunctionalTest")
 public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
+
+   private static Log log = LogFactory.getLog(CacheLoaderFunctionalTest.class);
+
    Cache cache;
    CacheStore store;
    TransactionManager tm;
@@ -70,8 +76,9 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
          .loaders()
             .addCacheLoader(new DummyInMemoryCacheStore.Cfg()
                .storeName(this.getClass().getName())) // in order to use the same store
+            .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
          .build();
-      cm = TestCacheManagerFactory.createCacheManager(cfg, true);
+      cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
       tm = TestingUtil.getTransactionManager(cache);
@@ -185,7 +192,9 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
             assertInCacheAndStore("k" + i, "v" + i, lifespan);
       }
 
+      log.info("cache.get(\"k1\") = " + cache.get("k1"));
       assert cache.remove("k1", "v1");
+      log.info("cache.get(\"k1\") = " + cache.get("k1"));
       assert cache.remove("k2").equals("v2");
 
       assertNotInCacheAndStore("k1", "k2");
@@ -495,7 +504,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assert value.equals(cache.get(key));
    }
 
-   public void testGetCacheLoadersFroomConfigAfterStart() {
+   public void testGetCacheLoadersFromConfigAfterStart() {
       cache.getConfiguration().getCacheLoaders();
       cache.getConfiguration().getCacheLoaders();
    }

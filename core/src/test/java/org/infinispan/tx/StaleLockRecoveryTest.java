@@ -27,6 +27,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
@@ -48,6 +49,7 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
+      c.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
       c.setLockAcquisitionTimeout(500);
       List<Cache<String, String>> caches = createClusteredCaches(2, "tx", c);
       c1 = caches.get(0);

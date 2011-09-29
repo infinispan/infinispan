@@ -30,9 +30,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.util.Properties;
@@ -49,7 +47,7 @@ public class RemoteCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest
    @Override
    protected CacheStoreConfig createCacheStoreConfig() throws Exception {
       RemoteCacheStoreConfig remoteCacheStoreConfig = new RemoteCacheStoreConfig();
-      localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      localCacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       hrServer = TestHelper.startHotRodServer(localCacheManager);
 
       remoteCacheStoreConfig.setRemoteCacheName(CacheContainer.DEFAULT_CACHE_NAME);

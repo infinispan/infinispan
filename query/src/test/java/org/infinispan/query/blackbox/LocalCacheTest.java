@@ -333,7 +333,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
             .addProperty("hibernate.search.default.directory_provider", "ram")
             .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cfg);
-      return TestCacheManagerFactory.createCacheManager(cfg.build(), true);
+      return TestCacheManagerFactory.createCacheManager(cfg.build());
    }
    
    public void testEntityDiscovery() {

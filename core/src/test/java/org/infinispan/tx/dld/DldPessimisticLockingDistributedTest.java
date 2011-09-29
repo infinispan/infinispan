@@ -28,27 +28,28 @@ import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
+import javax.transaction.SystemException;
 import java.util.concurrent.Executor;
 
 /**
- * Tests deadlock detection when t1 acquire (k1, k2) and te acquires (k2, k1).
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(groups = "functional", testName = "tx.dld.DldLazyLockingDistributionTest")
-public class DldLazyLockingDistributionTest extends BaseDldLazyLockingTest {
+@Test (groups = "functional", testName = "tx.dld.DldEagerLockingDistributedTest")
+public class DldPessimisticLockingDistributedTest extends BaseDldPessimisticLockingTest {
 
    private KeyAffinityService cas;
+   private Object k0;
+   private Object k1;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = updatedConfig();
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(config, true);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(config, true);
+      Configuration config = createConfiguration();
+
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(config);
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(config);
       registerCacheManager(cm1);
       registerCacheManager(cm2);
       waitForClusterToForm();
@@ -58,28 +59,21 @@ public class DldLazyLockingDistributionTest extends BaseDldLazyLockingTest {
             new Thread(command).start();
          }
       }, new RndKeyGenerator(), 2, true);
-
-      rpcManager0 = DldLazyLockingReplicationTest.replaceRpcManager(cache(0));
-      rpcManager1 = DldLazyLockingReplicationTest.replaceRpcManager(cache(1));
-   }
-
-   protected Configuration updatedConfig() {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-      config.setUnsafeUnreliableReturnValues(true);
-      config.setNumOwners(1);
-      config.setEnableDeadlockDetection(true);
-      return config;
-   }
-
-   public void testSymmetricDeadlock() {
-      Object k0 = cas.getKeyForAddress(address(0));
-      Object k1 = cas.getKeyForAddress(address(1));
-      testSymmetricDeadlock(k0, k1);
-   }
-
-   @AfterClass
-   public void destroyKeyService() {
+      k0 = cas.getKeyForAddress(address(0));
+      k1 = cas.getKeyForAddress(address(1));
       cas.stop();
    }
 
+   protected Configuration createConfiguration() {
+      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
+      config.setUnsafeUnreliableReturnValues(true);
+      config.setNumOwners(1);
+      config.setEnableDeadlockDetection(true);
+      config.setUseEagerLocking(true);
+      return config;
+   }
+
+   public void testSymmetricDeadlock() throws SystemException {
+      testSymmetricDld(k0, k1);
+   }
 }

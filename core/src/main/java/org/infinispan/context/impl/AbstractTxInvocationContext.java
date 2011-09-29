@@ -41,23 +41,41 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
 
    private Transaction transaction;
 
+   private boolean implicitTransaction;
+
    public boolean hasModifications() {
       return getModifications() != null && !getModifications().isEmpty();
    }
 
    public Set<Object> getAffectedKeys() {
-      return getCacheTrasaction().getAffectedKeys();
+      return getCacheTransaction().getAffectedKeys();
    }
 
    public void addAffectedKeys(Collection<Object> keys) {
       if (keys != null && !keys.isEmpty()) {
-         Set<Object> affectedKeys = getCacheTrasaction().getAffectedKeys();
+         Set<Object> affectedKeys = getCacheTransaction().getAffectedKeys();
          if (affectedKeys == null || affectedKeys.isEmpty()) {
             affectedKeys = new HashSet<Object>();
          }
          affectedKeys.addAll(keys);
-         getCacheTrasaction().setAffectedKeys(affectedKeys);
+         getCacheTransaction().setAffectedKeys(affectedKeys);
       }
+   }
+
+   @Override
+   public void setImplicitTransaction(boolean implicit) {
+      this.implicitTransaction = implicit;
+   }
+
+   @Override
+   public boolean isImplicitTransaction() {
+      return this.implicitTransaction;
+   }
+
+   @Override
+   public void reset() {
+      super.reset();
+      implicitTransaction = false;
    }
 
    public boolean isInTxScope() {
@@ -73,6 +91,6 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
       return transaction;
    }
 
-   public abstract AbstractCacheTransaction getCacheTrasaction();
+   public abstract AbstractCacheTransaction getCacheTransaction();
 
 }

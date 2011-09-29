@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,16 +20,19 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.api.mvcc.repeatable_read;
+package org.infinispan.tx.recovery;
 
-import org.infinispan.api.CacheAPITest;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.config.Configuration;
+import org.infinispan.tx.dld.DldPessimisticLockingDistributedTest;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "api.mvcc.repeatable_read.CacheAPIMVCCTest")
-public class CacheAPIMVCCTest extends CacheAPITest {
+/**
+ * @author Mircea.Markus@jboss.com
+ */
+@Test(groups = "functional", testName = "tx.recovery.DldEagerLockingAndRecoveryDistributedTest")
+public class DldPessimisticLockingAndRecoveryDistributedTest extends DldPessimisticLockingDistributedTest {
    @Override
-   protected IsolationLevel getIsolationLevel() {
-      return IsolationLevel.REPEATABLE_READ;
+   protected Configuration createConfiguration() {
+      return super.createConfiguration().fluent().transaction().recovery().build();
    }
 }

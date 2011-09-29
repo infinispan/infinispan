@@ -50,7 +50,7 @@ public class APITest extends AbstractInfinispanTest {
    public void setUp() {
       Configuration c = new Configuration();
       c.setInvocationBatchingEnabled(true);
-      cacheContainer = TestCacheManagerFactory.createCacheManager(c, true);
+      cacheContainer = TestCacheManagerFactory.createCacheManager(c);
       cache = cacheContainer.getCache();
       tm = TestingUtil.getTransactionManager(cache);
    }

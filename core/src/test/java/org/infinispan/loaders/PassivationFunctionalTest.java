@@ -58,12 +58,12 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      cfg = new Configuration();
+      cfg = TestCacheManagerFactory.getDefaultConfiguration(true);
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       clmc.setPassivation(true);
       clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
       cfg.setCacheLoaderManagerConfig(clmc);
-      cm = TestCacheManagerFactory.createCacheManager(cfg, true);
+      cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
       tm = TestingUtil.getTransactionManager(cache);

@@ -32,6 +32,8 @@ import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.remoting.ReplicationQueue;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -170,7 +172,8 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       TransactionConfig transactionManagerLookupClass(Class<? extends TransactionManagerLookup> transactionManagerLookupClass);
 
       /**
-       * Configure Transaction manager lookup directly using an instance of TransactionManagerLookup
+       * Configure Transaction manager lookup directly using an instance of TransactionManagerLookup. Calling this
+       * method marks the cache as transactional.
        *
        * @param transactionManagerLookup instance to use as lookup
        * @return this TransactionConfig
@@ -178,7 +181,8 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       TransactionConfig transactionManagerLookup(TransactionManagerLookup transactionManagerLookup);
 
       /**
-       * Configure Transaction Synchronization Registry lookup directly using an instance of TransactionManagerLookup
+       * Configure Transaction Synchronization Registry lookup directly using an instance of TransactionManagerLookup.
+       * Calling this method marks the cache as transactional.
        *
        * @param transactionSynchronizationRegistryLookup instance to use as lookup
        * @return this TransactionConfig
@@ -214,8 +218,14 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * reside if numOwners==1. If the node where the lock resides crashes, then the transaction is
        * marked for rollback - data is in a consistent state, no fault tolerance.
        *
+       * Note: Starting with infinispan 5.1 eager locking is replaced with pessimistic locking and can
+       * be enforced by setting transaction's locking mode to PESSIMISTIC.
+       *
        * @param useEagerLocking
+       * @deprecated
+       * @see  Configuration#getTransactionLockingMode()
        */
+      @Deprecated
       TransactionConfig useEagerLocking(Boolean useEagerLocking);
 
       /**
@@ -248,6 +258,24 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       RecoveryConfig recovery();
 
       TransactionConfig useSynchronization(Boolean useSynchronization);
+
+      /**
+       * Configures whether the cache uses optimistic or pessimistic locking. If the cache is not transactional then
+       * the locking mode is ignored.
+       * @see org.infinispan.config.Configuration#isTransactionalCache()
+       */
+      TransactionConfig lockingMode(LockingMode lockingMode);
+
+      /**
+       * Configures whether the cache is transactional or not.
+       * @see TransactionMode
+       */
+      TransactionConfig transactionMode(TransactionMode transactionMode);
+
+      /**
+       * @see org.infinispan.config.Configuration#isTransactionAutoCommit().
+       */
+      TransactionConfig autoCommit(boolean enabled);
    }
 
    /**
@@ -774,7 +802,8 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
 
    public static interface JmxStatisticsConfig extends FluentTypes {}
 
-   public static interface InvocationBatchingConfig extends FluentTypes {}
+   public static interface InvocationBatchingConfig extends FluentTypes {
+   }
 }
 
 interface FluentTypes {

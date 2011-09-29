@@ -54,7 +54,7 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
                .storeName(this.getClass().getName())
                .purgeOnStartup(false))
          .build();
-      cm = TestCacheManagerFactory.createCacheManager(cfg, true);
+      cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
       tm = TestingUtil.getTransactionManager(cache);

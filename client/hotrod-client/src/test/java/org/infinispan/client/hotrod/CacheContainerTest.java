@@ -46,7 +46,7 @@ public class CacheContainerTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       cacheManager.defineConfiguration(CACHE_NAME, new Configuration());
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
       remoteCacheManager = new RemoteCacheManager("localhost:" + hotrodServer.getPort(), true);

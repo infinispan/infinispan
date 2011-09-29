@@ -20,16 +20,29 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.api.mvcc.read_committed;
+package org.infinispan.distribution;
 
-import org.infinispan.api.CacheAPITest;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.Cache;
+import org.infinispan.config.Configuration;
+import org.infinispan.replication.AsyncAPITxSyncReplTest;
+import org.infinispan.test.data.Key;
+import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "api.mvcc.read_committed.CacheAPIMVCCTest")
-public class CacheAPIMVCCTest extends CacheAPITest {
+import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
+
+@Test(groups = "functional", testName = "distribution.AsyncAPISyncDistTest")
+public class AsyncAPITxSyncDistTest extends AsyncAPITxSyncReplTest {
+
+   protected Configuration getConfig(boolean txEnabled) {
+      return getDefaultClusteredConfig(sync() ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, txEnabled);
+   }
+
+
    @Override
-   protected IsolationLevel getIsolationLevel() {
-      return IsolationLevel.READ_COMMITTED;
+   protected void assertOnAllCaches(Key k, String v, Cache c1, Cache c2) {
+      Object real;
+      assert Util.safeEquals((real = c1.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k)), v) : "Error on cache 1.  Expected " + v + " and got " + real;
+      assert Util.safeEquals((real = c2.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k)), v) : "Error on cache 2.  Expected " + v + " and got " + real;
    }
 }

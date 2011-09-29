@@ -63,7 +63,7 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
          .transactionManagerLookupClass(DummyTransactionManagerLookup.class)
          .recovery();
       configuration.fluent().clustering().hash().rehashEnabled(false);
-      createCluster(configuration, false, 2);
+      createCluster(configuration, 2);
       waitForClusterToForm();
       ComponentRegistry componentRegistry = this.cache(0).getAdvancedCache().getComponentRegistry();
       XaTransactionTable txTable = (XaTransactionTable) componentRegistry.getComponent(TransactionTable.class);

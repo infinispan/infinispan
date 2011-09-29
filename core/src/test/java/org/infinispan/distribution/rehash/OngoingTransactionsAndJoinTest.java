@@ -76,7 +76,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       configuration = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
       configuration.setLockAcquisitionTimeout(60000);
       configuration.setUseLockStriping(false);
-      addClusterEnabledCacheManager(configuration, true);
+      addClusterEnabledCacheManager(configuration);
    }
 
    private void injectListeningHandler(CacheContainer ecm, ListeningHandler lh) {
@@ -133,7 +133,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       }, 10, TimeUnit.MILLISECONDS);
       
       // start a new node!
-      addClusterEnabledCacheManager(configuration, true);
+      addClusterEnabledCacheManager(configuration);
 
       ListeningHandler listeningHandler2 = new ListeningHandler(extractComponent(firstNode, InboundInvocationHandler.class), txsReady, joinEnded, rehashStarted);
       injectListeningHandler(cacheManagers.get(1), listeningHandler);

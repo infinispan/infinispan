@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,55 +20,40 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.infinispan.distribution;
 
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.test.AbstractCacheTest;
-import org.infinispan.test.ReplListener;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.TimeUnit;
+import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 
-@Test(groups = "functional", testName = "distribution.AsyncAPIAsyncDistTest")
-public class AsyncAPIAsyncDistTest extends AsyncAPISyncDistTest {
+/**
+ * @author Mircea Markus
+ * @since 5.1
+ */
+@Test (groups = "functional", testName = "distribution.DistSkipRemoteLookupBatchingTest")
+public class DistSkipRemoteLookupBatchingTest extends BaseDistFunctionalTest {
 
-   ReplListener rl;
-
-   public AsyncAPIAsyncDistTest() {
+   public DistSkipRemoteLookupBatchingTest() {
       cleanup = AbstractCacheTest.CleanupPhase.AFTER_METHOD;
+      batchingEnabled = true;
+      tx = true;
    }
 
-   @Override
-   protected void createCacheManagers() throws Throwable {
-      super.createCacheManagers();
-      rl = new ReplListener(c2, true);
-   }
+   public void testSkipLookupOnGetWhileBatching() {
+      MagicKey k1 = new MagicKey(c1);
+      c1.put(k1, "batchingMagicValue-h1");
 
-   @Override
-   protected boolean sync() {
-      return false;
-   }
+      assertIsInContainerImmortal(c1, k1);
+      assertIsInContainerImmortal(c2, k1);
+      assertIsNotInL1(c3, k1);
+      assertIsNotInL1(c4, k1);
 
-   @Override
-   protected void resetListeners() {
-      rl.resetEager();
-   }
+      c4.startBatch();
+      assert c4.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k1) == null;
+      c4.endBatch(true);
 
-   @Override
-   protected void asyncWait(boolean tx, Class<? extends WriteCommand>... cmds) {
-      if (tx) {
-         if (cmds == null || cmds.length == 0)
-            rl.expectAnyWithTx();
-         else
-            rl.expectWithTx(cmds);
-      } else {
-         if (cmds == null || cmds.length == 0)
-            rl.expectAny();
-         else
-            rl.expect(cmds);
-      }
-
-
-      rl.waitForRpc(240, TimeUnit.SECONDS);
+      assertOwnershipAndNonOwnership(k1, false);
    }
 }

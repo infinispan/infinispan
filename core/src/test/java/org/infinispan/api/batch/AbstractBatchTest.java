@@ -32,7 +32,9 @@ public abstract class AbstractBatchTest extends AbstractInfinispanTest {
       final AtomicReference<String> ref = new AtomicReference<String>();
       Thread t = new Thread() {
          public void run() {
+            cache.startBatch();
             ref.set(cache.get(key));
+            cache.endBatch(true);
          }
       };
 

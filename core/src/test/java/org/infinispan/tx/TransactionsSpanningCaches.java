@@ -37,9 +37,9 @@ import javax.transaction.TransactionManager;
 public class TransactionsSpanningCaches extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration defaultCacheConfig = new Configuration();
+      Configuration defaultCacheConfig = getDefaultStandaloneConfig(true);
       amendConfig(defaultCacheConfig);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(defaultCacheConfig, true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(defaultCacheConfig);
       cm.defineConfiguration("c1", cm.getCache().getConfiguration());
       cm.defineConfiguration("c2", cm.getCache().getConfiguration());
       return cm;

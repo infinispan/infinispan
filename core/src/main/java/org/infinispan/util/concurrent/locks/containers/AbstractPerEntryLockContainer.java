@@ -73,8 +73,7 @@ public abstract class AbstractPerEntryLockContainer<L extends Lock> extends Abst
             safeRelease(lock, ctx);
             throw ie;
          } catch (Throwable th) {
-            safeRelease(lock, ctx);
-            locked = false;
+             locked = false;
          }
          if (locked) {
             // lock acquired.  Now check if it is the *correct* lock!

@@ -60,7 +60,7 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
    public void testNotROWhenHasWrites() throws Exception {
       tm().begin();
       cache.put("k", "v");
-      assert TestingUtil.extractLockManager(cache).isLocked("k");
+      assert !TestingUtil.extractLockManager(cache).isLocked("k");
       Transaction transaction = tm().suspend();
       LocalXaTransaction localTransaction = (LocalXaTransaction) txTable().getLocalTransaction(transaction);
       assert localTransaction != null && !localTransaction.isReadOnly();
@@ -70,7 +70,7 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
       cache.put("k", "v");
       tm().begin();
       cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get("k");
-      assert TestingUtil.extractLockManager(cache).isLocked("k");
+      assert !TestingUtil.extractLockManager(cache).isLocked("k");
       Transaction transaction = tm().suspend();
       LocalXaTransaction localTransaction = (LocalXaTransaction) txTable().getLocalTransaction(transaction);
       assert localTransaction != null && !localTransaction.isReadOnly();

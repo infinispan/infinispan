@@ -70,6 +70,8 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
          EmbeddedCacheManager cacheManager = cache.getCacheManager();
          cacheAddresses.add(cacheManager.getAddress());
       }
+
+      waitForJoinTasksToComplete(60000, c1, c2);
    }
 
    public void testPutOnKeyOwner() {
@@ -102,6 +104,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
    }
 
    public void testErrorWhenRetrievingKeyFromNonOwner() {
+      log.trace("Before test");
       Cache[] owners = getOwners("diffkey", 1);
       Cache[] nonOwners = getNonOwners("diffkey", 1);
       assert owners.length == 1;
@@ -121,7 +124,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
          nonOwnerCache.get("diffkey");
          assert false : "Should have failed with a CacheException that contains an UnknownError";
       } catch (CacheException e) {
-         assert e.getCause() instanceof UnknownError;
+         assert e.getCause() instanceof UnknownError : e.getCause();
       }
    }
 }

@@ -103,7 +103,7 @@ public final class PerCacheExecutorThread extends Thread {
                   ongoingTransaction = txManager.getTransaction();
                   setResponse(OperationsResult.BEGGIN_TX_OK);
                } catch (Exception e) {
-                  log.trace("Failure on beggining tx", e);
+                  log.trace("Failure on beginning tx", e);
                   setResponse(e);
                }
                break;

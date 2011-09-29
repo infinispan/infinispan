@@ -46,7 +46,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    
    @Test(expectedExceptions = { IllegalStateException.class })
    public void testImproperCacheStateForDistribtuedExecutor() {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
          DistributedExecutorService des = new DefaultExecutorService(cache);

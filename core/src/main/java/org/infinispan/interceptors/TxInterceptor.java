@@ -96,26 +96,6 @@ public class TxInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      if (!ctx.isOriginLocal()) {
-         // replay modifications
-         for (VisitableCommand modification : command.getModifications()) {
-            VisitableCommand toReplay = getCommandToReplay(modification);
-            if (toReplay != null) {
-               try {
-                  invokeNextInterceptor(ctx, toReplay);
-               } catch (Exception e) {
-                  // If exception encountered, i.e. DeadlockDetectedException
-                  // in an async env (i.e. isOnePhaseCommit()), clear the
-                  // remote transaction, otherwise it leaks
-                  if (command.isOnePhaseCommit())
-                     markCompleted(ctx, command.getGlobalTransaction(), false);
-
-                  // Now rethrow the original exception
-                  throw e;
-               }
-            }
-         }
-      }
       //if it is remote and 2PC then first log the tx only after replying mods
       if (!command.isOnePhaseCommit()) {
          transactionLog.logPrepare(command);
@@ -283,17 +263,5 @@ public class TxInterceptor extends CommandInterceptor {
    @Metric(displayName = "Rollbacks", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public long getRollbacks() {
       return rollbacks.get();
-   }
-
-   /**
-    * Designed to be overridden.  Returns a VisitableCommand fit for replaying locally, based on the modification passed
-    * in.  If a null value is returned, this means that the command should not be replayed.
-    *
-    * @param modification modification in a prepare call
-    * @return a VisitableCommand representing this modification, fit for replaying, or null if the command should not be
-    *         replayed.
-    */
-   protected VisitableCommand getCommandToReplay(VisitableCommand modification) {
-      return modification;
    }
 }

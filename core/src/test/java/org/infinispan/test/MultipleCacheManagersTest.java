@@ -181,14 +181,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return addClusterEnabledCacheManager(defaultConfig, new TransportFlags());
    }
 
-   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig, boolean transactional) {
-      return addClusterEnabledCacheManager(defaultConfig, transactional, new TransportFlags());
-   }
-
-   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig, TransportFlags flags) {
-      return addClusterEnabledCacheManager(defaultConfig, false, flags);
-   }
-
    /**
     * Creates a new optionally transactional cache manager, starts it, and adds it to the list of known cache managers on
     * the current thread.  Uses a default clustered cache manager global config.
@@ -197,8 +189,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @param transactional if true, the configuration will be decorated with necessary transactional settings
     * @return the new CacheManager
     */
-   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig, boolean transactional, TransportFlags flags) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(defaultConfig, transactional, flags);
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig, TransportFlags flags) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(defaultConfig, flags);
       cacheManagers.add(cm);
       return cm;
    }
@@ -215,7 +207,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration.CacheMode mode, boolean transactional, TransportFlags flags) {
       Configuration configuration = getDefaultClusteredConfig(mode, transactional);
-      configuration.setCacheMode(mode);
       return addClusterEnabledCacheManager(configuration, flags);
    }
 
@@ -226,10 +217,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected void createCluster(Configuration config, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(config);
-   }
-
-   protected void createCluster(Configuration config, boolean transactional, int count) {
-      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(config, transactional);
    }
 
    protected void createCluster(Configuration.CacheMode mode, int count) {
@@ -311,6 +298,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfig);
          Cache<K, V> cache = cm.getCache();
          caches.add(cache);
+
       }
       waitForClusterToForm();
       return caches;
@@ -418,11 +406,16 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @param nodeIndex the index of tha cache where to be the main data owner of the returned key
     */
    protected Object getKeyForNode(int nodeIndex) {
+      final Cache<Object, Object> cache = cache(nodeIndex);
+      return getKeyForCache(cache);
+   }
+
+   protected Object getKeyForCache(Cache cache) {
       ExecutorService ex = Executors.newSingleThreadExecutor();
-      KeyAffinityService<Object> kas = KeyAffinityServiceFactory.newKeyAffinityService(cache(nodeIndex), ex,
+      KeyAffinityService<Object> kas = KeyAffinityServiceFactory.newKeyAffinityService(cache, ex,
                                                                                        new RndKeyGenerator(), 5, true);
       try {
-         return kas.getKeyForAddress(address(nodeIndex));
+         return kas.getKeyForAddress(cache.getAdvancedCache().getRpcManager().getAddress());
       } finally {
          ex.shutdown();
       }

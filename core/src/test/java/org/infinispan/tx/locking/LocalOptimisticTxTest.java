@@ -20,19 +20,39 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.tx.recovery;
+
+package org.infinispan.tx.locking;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.tx.dld.DldEagerLockingDistributedTest;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+
 /**
- * @author Mircea.Markus@jboss.com
+ * @author Mircea Markus
+ * @since 5.1
  */
-@Test(groups = "functional", testName = "tx.recovery.DldEagerLockingAndRecoveryDistributedTest")
-public class DldEagerLockingAndRecoveryDistributedTest extends DldEagerLockingDistributedTest {
+@Test (groups = "functional", testName = "tx.locking.LocalOptimisticTxTest")
+public class LocalOptimisticTxTest extends AbstractLocalTest {
+
    @Override
-   protected Configuration createConfiguration() {
-      return super.createConfiguration().fluent().transaction().recovery().build();
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      final Configuration config = getDefaultStandaloneConfig(true);
+      config.fluent().transaction().lockingMode(LockingMode.OPTIMISTIC)
+            .transactionManagerLookup(new DummyTransactionManagerLookup());
+      return TestCacheManagerFactory.createCacheManager(config);
+   }
+
+   protected void assertLocking() {
+      assertFalse(lockManager().isLocked("k"));
+      prepare();
+      assertTrue(lockManager().isLocked("k"));
+      commit();
+      assertFalse(lockManager().isLocked("k"));
    }
 }

@@ -28,11 +28,14 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransactionSetup;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
+
+import static org.testng.Assert.assertEquals;
 
 
 @Test(groups = {"functional", "transaction"}, testName = "api.batch.BatchWithTMTest")
@@ -42,7 +45,7 @@ public class BatchWithTMTest extends AbstractBatchTest {
 
    @BeforeClass
    public void createCacheManager() {
-      cm = TestCacheManagerFactory.createLocalCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager(false);
    }
 
    @AfterClass
@@ -105,7 +108,7 @@ public class BatchWithTMTest extends AbstractBatchTest {
       cache.put("k", "v");
       cache.put("k2", "v2");
 
-      assert getOnDifferentThread(cache, "k") == null;
+      assertEquals(getOnDifferentThread(cache, "k"), null);
       assert getOnDifferentThread(cache, "k2") == null;
 
       cache.endBatch(false);
@@ -118,6 +121,7 @@ public class BatchWithTMTest extends AbstractBatchTest {
       Configuration c = new Configuration();
       c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
       c.setInvocationBatchingEnabled(true);
+      c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       assert c.getTransactionManagerLookupClass() != null : "Should have a transaction manager lookup class attached!!";
       cm.defineConfiguration(name, c);
       return cm.getCache(name);

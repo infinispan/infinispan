@@ -24,6 +24,7 @@ package org.infinispan;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -44,6 +45,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -127,6 +129,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    private EvictionManager evictionManager;
    private DataContainer dataContainer;
    private static final Log log = LogFactory.getLog(CacheImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
    private EmbeddedCacheManager cacheManager;
    // this is never used here but should be injected - this is a hack to make sure the StateTransferManager is properly constructed if needed.
    private StateTransferManager stateTransferManager;
@@ -207,9 +210,9 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final boolean remove(Object key, Object value, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(explicitFlags, explicitClassLoader);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, value, ctx.getFlags());
-      return (Boolean) invoker.invoke(ctx, command);
+      return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
    public final int size() {
@@ -218,7 +221,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final int size(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       SizeCommand command = commandsFactory.buildSizeCommand();
-      return (Integer) invoker.invoke(getInvocationContext(false, explicitFlags, explicitClassLoader), command);
+      return (Integer) invoker.invoke(getInvocationContextForRead(null, explicitFlags, explicitClassLoader), command);
    }
 
    public final boolean isEmpty() {
@@ -235,7 +238,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final boolean containsKey(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextForRead(null, explicitFlags, explicitClassLoader);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, ctx.getFlags());
       Object response = invoker.invoke(ctx, command);
       return response != null;
@@ -252,7 +255,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    @SuppressWarnings("unchecked")
    final V get(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextForRead(null, explicitFlags, explicitClassLoader);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, ctx.getFlags());
       return (V) invoker.invoke(ctx, command);
    }
@@ -264,9 +267,9 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    @SuppressWarnings("unchecked")
    final V remove(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(explicitFlags, explicitClassLoader);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, ctx.getFlags());
-      return (V) invoker.invoke(ctx, command);
+      return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
    public final void clear() {
@@ -274,9 +277,9 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    final void clear(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(explicitFlags, explicitClassLoader);
       ClearCommand command = commandsFactory.buildClearCommand(ctx.getFlags());
-      invoker.invoke(ctx, command);
+      executeCommandAndCommitIfNeeded(ctx, command);
    }
 
    public Set<K> keySet() {
@@ -285,7 +288,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @SuppressWarnings("unchecked")
    Set<K> keySet(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextForRead(null, explicitFlags, explicitClassLoader);
       KeySetCommand command = commandsFactory.buildKeySetCommand();
       return (Set<K>) invoker.invoke(ctx, command);
    }
@@ -296,7 +299,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @SuppressWarnings("unchecked")
    Collection<V> values(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextForRead(null, explicitFlags, explicitClassLoader);
       ValuesCommand command = commandsFactory.buildValuesCommand();
       return (Collection<V>) invoker.invoke(ctx, command);
    }
@@ -307,7 +310,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @SuppressWarnings("unchecked")
    Set<Map.Entry<K, V>> entrySet(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextForRead(null, explicitFlags, explicitClassLoader);
       EntrySetCommand command = commandsFactory.buildEntrySetCommand();
       return (Set<Map.Entry<K, V>>) invoker.invoke(ctx, command);
    }
@@ -348,9 +351,14 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final void evict(K key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(true, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = createNonTxInvocationContext(explicitFlags, explicitClassLoader);
       EvictCommand command = commandsFactory.buildEvictCommand(key);
       invoker.invoke(ctx, command);
+   }
+
+   private InvocationContext createNonTxInvocationContext(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      InvocationContext ctx = icc.createNonTxInvocationContext();
+      return setInvocationContextFlagsAndClassLoader(ctx, explicitFlags, explicitClassLoader);
    }
 
    public Configuration getConfiguration() {
@@ -369,9 +377,53 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       return notifier.getListeners();
    }
 
-   private InvocationContext getInvocationContext(boolean forceNonTransactional, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = forceNonTransactional ? icc.createNonTxInvocationContext() : icc.createInvocationContext();
+   private InvocationContext getInvocationContextForWrite(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      InvocationContext ctx = icc.createInvocationContext(true);
       return setInvocationContextFlagsAndClassLoader(ctx, explicitFlags, explicitClassLoader);
+   }
+
+   private InvocationContext getInvocationContextForRead(Transaction tx, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      if (config.isTransactionalCache()) {
+         Transaction transaction = tx == null ? getOngoingTransaction() : tx;
+         //if we are in the scope of a transaction than return a transactional context. This is relevant e.g.
+         // FORCE_WRITE_LOCK is used on read operations - in that case, the lock is held for the the transaction's
+         // lifespan (when in tx scope) vs. call lifespan (when not in tx scope).
+         if (transaction != null)
+            return getInvocationContext(transaction, explicitFlags, explicitClassLoader);
+      }
+      InvocationContext result = icc.createInvocationContext(false);
+      setInvocationContextFlagsAndClassLoader(result, explicitFlags, explicitClassLoader);
+      return result;
+   }
+
+   /**
+    * If this is a transactional cache and autoCommit is set to true then starts a transaction if this is
+    * not a transactional call.
+    */
+   private InvocationContext getInvocationContextWithImplicitTransaction(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      InvocationContext invocationContext;
+      boolean txInjected = false;
+      if (config.isTransactionalCache()) {
+         Transaction transaction = getOngoingTransaction();
+         if (transaction == null && config.isTransactionAutoCommit()) {
+            try {
+               transactionManager.begin();
+               transaction = transactionManager.getTransaction();
+               txInjected = true;
+               if (trace) log.trace("Implicit transaction started!");
+            } catch (Exception e) {
+               throw new CacheException("Could not start transaction", e);
+            }
+         }
+         invocationContext = getInvocationContext(transaction, explicitFlags, explicitClassLoader);
+      } else {
+         invocationContext = getInvocationContextForWrite(explicitFlags, explicitClassLoader);
+      }
+      if (txInjected) {
+         ((TxInvocationContext) invocationContext).setImplicitTransaction(true);
+         if (trace) log.tracef("Marked tx as implicit.");
+      }
+      return invocationContext;
    }
 
    private InvocationContext getInvocationContext(Transaction tx, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
@@ -399,7 +451,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       if (keys == null || keys.isEmpty()) {
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       }
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextForWrite(explicitFlags, explicitClassLoader);
       LockControlCommand command = commandsFactory.buildLockControlCommand(keys, false, ctx.getFlags());
       return (Boolean) invoker.invoke(ctx, command);
    }
@@ -423,7 +475,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       if (log.isDebugEnabled()) log.debugf("Stopping cache %s on %s", getName(), getCacheManager().getAddress());
 
       // Create invocation context to pass flags
-      getInvocationContext(false, explicitFlags, explicitClassLoader);
+      createNonTxInvocationContext(explicitFlags, explicitClassLoader);
       componentRegistry.stop();
    }
 
@@ -563,9 +615,9 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    @SuppressWarnings("unchecked")
    final V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(explicitFlags, explicitClassLoader);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), ctx.getFlags());
-      return (V) invoker.invoke(ctx, command);
+      return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
    public final V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
@@ -575,10 +627,10 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    @SuppressWarnings("unchecked")
    final V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(explicitFlags, explicitClassLoader);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), ctx.getFlags());
       command.setPutIfAbsent(true);
-      return (V) invoker.invoke(ctx, command);
+      return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
    public final void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
@@ -587,9 +639,9 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeysNotNull(map);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(explicitFlags, explicitClassLoader);
       PutMapCommand command = commandsFactory.buildPutMapCommand(map, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), ctx.getFlags());
-      invoker.invoke(ctx, command);
+      executeCommandAndCommitIfNeeded(ctx, command);
    }
 
    public final V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
@@ -599,9 +651,9 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    @SuppressWarnings("unchecked")
    final V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(explicitFlags, explicitClassLoader);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), ctx.getFlags());
-      return (V) invoker.invoke(ctx, command);
+      return (V) executeCommandAndCommitIfNeeded(ctx, command);
 
    }
 
@@ -611,9 +663,9 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(explicitFlags, explicitClassLoader);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime), ctx.getFlags());
-      return (Boolean) invoker.invoke(ctx, command);
+      return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
    /**
@@ -648,7 +700,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextForWrite(explicitFlags, explicitClassLoader);
       ctx.setUseFutureReturnType(true);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), ctx.getFlags());
       return wrapInFuture(invoker.invoke(ctx, command));
@@ -660,7 +712,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeysNotNull(data);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextForWrite(explicitFlags, explicitClassLoader);
       ctx.setUseFutureReturnType(true);
       PutMapCommand command = commandsFactory.buildPutMapCommand(data, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), ctx.getFlags());
       return wrapInFuture(invoker.invoke(ctx, command));
@@ -671,7 +723,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    final NotifyingFuture<Void> clearAsync(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextForWrite(explicitFlags, explicitClassLoader);
       ctx.setUseFutureReturnType(true);
       ClearCommand command = commandsFactory.buildClearCommand(ctx.getFlags());
       return wrapInFuture(invoker.invoke(ctx, command));
@@ -683,7 +735,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextForWrite(explicitFlags, explicitClassLoader);
       ctx.setUseFutureReturnType(true);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), ctx.getFlags());
       command.setPutIfAbsent(true);
@@ -696,7 +748,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final NotifyingFuture<V> removeAsync(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextForWrite(explicitFlags, explicitClassLoader);
       ctx.setUseFutureReturnType(true);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, ctx.getFlags());
       return wrapInFuture(invoker.invoke(ctx, command));
@@ -708,7 +760,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final NotifyingFuture<Boolean> removeAsync(Object key, Object value, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextForWrite(explicitFlags, explicitClassLoader);
       ctx.setUseFutureReturnType(true);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, value, ctx.getFlags());
       return wrapInFuture(invoker.invoke(ctx, command));
@@ -720,7 +772,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextForWrite(explicitFlags, explicitClassLoader);
       ctx.setUseFutureReturnType(true);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), ctx.getFlags());
       return wrapInFuture(invoker.invoke(ctx, command));
@@ -732,7 +784,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContext(false, explicitFlags, explicitClassLoader);
+      InvocationContext ctx = getInvocationContextForWrite(explicitFlags, explicitClassLoader);
       ctx.setUseFutureReturnType(true);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, newValue, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle), ctx.getFlags());
       return wrapInFuture(invoker.invoke(ctx, command));
@@ -763,7 +815,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
             @Override
             public V call() throws Exception {
                assertKeyNotNull(key);
-               InvocationContext ctx = getInvocationContext(tx, appliedFlags, explicitClassLoader);
+               InvocationContext ctx = getInvocationContextForRead(tx, appliedFlags, explicitClassLoader);
                GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, appliedFlags);
                Object ret = invoker.invoke(ctx, command);
                f.notifyDone();
@@ -831,9 +883,49 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    private Transaction getOngoingTransaction() {
       try {
-         return transactionManager != null ? transactionManager.getTransaction() : null;
+         Transaction transaction = null;
+         if (transactionManager != null) {
+            transaction = transactionManager.getTransaction();
+            if (transaction == null && config.isInvocationBatchingEnabled()) {
+               transaction = batchContainer.getBatchTransaction();
+            }
+         }
+         return transaction;
       } catch (SystemException e) {
          throw new CacheException("Unable to get transaction", e);
+      }
+   }
+
+   private Object executeCommandAndCommitIfNeeded(InvocationContext ctx, VisitableCommand command) {
+      final boolean txInjected = ctx.isInTxScope() && ((TxInvocationContext) ctx).isImplicitTransaction();
+      Object result;
+      try {
+         result = invoker.invoke(ctx, command);
+      } catch (RuntimeException e) {
+         if (txInjected) tryRollback();
+         throw e;
+      }
+
+      if (txInjected) {
+         if (trace)
+            log.tracef("Committing transaction as it was implicit: %s", getOngoingTransaction());
+         try {
+            transactionManager.commit();
+         } catch (Throwable e) {
+            log.couldNotCompleteInjectedTransaction(e);
+            tryRollback();
+            throw new CacheException("Could not commit implicit transaction", e);
+         }
+      }
+
+      return result;
+   }
+
+   private void tryRollback() {
+      try {
+         if (transactionManager != null) transactionManager.rollback();
+      } catch (Throwable t) {
+         if (trace) log.trace("Could not rollback", t);//best effort
       }
    }
 

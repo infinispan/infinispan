@@ -23,7 +23,6 @@
 package org.infinispan.loaders.remote;
 
 import org.infinispan.client.hotrod.TestHelper;
-import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.BaseCacheStoreTest;
@@ -34,7 +33,6 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.util.Properties;
@@ -55,7 +53,7 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
       remoteCacheStoreConfig.setUseDefaultRemoteCache(true);
       assert remoteCacheStoreConfig.isUseDefaultRemoteCache();
 
-      localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      localCacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       localCacheManager.getDefaultConfiguration().fluent()
          .eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED)
          .expiration().wakeUpInterval(10L)

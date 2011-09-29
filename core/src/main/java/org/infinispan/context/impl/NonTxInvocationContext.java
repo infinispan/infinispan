@@ -27,7 +27,10 @@ import org.infinispan.util.BidirectionalLinkedHashMap;
 import org.infinispan.util.BidirectionalMap;
 import org.infinispan.util.InfinispanCollections;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Context to be used for non transactional calls, both remote and local.
@@ -37,7 +40,10 @@ import java.util.Map;
  */
 public class NonTxInvocationContext extends AbstractInvocationContext {
 
+   private static final int INITIAL_CAPACITY = 4;
    protected BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries = null;
+
+   protected Set<Object> lockedKeys = null;
 
    public CacheEntry lookupEntry(Object k) {
       return lookedUpEntries == null ? null : lookedUpEntries.get(k);
@@ -86,13 +92,14 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    }
 
    private void initLookedUpEntries() {
-      if (lookedUpEntries == null) lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(4);
+      if (lookedUpEntries == null) lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(INITIAL_CAPACITY);
    }
 
    @Override
    public void reset() {
       super.reset();
       clearLookedUpEntries();
+      if (lockedKeys != null) lockedKeys.clear();
    }
 
    @Override
@@ -102,5 +109,16 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
          dolly.lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(lookedUpEntries);
       }
       return dolly;
+   }
+
+   @Override
+   public void addLockedKey(Object key) {
+      if (lockedKeys == null) lockedKeys = new HashSet<Object>(INITIAL_CAPACITY);
+      lockedKeys.add(key);
+   }
+
+   @Override
+   public Set<Object> getLockedKeys() {
+      return lockedKeys == null ? Collections.<Object>emptySet() : lockedKeys;
    }
 }

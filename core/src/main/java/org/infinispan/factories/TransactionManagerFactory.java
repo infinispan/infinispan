@@ -22,14 +22,15 @@
  */
 package org.infinispan.factories;
 
+import javax.transaction.TransactionManager;
+
+import org.infinispan.CacheException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.TransactionManager;
 
 /**
  * Uses a number of mechanisms to retrieve a transaction manager.
@@ -44,6 +45,11 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
    private static final Log log = LogFactory.getLog(TransactionManagerFactory.class);
 
    public <T> T construct(Class<T> componentType) {
+
+      if (!configuration.isTransactionalCache()) {
+         return null;
+      }
+
       // See if we had a TransactionManager injected into our config
       TransactionManager transactionManager = null;
       TransactionManagerLookup lookup = configuration.getTransactionManagerLookup();
@@ -62,13 +68,19 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
          }
       }
       catch (Exception e) {
-         log.info("failed looking up TransactionManager, will not use transactions", e);
+         log.couldNotInstantiateTransactionManager(e);
       }
 
       if (transactionManager == null && configuration.isInvocationBatchingEnabled()) {
-         log.info("Using a batchMode transaction manager");
+         log.usingBatchModeTransactionManager();
          transactionManager = BatchModeTransactionManager.getInstance();
       }
+
+      if (transactionManager == null) {
+         throw new CacheException("This is transactional cache but no transaction manager could be found. " +
+                                        "Configure the transaction manager lookup properly.");
+      }
+
       return componentType.cast(transactionManager);
    }
 }

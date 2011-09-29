@@ -27,6 +27,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.transaction.Transaction;
+import java.security.PrivateKey;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -51,7 +52,7 @@ public interface TxInvocationContext extends InvocationContext {
    Set<Object> getAffectedKeys();
 
    /**
-    * Returns the id of the transaction assoctiated  with the current call.
+    * Returns the id of the transaction associated  with the current call.
     */
    GlobalTransaction getGlobalTransaction();
 
@@ -79,4 +80,12 @@ public interface TxInvocationContext extends InvocationContext {
     * or false otherwise.
     */
    boolean isTransactionValid();
+
+   /**
+    * Marks this transaction as implicit; implicit transactions are started for transactional caches that have the autoCommit enabled.
+    */
+   void setImplicitTransaction(boolean implicit);
+
+
+   boolean isImplicitTransaction();
 }

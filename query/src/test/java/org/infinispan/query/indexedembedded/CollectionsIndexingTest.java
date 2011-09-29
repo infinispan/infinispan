@@ -57,7 +57,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
          .indexLocalOnly(false)
          .addProperty("hibernate.search.default.directory_provider", "ram")
          .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
-      return TestCacheManagerFactory.createCacheManager(c, true);
+      return TestCacheManagerFactory.createCacheManager(c);
    }
 
    @BeforeClass

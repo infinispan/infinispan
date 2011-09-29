@@ -44,7 +44,7 @@ import java.util.concurrent.CountDownLatch;
  * @author Mircea.Markus@jboss.com
  */
 @Test(testName = "tx.dld.DldLazyLockingReplicationTest", groups = "functional")
-public class DldLazyLockingReplicationTest extends BaseDldLazyLockingTest {
+public class DldOptimisticLockingReplicationTest extends BaseDldOptimisticLockingTest {
 
    protected CountDownLatch replicationLatch;
    protected PerCacheExecutorThread t1;
@@ -108,69 +108,12 @@ public class DldLazyLockingReplicationTest extends BaseDldLazyLockingTest {
       super.testSymmetricDeadlock("k0", "k1");
    }
 
-   public void testLocalVsRemoteDeadlock() {
-      replicationLatch.countDown();
-      testLocalVsRemoteDeadlock("k0", "k1");
-   }
-
    public void testExpectedInnerStructure() {
       LockManager lockManager = TestingUtil.extractComponent(cache(0), LockManager.class);
       assert lockManager instanceof DeadlockDetectingLockManager;
 
       InterceptorChain ic = TestingUtil.extractComponent(cache(0), InterceptorChain.class);
       assert ic.containsInterceptorType(DeadlockDetectingInterceptor.class);
-   }
-
-   public void testSameKeyDeadlock() throws Exception {
-      t1.setKeyValue("key", "value1");
-      t2.setKeyValue("key", "value2");
-      assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t1.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
-      assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t2.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
-
-      t1.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
-      t2.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
-      System.out.println("After put key value");
-
-      t1.clearResponse();
-      t2.clearResponse();
-
-      t1.executeNoResponse(PerCacheExecutorThread.Operations.COMMIT_TX);
-      t2.executeNoResponse(PerCacheExecutorThread.Operations.COMMIT_TX);
-
-      System.out.println("Now replication is triggered");
-      replicationLatch.countDown();
-
-
-      Object t1Commit = t1.waitForResponse();
-      Object t2Commit = t2.waitForResponse();
-      System.out.println("After commit: " + t1Commit + ", " + t2Commit);
-
-      assert xor(t1Commit instanceof Exception, t2Commit instanceof Exception) : "only one thread must be failing " + t1Commit + "," + t2Commit;
-      System.out.println("t2Commit = " + t2Commit);
-      System.out.println("t1Commit = " + t1Commit);
-
-      if (t1Commit instanceof Exception) {
-         System.out.println("t1 rolled back");
-         Object o = cache(0).get("key");
-         assert o != null;
-         assert o.equals("value2");
-      } else {
-         System.out.println("t2 rolled back");
-         Object o = cache(0).get("key");
-         assert o != null;
-         assert o.equals("value1");
-         o = cache(1).get("key");
-         assert o != null;
-         assert o.equals("value1");
-      }
-
-      assert ddLm1.getDetectedRemoteDeadlocks() + ddLm2.getDetectedRemoteDeadlocks() >= 1;
-
-      LockManager lm1 = TestingUtil.extractComponent(cache(0), LockManager.class);
-      assert !lm1.isLocked("key") : "It is locked by " + lm1.getOwner("key");
-      LockManager lm2 = TestingUtil.extractComponent(cache(1), LockManager.class);
-      assert !lm2.isLocked("key") : "It is locked by " + lm2.getOwner("key");
-      LockAssert.assertNoLocks(cache(0));
    }
 
    public void testDeadlockDetectedOneTx() throws Exception {

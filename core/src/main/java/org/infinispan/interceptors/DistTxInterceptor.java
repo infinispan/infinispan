@@ -54,27 +54,12 @@ import java.util.Map;
 public class DistTxInterceptor extends TxInterceptor {
 
    DistributionManager dm;
-   ReplayCommandVisitor replayCommandVisitor = new ReplayCommandVisitor();
    private CommandsFactory commandsFactory;
 
    @Inject
    public void injectDistributionManager(DistributionManager dm, StateTransferLock stateTransferLock, CommandsFactory commandsFactory) {
       this.dm = dm;
       this.commandsFactory = commandsFactory;
-   }
-
-   /**
-    * Only replays modifications that are
-    */
-   @Override
-   protected VisitableCommand getCommandToReplay(VisitableCommand command) {
-      try {
-         return (VisitableCommand) command.acceptVisitor(null, replayCommandVisitor);
-      } catch (RuntimeException re) {
-         throw re;
-      } catch (Throwable th) {
-         throw new RuntimeException(th);
-      }
    }
 
    @Override
@@ -120,44 +105,5 @@ public class DistTxInterceptor extends TxInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return super.visitPutMapCommand(ctx, command);
-   }
-
-
-   class ReplayCommandVisitor extends AbstractVisitor {
-      @Override
-      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
-         Map newMap = new HashMap();
-         for (Map.Entry entry : command.getMap().entrySet()) {
-            if (dm.getLocality(entry.getKey()).isLocal()) newMap.put(entry.getKey(), entry.getValue());
-         }
-
-         if (newMap.isEmpty()) return null;
-         if (newMap.size() == command.getMap().size()) return command;
-         return commandsFactory.buildPutMapCommand(newMap, command.getLifespanMillis(), command.getMaxIdleTimeMillis(), ctx.getFlags());
-      }
-
-      @Override
-      public Object visitPutKeyValueCommand(InvocationContext ignored, PutKeyValueCommand command) {
-         return visitDataWriteCommand(command);
-      }
-
-      @Override
-      public Object visitRemoveCommand(InvocationContext ignored, RemoveCommand command) {
-         return visitDataWriteCommand(command);
-      }
-
-      @Override
-      public Object visitReplaceCommand(InvocationContext ignored, ReplaceCommand command) {
-         return visitDataWriteCommand(command);
-      }
-
-      private VisitableCommand visitDataWriteCommand(DataWriteCommand command) {
-         return dm.getLocality(command.getKey()).isLocal() ? command : null;
-      }
-
-      @Override
-      public Object handleDefault(InvocationContext ignored, VisitableCommand command) {
-         return command;
-      }
    }
 }

@@ -31,6 +31,7 @@
 package org.infinispan.replication;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
@@ -38,6 +39,8 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.NotSerializableException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
@@ -60,17 +63,31 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
                .locking()
                   .isolationLevel(IsolationLevel.REPEATABLE_READ)
                   .lockAcquisitionTimeout(60000l)
+               .transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
             .build();
       createClusteredCaches(2, "syncReplCache", configuration);
+      waitForClusterToForm("syncReplCache");
+
+      Configuration noTx = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,false)
+            .fluent()
+               .locking()
+                  .isolationLevel(IsolationLevel.REPEATABLE_READ)
+                  .lockAcquisitionTimeout(60000l).build();
+
+      defineConfigurationOnAllManagers("syncReplCacheNoTx", noTx);
 
       Configuration replAsync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
       defineConfigurationOnAllManagers("asyncReplCache", replAsync);
+
+      Configuration replAsyncNoTx = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,false);
+      defineConfigurationOnAllManagers("asyncReplCacheNoTx", replAsyncNoTx);
 
       Configuration replQueue = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true)
             .fluent()
                .clustering()
                   .async()
                      .useReplQueue(true)
+               .transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
             .build();
       defineConfigurationOnAllManagers("replQueueCache", replQueue);
 
@@ -79,6 +96,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
                .clustering()
                   .async()
                      .asyncMarshalling(true)
+               .transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
             .build();
       defineConfigurationOnAllManagers("asyncMarshallCache", asyncMarshall);
    }
@@ -92,11 +110,11 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
    }
 
    public void testNonSerializableRepl() throws Exception {
-      doNonSerializableReplTest("syncReplCache");
+      doNonSerializableReplTest("syncReplCacheNoTx");
    }
 
    public void testNonSerializableAsyncRepl() throws Exception {
-      doNonSerializableReplTest("asyncReplCache");
+      doNonSerializableReplTest("asyncReplCacheNoTx");
    }
 
    public void testNonSerializableReplQueue() throws Exception {
@@ -146,7 +164,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       }
    }
 
-   @Test(groups = "functional", expectedExceptions = { TimeoutException.class })
+   @Test(groups = "functional", expectedExceptions = { CacheException.class })
    public void testSyncReplTimeout() {
       AdvancedCache cache1 = cache(0, "syncReplCache").getAdvancedCache();
       AdvancedCache cache2 = cache(1, "syncReplCache").getAdvancedCache();
@@ -167,17 +185,19 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       cache1.put("k", "v");
    }
 
-   @Test(groups = "functional", expectedExceptions = { TimeoutException.class })
+   @Test(groups = "functional", expectedExceptions = { CacheException.class })
    public void testLockAcquisitionTimeout() throws Exception {
       AdvancedCache cache1 = cache(0, "syncReplCache").getAdvancedCache();
       AdvancedCache cache2 = cache(1, "syncReplCache").getAdvancedCache();
+      cache1.getConfiguration().setLockAcquisitionTimeout(10);
       cache2.getConfiguration().setLockAcquisitionTimeout(10);
       TestingUtil.blockUntilViewsReceived(10000, cache1, cache2);
 
       // get a lock on cache 2 and hold on to it.
-      TransactionManager tm = TestingUtil.getTransactionManager(cache2);
+      DummyTransactionManager tm = (DummyTransactionManager) TestingUtil.getTransactionManager(cache2);
       tm.begin();
       cache2.put("block", "block");
+      assert tm.getTransaction().runPrepare();
       tm.suspend();
       cache1.put("block", "v");
    }

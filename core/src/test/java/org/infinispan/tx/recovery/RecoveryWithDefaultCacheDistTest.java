@@ -25,6 +25,7 @@ package org.infinispan.tx.recovery;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.xa.recovery.SerializableXid;
@@ -48,7 +49,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
    @Override
    protected void createCacheManagers() throws Throwable {
       configuration = configure();
-      createCluster(configuration, false, 2);
+      createCluster(configuration, 2);
       waitForClusterToForm();
 
       //check that a default cache has been created
@@ -130,7 +131,8 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       assert inDoubtTransactions.contains(new SerializableXid(t1_2.getXid()));
       assert inDoubtTransactions.contains(new SerializableXid(t1_3.getXid()));
 
-      addClusterEnabledCacheManager(configuration, false);
+      configuration.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      addClusterEnabledCacheManager(configuration);
       defineRecoveryCache(1);
       TestingUtil.blockUntilViewsReceived(60000, cache(0), cache(1));
       DummyTransaction t1_4 = beginAndSuspendTx(cache(1));

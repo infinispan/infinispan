@@ -262,4 +262,15 @@ public class ReadCommittedEntry implements MVCCEntry {
             ", isValid=" + isValid() +
             '}';
    }
+
+   @Override
+   public boolean undelete(boolean doUndelete) {
+      if (isRemoved() && doUndelete) {
+         if (trace) log.trace("Entry is deleted in current scope.  Un-deleting.");
+         setRemoved(false);
+         setValid(true);
+         return true;
+      }
+      return false;
+   }
 }

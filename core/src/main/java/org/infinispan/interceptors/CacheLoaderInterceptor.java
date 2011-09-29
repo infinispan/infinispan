@@ -43,6 +43,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
@@ -57,13 +58,11 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    protected CacheLoaderManager clm;
    protected CacheNotifier notifier;
    protected CacheLoader loader;
-   private DataContainer dataContainer;
    private EntryFactory entryFactory;
 
    @Inject
-   protected void injectDependencies(CacheLoaderManager clm, DataContainer dataContainer, EntryFactory entryFactory, CacheNotifier notifier) {
+   protected void injectDependencies(CacheLoaderManager clm, EntryFactory entryFactory, CacheNotifier notifier) {
       this.clm = clm;
-      this.dataContainer = dataContainer;
       this.notifier = notifier;
       this.entryFactory = entryFactory;
    }
@@ -126,41 +125,16 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          return false; //skip operation
       }
       // first check if the container contains the key we need.  Try and load this into the context.
-      CacheEntry e = entryFactory.wrapEntryForReading(ctx, key);
-      if (e == null || e.isNull()) {
-
-         // Obtain a temporary lock to verify the key is not being concurrently added
-         boolean keyLocked = entryFactory.acquireLock(ctx, key);
-         boolean unlockOnWayOut = false;
-         try {
-            // check again, in case there is a concurrent addition
-            if (dataContainer.containsKey(key)) {
-               log.trace("No need to load.  Key exists in the data container.");
-               unlockOnWayOut = true;
-               return true;
-            }
-         } finally {
-            if (keyLocked && unlockOnWayOut) {
-               entryFactory.releaseLock(ctx, key);
-            }
-         }
-
-         // we *may* need to load this.
+      CacheEntry e = ctx.lookupEntry(key);
+      if (e == null || e.isNull() || e.getValue() == null) {
          InternalCacheEntry loaded = loader.load(key);
-         if (loaded == null) {
-            if (log.isTraceEnabled()) {
-               log.trace("No need to load.  Key doesn't exist in the loader.");
-            }
-            if (keyLocked) {
-               entryFactory.releaseLock(ctx, key);
-            }
+         if (loaded != null) {
+            MVCCEntry mvccEntry = entryFactory.wrapEntryForPut(ctx, key, loaded, false);
+            recordLoadedEntry(ctx, key, mvccEntry, loaded);
+            return true;
+         } else {
             return false;
          }
-
-         // Reuse the lock and create a new entry for loading
-         MVCCEntry n = entryFactory.wrapEntryForWriting(ctx, key, true, false, keyLocked, false, true);
-         recordLoadedEntry(ctx, key, n, loaded);
-         return true;
       } else {
          return true;
       }

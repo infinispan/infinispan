@@ -32,6 +32,8 @@ import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.testng.annotations.Test;
 
+import javax.transaction.Transaction;
+
 import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
 import static org.testng.Assert.assertEquals;
 
@@ -43,7 +45,7 @@ public class LocalRecoveryTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(true);
       cm.getDefaultConfiguration().fluent()
          .transaction()
             .transactionManagerLookupClass(DummyTransactionManagerLookup.class)
@@ -59,8 +61,10 @@ public class LocalRecoveryTest extends SingleCacheManagerTest {
       assertPrepared(0, dummyTm().getTransaction());
       xaRes.prepare(xaRes.getLocalTransaction().getXid());
       assertPrepared(1, dummyTm().getTransaction());
+      final DummyTransaction suspend = (DummyTransaction) dummyTm().suspend();
+
       xaRes.commit(xaRes.getLocalTransaction().getXid(), false);
-      assertPrepared(0, dummyTm().getTransaction());
+      assertPrepared(0, suspend);
       assertEquals(0, TestingUtil.getTransactionTable(cache).getLocalTxCount());
    }
 

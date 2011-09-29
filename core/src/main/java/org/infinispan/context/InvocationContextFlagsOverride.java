@@ -178,4 +178,9 @@ public class InvocationContextFlagsOverride implements InvocationContext {
    public void setClassLoader(ClassLoader classLoader) {
       delegate.setClassLoader(classLoader);
    }
+
+   @Override
+   public void addLockedKey(Object key) {
+      delegate.addLockedKey(key);
+   }
 }

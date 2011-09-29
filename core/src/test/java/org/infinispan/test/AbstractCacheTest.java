@@ -97,6 +97,7 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
                .sync()
                   .stateRetrieval().fetchInMemoryState(false)
                .transaction().syncCommitPhase(true).syncRollbackPhase(true)
+               .cacheStopTimeout(0)
             .build();
       } else {
          return TestCacheManagerFactory.getDefaultConfiguration(transactional).fluent()
@@ -105,6 +106,7 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
                .async()
                   .stateRetrieval().fetchInMemoryState(false)
                .transaction().syncCommitPhase(true).syncRollbackPhase(true)
+               .cacheStopTimeout(0)
             .build();
       }
    }

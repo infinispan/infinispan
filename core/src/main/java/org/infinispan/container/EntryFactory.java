@@ -36,56 +36,10 @@ import org.infinispan.util.concurrent.TimeoutException;
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Galder Zamarreño
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public interface EntryFactory {
-
-   void releaseLock(InvocationContext ctx, Object key);
-
-   /**
-    * Attempts to lock an entry if the lock isn't already held in the current scope, and records the lock in the
-    * context.
-    *
-    * @param ctx context
-    * @param key Key to lock
-    * @return true if a lock was needed and acquired, false if it didn't need to acquire the lock (i.e., lock was
-    *         already held)
-    * @throws InterruptedException if interrupted
-    * @throws org.infinispan.util.concurrent.TimeoutException
-    *                              if we are unable to acquire the lock after a specified timeout.
-    */
-   boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException;
-
-   /**
-    * Wraps an entry for writing.  This would typically acquire write locks if necessary, and place the wrapped
-    * entry in the invocation context.
-    *
-    * @param ctx current invocation context
-    * @param key key to look up and wrap
-    * @param createIfAbsent if true, an entry is created if it does not exist in the data container.
-    * @param forceLockIfAbsent forces a lock even if the entry is absent
-    * @param alreadyLocked if true, this hint prevents the method from acquiring any locks and the existence and ownership of the lock is presumed.
-    * @param forRemoval if true, this hint informs this method that the lock is being acquired for removal.
-    * @param undeleteIfNeeded if true, if the entry is found in the current scope (perhaps a transaction) and is deleted, it will be undeleted.  If false, it will be considered deleted.
-    * @return an MVCCEntry instance
-    * @throws InterruptedException when things go wrong, usually trying to acquire a lock
-    */
-   MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval, boolean undeleteIfNeeded) throws InterruptedException;
-
-   /**
-    * Wraps an entry for writing.  This would typically acquire write locks if necessary, and place the wrapped
-    * entry in the invocation context.
-    *
-    * @param ctx current invocation context
-    * @param entry an internal entry to wrap
-    * @param createIfAbsent if true, an entry is created if it does not exist in the data container.
-    * @param forceLockIfAbsent forces a lock even if the entry is absent
-    * @param alreadyLocked if true, this hint prevents the method from acquiring any locks and the existence and ownership of the lock is presumed.
-    * @param forRemoval if true, this hint informs this method that the lock is being acquired for removal.
-* @param undeleteIfNeeded if true, if the entry is found in the current scope (perhaps a transaction) and is deleted, it will be undeleted.  If false, it will be considered deleted.    * @return an MVCCEntry instance
-    * @throws InterruptedException when things go wrong, usually trying to acquire a lock
-    */
-   MVCCEntry wrapEntryForWriting(InvocationContext ctx, InternalCacheEntry entry, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval, boolean undeleteIfNeeded) throws InterruptedException;
 
    /**
     * Wraps an entry for reading.  Usually this is just a raw {@link CacheEntry} but certain combinations of isolation
@@ -94,8 +48,31 @@ public interface EntryFactory {
     *
     * @param ctx current invocation context
     * @param key key to look up and wrap
-    * @return an entry for reading
     * @throws InterruptedException when things go wrong, usually trying to acquire a lock
     */
    CacheEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException;
+
+   /**
+    * Used for wrapping individual keys when clearing the cache. The wrapped entry is added to the
+    * supplied InvocationContext.
+    */
+   MVCCEntry wrapEntryForClear(InvocationContext ctx, Object key) throws InterruptedException;
+
+   /**
+    * Used for wrapping a cache entry for replacement. The wrapped entry is added to the
+    * supplied InvocationContext.
+    */
+   MVCCEntry wrapEntryForReplace(InvocationContext ctx, Object key) throws InterruptedException;
+
+   /**
+    * Used for wrapping a cache entry for removal. The wrapped entry is added to the
+    * supplied InvocationContext.
+    */
+   MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key) throws InterruptedException;
+
+   /**
+    * Used for wrapping a cache entry for addition to cache. The wrapped entry is added to the
+    * supplied InvocationContext.
+    */
+   MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry ice, boolean undeleteIfNeeded) throws InterruptedException;
 }
