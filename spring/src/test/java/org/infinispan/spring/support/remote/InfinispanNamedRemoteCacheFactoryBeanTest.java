@@ -32,6 +32,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
@@ -68,7 +69,7 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
 
    @BeforeClass
    public void setupRemoteCacheFactory() {
-      hotrodServer = TestHelper.startHotRodServer(cacheManager);
+      hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager, 19733);
       remoteCacheManager = new RemoteCacheManager("localhost", hotrodServer.getPort());
    }
 
