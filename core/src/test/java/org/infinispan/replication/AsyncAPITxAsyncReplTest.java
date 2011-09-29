@@ -20,24 +20,17 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.distribution;
+package org.infinispan.replication;
 
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.ReplListener;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.TimeUnit;
-
-@Test(groups = "functional", testName = "distribution.AsyncAPIAsyncDistTest")
-public class AsyncAPIAsyncDistTest extends AsyncAPISyncDistTest {
+@Test(groups = "functional", testName = "replication.AsyncAPIAsyncReplTest")
+public class AsyncAPITxAsyncReplTest extends AsyncAPITxSyncReplTest {
 
    ReplListener rl;
    ReplListener rlNoTx;
-
-   public AsyncAPIAsyncDistTest() {
-      cleanup = AbstractCacheTest.CleanupPhase.AFTER_METHOD;
-   }
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -47,30 +40,21 @@ public class AsyncAPIAsyncDistTest extends AsyncAPISyncDistTest {
    }
 
    @Override
-   protected boolean sync() {
-      return false;
-   }
-
-   @Override
-   protected void resetListeners() {
-      rl.resetEager();
-   }
-
-   @Override
    protected void asyncWait(boolean tx, Class<? extends WriteCommand>... cmds) {
       if (tx) {
          if (cmds == null || cmds.length == 0)
             rl.expectAnyWithTx();
          else
             rl.expectWithTx(cmds);
-         rl.waitForRpc(240, TimeUnit.SECONDS);
+         rl.waitForRpc();
       } else {
          if (cmds == null || cmds.length == 0)
             rlNoTx.expectAny();
          else
             rlNoTx.expect(cmds);
-         rlNoTx.waitForRpc(240, TimeUnit.SECONDS);
+         rlNoTx.waitForRpc();
       }
+
 
 
    }

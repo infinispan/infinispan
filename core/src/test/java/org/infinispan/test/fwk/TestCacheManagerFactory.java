@@ -140,7 +140,7 @@ public class TestCacheManagerFactory {
    }
 
    private static void amendJTA(Configuration c) {
-      if (c.getTransactionManagerLookupClass() == null && c.getTransactionManagerLookup() == null) {
+      if (c.isTransactionalCache() && c.getTransactionManagerLookupClass() == null && c.getTransactionManagerLookup() == null) {
          c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
       }
    }

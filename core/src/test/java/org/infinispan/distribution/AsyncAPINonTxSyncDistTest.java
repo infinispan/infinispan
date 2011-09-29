@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,21 +20,20 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
-import org.infinispan.replication.AsyncAPISyncReplTest;
+import org.infinispan.replication.AsyncAPINonTxSyncReplTest;
 import org.infinispan.test.data.Key;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 
-@Test(groups = "functional", testName = "distribution.AsyncAPISyncDistTest")
-public class AsyncAPISyncDistTest extends AsyncAPISyncReplTest {
+@Test (groups = "functional", testName = "distribution.AsyncAPINonTxSyncReplTest")
+public class AsyncAPINonTxSyncDistTest extends AsyncAPINonTxSyncReplTest {
 
    protected Configuration getConfig(boolean txEnabled) {
       return getDefaultClusteredConfig(sync() ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, txEnabled);

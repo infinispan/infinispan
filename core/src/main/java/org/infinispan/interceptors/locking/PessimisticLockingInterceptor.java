@@ -90,7 +90,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       try {
          acquireRemoteIfNeeded(ctx, command.getKey());
-         if (cll.localNodeIsOwner(command.getKey()) || ctx.isOriginLocal()) {
+         if (ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK) || ctx.isOriginLocal() || cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
          }
          return invokeNextInterceptor(ctx, command);

@@ -47,8 +47,7 @@ import static org.infinispan.distribution.DistributionTestHelper.isOwner;
 public class DistCacheStoreTxDisjointSetTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration c = new Configuration();
-      c.setCacheMode(Configuration.CacheMode.DIST_SYNC);
+      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
       c.setCacheLoaderManagerConfig(new CacheLoaderManagerConfig(new DummyInMemoryCacheStore.Cfg("DistCacheStoreTxDisjointSetTest0")));
       addClusterEnabledCacheManager(c);
 

@@ -29,6 +29,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -115,7 +116,9 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
       Cache cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
       cache2.getAdvancedCache().addInterceptorAfter(
-            new ErrorInducingInterceptor(), OptimisticLockingInterceptor.class);
+            new ErrorInducingInterceptor(), NonTransactionalLockingInterceptor.class);
+
+      log.info("Before put.");
       try {
          cache1.put(failureType, 1);
       } catch (CacheException e) {

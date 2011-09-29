@@ -57,7 +57,7 @@ public class RemoteCacheStoreConfigTest {
    public void startUp() {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
       assertEquals(cacheManager.getCache().size(), 0);
-      hotRodServer = TestHelper.startHotRodServer(cacheManager);
+      hotRodServer = HotRodTestingUtil.startHotRodServer(cacheManager, 19711);
    }
 
    public void simpleTest() throws IOException {

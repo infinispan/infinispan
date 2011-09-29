@@ -57,8 +57,10 @@ public abstract class RetryOnFailureOperation extends HotRodOperation {
    public Object execute() {
       int retryCount = 0;
       while (shouldRetry(retryCount)) {
-         Transport transport = getTransport(retryCount);
+         Transport transport = null;
          try {
+            // Transport retrieval should be retried
+            transport = getTransport(retryCount);
             return executeOperation(transport);
          } catch (TransportException te) {
             logErrorAndThrowExceptionIfNeeded(retryCount, te);
