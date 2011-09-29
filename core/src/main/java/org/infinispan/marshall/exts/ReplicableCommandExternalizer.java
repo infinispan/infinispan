@@ -35,10 +35,10 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
-import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
@@ -46,8 +46,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Set;
-
-import static org.infinispan.util.ModuleProperties.moduleOnlyReplicableCommands;
 
 /**
  * ReplicableCommandExternalizer.
@@ -57,9 +55,11 @@ import static org.infinispan.util.ModuleProperties.moduleOnlyReplicableCommands;
  */
 public class ReplicableCommandExternalizer extends AbstractExternalizer<ReplicableCommand> {
    RemoteCommandsFactory cmdFactory;
+   private GlobalComponentRegistry globalComponentRegistry;
    
-   public void inject(RemoteCommandsFactory cmdFactory) {
+   public void inject(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry globalComponentRegistry) {
       this.cmdFactory = cmdFactory;
+      this.globalComponentRegistry = globalComponentRegistry;
    }
 
    @Override
@@ -133,13 +133,13 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             PutKeyValueCommand.class, PutMapCommand.class,
             RemoveCommand.class, ReplaceCommand.class);
       // Search only those commands that replicable and not cache specific replicable commands
-      Collection<Class<? extends ReplicableCommand>> moduleCommands = moduleOnlyReplicableCommands();
+      Collection<Class<? extends ReplicableCommand>> moduleCommands = globalComponentRegistry.getModuleProperties().moduleOnlyReplicableCommands();
       if (moduleCommands != null && !moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);
       return coreCommands;
    }
 
    private Collection<Class<? extends ReplicableCommand>> getModuleCommands() {
-      return ModuleProperties.moduleCommands(null);
+      return globalComponentRegistry.getModuleProperties().moduleCommands(null);
    }
 
 }

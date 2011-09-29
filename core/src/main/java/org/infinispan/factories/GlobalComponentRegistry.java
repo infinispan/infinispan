@@ -25,6 +25,7 @@ package org.infinispan.factories;
 import org.infinispan.CacheException;
 import org.infinispan.Version;
 import org.infinispan.commands.module.ModuleCommandFactory;
+import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
@@ -44,6 +45,7 @@ import javax.management.MBeanServerFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -78,6 +80,11 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
     */
    private final Set<String> createdCaches;
 
+   private final ModuleProperties moduleProperties = new ModuleProperties();
+   final List<ModuleLifecycle> moduleLifecycles;
+   private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
+
+
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
     *
@@ -86,11 +93,12 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    public GlobalComponentRegistry(GlobalConfiguration configuration,
                                   EmbeddedCacheManager cacheManager,
                                   Set<String> createdCaches) {
+      super(null); // registers the default classloader
       if (configuration == null) throw new NullPointerException("GlobalConfiguration cannot be null!");
+      moduleLifecycles = moduleProperties.resolveModuleLifecycles(defaultClassLoader);
       try {
          // this order is important ... 
          globalConfiguration = configuration;
-         registerDefaultClassLoader(null);
 
          registerComponent(this, GlobalComponentRegistry.class);
          registerComponent(cacheManager, EmbeddedCacheManager.class);
@@ -98,7 +106,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
 
-         Map<Byte, ModuleCommandFactory> factories = ModuleProperties.moduleCommandFactories(configuration.getClassLoader());
+         Map<Byte, ModuleCommandFactory> factories = moduleProperties.moduleCommandFactories(configuration.getClassLoader());
          if (factories != null && !factories.isEmpty())
             registerNonVolatileComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
          else
@@ -165,6 +173,11 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          cr.rewire();
    }
 
+   public Map<Byte,ModuleCommandInitializer> getModuleCommandInitializers() {
+            return moduleProperties.moduleCommandInitializers(defaultClassLoader);
+   }
+
+   @Override
    public void start() {
       try {
          boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
@@ -224,5 +237,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
     */
    public boolean removeCache(String cacheName) {
       return createdCaches.remove(cacheName);
+   }
+
+   public ModuleProperties getModuleProperties() {
+      return moduleProperties;
    }
 }
