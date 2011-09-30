@@ -547,7 +547,7 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    }
 
    def testStoreAsBinaryOverride {
-      val cm = TestCacheManagerFactory.createLocalCacheManager
+      val cm = TestCacheManagerFactory.createLocalCacheManager(false)
       val cfg = new Configuration().fluent.storeAsBinary.build
       cm.defineConfiguration(MemcachedServer.cacheName, cfg)
       assertTrue(cfg.isStoreAsBinary)
