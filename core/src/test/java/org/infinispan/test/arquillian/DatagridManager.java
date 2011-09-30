@@ -130,18 +130,11 @@ public class DatagridManager extends MultipleCacheManagersTest
       return super.addClusterEnabledCacheManager(defaultConfig);
    }
    
-   public EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig, boolean transactional) {
-      return super.addClusterEnabledCacheManager(defaultConfig, transactional);
-   }
-   
    public EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig, TransportFlags flags) {
       return super.addClusterEnabledCacheManager(defaultConfig, flags);
    }
-   
-   public EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig, boolean transactional, TransportFlags flags) {
-      return super.addClusterEnabledCacheManager(defaultConfig, transactional, flags);
-   }
-   
+
+
    public EmbeddedCacheManager addClusterEnabledCacheManager(Configuration.CacheMode mode, boolean transactional) {
       return super.addClusterEnabledCacheManager(mode, transactional);
    }
@@ -156,10 +149,6 @@ public class DatagridManager extends MultipleCacheManagersTest
    
    public void createCluster(Configuration config, int count) {
       super.createCluster(config, count);
-   }
-   
-   public void createCluster(Configuration config, boolean transactional, int count) {
-      super.createCluster(config, transactional, count);
    }
    
    public void createCluster(Configuration.CacheMode mode, int count) {
