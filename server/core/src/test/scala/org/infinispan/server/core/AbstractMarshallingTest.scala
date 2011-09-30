@@ -47,7 +47,7 @@ abstract class AbstractMarshallingTest {
       // Manual addition of externalizers to replication what happens in fully functional tests
       val globalCfg = new GlobalConfiguration
       new LifecycleCallbacks().addExternalizer(globalCfg)
-      cm = TestCacheManagerFactory.createLocalCacheManager
+      cm = TestCacheManagerFactory.createLocalCacheManager(false)
       marshaller = TestingUtil.extractCacheMarshaller(cm.getCache())
    }
 
