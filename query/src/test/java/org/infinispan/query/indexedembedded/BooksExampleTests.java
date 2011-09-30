@@ -28,6 +28,7 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 /**
@@ -39,11 +40,13 @@ public class BooksExampleTests extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultStandaloneConfig(true);
       c.fluent()
+         .transaction()
+            .transactionMode(TransactionMode.TRANSACTIONAL)
          .indexing()
          .indexLocalOnly(false)
          .addProperty("hibernate.search.default.directory_provider", "ram")
          .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
-      return TestCacheManagerFactory.createCacheManager(c, true);
+      return TestCacheManagerFactory.createCacheManager(c);
    }
 
    @Test
