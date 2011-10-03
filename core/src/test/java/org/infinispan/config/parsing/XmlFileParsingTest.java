@@ -33,6 +33,7 @@ import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -248,6 +249,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c = getNamedCacheConfig(namedCaches, "transactional2");
       assert c.getTransactionManagerLookupClass().equals("org.something.Lookup");
       assert c.getCacheStopTimeout() == 10000;
+      assert c.getTransactionLockingMode().equals(LockingMode.PESSIMISTIC);
 
       c = getNamedCacheConfig(namedCaches, "syncRepl");
 

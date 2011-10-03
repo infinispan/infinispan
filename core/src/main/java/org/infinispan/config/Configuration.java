@@ -1896,6 +1896,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.transactionMode = transactionMode;
       }
 
+      public LockingMode getLockingMode() {
+         return lockingMode;
+      }
+
+      @XmlAttribute
+      public void setLockingMode(LockingMode lockingMode) {
+         testImmutability("lockingMode");
+         this.lockingMode = lockingMode;
+      }
+
       @Override
       public boolean equals(Object o) {
          if (this == o) return true;
@@ -1916,6 +1926,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (cacheStopTimeout != null ? !cacheStopTimeout.equals(that.cacheStopTimeout) : that.cacheStopTimeout != null)
             return false;
          if (transactionMode != null ? !transactionMode.equals(that.transactionMode) : that.transactionMode != null)
+            return false;
+         if (lockingMode != null ? !lockingMode.equals(that.lockingMode) : that.lockingMode != null)
             return false;
 
          return true;
