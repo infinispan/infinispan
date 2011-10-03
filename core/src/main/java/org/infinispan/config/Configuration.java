@@ -412,7 +412,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @Deprecated
    public void setInvocationBatchingEnabled(boolean enabled) {
-      if (enabled) transaction.transactionMode = TransactionMode.TRANSACTIONAL;
       invocationBatching.setEnabled(enabled);
    }
 
@@ -1703,7 +1702,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Deprecated
       public void setTransactionManagerLookupClass(String transactionManagerLookupClass) {
          testImmutability("transactionManagerLookupClass");
-         if (transactionManagerLookupClass != null) transactionMode = TransactionMode.TRANSACTIONAL;
+         if (transactionManagerLookupClass != null) transactionMode(TransactionMode.TRANSACTIONAL);
          this.transactionManagerLookupClass = transactionManagerLookupClass;
       }
 
@@ -1816,7 +1815,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public TransactionConfig transactionManagerLookup(TransactionManagerLookup transactionManagerLookup) {
          testImmutability("transactionManagerLookup");
          this.transactionManagerLookup = transactionManagerLookup;
-         if (transactionManagerLookup != null) transactionMode = TransactionMode.TRANSACTIONAL;
+         if (transactionManagerLookup != null) transactionMode(TransactionMode.TRANSACTIONAL);
          return this;
       }
 
@@ -1824,7 +1823,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public TransactionConfig transactionSynchronizationRegistryLookup(TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup) {
          testImmutability("transactionSynchronizationRegistryLookup");
          this.transactionSynchronizationRegistryLookup = transactionSynchronizationRegistryLookup;
-         if (transactionSynchronizationRegistryLookup != null) transactionMode = TransactionMode.TRANSACTIONAL;
+         if (transactionSynchronizationRegistryLookup != null) transactionMode(TransactionMode.TRANSACTIONAL);
          return this;
       }
 
@@ -1893,6 +1892,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @XmlAttribute
       public void setTransactionMode(TransactionMode transactionMode) {
+         testImmutability("transactionMode");
          this.transactionMode = transactionMode;
       }
 
@@ -3918,8 +3918,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public InvocationBatching enabled(Boolean enabled) {
          super.enabled(enabled);
-         if (enabled) transaction().transactionMode(TransactionMode.TRANSACTIONAL);
          return this;
+      }
+
+      @Override
+      public void setEnabled(Boolean enabled) {
+         super.setEnabled(enabled);
+         if (enabled) config.transaction.transactionMode(TransactionMode.TRANSACTIONAL);
       }
 
       @Override
