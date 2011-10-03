@@ -89,7 +89,7 @@
 
    <namedCache name="transactional2">
       <transaction transactionManagerLookupClass="org.something.Lookup"
-                   cacheStopTimeout="10000"/>
+                   cacheStopTimeout="10000" lockingMode="PESSIMISTIC"/>
    </namedCache>
 
 
