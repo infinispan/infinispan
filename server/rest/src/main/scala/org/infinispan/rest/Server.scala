@@ -112,8 +112,8 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
    @Path("/{cacheName}/{cacheKey}")
    def putEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String,
                 @HeaderParam("Content-Type") mediaType: String, data: Array[Byte],
-                @DefaultValue("-1") @HeaderParam("timeToLiveSeconds") ttl: Long,
-                @DefaultValue("-1") @HeaderParam("maxIdleTimeSeconds") idleTime: Long): Response = {
+                @DefaultValue("0") @HeaderParam("timeToLiveSeconds") ttl: Long,
+                @DefaultValue("0") @HeaderParam("maxIdleTimeSeconds") idleTime: Long): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) =>
          val cache = ManagerInstance.getCache(cacheName)
          if (request.getMethod == "POST" && cache.containsKey(key)) {
