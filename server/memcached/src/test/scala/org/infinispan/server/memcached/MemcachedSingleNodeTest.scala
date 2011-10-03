@@ -52,7 +52,7 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with Memca
       return cacheManager
    }
 
-   protected def createTestCacheManager: EmbeddedCacheManager = TestCacheManagerFactory.createLocalCacheManager
+   protected def createTestCacheManager: EmbeddedCacheManager = TestCacheManagerFactory.createLocalCacheManager(false)
 
    @AfterClass(alwaysRun = true)
    override def destroyAfterClass {
