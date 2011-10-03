@@ -157,6 +157,40 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
       assert cache.getConfiguration().isTransactionalCache();
    }
 
+   public void testBatchingAndTransactionalCache() {
+      Configuration c = new Configuration();
+      c.fluent().invocationBatching();
+
+      assert c.isInvocationBatchingEnabled();
+      assert c.isTransactionalCache();
+
+      DefaultCacheManager dcm = new DefaultCacheManager();
+      assert !dcm.getCache().getConfiguration().isTransactionalCache();
+
+      dcm.defineConfiguration("a", c);
+      final Cache<Object, Object> a = dcm.getCache("a");
+
+      assert a.getConfiguration().isInvocationBatchingEnabled();
+      assert a.getConfiguration().isTransactionalCache();
+   }
+
+   public void testBatchingAndTransactionalCache2() {
+      Configuration c = new Configuration();
+      c.setInvocationBatchingEnabled(true);
+
+      assert c.isInvocationBatchingEnabled();
+      assert c.isTransactionalCache();
+
+      DefaultCacheManager dcm = new DefaultCacheManager();
+      assert !dcm.getCache().getConfiguration().isTransactionalCache();
+
+      dcm.defineConfiguration("a", c);
+      final Cache<Object, Object> a = dcm.getCache("a");
+
+      assert a.getConfiguration().isInvocationBatchingEnabled();
+      assert a.getConfiguration().isTransactionalCache();
+   }
+
 
    private void assertTmLookupSet(Configuration c, boolean b) {
       assert b == (c.getTransactionManagerLookup() != null || c.getTransactionManagerLookupClass() != null);
