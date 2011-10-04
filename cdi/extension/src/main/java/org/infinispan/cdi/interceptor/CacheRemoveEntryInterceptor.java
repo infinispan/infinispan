@@ -34,6 +34,7 @@ import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
+import java.io.Serializable;
 
 /**
  * <p>{@link CacheRemoveEntry} interceptor implementation.This interceptor uses the following algorithm describes in
@@ -48,7 +49,9 @@ import javax.interceptor.InvocationContext;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @Interceptor
-public class CacheRemoveEntryInterceptor {
+public class CacheRemoveEntryInterceptor implements Serializable {
+
+   private static final long serialVersionUID = -9079291622309963969L;
 
    private final CacheResolver cacheResolver;
    private final CacheKeyInvocationContextFactory contextFactory;

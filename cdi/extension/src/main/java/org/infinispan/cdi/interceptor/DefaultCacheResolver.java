@@ -26,6 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 import javax.cache.interceptor.CacheInvocationContext;
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Instance;
@@ -40,15 +41,20 @@ import static org.infinispan.cdi.util.Contracts.assertNotNull;
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
+@ApplicationScoped
 public class DefaultCacheResolver implements CacheResolver {
 
-   private final EmbeddedCacheManager defaultCacheManager;
-   private final Instance<EmbeddedCacheManager> cacheManagers;
+   private EmbeddedCacheManager defaultCacheManager;
+   private Instance<EmbeddedCacheManager> cacheManagers;
 
    @Inject
    public DefaultCacheResolver(@Any Instance<EmbeddedCacheManager> cacheManagers) {
       this.cacheManagers = cacheManagers;
       this.defaultCacheManager = cacheManagers.select(new AnnotationLiteral<Default>() {}).get();
+   }
+
+   // for proxy.
+   protected DefaultCacheResolver() {
    }
 
    @Override
