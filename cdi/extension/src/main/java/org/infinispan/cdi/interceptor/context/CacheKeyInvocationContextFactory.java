@@ -68,7 +68,7 @@ public class CacheKeyInvocationContextFactory {
       this.cacheMethodMetaDataCache = new ConcurrentHashMap<Method, MethodMetaData<? extends Annotation>>();
    }
 
-   // For proxy.
+   // for proxy.
    protected CacheKeyInvocationContextFactory() {
    }
 

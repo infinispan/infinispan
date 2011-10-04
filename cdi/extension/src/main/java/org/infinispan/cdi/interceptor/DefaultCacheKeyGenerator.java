@@ -26,6 +26,7 @@ import javax.cache.interceptor.CacheInvocationParameter;
 import javax.cache.interceptor.CacheKey;
 import javax.cache.interceptor.CacheKeyGenerator;
 import javax.cache.interceptor.CacheKeyInvocationContext;
+import javax.enterprise.context.ApplicationScoped;
 import java.lang.annotation.Annotation;
 
 /**
@@ -34,6 +35,7 @@ import java.lang.annotation.Annotation;
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
+@ApplicationScoped
 public class DefaultCacheKeyGenerator implements CacheKeyGenerator {
 
    @Override

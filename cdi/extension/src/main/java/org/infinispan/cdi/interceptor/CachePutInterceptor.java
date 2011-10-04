@@ -34,6 +34,7 @@ import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
+import java.io.Serializable;
 
 /**
  * {@link CachePut} interceptor implementation.
@@ -41,7 +42,9 @@ import javax.interceptor.InvocationContext;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @Interceptor
-public class CachePutInterceptor {
+public class CachePutInterceptor implements Serializable {
+
+   private static final long serialVersionUID = 270924196162168618L;
 
    private final CacheResolver cacheResolver;
    private final CacheKeyInvocationContextFactory contextFactory;
