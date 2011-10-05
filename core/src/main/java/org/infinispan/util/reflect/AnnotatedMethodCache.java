@@ -152,31 +152,23 @@ public class AnnotatedMethodCache {
          synchronized (AnnotatedMethodCache.class) {
             l = richMethodCache.get(className);
             if (l == null) {
-               l = basicMethodCache.get(className);
-               if (l != null) {
-                  // check superclasses/interfaces
-                  for (Map.Entry<String, List<CachedMethod>> e : basicMethodCache.entrySet()) {
-                     if (match(clazz, e.getKey(), classLoader)) l.addAll(e.getValue());
-                  }
-               } else {
-                  l = new LinkedList<CachedMethod>();
+               l = new LinkedList<CachedMethod>();
 
-                  for (Map.Entry<String, List<CachedMethod>> e : basicMethodCache.entrySet()) {
-                     if (match(clazz, e.getKey(), classLoader)) l.addAll(e.getValue());
-                  }
-
-
-                  // check using vanilla JDK reflection.
-                  // Now see if the class itself has anything on it, using reflection.  This is to deal with
-                  // annotated components declared in modules other than core, that aren't indexed using Jandex.
-                  // Note that superclasses will not be analysed this way.
-                  for (Method m: ReflectionUtil.getAllMethodsShallow(clazz, annotation)) {
-                     CachedMethod cm = new CachedMethod(m);
-                     if (!l.contains(cm)) l.add(cm);
-                  }
+               for (Map.Entry<String, List<CachedMethod>> e : basicMethodCache.entrySet()) {
+                  if (match(clazz, e.getKey(), classLoader)) l.addAll(e.getValue());
                }
-               richMethodCache.put(className, l);
+
+
+               // check using vanilla JDK reflection.
+               // Now see if the class itself has anything on it, using reflection.  This is to deal with
+               // annotated components declared in modules other than core, that aren't indexed using Jandex.
+               // Note that superclasses will not be analysed this way.
+               for (Method m: ReflectionUtil.getAllMethodsShallow(clazz, annotation)) {
+                  CachedMethod cm = new CachedMethod(m);
+                  if (!l.contains(cm)) l.add(cm);
+               }
             }
+            richMethodCache.put(className, l);
          }
       }
       return l;
