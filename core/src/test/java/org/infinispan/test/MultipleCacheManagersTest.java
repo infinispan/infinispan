@@ -405,7 +405,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * Creates a {@link org.infinispan.affinity.KeyAffinityService} and uses it for generating a key that maps to the given address.
     * @param nodeIndex the index of tha cache where to be the main data owner of the returned key
     */
-   protected Object getKeyForNode(int nodeIndex) {
+   protected Object getKeyForCache(int nodeIndex) {
       final Cache<Object, Object> cache = cache(nodeIndex);
       return getKeyForCache(cache);
    }

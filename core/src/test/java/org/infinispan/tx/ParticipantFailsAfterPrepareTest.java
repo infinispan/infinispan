@@ -59,7 +59,7 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
    }
 
    public void testNonOriginatorFailsAfterPrepare() throws Exception {
-      DummyTransaction dummyTransaction = beginAndSuspendTx(cache(0), getKeyForNode(0));
+      DummyTransaction dummyTransaction = beginAndSuspendTx(cache(0), getKeyForCache(0));
       prepareTransaction(dummyTransaction);
 
       int indexToKill = -1;

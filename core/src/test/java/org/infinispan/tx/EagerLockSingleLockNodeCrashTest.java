@@ -51,7 +51,7 @@ public class EagerLockSingleLockNodeCrashTest extends MultipleCacheManagersTest 
 
    public void testMainOwnerRemoteFailure() throws Exception {
       tm(0).begin();
-      Object key1 = getKeyForNode(2);
+      Object key1 = getKeyForCache(2);
       cache(0).put(key1, "value");
       for (int i = 0; i < 3; i++) {
          log.tracef("i = %s, owner = %s, isLocked = %s", i, 2, lockManager(i).isLocked(key1));
