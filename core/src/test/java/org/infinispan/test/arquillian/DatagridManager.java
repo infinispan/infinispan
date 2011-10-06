@@ -261,8 +261,8 @@ public class DatagridManager extends MultipleCacheManagersTest
       super.killMember(cacheIndex);
    }
    
-   public Object getKeyForNode(int nodeIndex) {
-      return super.getKeyForNode(nodeIndex);
+   public Object getKeyForCache(int nodeIndex) {
+      return super.getKeyForCache(nodeIndex);
    }
    
    /* ========== methods simulating those from SingleCacheManagerTest ========== */
