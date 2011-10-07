@@ -45,7 +45,8 @@ public class WorkerThread {
 
    private final ExecutorService executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
       public Thread newThread(Runnable r) {
-         return new Thread(r, "WorkerThread-" + WORKER_INDEX.getAndIncrement());
+         return new Thread(r, String.format("%s-Worker-%d",
+               Thread.currentThread().getName(), WORKER_INDEX.getAndIncrement()));
       }
    });
 

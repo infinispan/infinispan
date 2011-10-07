@@ -37,7 +37,7 @@ import org.testng.annotations.Test
 class HotRodBigDataStressTest extends HotRodSingleNodeTest {
 
    def testPutBigSizeValue(m: Method) {
-      val value = generateRandomString(1024 * 1024).getBytes
+      val value = generateRandomString(10 * 1024 * 1024).getBytes
       assertStatus(client.put(k(m), 0, 0, value), Success)
       while (true)
          Thread.sleep(5000)
