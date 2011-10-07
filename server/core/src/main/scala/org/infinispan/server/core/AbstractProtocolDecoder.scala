@@ -24,17 +24,16 @@ package org.infinispan.server.core
 
 import org.infinispan.Cache
 import Operation._
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
 import transport._
 import java.io.StreamCorruptedException
 import transport.ExtendedChannelBuffer._
-import org.jboss.netty.handler.codec.replay.ReplayingDecoder
 import org.jboss.netty.buffer.ChannelBuffer
 import org.jboss.netty.channel._
 import DecoderState._
 import org.infinispan.util.ClusterIdGenerator
 import logging.Log
+import org.jboss.netty.handler.codec.replay.CustomReplayingDecoder
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -43,7 +42,8 @@ import logging.Log
  * @since 4.1
  */
 abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTransport)
-        extends ReplayingDecoder[DecoderState](DECODE_HEADER, true) with Log {
+      extends CustomReplayingDecoder[DecoderState](DECODE_HEADER, true,
+           AbstractProtocolDecoder.DefaultSlimDownSize) with Log {
    import AbstractProtocolDecoder._
 
    type SuitableParameters <: RequestParameters
@@ -177,6 +177,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
       // into a request that has no params
       params = null.asInstanceOf[SuitableParameters]
       rawValue = null.asInstanceOf[Array[Byte]] // Clear reference to value
+      slimDownBuffer() // Slim down buffer in case it's grown too big
       null
    }
 
@@ -349,11 +350,14 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue](transport: NettyTrans
       transport.updateTotalBytesRead(e)
       super.messageReceived(ctx, e)
    }
+
+
 }
 
 object AbstractProtocolDecoder extends Log {
    private val SecondsInAMonth = 60 * 60 * 24 * 30
    private val DefaultTimeUnit = TimeUnit.MILLISECONDS
+   private val DefaultSlimDownSize = 5 * 1024 * 1024
 }
 
 class RequestHeader(val op: Enumeration#Value) {

@@ -53,7 +53,7 @@ import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
-import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
+import org.jboss.netty.handler.codec.replay.CustomReplayingDecoder;
 
 /**
  * An HTTP server which serves Web Socket requests on an Infinispan cacheManager.
@@ -75,7 +75,7 @@ public class WebSocketServer extends AbstractProtocolServer {
       return null;
    }
 
-   public ReplayingDecoder getDecoder() {
+   public CustomReplayingDecoder getDecoder() {
       return null;
    }
 

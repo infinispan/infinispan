@@ -35,8 +35,8 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.jboss.JBossMarshaller;
@@ -65,7 +65,7 @@ public class SocketTimeoutErrorTest extends SingleCacheManagerTest {
       Configuration cfg = new Configuration();
       CustomInterceptorConfig cic = new CustomInterceptorConfig(
             new TimeoutInducingInterceptor(), false, false, -1,
-            OptimisticLockingInterceptor.class.getName(), "");
+            EntryWrappingInterceptor.class.getName(), "");
       cfg.setCustomInterceptors(Collections.singletonList(cic));
 
       cacheManager = TestCacheManagerFactory.createCacheManager(cfg);

@@ -25,7 +25,7 @@ package org.infinispan.server.core
 import org.infinispan.manager.{EmbeddedCacheManager}
 import java.util.Properties
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
-import org.jboss.netty.handler.codec.replay.ReplayingDecoder
+import org.jboss.netty.handler.codec.replay.{CustomReplayingDecoder, ReplayingDecoder}
 
 /**
  * Represents a protocol compliant server.
@@ -64,5 +64,5 @@ trait ProtocolServer {
     * Gets the decoder for this protocol server. The decoder is responsible for reading client requests.
     * This method cannot return null.
     */
-   def getDecoder: ReplayingDecoder[DecoderState]
+   def getDecoder: CustomReplayingDecoder[DecoderState]
 }
