@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
@@ -96,12 +97,23 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
       assert cs.containsKey("k1");
       assert cs.containsKey("k2");
       assert cs.containsKey("k3");
+      createUnrelatedFile();
       Thread.sleep(lifespan + 100);
       cs.purgeExpired();
       FileCacheStore fcs = (FileCacheStore) cs;
       assert fcs.load("k1") == null;
       assert fcs.load("k2") == null;
       assert fcs.load("k3") == null;
+   }
+
+   private void createUnrelatedFile() throws IOException {
+      File cacheStoreDirectory = new File(tmpDirectory);
+      assert cacheStoreDirectory.exists();
+      assert cacheStoreDirectory.canWrite();
+      String newfile = cacheStoreDirectory.getAbsolutePath() + File.separator + "mockCache-org.infinispan.loaders.file.FileCacheStoreTest" + File.separator + "externalExistingFile";
+      File file = new File(newfile);
+      boolean created = file.createNewFile();
+      assert created;
    }
 
    public void testBucketRemoval() throws Exception {

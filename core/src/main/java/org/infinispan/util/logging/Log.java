@@ -772,4 +772,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Could not instantiate transaction manager", id = 162)
    void couldNotInstantiateTransactionManager(@Cause Exception e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "FileCacheStore ignored an unexpected file %2$s in path %1$s. The store path should be dedicated!", id = 163)
+   void chacheLoaderIgnoringUnexpectedFile(String parentPath, String name);
+
 }

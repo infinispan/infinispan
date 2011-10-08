@@ -201,7 +201,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       if (trace) log.trace("purgeInternal()");
 
       try {
-         File[] files = root.listFiles();
+         File[] files = root.listFiles(new NumericNamedFilesFilter());
          if (files == null)
             throw new CacheLoaderException("Root not directory or IO error occurred");
 
@@ -223,9 +223,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
                            updateBucket(bucket);
                         }
                      } catch (InterruptedException ie) {
-                        if (log.isDebugEnabled()) {
-                           log.debug("Interrupted, so finish work.");
-                        }
+                        log.debug("Interrupted, so finish work.");
                      } catch (CacheLoaderException e) {
                         log.problemsPurgingFile(bucketFile, e);
                      } finally {
@@ -255,9 +253,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
             }
          }
       } catch (InterruptedException ie) {
-         if (log.isDebugEnabled()) {
-            log.debug("Interrupted, so stop loading and finish with purging.");
-         }
+         log.debug("Interrupted, so stop loading and finish with purging.");
          Thread.currentThread().interrupt();
       }
    }
@@ -625,6 +621,25 @@ public class FileCacheStore extends BucketBasedCacheStore {
       public void stop() {
          // No-op
       }
+   }
+
+   /**
+    * Makes sure that files opened are actually named as numbers (ignore all other files)
+    */
+   private static class NumericNamedFilesFilter implements FilenameFilter {
+
+      @Override
+      public boolean accept(File dir, String name) {
+         try {
+            Integer.parseInt(name);
+            return true;
+         }
+         catch (NumberFormatException nfe) {
+            log.chacheLoaderIgnoringUnexpectedFile(dir.getAbsolutePath(), name);
+            return false;
+         }
+      }
+
    }
 
 
