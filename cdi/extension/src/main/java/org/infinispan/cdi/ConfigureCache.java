@@ -23,7 +23,7 @@
 package org.infinispan.cdi;
 
 import org.infinispan.config.Configuration;
-import org.jboss.seam.solder.bean.generic.GenericType;
+import org.jboss.solder.bean.generic.GenericType;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;

@@ -26,9 +26,9 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cdi.event.cache.CacheEventBridge;
 import org.infinispan.manager.CacheContainer;
-import org.jboss.seam.solder.bean.generic.ApplyScope;
-import org.jboss.seam.solder.bean.generic.Generic;
-import org.jboss.seam.solder.bean.generic.GenericConfiguration;
+import org.jboss.solder.bean.generic.ApplyScope;
+import org.jboss.solder.bean.generic.Generic;
+import org.jboss.solder.bean.generic.GenericConfiguration;
 
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
@@ -36,7 +36,7 @@ import javax.enterprise.inject.spi.AnnotatedMember;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 
-import static org.jboss.seam.solder.bean.Beans.getQualifiers;
+import static org.jboss.solder.bean.Beans.getQualifiers;
 
 /**
  * This class is responsible to produce the {@link Cache} and {@link AdvancedCache}. This class use the
