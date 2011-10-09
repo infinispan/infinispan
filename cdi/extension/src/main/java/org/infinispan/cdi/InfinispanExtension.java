@@ -33,8 +33,8 @@ import org.infinispan.cdi.interceptor.literal.CacheRemoveEntryLiteral;
 import org.infinispan.cdi.interceptor.literal.CacheResultLiteral;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.jboss.seam.solder.bean.Beans;
-import org.jboss.seam.solder.reflection.annotated.AnnotatedTypeBuilder;
+import org.jboss.solder.bean.Beans;
+import org.jboss.solder.reflection.annotated.AnnotatedTypeBuilder;
 
 import javax.cache.interceptor.CachePut;
 import javax.cache.interceptor.CacheRemoveAll;

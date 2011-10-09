@@ -27,7 +27,7 @@ import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.jboss.seam.solder.resourceLoader.Resource;
+import org.jboss.solder.resourceLoader.Resource;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
