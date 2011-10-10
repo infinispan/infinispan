@@ -32,17 +32,17 @@ public abstract class AbstractLockContainer<L extends Lock> implements LockConta
     *
     * @param toRelease lock to release
     */
-   protected void safeRelease(L toRelease, InvocationContext ctx) {
+   protected void safeRelease(L toRelease, Object lockOwner) {
       if (toRelease != null) {
          try {
-            unlock(toRelease, ctx);
+            unlock(toRelease, lockOwner);
          } catch (IllegalMonitorStateException imse) {
             // Perhaps the caller hadn't acquired the lock after all.
          }
       }
    }
 
-   protected abstract void unlock(L toRelease, InvocationContext ctx);
+   protected abstract void unlock(L toRelease, Object ctx);
 
-   protected abstract boolean tryLock(L lock, long timeout, TimeUnit unit, InvocationContext ctx) throws InterruptedException;
+   protected abstract boolean tryLock(L lock, long timeout, TimeUnit unit, Object lockOwner) throws InterruptedException;
 }

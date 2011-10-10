@@ -80,7 +80,7 @@ public class LockManagerImpl implements LockManager {
    public boolean lockAndRecord(Object key, InvocationContext ctx) throws InterruptedException {
       long lockTimeout = getLockAcquisitionTimeout(ctx);
       if (trace) log.tracef("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
-      if (lockContainer.acquireLock(ctx, key, lockTimeout, MILLISECONDS) != null) {
+      if (lockContainer.acquireLock(ctx.getLockOwner(), key, lockTimeout, MILLISECONDS) != null) {
          if (trace) log.tracef("Successfully acquired lock %s!", key);
          return true;
       }
@@ -109,14 +109,14 @@ public class LockManagerImpl implements LockManager {
 
    public void unlock(InvocationContext ctx, Object key) {
       if (trace) log.tracef("Attempting to unlock %s", key);
-      lockContainer.releaseLock(ctx, key);
+      lockContainer.releaseLock(ctx.getLockOwner(), key);
    }
 
    @SuppressWarnings("unchecked")
    public void unlockAll(InvocationContext ctx) {
       for (Object k : ctx.getLockedKeys()) {
          if (trace) log.tracef("Attempting to unlock %s", k);
-         lockContainer.releaseLock(ctx, k);
+         lockContainer.releaseLock(ctx.getLockOwner(), k);
       }
    }
 
