@@ -22,8 +22,6 @@
  */
 package org.infinispan.util.concurrent.locks.containers;
 
-import org.infinispan.context.InvocationContext;
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -58,12 +56,12 @@ public class ReentrantPerEntryLockContainer extends AbstractPerEntryLockContaine
    }
 
    @Override
-   protected void unlock(ReentrantLock l, InvocationContext unused) {
+   protected void unlock(ReentrantLock l, Object unused) {
       l.unlock();
    }
 
    @Override
-   protected boolean tryLock(ReentrantLock lock, long timeout, TimeUnit unit, InvocationContext unused) throws InterruptedException {
+   protected boolean tryLock(ReentrantLock lock, long timeout, TimeUnit unit, Object unused) throws InterruptedException {
       return lock.tryLock(timeout, unit);
    }
 }

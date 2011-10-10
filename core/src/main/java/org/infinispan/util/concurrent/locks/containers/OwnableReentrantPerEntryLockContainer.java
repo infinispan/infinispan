@@ -22,8 +22,6 @@
  */
 package org.infinispan.util.concurrent.locks.containers;
 
-import org.infinispan.context.InvocationContext;
-import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
 
 import java.util.concurrent.TimeUnit;
@@ -59,12 +57,12 @@ public class OwnableReentrantPerEntryLockContainer extends AbstractPerEntryLockC
    }
 
    @Override
-   protected boolean tryLock(OwnableReentrantLock lock, long timeout, TimeUnit unit, InvocationContext ctx) throws InterruptedException {
-      return lock.tryLock(ctx.getLockOwner(), timeout, unit);
+   protected boolean tryLock(OwnableReentrantLock lock, long timeout, TimeUnit unit, Object lockOwner) throws InterruptedException {
+      return lock.tryLock(lockOwner, timeout, unit);
    }
 
    @Override
-   protected void unlock(OwnableReentrantLock l, InvocationContext ctx) {
-      l.unlock(ctx.getLockOwner());
+   protected void unlock(OwnableReentrantLock l, Object owner) {
+      l.unlock(owner);
    }
 }

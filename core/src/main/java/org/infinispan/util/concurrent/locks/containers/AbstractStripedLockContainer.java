@@ -23,7 +23,6 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.context.InvocationContext;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -75,24 +74,24 @@ public abstract class AbstractStripedLockContainer<L extends Lock> extends Abstr
 
    protected abstract void initLocks(int numLocks);
 
-   public L acquireLock(InvocationContext ctx, Object key, long timeout, TimeUnit unit) throws InterruptedException {
+   public L acquireLock(Object lockOwner, Object key, long timeout, TimeUnit unit) throws InterruptedException {
       L lock = getLock(key);
       boolean locked;
       try {
-         locked = tryLock(lock, timeout, unit, ctx);
+         locked = tryLock(lock, timeout, unit, lockOwner);
       } catch (InterruptedException ie) {
-         safeRelease(lock, ctx);
+         safeRelease(lock, lockOwner);
          throw ie;
       } catch (Throwable th) {
-         safeRelease(lock, ctx);
+         safeRelease(lock, lockOwner);
          locked = false;
       }
       return locked ? lock : null;
    }
 
-   public void releaseLock(InvocationContext ctx, Object key) {
+   public void releaseLock(Object lockOwner, Object key) {
       final L lock = getLock(key);
-      safeRelease(lock, ctx);
+      safeRelease(lock, lockOwner);
    }
 
    public int getLockId(Object key) {

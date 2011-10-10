@@ -22,8 +22,6 @@
  */
 package org.infinispan.util.concurrent.locks.containers;
 
-import org.infinispan.context.InvocationContext;
-
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -63,14 +61,14 @@ public abstract class AbstractPerEntryLockContainer<L extends Lock> extends Abst
       return locks.size();
    }
 
-   public L acquireLock(InvocationContext ctx, Object key, long timeout, TimeUnit unit) throws InterruptedException {
+   public L acquireLock(Object lockOwner, Object key, long timeout, TimeUnit unit) throws InterruptedException {
       while (true) {
          L lock = getLock(key);
          boolean locked;
          try {
-            locked = tryLock(lock, timeout, unit, ctx);
+            locked = tryLock(lock, timeout, unit, lockOwner);
          } catch (InterruptedException ie) {
-            safeRelease(lock, ctx);
+            safeRelease(lock, lockOwner);
             throw ie;
          } catch (Throwable th) {
              locked = false;
@@ -80,7 +78,7 @@ public abstract class AbstractPerEntryLockContainer<L extends Lock> extends Abst
             L existingLock = locks.putIfAbsent(key, lock);
             if (existingLock != null && existingLock != lock) {
                // we have the wrong lock!  Unlock and retry.
-               safeRelease(lock, ctx);
+               safeRelease(lock, lockOwner);
             } else {
                // we got the right lock.
                return lock;
@@ -92,9 +90,9 @@ public abstract class AbstractPerEntryLockContainer<L extends Lock> extends Abst
       }
    }
 
-   public void releaseLock(InvocationContext ctx, Object key) {
+   public void releaseLock(Object lockOwner, Object key) {
       L l = locks.remove(key);
-      if (l != null) unlock(l, ctx);
+      if (l != null) unlock(l, lockOwner);
    }
 
    public int getLockId(Object key) {
