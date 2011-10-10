@@ -193,6 +193,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    }
 
    public int getViewId() {
+      if (channel == null)
+         throw new CacheException("The cache has been stopped and invocations are not allowed!");
       View view = channel.getView();
       if (view == null)
          return -1;

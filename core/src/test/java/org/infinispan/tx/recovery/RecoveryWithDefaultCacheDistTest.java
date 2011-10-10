@@ -25,15 +25,19 @@ package org.infinispan.tx.recovery;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.SerializableXid;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.transaction.xa.Xid;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
 import static org.testng.Assert.assertEquals;
@@ -42,6 +46,7 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  */
 @Test (groups = "functional", testName = "tx.recovery.RecoveryWithDefaultCacheDistTest")
+@CleanupAfterMethod
 public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest {
 
    Configuration configuration;
@@ -103,6 +108,15 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
             return noPrepTxOnFirstNode & noPrepTxOnSecondNode;
          }
       });
+
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            final Set<RecoveryManager.InDoubtTxInfo> inDoubt = rm(cache(0)).getInDoubtTransactionInfo();
+            System.out.println("inDoubt = " + inDoubt);
+            return inDoubt.size() == 0;
+         }
+      });
    }
 
    public void testNodeCrashesAfterPrepare() throws Exception {
@@ -120,7 +134,6 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
          @Override
          public boolean isSatisfied() throws Exception {
             int size = rm(cache(0)).getInDoubtTransactionInfo().size();
-            System.out.println("size = " + size);
             return size == 3;
          }
       });

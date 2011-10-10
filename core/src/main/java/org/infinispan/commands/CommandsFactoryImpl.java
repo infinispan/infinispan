@@ -40,7 +40,7 @@ import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
-import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -75,6 +75,7 @@ import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -114,6 +115,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private Configuration configuration;
    private RecoveryManager recoveryManager;
    private StateTransferManager stateTransferManager;
+   private LockManager lockManager;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -122,7 +124,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  InterceptorChain interceptorChain, DistributionManager distributionManager,
                                  InvocationContextContainer icc, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
-                                 RecoveryManager recoveryManager, StateTransferManager stateTransferManager) {
+                                 RecoveryManager recoveryManager, StateTransferManager stateTransferManager, LockManager lockManager) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -134,6 +136,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.moduleCommandInitializers = moduleCommandInitializers;
       this.recoveryManager = recoveryManager;
       this.stateTransferManager = stateTransferManager;
+      this.lockManager = lockManager;
    }
 
    @Start(priority = 1)
@@ -332,9 +335,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
             GetInDoubtTransactionsCommand gptx = (GetInDoubtTransactionsCommand) c;
             gptx.init(recoveryManager);
             break;
-         case RemoveRecoveryInfoCommand.COMMAND_ID:
-            RemoveRecoveryInfoCommand ftx = (RemoveRecoveryInfoCommand) c;
-            ftx.init(recoveryManager);
+         case TxCompletionNotificationCommand.COMMAND_ID:
+            TxCompletionNotificationCommand ftx = (TxCompletionNotificationCommand) c;
+            ftx.init(txTable, lockManager, recoveryManager);
             break;
          case MapReduceCommand.COMMAND_ID:
             MapReduceCommand mrc = (MapReduceCommand)c;
@@ -365,12 +368,17 @@ public class CommandsFactoryImpl implements CommandsFactory {
       }
    }
 
-   public LockControlCommand buildLockControlCommand(Collection keys, boolean implicit, Set<Flag> flags) {
-      return new LockControlCommand(keys, cacheName, flags, implicit);
+   public LockControlCommand buildLockControlCommand(Collection keys, boolean implicit, Set<Flag> flags, GlobalTransaction gtx) {
+      return new LockControlCommand(keys, cacheName, flags, gtx);
    }
 
-   public LockControlCommand buildLockControlCommand(Object key, boolean implicit, Set<Flag> flags) {
-      return new LockControlCommand(key, cacheName, flags, implicit);
+   public LockControlCommand buildLockControlCommand(Object key, boolean implicit, Set<Flag> flags, GlobalTransaction gtx) {
+      return new LockControlCommand(key, cacheName, flags, gtx);
+   }
+
+   @Override
+   public LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags) {
+      return new LockControlCommand(keys,  cacheName, flags, null);
    }
 
    public StateTransferControlCommand buildStateTransferCommand(StateTransferControlCommand.Type type, Address sender,
@@ -393,10 +401,15 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(Xid xid) {
-      return new RemoveRecoveryInfoCommand(xid, cacheName);
+   public TxCompletionNotificationCommand buildTxCompletionNotificationCommand(Xid xid, GlobalTransaction globalTransaction) {
+      return new TxCompletionNotificationCommand(xid, globalTransaction, cacheName);
    }
-   
+
+   @Override
+   public TxCompletionNotificationCommand buildTxCompletionNotificationCommand(long internalId) {
+      return new TxCompletionNotificationCommand(internalId, cacheName);
+   }
+
    @Override
    public <T> DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys) {
       return new DistributedExecuteCommand(keys, callable);
@@ -417,11 +430,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new CompleteTransactionCommand(cacheName, xid, commit);
    }
 
-   @Override
-   public RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(long internalId) {
-      return new RemoveRecoveryInfoCommand(internalId, cacheName);
-   }
-   
    @Override
    public ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys) {
       return new ApplyDeltaCommand(deltaAwareValueKey, delta, keys);

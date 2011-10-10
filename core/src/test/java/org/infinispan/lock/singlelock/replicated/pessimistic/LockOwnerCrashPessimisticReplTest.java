@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,24 +20,29 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.distribution;
+
+package org.infinispan.lock.singlelock.replicated.pessimistic;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.replication.SyncReplImplicitLockingTest;
-
+import org.infinispan.lock.singlelock.AbstractLockOwnerCrashTest;
+import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
 /**
- * Tests for implicit locking
- * <p/>
- * Transparent eager locking for transactions https://jira.jboss.org/jira/browse/ISPN-70
- *
- * @author Vladimir Blagojevic
+ * @author Mircea Markus
+ * @since 5.1
  */
-@Test(groups = "functional", testName = "distribution.SyncDistImplicitLockingTest")
-public class SyncDistImplicitLockingTest extends SyncReplImplicitLockingTest {
+@Test(groups = "functional", testName = "singlelock.replicated.optimistic.LockOwnerCrashPessimisticReplTest")
+@CleanupAfterMethod
+public class LockOwnerCrashPessimisticReplTest extends AbstractLockOwnerCrashTest {
+
+   public LockOwnerCrashPessimisticReplTest() {
+      super(Configuration.CacheMode.REPL_SYNC, LockingMode.PESSIMISTIC, false);
+   }
+
    @Override
-   protected Configuration.CacheMode getCacheMode() {
-      return Configuration.CacheMode.DIST_SYNC;
+   protected Object getKeyForCache(int nodeIndex) {
+      return "k" + nodeIndex;
    }
 }

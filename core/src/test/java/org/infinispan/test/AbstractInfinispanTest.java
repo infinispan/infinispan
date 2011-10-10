@@ -22,6 +22,8 @@
  */
 package org.infinispan.test;
 
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterTest;
 
 import java.util.HashSet;
@@ -37,6 +39,8 @@ import static org.testng.Assert.assertEquals;
  * @since 4.0
  */
 public class AbstractInfinispanTest {
+
+   protected final Log log = LogFactory.getLog(getClass());
 
    private Set<Thread> spawnedThreads = new HashSet<Thread>();
 
@@ -63,11 +67,13 @@ public class AbstractInfinispanTest {
       }
    }
 
-   protected Thread fork(Runnable r, boolean sync) {
-      final Thread t = new Thread(r, "TestThread-" + r.hashCode());
+   protected Thread fork(Runnable r, boolean waitForCompletion) {
+      final String name = "ForkThread-" + getClass().getSimpleName() + "-" + r.hashCode();
+      log.tracef("About to start thread '%s' as child of thread '%s'", name, Thread.currentThread().getName());
+      final Thread t = new Thread(new RunnableWrapper(r), name);
       spawnedThreads.add(t);
       t.start();
-      if (sync) {
+      if (waitForCompletion) {
          eventually(new Condition() {
             @Override
             public boolean isSatisfied() throws Exception {
@@ -76,6 +82,27 @@ public class AbstractInfinispanTest {
          });
       }
       return t;
+   }
+
+   public final class RunnableWrapper implements Runnable {
+
+      final Runnable realOne;
+
+      public RunnableWrapper(Runnable realOne) {
+         this.realOne = realOne;
+      }
+
+      @Override
+      public void run() {
+         try {
+            log.trace("Started fork thread..");
+            realOne.run();
+         } catch (Throwable e) {
+            log.trace("Exiting fork thread due to exception", e);
+         } finally {
+            log.trace("Exiting fork thread.");
+         }
+      }
    }
 
 

@@ -28,6 +28,13 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Abstractization for logic related to different clustering modes: replicated or distributed.
@@ -39,9 +46,15 @@ import org.infinispan.factories.annotations.Inject;
  */
 public interface ClusteringDependentLogic {
 
+   static final Log log = LogFactory.getLog(ClusteringDependentLogic.class);
+
    boolean localNodeIsOwner(Object key);
 
+   boolean localNodeIsPrimaryOwner(Object key);
+
    void commitEntry(CacheEntry entry, boolean skipOwnershipCheck);
+
+   Collection<Address> getOwners(Collection<Object> keys);
 
    /**
     * This logic is used when a changing a key affects all the nodes in the cluster, e.g. int the replicated,
@@ -51,9 +64,12 @@ public interface ClusteringDependentLogic {
 
       private DataContainer dataContainer;
 
+      private RpcManager rpcManager;
+
       @Inject
-      public void init(DataContainer dc) {
+      public void init(DataContainer dc, RpcManager rpcManager) {
          this.dataContainer = dc;
+         this.rpcManager = rpcManager;
       }
 
       @Override
@@ -62,8 +78,18 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
+      public boolean localNodeIsPrimaryOwner(Object key) {
+         return rpcManager == null || rpcManager.getTransport().isCoordinator();
+      }
+
+      @Override
       public void commitEntry(CacheEntry entry, boolean skipOwnershipCheck) {
          entry.commit(dataContainer);
+      }
+
+      @Override
+      public Collection<Address> getOwners(Collection<Object> keys) {
+         return null;
       }
    }
 
@@ -72,17 +98,28 @@ public interface ClusteringDependentLogic {
       private DistributionManager dm;
       private DataContainer dataContainer;
       private Configuration configuration;
+      private RpcManager rpcManager;
 
       @Inject
-      public void init(DistributionManager dm, DataContainer dataContainer, Configuration configuration) {
+      public void init(DistributionManager dm, DataContainer dataContainer, Configuration configuration, RpcManager rpcManager) {
          this.dm = dm;
          this.dataContainer = dataContainer;
          this.configuration = configuration;
+         this.rpcManager = rpcManager;
       }
 
       @Override
       public boolean localNodeIsOwner(Object key) {
          return dm.getLocality(key).isLocal();
+      }
+
+      @Override
+      public boolean localNodeIsPrimaryOwner(Object key) {
+         final List<Address> locate = dm.locate(key);
+         final Address address = rpcManager.getAddress();
+         final boolean result = locate.get(0).equals(address);
+         log.tracef("Node owners are %s and my address is %s. Am I main owner? - %b", locate, address, result);
+         return result;
       }
 
       @Override
@@ -100,6 +137,11 @@ public interface ClusteringDependentLogic {
             entry.commit(dataContainer);
          else
             entry.rollback();
+      }
+
+      @Override
+      public Collection<Address> getOwners(Collection<Object> keys) {
+         return dm.getAffectedNodes(keys);
       }
    }
 }

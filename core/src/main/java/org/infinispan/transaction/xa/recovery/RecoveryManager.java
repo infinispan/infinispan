@@ -72,8 +72,9 @@ public interface RecoveryManager {
     * @param where on which nodes should this be executed.
     * @param xid the list of xids to be removed.
     * @param sync execute sync or async (false)
+    * @param gtx
     */
-   void removeRecoveryInformationFromCluster(Collection<Address> where, Xid xid, boolean sync);
+   void removeRecoveryInformationFromCluster(Collection<Address> where, Xid xid, boolean sync, GlobalTransaction gtx);
 
    /**
     * Same as {@link #removeRecoveryInformationFromCluster(java.util.Collection} but the transaction
@@ -121,14 +122,14 @@ public interface RecoveryManager {
    /**
     * Same as {@link #removeRecoveryInformation(javax.transaction.xa.Xid)} but identifies the tx by its internal id.
     */
-   void removeRecoveryInformation(Long internalId);
+   RecoveryAwareTransaction removeRecoveryInformation(Long internalId);
 
    /**
     * Remove recovery information stored on this node (doesn't involve rpc).
     *
     * @param xid@see  #removeRecoveryInformation(java.util.Collection, javax.transaction.xa.Xid, boolean)
     */
-   void removeRecoveryInformation(Xid xid);
+   RecoveryAwareTransaction removeRecoveryInformation(Xid xid);
 
    /**
    * Stateful structure allowing prepared-tx retrieval in a batch-oriented manner,

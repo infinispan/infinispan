@@ -60,9 +60,20 @@ public class XaTransactionTable extends TransactionTable {
       if (localTx.getTransaction() != null) {//this can be null when we force the invocation during recovery, perhaps on a remote node
          result = super.removeLocalTransaction(localTx);
       }
-      LocalXaTransaction xaLocalTransaction = (LocalXaTransaction) localTx;
-      xid2LocalTx.remove(xaLocalTransaction.getXid());
+      removeXidTxMapping((LocalXaTransaction) localTx);
       return result;
+   }
+
+   private void removeXidTxMapping(LocalXaTransaction localTx) {
+      final Xid xid = localTx.getXid();
+      xid2LocalTx.remove(xid);
+   }
+
+   @Override
+   public LocalTransaction removeLocalTransaction(Transaction tx) {
+      final LocalTransaction remove = removeLocalTransactionInternal(tx);
+      if (remove != null) removeXidTxMapping((LocalXaTransaction) remove);
+      return remove;
    }
 
    public LocalXaTransaction getLocalTransaction(Xid xid) {
@@ -79,7 +90,9 @@ public class XaTransactionTable extends TransactionTable {
       LocalXaTransaction localTransaction = (LocalXaTransaction) ltx;
       if (!localTransaction.isEnlisted()) { //make sure that you only enlist it once
          try {
-            transaction.enlistResource(new TransactionXaAdapter(localTransaction, this, configuration, recoveryManager, txCoordinator));
+            transaction.enlistResource(new TransactionXaAdapter(localTransaction, this, configuration, recoveryManager,
+                                                                txCoordinator, commandsFactory, rpcManager,
+                                                                clusteringLogic, configuration));
          } catch (Exception e) {
             Xid xid = localTransaction.getXid();
             if (xid != null && !localTransaction.getLookedUpEntries().isEmpty()) {

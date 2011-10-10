@@ -21,23 +21,33 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.tx.synchronisation;
+package org.infinispan.tx.recovery;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.tx.dld.DldOptimisticLockingDistributionTest;
+import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
+
 /**
- * @author Mircea.Markus@jboss.com
- * @since 5.0
+ * @author Mircea Markus
+ * @since 5.1
  */
-@Test(groups = "functional", testName = "tx.synchronization.DldLazyLockingDistributionWithSyncTest")
-public class DldLazyLockingDistributionWithSyncTest extends DldOptimisticLockingDistributionTest {
+@Test (groups = "functional", testName = "tx.RecoveryHandlerTest")
+public class RecoveryHandlerTest extends MultipleCacheManagersTest {
 
    @Override
-   protected Configuration updatedConfig() {
-      Configuration configuration = super.updatedConfig();
-      configuration.fluent().transaction().useSynchronization(true);
-      return configuration;
+   protected void createCacheManagers() throws Throwable {
+      final Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+      config.fluent().transaction().recovery().useSynchronization(false);
+      createCluster(config, 2);
+      waitForClusterToForm();
+   }
+
+   public void testRecoveryHandler() throws Exception {
+      final XAResource xaResource = cache(0).getAdvancedCache().getXAResource();
+      final Xid[] recover = xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN);
+      assert recover != null && recover.length == 0;
    }
 }

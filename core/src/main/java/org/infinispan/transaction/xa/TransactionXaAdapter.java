@@ -22,7 +22,11 @@
  */
 package org.infinispan.transaction.xa;
 
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.config.Configuration;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.transaction.AbstractEnlistmentAdapter;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
@@ -41,7 +45,7 @@ import javax.transaction.xa.Xid;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class TransactionXaAdapter implements XAResource {
+public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements XAResource {
 
    private static final Log log = LogFactory.getLog(TransactionXaAdapter.class);
    private static boolean trace = log.isTraceEnabled();
@@ -70,14 +74,25 @@ public class TransactionXaAdapter implements XAResource {
    private final RecoveryManager recoveryManager;
 
    private volatile RecoveryManager.RecoveryIterator recoveryIterator;
-   private final int hashCode;
 
 
    public TransactionXaAdapter(LocalXaTransaction localTransaction, TransactionTable txTable,
-                               Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator) {
-      if (localTransaction == null) throw new IllegalArgumentException("localTransaction should not be null");
-      this.hashCode = preComputeHashCode(localTransaction);
+                               Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator,
+                               CommandsFactory commandsFactory, RpcManager rpcManager,
+                               ClusteringDependentLogic clusteringDependentLogic, Configuration config) {
+      super(localTransaction, commandsFactory, rpcManager, txTable, clusteringDependentLogic, config);
       this.localTransaction = localTransaction;
+      this.txTable = (XaTransactionTable) txTable;
+      this.configuration = configuration;
+      this.recoveryManager = rm;
+      this.txCoordinator = txCoordinator;
+   }
+   public TransactionXaAdapter(TransactionTable txTable,
+                               Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator,
+                               CommandsFactory commandsFactory, RpcManager rpcManager,
+                               ClusteringDependentLogic clusteringDependentLogic, Configuration config) {
+      super(commandsFactory, rpcManager, txTable, clusteringDependentLogic, config);
+      localTransaction = null;
       this.txTable = (XaTransactionTable) txTable;
       this.configuration = configuration;
       this.recoveryManager = rm;
@@ -90,12 +105,7 @@ public class TransactionXaAdapter implements XAResource {
    public int prepare(Xid externalXid) throws XAException {
       Xid xid = convertXid(externalXid);
       LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
-      if (!configuration.isOnePhaseCommit()) {
-         return txCoordinator.prepare(localTransaction);
-      } else {
-         if (trace)log.tracef("Skipping prepare as we're configured to run 1PC. Xid=%s", externalXid);
-         return XA_OK;
-      }
+      return txCoordinator.prepare(localTransaction);
    }
 
    /**
@@ -104,27 +114,14 @@ public class TransactionXaAdapter implements XAResource {
    public void commit(Xid externalXid, boolean isOnePhase) throws XAException {
       Xid xid = convertXid(externalXid);
       LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
-      if (trace) log.tracef("Committing transaction %s. One phase? %s", localTransaction.getGlobalTransaction(), isOnePhase);
-      if (isOnePhase && !configuration.isOnePhaseCommit()) {
+      if (isOnePhase) {
          //isOnePhase being true means that we're the only participant in the distributed transaction and TM does the
          //1PC optimization. We run a 2PC though, as running only 1PC has a high chance of leaving the cluster in
          //inconsistent state.
-         try {
-            txCoordinator.prepare(localTransaction);
-            txCoordinator.commit(localTransaction, false);
-         } catch (XAException e) {
-            if (trace) log.tracef("Couldn't commit 1PC transaction %s, trying to rollback.", localTransaction);
-            try {
-               rollback(xid);
-               throw new XAException(XAException.XA_HEURRB); //this is a heuristic rollback
-            } catch (XAException e1) {
-               log.couldNotRollbackPrepared1PcTransaction(localTransaction, e1);
-               // inform the TM that a resource manager error has occurred in the transaction branch (XAER_RMERR).
-               throw new XAException(XAException.XAER_RMERR);
-            }
-         }
+         txCoordinator.prepare(localTransaction);
+         txCoordinator.commit(localTransaction, false);
       } else {
-         txCoordinator.commit(localTransaction, configuration.isOnePhaseCommit());
+         txCoordinator.commit(localTransaction, false);
       }
       forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction);
    }
@@ -149,14 +146,14 @@ public class TransactionXaAdapter implements XAResource {
    }
 
    public void end(Xid externalXid, int i) throws XAException {
-      if (trace) log.tracef("end called on tx %s", this.localTransaction.getGlobalTransaction());
+      if (trace) log.tracef("end called on tx %s(%s)", this.localTransaction.getGlobalTransaction(), configuration.getName());
    }
 
    public void forget(Xid externalXid) throws XAException {
       Xid xid = convertXid(externalXid);
       if (trace) log.tracef("forget called for xid %s", xid);
       try {
-         recoveryManager.removeRecoveryInformationFromCluster(null, xid, true);
+         recoveryManager.removeRecoveryInformationFromCluster(null, xid, true, null);
       } catch (Exception e) {
          log.warn("Exception removing recovery information: ", e);
          throw new XAException(XAException.XAER_RMERR);
@@ -221,8 +218,11 @@ public class TransactionXaAdapter implements XAResource {
    }
 
    private void forgetSuccessfullyCompletedTransaction(RecoveryManager recoveryManager, Xid xid, LocalXaTransaction localTransaction) {
+      final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
       if (configuration.isTransactionRecoveryEnabled()) {
-         recoveryManager.removeRecoveryInformationFromCluster(localTransaction.getRemoteLocksAcquired(), xid, false);
+         recoveryManager.removeRecoveryInformationFromCluster(localTransaction.getRemoteLocksAcquired(), xid, false, gtx);
+      } else {
+         releaseLocksForCompletedTransaction(localTransaction);
       }
    }
 
@@ -254,17 +254,17 @@ public class TransactionXaAdapter implements XAResource {
       }
    }
 
-   /**
-    * Invoked by TransactionManagers, make sure it's an efficient implementation.
-    * System.identityHashCode(x) is NOT an efficient implementation.
-    */
    @Override
-   public int hashCode() {
-      return this.hashCode;
-   }
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
 
-   private static int preComputeHashCode(final LocalXaTransaction localTransaction) {
-      return 31 + localTransaction.hashCode();
-   }
+      TransactionXaAdapter that = (TransactionXaAdapter) o;
 
+      if (localTransaction != null ? !localTransaction.equals(that.localTransaction) : that.localTransaction != null)
+         return false;
+      //also include the name of the cache in comparison - needed when same tx spans multiple caches.
+      return configuration.getName() != null ?
+            configuration.getName().equals(that.configuration.getName()) : that.configuration.getName() == null;
+   }
 }

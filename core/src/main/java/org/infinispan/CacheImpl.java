@@ -454,7 +454,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       }
       InvocationContext ctx = getInvocationContextForWrite(explicitFlags, explicitClassLoader);
-      LockControlCommand command = commandsFactory.buildLockControlCommand(keys, false, ctx.getFlags());
+      LockControlCommand command = commandsFactory.buildLockControlCommand(keys, ctx.getFlags());
       return (Boolean) invoker.invoke(ctx, command);
    }
    
@@ -616,7 +616,7 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    @Override
    public XAResource getXAResource() {
-      return new TransactionXaAdapter(null, txTable, config, recoveryManager, txCoordinator);
+      return new TransactionXaAdapter(txTable, config, recoveryManager, txCoordinator, commandsFactory, rpcManager, null, config);
    }
 
    public final V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {

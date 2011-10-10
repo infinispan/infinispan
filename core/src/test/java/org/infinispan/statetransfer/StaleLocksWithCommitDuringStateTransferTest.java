@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -112,9 +112,9 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       try {
          // finally commit or rollback the transaction
          if (commit) {
-            txCoordinator.commit(localTx, false);
+            tm(c1).commit();
          } else {
-            txCoordinator.rollback(localTx);
+            tm(c1).rollback();
          }
 
          // make the transaction manager forget about our tx so that we don't get rollback exceptions in the log

@@ -52,8 +52,8 @@ import static org.testng.Assert.assertEquals;
 public class CommitFailsTest extends AbstractRecoveryTest {
 
    private Object key;
+   private InDoubtWithCommitFailsTest.ForceFailureInterceptor failureInterceptor0;
    private InDoubtWithCommitFailsTest.ForceFailureInterceptor failureInterceptor1;
-   private InDoubtWithCommitFailsTest.ForceFailureInterceptor failureInterceptor2;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -64,17 +64,17 @@ public class CommitFailsTest extends AbstractRecoveryTest {
 
       key = getKey();
 
+      failureInterceptor0 = new InDoubtWithCommitFailsTest.ForceFailureInterceptor();
       failureInterceptor1 = new InDoubtWithCommitFailsTest.ForceFailureInterceptor();
-      failureInterceptor2 = new InDoubtWithCommitFailsTest.ForceFailureInterceptor();
-      advancedCache(0).addInterceptorAfter(failureInterceptor1, InvocationContextInterceptor.class);
-      advancedCache(1).addInterceptorAfter(failureInterceptor2, InvocationContextInterceptor.class);
+      advancedCache(0).addInterceptorAfter(failureInterceptor0, InvocationContextInterceptor.class);
+      advancedCache(1).addInterceptorAfter(failureInterceptor1, InvocationContextInterceptor.class);
    }
 
 
    @BeforeMethod
    protected void setUpTx() throws Exception {
+      failureInterceptor0.fail = true;
       failureInterceptor1.fail = true;
-      failureInterceptor2.fail = true;
 
       tm(2).begin();
       cache(2).put(this.key, "newValue");
@@ -92,8 +92,8 @@ public class CommitFailsTest extends AbstractRecoveryTest {
       assertEquals(countInDoubtTx(recoveryOps(0).showInDoubtTransactions()), 1);
       assertEquals(countInDoubtTx(recoveryOps(1).showInDoubtTransactions()), 1);
 
+      failureInterceptor0.fail = false;
       failureInterceptor1.fail = false;
-      failureInterceptor2.fail = false;
 
    }
 
@@ -139,7 +139,9 @@ public class CommitFailsTest extends AbstractRecoveryTest {
       List<Long> internalIds = getInternalIds(recoveryOps(where).showInDoubtTransactions());
       log.info("About to force commit!");
       recoveryOps(where).forceCommit(internalIds.get(0));
-      assertCleanup(0, 1, 2);
+      assertCleanup(0);
+      assertCleanup(1);
+      assertCleanup(2);
       assertAllHaveValue(key, "newValue");
       assertCleanup(0, 1, 2);
    }

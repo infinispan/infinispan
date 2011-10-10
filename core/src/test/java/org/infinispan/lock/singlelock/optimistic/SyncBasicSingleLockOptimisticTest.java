@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -20,22 +20,23 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.tx.dld;
 
-import org.infinispan.config.Configuration;
+package org.infinispan.lock.singlelock.optimistic;
+
 import org.testng.annotations.Test;
 
 /**
- * @author Mircea.Markus@jboss.com
- * @since 4.2
+ * @author Mircea Markus
+ * @since 5.1
  */
-@Test (groups = "functional", testName = "tx.dld.SameKeyDeadlockDistributionTest")
-public class SameKeyDeadlockDistributionTest extends SameKeyDeadlockReplicationTest {
+@Test (groups = "functional", testName = "lock.singlelock.SyncBasicSingleLockOptimisticTest")
+public class SyncBasicSingleLockOptimisticTest extends BasicSingleLockOptimisticTest {
+
+   public SyncBasicSingleLockOptimisticTest() {
+      useSynchronization = true;
+   }
+
    @Override
-   protected Configuration getConfiguration() {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
-      //we have two owners - this guarantees that lock acquisition will cause an deadlock
-      config.setNumOwners(2);
-      return config;
+   public void testSecondTxCannotPrepare() throws Exception {
    }
 }

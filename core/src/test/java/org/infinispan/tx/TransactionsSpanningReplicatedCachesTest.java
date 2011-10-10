@@ -28,6 +28,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -37,7 +38,7 @@ import java.util.Arrays;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
-@Test(groups = "functional", sequential=true, testName = "tx.TransactionsSpanningReplicatedCachesTest")
+@Test(groups = "functional", testName = "tx.TransactionsSpanningReplicatedCachesTest")
 public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManagersTest {
 
    EmbeddedCacheManager cm1, cm2;
@@ -79,17 +80,7 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       c1.put("c1key", "c1value");
       c2.put("c2key", "c2value");
 
-      for (Cache c : Arrays.asList(c1, c1Replica)) {
-         assert !c.isEmpty();
-         assert c.size() == 1;
-         assert c.get("c1key").equals("c1value");
-      }
-
-      for (Cache c : Arrays.asList(c2, c2Replica)) {
-         assert !c.isEmpty();
-         assert c.size() == 1;
-         assert c.get("c2key").equals("c2value");
-      }
+      assertInitialValues(c1, c1Replica, c2, c2Replica);
 
       TransactionManager tm = TestingUtil.getTransactionManager(c1);
 
@@ -104,17 +95,17 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
 
       Transaction tx = tm.suspend();
 
-      assert c1.get("c1key").equals("c1value");
-      assert c1Replica.get("c1key").equals("c1value");
-      assert c2.get("c2key").equals("c2value");
-      assert c2Replica.get("c2key").equals("c2value");
+
+      assertInitialValues(c1, c1Replica, c2, c2Replica);
 
       tm.resume(tx);
+      log.trace("before commit...");
       tm.commit();
+
 
       assert c1.get("c1key").equals("c1value_new");
       assert c1Replica.get("c1key").equals("c1value_new");
-      assert c2.get("c2key").equals("c2value_new");
+      assertEquals(c2.get("c2key"), "c2value_new");
       assert c2Replica.get("c2key").equals("c2value_new");
    }
 
@@ -133,17 +124,7 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       c1.put("c1key", "c1value");
       c2.put("c2key", "c2value");
 
-      for (Cache c : Arrays.asList(c1, c1Replica)) {
-         assert !c.isEmpty();
-         assert c.size() == 1;
-         assert c.get("c1key").equals("c1value");
-      }
-
-      for (Cache c : Arrays.asList(c2, c2Replica)) {
-         assert !c.isEmpty();
-         assert c.size() == 1;
-         assert c.get("c2key").equals("c2value");
-      }
+      assertInitialValues(c1, c1Replica, c2, c2Replica);
 
       TransactionManager tm = TestingUtil.getTransactionManager(c1);
 
@@ -170,6 +151,20 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       assert c1Replica.get("c1key").equals("c1value");
       assert c2.get("c2key").equals("c2value");
       assert c2Replica.get("c2key").equals("c2value");
+   }
+
+   private void assertInitialValues(Cache c1, Cache c1Replica, Cache c2, Cache c2Replica) {
+      for (Cache c : Arrays.asList(c1, c1Replica)) {
+         assert !c.isEmpty();
+         assert c.size() == 1;
+         assert c.get("c1key").equals("c1value");
+      }
+
+      for (Cache c : Arrays.asList(c2, c2Replica)) {
+         assert !c.isEmpty();
+         assert c.size() == 1;
+         assert c.get("c2key").equals("c2value");
+      }
    }
 
    public void testRollbackSpanningCaches2() throws Exception {

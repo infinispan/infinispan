@@ -44,7 +44,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Tests RepliationQueue functionality.
+ * Tests ReplicationQueue's functionality.
  *
  * @author Mircea.Markus@jboss.com
  */
@@ -80,7 +80,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * <tt>replicationQueueScheduledExecutor</tt> config param.
     */
    @Test(dependsOnMethods = "testReplicationBasedOnTime")
-   public void testApropriateExecutorIsUsed() {
+   public void testAppropriateExecutorIsUsed() {
       assert ReplQueueTestScheduledExecutorFactory.methodCalled;
       assert ReplQueueTestScheduledExecutorFactory.command != null;
       assert ReplQueueTestScheduledExecutorFactory.delay == REPL_QUEUE_INTERVAL;

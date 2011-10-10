@@ -167,6 +167,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          Object retval = cmd.perform(null);
          return respGen.getResponse(cmd, retval);
       } catch (Exception e) {
+         log.trace("Exception executing command", e);
          return new ExceptionResponse(e);
       }
    }
@@ -180,7 +181,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          //if (replayIgnored) resp = new ExtendedResponse(resp, true);
       } else {
          // invalid response
-         if (trace) log.trace("Unable to execute command, got invalid response");
+         log.tracef("Unable to execute command, got invalid response %s", resp);
       }
 
       return resp;

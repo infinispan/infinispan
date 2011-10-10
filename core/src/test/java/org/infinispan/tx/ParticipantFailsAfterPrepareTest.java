@@ -59,20 +59,22 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
    }
 
    public void testNonOriginatorFailsAfterPrepare() throws Exception {
-      DummyTransaction dummyTransaction = beginAndSuspendTx(cache(0), getKeyForCache(0));
+      final Object key = getKeyForCache(0);
+      DummyTransaction dummyTransaction = beginAndSuspendTx(cache(0), key);
       prepareTransaction(dummyTransaction);
 
       int indexToKill = -1;
       //this tx spreads over 3 out of 4 nodes, let's find one that has the tx and kill it
+      final List<Address> locate = advancedCache(0).getDistributionManager().getConsistentHash().locate(key, 3);
       for (int i = 3; i > 0; i--) {
-         if (lockManager(i).getNumberOfLocksHeld() == 1) {
+         if (locate.contains(address(i))) {
             indexToKill = i;
             break;
          }
       }
 
-      assert indexToKill > 0;
       System.out.println("indexToKill = " + indexToKill);
+      assert indexToKill > 0;
 
       Address toKill = address(indexToKill);
       TestingUtil.killCacheManagers(manager(indexToKill));

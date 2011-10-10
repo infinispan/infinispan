@@ -23,18 +23,18 @@
 
 package org.infinispan.interceptors.locking;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.AbstractVisitor;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.EntryFactory;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -47,9 +47,9 @@ import org.infinispan.factories.annotations.Inject;
  */
 public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
-   EntryFactory entryFactory;
+   final LockAquisitionVisitor lockAquisitionVisitor = new LockAquisitionVisitor();
 
-   private final LockAquisitionVisitor lockAquisitionVisitor = new LockAquisitionVisitor();
+   EntryFactory entryFactory;
 
    @Inject
    public void setDependencies(EntryFactory entryFactory) {
@@ -67,18 +67,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       } catch (Throwable te) {
          // don't remove the locks here, the rollback command will clear them
          throw te;
-      }
-   }
-
-   @Override
-   public final Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      // ensure keys are properly locked for evict commands
-      ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
-      try {
-         return visitRemoveCommand(ctx, command);
-      } finally {
-         //evict doesn't get called within a tx scope, so we should apply the changes before returning
-         lockManager.unlockAll(ctx);
       }
    }
 
@@ -138,12 +126,17 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       }
    }
 
+   @Override
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+      throw new CacheException("Explicit locking is not allowed with optimistic caches!");
+   }
+
    private final class LockAquisitionVisitor extends AbstractVisitor {
 
       @Override
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
          for (Object key : dataContainer.keySet()) {
-            lockKey(ctx, key);
+            lockAndRegisterBackupLock((TxInvocationContext) ctx, key);
          }
          return null;
       }
@@ -151,32 +144,26 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
          for (Object key : command.getMap().keySet()) {
-            if (cll.localNodeIsOwner(key)) {
-               lockKey(ctx, key);
-            }
+            lockAndRegisterBackupLock((TxInvocationContext) ctx, key);
          }
          return null;
       }
 
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-         if (cll.localNodeIsOwner(command.getKey())) {
-            lockKey(ctx, command.getKey());
-         }
+         lockAndRegisterBackupLock((TxInvocationContext) ctx, command.getKey());
          return null;
       }
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         if (cll.localNodeIsOwner(command.getKey())) {
-            lockKey(ctx, command.getKey());
-         }
+         lockAndRegisterBackupLock((TxInvocationContext) ctx, command.getKey());
          return null;
       }
       
       @Override
       public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-         if (cll.localNodeIsOwner(command.getKey())) {
+         if (cdl.localNodeIsOwner(command.getKey())) {
             Object[] compositeKeys = command.getCompositeKeys();
             for (Object key : compositeKeys) {
                lockKey(ctx, key);   
@@ -187,9 +174,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-         if (cll.localNodeIsOwner(command.getKey())) {
-            lockKey(ctx, command.getKey());
-         }
+         lockAndRegisterBackupLock((TxInvocationContext) ctx, command.getKey());
          return null;
       }
    }

@@ -25,6 +25,7 @@ package org.infinispan.interceptors.base;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -60,6 +61,8 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
          //unlock will happen async as it is a best effort
          boolean sync = !command.isUnlock();
          command.setFlags(ctx.getFlags());
+         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
+         ctx.addAffectedKeys(command.getKeys());
          rpcManager.broadcastRpcCommand(command, sync, false);
       }
       return retVal;

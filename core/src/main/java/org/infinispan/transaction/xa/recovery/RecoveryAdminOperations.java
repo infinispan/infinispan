@@ -105,7 +105,7 @@ public class RecoveryAdminOperations {
 
    @ManagedOperation(description = "Removes recovery info for the given transaction.")
    public String forget(int formatId, byte[] globalTxId, byte[] branchQualifier) {
-      recoveryManager.removeRecoveryInformationFromCluster(null, new SerializableXid(branchQualifier, globalTxId, formatId), true);
+      recoveryManager.removeRecoveryInformationFromCluster(null, new SerializableXid(branchQualifier, globalTxId, formatId), true, null);
       return "Recovery info removed.";
    }
 

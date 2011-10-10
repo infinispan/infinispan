@@ -125,7 +125,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       value = parameters[1];
       lifespanMillis = (Long) parameters[2];
       maxIdleTimeMillis = (Long) parameters[3];
-      flags = (Set<Flag>) (parameters.length>4 ? parameters[4] : Collections.EMPTY_SET); //TODO remove conditional check in future - eases migration for now
+      flags = (Set<Flag>) (parameters.length > 4 ? parameters[4] : Collections.EMPTY_SET); //TODO remove conditional check in future - eases migration for now
    }
 
    public boolean isPutIfAbsent() {

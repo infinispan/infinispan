@@ -35,6 +35,8 @@ import org.infinispan.transaction.xa.XaTransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.xa.Xid;
@@ -54,6 +56,8 @@ import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
  */
 @Test (groups = "functional", testName = "tx.recovery.PostCommitRecoveryStateTest")
 public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
+
+   private static Log log = LogFactory.getLog(PostCommitRecoveryStateTest.class);
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -105,11 +109,11 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public void removeRecoveryInformationFromCluster(Collection<Address> where, Xid xid, boolean sync) {
+      public void removeRecoveryInformationFromCluster(Collection<Address> where, Xid xid, boolean sync, GlobalTransaction gtx) {
          if (swallowRemoveRecoveryInfoCalls){
-            System.out.println("PostCommitRecoveryStateTest$RecoveryManagerDelegate.removeRecoveryInformation");
+            log.trace("PostCommitRecoveryStateTest$RecoveryManagerDelegate.removeRecoveryInformation");
          } else {
-            this.rm.removeRecoveryInformationFromCluster(where, xid, sync);
+            this.rm.removeRecoveryInformationFromCluster(where, xid, sync, null);
          }
       }
 
@@ -119,8 +123,9 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public void removeRecoveryInformation(Xid xid) {
+      public RecoveryAwareTransaction removeRecoveryInformation(Xid xid) {
          rm.removeRecoveryInformation(xid);
+         return null;
       }
 
       @Override
@@ -159,8 +164,9 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public void removeRecoveryInformation(Long internalId) {
+      public RecoveryAwareTransaction removeRecoveryInformation(Long internalId) {
          rm.removeRecoveryInformation(internalId);
+         return null;
       }
    }
 }
