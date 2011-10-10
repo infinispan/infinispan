@@ -38,7 +38,7 @@ import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
-import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -191,8 +191,8 @@ public class RemoteCommandsFactory {
             case RemoveCacheCommand.COMMAND_ID:
                command = new RemoveCacheCommand(cacheName, cacheManager, registry);
                break;
-            case RemoveRecoveryInfoCommand.COMMAND_ID:
-               command = new RemoveRecoveryInfoCommand(cacheName);
+            case TxCompletionNotificationCommand.COMMAND_ID:
+               command = new TxCompletionNotificationCommand(cacheName);
                break;
             case GetInDoubtTransactionsCommand.COMMAND_ID:
                command = new GetInDoubtTransactionsCommand(cacheName);

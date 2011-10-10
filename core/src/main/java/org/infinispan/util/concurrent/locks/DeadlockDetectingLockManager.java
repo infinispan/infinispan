@@ -42,12 +42,12 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * Lock manager in charge with processing deadlock detections.
  * Implementation notes: if a deadlock is detected, then one of the transactions has to rollback. The transaction that
  * rollbacks is determined by comparing the coin toss from {@link org.infinispan.transaction.xa.DldGlobalTransaction}.
- * A thread calling {@link DeadlockDetectingLockManager#lockAndRecord(Object, org.infinispan.context.InvocationContext)}
+ * A thread calling {@link LockManager#lockAndRecord(Object, org.infinispan.context.InvocationContext, long)}
  * would run the deadlock detection algorithm only if all of the following take place:
  * - the call is made in the scope of a transaction (either locally originated or remotely originated)
  * - it cannot acquire lock on the given key and the lock owner is another transaction
  * - when comparing coin toss, this thread would loose against the other one - so it's always the potential loser that runs DLD.
- * If deadlock is detected then {@link #lockAndRecord(Object, org.infinispan.context.InvocationContext)} would throw an
+ * If deadlock is detected then {@link LockManager#lockAndRecord(Object, org.infinispan.context.InvocationContext, long)} would throw an
  * {@link org.infinispan.util.concurrent.locks.DeadlockDetectedException}. This is subsequently handled in
  * in the interceptor chain - locks owned by this tx are released.
  *
@@ -74,8 +74,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
       exposeJmxStats = configuration.isExposeJmxStatistics();
    }
 
-   public boolean lockAndRecord(Object key, InvocationContext ctx) throws InterruptedException {
-      long lockTimeout = getLockAcquisitionTimeout(ctx);
+   public boolean lockAndRecord(Object key, InvocationContext ctx, long lockTimeout) throws InterruptedException {
       if (trace) log.tracef("Attempting to lock %s with acquisition timeout of %s millis", key, lockTimeout);
 
 
@@ -89,7 +88,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
          while (System.currentTimeMillis() < (start + lockTimeout)) {
             if (lockContainer.acquireLock(ctx.getLockOwner(), key, spinDuration, MILLISECONDS) != null) {
                thisTx.setLockIntention(null); //clear lock intention
-               if (trace) log.tracef("successfully acquired lock on %s, returning ...", key);
+               if (trace) log.tracef("successfully acquired lock on %s on behalf of %s, returning ...", key, ctx.getLockOwner());
                return true;
             } else {
                Object owner = getOwner(key);

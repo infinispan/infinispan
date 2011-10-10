@@ -1148,7 +1148,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * Returns true if and only if {@link #isUseEagerLocking()}, {@link #isEagerLockSingleNode()} and the cache is
     * distributed.
+    * @deprecated this is deprecated as starting with Infinispan 5.1 a single lock is always acquired disregarding the
+    * number of owner.
     */
+   @Deprecated
    public boolean isEagerLockingSingleNodeInUse() {
       return isUseEagerLocking() && isEagerLockSingleNode() && getCacheMode().isDistributed();
    }
@@ -1248,6 +1251,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
+    * Returns true if the 2nd phase of the 2PC (i.e. either commit or rollback) is sent asynchronously.
+    */
+   public boolean isSecondPhaseAsync() {
+      return !isSyncCommitPhase() || isUseReplQueue() || !getCacheMode().isSynchronous();
+   }
+
+   /**
     * This is now deprecated. An "eager" locking cache is a transactional cache running in pessimistic mode.
     * @see #getTransactionLockingMode()
     */
@@ -1256,7 +1266,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return transaction.useEagerLocking;
    }
 
-   //todo deprecate that once single node locking is in place
+   /**
+    * @deprecated starting with Infinispan 5.1 single node locking is used by default
+    */
+   @Deprecated
    public boolean isEagerLockSingleNode() {
       return transaction.eagerLockSingleNode;
    }
@@ -1603,7 +1616,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    public boolean isOnePhaseCommit() {
-      return !getCacheMode().isSynchronous();
+      return !getCacheMode().isSynchronous() || getTransactionLockingMode() == LockingMode.PESSIMISTIC;
    }
 
    /**

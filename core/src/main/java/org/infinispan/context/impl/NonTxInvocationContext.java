@@ -121,4 +121,9 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    public Set<Object> getLockedKeys() {
       return lockedKeys == null ? Collections.<Object>emptySet() : lockedKeys;
    }
+
+   @Override
+   public void clearLockedKeys() {
+      lockedKeys = null;
+   }
 }

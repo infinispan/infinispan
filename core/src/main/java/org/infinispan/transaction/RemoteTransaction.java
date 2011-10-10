@@ -105,6 +105,8 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
       return "RemoteTransaction{" +
             "modifications=" + modifications +
             ", lookedUpEntries=" + lookedUpEntries +
+            ", lockedKeys= " + lockedKeys +
+            ", backupKeyLocks " + backupKeyLocks +
             ", tx=" + tx +
             '}';
    }

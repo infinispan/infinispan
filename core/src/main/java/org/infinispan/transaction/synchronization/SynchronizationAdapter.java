@@ -23,8 +23,14 @@
 package org.infinispan.transaction.synchronization;
 
 import org.infinispan.CacheException;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.config.Configuration;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.transaction.AbstractEnlistmentAdapter;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionCoordinator;
+import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -39,14 +45,18 @@ import javax.transaction.xa.XAException;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-public class SynchronizationAdapter implements Synchronization {
+public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements Synchronization {
 
    private static final Log log = LogFactory.getLog(SynchronizationAdapter.class);
 
    private final LocalTransaction localTransaction;
    private final TransactionCoordinator txCoordinator;
 
-   public SynchronizationAdapter(LocalTransaction localTransaction, TransactionCoordinator txCoordinator) {
+   public SynchronizationAdapter(LocalTransaction localTransaction, TransactionCoordinator txCoordinator,
+                                 CommandsFactory commandsFactory, RpcManager rpcManager,
+                                 TransactionTable transactionTable, ClusteringDependentLogic clusteringLogic,
+                                 Configuration configuration) {
+      super(localTransaction, commandsFactory, rpcManager, transactionTable, clusteringLogic, configuration);
       this.localTransaction = localTransaction;
       this.txCoordinator = txCoordinator;
    }
@@ -83,6 +93,7 @@ public class SynchronizationAdapter implements Synchronization {
       } else {
          throw new IllegalArgumentException("Unknown status: " + status);
       }
+      releaseLocksForCompletedTransaction(localTransaction);
    }
 
    @Override
@@ -103,10 +114,5 @@ public class SynchronizationAdapter implements Synchronization {
          return false;
 
       return true;
-   }
-
-   @Override
-   public int hashCode() {
-      return localTransaction != null ? localTransaction.hashCode() : 0;
    }
 }

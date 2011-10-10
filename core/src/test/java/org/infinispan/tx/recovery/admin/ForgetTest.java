@@ -107,7 +107,8 @@ public class ForgetTest extends AbstractRecoveryTest {
       if (internalId == -1) throw new IllegalStateException();
       log.tracef("About to forget... %s", internalId);
       recoveryOps(cacheIndex).forget(internalId);
-      assertEquals(tt(1).getRemoteTxCount(), 0);//make sure tx has been removed
+      assertEquals(tt(0).getRemoteTxCount(), 0);
+      assertEquals(tt(1).getRemoteTxCount(), 0);
    }
 
 

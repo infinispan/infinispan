@@ -50,10 +50,7 @@ public class DistListenerTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       createCluster(Configuration.CacheMode.DIST_SYNC, 3);
-      // make sure all caches are started...
-      cache(0);
-      cache(1);
-      cache(2);
+      waitForClusterToForm();
    }
    
    public void testRemoteGet() {

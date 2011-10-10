@@ -21,23 +21,28 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.tx.synchronisation;
+package org.infinispan.lock.singlelock.replicated.optimistic;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.tx.dld.DldOptimisticLockingReplicationTest;
+import org.infinispan.lock.singlelock.AbstractLockOwnerCrashTest;
+import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
 /**
- * @author Mircea.Markus@jboss.com
- * @since 5.0
+ * @author Mircea Markus
+ * @since 5.1
  */
-@Test (groups = "functional", testName = "tx.synchronization.DldLazyLockingReplicationWithSyncTest")
-public class DldLazyLockingReplicationWithSyncTest extends DldOptimisticLockingReplicationTest {
+@Test (groups = "functional", testName = "singlelock.replicated.optimistic.LockOwnerCrashOptimisticReplTest")
+@CleanupAfterMethod
+public class LockOwnerCrashOptimisticReplTest extends AbstractLockOwnerCrashTest {
+
+   public LockOwnerCrashOptimisticReplTest() {
+      super(Configuration.CacheMode.REPL_SYNC, LockingMode.OPTIMISTIC, false);
+   }
 
    @Override
-   protected Configuration createConfiguration() {
-      Configuration configuration = super.createConfiguration();
-      configuration.fluent().transaction().useSynchronization(true);
-      return configuration;
+   protected Object getKeyForCache(int nodeIndex) {
+      return "k" + nodeIndex;
    }
 }

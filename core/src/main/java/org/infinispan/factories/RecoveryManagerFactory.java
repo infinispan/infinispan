@@ -83,7 +83,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
    }
 
    private void checkAsyncCache(Configuration configuration) {
-      if (configuration.isTransactionRecoveryEnabled() && configuration.isOnePhaseCommit()) {
+      if (configuration.isTransactionRecoveryEnabled() && !configuration.getCacheMode().isSynchronous()) {
          throw new ConfigurationException("Recovery for async caches is not supported!");
       }
    }

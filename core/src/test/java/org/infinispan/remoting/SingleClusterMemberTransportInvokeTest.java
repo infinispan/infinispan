@@ -44,7 +44,6 @@ public class SingleClusterMemberTransportInvokeTest extends MultipleCacheManager
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       createClusteredCaches(1, "replSync", c);
       
    }

@@ -149,7 +149,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
    }
 
    private void checkResponse(String result, int entryCount) {
-      assert isSuccess(result) : "Received " + result;
+      assert isSuccess(result) : "Received: " + result;
 
       assertEquals(cache(0, "test").keySet().size(), entryCount);
       assertEquals(cache(1, "test").keySet().size(), entryCount);
@@ -168,8 +168,13 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
    }
 
 
-   protected void checkProperlyCleanup(int managerIndex) {
-      assertEquals(TestingUtil.extractLockManager(cache(managerIndex, "test")).getNumberOfLocksHeld(), 0);
+   protected void checkProperlyCleanup(final int managerIndex) {
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return TestingUtil.extractLockManager(cache(managerIndex, "test")).getNumberOfLocksHeld() == 0;
+         }
+      });
       final TransactionTable tt = TestingUtil.extractComponent(cache(managerIndex, "test"), TransactionTable.class);
       eventually(new Condition() {
          @Override

@@ -59,7 +59,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    public static final int COMMAND_ID = 3;
 
    private List<Object> keys;
-   private boolean implicit = false;
    private boolean unlock = false;
    private Set<Flag> flags;
 
@@ -71,11 +70,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       super(cacheName);
    }
 
-   public LockControlCommand(Collection<Object> keys, String cacheName, Set<Flag> flags) {
-      this(keys, cacheName, flags, false);
-   }
-
-   public LockControlCommand(Collection<Object> keys, String cacheName, Set<Flag> flags, boolean implicit) {
+   public LockControlCommand(Collection<Object> keys, String cacheName, Set<Flag> flags, GlobalTransaction gtx) {
       super(cacheName);
       if (keys != null) {
          //building defensive copies is here in order to support replaceKey operation
@@ -84,18 +79,18 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          this.keys = Collections.emptyList();
       }
       this.flags = flags;
-      this.implicit = implicit;
+      this.globalTx = gtx;
    }
 
-   public LockControlCommand(Object key, String cacheName, Set<Flag> flags, boolean implicit) {
+   public LockControlCommand(Object key, String cacheName, Set<Flag> flags, GlobalTransaction gtx) {
       this(cacheName);
       this.keys = new ArrayList<Object>();
       this.keys.add(key);
       this.flags = flags;
-      this.implicit = implicit;
+      this.globalTx = gtx;
    }
 
-   public void attachGlobalTransaction(GlobalTransaction gtx) {
+   public void setGlobalTransaction(GlobalTransaction gtx) {
       globalTx = gtx;
    }
 
@@ -130,14 +125,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       return keys.get(0);
    }
 
-   public boolean isImplicit() {
-      return implicit;
-   }
-
-   public boolean isExplicit() {
-      return !isImplicit();
-   }
-
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitLockControlCommand((TxInvocationContext) ctx, this);
    }
@@ -158,7 +145,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
             return null;
          }
          //create a remote tx without any modifications (we do not know modifications ahead of time)
-         transaction = txTable.createRemoteTransaction(globalTx);
+         transaction = txTable.createRemoteTransaction(globalTx, null);
       }
       ctxt.setRemoteTransaction(transaction);
       TxInvocationContext ctx = ctxt;
@@ -185,6 +172,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       globalTx = (GlobalTransaction) args[i++];
       unlock = (Boolean) args[i++];
       keys = (List<Object>) args[i++];
+      flags = (Set<Flag>) args[i];
    }
 
    public boolean isUnlock() {
@@ -203,7 +191,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
       LockControlCommand that = (LockControlCommand) o;
 
-      if (implicit != that.implicit) return false;
       if (unlock != that.unlock) return false;
       if (flags == null)
          return that.flags == null;
@@ -218,7 +205,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    public int hashCode() {
       int result = super.hashCode();
       result = 31 * result + keys.hashCode();
-      result = 31 * result + (implicit ? 1 : 0);
       result = 31 * result + (unlock ? 1 : 0);
       if (flags != null)
          result = 31 * result + flags.hashCode();
@@ -231,7 +217,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          .append("LockControlCommand{cache=").append(cacheName)
          .append(", keys=").append(keys)
          .append(", flags=").append(flags)
-         .append(", implicit=").append(implicit)
          .append(", unlock=").append(unlock)
          .append("}")
          .toString();

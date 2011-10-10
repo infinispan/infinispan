@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -89,22 +89,17 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
          c1.put(k1, "v1");
          c1.put(k2, "v2");
 
-         assertLocked(c1, k1);
-         assertNotLocked(c2, k1);
-
-         assertLocked(c1, k2);
-         assertLocked(c2, k2);
+         assertKeyLockedCorrectly(k1);
+         assertKeyLockedCorrectly(k2);
       } else {
          c1.getAdvancedCache().lock(k1);
          c1.getAdvancedCache().lock(k2);
 
          assertNull(c1.get(k1));
-         assertLocked(c1, k1);
-         assertNotLocked(c2, k1);
-
          assertNull(c1.get(k2));
-         assertLocked(c1, k2);
-         assertLocked(c2, k2);
+
+         assertKeyLockedCorrectly(k1);
+         assertKeyLockedCorrectly(k2);
       }
 
       try {

@@ -31,6 +31,7 @@ import javax.transaction.Transaction;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
@@ -93,5 +94,10 @@ public class TransactionalInvocationContextFlagsOverride extends InvocationConte
    @Override
    public boolean isImplicitTransaction() {
       return delegate.isImplicitTransaction();
+   }
+
+   @Override
+   public CacheTransaction getCacheTransaction() {
+      return delegate.getCacheTransaction();
    }
 }

@@ -26,7 +26,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -83,7 +82,7 @@ public class TransactionCoordinator {
          return XA_OK;
       }
 
-      PrepareCommand prepareCommand = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), configuration.isOnePhaseCommit());
+      PrepareCommand prepareCommand = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), false);
       if (trace) log.tracef("Sending prepare command through the chain: %s", prepareCommand);
 
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
@@ -112,46 +111,35 @@ public class TransactionCoordinator {
 
    public void commit(LocalTransaction localTransaction, boolean isOnePhase) throws XAException {
       if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
-         LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-         ctx.setLocalTransaction(localTransaction);
-         if (configuration.isOnePhaseCommit() || isOnePhase) {
+      LocalTxInvocationContext ctx = icc.createTxInvocationContext();
+      ctx.setLocalTransaction(localTransaction);
+      if (configuration.isOnePhaseCommit() || isOnePhase) {
+         validateNotMarkedForRollback(localTransaction);
 
-            validateNotMarkedForRollback(localTransaction);
-
-            if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
-            PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
-            try {
-               invoker.invoke(ctx, command);
-               txTable.removeLocalTransaction(localTransaction);
-            } catch (Throwable e) {
-               txTable.failureCompletingTransaction(ctx.getTransaction());
-               log.errorProcessing1pcPrepareCommand(e);
-               throw new XAException(XAException.XAER_RMERR);
-            }
-         } else {
-            CommitCommand commitCommand = commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
-            try {
-               invoker.invoke(ctx, commitCommand);
-               txTable.removeLocalTransaction(localTransaction);
-            } catch (Throwable e) {
-               txTable.failureCompletingTransaction(ctx.getTransaction());
-               log.errorProcessing1pcPrepareCommand(e);
-               throw new XAException(XAException.XAER_RMERR);
-            }
+         if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
+         PrepareCommand command = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), true);
+         try {
+            invoker.invoke(ctx, command);
+         } catch (Throwable e) {
+            handleCommitFailure(e, localTransaction);
          }
+      } else {
+         CommitCommand commitCommand = commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
+         try {
+            invoker.invoke(ctx, commitCommand);
+            txTable.removeLocalTransaction(localTransaction);
+         } catch (Throwable e) {
+            handleCommitFailure(e, localTransaction);
+         }
+      }
    }
 
    public void rollback(LocalTransaction localTransaction) throws XAException {
-      if (trace) log.tracef("rollback transaction %s ", localTransaction.getGlobalTransaction());
-      RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
-      LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-      ctx.setLocalTransaction(localTransaction);
       try {
-         invoker.invoke(ctx, rollbackCommand);
-         txTable.removeLocalTransaction(localTransaction);
+         rollbackInternal(localTransaction);
       } catch (Throwable e) {
          log.errorRollingBack(e);
-         final Transaction transaction = ctx.getTransaction();
+         final Transaction transaction = localTransaction.getTransaction();
          //this might be possible if the cache has stopped and TM still holds a reference to the XAResource
          if (transaction != null) {
             txTable.failureCompletingTransaction(transaction);
@@ -160,8 +148,30 @@ public class TransactionCoordinator {
       }
    }
 
-   /**
-    */
+   private void handleCommitFailure(Throwable e, LocalTransaction localTransaction) throws XAException {
+      log.errorProcessing1pcPrepareCommand(e);
+      if (trace) log.tracef("Couldn't commit 1PC transaction %s, trying to rollback.", localTransaction);
+      try {
+         rollbackInternal(localTransaction);
+      } catch (Throwable e1) {
+         log.couldNotRollbackPrepared1PcTransaction(localTransaction, e1);
+         // inform the TM that a resource manager error has occurred in the transaction branch (XAER_RMERR).
+         throw new XAException(XAException.XAER_RMERR);
+      } finally {
+         txTable.failureCompletingTransaction(localTransaction.getTransaction());
+      }
+      throw new XAException(XAException.XA_HEURRB); //this is a heuristic rollback
+   }
+
+   private void rollbackInternal(LocalTransaction localTransaction) throws Throwable {
+      if (trace) log.tracef("rollback transaction %s ", localTransaction.getGlobalTransaction());
+      RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
+      LocalTxInvocationContext ctx = icc.createTxInvocationContext();
+      ctx.setLocalTransaction(localTransaction);
+      invoker.invoke(ctx, rollbackCommand);
+      txTable.removeLocalTransaction(localTransaction);
+   }
+
    private void validateNotMarkedForRollback(LocalTransaction localTransaction) throws XAException {
       if (localTransaction.isMarkedForRollback()) {
          if (trace) log.tracef("Transaction already marked for rollback. Forcing rollback for %s", localTransaction);

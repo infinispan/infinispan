@@ -24,6 +24,7 @@ package org.infinispan.context.impl;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.transaction.Transaction;
@@ -88,4 +89,6 @@ public interface TxInvocationContext extends InvocationContext {
 
 
    boolean isImplicitTransaction();
+
+   CacheTransaction getCacheTransaction();
 }

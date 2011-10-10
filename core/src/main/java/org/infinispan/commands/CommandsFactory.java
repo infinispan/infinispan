@@ -38,7 +38,7 @@ import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
-import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -244,17 +244,22 @@ public interface CommandsFactory {
 
    /**
     * Builds a LockControlCommand to control explicit remote locking
+    *
     * @param keys keys to lock
     * @param implicit whether the lock command was implicit (triggered internally) or explicit (triggered by an API call)
+    * @param gtx
     * @return a LockControlCommand
     */
-   LockControlCommand buildLockControlCommand(Collection keys, boolean implicit, Set<Flag> flags);
+   LockControlCommand buildLockControlCommand(Collection keys, boolean implicit, Set<Flag> flags, GlobalTransaction gtx);
 
    /**
-    * Same as {@link #buildLockControlCommand(java.util.Collection, boolean, java.util.Set)} but for locking a single key
-    * vs a collection of keys.
+    * Same as {@link #buildLockControlCommand(Object, boolean, java.util.Set,
+    * org.infinispan.transaction.xa.GlobalTransaction)} but for locking a single key vs a collection of keys.
     */
-   LockControlCommand buildLockControlCommand(Object key, boolean implicit, Set<Flag> flags);
+   LockControlCommand buildLockControlCommand(Object key, boolean implicit, Set<Flag> flags, GlobalTransaction gtx);
+
+
+   LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags);
 
    /**
     * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a simple
@@ -285,9 +290,9 @@ public interface CommandsFactory {
    GetInDoubtTransactionsCommand buildGetInDoubtTransactionsCommand();
 
    /**
-    * Builds a {@link org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand}.
+    * Builds a {@link org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand}.
     */
-   RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(Xid xid);
+   TxCompletionNotificationCommand buildTxCompletionNotificationCommand(Xid xid, GlobalTransaction globalTransaction);
    
    /**
     * Builds a DistributedExecuteCommand used for migration and execution of distributed Callables and Runnables. 
@@ -324,9 +329,9 @@ public interface CommandsFactory {
 
    /**
     * @param internalId the internal id identifying the transaction to be removed.
-    * @see RemoveRecoveryInfoCommand
+    * @see org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand
     */
-   RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(long internalId);
+   TxCompletionNotificationCommand buildTxCompletionNotificationCommand(long internalId);
    
    
    /**
@@ -336,5 +341,4 @@ public interface CommandsFactory {
     * @see ApplyDeltaCommand
     */
    ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys);
-   
 }

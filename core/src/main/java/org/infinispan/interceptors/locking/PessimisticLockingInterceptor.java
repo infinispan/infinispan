@@ -26,10 +26,10 @@ package org.infinispan.interceptors.locking;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -39,6 +39,8 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.transaction.LocalTransaction;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -46,6 +48,12 @@ import java.util.Set;
 
 /**
  * Locking interceptor to be used by pessimistic caches.
+ * Design note: when a lock "k" needs to be acquired (e.g. cache.put("k", "v")), if the lock owner is the local node,
+ * no remote call is performed to migrate locking logic to the other (numOwners - 1) lock owners. This is a good
+ * optimisation for  in-vm transactions: if the local node crashes before prepare then the replicated lock information
+ * would be useless as the tx is rolled back. OTOH for remote hotrod/transactions this additional RPC makes sense because
+ * there's no such thing as transaction originator node, so this might become a configuration option when HotRod tx are
+ * in place.
  *
  * Implementation note: current implementation acquires locks remotely first and then locally. This is required
  * by the deadlock detection logic, but might not be optimal: acquiring locks locally first might help to fail fast the
@@ -57,9 +65,11 @@ import java.util.Set;
 public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private CommandsFactory cf;
+   private RpcManager rpcManager;
 
    @Inject
-   public void init(CommandsFactory factory) {
+   public void init(CommandsFactory factory, RpcManager rpcManager) {
+      this.rpcManager = rpcManager;
       this.cf = factory;
    }
 
@@ -67,11 +77,11 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       try {
          if (ctx.hasFlag(Flag.FORCE_WRITE_LOCK)) {
-            lockKey(ctx, command.getKey());
+            lockKeyAndCheckOwnership(ctx, command.getKey());
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable t) {
-         lockManager.unlockAll(ctx);
+         releaseLocksOnFailureBeforePrepare(ctx);
          throw t;
       } finally {
          if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
@@ -91,46 +101,49 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      // needed by the stat transfer.
+      if (ctx.hasFlag(Flag.SKIP_LOCKING))
+         return invokeNextInterceptor(ctx, command);
+
       try {
-         acquireRemoteIfNeeded(ctx, command.getKey());
-         if (ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK) || ctx.isOriginLocal() || cll.localNodeIsOwner(command.getKey())) {
-            lockKey(ctx, command.getKey());
+         final boolean localNodeOwnsLock = cdl.localNodeIsPrimaryOwner(command.getKey());
+         acquireRemoteIfNeeded(ctx, command.getKey(), localNodeOwnsLock);
+         if (ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK) || localNodeOwnsLock) {
+            lockKeyAndCheckOwnership(ctx, command.getKey());
+         } else if (cdl.localNodeIsOwner(command.getKey())) {
+            ((TxInvocationContext)ctx).getCacheTransaction().addBackupLockForKey(command.getKey());
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         throw cleanLocksAndRethrow(ctx, te);
+         releaseLocksOnFailureBeforePrepare(ctx);
+         throw te;
       }
    }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       try {
-         if (ctx.isOriginLocal()) {
-            acquireRemoteIfNeeded(ctx, command.getMap().keySet());
-         }
+         acquireRemoteIfNeeded(ctx, command.getMap().keySet());
          for (Object key : command.getMap().keySet()) {
-            if (cll.localNodeIsOwner(key)) {
-               lockKey(ctx, key);
-            }
-            entryFactory.wrapEntryForPut(ctx, key, null, true);
+            lockAndRegisterBackupLock((TxInvocationContext) ctx, key);
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         throw cleanLocksAndRethrow(ctx, te);
+         releaseLocksOnFailureBeforePrepare(ctx);
+         throw te;
       }
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
-         acquireRemoteIfNeeded(ctx, command.getKey());
-         if (cll.localNodeIsOwner(command.getKey())) {
-            lockKey(ctx, command.getKey());
-         }
-         invokeNextInterceptor(ctx, command);
+         final boolean localNodeOwnsLock = cdl.localNodeIsPrimaryOwner(command.getKey());
+         acquireRemoteIfNeeded(ctx, command.getKey(), localNodeOwnsLock);
+         lockAndRegisterBackupLock((TxInvocationContext) ctx, command.getKey(), localNodeOwnsLock);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         throw cleanLocksAndRethrow(ctx, te);
+         releaseLocksOnFailureBeforePrepare(ctx);
+         throw te;
       }
    }
    
@@ -140,7 +153,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       try {
          HashSet<Object> keysToLock = new HashSet<Object>(Arrays.asList(compositeKeys));
          acquireRemoteIfNeeded(ctx, keysToLock);
-         if (cll.localNodeIsOwner(command.getDeltaAwareKey())) {
+         if (cdl.localNodeIsOwner(command.getDeltaAwareKey())) {
             for (Object key : compositeKeys) {
                lockKey(ctx, key);   
             }      
@@ -154,26 +167,13 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
-         acquireRemoteIfNeeded(ctx, command.getKey());
-         if (cll.localNodeIsOwner(command.getKey())) {
-            lockKey(ctx, command.getKey());
-         }
+         final boolean localNodeOwnsLock = cdl.localNodeIsPrimaryOwner(command.getKey());
+         acquireRemoteIfNeeded(ctx, command.getKey(), localNodeOwnsLock);
+         lockAndRegisterBackupLock((TxInvocationContext) ctx, command.getKey(), localNodeOwnsLock);
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         throw cleanLocksAndRethrow(ctx, te);
-      }
-   }
-
-   @Override
-   public final Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      // ensure keys are properly locked for evict commands
-      ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
-      try {
-         lockKey(ctx, command.getKey());
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         //evict doesn't get called within a tx scope, so we should apply the changes before returning
-         lockManager.unlockAll(ctx);
+         releaseLocksOnFailureBeforePrepare(ctx);
+         throw te;
       }
    }
 
@@ -181,24 +181,93 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       try {
          for (InternalCacheEntry entry : dataContainer.entrySet())
-            lockKey(ctx, entry.getKey());
+            lockAndRegisterBackupLock((TxInvocationContext) ctx, entry.getKey());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
-         throw cleanLocksAndRethrow(ctx, te);
+         releaseLocksOnFailureBeforePrepare(ctx);
+         throw te;
+      }
+   }
+
+   @Override
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+      if (!ctx.isInTxScope())
+         throw new IllegalStateException("Locks should only be acquired within the scope of a transaction!");
+
+      //first go remotely - required by DLD. Only acquire remote lock if multiple keys or the single key doesn't map
+      // to the local node.
+      if (ctx.isOriginLocal()) {
+         final boolean isSingleKeyAndLocal = !command.multipleKeys() && cdl.localNodeIsPrimaryOwner(command.getSingleKey());
+         if (!isSingleKeyAndLocal || command.multipleKeys()) {
+            LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
+            if (!localTx.getAffectedKeys().containsAll(command.getKeys())) {
+               invokeNextInterceptor(ctx, command);
+            } else {
+               log.tracef("Already own locks on keys: %s, skipping remote call", command.getKeys());
+            }
+         }
+      }
+
+      try {
+         abortIfRemoteTransactionInvalid(ctx, command);
+         if (command.isUnlock()) {
+            if (ctx.isOriginLocal())
+               throw new AssertionError("There's no advancedCache.unlock so this must have originated remotely.");
+            releaseLocksOnFailureBeforePrepare(ctx);
+            return false;
+         }
+
+         for (Object key : command.getKeys()) {
+            lockAndRegisterBackupLock(ctx, key);
+         }
+         return true;
+      } catch (Throwable te) {
+         releaseLocksOnFailureBeforePrepare(ctx);
+         throw te;
       }
    }
 
    private void acquireRemoteIfNeeded(InvocationContext ctx, Set<Object> keys) throws Throwable {
-      if (!ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         LockControlCommand lcc = cf.buildLockControlCommand(keys, true, ctx.getFlags());
-         visitLockControlCommand((TxInvocationContext) ctx, lcc);
+      if (ctx.isOriginLocal() && !ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+         final TxInvocationContext txContext = (TxInvocationContext) ctx;
+         LocalTransaction localTransaction = (LocalTransaction) txContext.getCacheTransaction();
+         if (localTransaction.getAffectedKeys().containsAll(keys)) {
+            log.tracef("We already have lock for keys %s, skip remote lock acquisition", keys);
+         } else {
+            LockControlCommand lcc = cf.buildLockControlCommand(keys, true, ctx.getFlags(), txContext.getGlobalTransaction());
+            invokeNextInterceptor(ctx, lcc);
+         }
       }
    }
 
-   private void acquireRemoteIfNeeded(InvocationContext ctx, Object key) throws Throwable {
-      if (!ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         LockControlCommand lcc = cf.buildLockControlCommand(key, true, ctx.getFlags());
-         visitLockControlCommand((TxInvocationContext) ctx, lcc);
+   private void acquireRemoteIfNeeded(InvocationContext ctx, Object key, boolean localNodeIsLockOwner) throws Throwable {
+      if (!localNodeIsLockOwner && ctx.isOriginLocal() && !ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+         final TxInvocationContext txContext = (TxInvocationContext) ctx;
+         LocalTransaction localTransaction = (LocalTransaction) txContext.getCacheTransaction();
+         if (localTransaction.getAffectedKeys().contains(key)) {
+            log.tracef("We already have lock for key %s, skip remote lock acquisition", key);
+         } else {
+            LockControlCommand lcc = cf.buildLockControlCommand(key, true, ctx.getFlags(), txContext.getGlobalTransaction());
+            invokeNextInterceptor(ctx, lcc);
+         }
+      }
+   }
+
+   private void releaseLocksOnFailureBeforePrepare(InvocationContext ctx) {
+      lockManager.unlockAll(ctx);
+      if (ctx.isOriginLocal() && rpcManager != null) {
+         final TxInvocationContext txContext = (TxInvocationContext) ctx;
+         TxCompletionNotificationCommand command = cf.buildTxCompletionNotificationCommand(null, txContext.getGlobalTransaction());
+         final LocalTransaction cacheTransaction = (LocalTransaction) txContext.getCacheTransaction();
+         rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(), command, true);
+      }
+   }
+
+   protected final void lockAndRegisterBackupLock(TxInvocationContext ctx, Object key, boolean isLockOwner) throws InterruptedException {
+      if (isLockOwner) {
+         lockKeyAndCheckOwnership(ctx, key);
+      } else if (cdl.localNodeIsOwner(key)) {
+         ctx.getCacheTransaction().addBackupLockForKey(key);
       }
    }
 }

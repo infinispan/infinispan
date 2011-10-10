@@ -238,7 +238,9 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * marked for rollback - data is in a consistent state, no fault tolerance.
        *
        * @param eagerLockSingleNode
+       * @deprecated starting with Infinispan 5.1 single node locking is used by default
        */
+      @Deprecated
       TransactionConfig eagerLockSingleNode(Boolean eagerLockSingleNode);
 
       /**

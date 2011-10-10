@@ -145,7 +145,7 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
       } catch (IllegalStateException e) {
          //expected
       }
-      assertEquals(txTable.getLocalTxCount(), 2);
+      assertEquals(txTable.getLocalTxCount(), 1);
 
       //now the TM is expected to rollback the tx
       tm.rollback();

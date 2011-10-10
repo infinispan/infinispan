@@ -30,6 +30,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
 import java.util.concurrent.Executors;
 
 import static org.testng.Assert.assertEquals;
@@ -50,14 +51,15 @@ public class InvalidationNoReplicationTest extends MultipleCacheManagersTest {
       config.setL1CacheEnabled(true);
       config.setNumOwners(1);
       createCluster(config, 2);
-      TestingUtil.blockUntilViewsReceived(10000, cache(0), cache(1));
-      KeyAffinityService<Object> service = KeyAffinityServiceFactory.
-            newKeyAffinityService(cache(0), Executors.newSingleThreadExecutor(), new RndKeyGenerator(), 2, true);
-      k0 = service.getKeyForAddress(address(0));
-      service.stop();
+      waitForClusterToForm();
+      k0 = getKeyForCache(0);
    }
 
    public void testInvalidation() throws Exception {
+
+      assert advancedCache(0).getDistributionManager().locate(k0).equals(Collections.singletonList(address(0)));
+      assert advancedCache(1).getDistributionManager().locate(k0).equals(Collections.singletonList(address(0)));
+
       advancedCache(1).put(k0, "k1");
       assert advancedCache(1).getDataContainer().containsKey(k0);
       assert advancedCache(0).getDataContainer().containsKey(k0);
