@@ -70,6 +70,12 @@
          <classifier>tests</classifier>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.jboss.weld.se</groupId>
+         <artifactId>weld-se</artifactId>
+         <version>${version.weld}</version>
+         <scope>test</scope>
+      </dependency>
 
       <dependency>
          <groupId>junit</groupId>
@@ -98,8 +104,6 @@
                <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
                <!-- Remove other files packaged with the TCK (e.g. beans.xml) -->
                <includes>**/*.class</includes>
-               <!-- Exclude JMXTest which cannot be excluded with "ExcludeFile" -->
-               <excludes>**/JMXTest.class</excludes>
             </configuration>
          </plugin>
          <plugin>

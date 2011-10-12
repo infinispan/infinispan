@@ -24,23 +24,27 @@ package org.infinispan.cdi.test.tck;
 
 import javax.cache.CacheManager;
 import javax.cache.OptionalFeature;
-import javax.cache.spi.CacheManagerFactoryProvider;
+import javax.cache.spi.CachingProvider;
 
 /**
- * This implementation is only here for test purpose. To pass the JCache TCK for the annotations part we have to say
- * that this optional feature is supported by our implementation.
+ * The {@link CachingProvider} implementation needed for TCK tests.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class CacheManagerFactoryProviderImpl implements CacheManagerFactoryProvider {
+public class DummyCachingProvider implements CachingProvider {
 
    @Override
-   public CacheManager createCacheManager(String name) {
+   public CacheManager createCacheManager(ClassLoader classLoader, String name) {
       return null;
    }
 
    @Override
+   public ClassLoader getDefaultClassLoader() {
+      return Thread.currentThread().getContextClassLoader();
+   }
+
+   @Override
    public boolean isSupported(OptionalFeature optionalFeature) {
-      return optionalFeature == OptionalFeature.ANNOTATIONS;
+      return false;
    }
 }
