@@ -22,9 +22,9 @@
  */
 package org.infinispan.cdi.test.interceptor.service;
 
-import javax.cache.interceptor.CacheKey;
-import javax.cache.interceptor.CacheKeyGenerator;
-import javax.cache.interceptor.CacheKeyInvocationContext;
+import javax.cache.annotation.CacheKey;
+import javax.cache.annotation.CacheKeyGenerator;
+import javax.cache.annotation.CacheKeyInvocationContext;
 import java.lang.annotation.Annotation;
 
 /**
@@ -33,7 +33,7 @@ import java.lang.annotation.Annotation;
 public class CustomCacheKeyGenerator implements CacheKeyGenerator {
 
    @Override
-   public CacheKey generateCacheKey(CacheKeyInvocationContext<Annotation> cacheKeyInvocationContext) {
+   public CacheKey generateCacheKey(CacheKeyInvocationContext<? extends Annotation> cacheKeyInvocationContext) {
 
       return new CustomCacheKey(
             cacheKeyInvocationContext.getMethod(),

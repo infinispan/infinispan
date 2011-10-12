@@ -36,10 +36,10 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.solder.bean.Beans;
 import org.jboss.solder.reflection.annotated.AnnotatedTypeBuilder;
 
-import javax.cache.interceptor.CachePut;
-import javax.cache.interceptor.CacheRemoveAll;
-import javax.cache.interceptor.CacheRemoveEntry;
-import javax.cache.interceptor.CacheResult;
+import javax.cache.annotation.CachePut;
+import javax.cache.annotation.CacheRemoveAll;
+import javax.cache.annotation.CacheRemoveEntry;
+import javax.cache.annotation.CacheResult;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Any;

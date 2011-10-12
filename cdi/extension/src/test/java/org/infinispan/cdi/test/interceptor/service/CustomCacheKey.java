@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi.test.interceptor.service;
 
-import javax.cache.interceptor.CacheKey;
+import javax.cache.annotation.CacheKey;
 import java.lang.reflect.Method;
 
 /**

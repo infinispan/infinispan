@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi.interceptor.context.metadata;
 
-import javax.cache.interceptor.CacheKeyGenerator;
+import javax.cache.annotation.CacheKeyGenerator;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.List;

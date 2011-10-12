@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi.interceptor;
 
-import javax.cache.interceptor.CacheKey;
+import javax.cache.annotation.CacheKey;
 
 import static java.util.Arrays.deepEquals;
 import static java.util.Arrays.deepHashCode;

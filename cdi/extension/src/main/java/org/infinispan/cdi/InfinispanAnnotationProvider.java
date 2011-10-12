@@ -20,34 +20,22 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi.interceptor.literal;
+package org.infinispan.cdi;
 
-import javax.cache.annotation.CacheRemoveAll;
-import javax.cache.annotation.CacheResolverFactory;
-import javax.enterprise.util.AnnotationLiteral;
+import javax.cache.OptionalFeature;
+import javax.cache.spi.AnnotationProvider;
+
+import static javax.cache.OptionalFeature.ANNOTATIONS;
 
 /**
+ * JCache {@link AnnotationProvider} implementation. This implementation is used to say that we support the annotations
+ * part of JCache specification.
+ *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class CacheRemoveAllLiteral extends AnnotationLiteral<CacheRemoveAll> implements CacheRemoveAll {
-
-   public final static CacheRemoveAllLiteral INSTANCE = new CacheRemoveAllLiteral();
-
-   private CacheRemoveAllLiteral() {
-   }
-
+public class InfinispanAnnotationProvider implements AnnotationProvider {
    @Override
-   public String cacheName() {
-      return "";
-   }
-
-   @Override
-   public boolean afterInvocation() {
-      return false;
-   }
-
-   @Override
-   public Class<? extends CacheResolverFactory> cacheResolverFactory() {
-      return CacheResolverFactory.class;
+   public boolean isSupported(OptionalFeature optionalFeature) {
+      return optionalFeature == ANNOTATIONS;
    }
 }

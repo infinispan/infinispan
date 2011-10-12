@@ -35,7 +35,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.cache.CacheException;
-import javax.cache.interceptor.CacheKey;
+import javax.cache.annotation.CacheKey;
 import javax.inject.Inject;
 import java.lang.reflect.Method;
 
@@ -45,7 +45,7 @@ import static org.testng.Assert.assertTrue;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
- * @see javax.cache.interceptor.CacheRemoveEntry
+ * @see javax.cache.annotation.CacheRemoveEntry
  */
 @Test(groups = "functional", testName = "cdi.test.interceptor.CacheRemoveEntryInterceptorTest")
 public class CacheRemoveEntryInterceptorTest extends Arquillian {

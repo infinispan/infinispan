@@ -25,9 +25,9 @@ package org.infinispan.cdi.interceptor;
 import org.infinispan.Cache;
 import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextFactory;
 
-import javax.cache.interceptor.CacheKey;
-import javax.cache.interceptor.CacheKeyInvocationContext;
-import javax.cache.interceptor.CacheRemoveAll;
+import javax.cache.annotation.CacheKey;
+import javax.cache.annotation.CacheKeyInvocationContext;
+import javax.cache.annotation.CacheRemoveAll;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;

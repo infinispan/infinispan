@@ -22,9 +22,9 @@
  */
 package org.infinispan.cdi.test.interceptor.service;
 
-import javax.cache.interceptor.CacheKeyParam;
-import javax.cache.interceptor.CachePut;
-import javax.cache.interceptor.CacheValue;
+import javax.cache.annotation.CacheKeyParam;
+import javax.cache.annotation.CachePut;
+import javax.cache.annotation.CacheValue;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI

@@ -24,7 +24,7 @@ package org.infinispan.cdi.interceptor;
 
 import org.infinispan.Cache;
 
-import javax.cache.interceptor.CacheInvocationContext;
+import javax.cache.annotation.CacheInvocationContext;
 import java.lang.annotation.Annotation;
 
 /**

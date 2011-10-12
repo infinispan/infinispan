@@ -24,8 +24,8 @@ package org.infinispan.cdi.util;
 
 import org.infinispan.cdi.interceptor.DefaultCacheKeyGenerator;
 
-import javax.cache.interceptor.CacheDefaults;
-import javax.cache.interceptor.CacheKeyGenerator;
+import javax.cache.annotation.CacheDefaults;
+import javax.cache.annotation.CacheKeyGenerator;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;

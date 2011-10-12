@@ -26,10 +26,10 @@ import org.infinispan.Cache;
 import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextFactory;
 import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextImpl;
 
-import javax.cache.interceptor.CacheKey;
-import javax.cache.interceptor.CacheKeyGenerator;
-import javax.cache.interceptor.CacheKeyInvocationContext;
-import javax.cache.interceptor.CachePut;
+import javax.cache.annotation.CacheKey;
+import javax.cache.annotation.CacheKeyGenerator;
+import javax.cache.annotation.CacheKeyInvocationContext;
+import javax.cache.annotation.CachePut;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
@@ -60,7 +60,7 @@ public class CachePutInterceptor implements Serializable {
       final CacheKeyInvocationContext<CachePut> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
       final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
       final CachePut cacheResult = cacheKeyInvocationContext.getCacheAnnotation();
-      final CacheKey cacheKey = cacheKeyGenerator.generateCacheKey((CacheKeyInvocationContext) cacheKeyInvocationContext);
+      final CacheKey cacheKey = cacheKeyGenerator.generateCacheKey(cacheKeyInvocationContext);
       final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
 
       final Object valueToCache = cacheKeyInvocationContext.getValueParameter().getValue();
