@@ -22,10 +22,10 @@
  */
 package org.infinispan.cdi.interceptor;
 
-import javax.cache.interceptor.CacheInvocationParameter;
-import javax.cache.interceptor.CacheKey;
-import javax.cache.interceptor.CacheKeyGenerator;
-import javax.cache.interceptor.CacheKeyInvocationContext;
+import javax.cache.annotation.CacheInvocationParameter;
+import javax.cache.annotation.CacheKey;
+import javax.cache.annotation.CacheKeyGenerator;
+import javax.cache.annotation.CacheKeyInvocationContext;
 import javax.enterprise.context.ApplicationScoped;
 import java.lang.annotation.Annotation;
 
@@ -39,7 +39,7 @@ import java.lang.annotation.Annotation;
 public class DefaultCacheKeyGenerator implements CacheKeyGenerator {
 
    @Override
-   public CacheKey generateCacheKey(CacheKeyInvocationContext<Annotation> cacheKeyInvocationContext) {
+   public CacheKey generateCacheKey(CacheKeyInvocationContext<? extends Annotation> cacheKeyInvocationContext) {
       final CacheInvocationParameter[] keyParameters = cacheKeyInvocationContext.getKeyParameters();
       final Object[] keyValues = new Object[keyParameters.length];
 

@@ -24,7 +24,7 @@ package org.infinispan.cdi.interceptor.context;
 
 import org.infinispan.cdi.interceptor.context.metadata.ParameterMetaData;
 
-import javax.cache.interceptor.CacheInvocationParameter;
+import javax.cache.annotation.CacheInvocationParameter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Set;

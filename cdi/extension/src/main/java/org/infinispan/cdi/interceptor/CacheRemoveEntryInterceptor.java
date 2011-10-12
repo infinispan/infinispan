@@ -26,10 +26,10 @@ import org.infinispan.Cache;
 import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextFactory;
 import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextImpl;
 
-import javax.cache.interceptor.CacheKey;
-import javax.cache.interceptor.CacheKeyGenerator;
-import javax.cache.interceptor.CacheKeyInvocationContext;
-import javax.cache.interceptor.CacheRemoveEntry;
+import javax.cache.annotation.CacheKey;
+import javax.cache.annotation.CacheKeyGenerator;
+import javax.cache.annotation.CacheKeyInvocationContext;
+import javax.cache.annotation.CacheRemoveEntry;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
@@ -68,7 +68,7 @@ public class CacheRemoveEntryInterceptor implements Serializable {
       final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
       final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
       final CacheRemoveEntry cacheRemoveEntry = cacheKeyInvocationContext.getCacheAnnotation();
-      final CacheKey cacheKey = cacheKeyGenerator.generateCacheKey((CacheKeyInvocationContext) cacheKeyInvocationContext);
+      final CacheKey cacheKey = cacheKeyGenerator.generateCacheKey(cacheKeyInvocationContext);
 
       if (!cacheRemoveEntry.afterInvocation()) {
          cache.remove(cacheKey);

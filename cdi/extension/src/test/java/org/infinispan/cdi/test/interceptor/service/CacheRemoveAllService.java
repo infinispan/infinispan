@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi.test.interceptor.service;
 
-import javax.cache.interceptor.CacheRemoveAll;
+import javax.cache.annotation.CacheRemoveAll;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI

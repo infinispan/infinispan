@@ -22,8 +22,8 @@
  */
 package org.infinispan.cdi.test.interceptor.service;
 
-import javax.cache.interceptor.CacheKeyParam;
-import javax.cache.interceptor.CacheRemoveEntry;
+import javax.cache.annotation.CacheKeyParam;
+import javax.cache.annotation.CacheRemoveEntry;
 
 import static org.infinispan.cdi.util.Contracts.assertNotNull;
 

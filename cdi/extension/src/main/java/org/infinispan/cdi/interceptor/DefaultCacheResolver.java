@@ -25,7 +25,7 @@ package org.infinispan.cdi.interceptor;
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 
-import javax.cache.interceptor.CacheInvocationContext;
+import javax.cache.annotation.CacheInvocationContext;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Default;

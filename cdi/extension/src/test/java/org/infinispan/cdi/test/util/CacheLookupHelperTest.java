@@ -28,11 +28,11 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Test;
 
-import javax.cache.interceptor.CacheDefaults;
-import javax.cache.interceptor.CacheKey;
-import javax.cache.interceptor.CacheKeyGenerator;
-import javax.cache.interceptor.CacheKeyInvocationContext;
-import javax.cache.interceptor.CacheResult;
+import javax.cache.annotation.CacheDefaults;
+import javax.cache.annotation.CacheKey;
+import javax.cache.annotation.CacheKeyGenerator;
+import javax.cache.annotation.CacheKeyInvocationContext;
+import javax.cache.annotation.CacheResult;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;
@@ -224,14 +224,14 @@ public class CacheLookupHelperTest extends Arquillian {
 
    static class FooCacheKeyGenerator implements CacheKeyGenerator {
       @Override
-      public CacheKey generateCacheKey(CacheKeyInvocationContext<Annotation> cacheKeyInvocationContext) {
+      public CacheKey generateCacheKey(CacheKeyInvocationContext<? extends Annotation> cacheKeyInvocationContext) {
          return null;
       }
    }
 
    static class BarCacheKeyGenerator implements CacheKeyGenerator {
       @Override
-      public CacheKey generateCacheKey(CacheKeyInvocationContext<Annotation> cacheKeyInvocationContext) {
+      public CacheKey generateCacheKey(CacheKeyInvocationContext<? extends Annotation> cacheKeyInvocationContext) {
          return null;
       }
    }

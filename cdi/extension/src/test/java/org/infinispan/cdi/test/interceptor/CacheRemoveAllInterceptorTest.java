@@ -41,7 +41,7 @@ import static org.testng.Assert.assertTrue;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
- * @see javax.cache.interceptor.CacheRemoveAll
+ * @see javax.cache.annotation.CacheRemoveAll
  */
 @Test(groups = "functional", testName = "cdi.test.interceptor.CacheRemoveAllInterceptorTest")
 public class CacheRemoveAllInterceptorTest extends Arquillian {

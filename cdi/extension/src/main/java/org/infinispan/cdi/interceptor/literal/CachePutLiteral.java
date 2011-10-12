@@ -22,9 +22,9 @@
  */
 package org.infinispan.cdi.interceptor.literal;
 
-import javax.cache.interceptor.CacheKeyGenerator;
-import javax.cache.interceptor.CachePut;
-import javax.cache.interceptor.CacheResolverFactory;
+import javax.cache.annotation.CacheKeyGenerator;
+import javax.cache.annotation.CachePut;
+import javax.cache.annotation.CacheResolverFactory;
 import javax.enterprise.util.AnnotationLiteral;
 
 /**

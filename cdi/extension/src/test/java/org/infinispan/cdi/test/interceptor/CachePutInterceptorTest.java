@@ -35,7 +35,7 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.cache.interceptor.CacheKey;
+import javax.cache.annotation.CacheKey;
 import javax.inject.Inject;
 import java.lang.reflect.Method;
 
