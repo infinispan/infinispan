@@ -792,6 +792,6 @@ public interface Log extends BasicLogger {
    void cacheViewRollbackFailure(@Cause Exception e, String cacheName, int committedViewId);
 
    @LogMessage(level = WARN)
-   @Message(value = "Error committing cache view %2$d for cache %1$s", id = 168)
+   @Message(value = "Error committing cache view %2$d for cache %1$s", id = 169)
    void cacheViewCommitFailure(@Cause Exception e, String cacheName, int committedViewId);
 }
