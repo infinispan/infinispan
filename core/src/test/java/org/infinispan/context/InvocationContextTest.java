@@ -64,7 +64,7 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       try {
          cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).put("k", "v");
       } catch (CacheException ce) {
-         assert ce.getCause() instanceof NullPointerException;
+         assert ce.getCause() instanceof RuntimeException;
       }
    }
 
@@ -161,8 +161,8 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       @CacheEntryModified
       public void entryModified(CacheEntryModifiedEvent event) {
          if (!event.isPre()) {
-            log.debugf("Entry modified: %s, let's throw an NPE!!", event);
-            throw new NullPointerException();
+            log.debugf("Entry modified: %s, let's throw an exception!!", event);
+            throw new RuntimeException("Testing exception handling");
          }
       }
    }

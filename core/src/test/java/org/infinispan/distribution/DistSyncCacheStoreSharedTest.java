@@ -143,7 +143,7 @@ public class DistSyncCacheStoreSharedTest extends BaseDistCacheStoreTest {
             if (isFirstOwner(c, key)) {
                assertIsInContainerImmortal(c, key);
             }
-            System.out.println("Testing " + c);
+            log.debug("Testing " + c);
             assertNumberOfInvocations(store, "store", 4);
             assert store.containsKey(key);
          }
