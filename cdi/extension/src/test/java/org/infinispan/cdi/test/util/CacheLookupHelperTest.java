@@ -195,6 +195,15 @@ public class CacheLookupHelperTest extends Arquillian {
       assertTrue(cacheKeyGenerator instanceof BarCacheKeyGenerator);
    }
 
+   public void testGetCacheKeyGeneratorWithANonManagedCacheKeyGenerator() throws Exception {
+      final Method bazMethod = Foo.class.getMethod("bazMethod");
+      final CacheResult cacheResultAnnotation = bazMethod.getAnnotation(CacheResult.class);
+      final CacheDefaults cacheDefaultsAnnotation = Bar.class.getAnnotation(CacheDefaults.class);
+      final CacheKeyGenerator cacheKeyGenerator = getCacheKeyGenerator(beanManager, cacheResultAnnotation.cacheKeyGenerator(), cacheDefaultsAnnotation);
+
+      assertTrue(cacheKeyGenerator instanceof BazCacheKeyGenerator);
+   }
+
    /**
     * Test classes.
     */
@@ -208,6 +217,10 @@ public class CacheLookupHelperTest extends Arquillian {
 
       @CacheResult(cacheName = "bar-cache", cacheKeyGenerator = BarCacheKeyGenerator.class)
       public void barMethod() {
+      }
+
+      @CacheResult(cacheKeyGenerator = BazCacheKeyGenerator.class)
+      public void bazMethod() {
       }
    }
 
@@ -230,6 +243,13 @@ public class CacheLookupHelperTest extends Arquillian {
    }
 
    static class BarCacheKeyGenerator implements CacheKeyGenerator {
+      @Override
+      public CacheKey generateCacheKey(CacheKeyInvocationContext<? extends Annotation> cacheKeyInvocationContext) {
+         return null;
+      }
+   }
+
+   static class BazCacheKeyGenerator implements CacheKeyGenerator {
       @Override
       public CacheKey generateCacheKey(CacheKeyInvocationContext<? extends Annotation> cacheKeyInvocationContext) {
          return null;

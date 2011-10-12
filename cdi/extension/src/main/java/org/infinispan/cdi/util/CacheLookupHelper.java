@@ -22,6 +22,7 @@
  */
 package org.infinispan.cdi.util;
 
+import org.infinispan.CacheException;
 import org.infinispan.cdi.interceptor.DefaultCacheKeyGenerator;
 
 import javax.cache.annotation.CacheDefaults;
@@ -95,9 +96,21 @@ public final class CacheLookupHelper {
 
       final CreationalContext<?> creationalContext = beanManager.createCreationalContext(null);
       final Set<Bean<?>> beans = beanManager.getBeans(cacheKeyGeneratorClass);
-      final Bean<?> bean = beanManager.resolve(beans);
+      if (!beans.isEmpty()) {
+         final Bean<?> bean = beanManager.resolve(beans);
+         return (CacheKeyGenerator) beanManager.getReference(bean, CacheKeyGenerator.class, creationalContext);
+      }
 
-      return (CacheKeyGenerator) beanManager.getReference(bean, CacheKeyGenerator.class, creationalContext);
+      // the CacheKeyGenerator implementation is not managed by CDI
+      try {
+
+         return cacheKeyGeneratorClass.newInstance();
+
+      } catch (InstantiationException e) {
+         throw new CacheException("Unable to instantiate the CacheKeyGenerator with type '" + cacheKeyGeneratorClass + "'", e);
+      } catch (IllegalAccessException e) {
+         throw new CacheException("Unable to instantiate the CacheKeyGenerator with type '" + cacheKeyGeneratorClass + "'", e);
+      }
    }
 
    /**
