@@ -22,14 +22,14 @@
  */
 package org.infinispan.query.backend;
 
-import org.infinispan.query.test.CustomKey;
-import org.infinispan.query.test.CustomKey2;
+import org.infinispan.query.test.*;
 import org.testng.annotations.Test;
 
 /**
  * This is the test class for {@link org.infinispan.query.backend.KeyTransformationHandler}
  *
  * @author Navin Surtani
+ * @author Marko Luksa
  */
 
 @Test(groups = "functional")
@@ -106,7 +106,7 @@ public class KeyTransformationHandlerTest {
 
    }
 
-   public void testStringToKeyWithCustomTransformable(){
+   public void testStringToKeyWithCustomTransformable() {
       CustomKey customKey = new CustomKey(88, 8800, 12889976);
       String strRep = KeyTransformationHandler.keyToString(customKey);
       assert customKey.equals(KeyTransformationHandler.stringToKey(strRep, Thread.currentThread().getContextClassLoader()));
@@ -117,4 +117,13 @@ public class KeyTransformationHandlerTest {
       String strRep = KeyTransformationHandler.keyToString(ck2);
       assert ck2.equals(KeyTransformationHandler.stringToKey(strRep, Thread.currentThread().getContextClassLoader()));
    }
+
+   public void testStringToKeyWithRegisteredTransformer() {
+      KeyTransformationHandler.registerTransformer(CustomKey3.class, CustomKey3Transformer.class);
+
+      CustomKey3 key = new CustomKey3("str");
+      String string = KeyTransformationHandler.keyToString(key);
+      assert key.equals(KeyTransformationHandler.stringToKey(string, Thread.currentThread().getContextClassLoader()));
+   }
+
 }

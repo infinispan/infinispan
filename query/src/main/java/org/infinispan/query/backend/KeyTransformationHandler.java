@@ -29,6 +29,9 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * This transforms arbitrary keys to a String which can be used by Lucene as a document identifier, and vice versa.
  * <p/>
@@ -37,16 +40,20 @@ import org.infinispan.util.logging.LogFactory;
  * <p/>
  * For SimpleKeys, users don't need to do anything, these keys are automatically transformed by this class.
  * <p/>
- * For user-defined keys, only types annotated with @Transformable, and declaring an appropriate {@link
- * org.infinispan.query.Transformer} implementation, are supported.
+ * For user-defined keys, two options are supported. Types annotated with @Transformable, and declaring an appropriate {@link
+ * org.infinispan.query.Transformer} implementation; and types for which a {@link org.infinispan.query.Transformer} has
+ * been explicitly registered through KeyTransformationHandler.registerTransformer().
  *
  * @author Manik Surtani
+ * @author Marko Luksa
  * @see org.infinispan.query.Transformable
  * @see org.infinispan.query.Transformer
  * @since 4.0
  */
 public class KeyTransformationHandler {
    private static final Log log = LogFactory.getLog(KeyTransformationHandler.class, Log.class);
+
+   private static Map<Class<?>, Class<? extends Transformer>> transformers = new HashMap<Class<?>, Class<? extends Transformer>>();
 
    public static Object stringToKey(String s, ClassLoader classLoader) {
       char type = s.charAt(0);
@@ -169,23 +176,44 @@ public class KeyTransformationHandler {
    }
 
    /**
-    * Retrieves a {@link org.infinispan.query.Transformer} instance for this {@link org.infinispan.query.Transformable}
-    * type key.  If the key is not {@link org.infinispan.query.Transformable}, a null is returned.
+    * Retrieves a {@link org.infinispan.query.Transformer} instance for this key.  If the key is not
+    * {@link org.infinispan.query.Transformable} and no transformer has been registered for the key's class,
+    * null is returned.
     *
     * @param keyClass key class to analyze
     * @return a Transformer for this key, or null if the key type is not properly annotated.
-    * @throws IllegalAccessException if a Transformer instance cannot be created via reflection.
-    * @throws InstantiationException if a Transformer instance cannot be created via reflection.
     */
    private static Transformer getTransformer(Class<?> keyClass) {
-      Transformable t = keyClass.getAnnotation(Transformable.class);
-      Transformer tf = null;
-      if (t != null) try {
-         // The cast should not be necessary but it's workaround for a compiler bug.
-         tf = (Transformer) t.transformer().newInstance();
+      Class transformerClass = getTransformerClass(keyClass);
+      return instantiate(transformerClass);
+   }
+
+   private static Class getTransformerClass(Class<?> keyClass) {
+      Transformable annotation = keyClass.getAnnotation(Transformable.class);
+      if (annotation == null)
+         return transformers.get(keyClass);
+      else
+         return annotation.transformer();
+   }
+
+   private static Transformer instantiate(Class transformerClass) {
+      try {
+         // The cast should not be necessary but it's a workaround for a compiler bug.
+         return (Transformer) transformerClass.newInstance();
       } catch (Exception e) {
-         log.couldNotInstantiaterTransformerClass(t.transformer(), e);
+         log.couldNotInstantiaterTransformerClass(transformerClass, e);
+         return null;
       }
-      return tf;
+   }
+
+   /**
+    * Registers a {@link org.infinispan.query.Transformer} for the supplied key class. The registered
+    * {@link org.infinispan.query.Transformer} will be used for transforming keys that are not annotated as
+    * {@link org.infinispan.query.Transformable}.
+    * @param keyClass the key class for which the supplied transformerClass should be used
+    * @param transformerClass the transformer class to use for the supplied key class
+    */
+   public static void registerTransformer(Class<?> keyClass, Class<? extends Transformer> transformerClass) {
+      transformers.put(keyClass, transformerClass);
    }
 }
