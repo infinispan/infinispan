@@ -35,6 +35,7 @@ import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -131,7 +132,7 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
 
    @Override
    public Set<Object> getLockedKeys() {
-      return localTransaction == null ? null : localTransaction.getLockedKeys();
+      return localTransaction == null ? Collections.emptySet() : localTransaction.getLockedKeys();
    }
 
    @Override
