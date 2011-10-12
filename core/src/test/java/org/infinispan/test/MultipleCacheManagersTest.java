@@ -87,6 +87,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       try {
          log.debug("Creating cache managers");
          createCacheManagers();
+         log.debug("Cache managers created, ready to start the test");
       } catch (Throwable th) {
          log.error("Error in test setup: ", th);
          throw th;
@@ -186,7 +187,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * the current thread.  Uses a default clustered cache manager global config.
     *
     * @param defaultConfig default cfg to use
-    * @param transactional if true, the configuration will be decorated with necessary transactional settings
     * @return the new CacheManager
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig, TransportFlags flags) {

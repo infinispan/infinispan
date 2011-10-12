@@ -128,7 +128,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       private TransactionManager tm;
 
       WritingThread(Cache<Object, Object> cache, boolean tx) {
-         super("WriterThread");
+         super("WriterThread,StateTransferFunctionalTest");
          this.cache = cache;
          this.tx = tx;
          if (tx) tm = TestingUtil.getTransactionManager(cache);
