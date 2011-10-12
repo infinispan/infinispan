@@ -18,7 +18,6 @@ import org.jgroups.util.UUID;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +86,7 @@ public class TEST_PING extends Discovery {
                         } else {
                            if (traceEnabled)
                               log.trace("Skipping sending response cos DISCARD is on");
-                           return Collections.emptyList();
+                           return new LinkedList<PingData>();
                         }
                      } else {
                         if (traceEnabled)
@@ -98,15 +97,15 @@ public class TEST_PING extends Discovery {
                return rsps;
             } else {
                log.debug("No other nodes yet, so skip sending get-members request");
-               return Collections.emptyList();
+               return new LinkedList<PingData>();
             }
          } else {
             log.debug("Not sending discovery because DISCARD is on");
-            return Collections.emptyList();
+            return new LinkedList<PingData>();
          }
       } else {
          log.debug("Discovery protocol already stopped, so don't look for members");
-         return Collections.emptyList();
+         return new LinkedList<PingData>();
       }
    }
 
