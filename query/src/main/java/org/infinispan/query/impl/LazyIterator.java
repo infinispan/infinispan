@@ -41,6 +41,7 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  * differs from {@link EagerIterator} which is the other implementation of QueryResultIterator.
  *
  * @author Navin Surtani
+ * @author Marko Luksa
  */
 @NotThreadSafe
 public class LazyIterator extends AbstractIterator {
@@ -90,8 +91,10 @@ public class LazyIterator extends AbstractIterator {
          // else we need to populate the buffer and get what we need.
 
          try {
+            KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler.getInstance(cache);
+
             String documentId = (String) extractor.extract(index).getId();
-            toReturn = cache.get(KeyTransformationHandler.stringToKey(documentId, cache.getClassLoader()));
+            toReturn = cache.get(keyTransformationHandler.stringToKey(documentId, cache.getClassLoader()));
 
             //Wiping bufferObjects and the bufferIndex so that there is no stale data.
             Arrays.fill(buffer, null);
@@ -103,7 +106,7 @@ public class LazyIterator extends AbstractIterator {
 
             for (int i = 1; i < bufferSize; i++) {
                String bufferDocumentId = (String) extractor.extract(index + i).getId();
-               Object toBuffer = cache.get(KeyTransformationHandler.stringToKey(bufferDocumentId, cache.getClassLoader()));
+               Object toBuffer = cache.get(keyTransformationHandler.stringToKey(bufferDocumentId, cache.getClassLoader()));
                buffer[i] = toBuffer;
             }
             bufferIndex = index;
@@ -135,18 +138,20 @@ public class LazyIterator extends AbstractIterator {
       }
 
       try {
+         KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler.getInstance(cache);
+
          //Wiping the buffer
          Arrays.fill(buffer, null);
 
          String documentId = (String) extractor.extract(index).getId();
-         toReturn = cache.get(KeyTransformationHandler.stringToKey(documentId, cache.getClassLoader()));
+         toReturn = cache.get(keyTransformationHandler.stringToKey(documentId, cache.getClassLoader()));
 
          buffer[0] = toReturn;
 
          //now loop through bufferSize times to add the rest of the objects into the list.
          for (int i = 1; i < bufferSize; i++) {
             String bufferDocumentId = (String) extractor.extract(index - i).getId();    //In this case it has to be index - i because previous() is called.
-            Object toBuffer = cache.get(KeyTransformationHandler.stringToKey(bufferDocumentId, cache.getClassLoader()));
+            Object toBuffer = cache.get(keyTransformationHandler.stringToKey(bufferDocumentId, cache.getClassLoader()));
             buffer[i] = toBuffer;
          }
 

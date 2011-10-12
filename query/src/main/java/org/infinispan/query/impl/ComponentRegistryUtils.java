@@ -20,43 +20,25 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-
 package org.infinispan.query.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.hibernate.search.query.engine.spi.EntityInfo;
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.factories.ComponentRegistry;
 
 /**
- * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @author Marko Luksa
- * @since 5.0
  */
-public class EntityLoader {
-   
-   private final AdvancedCache<?, ?> cache;
-   
-   public EntityLoader(Cache<?, ?> cache) {
-      this.cache = cache.getAdvancedCache();
+public class ComponentRegistryUtils {
+
+   private ComponentRegistryUtils() {
    }
 
-   public Object load(EntityInfo entityInfo) {
-      KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler.getInstance(cache);
-      Object cacheKey = keyTransformationHandler.stringToKey(entityInfo.getId().toString(), cache.getClassLoader());
-      return cache.get(cacheKey);
-   }
-
-   public List<Object> load(EntityInfo... entityInfos) {
-      int size = entityInfos.length;
-      ArrayList<Object> list = new ArrayList<Object>(size);
-      for (EntityInfo e : entityInfos) {
-         list.add(load(e));
+   public static <T> T getComponent(Cache cache, Class<T> class1) {
+      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+      T component = componentRegistry.getComponent(class1);
+      if (component == null) {
+         throw new IllegalArgumentException("Indexing was not enabled on this cache. " + class1 + " not found in registry");
       }
-      return list;
+      return component;
    }
-
 }

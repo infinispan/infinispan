@@ -22,12 +22,18 @@
  */
 package org.infinispan.query.backend;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.CacheException;
 import org.infinispan.query.Transformable;
 import org.infinispan.query.Transformer;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This transforms arbitrary keys to a String which can be used by Lucene as a document identifier, and vice versa.
@@ -37,10 +43,12 @@ import org.infinispan.util.logging.LogFactory;
  * <p/>
  * For SimpleKeys, users don't need to do anything, these keys are automatically transformed by this class.
  * <p/>
- * For user-defined keys, only types annotated with @Transformable, and declaring an appropriate {@link
- * org.infinispan.query.Transformer} implementation, are supported.
+ * For user-defined keys, two options are supported. Types annotated with @Transformable, and declaring an appropriate {@link
+ * org.infinispan.query.Transformer} implementation; and types for which a {@link org.infinispan.query.Transformer} has
+ * been explicitly registered through KeyTransformationHandler.registerTransformer().
  *
  * @author Manik Surtani
+ * @author Marko Luksa
  * @see org.infinispan.query.Transformable
  * @see org.infinispan.query.Transformer
  * @since 4.0
@@ -48,7 +56,9 @@ import org.infinispan.util.logging.LogFactory;
 public class KeyTransformationHandler {
    private static final Log log = LogFactory.getLog(KeyTransformationHandler.class, Log.class);
 
-   public static Object stringToKey(String s, ClassLoader classLoader) {
+   private final Map<Class<?>, Class<? extends Transformer>> transformers = new ConcurrentHashMap<Class<?>, Class<? extends Transformer>>();
+
+   public Object stringToKey(String s, ClassLoader classLoader) {
       char type = s.charAt(0);
       switch (type) {
          case 'S':
@@ -100,7 +110,7 @@ public class KeyTransformationHandler {
       throw new CacheException("Unknown type metadata " + type);
    }
 
-   public static String keyToString(Object key) {
+   public String keyToString(Object key) {
       // this string should be in the format of
       // "<TYPE>:(TRANSFORMER):<KEY>"
       // e.g.:
@@ -150,7 +160,7 @@ public class KeyTransformationHandler {
                "and classes that have the @Transformable annotation - you passed in a " + key.getClass().toString());
    }
 
-   private static boolean isStringOrPrimitive(Object key) {
+   private boolean isStringOrPrimitive(Object key) {
 
       // we support String and JDK primitives and their wrappers.
       if (key instanceof String ||
@@ -169,23 +179,58 @@ public class KeyTransformationHandler {
    }
 
    /**
-    * Retrieves a {@link org.infinispan.query.Transformer} instance for this {@link org.infinispan.query.Transformable}
-    * type key.  If the key is not {@link org.infinispan.query.Transformable}, a null is returned.
+    * Retrieves a {@link org.infinispan.query.Transformer} instance for this key.  If the key is not
+    * {@link org.infinispan.query.Transformable} and no transformer has been registered for the key's class,
+    * null is returned.
     *
     * @param keyClass key class to analyze
     * @return a Transformer for this key, or null if the key type is not properly annotated.
-    * @throws IllegalAccessException if a Transformer instance cannot be created via reflection.
-    * @throws InstantiationException if a Transformer instance cannot be created via reflection.
     */
-   private static Transformer getTransformer(Class<?> keyClass) {
-      Transformable t = keyClass.getAnnotation(Transformable.class);
-      Transformer tf = null;
-      if (t != null) try {
-         // The cast should not be necessary but it's workaround for a compiler bug.
-         tf = (Transformer) t.transformer().newInstance();
-      } catch (Exception e) {
-         log.couldNotInstantiaterTransformerClass(t.transformer(), e);
+   private Transformer getTransformer(Class<?> keyClass) {
+      Class transformerClass = getTransformerClass(keyClass);
+      return instantiate(transformerClass);
+   }
+
+   private Class getTransformerClass(Class<?> keyClass) {
+      Class<? extends Transformer> transformerClass = transformers.get(keyClass);
+      if (transformerClass == null) {
+         transformerClass = getTransformerClassFromAnnotation(keyClass);
+         registerTransformer(keyClass, transformerClass);
       }
-      return tf;
+      return transformerClass;
+   }
+
+   private Class<? extends Transformer> getTransformerClassFromAnnotation(Class<?> keyClass) {
+      Transformable annotation = keyClass.getAnnotation(Transformable.class);
+      return annotation.transformer();
+   }
+
+   private Transformer instantiate(Class transformerClass) {
+      try {
+         // The cast should not be necessary but it's a workaround for a compiler bug.
+         return (Transformer) transformerClass.newInstance();
+      } catch (Exception e) {
+         log.couldNotInstantiaterTransformerClass(transformerClass, e);
+         return null;
+      }
+   }
+
+   /**
+    * Registers a {@link org.infinispan.query.Transformer} for the supplied key class.
+    * @param keyClass the key class for which the supplied transformerClass should be used
+    * @param transformerClass the transformer class to use for the supplied key class
+    */
+   public void registerTransformer(Class<?> keyClass, Class<? extends Transformer> transformerClass) {
+      transformers.put(keyClass, transformerClass);
+   }
+
+   /**
+    * Gets the KeyTransformationHandler instance used by the supplied cache.
+    * @param cache the cache for which we want to get the KeyTransformationHandler instance
+    * @return a KeyTransformationHandler instance
+    */
+   public static KeyTransformationHandler getInstance(AdvancedCache<?, ?> cache) {
+      QueryInterceptor queryInterceptor = ComponentRegistryUtils.getComponent(cache, QueryInterceptor.class);
+      return queryInterceptor.getKeyTransformationHandler();
    }
 }

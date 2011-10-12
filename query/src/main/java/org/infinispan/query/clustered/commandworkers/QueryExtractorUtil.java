@@ -33,6 +33,7 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  * Utility to extract the cache key of a DocumentExtractor.
  * 
  * @author Israel Lacerra <israeldl@gmail.com>
+ * @author Marko Luksa
  * @since 5.1
  */
 public class QueryExtractorUtil {
@@ -43,8 +44,7 @@ public class QueryExtractorUtil {
 
 	}
 
-	public static Object extractKey(DocumentExtractor extractor, Cache cache,
-			int docIndex) {
+	public static Object extractKey(DocumentExtractor extractor, Cache cache, int docIndex) {
 		String bufferDocumentId;
 		try {
 			bufferDocumentId = (String) extractor.extract(docIndex).getId();
@@ -52,9 +52,9 @@ public class QueryExtractorUtil {
 			log.error("Error while extracting key...", e);
 			return null;
 		}
-		
-		Object key = KeyTransformationHandler.stringToKey(bufferDocumentId,
-				cache.getAdvancedCache().getClassLoader());
+
+      KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler.getInstance(cache.getAdvancedCache());
+      Object key = keyTransformationHandler.stringToKey(bufferDocumentId, cache.getAdvancedCache().getClassLoader());
 		return key;
 	}
 

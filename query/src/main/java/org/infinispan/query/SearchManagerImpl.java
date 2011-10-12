@@ -29,17 +29,17 @@ import org.hibernate.search.SearchFactory;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
 import org.infinispan.query.impl.CacheQueryImpl;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 
 /**
  * Class that is used to build {@link org.infinispan.query.CacheQuery}
  *
  * @author Navin Surtani
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Marko Luksa
  * @since 4.0
  */
 class SearchManagerImpl implements SearchManager {
@@ -53,17 +53,8 @@ class SearchManagerImpl implements SearchManager {
          throw new IllegalArgumentException("cache parameter shall not be null");
       }
       this.cache = cache;
-      this.searchFactory = extractType(cache, SearchFactoryIntegrator.class);
-      this.queryInterceptor = extractType(cache, QueryInterceptor.class);
-   }
-
-   private static <T> T extractType(Cache cache, Class<T> class1) {
-      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
-      T component = componentRegistry.getComponent(class1);
-      if (component==null) {
-         throw new IllegalArgumentException("Indexing was not enabled on this cache. " + class1 + " not found in registry");
-      }
-      return component;
+      this.searchFactory = ComponentRegistryUtils.getComponent(cache, SearchFactoryIntegrator.class);
+      this.queryInterceptor = ComponentRegistryUtils.getComponent(cache, QueryInterceptor.class);
    }
 
    /* (non-Javadoc)
@@ -88,6 +79,11 @@ class SearchManagerImpl implements SearchManager {
       queryInterceptor.enableClasses(classes);
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
       return new ClusteredCacheQueryImpl(luceneQuery, searchFactory, asyncExecutor, cache, classes);
+   }
+
+   @Override
+   public void registerKeyTransformer(Class<?> keyClass, Class<? extends Transformer> transformerClass) {
+      queryInterceptor.registerKeyTransformer(keyClass, transformerClass);
    }
 
    /* (non-Javadoc)
