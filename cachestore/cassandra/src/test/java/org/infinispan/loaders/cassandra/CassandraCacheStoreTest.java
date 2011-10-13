@@ -52,7 +52,7 @@ public class CassandraCacheStoreTest extends BaseCacheStoreTest {
    }
 
    @AfterClass
-   public static void cleanup() {
+   public static void cleanup() throws IOException {
       EmbeddedServerHelper.teardown();
       embedded = null;
    }

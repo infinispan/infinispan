@@ -31,7 +31,7 @@ import org.apache.thrift.transport.TTransportException;
  * substantial portions of the Software.
  */
 public class EmbeddedServerHelper {
-   private static final String TMP = "tmp";
+   private static final String TMP = System.getProperty("java.io.tmpdir")+File.separator+EmbeddedServerHelper.class.getPackage().getName()+"-test";
 
    private final String yamlFile;
    static CassandraDaemon cassandraDaemon;
@@ -74,9 +74,11 @@ public class EmbeddedServerHelper {
       }
    }
 
-   public static void teardown() {
+   public static void teardown() throws IOException {
       executor.shutdown();
       executor.shutdownNow();
+      // delete tmp dir
+      rmdir(TMP);
    }
 
    private static void rmdir(String dir) throws IOException {
