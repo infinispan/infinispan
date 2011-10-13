@@ -190,7 +190,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    }
 
    @Override
-   public void join(String cacheName, CacheMembershipListener listener) throws Exception {
+   public void join(String cacheName, CacheViewListener listener) throws Exception {
       // first keep track of the join locally
       handleRequestJoin(self, cacheName);
       viewsInfo.get(cacheName).setListener(listener);
@@ -415,8 +415,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       if (isLocal || isCoordinator) {
          // The first time we get a PREPARE_VIEW our committed view id is -1, we need to accept any view
          if (lastCommittedView.getViewId() > 0 && lastCommittedView.getViewId() != committedView.getViewId()) {
-            log.infof("Our last committed view (%s) is not the same as the coordinator's last committed view (%s). This is normal during a merge",
-                  lastCommittedView, committedView);
+            log.prepareViewIdMismatch(lastCommittedView, committedView);
          }
          cacheViewInfo.prepareView(pendingView);
       }

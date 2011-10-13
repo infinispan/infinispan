@@ -23,6 +23,7 @@
 package org.infinispan.util.logging;
 
 import org.infinispan.CacheException;
+import org.infinispan.cacheviews.CacheView;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -781,7 +782,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "View installation failed for cache %s", id = 166)
-   void viewInstallationFailure(Exception e, String cacheName);
+   void viewInstallationFailure(@Cause Exception e, String cacheName);
 
    @LogMessage(level = WARN)
    @Message(value = "Rejecting state pushed by node %s for view %d, there is no state transfer in progress (we are at view %d)", id = 167)
@@ -794,4 +795,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Error committing cache view %2$d for cache %1$s", id = 169)
    void cacheViewCommitFailure(@Cause Exception e, String cacheName, int committedViewId);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Our last committed view (%s) is not the same as the coordinator's last committed view (%s). This is normal during a merge", id = 170)
+   void prepareViewIdMismatch(CacheView lastCommittedView, CacheView committedView);
 }

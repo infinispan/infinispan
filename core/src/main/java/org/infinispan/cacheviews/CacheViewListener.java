@@ -24,11 +24,19 @@ import org.infinispan.remoting.transport.Address;
 import java.util.Collection;
 
 /**
- * Callback interface for installing views.
+ * Callback interface for installing views on a cache.
+ *
+ * A cache-level component ({@link org.infinispan.statetransfer.StateTransferManager})
+ * will implement this interface and add itself as a cache view listener in order to transfer cache state
+ * to the new owners during the prepare phase.
+ *
  * The view is installed in two phases, so every {@link #prepareView(CacheView,CacheView)}
  * call will be followed either by a {@link #commitView(int)} or a {@link #rollbackView(int)}.
+ *
+ * @author Dan Berindei &lt;dan@infinispan.org&gt;
+ * @since 5.1
  */
-public interface CacheMembershipListener {
+public interface CacheViewListener {
    void prepareView(CacheView newView, CacheView oldView) throws Exception;
    void commitView(int viewId);
    void rollbackView(int committedViewId);
