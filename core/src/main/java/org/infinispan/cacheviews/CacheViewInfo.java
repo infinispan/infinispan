@@ -40,7 +40,7 @@ public class CacheViewInfo {
 
    // TODO These two don't really belong to the view state, but we keep them here to avoid creating other map
    // The cache-scoped listener
-   private volatile CacheMembershipListener listener;
+   private volatile CacheViewListener listener;
 
    // The view installation task - only used if this node is the coordinator
    private volatile PendingCacheViewChanges pendingChanges;
@@ -75,11 +75,11 @@ public class CacheViewInfo {
     * TODO Consider moving the listener to the <tt>CacheNotifier</tt> interface.
     * @param listener
     */
-   public void setListener(CacheMembershipListener listener) {
+   public void setListener(CacheViewListener listener) {
       this.listener = listener;
    }
 
-   public CacheMembershipListener getListener() {
+   public CacheViewListener getListener() {
       return listener;
    }
 

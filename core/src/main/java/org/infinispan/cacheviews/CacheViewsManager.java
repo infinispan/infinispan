@@ -56,7 +56,7 @@ public interface CacheViewsManager {
    /**
     * Start the cache.
     */
-   public void join(String cacheName, CacheMembershipListener listener) throws Exception;
+   public void join(String cacheName, CacheViewListener listener) throws Exception;
 
    /**
     * Stop the cache.

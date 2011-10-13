@@ -19,7 +19,7 @@
 
 package org.infinispan.statetransfer;
 
-import org.infinispan.cacheviews.CacheMembershipListener;
+import org.infinispan.cacheviews.CacheViewListener;
 import org.infinispan.cacheviews.CacheView;
 import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
@@ -60,7 +60,7 @@ import static org.infinispan.context.Flag.*;
  * State transfer manager.
  * Base class for the distributed and replicated implementations.
  */
-public abstract class BaseStateTransferManagerImpl implements StateTransferManager, CacheMembershipListener {
+public abstract class BaseStateTransferManagerImpl implements StateTransferManager, CacheViewListener {
    private static final Log log = LogFactory.getLog(BaseStateTransferManagerImpl.class);
 
    private static final boolean trace = log.isTraceEnabled();
@@ -271,7 +271,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       final StateTransferControlCommand cmd = cf.buildStateTransferCommand(StateTransferControlCommand.Type.APPLY_STATE, getAddress(), viewId, state);
 
       rpcManager.invokeRemotelyInFuture(Collections.singleton(target), cmd,
-                                        false, stateTransferFuture, configuration.getRehashRpcTimeout());
+            false, stateTransferFuture, configuration.getRehashRpcTimeout());
    }
 
    public boolean isLastViewId(int viewId) {
