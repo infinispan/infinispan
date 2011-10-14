@@ -191,11 +191,17 @@ public class KeyTransformationHandler {
    }
 
    private Class getTransformerClass(Class<?> keyClass) {
+      Class<? extends Transformer> transformerClass = transformers.get(keyClass);
+      if (transformerClass == null) {
+         transformerClass = getTransformerClassFromAnnotation(keyClass);
+         registerTransformer(keyClass, transformerClass);
+      }
+      return transformerClass;
+   }
+
+   private Class<? extends Transformer> getTransformerClassFromAnnotation(Class<?> keyClass) {
       Transformable annotation = keyClass.getAnnotation(Transformable.class);
-      if (annotation == null)
-         return transformers.get(keyClass);
-      else
-         return annotation.transformer();
+      return annotation.transformer();
    }
 
    private Transformer instantiate(Class transformerClass) {
@@ -209,9 +215,7 @@ public class KeyTransformationHandler {
    }
 
    /**
-    * Registers a {@link org.infinispan.query.Transformer} for the supplied key class. The registered
-    * {@link org.infinispan.query.Transformer} will be used for transforming keys that are not annotated as
-    * {@link org.infinispan.query.Transformable}.
+    * Registers a {@link org.infinispan.query.Transformer} for the supplied key class.
     * @param keyClass the key class for which the supplied transformerClass should be used
     * @param transformerClass the transformer class to use for the supplied key class
     */
