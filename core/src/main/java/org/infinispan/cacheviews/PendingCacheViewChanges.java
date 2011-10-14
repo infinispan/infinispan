@@ -52,7 +52,7 @@ public class PendingCacheViewChanges {
    // The leave requests are also used on normal nodes to compute the valid members set
    private final Set<Address> leavers;
    // True if there was a merge since the last committed view
-   private Set<Address> membersAfterCoordChange;
+   private Set<Address> recoveredMembers;
 
    private boolean viewInstallationInProgress;
 
@@ -60,7 +60,7 @@ public class PendingCacheViewChanges {
       this.cacheName = cacheName;
       this.joiners = new HashSet<Address>();
       this.leavers = new HashSet<Address>();
-      this.membersAfterCoordChange = Collections.emptySet();
+      this.recoveredMembers = Collections.emptySet();
    }
 
    /**
@@ -74,12 +74,12 @@ public class PendingCacheViewChanges {
             log.tracef("Cannot prepare a new view, there is another view installation in progress");
             return null;
          }
-         if (leavers.size() == 0 && joiners.size() == 0 && membersAfterCoordChange == null) {
+         if (leavers.size() == 0 && joiners.size() == 0 && recoveredMembers == null) {
             log.tracef("Cannot prepare a new view, we have no joiners or leavers");
             return null;
          }
 
-         Collection<Address> baseMembers = membersAfterCoordChange != null ? membersAfterCoordChange : committedView.getMembers();
+         Collection<Address> baseMembers = recoveredMembers != null ? recoveredMembers : committedView.getMembers();
          List<Address> members = new ArrayList<Address>(baseMembers);
          // If a node is both in leavers and in joiners we should install a view without it first
          // so that other nodes don't consider it an old owner, so we first add it as a joiner
@@ -107,7 +107,7 @@ public class PendingCacheViewChanges {
    }
 
    public boolean hasChanges() {
-      return membersAfterCoordChange != null || !joiners.isEmpty() || !leavers.isEmpty();
+      return recoveredMembers != null || !joiners.isEmpty() || !leavers.isEmpty();
    }
 
    public void resetChanges(CacheView committedView) {
@@ -118,14 +118,14 @@ public class PendingCacheViewChanges {
             List<Address> bothJoinerAndLeavers = new ArrayList<Address>(joiners);
             bothJoinerAndLeavers.retainAll(leavers);
             for (Address node : bothJoinerAndLeavers) {
-               if (committedView.getMembers().contains(node)) {
+               if (committedView.contains(node)) {
                   log.debugf("Node %s should not be a member in view %s, left and then joined before the view was installed");
                }
             }
          }
          leavers.retainAll(committedView.getMembers());
          joiners.removeAll(committedView.getMembers());
-         membersAfterCoordChange = null;
+         recoveredMembers = null;
 
          viewInstallationInProgress = false;
          if (committedView.getViewId() > lastViewId) {
@@ -166,14 +166,15 @@ public class PendingCacheViewChanges {
    /**
     * Signal a merge
     */
-   public void requestCoordChange(Collection<Address> newMembers, Collection<Address> joiners) {
+   public void recoveredViews(Collection<Address> newMembers, Collection<Address> recoveredJoiners) {
       synchronized (lock) {
          log.tracef("%s: Coordinator changed, this node is the current coordinator", cacheName);
-         membersAfterCoordChange = new HashSet<Address>(newMembers);
+         recoveredMembers = new HashSet<Address>(newMembers);
          // Apply any changes that we may have received before we realized we're the coordinator
-         membersAfterCoordChange.removeAll(leavers);
-         joiners.removeAll(membersAfterCoordChange);
-         log.tracef("%s: Members after coordinator change: %s, joiners: %s, leavers: %s", cacheName, membersAfterCoordChange, joiners, leavers);
+         recoveredMembers.removeAll(leavers);
+         recoveredJoiners.removeAll(recoveredMembers);
+         joiners.addAll(recoveredJoiners);
+         log.tracef("%s: Members after coordinator change: %s, joiners: %s, leavers: %s", cacheName, recoveredMembers, recoveredJoiners, leavers);
       }
    }
 

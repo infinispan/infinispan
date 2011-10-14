@@ -23,11 +23,13 @@ import net.jcip.annotations.Immutable;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Immutables;
 import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -39,12 +41,14 @@ import java.util.Set;
 public class CacheView {
    public static final CacheView EMPTY_CACHE_VIEW = new CacheView(-1, Collections.<Address>emptyList());
 
-   private int viewId;
-   private List<Address> members;
+   private final int viewId;
+   private final List<Address> members;
 
    public CacheView(int viewId, List<Address> members) {
+      if (members == null)
+         throw new IllegalArgumentException("Member list cannot be null");
       this.viewId = viewId;
-      this.members = members;
+      this.members = Immutables.immutableListCopy(members);
    }
 
    public int getViewId() {
@@ -53,6 +57,23 @@ public class CacheView {
 
    public List<Address> getMembers() {
       return members;
+   }
+
+   public boolean isEmpty() {
+      return members.isEmpty();
+   }
+
+   public boolean contains(Address node) {
+      return members.contains(node);
+   }
+
+   public boolean containsAny(Collection<Address> nodes) {
+      for (Address node : nodes) {
+         if (members.contains(node))
+            return true;
+      }
+
+      return false;
    }
 
    @Override

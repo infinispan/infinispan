@@ -67,23 +67,27 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
 
 /**
  * CacheViewsManager implementation.
- *
+ * <p/>
  * It uses {@link org.infinispan.commands.control.CacheViewControlCommand}s to organize the installation of cache views in two phases.
+ * <p/>
  * There are three phases in installing a cache view:
- * 1. A node wants to start or stop the cache, sending a REQUEST_JOIN or a REQUEST_LEAVE.
- *    A node leaving the JGroups cluster is interpreted as a REQUEST_LEAVE for all its caches.
- *    The request will be broadcast to all the cluster members, as all the nodes need to stop sending requests to the leavers.
- * 2. For join requests, the cache views manager will wait for a short period of time to allow other members to join.
- * 3. The coordinator then sends a PREPARE_VIEW to all the nodes that have the cache started (or starting).
- *    Any node can veto the view by throwing an exception in this phase.
- * 4. The coordinator sends a COMMIT_VIEW to all the nodes that have the cache started.
- * 4.1. If a node threw an exception during PREPARE_VIEW, the coordinator will send a ROLLBACK_VIEW instead.
- *      After a configurable amount of time the coordinator may retry to install the view, but with a different
- *      view id (even if the members are the same).
- *
+ * <ol>
+ * <li>A node wants to start or stop the cache, sending a REQUEST_JOIN or a REQUEST_LEAVE.
+ *     A node leaving the JGroups cluster is interpreted as a REQUEST_LEAVE for all its caches.
+ *     The request will be broadcast to all the cluster members, as all the nodes need to stop sending requests to the leavers.
+ * <li>For join requests, the cache views manager will wait for a short period of time to allow other members to join.
+ * <li>The coordinator then sends a PREPARE_VIEW to all the nodes that have the cache started (or starting).
+ *     Any node can veto the view by throwing an exception in this phase.
+ * <li>The coordinator sends a COMMIT_VIEW to all the nodes that have the cache started.
+ * <li>If a node threw an exception during PREPARE_VIEW, the coordinator will send a ROLLBACK_VIEW instead.<br>
+ *     After a configurable amount of time the coordinator may retry to install the view, but with a different
+ *     view id (even if the members are the same; this makes it simpler to implement).
+ * </ul>
+ * <p/>
  * Only the coordinator keeps the information about which nodes have requested to join, so when
  * the coordinator changes the new coordinator will have to request state from all the members using
- * the RECOVER_VIEW command. This also happens after a merge, when the coordinator changes only for some of the nodes.
+ * the RECOVER_VIEW command. This also happens after a merge, even if the new coordinator was a coordinator
+ * in one of the partitions. For a full description of the view recovery algorithm see {@link #recoverViews()}
  *
  * @author Dan Berindei &lt;dan@infinispan.org&gt;
  * @since 5.1
@@ -263,14 +267,15 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
             CacheViewControlCommand.Type.PREPARE_VIEW, self, pendingView.getViewId(),
             pendingView.getMembers(), committedView.getViewId(), committedView.getMembers());
 
-      final List<Address> targets = pendingView.getMembers();
-      targets.removeAll(cacheViewInfo.getPendingChanges().getLeavers());
+      Set<Address> leavers = cacheViewInfo.getPendingChanges().getLeavers();
+      if (pendingView.containsAny(leavers))
+         throw new IllegalStateException("Cannot prepare view " + pendingView + ", some nodes already left the cluster: " + leavers);
 
       // broadcast the command to the targets, which will skip the local node
       Future<Map<Address, Response>> future = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
          @Override
          public Map<Address, Response> call() throws Exception {
-            Map<Address, Response> rspList = transport.invokeRemotely(targets, cmd, ResponseMode.SYNCHRONOUS, timeout, false, null, false);
+            Map<Address, Response> rspList = transport.invokeRemotely(pendingView.getMembers(), cmd, ResponseMode.SYNCHRONOUS, timeout, false, null, false);
             return rspList;
          }
       });
@@ -289,6 +294,9 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
     */
    private void clusterRollbackView(final String cacheName, int committedViewId, List<Address> targets, boolean includeCoordinator) {
       final CacheViewInfo cacheViewInfo = viewsInfo.get(cacheName);
+      // TODO Remove the rollback view id and instead add a pending view to the recovery response
+      // If the coordinator dies while sending the rollback commands, some nodes may install the new view id and some may not.
+      // If that happens the recovery process will try to commit the highest view id, which is wrong because we need to rollback.
       final int newViewId = cacheViewInfo.getPendingChanges().getRollbackViewId();
       final List<Address> validTargets = new ArrayList<Address>(targets);
       validTargets.removeAll(cacheViewInfo.getPendingChanges().getLeavers());
@@ -396,7 +404,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
       // tell the upper layer to stop sending commands to the nodes that already left
       if (cacheViewInfo.getListener() != null) {
-         if (cacheViewInfo.getCommittedView().getMembers().contains(self)) {
+         if (cacheViewInfo.getCommittedView().contains(self)) {
             cacheViewInfo.getListener().updateLeavers(cacheViewInfo.getPendingChanges().getLeavers());
          }
       }
@@ -411,7 +419,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
       CacheView lastCommittedView = cacheViewInfo.getCommittedView();
 
-      boolean isLocal = pendingView.getMembers().contains(self);
+      boolean isLocal = pendingView.contains(self);
       if (isLocal || isCoordinator) {
          // The first time we get a PREPARE_VIEW our committed view id is -1, we need to accept any view
          if (lastCommittedView.getViewId() > 0 && lastCommittedView.getViewId() != committedView.getViewId()) {
@@ -436,7 +444,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          return;
       }
 
-      boolean isLocal = cacheViewInfo.getPendingView() != null && cacheViewInfo.getPendingView().getMembers().contains(self);
+      boolean isLocal = cacheViewInfo.getPendingView() != null && cacheViewInfo.getPendingView().contains(self);
       if (isLocal || isCoordinator) {
          log.debugf("%s: Committing cache view %d", cacheName, viewId);
          cacheViewInfo.commitView(viewId);
@@ -457,7 +465,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          return;
       }
 
-      boolean isLocal = cacheViewInfo.getCommittedView().getMembers().contains(self);
+      boolean isLocal = cacheViewInfo.getCommittedView().contains(self);
       if (isLocal || isCoordinator) {
          log.debugf("%s: Rolling back to cache view %d, new view id is %d", cacheName, committedViewId, newViewId);
          cacheViewInfo.rollbackView(newViewId, committedViewId);
@@ -474,8 +482,10 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    public Map<String, CacheView> handleRecoverViews() {
       Map<String, CacheView> result = new HashMap<String, CacheView>();
       for (CacheViewInfo cacheViewInfo : viewsInfo.values()) {
-         if (cacheViewInfo.getCommittedView().getMembers().contains(self)) {
+         if (cacheViewInfo.getCommittedView().contains(self)) {
             result.put(cacheViewInfo.getCacheName(), cacheViewInfo.getCommittedView());
+         } else if (cacheViewInfo.getListener() != null) {
+            result.put(cacheViewInfo.getCacheName(), CacheView.EMPTY_CACHE_VIEW);
          }
       }
       return result;
@@ -520,20 +530,47 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    }
 
    /**
-    * Algorithm:
-    * 1. The new coordinator sends RECOVER_VIEW to everyone
-    * 2. Each node returns a map of started caches -> last committed view
-    * 3. For each cache:
-    * 3.1. Sort the nodes by their last committed view id, in descending order
-    * 3.2. For each node N:
-    * 3.2.1. Remove the set NN of all the other nodes M in the last committed view of N from the node list
-    * 3.2.2. For each node M in NN:
-    * 3.2.2.1. Skip node M if it we didn't get a recovery response from it
-    * 3.2.2.2. If node M's last committed view id < N's last committed view id, send a COMMIT_VIEW(N's last committed view id)
-    *          // A node couldn't have received the commit command if all the others didn't prepare successfully
-    * 3.2.2.3. Else send a ROLLBACK_VIEW(N's last committed view id) to go back to N's last committed view id
-    * 3.3. If we had more than one iteration it means we had a merge, so we'll need to install a merged view
-    * 3.4. Otherwise we'll rely on the joiners/leavers to trigger a new view
+    * When the coordinator changes, the new coordinator has to find what caches are running and on which nodes from
+    * the other cluster members.
+    * <p/>
+    * In addition, the old coordinator (or coordinators, if we have a merge) may have left while there a new view was
+    * being installed. We have to find the previous partitions and either commit the new view (if we know that all the
+    * nodes in the partitions prepared the view) or rollback to the previous view (if the prepare didn't finish successfully).
+    * <p/>
+    * We cannot use just the view ids of each node because a node could be part of two partitions (e.g. if a cluster
+    * {A, B} splits but only A notices the split, the merge partitions will be {A} and {A, B}. However we can rely on
+    * the view id of A's committed view being greater than B's to compute the partitions should be {A} and {B}.
+    * <p/>
+    * The algorithm is as follows:
+    * <ol>
+    * <li>The new coordinator sends <tt>RECOVER_VIEW</tt> to everyone<br/>
+    * <li>Each node returns a map of started caches -> last committed view.<br/>
+    *    The returned view may be empty if the node started joining but did not finish.<br/>
+    * <li>Let CC be the list of all the caches returned by any member.
+    * <li>For each cache <tt>C</tt> in <tt>CC</tt>:<br/>
+    * <ol>
+    *    <li> Create a join request for the nodes that have this cache but with an empty view.
+    *    <li> Let <tt>CM</tt> be the list of nodes that have this cache (excluding joiners).
+    *    <li> Sort <tt>CM</tt> by the nodes' last committed view id, in descending order.
+    *    <li>For each node <tt>N</tt> in <tt>CM</tt>:
+    *    <ol>
+    *       <li> Let <tt>NN</tt> be the set of nodes in the committed view of <tt>N</tt>.
+    *       <li> Let <tt>PP</tt> be <tt>intersection(NN, CM)</tt> (<tt>N</tt>'s subpartition).
+    *       <li> Remove all nodes in <tt>PP</tt> from <tt>CM</tt>, so that they won't be processed again.
+    *       <li> Let <tt>minViewId</tt> be lowest 'last committed view id' of all the nodes in <tt>PP</tt>.
+    *       <li> If <tt>minViewId < N's last committed view id</tt> then send a <tt>COMMIT_VIEW</tt> to all the nodes in <tt>PP</tt>.
+    *          A node couldn't have received the commit command if all the others didn't prepare successfully.
+    *       <li> Otherwise send a ROLLBACK_VIEW to go back to N's last committed view id, as we may have a pending view
+    *          in this subpartition.
+    *    </ol>
+    *    <li> If we had more than one iteration it means we had a merge, so we'll need to install a merged view.
+    *    <li> Otherwise we'll rely on the joiners/leavers to trigger a new view.
+    * </ol>
+    * </ol>
+    * <p/>
+    * TODO Relying on the commit message from the old coordinator can lead to a race condition if one of the nodes received the commit but didn't process it yet.
+    * We could reply to the RECOVER_VIEW message with the last prepared view in addition to the last committed view,
+    * and in step 4.4.5 we could send the commit if everyone in the subpartition has finished preparing the view.
     */
    private void recoverViews() {
       // read the recovery info from every node
@@ -556,7 +593,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
             recoveryInfo.put(e.getKey(), (Map<String, CacheView>) value.getResponseValue());
          }
 
-         // get the list of caches
+         // get the full set of caches
          Set<String> cacheNames = new HashSet<String>();
          for (Map<String, CacheView> m : recoveryInfo.values()) {
             cacheNames.addAll(m.keySet());
@@ -564,12 +601,21 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
          // now apply the algorithm for each cache
          for (final String cacheName : cacheNames) {
+            CacheViewInfo cacheViewInfo = getCacheViewInfo(cacheName);
+
             // get the list of nodes for this cache
             List<Address> recoveredMembers = new ArrayList(recoveryInfo.size());
-            for (Map.Entry<Address, Map<String, CacheView>> e : recoveryInfo.entrySet()) {
-               // This will include nodes that requested to join but were not committed yet
-               if (e.getValue().containsKey(cacheName)) {
-                  recoveredMembers.add(e.getKey());
+            List<Address> recoveredJoiners = new ArrayList(recoveryInfo.size());
+            for (Map.Entry<Address, Map<String, CacheView>> nodeRecoveryInfo : recoveryInfo.entrySet()) {
+               Address node = nodeRecoveryInfo.getKey();
+               CacheView lastCommittedView = nodeRecoveryInfo.getValue().get(cacheName);
+               if (lastCommittedView != null) {
+                  // joining nodes will return an empty view
+                  if (lastCommittedView.contains(node)) {
+                     recoveredMembers.add(node);
+                  } else {
+                     recoveredJoiners.add(node);
+                  }
                }
             }
 
@@ -578,26 +624,25 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
                @Override
                public int compare(Address o1, Address o2) {
                   return recoveryInfo.get(o2).get(cacheName).getViewId() -
-                        recoveryInfo.get(o1).get(cacheName).getViewId();
+                  recoveryInfo.get(o1).get(cacheName).getViewId();
                }
             });
             log.tracef("%s: Recovered members (including joiners) are %s", cacheName, recoveredMembers);
 
-            CacheViewInfo cacheViewInfo = getCacheViewInfo(cacheName);
-            if (recoveredMembers.size() > 0) {
-               // the first partition will have the highest view id, so update our latest view id to match that
-               int highestViewId = recoveryInfo.get(recoveredMembers.get(0)).get(cacheName).getViewId();
-               // there may have been a prepare going on in this partition, make sure our id is greater than that by adding 1
-               cacheViewInfo.getPendingChanges().updateLatestViewId(highestViewId + 1);
-            }
-
             // iterate on the nodes, taking all the nodes in a view as a partition
             int partitionCount = 0;
             List<Address> membersToProcess = new LinkedList<Address>(recoveredMembers);
-            List<Address> committedMembers = new ArrayList<Address>(recoveredMembers.size());
             while (!membersToProcess.isEmpty()) {
                Address node = membersToProcess.get(0);
                CacheView committedView = recoveryInfo.get(node).get(cacheName);
+               int highestViewId = committedView.getViewId();
+
+               if (partitionCount == 0) {
+                  // the first partition will have the highest view id, so update our latest view id to match that
+                  // there may have been a prepare going on in this partition, make sure our id is greater than that by adding 1
+                  cacheViewInfo.getPendingChanges().updateLatestViewId(highestViewId + 1);
+               }
+
 
                final List<Address> partitionMembers = new ArrayList<Address>(committedView.getMembers());
                // exclude from this group nodes that didn't send recovery info
@@ -613,34 +658,28 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
                // * either the nodes in the partition have the same view id and we need to roll back
                // * or the nodes have different view ids and we need to commit
                // TODO Is it possible to receive a COMMIT_VIEW from the old coordinator now, after it left the cluster?
-               int minViewId = Integer.MAX_VALUE, maxViewId = Integer.MIN_VALUE;
+               int minViewId = Integer.MAX_VALUE;
                for (Address partitionMember : partitionMembers) {
                   CacheView pmCommittedView = recoveryInfo.get(partitionMember).get(cacheName);
                   int pmViewId = pmCommittedView.getViewId();
                   if (pmViewId < minViewId)
                      minViewId = pmViewId;
-                  if (maxViewId < pmViewId)
-                     maxViewId = pmViewId;
                }
-               if (minViewId != maxViewId) {
+               if (minViewId != highestViewId) {
                   log.debugf("Found partition %d (%s) that should have committed view id %d but not all of them do (min view id %d), " +
-                        "committing the view", partitionCount, partitionMembers, maxViewId, minViewId);
-                  clusterCommitView(cacheName, maxViewId, partitionMembers, false);
+                        "committing the view", partitionCount, partitionMembers, highestViewId, minViewId);
+                  clusterCommitView(cacheName, highestViewId, partitionMembers, false);
                } else {
                   log.debugf("Found partition %d (%s) that has committed view id %d, sending a rollback command " +
-                        "to clear any pending prepare", partitionCount, partitionMembers, maxViewId);
-                  clusterRollbackView(cacheName, maxViewId, partitionMembers, false);
+                        "to clear any pending prepare", partitionCount, partitionMembers, highestViewId);
+                  clusterRollbackView(cacheName, highestViewId, partitionMembers, false);
                }
 
-               committedMembers.addAll(partitionMembers);
                partitionCount++;
             }
 
-            List<Address> joiners = new ArrayList<Address>(recoveredMembers);
-            joiners.removeAll(committedMembers);
-
             // we install a new view even if the member list of this cache didn't change, just to make sure
-            cacheViewInfo.getPendingChanges().requestCoordChange(committedMembers, joiners);
+            cacheViewInfo.getPendingChanges().recoveredViews(recoveredMembers, recoveredJoiners);
          }
       } catch (Exception e) {
          log.error("Error recovering views from the cluster members", e);
