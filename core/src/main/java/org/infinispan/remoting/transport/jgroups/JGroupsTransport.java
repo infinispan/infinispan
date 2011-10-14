@@ -394,21 +394,17 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       if (trace) log.tracef("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
 
-      if (!mode.isAsynchronous() && recipients != null && !getMembers().containsAll(recipients)) {
+      if (mode == ResponseMode.SYNCHRONOUS && recipients != null && !getMembers().containsAll(recipients)) {
          throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
       }
       boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
-      if (!usePriorityQueue && ResponseMode.SYNCHRONOUS == mode) usePriorityQueue = true;
+      if (!usePriorityQueue && (ResponseMode.SYNCHRONOUS == mode || ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS == mode))
+         usePriorityQueue = true;
 
-      if (dispatcher == null) {
-         throw new IllegalStateException("dispatcher is null!!!!!");
-      }
-      if (members == null) {
-         throw new IllegalStateException("members is null!!!!!");
-      }
+      boolean broadcast = recipients == null || recipients.size() == members.size();
       RspList<Object> rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode),
               timeout, recipients != null, usePriorityQueue,
-              toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, recipients == null || recipients.size() == members.size());
+              toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, broadcast);
 
       if (mode.isAsynchronous()) return Collections.emptyMap();// async case
 
@@ -416,9 +412,11 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (rsps == null) return Collections.emptyMap();
       Map<Address, Response> retval = new HashMap<Address, Response>(rsps.size());
 
+      boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
       boolean noValidResponses = true;
       for (Rsp<Object> rsp : rsps.values()) {
-         noValidResponses = parseResponseAndAddToResponseList(rsp.getValue(), retval, rsp.wasSuspected(), rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()), responseFilter != null) && noValidResponses;
+         noValidResponses &= parseResponseAndAddToResponseList(rsp, retval, rsp.wasSuspected(),
+               rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()), responseFilter != null, ignoreLeavers);
       }
 
       if (noValidResponses) throw new TimeoutException("Timed out waiting for valid responses!");
@@ -431,6 +429,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          case ASYNCHRONOUS_WITH_SYNC_MARSHALLING:
             return org.jgroups.blocks.ResponseMode.GET_NONE;
          case SYNCHRONOUS:
+         case SYNCHRONOUS_IGNORE_LEAVERS:
             return org.jgroups.blocks.ResponseMode.GET_ALL;
          case WAIT_FOR_VALID_RESPONSE:
             return org.jgroups.blocks.ResponseMode.GET_MAJORITY;

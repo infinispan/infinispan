@@ -31,6 +31,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
+import org.jgroups.util.Rsp;
 
 import java.util.Map;
 
@@ -56,22 +57,19 @@ public abstract class AbstractTransport implements Transport {
       return true;
    }
 
-   protected boolean parseResponseAndAddToResponseList(Object responseObject, Map<Address, Response> responseListToAddTo, boolean wasSuspected,
-                                                       boolean wasReceived, Address sender, boolean usedResponseFilter)
+   protected boolean parseResponseAndAddToResponseList(Rsp<Object> rsp, Map<Address, Response> responseListToAddTo, boolean wasSuspected,
+                                                       boolean wasReceived, Address sender, boolean usedResponseFilter, boolean ignoreLeavers)
            throws Exception
    {
       Log log = getLog();
-      boolean trace = log.isTraceEnabled();
       boolean invalidResponse = true;
-      if (wasSuspected || !wasReceived) {
-         if (wasSuspected) {
-            throw new SuspectException("Suspected member: " + sender, sender);
-         } else {
-            // if we have a response filter then we may not have waited for some nodes!
-            if (!usedResponseFilter) throw new TimeoutException("Replication timeout for " + sender);
-         }
-      } else {
+      if (!wasSuspected && wasReceived) {
          invalidResponse = false;
+         if (rsp.hasException()) {
+            log.tracef(rsp.getException(), "Unexpected exception from %s", sender);
+            throw new CacheException("Remote (" + sender + ") failed unexpectedly", rsp.getException());
+         }
+         Object responseObject = rsp.getValue();
          if (responseObject instanceof Response) {
             Response response = (Response) responseObject;
             if (response instanceof ExceptionResponse) {
@@ -86,17 +84,22 @@ public abstract class AbstractTransport implements Transport {
                }
             }
             responseListToAddTo.put(sender, response);
-         } else if (responseObject instanceof Exception) {
-            Exception e = (Exception) responseObject;
-            if (trace) log.trace("Unexpected exception from " + sender, e);
-            throw e;
-         } else if (responseObject instanceof Throwable) {
-            Throwable t = (Throwable) responseObject;
-            if (trace) log.trace("Unexpected throwable from " + sender, t);
-            throw new CacheException("Remote (" + sender + ") failed unexpectedly", t);
+         } else {
+            Class<? extends Object> responseClass = responseObject != null ? responseObject.getClass() : null;
+            log.tracef("Unexpected response object type from %s: %s", sender, responseClass);
+            throw new CacheException(String.format("Unexpected response object type from %s: %s", sender, responseClass));
          }
+      } else if (wasSuspected) {
+         if (!ignoreLeavers) {
+            throw new SuspectException("Suspected member: " + sender, sender);
+         } else {
+            log.tracef("Target node %s left during remote call, ignoring", sender);
+         }
+      } else {
+         // if we have a response filter then we may not have waited for some nodes!
+         if (!usedResponseFilter) throw new TimeoutException("Replication timeout for " + sender);
       }
-      
+
       return invalidResponse;
    }
 }

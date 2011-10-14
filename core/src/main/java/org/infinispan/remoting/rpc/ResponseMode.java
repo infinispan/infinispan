@@ -36,6 +36,7 @@ import org.infinispan.config.Configuration;
  */
 public enum ResponseMode {
    SYNCHRONOUS,
+   SYNCHRONOUS_IGNORE_LEAVERS,
    ASYNCHRONOUS,
    ASYNCHRONOUS_WITH_SYNC_MARSHALLING,
    WAIT_FOR_VALID_RESPONSE;
