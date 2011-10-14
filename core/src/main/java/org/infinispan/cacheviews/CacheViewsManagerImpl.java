@@ -205,7 +205,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
                CacheViewControlCommand.Type.REQUEST_JOIN, self);
          // If we get a SuspectException we can ignore it, the new coordinator will come asking for our state anyway
          Map<Address,Response> rspList = transport.invokeRemotely(Collections.singleton(coordinator), cmd,
-               ResponseMode.SYNCHRONOUS, timeout, false, null, false);
+               ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false, null, false);
          checkRemoteResponse(cacheName, cmd, rspList);
       }
    }
@@ -275,7 +275,8 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       Future<Map<Address, Response>> future = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
          @Override
          public Map<Address, Response> call() throws Exception {
-            Map<Address, Response> rspList = transport.invokeRemotely(pendingView.getMembers(), cmd, ResponseMode.SYNCHRONOUS, timeout, false, null, false);
+            Map<Address, Response> rspList = transport.invokeRemotely(pendingView.getMembers(), cmd,
+                  ResponseMode.SYNCHRONOUS, timeout, false, null, false);
             return rspList;
          }
       });
@@ -308,7 +309,8 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          final CacheViewControlCommand cmd = new CacheViewControlCommand(cacheName,
                CacheViewControlCommand.Type.ROLLBACK_VIEW, self, newViewId, null, committedViewId, null);
          // wait until we get all the responses, but ignore the results
-         Map<Address, Response> rspList = transport.invokeRemotely(validTargets, cmd, ResponseMode.SYNCHRONOUS, timeout, false, null, false);
+         Map<Address, Response> rspList = transport.invokeRemotely(validTargets, cmd,
+               ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false, null, false);
          checkRemoteResponse(cacheName, cmd, rspList);
       } catch (Exception e) {
          log.cacheViewRollbackFailure(e, cacheName, committedViewId);
@@ -335,7 +337,8 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          final CacheViewControlCommand cmd = new CacheViewControlCommand(cacheName,
                CacheViewControlCommand.Type.COMMIT_VIEW, self, viewId);
          // wait until we get all the responses, but ignore the results
-         Map<Address, Response> rspList = transport.invokeRemotely(validTargets, cmd, ResponseMode.SYNCHRONOUS, timeout, false, null, false);
+         Map<Address, Response> rspList = transport.invokeRemotely(validTargets, cmd,
+               ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false, null, false);
          checkRemoteResponse(cacheName, cmd, rspList);
       } catch (Exception e) {
          log.cacheViewCommitFailure(e, cacheName, viewId);
@@ -587,7 +590,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          CacheViewControlCommand cmd = new CacheViewControlCommand(
                DUMMY_CACHE_NAME_FOR_GLOBAL_COMMANDS, CacheViewControlCommand.Type.RECOVER_VIEW, self);
          Map<Address, Response> rspList = transport.invokeRemotely(null, cmd,
-               ResponseMode.SYNCHRONOUS, timeout, true, null, false);
+               ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, true, null, false);
          checkRemoteResponse(null, cmd, rspList);
          for (Map.Entry<Address, Response> e : rspList.entrySet()) {
             SuccessfulResponse value = (SuccessfulResponse) e.getValue();
