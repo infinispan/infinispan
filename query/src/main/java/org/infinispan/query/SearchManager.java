@@ -31,6 +31,7 @@ import org.hibernate.search.query.dsl.EntityContext;
  * The SearchManager is the entry point to create full text queries on top of a cache.
  * 
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Marko Luksa
  */
 public interface SearchManager {
 
@@ -68,4 +69,14 @@ public interface SearchManager {
     */
    CacheQuery getClusteredQuery(Query luceneQuery, Class<?>... classes);
 
+   /**
+    * Registers a {@link org.infinispan.query.Transformer} for the supplied key class.
+    * When storing keys in cache that are neither simple (String, int, ...) nor annotated with @Transformable,
+    * Infinispan-Query will need to know what Transformer to use when transforming the keys to Strings. Clients
+    * must specify what Transformer to use for a particular key class by registering it through this method.
+    *
+    * @param keyClass the key class for which the supplied transformerClass should be used
+    * @param transformerClass the transformer class to use for the supplied key class
+    */
+   void registerKeyTransformer(Class<?> keyClass, Class<? extends Transformer> transformerClass);
 }

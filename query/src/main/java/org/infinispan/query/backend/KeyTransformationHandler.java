@@ -22,7 +22,9 @@
  */
 package org.infinispan.query.backend;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.CacheException;
+import org.infinispan.query.ComponentRegistryUtils;
 import org.infinispan.query.Transformable;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.logging.Log;
@@ -51,11 +53,11 @@ import java.util.Map;
  * @since 4.0
  */
 public class KeyTransformationHandler {
-   private static final Log log = LogFactory.getLog(KeyTransformationHandler.class, Log.class);
+   private final Log log = LogFactory.getLog(getClass(), Log.class);
 
-   private static Map<Class<?>, Class<? extends Transformer>> transformers = new HashMap<Class<?>, Class<? extends Transformer>>();
+   private Map<Class<?>, Class<? extends Transformer>> transformers = new HashMap<Class<?>, Class<? extends Transformer>>();
 
-   public static Object stringToKey(String s, ClassLoader classLoader) {
+   public Object stringToKey(String s, ClassLoader classLoader) {
       char type = s.charAt(0);
       switch (type) {
          case 'S':
@@ -107,7 +109,7 @@ public class KeyTransformationHandler {
       throw new CacheException("Unknown type metadata " + type);
    }
 
-   public static String keyToString(Object key) {
+   public String keyToString(Object key) {
       // this string should be in the format of
       // "<TYPE>:(TRANSFORMER):<KEY>"
       // e.g.:
@@ -157,7 +159,7 @@ public class KeyTransformationHandler {
                "and classes that have the @Transformable annotation - you passed in a " + key.getClass().toString());
    }
 
-   private static boolean isStringOrPrimitive(Object key) {
+   private boolean isStringOrPrimitive(Object key) {
 
       // we support String and JDK primitives and their wrappers.
       if (key instanceof String ||
@@ -183,12 +185,12 @@ public class KeyTransformationHandler {
     * @param keyClass key class to analyze
     * @return a Transformer for this key, or null if the key type is not properly annotated.
     */
-   private static Transformer getTransformer(Class<?> keyClass) {
+   private Transformer getTransformer(Class<?> keyClass) {
       Class transformerClass = getTransformerClass(keyClass);
       return instantiate(transformerClass);
    }
 
-   private static Class getTransformerClass(Class<?> keyClass) {
+   private Class getTransformerClass(Class<?> keyClass) {
       Transformable annotation = keyClass.getAnnotation(Transformable.class);
       if (annotation == null)
          return transformers.get(keyClass);
@@ -196,7 +198,7 @@ public class KeyTransformationHandler {
          return annotation.transformer();
    }
 
-   private static Transformer instantiate(Class transformerClass) {
+   private Transformer instantiate(Class transformerClass) {
       try {
          // The cast should not be necessary but it's a workaround for a compiler bug.
          return (Transformer) transformerClass.newInstance();
@@ -213,7 +215,17 @@ public class KeyTransformationHandler {
     * @param keyClass the key class for which the supplied transformerClass should be used
     * @param transformerClass the transformer class to use for the supplied key class
     */
-   public static void registerTransformer(Class<?> keyClass, Class<? extends Transformer> transformerClass) {
+   public void registerTransformer(Class<?> keyClass, Class<? extends Transformer> transformerClass) {
       transformers.put(keyClass, transformerClass);
+   }
+
+   /**
+    * Gets the KeyTransformationHandler instance used by the supplied cache.
+    * @param cache the cache for which we want to get the KeyTransformationHandler instance
+    * @return a KeyTransformationHandler instance
+    */
+   public static KeyTransformationHandler getInstance(AdvancedCache<?, ?> cache) {
+      QueryInterceptor queryInterceptor = ComponentRegistryUtils.getComponent(cache, QueryInterceptor.class);
+      return queryInterceptor.getKeyTransformationHandler();
    }
 }

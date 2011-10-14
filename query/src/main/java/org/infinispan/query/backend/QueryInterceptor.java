@@ -40,6 +40,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.query.Transformer;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
@@ -52,8 +53,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static org.infinispan.query.backend.KeyTransformationHandler.keyToString;
-
 /**
  * This interceptor will be created when the System Property "infinispan.query.indexLocalOnly" is "false"
  * <p/>
@@ -63,6 +62,7 @@ import static org.infinispan.query.backend.KeyTransformationHandler.keyToString;
  *
  * @author Navin Surtani
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Marko Luksa
  * @since 4.0
  */
 public class QueryInterceptor extends CommandInterceptor {
@@ -70,12 +70,14 @@ public class QueryInterceptor extends CommandInterceptor {
    private final SearchFactoryIntegrator searchFactory;
    private final ConcurrentHashMap<Class,Class> knownClasses = new ConcurrentHashMap<Class,Class>();
    private final Lock mutating = new ReentrantLock();
+   private final KeyTransformationHandler keyTransformationHandler;
    protected TransactionManager transactionManager;
    protected TransactionSynchronizationRegistry transactionSynchronizationRegistry;
    protected ExecutorService asyncExecutor;
 
    public QueryInterceptor(SearchFactoryIntegrator searchFactory) {
       this.searchFactory = searchFactory;
+      this.keyTransformationHandler = new KeyTransformationHandler();
    }
 
    @Inject
@@ -290,5 +292,17 @@ public class QueryInterceptor extends CommandInterceptor {
             }
          }
       }
+   }
+
+   public void registerKeyTransformer(Class<?> keyClass, Class<? extends Transformer> transformerClass) {
+      keyTransformationHandler.registerTransformer(keyClass, transformerClass);
+   }
+
+   private String keyToString(Object key) {
+      return keyTransformationHandler.keyToString(key);
+   }
+
+   public KeyTransformationHandler getKeyTransformationHandler() {
+      return keyTransformationHandler;
    }
 }

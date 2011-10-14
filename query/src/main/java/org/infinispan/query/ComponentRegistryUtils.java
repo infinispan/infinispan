@@ -20,36 +20,25 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.query.test;
+package org.infinispan.query;
 
-import java.io.Serializable;
+import org.infinispan.Cache;
+import org.infinispan.factories.ComponentRegistry;
 
-public class CustomKey3 implements Serializable {
-   private static final long serialVersionUID = -8825579871900146417L;
+/**
+ * @author Marko Luksa
+ */
+public class ComponentRegistryUtils {
 
-   String str;
-
-   public CustomKey3() {
+   private ComponentRegistryUtils() {
    }
 
-   public CustomKey3(String str) {
-      this.str = str;
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      CustomKey3 that = (CustomKey3) o;
-
-      if (str != null ? !str.equals(that.str) : that.str != null) return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      return str != null ? str.hashCode() : 0;
+   public static <T> T getComponent(Cache cache, Class<T> class1) {
+      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+      T component = componentRegistry.getComponent(class1);
+      if (component==null) {
+         throw new IllegalArgumentException("Indexing was not enabled on this cache. " + class1 + " not found in registry");
+      }
+      return component;
    }
 }

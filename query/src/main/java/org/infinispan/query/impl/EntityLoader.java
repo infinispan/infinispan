@@ -33,6 +33,7 @@ import org.infinispan.query.backend.KeyTransformationHandler;
 
 /**
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Marko Luksa
  * @since 5.0
  */
 public class EntityLoader {
@@ -44,7 +45,8 @@ public class EntityLoader {
    }
 
    public Object load(EntityInfo entityInfo) {
-      Object cacheKey = KeyTransformationHandler.stringToKey(entityInfo.getId().toString(), cache.getClassLoader());
+      KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler.getInstance(cache);
+      Object cacheKey = keyTransformationHandler.stringToKey(entityInfo.getId().toString(), cache.getClassLoader());
       return cache.get(cacheKey);
    }
 

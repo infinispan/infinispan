@@ -48,6 +48,7 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  *
  * @author Navin Surtani
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
+ * @author Marko Luksa
  */
 public class CacheQueryImpl implements CacheQuery {
 
@@ -153,9 +154,11 @@ public class CacheQueryImpl implements CacheQuery {
    }
    
    private List<Object> fromEntityInfosToKeys(final List<EntityInfo> entityInfos) {
+      KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler.getInstance(cache);
+
       List<Object> keyList = new ArrayList<Object>(entityInfos.size());
       for (EntityInfo ei : entityInfos) {
-         Object cacheKey = KeyTransformationHandler.stringToKey(ei.getId().toString(), cache.getClassLoader());
+         Object cacheKey = keyTransformationHandler.stringToKey(ei.getId().toString(), cache.getClassLoader());
          keyList.add(cacheKey);
       }
       return keyList;
