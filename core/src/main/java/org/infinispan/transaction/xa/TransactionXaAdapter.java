@@ -70,10 +70,13 @@ public class TransactionXaAdapter implements XAResource {
    private final RecoveryManager recoveryManager;
 
    private volatile RecoveryManager.RecoveryIterator recoveryIterator;
+   private final int hashCode;
 
 
    public TransactionXaAdapter(LocalXaTransaction localTransaction, TransactionTable txTable,
                                Configuration configuration, RecoveryManager rm, TransactionCoordinator txCoordinator) {
+      if (localTransaction == null) throw new IllegalArgumentException("localTransaction should not be null");
+      this.hashCode = preComputeHashCode(localTransaction);
       this.localTransaction = localTransaction;
       this.txTable = (XaTransactionTable) txTable;
       this.configuration = configuration;
@@ -250,4 +253,18 @@ public class TransactionXaAdapter implements XAResource {
          return externalXid;
       }
    }
+
+   /**
+    * Invoked by TransactionManagers, make sure it's an efficient implementation.
+    * System.identityHashCode(x) is NOT an efficient implementation.
+    */
+   @Override
+   public int hashCode() {
+      return this.hashCode;
+   }
+
+   private static int preComputeHashCode(final LocalXaTransaction localTransaction) {
+      return 31 + localTransaction.hashCode();
+   }
+
 }
