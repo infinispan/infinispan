@@ -450,6 +450,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          cacheViewInfo.commitView(viewId);
          cacheViewInfo.getPendingChanges().resetChanges(cacheViewInfo.getCommittedView());
          if (isLocal && cacheViewInfo.getListener() != null) {
+            cacheViewInfo.getListener().updateLeavers(cacheViewInfo.getPendingChanges().getLeavers());
             cacheViewInfo.getListener().commitView(viewId);
          }
       } else {
