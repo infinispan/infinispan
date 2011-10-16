@@ -80,10 +80,6 @@ public abstract class BaseStateTransferTask {
       NotifyingNotifiableFuture<Object> stateTransferFuture = new AggregatingNotifyingFutureImpl(null, states.size());
       for (Map.Entry<Address, Collection<InternalCacheEntry>> entry : states.entrySet()) {
          final Address target = entry.getKey();
-         if (stateTransferManager.getLeavers().contains(target)) {
-            log.debugf("Not sending state to node %s, it has already left the cluster", target);
-            continue;
-         }
          Collection<InternalCacheEntry> state = entry.getValue();
          stateTransferManager.pushStateToNode(stateTransferFuture, newViewId, target, state);
       }
