@@ -84,4 +84,29 @@ public class SynchronizationAdapter implements Synchronization {
          throw new IllegalArgumentException("Unknown status: " + status);
       }
    }
+
+   @Override
+   public String toString() {
+      return "SynchronizationAdapter{" +
+            "localTransaction=" + localTransaction +
+            "} " + super.toString();
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      SynchronizationAdapter that = (SynchronizationAdapter) o;
+
+      if (localTransaction != null ? !localTransaction.equals(that.localTransaction) : that.localTransaction != null)
+         return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      return localTransaction != null ? localTransaction.hashCode() : 0;
+   }
 }
