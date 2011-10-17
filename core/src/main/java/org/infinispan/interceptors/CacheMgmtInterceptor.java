@@ -52,17 +52,17 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
 public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
-   private AtomicLong hitTimes = new AtomicLong(0);
-   private AtomicLong missTimes = new AtomicLong(0);
-   private AtomicLong storeTimes = new AtomicLong(0);
-   private AtomicLong hits = new AtomicLong(0);
-   private AtomicLong misses = new AtomicLong(0);
-   private AtomicLong stores = new AtomicLong(0);
-   private AtomicLong evictions = new AtomicLong(0);
-   private AtomicLong start = new AtomicLong(System.currentTimeMillis());
-   private AtomicLong reset = new AtomicLong(start.get());
-   private AtomicLong removeHits = new AtomicLong(0);
-   private AtomicLong removeMisses = new AtomicLong(0);
+   private final AtomicLong hitTimes = new AtomicLong(0);
+   private final AtomicLong missTimes = new AtomicLong(0);
+   private final AtomicLong storeTimes = new AtomicLong(0);
+   private final AtomicLong hits = new AtomicLong(0);
+   private final AtomicLong misses = new AtomicLong(0);
+   private final AtomicLong stores = new AtomicLong(0);
+   private final AtomicLong evictions = new AtomicLong(0);
+   private final AtomicLong startNanoseconds = new AtomicLong(System.nanoTime());
+   private final AtomicLong resetNanoseconds = new AtomicLong(startNanoseconds.get());
+   private final AtomicLong removeHits = new AtomicLong(0);
+   private final AtomicLong removeMisses = new AtomicLong(0);
 
    private DataContainer dataContainer;
 
@@ -80,14 +80,15 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      long t1 = System.currentTimeMillis();
+      long t1 = System.nanoTime();
       Object retval = invokeNextInterceptor(ctx, command);
-      long t2 = System.currentTimeMillis();
+      long t2 = System.nanoTime();
+      long intervalMilliseconds = nanosecondsIntervalToMilliseconds(t1, t2);
       if (retval == null) {
-         missTimes.getAndAdd(t2 - t1);
+         missTimes.getAndAdd(intervalMilliseconds);
          misses.incrementAndGet();
       } else {
-         hitTimes.getAndAdd(t2 - t1);
+         hitTimes.getAndAdd(intervalMilliseconds);
          hits.incrementAndGet();
       }
       return retval;
@@ -96,12 +97,12 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Map data = command.getMap();
-      long t1 = System.currentTimeMillis();
+      long t1 = System.nanoTime();
       Object retval = invokeNextInterceptor(ctx, command);
-      long t2 = System.currentTimeMillis();
-
+      long t2 = System.nanoTime();
+      long intervalMilliseconds = nanosecondsIntervalToMilliseconds(t1, t2);
       if (data != null && !data.isEmpty()) {
-         storeTimes.getAndAdd(t2 - t1);
+         storeTimes.getAndAdd(intervalMilliseconds);
          stores.getAndAdd(data.size());
       }
       return retval;
@@ -110,10 +111,11 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @Override
    //Map.put(key,value) :: oldValue
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      long t1 = System.currentTimeMillis();
+      long t1 = System.nanoTime();
       Object retval = invokeNextInterceptor(ctx, command);
-      long t2 = System.currentTimeMillis();
-      storeTimes.getAndAdd(t2 - t1);
+      long t2 = System.nanoTime();
+      long intervalMilliseconds = nanosecondsIntervalToMilliseconds(t1, t2);
+      storeTimes.getAndAdd(intervalMilliseconds);
       stores.incrementAndGet();
       return retval;
    }
@@ -211,13 +213,13 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(description = "Number of seconds since cache started")
    @Metric(displayName = "Seconds since cache started", units = Units.SECONDS, measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public long getElapsedTime() {
-      return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start.get());
+      return TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startNanoseconds.get());
    }
 
    @ManagedAttribute(description = "Number of seconds since the cache statistics were last reset")
    @Metric(displayName = "Seconds since cache statistics were reset", units = Units.SECONDS, displayType = DisplayType.SUMMARY)
    public long getTimeSinceReset() {
-      return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - reset.get());
+      return TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - resetNanoseconds.get());
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component")
@@ -232,7 +234,16 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       storeTimes.set(0);
       removeHits.set(0);
       removeMisses.set(0);
-      reset.set(System.currentTimeMillis());
+      resetNanoseconds.set(System.nanoTime());
+   }
+
+   /**
+    * @param nanoStart
+    * @param nanoEnd
+    * @return the interval rounded in milliseconds
+    */
+   private final long nanosecondsIntervalToMilliseconds(final long nanoStart, final long nanoEnd) {
+      return TimeUnit.MILLISECONDS.convert(nanoEnd - nanoStart, TimeUnit.NANOSECONDS);
    }
 }
 
