@@ -86,7 +86,8 @@ public class TEST_PING extends Discovery {
                         } else {
                            if (traceEnabled)
                               log.trace("Skipping sending response cos DISCARD is on");
-                           return new LinkedList<PingData>();
+                           // If discard is, add an empty response
+                           addPingRsp(new LinkedList<PingData>(), discovery);
                         }
                      } else {
                         if (traceEnabled)
