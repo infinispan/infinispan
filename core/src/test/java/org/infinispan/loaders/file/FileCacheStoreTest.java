@@ -110,7 +110,7 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
       File cacheStoreDirectory = new File(tmpDirectory);
       assert cacheStoreDirectory.exists();
       assert cacheStoreDirectory.canWrite();
-      String newfile = cacheStoreDirectory.getAbsolutePath() + File.separator + "mockCache-org.infinispan.loaders.file.FileCacheStoreTest" + File.separator + "externalExistingFile";
+      String newfile = cacheStoreDirectory.getAbsolutePath() + File.separator + "mockCache-" + this.getClass().getName() + File.separator + "externalExistingFile";
       File file = new File(newfile);
       boolean created = file.createNewFile();
       assert created;
