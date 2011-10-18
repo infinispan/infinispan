@@ -35,24 +35,29 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.Address;
 import org.jgroups.Channel;
 import org.jgroups.JChannel;
+import org.jgroups.View;
 import org.jgroups.protocols.UDP;
 import org.jgroups.stack.ProtocolStack;
+import org.jgroups.util.UUID;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
 import java.util.Properties;
 
 @Test(testName = "remoting.jgroups.ChannelLookupTest", groups = "functional")
 public class ChannelLookupTest extends AbstractInfinispanTest {
    static Channel mockChannel = EasyMock.createNiceMock(Channel.class);
-   Address a = EasyMock.createNiceMock(Address.class);
    ProtocolStack ps = EasyMock.createNiceMock(ProtocolStack.class);
+   Address a = new UUID(1, 1);
+   View v = new View(a, 1, Collections.singletonList(a));
 
    public void channelLookupTest() {
       EasyMock.reset(mockChannel);
       EasyMock.expect(mockChannel.getAddress()).andReturn(a);
+      EasyMock.expect(mockChannel.getView()).andReturn(v).atLeastOnce();
       EasyMock.expect(mockChannel.getProtocolStack()).andReturn(ps);
       EasyMock.expect(ps.getTransport()).andReturn(new UDP());
-      EasyMock.replay(mockChannel, a, ps);
+      EasyMock.replay(mockChannel, ps);
 
       EmbeddedCacheManager cm = null;
       try {
@@ -63,7 +68,7 @@ public class ChannelLookupTest extends AbstractInfinispanTest {
          cm = TestCacheManagerFactory.createCacheManager(gc);
          cm.start();
          cm.getCache();
-         EasyMock.verify(mockChannel, a, ps);
+         EasyMock.verify(mockChannel, ps);
 
          GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(cm);
          Transport t = gcr.getComponent(Transport.class);
