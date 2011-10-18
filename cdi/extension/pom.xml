@@ -129,6 +129,32 @@
                </instructions>
             </configuration>
          </plugin>
+         <plugin>
+            <groupId>org.jboss.maven.plugins</groupId>
+            <artifactId>maven-injection-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>inject-project-version</id>
+                  <phase>compile</phase>
+                  <goals>
+                     <goal>bytecode</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <configuration>
+               <bytecodeInjections>
+                  <bytecodeInjection>
+                     <expression>${project.version}</expression>
+                     <targetMembers>
+                        <methodBodyReturn>
+                           <className>org.infinispan.cdi.util.Version</className>
+                           <methodName>getVersion</methodName>
+                        </methodBodyReturn>
+                     </targetMembers>
+                  </bytecodeInjection>
+               </bytecodeInjections>
+            </configuration>
+         </plugin>
       </plugins>
    </build>
    <profiles>
