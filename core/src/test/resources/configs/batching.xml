@@ -27,8 +27,13 @@
     xmlns="urn:infinispan:config:5.1">
 
     <default>
+        <transaction cacheStopTimeout="2"/>
         <invocationBatching enabled="true" />
     </default>
+
+    <namedCache name="tml">
+        <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.DummyTransactionManagerLookup" cacheStopTimeout="2"/>
+    </namedCache>
 
 </infinispan>
 

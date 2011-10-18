@@ -83,7 +83,7 @@ import static org.infinispan.config.Configuration.CacheMode.*;
  * @since 4.0
  */
 @SurvivesRestarts
-@XmlAccessorType(XmlAccessType.FIELD)
+@XmlAccessorType(XmlAccessType.NONE)
 @XmlType(propOrder = {})
 @XmlRootElement(name = "namedCacheConfiguration")
 @ConfigurationDoc(name = "default")
@@ -148,7 +148,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    @XmlElement
    LazyDeserialization lazyDeserialization = new LazyDeserialization().setConfiguration(this);
 
-   @XmlElement
+   @XmlTransient
    InvocationBatching invocationBatching = new InvocationBatching().setConfiguration(this);
 
    @XmlElement
@@ -186,6 +186,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public FluentConfiguration fluent() {
       return fluentConfig;
+   }
+
+   private void setInvocationBatching(InvocationBatching invocationBatching) {
+      this.invocationBatching = invocationBatching;
+      this.invocationBatching.setConfiguration(this);
+   }
+
+   @XmlElement
+   private InvocationBatching getInvocationBatching() {
+      return invocationBatching;
    }
 
    // ------------------------------------------------------------------------------------------------------------
@@ -3936,12 +3946,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public void setEnabled(Boolean enabled) {
          super.setEnabled(enabled);
-         if (enabled) config.transaction.transactionMode(TransactionMode.TRANSACTIONAL);
+         updateTransactionMode();
       }
 
       @Override
       protected InvocationBatching setConfiguration(Configuration config) {
          super.setConfiguration(config);
+         updateTransactionMode();
          return this;
       }
 
@@ -3949,6 +3960,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public InvocationBatching disable() {
          super.disable();
          return this;
+      }
+
+      private void updateTransactionMode() {
+         if (enabled && config != null) config.transaction.transactionMode(TransactionMode.TRANSACTIONAL);
       }
    }
 

@@ -159,8 +159,11 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
       try {
          Cache c = cm.getCache("any");
          assert c.getConfiguration().isInvocationBatchingEnabled();
+         assert c.getConfiguration().isTransactionalCache();
          c = cm.getCache();
          assert c.getConfiguration().isInvocationBatchingEnabled();
+         Cache c2 = cm.getCache("tml");
+         assert c2.getConfiguration().isTransactionalCache();
       } finally {
          cm.stop();
       }
