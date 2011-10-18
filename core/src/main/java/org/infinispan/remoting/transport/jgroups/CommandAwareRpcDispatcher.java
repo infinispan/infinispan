@@ -136,7 +136,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       if (isValid(req)) {
          ReplicableCommand cmd = null;
          try {
-            cmd = (ReplicableCommand) req_marshaller.objectFromBuffer(req.getBuffer(), req.getOffset(), req.getLength());
+            cmd = (ReplicableCommand) req_marshaller.objectFromBuffer(req.getRawBuffer(), req.getOffset(), req.getLength());
             if (cmd instanceof CacheRpcCommand)
                return executeCommand((CacheRpcCommand) cmd, req);
             else
