@@ -183,10 +183,11 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             throw new CacheException("Channel connected, but unable to register MBeans", e);
          }
       }
-      else {
-         channelConnectedLatch.countDown();
-      }
       address = fromJGroupsAddress(channel.getAddress());
+      if (!startChannel) {
+         // the channel was already started externally, we need to initialize our member list
+         viewAccepted(channel.getView());
+      }
       if (log.isInfoEnabled())
          log.localAndPhysicalAddress(getAddress(), getPhysicalAddresses());
    }
