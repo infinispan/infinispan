@@ -36,7 +36,7 @@ import javax.naming.StringRefAddr;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
-import junit.framework.TestCase;
+import static org.junit.Assert.*;
 import org.enhydra.jdbc.standard.StandardXADataSource;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.logging.Log;
@@ -68,9 +68,15 @@ import org.jboss.util.naming.NonSerializableFactory;
 import org.jnp.interfaces.NamingContext;
 import org.jnp.server.Main;
 import org.jnp.server.NamingServer;
+<<<<<<< HEAD
 =======
 import org.hibernate.testing.ServiceRegistryBuilder;
 >>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
+=======
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+>>>>>>> HHH-6742 move unit tests back to src/test
 
 /**
  * This is an example test based on http://community.jboss.org/docs/DOC-14617 that shows how to interact with
@@ -82,16 +88,15 @@ import org.hibernate.testing.ServiceRegistryBuilder;
  * @author Galder Zamarreño
  * @since 3.5
  */
-public class JBossStandaloneJtaExampleTest extends TestCase {
+public class JBossStandaloneJtaExampleTest {
    private static final Log log = LogFactory.getLog(JBossStandaloneJtaExampleTest.class);
    private static final JBossStandaloneJTAManagerLookup lookup = new JBossStandaloneJTAManagerLookup();
    Context ctx;
    Main jndiServer;
    private ServiceRegistry serviceRegistry;
 
-   @Override
-   protected void setUp() throws Exception {
-      super.setUp();
+   @Before
+   public void setUp() throws Exception {
 	   serviceRegistry = ServiceRegistryBuilder.buildServiceRegistry( Environment.getProperties() );
       jndiServer = startJndiServer();
       ctx = createJndiContext();
@@ -102,10 +107,9 @@ public class JBossStandaloneJtaExampleTest extends TestCase {
       bindDataSource();
    }
 
-   @Override
-   protected void tearDown() throws Exception {
+   @After
+   public void tearDown() throws Exception {
       try {
-         super.tearDown();
          ctx.close();
          jndiServer.stop();
 	  }
@@ -115,7 +119,7 @@ public class JBossStandaloneJtaExampleTest extends TestCase {
 		  }
 	  }
    }
-
+   @Test
    public void testPersistAndLoadUnderJta() throws Exception {
       Item item;
       SessionFactory sessionFactory = buildSessionFactory();
