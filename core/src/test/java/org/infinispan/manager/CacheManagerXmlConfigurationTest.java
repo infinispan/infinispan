@@ -152,8 +152,20 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
       } finally {
          cm.stop();
       }
-
    }
+
+   public void testBatchingIsEnabled() throws Exception {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.fromXml("configs/batching.xml");
+      try {
+         Cache c = cm.getCache("any");
+         assert c.getConfiguration().isInvocationBatchingEnabled();
+         c = cm.getCache();
+         assert c.getConfiguration().isInvocationBatchingEnabled();
+      } finally {
+         cm.stop();
+      }
+   }
+
 }
 
 
