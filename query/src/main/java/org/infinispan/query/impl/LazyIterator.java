@@ -47,11 +47,13 @@ import org.infinispan.query.backend.KeyTransformationHandler;
 public class LazyIterator extends AbstractIterator {
 
    private final DocumentExtractor extractor;
+   private final KeyTransformationHandler keyTransformationHandler;
 
-   public LazyIterator(HSQuery hSearchQuery, AdvancedCache<?, ?> cache, int fetchSize) {
+   public LazyIterator(HSQuery hSearchQuery, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, int fetchSize) {
       if (fetchSize < 1) {
          throw new IllegalArgumentException("Incorrect value for fetchsize passed. Your fetchSize is less than 1");
       }
+      this.keyTransformationHandler = keyTransformationHandler;
       this.extractor = hSearchQuery.queryDocumentExtractor(); //triggers actual Lucene search
       this.index = 0;
       this.max = hSearchQuery.queryResultSize() - 1;
@@ -91,8 +93,6 @@ public class LazyIterator extends AbstractIterator {
          // else we need to populate the buffer and get what we need.
 
          try {
-            KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler.getInstance(cache);
-
             String documentId = (String) extractor.extract(index).getId();
             toReturn = cache.get(keyTransformationHandler.stringToKey(documentId, cache.getClassLoader()));
 
@@ -138,8 +138,6 @@ public class LazyIterator extends AbstractIterator {
       }
 
       try {
-         KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler.getInstance(cache);
-
          //Wiping the buffer
          Arrays.fill(buffer, null);
 

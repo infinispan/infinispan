@@ -35,6 +35,7 @@ import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryIterator;
+import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.CacheQueryImpl;
 
 /**
@@ -52,8 +53,8 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
    private final ExecutorService asyncExecutor;
 
    public ClusteredCacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory,
-            ExecutorService asyncExecutor, AdvancedCache cache, Class<?>... classes) {
-      super(luceneQuery, searchFactory, cache, classes);
+            ExecutorService asyncExecutor, AdvancedCache cache, KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
+      super(luceneQuery, searchFactory, cache, keyTransformationHandler, classes);
       this.asyncExecutor = asyncExecutor;
       hSearchQuery = searchFactory.createHSQuery().luceneQuery(luceneQuery)
                .targetedEntities(Arrays.asList(classes));

@@ -31,7 +31,6 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

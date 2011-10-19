@@ -26,6 +26,8 @@ import java.io.IOException;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.infinispan.Cache;
 import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * QueryExtractorUtil.
@@ -38,24 +40,23 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  */
 public class QueryExtractorUtil {
 
-	public static org.infinispan.util.logging.Log log;
+   private static final Log log = LogFactory.getLog(QueryExtractorUtil.class, Log.class);
 
-	private QueryExtractorUtil() {
+   private QueryExtractorUtil() {
+   }
 
-	}
+   public static Object extractKey(DocumentExtractor extractor, Cache cache, KeyTransformationHandler keyTransformationHandler, int docIndex) {
+      String bufferDocumentId;
+      try {
+         bufferDocumentId = (String) extractor.extract(docIndex).getId();
+      } catch (IOException e) {
+         log.error("Error while extracting key...", e);
+         return null;
+      }
 
-	public static Object extractKey(DocumentExtractor extractor, Cache cache, int docIndex) {
-		String bufferDocumentId;
-		try {
-			bufferDocumentId = (String) extractor.extract(docIndex).getId();
-		} catch (IOException e) {
-			log.error("Error while extracting key...", e);
-			return null;
-		}
-
-      KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler.getInstance(cache.getAdvancedCache());
-      Object key = keyTransformationHandler.stringToKey(bufferDocumentId, cache.getAdvancedCache().getClassLoader());
-		return key;
-	}
+      Object key = keyTransformationHandler.stringToKey(bufferDocumentId, cache
+            .getAdvancedCache().getClassLoader());
+      return key;
+   }
 
 }

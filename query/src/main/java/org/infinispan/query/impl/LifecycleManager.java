@@ -48,10 +48,6 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Map;
-import java.util.Properties;
-import java.util.TreeMap;
-
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down
  * at cache stop.

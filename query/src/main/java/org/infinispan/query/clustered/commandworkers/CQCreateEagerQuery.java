@@ -24,6 +24,7 @@ package org.infinispan.query.clustered.commandworkers;
 import org.apache.lucene.search.TopDocs;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.clustered.ISPNEagerTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
 
@@ -56,10 +57,11 @@ public class CQCreateEagerQuery extends ClusteredQueryCommandWorker {
 		TopDocs topDocs = extractor.getTopDocs();
 
 		Object[] keys = new Object[topDocs.scoreDocs.length];
+		KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler.getInstance(cache.getAdvancedCache());
 
 		// collecting keys (it's a eager query!)
 		for (int i = 0; i < topDocs.scoreDocs.length; i++) {
-			keys[i] = QueryExtractorUtil.extractKey(extractor, cache, i);
+			keys[i] = QueryExtractorUtil.extractKey(extractor, cache, keyTransformationHandler, i);
 		}
 
 		return new ISPNEagerTopDocs(topDocs, keys);

@@ -29,6 +29,9 @@ import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.AdvancedCache;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -41,8 +44,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.easymock.EasyMock.*;
-
+import static org.easymock.classextension.EasyMock.createMock;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.getCurrentArguments;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.createStrictMock;
+import static org.easymock.EasyMock.anyInt;
+import static org.easymock.EasyMock.expectLastCall;
 
 /**
  * @author Navin Surtani
@@ -88,8 +96,9 @@ public class LazyIteratorTest {
             return dummyDataMap.get(key);
          }
       }).anyTimes();
-      
+
       expect(cache.getClassLoader()).andReturn(Thread.currentThread().getContextClassLoader()).anyTimes();
+      expect(cache.getAdvancedCache()).andReturn(cache).anyTimes();
 
       extractor = createStrictMock(DocumentExtractor.class);
       HSQuery hsQuery = createMock(HSQuery.class);
@@ -106,7 +115,7 @@ public class LazyIteratorTest {
       extractor.close();
       expectLastCall().once();
       EasyMock.replay(cache, extractor, hsQuery);
-      iterator = new LazyIterator(hsQuery, cache, fetchSize);
+      iterator = new LazyIterator(hsQuery, cache, new KeyTransformationHandler(), fetchSize);
    }
 
    @AfterMethod(alwaysRun = false)

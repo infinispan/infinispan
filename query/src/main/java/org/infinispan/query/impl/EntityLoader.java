@@ -39,13 +39,14 @@ import org.infinispan.query.backend.KeyTransformationHandler;
 public class EntityLoader {
    
    private final AdvancedCache<?, ?> cache;
+   private final KeyTransformationHandler keyTransformationHandler;
    
-   public EntityLoader(Cache<?, ?> cache) {
+   public EntityLoader(Cache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
+      this.keyTransformationHandler = keyTransformationHandler;
       this.cache = cache.getAdvancedCache();
    }
 
    public Object load(EntityInfo entityInfo) {
-      KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler.getInstance(cache);
       Object cacheKey = keyTransformationHandler.stringToKey(entityInfo.getId().toString(), cache.getClassLoader());
       return cache.get(cacheKey);
    }

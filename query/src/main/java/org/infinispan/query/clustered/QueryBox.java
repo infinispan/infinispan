@@ -27,7 +27,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.infinispan.AdvancedCache;
+import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.clustered.commandworkers.QueryExtractorUtil;
+import org.infinispan.query.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Each node in the cluster has a QueryBox instance. The QueryBox keep the active lazy iterators
@@ -60,7 +63,9 @@ public class QueryBox {
    // the local cache instance
    private AdvancedCache cache;
 
-   public org.infinispan.util.logging.Log log;
+   private static final Log log = LogFactory.getLog(QueryBox.class, Log.class);
+
+   private KeyTransformationHandler keyTransformationHandler;
 
    /**
     * Get the "docIndex" value on the correct DocumentExtractor
@@ -80,7 +85,7 @@ public class QueryBox {
          throw new IllegalStateException("Query not found!");
       }
 
-      Object key = QueryExtractorUtil.extractKey(extractor, cache, docIndex);
+      Object key = QueryExtractorUtil.extractKey(extractor, cache, keyTransformationHandler, docIndex);
       return cache.get(key);
    }
 
@@ -134,6 +139,7 @@ public class QueryBox {
 
    public void setCache(AdvancedCache cache) {
       this.cache = cache;
+      keyTransformationHandler = KeyTransformationHandler.getInstance(cache.getAdvancedCache());
    }
 
 }

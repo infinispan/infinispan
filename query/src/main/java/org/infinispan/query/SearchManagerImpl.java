@@ -49,7 +49,7 @@ class SearchManagerImpl implements SearchManager {
    private final QueryInterceptor queryInterceptor;
    
    SearchManagerImpl(AdvancedCache<?, ?> cache) {
-      if (cache==null) {
+      if (cache == null) {
          throw new IllegalArgumentException("cache parameter shall not be null");
       }
       this.cache = cache;
@@ -63,7 +63,7 @@ class SearchManagerImpl implements SearchManager {
    @Override
    public CacheQuery getQuery(Query luceneQuery, Class<?>... classes) {
       queryInterceptor.enableClasses(classes);
-      return new CacheQueryImpl(luceneQuery, searchFactory, cache, classes);
+      return new CacheQueryImpl(luceneQuery, searchFactory, cache, queryInterceptor.getKeyTransformationHandler(), classes);
    }
    
    /**
@@ -78,7 +78,7 @@ class SearchManagerImpl implements SearchManager {
    public CacheQuery getClusteredQuery(Query luceneQuery, Class<?>... classes) {
       queryInterceptor.enableClasses(classes);
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
-      return new ClusteredCacheQueryImpl(luceneQuery, searchFactory, asyncExecutor, cache, classes);
+      return new ClusteredCacheQueryImpl(luceneQuery, searchFactory, asyncExecutor, cache, queryInterceptor.getKeyTransformationHandler(), classes);
    }
 
    @Override

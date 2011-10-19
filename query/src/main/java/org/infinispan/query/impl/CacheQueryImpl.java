@@ -52,10 +52,13 @@ import org.infinispan.query.backend.KeyTransformationHandler;
  */
 public class CacheQueryImpl implements CacheQuery {
 
-   protected AdvancedCache<?, ?> cache;
+   protected final AdvancedCache<?, ?> cache;
+   protected final KeyTransformationHandler keyTransformationHandler;
    protected HSQuery hSearchQuery;
 
-   public CacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory, AdvancedCache<?, ?> cache, Class<?>... classes) {
+   public CacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory, AdvancedCache<?, ?> cache,
+         KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
+      this.keyTransformationHandler = keyTransformationHandler;
       this.cache = cache;
       hSearchQuery = searchFactory.createHSQuery();
       hSearchQuery
@@ -138,7 +141,7 @@ public class CacheQueryImpl implements CacheQuery {
    }
 
    public QueryIterator lazyIterator(int fetchSize) {
-      return new LazyIterator(hSearchQuery, cache, fetchSize);
+      return new LazyIterator(hSearchQuery, cache, keyTransformationHandler, fetchSize);
    }
 
    public List<Object> list() throws SearchException {
@@ -150,12 +153,10 @@ public class CacheQueryImpl implements CacheQuery {
    }
 
    private EntityLoader getLoader() {
-      return new EntityLoader(cache);
+      return new EntityLoader(cache, keyTransformationHandler);
    }
    
    private List<Object> fromEntityInfosToKeys(final List<EntityInfo> entityInfos) {
-      KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler.getInstance(cache);
-
       List<Object> keyList = new ArrayList<Object>(entityInfos.size());
       for (EntityInfo ei : entityInfos) {
          Object cacheKey = keyTransformationHandler.stringToKey(ei.getId().toString(), cache.getClassLoader());
