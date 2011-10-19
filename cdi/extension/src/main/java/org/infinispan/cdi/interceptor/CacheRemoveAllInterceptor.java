@@ -24,6 +24,8 @@ package org.infinispan.cdi.interceptor;
 
 import org.infinispan.Cache;
 import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextFactory;
+import org.infinispan.cdi.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheKeyInvocationContext;
@@ -49,6 +51,7 @@ import java.io.Serializable;
 public class CacheRemoveAllInterceptor implements Serializable {
 
    private static final long serialVersionUID = -8763819640664021763L;
+   private static final Log log = LogFactory.getLog(CacheRemoveAllInterceptor.class, Log.class);
 
    private final CacheResolver cacheResolver;
    private final CacheKeyInvocationContextFactory contextFactory;
@@ -61,18 +64,24 @@ public class CacheRemoveAllInterceptor implements Serializable {
 
    @AroundInvoke
    public Object cacheRemoveAll(InvocationContext invocationContext) throws Exception {
+      if (log.isTraceEnabled()) {
+         log.tracef("Interception of method named '%s'", invocationContext.getMethod().getName());
+      }
+
       final CacheKeyInvocationContext<CacheRemoveAll> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
       final CacheRemoveAll cacheRemoveAll = cacheKeyInvocationContext.getCacheAnnotation();
       final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
 
       if (!cacheRemoveAll.afterInvocation()) {
          cache.clear();
+         log.tracef("Clear cache '%s' before method invocation", cache.getName());
       }
 
       final Object result = invocationContext.proceed();
 
       if (cacheRemoveAll.afterInvocation()) {
          cache.clear();
+         log.tracef("Clear cache '%s' after method invocation", cache.getName());
       }
 
       return result;

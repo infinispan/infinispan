@@ -31,8 +31,11 @@ import org.infinispan.cdi.interceptor.literal.CachePutLiteral;
 import org.infinispan.cdi.interceptor.literal.CacheRemoveAllLiteral;
 import org.infinispan.cdi.interceptor.literal.CacheRemoveEntryLiteral;
 import org.infinispan.cdi.interceptor.literal.CacheResultLiteral;
+import org.infinispan.cdi.util.Version;
+import org.infinispan.cdi.util.logging.Log;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.util.logging.LogFactory;
 import org.jboss.solder.bean.Beans;
 import org.jboss.solder.reflection.annotated.AnnotatedTypeBuilder;
 
@@ -66,6 +69,8 @@ import java.util.Set;
  */
 public class InfinispanExtension implements Extension {
 
+   private static final Log log = LogFactory.getLog(InfinispanExtension.class, Log.class);
+
    private final Set<ConfigurationHolder> configurations;
 
    InfinispanExtension() {
@@ -73,6 +78,8 @@ public class InfinispanExtension implements Extension {
    }
 
    void registerInterceptorBindings(@Observes BeforeBeanDiscovery event) {
+      log.version(Version.getVersion());
+
       event.addInterceptorBinding(CacheResult.class);
       event.addInterceptorBinding(CachePut.class);
       event.addInterceptorBinding(CacheRemoveEntry.class);
@@ -137,8 +144,10 @@ public class InfinispanExtension implements Extension {
          if (!cacheName.trim().isEmpty()) {
             if (cacheConfiguration != null) {
                cacheManager.defineConfiguration(cacheName, cacheConfiguration);
+               log.cacheConfigurationDefined(cacheName, cacheManager);
             } else if (!cacheManager.getCacheNames().contains(cacheName)) {
                cacheManager.defineConfiguration(cacheName, cacheManager.getDefaultConfiguration().clone());
+               log.cacheConfigurationDefined(cacheName, cacheManager);
             }
          }
 

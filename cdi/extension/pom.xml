@@ -82,6 +82,13 @@
          <version>${version.solder}</version>
       </dependency>
 
+      <!-- Logging dependency -->
+      <dependency>
+         <groupId>org.jboss.logging</groupId>
+         <artifactId>jboss-logging</artifactId>
+         <version>${version.jboss.logging}</version>
+      </dependency>
+
       <!-- Test dependencies -->
       <dependency>
          <groupId>org.testng</groupId>

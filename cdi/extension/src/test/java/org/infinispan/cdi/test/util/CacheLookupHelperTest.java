@@ -68,13 +68,13 @@ public class CacheLookupHelperTest extends Arquillian {
     */
 
    @Test(expectedExceptions = NullPointerException.class,
-         expectedExceptionsMessageRegExp = "method parameter cannot be null")
+         expectedExceptionsMessageRegExp = "method parameter must not be null")
    public void testGetCacheNameWithNullMethodParameter() {
       getCacheName(null, "", null, false);
    }
 
    @Test(expectedExceptions = NullPointerException.class,
-         expectedExceptionsMessageRegExp = "methodCacheName parameter cannot be null")
+         expectedExceptionsMessageRegExp = "methodCacheName parameter must not be null")
    public void testGetCacheNameWithNullMethodCacheNameParameter() throws Exception {
       final Method fooMethod = Foo.class.getMethod("fooMethod", String.class, String.class);
 
@@ -146,7 +146,7 @@ public class CacheLookupHelperTest extends Arquillian {
     */
 
    @Test(expectedExceptions = NullPointerException.class,
-         expectedExceptionsMessageRegExp = "beanManager parameter cannot be null")
+         expectedExceptionsMessageRegExp = "beanManager parameter must not be null")
    public void testGetCacheKeyGeneratorWithNullBeanManagerParameter() {
       getCacheKeyGenerator(null, null, null);
    }
