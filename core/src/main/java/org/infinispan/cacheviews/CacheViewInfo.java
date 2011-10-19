@@ -115,7 +115,12 @@ public class CacheViewInfo {
       log.tracef("%s: Committing view %s", cacheName, viewId);
       synchronized (lock) {
          // We need to allow re-committing the same view
-         if ((pendingView == null && viewId != committedView.getViewId()) || viewId != pendingView.getViewId())
+         if (pendingView == null && viewId == committedView.getViewId()) {
+            log.tracef("%s: Re-committing view %d", cacheName, viewId);
+            return;
+         }
+
+         if (pendingView == null || viewId != pendingView.getViewId())
             throw new IllegalArgumentException(String.format("Cannot commit view %d, we are currently preparing view %s", viewId, pendingView));
 
          committedView = pendingView;
