@@ -130,6 +130,17 @@
             </configuration>
          </plugin>
          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+               <archive>
+                  <manifest>
+                     <mainClass>org.infinispan.cdi.util.Version</mainClass>
+                  </manifest>
+               </archive>
+            </configuration>
+         </plugin>
+         <plugin>
             <groupId>org.jboss.maven.plugins</groupId>
             <artifactId>maven-injection-plugin</artifactId>
             <executions>
