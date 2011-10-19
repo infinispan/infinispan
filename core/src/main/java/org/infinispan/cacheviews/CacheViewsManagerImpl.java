@@ -316,7 +316,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
                ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false, null, false);
          checkRemoteResponse(cacheName, cmd, rspList);
       } catch (Exception e) {
-         log.cacheViewRollbackFailure(e, cacheName, committedViewId);
+         log.cacheViewRollbackFailure(e, committedViewId, cacheName);
       }
 
       // in the end we roll back locally, so any pending changes can trigger a new view installation
@@ -344,7 +344,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
                ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false, null, false);
          checkRemoteResponse(cacheName, cmd, rspList);
       } catch (Exception e) {
-         log.cacheViewCommitFailure(e, cacheName, viewId);
+         log.cacheViewCommitFailure(e, viewId, cacheName);
       }
 
       // in the end we commit locally, so any pending changes can trigger a new view installation

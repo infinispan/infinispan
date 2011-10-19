@@ -77,7 +77,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @LogMessage(level = ERROR)
    @Message(value = "I/O failure while marshalling bucket: %s", id = 8008)
-   void errorMarshallingBucket(Object bucket, IOException ioe);
+   void errorMarshallingBucket(@Cause IOException ioe, Object bucket);
 
    @LogMessage(level = ERROR)
    @Message(value = "I/O error while unmarshalling from stream", id = 8009)
