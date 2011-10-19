@@ -78,7 +78,7 @@ public class JdbcUtil {
       try {
          return marshaller.objectToBuffer(bucket);
       } catch (IOException e) {
-         log.errorMarshallingBucket(bucket, e);
+         log.errorMarshallingBucket(e, bucket);
          throw new CacheLoaderException("I/O failure while marshalling bucket: " + bucket, e);
       }
    }
