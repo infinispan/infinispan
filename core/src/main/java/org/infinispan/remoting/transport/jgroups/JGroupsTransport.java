@@ -416,7 +416,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
       boolean noValidResponses = true;
       for (Rsp<Object> rsp : rsps.values()) {
-         noValidResponses &= parseResponseAndAddToResponseList(rsp, retval, rsp.wasSuspected(),
+         noValidResponses &= parseResponseAndAddToResponseList(rsp.getValue(), rsp.getException(), retval, rsp.wasSuspected(),
                rsp.wasReceived(), fromJGroupsAddress(rsp.getSender()), responseFilter != null, ignoreLeavers);
       }
 

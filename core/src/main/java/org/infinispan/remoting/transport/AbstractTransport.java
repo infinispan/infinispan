@@ -31,7 +31,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
-import org.jgroups.util.Rsp;
 
 import java.util.Map;
 
@@ -57,7 +56,7 @@ public abstract class AbstractTransport implements Transport {
       return true;
    }
 
-   protected boolean parseResponseAndAddToResponseList(Rsp<Object> rsp, Map<Address, Response> responseListToAddTo, boolean wasSuspected,
+   protected boolean parseResponseAndAddToResponseList(Object responseObject, Throwable exception, Map<Address, Response> responseListToAddTo, boolean wasSuspected,
                                                        boolean wasReceived, Address sender, boolean usedResponseFilter, boolean ignoreLeavers)
            throws Exception
    {
@@ -65,11 +64,10 @@ public abstract class AbstractTransport implements Transport {
       boolean invalidResponse = true;
       if (!wasSuspected && wasReceived) {
          invalidResponse = false;
-         if (rsp.hasException()) {
-            log.tracef(rsp.getException(), "Unexpected exception from %s", sender);
-            throw new CacheException("Remote (" + sender + ") failed unexpectedly", rsp.getException());
+         if (exception != null) {
+            log.tracef(exception, "Unexpected exception from %s", sender);
+            throw new CacheException("Remote (" + sender + ") failed unexpectedly", exception);
          }
-         Object responseObject = rsp.getValue();
          if (responseObject instanceof Response) {
             Response response = (Response) responseObject;
             if (response instanceof ExceptionResponse) {
@@ -84,7 +82,8 @@ public abstract class AbstractTransport implements Transport {
                }
             }
             responseListToAddTo.put(sender, response);
-         } else {
+         } else if (responseObject != null) {
+            // null responses should just be ignored, all other responses should trigger an exception
             Class<? extends Object> responseClass = responseObject != null ? responseObject.getClass() : null;
             log.tracef("Unexpected response object type from %s: %s", sender, responseClass);
             throw new CacheException(String.format("Unexpected response object type from %s: %s", sender, responseClass));
