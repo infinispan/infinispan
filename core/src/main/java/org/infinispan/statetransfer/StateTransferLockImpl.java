@@ -158,10 +158,12 @@ public class StateTransferLockImpl implements StateTransferLock {
    @Override
    public void blockNewTransactions() throws InterruptedException {
       if (!txLock.isWriteLockedByCurrentThread()) {
-         if (trace) log.debug("Blocking new transactions");
+         log.debug("Blocking new transactions");
+         if (trace) log.tracef("Acquiring exclusive state transfer shared lock, shared holders: %d", txLock.getReadLockCount());
          txLockLatch.close();
          // we want to ensure that all the modifications that passed through the tx gate have ended
          txLock.writeLock().lockInterruptibly();
+         log.trace("Acquired state transfer lock in exclusive mode");
          // need to unlock here because the unlock call may arrive on a different thread
          txLock.writeLock().unlock();
       } else {
@@ -171,7 +173,7 @@ public class StateTransferLockImpl implements StateTransferLock {
 
    @Override
    public void unblockNewTransactions() {
-      if (trace) log.debug("Unblocking new transactions");
+      log.debug("Unblocking new transactions");
       // only for lock commands
       txLockLatch.open();
    }
@@ -190,8 +192,10 @@ public class StateTransferLockImpl implements StateTransferLock {
       // hold the read lock to ensure the rehash process waits for the tx to end
       // first try with 0 timeout, in case a rehash is not in progress
       if (txLockLatch.await(0, TimeUnit.MILLISECONDS)) {
-         if (txLock.readLock().tryLock(0, TimeUnit.MILLISECONDS))
+         if (txLock.readLock().tryLock(0, TimeUnit.MILLISECONDS)) {
+            if (trace) log.tracef("Acquired shared state transfer shared lock, remaining holders: %d", txLock.getReadLockCount());
             return true;
+         }
       }
 
       // When the command is being replicated, the caller already holds the tx lock for read on the
@@ -214,8 +218,10 @@ public class StateTransferLockImpl implements StateTransferLock {
             return false;
 
          // hold the read lock to ensure the rehash process waits for the tx to end
-         if (txLock.readLock().tryLock(0, TimeUnit.MILLISECONDS))
+         if (txLock.readLock().tryLock(0, TimeUnit.MILLISECONDS)) {
+            if (trace) log.tracef("Acquired shared state transfer shared lock, remaining holders: %d", txLock.getReadLockCount());
             return true;
+         }
 
          // the rehashing thread has acquired the write lock between our latch check and our read lock attempt
          // retry, unless the timeout expired
@@ -230,6 +236,7 @@ public class StateTransferLockImpl implements StateTransferLock {
       if (holdCount > 1)
          throw new IllegalStateException("Transaction lock should not be acquired more than once by any thread");
       if (holdCount == 1) {
+         if (trace) log.tracef("Releasing shared state transfer shared lock, remaining holders: %d", txLock.getReadLockCount());
          txLock.readLock().unlock();
          return true;
       } else {
