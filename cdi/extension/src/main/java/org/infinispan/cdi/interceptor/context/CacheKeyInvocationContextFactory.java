@@ -60,12 +60,12 @@ import static org.infinispan.cdi.util.Contracts.assertNotNull;
 public class CacheKeyInvocationContextFactory {
 
    private BeanManager beanManager;
-   private ConcurrentMap<Method, MethodMetaData<? extends Annotation>> cacheMethodMetaDataCache;
+   private ConcurrentMap<Method, MethodMetaData<? extends Annotation>> methodMetaDataCache;
 
    @Inject
    public CacheKeyInvocationContextFactory(BeanManager beanManager) {
       this.beanManager = beanManager;
-      this.cacheMethodMetaDataCache = new ConcurrentHashMap<Method, MethodMetaData<? extends Annotation>>();
+      this.methodMetaDataCache = new ConcurrentHashMap<Method, MethodMetaData<? extends Annotation>>();
    }
 
    // for proxy.
@@ -92,7 +92,7 @@ public class CacheKeyInvocationContextFactory {
     * @return an instance of {@link MethodMetaData}.
     */
    private MethodMetaData<? extends Annotation> getMethodMetaData(Method method) {
-      MethodMetaData<? extends Annotation> methodMetaData = cacheMethodMetaDataCache.get(method);
+      MethodMetaData<? extends Annotation> methodMetaData = methodMetaDataCache.get(method);
 
       if (methodMetaData == null) {
          final String cacheName;
@@ -153,7 +153,7 @@ public class CacheKeyInvocationContextFactory {
                cacheName
          );
 
-         methodMetaData = cacheMethodMetaDataCache.putIfAbsent(method, newCacheMethodMetaData);
+         methodMetaData = methodMetaDataCache.putIfAbsent(method, newCacheMethodMetaData);
          if (methodMetaData == null) {
             methodMetaData = newCacheMethodMetaData;
          }

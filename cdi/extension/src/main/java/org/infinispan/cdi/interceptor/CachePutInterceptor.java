@@ -56,22 +56,22 @@ public class CachePutInterceptor implements Serializable {
    }
 
    @AroundInvoke
-   public Object cacheResult(InvocationContext invocationContext) throws Exception {
+   public Object cachePut(InvocationContext invocationContext) throws Exception {
       final CacheKeyInvocationContext<CachePut> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
       final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
-      final CachePut cacheResult = cacheKeyInvocationContext.getCacheAnnotation();
+      final CachePut cachePut = cacheKeyInvocationContext.getCacheAnnotation();
       final CacheKey cacheKey = cacheKeyGenerator.generateCacheKey(cacheKeyInvocationContext);
       final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
 
       final Object valueToCache = cacheKeyInvocationContext.getValueParameter().getValue();
 
-      if (!cacheResult.afterInvocation() && valueToCache != null) {
+      if (!cachePut.afterInvocation() && valueToCache != null) {
          cache.put(cacheKey, valueToCache);
       }
 
       final Object result = invocationContext.proceed();
 
-      if (cacheResult.afterInvocation() && valueToCache != null) {
+      if (cachePut.afterInvocation() && valueToCache != null) {
          cache.put(cacheKey, valueToCache);
       }
 
