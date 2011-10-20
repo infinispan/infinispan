@@ -80,6 +80,13 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    }
 
    @Override
+   public AdvancedCache<K, V> getAdvancedCache() {
+      //We need to override the super implementation which returns to the decorated cache;
+      //otherwise the current operation breaks out of the selected ClassLoader.
+      return this;
+   }
+
+   @Override
    public List<CommandInterceptor> getInterceptorChain() {
       return cache.getInterceptorChain();
    }
