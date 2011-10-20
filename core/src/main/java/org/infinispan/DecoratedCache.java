@@ -93,6 +93,16 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
+   public ClassLoader getClassLoader() {
+      if (this.classLoader == null) {
+         return cacheImplementation.getClassLoader();
+      }
+      else {
+         return this.classLoader;
+      }
+   }
+
+   @Override
    public void stop() {
       cacheImplementation.stop(flags, classLoader);
    }
