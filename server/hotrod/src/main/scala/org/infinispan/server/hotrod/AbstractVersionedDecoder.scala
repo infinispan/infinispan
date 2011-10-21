@@ -40,7 +40,7 @@ abstract class AbstractVersionedDecoder {
    /**
     * Having read the message's Id, read the rest of Hot Rod header from the given buffer and return it.
     */
-   def readHeader(buffer: ChannelBuffer, messageId: Long): (HotRodHeader, Boolean)
+   def readHeader(buffer: ChannelBuffer, version: Byte, messageId: Long): (HotRodHeader, Boolean)
 
    /**
     * Read the key to operate on from the message.

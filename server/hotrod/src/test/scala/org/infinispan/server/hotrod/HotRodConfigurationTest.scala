@@ -42,7 +42,7 @@ import org.infinispan.loaders.cluster.{ClusterCacheLoaderConfig, ClusterCacheLoa
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodConfigurationTest")
 class HotRodConfigurationTest {
 
-   import HotRodServer.TopologyCacheName
+   import HotRodServer.ADDRESS_CACHE_NAME
 
    def testUserDefinedTimeouts {
       val props = new Properties
@@ -75,7 +75,7 @@ class HotRodConfigurationTest {
       val cacheManager = TestCacheManagerFactory.createClusteredCacheManager
       val server = startHotRodServer(cacheManager, UniquePortThreadLocal.get.intValue, props)
       try {
-         val cfg = cacheManager.getCache(TopologyCacheName).getConfiguration
+         val cfg = cacheManager.getCache(ADDRESS_CACHE_NAME).getConfiguration
          assert(cfg, cacheManager.getGlobalConfiguration.getDistributedSyncTimeout)
       } finally {
          server.stop

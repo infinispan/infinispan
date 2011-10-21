@@ -75,5 +75,5 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
 
    protected def shutdownClient: ChannelFuture = hotRodClient.stop
 
-   protected def connectClient: HotRodClient = new HotRodClient("127.0.0.1", hotRodServer.getPort, cacheName, 60)
+   protected def connectClient: HotRodClient = new HotRodClient("127.0.0.1", hotRodServer.getPort, cacheName, 60, 10)
 }

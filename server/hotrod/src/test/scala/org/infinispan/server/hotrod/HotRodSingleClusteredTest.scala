@@ -48,7 +48,7 @@ class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
       val cm = addClusterEnabledCacheManager()
       cm.defineConfiguration(cacheName, getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC))
       hotRodServer = startHotRodServer(cm)
-      hotRodClient = new HotRodClient("127.0.0.1", hotRodServer.getPort, cacheName, 60)
+      hotRodClient = new HotRodClient("127.0.0.1", hotRodServer.getPort, cacheName, 60, 10)
    }
 
    def testPutGet(m: Method) {

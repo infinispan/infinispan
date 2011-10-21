@@ -27,6 +27,8 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResult;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.CodecFactory;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
@@ -88,6 +90,7 @@ import static org.infinispan.util.Util.getInstance;
  * <li><tt>infinispan.client.hotrod.key_size_estimate</tt>, default = 64.  This hint allows sizing of byte buffers when serializing and deserializing keys, to minimize array resizing.</li>
  * <li><tt>infinispan.client.hotrod.value_size_estimate</tt>, default = 512.  This hint allows sizing of byte buffers when serializing and deserializing values, to minimize array resizing.</li>
  * <li><tt>infinispan.client.hotrod.socket_timeout</tt>, default = 60000 (60 seconds).  This property defines the maximum socket read timeout before giving up waiting for bytes from the server.</li>
+ * <li><tt>infinispan.client.hotrod.protocol_version</tt>, default = 1.1 .This property defines the protocol version that this client should use. Other valid values include 1.0.</li>
  * </ul>
  * <br/>
  * <i>The following properties are related to connection pooling</i>:
@@ -159,7 +162,7 @@ public class RemoteCacheManager implements CacheContainer {
    private final Map<String, RemoteCacheImpl> cacheName2RemoteCache = new HashMap<String, RemoteCacheImpl>();
    private AtomicInteger topologyId = new AtomicInteger();
    private ClassLoader classLoader;
-
+   private Codec codec;
 
    /**
     * Builds a remote cache manager that relies on the provided {@link Marshaller} for marshalling
@@ -446,10 +449,13 @@ public class RemoteCacheManager implements CacheContainer {
 
    @Override
    public void start() {
+      codec = CodecFactory.getCodec(config.getProtocolVersion());
+
       String factory = config.getTransportFactory();
       transportFactory = (TransportFactory) getInstance(factory, classLoader);
+
       Collection<SocketAddress> servers = config.getServerList();
-      transportFactory.start(config, servers, topologyId, classLoader);
+      transportFactory.start(codec, config, servers, topologyId, classLoader);
       if (marshaller == null) {
          String marshallerName = config.getMarshaller();
          setMarshaller((Marshaller) getInstance(marshallerName, classLoader));
@@ -528,7 +534,8 @@ public class RemoteCacheManager implements CacheContainer {
    }
 
    private <K, V> void startRemoteCache(RemoteCacheImpl<K, V> result) {
-      OperationsFactory operationsFactory = new OperationsFactory(transportFactory, result.getName(), topologyId, forceReturnValueDefault);
+      OperationsFactory operationsFactory = new OperationsFactory(
+            transportFactory, result.getName(), topologyId, forceReturnValueDefault, codec);
       result.init(marshaller, asyncExecutorService, operationsFactory, config.getKeySizeEstimate(), config.getValueSizeEstimate());
    }
 

@@ -29,22 +29,21 @@ import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
 import org.jboss.netty.channel._
 import org.jboss.netty.buffer.ChannelBuffer
 import org.testng.Assert._
-import org.infinispan.server.hotrod._
-import logging.Log
-import org.infinispan.server.hotrod.Response
+import org.infinispan.server.hotrod.logging.Log
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.OperationResponse._
 import collection.mutable
 import collection.immutable
 import java.lang.reflect.Method
 import mutable.ListBuffer
-import test.HotRodTestingUtil._
+import HotRodTestingUtil._
 import java.util.concurrent.{ConcurrentHashMap, Executors}
 import java.util.concurrent.atomic.{AtomicLong}
 import org.infinispan.test.TestingUtil
 import org.infinispan.util.{ByteArrayKey, Util}
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import org.jboss.netty.handler.codec.replay.{VoidEnum, ReplayingDecoder}
+import org.infinispan.server.hotrod._
 
 /**
  * A very simply Hot Rod client for testing purpouses. It's a quick and dirty client implementation done for testing
@@ -57,7 +56,7 @@ import org.jboss.netty.handler.codec.replay.{VoidEnum, ReplayingDecoder}
  * @author Galder Zamarreño
  * @since 4.1
  */
-class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeoutSeconds: Int) extends Log {
+class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeoutSeconds: Int, protocolVersion: Byte) extends Log {
    val idToOp = new ConcurrentHashMap[Long, Op]    
 
    private lazy val ch: Channel = {
@@ -87,7 +86,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
    }
 
    def assertPutFail(m: Method) {
-      val op = new Op(0xA0, 0x01, defaultCacheName, k(m), 0, 0, v(m), 0, 1 , 0, 0)
+      val op = new Op(0xA0, protocolVersion, 0x01, defaultCacheName, k(m), 0, 0, v(m), 0, 1 , 0, 0)
       idToOp.put(op.id, op)
       val future = ch.write(op)
       future.awaitUninterruptibly
@@ -117,11 +116,13 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
    def replace(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): TestResponse =
       execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)   
 
-   def replaceIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long): TestResponse =
-      execute(0xA0, 0x09, defaultCacheName, k, lifespan, maxIdle, v, version, 1 ,0)
+   def replaceIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte],
+                           dataVersion: Long): TestResponse =
+      execute(0xA0, 0x09, defaultCacheName, k, lifespan, maxIdle, v, dataVersion, 1 ,0)
 
-   def replaceIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long, flags: Int): TestResponse =
-      execute(0xA0, 0x09, defaultCacheName, k, lifespan, maxIdle, v, version, flags)
+   def replaceIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte],
+                           dataVersion: Long, flags: Int): TestResponse =
+      execute(0xA0, 0x09, defaultCacheName, k, lifespan, maxIdle, v, dataVersion, flags)
 
    def remove(k: Array[Byte]): TestResponse =
       execute(0xA0, 0x0B, defaultCacheName, k, 0, 0, null, 0, 1 ,0)
@@ -129,33 +130,36 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
    def remove(k: Array[Byte], flags: Int): TestResponse =
       execute(0xA0, 0x0B, defaultCacheName, k, 0, 0, null, 0, flags)
 
-   def removeIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long): TestResponse =
-      execute(0xA0, 0x0D, defaultCacheName, k, lifespan, maxIdle, v, version, 1 ,0)
+   def removeIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte],
+                          dataVersion: Long): TestResponse =
+      execute(0xA0, 0x0D, defaultCacheName, k, lifespan, maxIdle, v, dataVersion, 1 ,0)
 
-   def removeIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long, flags: Int): TestResponse =
-      execute(0xA0, 0x0D, defaultCacheName, k, lifespan, maxIdle, v, version, flags)
+   def removeIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte],
+                          dataVersion: Long, flags: Int): TestResponse =
+      execute(0xA0, 0x0D, defaultCacheName, k, lifespan, maxIdle, v, dataVersion, flags)
 
    def execute(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
-               v: Array[Byte], version: Long, clientIntelligence: Byte, topologyId: Int): TestResponse = {
-      val op = new Op(magic, code, name, k, lifespan, maxIdle, v, 0, version, clientIntelligence, topologyId)
+               v: Array[Byte], dataVersion: Long, clientIntelligence: Byte, topologyId: Int): TestResponse = {
+      val op = new Op(magic, protocolVersion, code, name, k, lifespan, maxIdle, v, 0, dataVersion,
+                      clientIntelligence, topologyId)
       execute(op, op.id)
    }
 
    def executeExpectBadMagic(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
                            v: Array[Byte], version: Long): TestErrorResponse = {
-      val op = new Op(magic, code, name, k, lifespan, maxIdle, v, 0, version, 1, 0)
+      val op = new Op(magic, protocolVersion, code, name, k, lifespan, maxIdle, v, 0, version, 1, 0)
       execute(op, 0).asInstanceOf[TestErrorResponse]
    }
 
    def executePartial(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
                       v: Array[Byte], version: Long): TestErrorResponse = {
-      val op = new PartialOp(magic, code, name, k, lifespan, maxIdle, v, 0, version, 1, 0)
+      val op = new PartialOp(magic, protocolVersion, code, name, k, lifespan, maxIdle, v, 0, version, 1, 0)
       execute(op, op.id).asInstanceOf[TestErrorResponse]
    }
 
    def execute(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
-               v: Array[Byte], version: Long, flags: Int): TestResponse = {
-      val op = new Op(magic, code, name, k, lifespan, maxIdle, v, flags, version, 1, 0)
+               v: Array[Byte], dataVersion: Long, flags: Int): TestResponse = {
+      val op = new Op(magic, protocolVersion, code, name, k, lifespan, maxIdle, v, flags, dataVersion, 1, 0)
       execute(op, op.id)
    }
 
@@ -188,10 +192,10 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       get(0x11, k, 0).asInstanceOf[TestGetWithVersionResponse]
 
    private def get(code: Byte, k: Array[Byte], flags: Int): TestResponse = {
-      val op = new Op(0xA0, code, defaultCacheName, k, 0, 0, null, flags, 0, 1, 0)
+      val op = new Op(0xA0, protocolVersion, code, defaultCacheName, k, 0, 0, null, flags, 0, 1, 0)
       val writeFuture = writeOp(op)
       // Get the handler instance to retrieve the answer.
-      var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
       if (code == 0x03 || code == 0x11 || code == 0x0F) {
          handler.getResponse(op.id)
       } else {
@@ -202,10 +206,10 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
    def clear: TestResponse = execute(0xA0, 0x13, defaultCacheName, null, 0, 0, null, 0, 1 ,0)
 
    def stats: Map[String, String] = {
-      val op = new StatsOp(0xA0, 0x15, defaultCacheName, 1, 0, null)
+      val op = new StatsOp(0xA0, protocolVersion, 0x15, defaultCacheName, 1, 0, null)
       val writeFuture = writeOp(op)
       // Get the handler instance to retrieve the answer.
-      var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
       val resp = handler.getResponse(op.id).asInstanceOf[TestStatsResponse]
       resp.stats
    }
@@ -218,10 +222,10 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
    def bulkGet: TestBulkGetResponse = bulkGet(0)
 
    def bulkGet(count: Int): TestBulkGetResponse = {
-      val op = new BulkGetOp(0xA0, 0x19, defaultCacheName, 1, 0, count)
+      val op = new BulkGetOp(0xA0, protocolVersion, 0x19, defaultCacheName, 1, 0, count)
       val writeFuture = writeOp(op)
       // Get the handler instance to retrieve the answer.
-      var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
       handler.getResponse(op.id).asInstanceOf[TestBulkGetResponse]
    }
 }
@@ -247,7 +251,7 @@ private class Encoder extends OneToOneEncoder {
             val buffer = dynamicBuffer
             buffer.writeByte(partial.magic.asInstanceOf[Byte]) // magic
             writeUnsignedLong(partial.id, buffer) // message id
-            buffer.writeByte(10) // version
+            buffer.writeByte(partial.version) // version
             buffer.writeByte(partial.code) // opcode
             buffer
          }
@@ -255,7 +259,7 @@ private class Encoder extends OneToOneEncoder {
             val buffer = dynamicBuffer
             buffer.writeByte(op.magic.asInstanceOf[Byte]) // magic
             writeUnsignedLong(op.id, buffer) // message id
-            buffer.writeByte(10) // version
+            buffer.writeByte(op.version) // version
             buffer.writeByte(op.code) // opcode
             if (!op.cacheName.isEmpty) {
                writeRangedBytes(op.cacheName.getBytes(), buffer) // cache name length + cache name
@@ -274,7 +278,7 @@ private class Encoder extends OneToOneEncoder {
                      writeUnsignedInt(op.maxIdle, buffer) // maxIdle
                   }
                   if (op.code == 0x09 || op.code == 0x0D) {
-                     buffer.writeLong(op.version)
+                     buffer.writeLong(op.dataVersion)
                   }
                   if (op.code != 0x0D) { // If it's not removeIfUnmodified...
                      writeRangedBytes(op.value, buffer) // value length + value
@@ -298,7 +302,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
 
    override def decode(ctx: ChannelHandlerContext, ch: Channel, buf: ChannelBuffer, state: VoidEnum): Object = {
       trace("Decode response from server")
-      val magic = buf.readUnsignedByte
+      buf.readUnsignedByte // magic byte
       val id = readUnsignedLong(buf)
       val opCode = OperationResponse.apply(buf.readUnsignedByte)
       val status = OperationStatus.apply(buf.readUnsignedByte)
@@ -309,50 +313,61 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
             val topologyId = readUnsignedInt(buf)
             if (op.clientIntel == 2) {
                val numberClusterMembers = readUnsignedInt(buf)
-               val viewArray = new Array[TopologyAddress](numberClusterMembers)
+               val viewArray = new Array[ServerAddress](numberClusterMembers)
                for (i <- 0 until numberClusterMembers) {
                   val host = readString(buf)
                   val port = readUnsignedShort(buf)
-                  viewArray(i) = TopologyAddress(host, port, Map.empty, null)
+                  viewArray(i) = new ServerAddress(host, port)
                }
-               Some(TopologyAwareResponse(TopologyView(topologyId, viewArray.toList)))
+               Some(TopologyAwareResponse(topologyId, viewArray.toList))
             } else if (op.clientIntel == 3) {
                val numOwners = readUnsignedShort(buf)
                val hashFunction = buf.readByte
                val hashSpace = readUnsignedInt(buf)
                val numServersInTopo = readUnsignedInt(buf)
-               // The exact number of topology addresses in the list is unknown
-               // until we loop through the entire list and we figure out how
-               // hash ids are per HotRod server (i.e. num virtual nodes > 1)
-               val members = new ListBuffer[TopologyAddress]()
-               val hashIds = new ListBuffer[Int]()
-               var prevNode: ServerNode = null
-               for (i <- 1 to numServersInTopo) {
-                  val node = new ServerNode(readString(buf), readUnsignedShort(buf))
-                  val hashId = buf.readInt
-                  if (prevNode == null || node == prevNode) {
-                     // First time node has been seen, so cache it
-                     if (prevNode == null)
-                        prevNode = node
-
-                     // Add current hash id to list
-                     hashIds += hashId
-                  } else {
-                     // A new node has been detected, so create the topology
-                     // address and store it in the view
-                     members += TopologyAddress(prevNode.host, prevNode.port,
-                           Map(op.cacheName -> hashIds.toSeq), null)
-                     prevNode = node 
-                     hashIds.clear
-                     hashIds += hashId
-                  }
-                  // Check for last server hash in which case just add it
-                  if (i == numServersInTopo)
-                    members += TopologyAddress(prevNode.host, prevNode.port,
-                           Map(op.cacheName -> hashIds.toSeq), null)
-
+               op.version match {
+                  case 10 => read10HashDistAwareHeader(buf, topologyId,
+                        numOwners, hashFunction, hashSpace, numServersInTopo)
+                  case 11 => read11HashDistAwareHeader(buf, topologyId,
+                        numOwners, hashFunction, hashSpace, numServersInTopo)
                }
-               Some(HashDistAwareResponse(TopologyView(topologyId, members.toList), numOwners, hashFunction, hashSpace))
+
+//               // The exact number of topology addresses in the list is unknown
+//               // until we loop through the entire list and we figure out how
+//               // hash ids are per HotRod server (i.e. num virtual nodes > 1)
+//               val members = new ListBuffer[ServerAddress]()
+//               val allHashIds = mutable.Map.empty[ServerAddress, Seq[Int]]
+//               var hashIdsOfAddr = new ListBuffer[Int]()
+//               var prevNode: ServerAddress = null
+//               for (i <- 1 to numServersInTopo) {
+//                  val node = new ServerAddress(readString(buf), readUnsignedShort(buf))
+//                  val hashId = buf.readInt
+//                  if (prevNode == null || node == prevNode) {
+//                     // First time node has been seen, so cache it
+//                     if (prevNode == null)
+//                        prevNode = node
+//
+//                     // Add current hash id to list
+//                     hashIdsOfAddr += hashId
+//                  } else {
+//                     // A new node has been detected, so create the topology
+//                     // address and store it in the view
+//                     allHashIds += (prevNode -> hashIdsOfAddr)
+//                     members += prevNode
+//                     prevNode = node
+//                     hashIdsOfAddr = new ListBuffer[Int]()
+//                     hashIdsOfAddr += hashId
+//                  }
+//                  // Check for last server hash in which case just add it
+//                  if (i == numServersInTopo) {
+//                     allHashIds += (prevNode -> hashIdsOfAddr)
+//                     members += prevNode
+//                  }
+//
+//               }
+//               Some(TestHashDistAware10Response(topologyId, members.toList,
+//                     immutable.Map[ServerAddress, Seq[Int]]() ++ allHashIds,
+//                     numOwners, hashFunction, hashSpace))
             } else {
                None // Is it possible?
             }
@@ -366,42 +381,51 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
             for (i <- 1 to size) {
                stats += (readString(buf) -> readString(buf))
             }
-            new TestStatsResponse(id, op.cacheName, op.clientIntel, immutable.Map[String, String]() ++ stats, op.topologyId, topologyChangeResponse)
+            new TestStatsResponse(op.version, id, op.cacheName, op.clientIntel,
+                  immutable.Map[String, String]() ++ stats, op.topologyId, topologyChangeResponse)
          }
          case PutResponse | PutIfAbsentResponse | ReplaceResponse | ReplaceIfUnmodifiedResponse
               | RemoveResponse | RemoveIfUnmodifiedResponse => {
             if (op.flags == 1) {
                val length = readUnsignedInt(buf)
                if (length == 0) {
-                  new TestResponseWithPrevious(id, op.cacheName, op.clientIntel, opCode, status,
-                     op.topologyId, None, topologyChangeResponse)
+                  new TestResponseWithPrevious(op.version, id, op.cacheName,
+                        op.clientIntel, opCode, status, op.topologyId, None,
+                        topologyChangeResponse)
                } else {
                   val previous = new Array[Byte](length)
                   buf.readBytes(previous)
-                  new TestResponseWithPrevious(id, op.cacheName, op.clientIntel, opCode, status,
-                     op.topologyId, Some(previous), topologyChangeResponse)
+                  new TestResponseWithPrevious(op.version, id, op.cacheName,
+                     op.clientIntel, opCode, status, op.topologyId, Some(previous),
+                     topologyChangeResponse)
                }
-            } else new TestResponse(id, op.cacheName, op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse)
+            } else new TestResponse(op.version, id, op.cacheName, op.clientIntel,
+                     opCode, status, op.topologyId, topologyChangeResponse)
          }
          case ContainsKeyResponse | ClearResponse | PingResponse =>
-            new TestResponse(id, op.cacheName, op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse)
+            new TestResponse(op.version, id, op.cacheName, op.clientIntel, opCode,
+                  status, op.topologyId, topologyChangeResponse)
          case GetWithVersionResponse  => {
             if (status == Success) {
                val version = buf.readLong
                val data = Some(readRangedBytes(buf))
-               new TestGetWithVersionResponse(id, op.cacheName, op.clientIntel, opCode, status,
-                  op.topologyId, data, version, topologyChangeResponse)
+               new TestGetWithVersionResponse(op.version, id, op.cacheName,
+                  op.clientIntel, opCode, status, op.topologyId, data, version,
+                  topologyChangeResponse)
             } else{
-               new TestGetWithVersionResponse(id, op.cacheName, op.clientIntel, opCode, status,
-                  op.topologyId, None, 0, topologyChangeResponse)
+               new TestGetWithVersionResponse(op.version, id, op.cacheName,
+                     op.clientIntel, opCode, status, op.topologyId, None, 0,
+                     topologyChangeResponse)
             }
          }
          case GetResponse => {
             if (status == Success) {
                val data = Some(readRangedBytes(buf))
-               new TestGetResponse(id, op.cacheName, op.clientIntel, opCode, status, op.topologyId, data, topologyChangeResponse)
+               new TestGetResponse(op.version, id, op.cacheName, op.clientIntel,
+                     opCode, status, op.topologyId, data, topologyChangeResponse)
             } else{
-               new TestGetResponse(id, op.cacheName, op.clientIntel, opCode, status, op.topologyId, None, topologyChangeResponse)
+               new TestGetResponse(op.version, id, op.cacheName, op.clientIntel,
+                     opCode, status, op.topologyId, None, topologyChangeResponse)
             }
          }
          case BulkGetResponse => {
@@ -412,13 +436,16 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
                done = buf.readByte
             }
             val bulk = immutable.Map[ByteArrayKey, Array[Byte]]() ++ bulkBuffer
-            new TestBulkGetResponse(id, op.cacheName, op.clientIntel, bulk, op.topologyId, topologyChangeResponse)
+            new TestBulkGetResponse(op.version, id, op.cacheName, op.clientIntel,
+                  bulk, op.topologyId, topologyChangeResponse)
          }
          case ErrorResponse => {
             if (op == null)
-               new TestErrorResponse(id, "", 0, status, 0, readString(buf), topologyChangeResponse)
+               new TestErrorResponse(10, id, "", 0, status, 0,
+                     readString(buf), topologyChangeResponse)
             else
-               new TestErrorResponse(id, op.cacheName, op.clientIntel, status, op.topologyId, readString(buf), topologyChangeResponse)
+               new TestErrorResponse(op.version, id, op.cacheName, op.clientIntel,
+                     status, op.topologyId, readString(buf), topologyChangeResponse)
          }
 
       }
@@ -429,6 +456,60 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
       logExceptionReported(e.getCause)
    }
+
+   private def read10HashDistAwareHeader(buf: ChannelBuffer, topologyId: Int,
+            numOwners: Int, hashFunction: Byte, hashSpace: Int,
+            numServersInTopo: Int): Option[AbstractTopologyResponse] = {
+      // The exact number of topology addresses in the list is unknown
+      // until we loop through the entire list and we figure out how
+      // hash ids are per HotRod server (i.e. num virtual nodes > 1)
+      val members = new ListBuffer[ServerAddress]()
+      val allHashIds = mutable.Map.empty[ServerAddress, Seq[Int]]
+      var hashIdsOfAddr = new ListBuffer[Int]()
+      var prevNode: ServerAddress = null
+      for (i <- 1 to numServersInTopo) {
+         val node = new ServerAddress(readString(buf), readUnsignedShort(buf))
+         val hashId = buf.readInt
+         if (prevNode == null || node == prevNode) {
+            // First time node has been seen, so cache it
+            if (prevNode == null)
+               prevNode = node
+
+            // Add current hash id to list
+            hashIdsOfAddr += hashId
+         } else {
+            // A new node has been detected, so create the topology
+            // address and store it in the view
+            allHashIds += (prevNode -> hashIdsOfAddr)
+            members += prevNode
+            prevNode = node
+            hashIdsOfAddr = new ListBuffer[Int]()
+            hashIdsOfAddr += hashId
+         }
+         // Check for last server hash in which case just add it
+         if (i == numServersInTopo) {
+            allHashIds += (prevNode -> hashIdsOfAddr)
+            members += prevNode
+         }
+
+      }
+      Some(TestHashDistAware10Response(topologyId, members.toList,
+            immutable.Map[ServerAddress, Seq[Int]]() ++ allHashIds,
+            numOwners, hashFunction, hashSpace))
+   }
+
+   private def read11HashDistAwareHeader(buf: ChannelBuffer, topologyId: Int,
+            numOwners: Int, hashFunction: Byte, hashSpace: Int,
+            numServersInTopo: Int): Option[AbstractTopologyResponse] = {
+      val numVirtualNodes = readUnsignedInt(buf)
+      val members = new ListBuffer[ServerAddress]()
+      for (i <- 1 to numServersInTopo)
+         members += new ServerAddress(readString(buf), readUnsignedShort(buf))
+
+      Some(TestHashDistAware11Response(topologyId, members.toList,
+            numOwners, hashFunction, hashSpace, numVirtualNodes))
+   }
+
 }
 
 private class ClientHandler(rspTimeoutSeconds: Int) extends SimpleChannelUpstreamHandler {
@@ -459,6 +540,7 @@ private class ClientHandler(rspTimeoutSeconds: Int) extends SimpleChannelUpstrea
 }
 
 class Op(val magic: Int,
+         val version: Byte,
          val code: Byte,
          val cacheName: String,
          val key: Array[Byte],
@@ -466,7 +548,7 @@ class Op(val magic: Int,
          val maxIdle: Int,
          val value: Array[Byte],
          val flags: Int,
-         val version: Long,
+         val dataVersion: Long,
          val clientIntel: Byte,
          val topologyId: Int) {
    lazy val id = HotRodClient.idCounter.incrementAndGet
@@ -474,6 +556,7 @@ class Op(val magic: Int,
       new StringBuilder().append("Op").append("(")
          .append(id).append(',')
          .append(magic).append(',')
+         .append(version).append(',')
          .append(code).append(',')
          .append(cacheName).append(',')
          .append(if (key == null) "null" else Util.printArray(key, true)).append(',')
@@ -481,7 +564,7 @@ class Op(val magic: Int,
          .append(lifespan).append(',')
          .append(if (value == null) "null" else Util.printArray(value, true)).append(',')
          .append(flags).append(',')
-         .append(version).append(',')
+         .append(dataVersion).append(',')
          .append(clientIntel).append(',')
          .append(topologyId).append(')')
          .toString
@@ -490,6 +573,7 @@ class Op(val magic: Int,
 }
 
 class PartialOp(override val magic: Int,
+                override val version: Byte,
                 override val code: Byte,
                 override val cacheName: String,
                 override val key: Array[Byte],
@@ -497,68 +581,104 @@ class PartialOp(override val magic: Int,
                 override val maxIdle: Int,
                 override val value: Array[Byte],
                 override val flags: Int,
-                override val version: Long,
+                override val dataVersion: Long,
                 override val clientIntel: Byte,
                 override val topologyId: Int)
-      extends Op(magic, code, cacheName, key, lifespan, maxIdle, value, flags, version, clientIntel, topologyId) {
-}
+      extends Op(magic, version, code, cacheName, key, lifespan, maxIdle, value,
+                 flags, dataVersion, clientIntel, topologyId)
 
 class StatsOp(override val magic: Int,
+              override val version: Byte,
               override val code: Byte,
               override val cacheName: String,
               override val clientIntel: Byte,
               override val topologyId: Int,
-              val statName: String) extends Op(magic, code, cacheName, null, 0, 0, null, 0, 0, clientIntel, topologyId)
+              val statName: String)
+      extends Op(magic, version, code, cacheName, null, 0, 0, null, 0, 0,
+                 clientIntel, topologyId)
 
 class BulkGetOp(override val magic: Int,
+              override val version: Byte,
               override val code: Byte,
               override val cacheName: String,
               override val clientIntel: Byte,
               override val topologyId: Int,
-              val count: Int) extends Op(magic, code, cacheName, null, 0, 0, null, 0, 0, clientIntel, topologyId)
+              val count: Int)
+     extends Op(magic, version, code, cacheName, null, 0, 0, null, 0, 0,
+                clientIntel, topologyId)
 
-class TestResponse(override val messageId: Long, override val cacheName: String,
-                   override val clientIntel: Short, override val operation: OperationResponse,
+class TestResponse(override val version: Byte, override val messageId: Long,
+                   override val cacheName: String, override val clientIntel: Short,
+                   override val operation: OperationResponse,
                    override val status: OperationStatus,
                    override val topologyId: Int,
                    val topologyResponse: Option[AbstractTopologyResponse])
-      extends Response(messageId, cacheName, clientIntel, operation, status, topologyId)
+      extends Response(version, messageId, cacheName, clientIntel, operation, status, topologyId) {
+   override def toString = {
+      new StringBuilder().append("Response").append("{")
+         .append("version=").append(version)
+         .append(", messageId=").append(messageId)
+         .append(", operation=").append(operation)
+         .append(", status=").append(status)
+         .append(", cacheName=").append(cacheName)
+         .append(", topologyResponse=").append(topologyResponse)
+         .append("}").toString()
+   }
+}
 
-class TestResponseWithPrevious(override val messageId: Long, override val cacheName: String,
-                           override val clientIntel: Short, override val operation: OperationResponse,
+class TestResponseWithPrevious(override val version: Byte, override val messageId: Long,
+                           override val cacheName: String, override val clientIntel: Short,
+                           override val operation: OperationResponse,
                            override val status: OperationStatus,
                            override val topologyId: Int, val previous: Option[Array[Byte]],
                            override val topologyResponse: Option[AbstractTopologyResponse])
-      extends TestResponse(messageId, cacheName, clientIntel, operation, status, topologyId, topologyResponse)
+      extends TestResponse(version, messageId, cacheName, clientIntel, operation, status, topologyId, topologyResponse)
 
-class TestGetResponse(override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
+class TestGetResponse(override val version: Byte, override val messageId: Long,
+                  override val cacheName: String, override val clientIntel: Short,
                   override val operation: OperationResponse, override val status: OperationStatus,
                   override val topologyId: Int, val data: Option[Array[Byte]],
                   override val topologyResponse: Option[AbstractTopologyResponse])
-      extends TestResponse(messageId, cacheName, clientIntel, operation, status, topologyId, topologyResponse)
+      extends TestResponse(version, messageId, cacheName, clientIntel, operation, status, topologyId, topologyResponse)
 
-class TestGetWithVersionResponse(override val messageId: Long, override val cacheName: String,
-                             override val clientIntel: Short, override val operation: OperationResponse,
+class TestGetWithVersionResponse(override val version: Byte, override val messageId: Long,
+                             override val cacheName: String, override val clientIntel: Short,
+                             override val operation: OperationResponse,
                              override val status: OperationStatus,
                              override val topologyId: Int,
-                             override val data: Option[Array[Byte]], val version: Long,
+                             override val data: Option[Array[Byte]], val dataVersion: Long,
                              override val topologyResponse: Option[AbstractTopologyResponse])
-      extends TestGetResponse(messageId, cacheName, clientIntel, operation, status, topologyId, data, topologyResponse)
+      extends TestGetResponse(version, messageId, cacheName, clientIntel, operation, status, topologyId, data, topologyResponse)
 
-class TestErrorResponse(override val messageId: Long, override val cacheName: String,
-                    override val clientIntel: Short, override val status: OperationStatus,
+class TestErrorResponse(override val version: Byte, override val messageId: Long,
+                    override val cacheName: String, override val clientIntel: Short,
+                    override val status: OperationStatus,
                     override val topologyId: Int, val msg: String,
                     override val topologyResponse: Option[AbstractTopologyResponse])
-      extends TestResponse(messageId, cacheName, clientIntel, ErrorResponse, status, topologyId, topologyResponse)
+      extends TestResponse(version, messageId, cacheName, clientIntel, ErrorResponse, status, topologyId, topologyResponse)
 
-class TestStatsResponse(override val messageId: Long, override val cacheName: String,
-                        override val clientIntel: Short, val stats: Map[String, String],
-                        override val topologyId: Int, override val topologyResponse: Option[AbstractTopologyResponse])
-      extends TestResponse(messageId, cacheName, clientIntel, StatsResponse, Success, topologyId, topologyResponse)
+class TestStatsResponse(override val version: Byte, override val messageId: Long,
+                        override val cacheName: String, override val clientIntel: Short,
+                        val stats: Map[String, String], override val topologyId: Int,
+                        override val topologyResponse: Option[AbstractTopologyResponse])
+      extends TestResponse(version, messageId, cacheName, clientIntel, StatsResponse, Success, topologyId, topologyResponse)
 
-class TestBulkGetResponse(override val messageId: Long, override val cacheName: String,
-                          override val clientIntel: Short, val bulkData: Map[ByteArrayKey, Array[Byte]],
+class TestBulkGetResponse(override val version: Byte, override val messageId: Long,
+                          override val cacheName: String, override val clientIntel: Short,
+                          val bulkData: Map[ByteArrayKey, Array[Byte]],
                           override val topologyId: Int, override val topologyResponse: Option[AbstractTopologyResponse])
-      extends TestResponse(messageId, cacheName, clientIntel, BulkGetResponse, Success, topologyId, topologyResponse)
+      extends TestResponse(version, messageId, cacheName, clientIntel, BulkGetResponse, Success, topologyId, topologyResponse)
 
 case class ServerNode(val host: String, val port: Int)
+
+case class TestHashDistAware10Response(override val viewId: Int,
+                        override val members: Iterable[ServerAddress],
+                        hashIds: Map[ServerAddress, Seq[Int]],
+                        numOwners: Int, hashFunction: Byte, hashSpace: Int)
+      extends AbstractTopologyResponse(viewId, members)
+
+case class TestHashDistAware11Response(override val viewId: Int,
+                        override val members: Iterable[ServerAddress],
+                        numOwners: Int, hashFunction: Byte, hashSpace: Int,
+                        numVirtualNodes: Int)
+      extends AbstractTopologyResponse(viewId, members)

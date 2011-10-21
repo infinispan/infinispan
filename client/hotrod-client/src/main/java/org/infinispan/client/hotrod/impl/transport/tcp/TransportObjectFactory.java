@@ -24,6 +24,7 @@ package org.infinispan.client.hotrod.impl.transport.tcp;
 
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -41,11 +42,13 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
    private final AtomicInteger topologyId;
    private final boolean pingOnStartup;
    private volatile boolean firstPingExecuted = false;
+   private final Codec codec;
 
-   public TransportObjectFactory(TcpTransportFactory tcpTransportFactory, AtomicInteger topologyId, boolean pingOnStartup) {
+   public TransportObjectFactory(Codec codec, TcpTransportFactory tcpTransportFactory, AtomicInteger topologyId, boolean pingOnStartup) {
       this.tcpTransportFactory = tcpTransportFactory;
       this.topologyId = topologyId;
       this.pingOnStartup = pingOnStartup;
+      this.codec = codec;
    }
 
    @Override
@@ -68,7 +71,7 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
    }
 
    private PingOperation.PingResult ping(TcpTransport tcpTransport, AtomicInteger topologyId) {
-      PingOperation po = new PingOperation(topologyId, tcpTransport);
+      PingOperation po = new PingOperation(codec, topologyId, tcpTransport);
       return po.execute();
    }
 

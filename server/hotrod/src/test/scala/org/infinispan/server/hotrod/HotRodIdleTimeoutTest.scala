@@ -41,7 +41,7 @@ class HotRodIdleTimeoutTest extends HotRodSingleNodeTest {
    override protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager) =
       startHotRodServer(cacheManager, UniquePortThreadLocal.get.intValue, 5)
 
-   override protected def connectClient = new HotRodClient("127.0.0.1", server.getPort, cacheName, 10)
+   override protected def connectClient = new HotRodClient("127.0.0.1", server.getPort, cacheName, 10, 10)
 
    def testSendPartialRequest(m: Method) {
       client.assertPut(m)

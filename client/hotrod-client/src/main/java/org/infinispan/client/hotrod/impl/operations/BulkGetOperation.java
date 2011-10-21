@@ -23,6 +23,8 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
@@ -39,8 +41,8 @@ public class BulkGetOperation extends RetryOnFailureOperation {
 
    private final int entryCount;
 
-   public BulkGetOperation(TransportFactory transportFactory, byte[] cacheName, AtomicInteger topologyId, Flag[] flags, int entryCount) {
-      super(transportFactory, cacheName, topologyId, flags);
+   public BulkGetOperation(Codec codec, TransportFactory transportFactory, byte[] cacheName, AtomicInteger topologyId, Flag[] flags, int entryCount) {
+      super(codec, transportFactory, cacheName, topologyId, flags);
       this.entryCount = entryCount;
    }
    
@@ -51,10 +53,10 @@ public class BulkGetOperation extends RetryOnFailureOperation {
 
    @Override
    protected Object executeOperation(Transport transport) {
-      long messageId = writeHeader(transport, BULK_GET_REQUEST);
+      HeaderParams params = writeHeader(transport, BULK_GET_REQUEST);
       transport.writeVInt(entryCount);
       transport.flush();
-      readHeaderAndValidate(transport, messageId, BULK_GET_RESPONSE);
+      readHeaderAndValidate(transport, params);
       HashMap result = new HashMap();
       while ( transport.readByte() == 1) { //there's more!
          result.put(transport.readArray(), transport.readArray());

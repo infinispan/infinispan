@@ -24,6 +24,8 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
@@ -44,9 +46,9 @@ public abstract class AbstractKeyValueOperation extends AbstractKeyOperation {
 
    protected final int maxIdle;
 
-   protected AbstractKeyValueOperation(TransportFactory transportFactory, byte[] key, byte[] cacheName,
-                                    AtomicInteger topologyId, Flag[] flags, byte[] value, int lifespan, int maxIdle) {
-      super(transportFactory, key, cacheName, topologyId, flags);
+   protected AbstractKeyValueOperation(Codec codec, TransportFactory transportFactory, byte[] key, byte[] cacheName,
+                                       AtomicInteger topologyId, Flag[] flags, byte[] value, int lifespan, int maxIdle) {
+      super(codec, transportFactory, key, cacheName, topologyId, flags);
       this.value = value;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;
@@ -55,7 +57,7 @@ public abstract class AbstractKeyValueOperation extends AbstractKeyOperation {
    //[header][key length][key][lifespan][max idle][value length][value]
    protected short sendPutOperation(Transport transport, short opCode, byte opRespCode) {
       // 1) write header
-      long messageId = writeHeader(transport, opCode);
+      HeaderParams params = writeHeader(transport, opCode);
 
       // 2) write key and value
       transport.writeArray(key);
@@ -67,6 +69,6 @@ public abstract class AbstractKeyValueOperation extends AbstractKeyOperation {
       // 3) now read header
 
       //return status (not error status for sure)
-      return readHeaderAndValidate(transport, messageId, opRespCode);
+      return readHeaderAndValidate(transport, params);
    }
 }

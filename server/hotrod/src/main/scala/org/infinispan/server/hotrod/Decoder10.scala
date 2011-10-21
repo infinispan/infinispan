@@ -51,7 +51,7 @@ object Decoder10 extends AbstractVersionedDecoder with Log {
    import ProtocolFlag._
    type SuitableHeader = HotRodHeader
 
-   override def readHeader(buffer: ChannelBuffer, messageId: Long): (HotRodHeader, Boolean) = {
+   override def readHeader(buffer: ChannelBuffer, version: Byte, messageId: Long): (HotRodHeader, Boolean) = {
       val streamOp = buffer.readUnsignedByte
       val (op, endOfOp) = streamOp match {
          case 0x01 => (PutRequest, false)
@@ -67,7 +67,8 @@ object Decoder10 extends AbstractVersionedDecoder with Log {
          case 0x15 => (StatsRequest, true)
          case 0x17 => (PingRequest, true)
          case 0x19 => (BulkGetRequest, false)
-         case _ => throw new HotRodUnknownOperationException("Unknown operation: " + streamOp, messageId)
+         case _ => throw new HotRodUnknownOperationException(
+               "Unknown operation: " + streamOp, version, messageId)
       }
       if (isTraceEnabled) trace("Operation code: %d has been matched to %s", streamOp, op)
       
@@ -82,7 +83,7 @@ object Decoder10 extends AbstractVersionedDecoder with Log {
       val txId = buffer.readByte
       if (txId != 0) throw new UnsupportedOperationException("Transaction types other than 0 (NO_TX) is not supported at this stage.  Saw TX_ID of " + txId)
 
-      (new HotRodHeader(op, messageId, cacheName, flag, clientIntelligence, topologyId, this), endOfOp)
+      (new HotRodHeader(op, version, messageId, cacheName, flag, clientIntelligence, topologyId, this), endOfOp)
    }
 
    override def readKey(h: HotRodHeader, buffer: ChannelBuffer): (ByteArrayKey, Boolean) = {
@@ -134,34 +135,40 @@ object Decoder10 extends AbstractVersionedDecoder with Log {
 
    private def createResponse(h: HotRodHeader, op: OperationResponse, st: OperationStatus, prev: CacheValue): AnyRef = {
       if (h.flag == ForceReturnPreviousValue)
-         new ResponseWithPrevious(h.messageId, h.cacheName, h.clientIntel, op, st, h.topologyId,
-            if (prev == null) None else Some(prev.data))
+         new ResponseWithPrevious(h.version, h.messageId, h.cacheName,
+               h.clientIntel, op, st, h.topologyId, if (prev == null) None else Some(prev.data))
       else
-         new Response(h.messageId, h.cacheName, h.clientIntel, op, st, h.topologyId)
+         new Response(h.version, h.messageId, h.cacheName, h.clientIntel, op, st, h.topologyId)
    }
 
    override def createGetResponse(h: HotRodHeader, v: CacheValue): AnyRef = {
       val op = h.op
       if (v != null && op == GetRequest)
-         new GetResponse(h.messageId, h.cacheName, h.clientIntel, GetResponse, Success, h.topologyId, Some(v.data))
+         new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+               GetResponse, Success, h.topologyId, Some(v.data))
       else if (v != null && op == GetWithVersionRequest)
-         new GetWithVersionResponse(h.messageId, h.cacheName, h.clientIntel, GetWithVersionResponse, Success,
-            h.topologyId, Some(v.data), v.version)
+         new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
+               h.clientIntel, GetWithVersionResponse, Success, h.topologyId,
+               Some(v.data), v.version)
       else if (op == GetRequest)
-         new GetResponse(h.messageId, h.cacheName, h.clientIntel, GetResponse, KeyDoesNotExist, h.topologyId, None)
+         new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+                         GetResponse, KeyDoesNotExist, h.topologyId, None)
       else
-         new GetWithVersionResponse(h.messageId, h.cacheName, h.clientIntel, GetWithVersionResponse, KeyDoesNotExist,
-            h.topologyId, None, 0)
+         new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
+               h.clientIntel, GetWithVersionResponse, KeyDoesNotExist,
+               h.topologyId, None, 0)
    }
 
    override def customReadHeader(h: HotRodHeader, buffer: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef = {
       h.op match {
          case ClearRequest => {
             // Get an optimised cache in case we can make the operation more efficient
-            getOptimizedCache(h, cache).clear
-            new Response(h.messageId, h.cacheName, h.clientIntel, ClearResponse, Success, h.topologyId)
+            getOptimizedCache(h, cache).clear()
+            new Response(h.version, h.messageId, h.cacheName, h.clientIntel,
+                         ClearResponse, Success, h.topologyId)
          }
-         case PingRequest => new Response(h.messageId, h.cacheName, h.clientIntel, PingResponse, Success, h.topologyId)
+         case PingRequest => new Response(h.version, h.messageId, h.cacheName,
+                  h.clientIntel, PingResponse, Success, h.topologyId)
       }
    }
 
@@ -188,14 +195,17 @@ object Decoder10 extends AbstractVersionedDecoder with Log {
          case ContainsKeyRequest => {
             val k = readKey(buffer)
             if (cache.containsKey(k))
-               new Response(h.messageId, h.cacheName, h.clientIntel, ContainsKeyResponse, Success, h.topologyId)
+               new Response(h.version, h.messageId, h.cacheName, h.clientIntel,
+                            ContainsKeyResponse, Success, h.topologyId)
             else
-               new Response(h.messageId, h.cacheName, h.clientIntel, ContainsKeyResponse, KeyDoesNotExist, h.topologyId)
+               new Response(h.version, h.messageId, h.cacheName, h.clientIntel,
+                            ContainsKeyResponse, KeyDoesNotExist, h.topologyId)
          }
          case BulkGetRequest => {
             val count = readUnsignedInt(buffer)
             if (isTraceEnabled) trace("About to create bulk response, count = %d", count)
-            new BulkGetResponse(h.messageId, h.cacheName, h.clientIntel, BulkGetResponse, Success, h.topologyId, count)
+            new BulkGetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+                                BulkGetResponse, Success, h.topologyId, count)
          }
       }
    }
@@ -215,17 +225,21 @@ object Decoder10 extends AbstractVersionedDecoder with Log {
       stats += ("removeMisses" -> cacheStats.getRemoveMisses.toString)
       stats += ("totalBytesRead" -> t.getTotalBytesRead)
       stats += ("totalBytesWritten" -> t.getTotalBytesWritten)
-      new StatsResponse(h.messageId, h.cacheName, h.clientIntel, immutable.Map[String, String]() ++ stats, h.topologyId)
+      new StatsResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+                        immutable.Map[String, String]() ++ stats, h.topologyId)
    }
 
    override def createErrorResponse(h: HotRodHeader, t: Throwable): ErrorResponse = {
       t match {
          case i: IOException =>
-            new ErrorResponse(h.messageId, h.cacheName, h.clientIntel, ParseError, h.topologyId, i.toString)
+            new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+                              ParseError, h.topologyId, i.toString)
          case t: TimeoutException =>
-            new ErrorResponse(h.messageId, h.cacheName, h.clientIntel, OperationTimedOut, h.topologyId, t.toString)
+            new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+                              OperationTimedOut, h.topologyId, t.toString)
          case t: Throwable =>
-            new ErrorResponse(h.messageId, h.cacheName, h.clientIntel, ServerError, h.topologyId, t.toString)
+            new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+                              ServerError, h.topologyId, t.toString)
       }
    }
 

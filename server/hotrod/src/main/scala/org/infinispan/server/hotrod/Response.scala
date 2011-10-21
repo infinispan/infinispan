@@ -32,27 +32,31 @@ import org.infinispan.util.Util
  * @author Galder Zamarreño
  * @since 4.1
  */
-class Response(val messageId: Long, val cacheName: String, val clientIntel: Short, val operation: OperationResponse,
-               val status: OperationStatus, val topologyId: Int) {
+class Response(val version: Byte, val messageId: Long, val cacheName: String,
+      val clientIntel: Short, val operation: OperationResponse,
+      val status: OperationStatus, val topologyId: Int) {
    override def toString = {
       new StringBuilder().append("Response").append("{")
-         .append("messageId=").append(messageId)
+         .append("version=").append(version)
+         .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
          .append(", cacheName=").append(cacheName)
-         .append("}").toString
+         .append("}").toString()
    }
 }
 
-class ResponseWithPrevious(override val messageId: Long, override val cacheName: String,
-                           override val clientIntel: Short, override val operation: OperationResponse,
+class ResponseWithPrevious(override val version: Byte, override val messageId: Long,
+                           override val cacheName: String, override val clientIntel: Short,
+                           override val operation: OperationResponse,
                            override val status: OperationStatus,
                            override val topologyId: Int,
                            val previous: Option[Array[Byte]])
-      extends Response(messageId, cacheName, clientIntel, operation, status, topologyId) {
+      extends Response(version, messageId, cacheName, clientIntel, operation, status, topologyId) {
    override def toString = {
       new StringBuilder().append("ResponseWithPrevious").append("{")
-         .append("messageId=").append(messageId)
+         .append("version=").append(version)
+         .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
          .append(", previous=").append(if (previous == None) "null" else Util.printArray(previous.get, true))
@@ -60,57 +64,61 @@ class ResponseWithPrevious(override val messageId: Long, override val cacheName:
    }
 }
 
-class GetResponse(override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
+class GetResponse(override val version: Byte, override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
                   override val operation: OperationResponse, override val status: OperationStatus,
                   override val topologyId: Int,
                   val data: Option[Array[Byte]])
-      extends Response(messageId, cacheName, clientIntel, operation, status, topologyId) {
+      extends Response(version, messageId, cacheName, clientIntel, operation, status, topologyId) {
    override def toString = {
       new StringBuilder().append("GetResponse").append("{")
-         .append("messageId=").append(messageId)
+         .append("version=").append(version)
+         .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
          .append(", data=").append(if (data == None) "null" else Util.printArray(data.get, true))
          .append("}").toString
    }
 }
-class BulkGetResponse(override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
+class BulkGetResponse(override val version: Byte, override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
                   override val operation: OperationResponse, override val status: OperationStatus,
                   override val topologyId: Int, val count: Int)
-      extends Response(messageId, cacheName, clientIntel, operation, status, topologyId) {
+      extends Response(version, messageId, cacheName, clientIntel, operation, status, topologyId) {
    override def toString = {
       new StringBuilder().append("BulkGetResponse").append("{")
-         .append("messageId=").append(messageId)
+         .append("version=").append(version)
+         .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
          .append(", data=").append("}").toString
    }
 }
 
-class GetWithVersionResponse(override val messageId: Long, override val cacheName: String,
+class GetWithVersionResponse(override val version: Byte, override val messageId: Long, override val cacheName: String,
                              override val clientIntel: Short, override val operation: OperationResponse,
                              override val status: OperationStatus,
                              override val topologyId: Int,
-                             override val data: Option[Array[Byte]], val version: Long)
-      extends GetResponse(messageId, cacheName, clientIntel, operation, status, topologyId, data) {
+                             override val data: Option[Array[Byte]], val dataVersion: Long)
+      extends GetResponse(version, messageId, cacheName, clientIntel, operation, status, topologyId, data) {
    override def toString = {
       new StringBuilder().append("GetWithVersionResponse").append("{")
-         .append("messageId=").append(messageId)
+         .append("version=").append(version)
+         .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
          .append(", data=").append(if (data == None) "null" else Util.printArray(data.get, true))
-         .append(", version=").append(version)
+         .append(", dataVersion=").append(dataVersion)
          .append("}").toString
    }
 }
 
-class ErrorResponse(override val messageId: Long, override val cacheName: String,
+class ErrorResponse(override val version: Byte, override val messageId: Long, override val cacheName: String,
                     override val clientIntel: Short, override val status: OperationStatus,
                     override val topologyId: Int, val msg: String)
-      extends Response(messageId, cacheName, clientIntel, ErrorResponse, status, topologyId) {
+      extends Response(version, messageId, cacheName, clientIntel, ErrorResponse, status, topologyId) {
    override def toString = {
       new StringBuilder().append("ErrorResponse").append("{")
-         .append("messageId=").append(messageId)
+         .append("version=").append(version)
+         .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
          .append(", msg=").append(msg)
@@ -118,22 +126,33 @@ class ErrorResponse(override val messageId: Long, override val cacheName: String
    }
 }
 
-class StatsResponse(override val messageId: Long, override val cacheName: String,
+class StatsResponse(override val version: Byte, override val messageId: Long, override val cacheName: String,
                     override val clientIntel: Short, val stats: Map[String, String],
                     override val topologyId: Int)
-      extends Response(messageId, cacheName, clientIntel, StatsResponse, Success, topologyId) {
+      extends Response(version, messageId, cacheName, clientIntel, StatsResponse, Success, topologyId) {
    override def toString = {
       new StringBuilder().append("StatsResponse").append("{")
-         .append("messageId=").append(messageId)
+         .append("version=").append(version)
+         .append(", messageId=").append(messageId)
          .append(", stats=").append(stats)
          .append("}").toString
    }
 }
 
-abstract class AbstractTopologyResponse(val view: TopologyView)
+abstract class AbstractTopologyResponse(val viewId: Int,
+                                        val members: Iterable[ServerAddress])
 
-case class TopologyAwareResponse(override val view: TopologyView)
-      extends AbstractTopologyResponse(view)
+case class TopologyAwareResponse(override val viewId: Int,
+                                 override val members: Iterable[ServerAddress])
+      extends AbstractTopologyResponse(viewId, members)
 
-case class HashDistAwareResponse(override val view: TopologyView, numOwners: Int, hashFunction: Byte, hashSpace: Int)
-      extends AbstractTopologyResponse(view)
+case class HashDistAwareResponse(override val viewId: Int,
+                                 override val members: Iterable[ServerAddress],
+                                 numOwners: Int, hashFunction: Byte, hashSpace: Int)
+      extends AbstractTopologyResponse(viewId, members)
+
+case class HashDistAware11Response(override val viewId: Int,
+                                 override val members: Iterable[ServerAddress],
+                                 numOwners: Int, hashFunction: Byte, hashSpace: Int,
+                                 numVNodes: Int)
+      extends AbstractTopologyResponse(viewId, members)

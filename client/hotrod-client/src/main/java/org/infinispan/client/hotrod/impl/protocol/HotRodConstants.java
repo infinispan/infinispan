@@ -35,7 +35,8 @@ public interface HotRodConstants {
    static final short REQUEST_MAGIC = 0xA0;
    static final short RESPONSE_MAGIC = 0xA1;
 
-   static final byte HOTROD_VERSION = 10;
+   static final byte VERSION_10 = 10;
+   static final byte VERSION_11 = 11;
 
    //requests
    static final byte PUT_REQUEST = 0x01;

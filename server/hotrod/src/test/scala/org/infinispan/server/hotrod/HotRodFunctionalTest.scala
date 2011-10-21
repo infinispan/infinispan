@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodFunctionalTest")
 class HotRodFunctionalTest extends HotRodSingleNodeTest {
 
-   import HotRodServer.TopologyCacheName
+   import HotRodServer.ADDRESS_CACHE_NAME
 
    def testUnknownCommand(m: Method) {
       val status = client.execute(0xA0, 0x77, cacheName, k(m) , 0, 0, v(m), 0, 1, 0).status
@@ -81,7 +81,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testPutOnTopologyCache(m: Method) {
-      val resp = client.execute(0xA0, 0x01, TopologyCacheName, k(m), 0, 0, v(m), 0, 1, 0).asInstanceOf[TestErrorResponse]
+      val resp = client.execute(0xA0, 0x01, ADDRESS_CACHE_NAME, k(m), 0, 0, v(m), 0, 1, 0).asInstanceOf[TestErrorResponse]
       assertTrue(resp.msg.contains("Remote requests are not allowed to topology cache."))
       assertEquals(resp.status, ParseError, "Status should have been 'ParseError' but instead was: " + resp.status)
       client.assertPut(m)
@@ -197,14 +197,14 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    def testGetWithVersionDoesNotExist(m: Method) {
       val resp = client.getWithVersion(k(m), 0)
       assertKeyDoesNotExist(resp)
-      assertTrue(resp.version == 0)
+      assertTrue(resp.dataVersion == 0)
    }
 
    def testReplaceIfUnmodifiedBasic(m: Method) {
       client.assertPut(m)
       val resp = client.getWithVersion(k(m), 0)
       assertSuccess(resp, v(m), 0)
-      val resp2 = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v1-"), resp.version)
+      val resp2 = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v1-"), resp.dataVersion)
       assertStatus(resp2, Success)
    }
 
@@ -212,7 +212,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       client.assertPut(m)
       val resp = client.getWithVersion(k(m), 0)
       assertSuccess(resp, v(m), 0)
-      val resp2 = client.replaceIfUnmodified(k(m, "k1-"), 0, 0, v(m, "v1-"), resp.version)
+      val resp2 = client.replaceIfUnmodified(k(m, "k1-"), 0, 0, v(m, "v1-"), resp.dataVersion)
       assertStatus(resp2, KeyDoesNotExist)
    }
 
@@ -220,14 +220,14 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       client.assertPut(m)
       val resp = client.getWithVersion(k(m), 0)
       assertSuccess(resp, v(m), 0)
-      val resp2 = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v1-"), resp.version)
+      val resp2 = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v1-"), resp.dataVersion)
       assertStatus(resp2, Success)
       val resp3 = client.getWithVersion(k(m), 0)
       assertSuccess(resp3, v(m, "v1-"), 0)
-      assertTrue(resp.version != resp3.version)
-      val resp4 = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v2-"), resp.version)
+      assertTrue(resp.dataVersion != resp3.dataVersion)
+      val resp4 = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v2-"), resp.dataVersion)
       assertStatus(resp4, OperationNotExecuted)
-      val resp5 = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v2-"), resp3.version)
+      val resp5 = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v2-"), resp3.dataVersion)
       assertStatus(resp5, Success)
    }
 
@@ -241,7 +241,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       resp  = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v2-"), 888, 1).asInstanceOf[TestResponseWithPrevious]
       assertStatus(resp, OperationNotExecuted)
       assertTrue(Arrays.equals(v(m), resp.previous.get))
-      resp  = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v3-"), getResp.version, 1).asInstanceOf[TestResponseWithPrevious]
+      resp  = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v3-"), getResp.dataVersion, 1).asInstanceOf[TestResponseWithPrevious]
       assertStatus(resp, Success)
       assertTrue(Arrays.equals(v(m), resp.previous.get))
    }
@@ -250,12 +250,12 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       client.assertPut(m)
       val resp = client.getWithVersion(k(m), 0)
       assertSuccess(resp, v(m), 0)
-      assertTrue(resp.version != 0)
+      assertTrue(resp.dataVersion != 0)
 
       val lifespanSecs = 2
       val lifespan = TimeUnit.SECONDS.toMillis(lifespanSecs)
       val startTime = System.currentTimeMillis
-      val resp2 = client.replaceIfUnmodified(k(m), lifespanSecs, 0, v(m, "v1-"), resp.version)
+      val resp2 = client.replaceIfUnmodified(k(m), lifespanSecs, 0, v(m, "v1-"), resp.dataVersion)
       assertStatus(resp2, Success)
 
       while (System.currentTimeMillis() < startTime + lifespan - 10) {
@@ -300,8 +300,8 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       client.assertPut(m)
       val resp = client.getWithVersion(k(m), 0)
       assertSuccess(resp, v(m), 0)
-      assertTrue(resp.version != 0)
-      val resp2 = client.removeIfUnmodified(k(m), 0, 0, v(m, "v1-"), resp.version)
+      assertTrue(resp.dataVersion != 0)
+      val resp2 = client.removeIfUnmodified(k(m), 0, 0, v(m, "v1-"), resp.dataVersion)
       assertStatus(resp2, Success)
       assertKeyDoesNotExist(client.assertGet(m))
    }
@@ -310,7 +310,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       client.assertPut(m)
       val resp = client.getWithVersion(k(m), 0)
       assertSuccess(resp, v(m), 0)
-      val resp2 = client.removeIfUnmodified(k(m, "k1-"), 0, 0, v(m, "v1-"), resp.version)
+      val resp2 = client.removeIfUnmodified(k(m, "k1-"), 0, 0, v(m, "v1-"), resp.dataVersion)
       assertStatus(resp2, KeyDoesNotExist)
       assertSuccess(client.assertGet(m), v(m))
    }
@@ -319,14 +319,14 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       client.assertPut(m)
       val resp = client.getWithVersion(k(m), 0)
       assertSuccess(resp, v(m), 0)
-      val resp2 = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v1-"), resp.version)
+      val resp2 = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v1-"), resp.dataVersion)
       assertStatus(resp2, Success)
       val resp3 = client.getWithVersion(k(m), 0)
       assertSuccess(resp3, v(m, "v1-"), 0)
-      assertTrue(resp.version != resp3.version)
-      val resp4 = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), resp.version)
+      assertTrue(resp.dataVersion != resp3.dataVersion)
+      val resp4 = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), resp.dataVersion)
       assertStatus(resp4, OperationNotExecuted)
-      val resp5 = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), resp3.version)
+      val resp5 = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), resp3.dataVersion)
       assertStatus(resp5, Success)
    }
 
@@ -340,7 +340,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       resp  = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), 888, 1).asInstanceOf[TestResponseWithPrevious]
       assertStatus(resp, OperationNotExecuted)
       assertTrue(Arrays.equals(v(m), resp.previous.get))
-      resp = client.removeIfUnmodified(k(m), 0, 0, v(m, "v3-"), getResp.version, 1).asInstanceOf[TestResponseWithPrevious]
+      resp = client.removeIfUnmodified(k(m), 0, 0, v(m, "v3-"), getResp.dataVersion, 1).asInstanceOf[TestResponseWithPrevious]
       assertStatus(resp, Success)
       assertTrue(Arrays.equals(v(m), resp.previous.get))
    }

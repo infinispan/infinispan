@@ -24,6 +24,8 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
@@ -41,15 +43,16 @@ public class RemoveIfUnmodifiedOperation extends AbstractKeyOperation {
 
    private final long version;
 
-   public RemoveIfUnmodifiedOperation(TransportFactory transportFactory, byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags, long version) {
-      super(transportFactory, key, cacheName, topologyId, flags);
+   public RemoveIfUnmodifiedOperation(Codec codec, TransportFactory transportFactory,
+            byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags, long version) {
+      super(codec, transportFactory, key, cacheName, topologyId, flags);
       this.version = version;
    }
 
    @Override
    protected Object executeOperation(Transport transport) {
       // 1) write header
-      long messageId = writeHeader(transport, REMOVE_IF_UNMODIFIED_REQUEST);
+      HeaderParams params = writeHeader(transport, REMOVE_IF_UNMODIFIED_REQUEST);
 
       //2) write message body
       transport.writeArray(key);
@@ -57,6 +60,6 @@ public class RemoveIfUnmodifiedOperation extends AbstractKeyOperation {
       transport.flush();
 
       //process response and return
-      return returnVersionedOperationResponse(transport, messageId, REMOVE_IF_UNMODIFIED_RESPONSE);
+      return returnVersionedOperationResponse(transport, params);
    }
 }

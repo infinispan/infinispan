@@ -40,6 +40,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
    public DefaultConsistentHash(Hash hash) {
       setHashFunction(hash);
+      setHashSeed(new DefaultHashSeed());
    }
 
    public List<Address> locate(Object key, int replCount) {

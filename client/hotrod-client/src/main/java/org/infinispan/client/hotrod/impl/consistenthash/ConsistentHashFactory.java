@@ -80,6 +80,7 @@ public class ConsistentHashFactory {
          if (log.isTraceEnabled()) log.tracef("Trying to use default value: %s", hashFunctionClass);
          version2ConsistentHash.put(version, hashFunctionClass);
       }
+      // TODO: Why create a brand new instance via reflection everytime a new hash topology is received? Caching???
       return (ConsistentHash) Util.getInstance(hashFunctionClass, classLoader);
    }
 

@@ -73,7 +73,7 @@ public class ConsistentHashV1 implements ConsistentHash {
 
    @Override
    public SocketAddress getServer(byte[] key) {
-      int keyHashCode = hash.hash(key);
+      int keyHashCode = getNormalizedHash(key);
       if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
       int hash = Math.abs(keyHashCode);
 
@@ -113,4 +113,10 @@ public class ConsistentHashV1 implements ConsistentHash {
    public void setHash(Hash hash) {
       this.hash = hash;
    }
+
+   @Override
+   public int getNormalizedHash(Object key) {
+      return hash.hash(key) & Integer.MAX_VALUE; // make sure no negative numbers are involved.
+   }
+
 }

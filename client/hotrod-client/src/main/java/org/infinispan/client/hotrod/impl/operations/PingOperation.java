@@ -23,8 +23,9 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import net.jcip.annotations.Immutable;
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.util.logging.Log;
@@ -45,22 +46,22 @@ public class PingOperation extends HotRodOperation {
 
    private final Transport transport;
 
-   public PingOperation(AtomicInteger topologyId, Transport transport) {
-      this(topologyId, transport, DEFAULT_CACHE_NAME_BYTES);
+   public PingOperation(Codec codec, AtomicInteger topologyId, Transport transport) {
+      this(codec, topologyId, transport, DEFAULT_CACHE_NAME_BYTES);
    }
 
-   public PingOperation(AtomicInteger topologyId, Transport transport, byte[] cacheName) {
-      super(null, cacheName, topologyId);
+   public PingOperation(Codec codec, AtomicInteger topologyId, Transport transport, byte[] cacheName) {
+      super(codec, null, cacheName, topologyId);
       this.transport = transport;
    }
 
    @Override
    public PingResult execute() {
       try {
-         long messageId = writeHeader(transport, HotRodConstants.PING_REQUEST);
+         HeaderParams params = writeHeader(transport, HotRodConstants.PING_REQUEST);
          transport.flush();
 
-         short respStatus = readHeaderAndValidate(transport, messageId, HotRodConstants.PING_RESPONSE);
+         short respStatus = readHeaderAndValidate(transport, params);
          if (respStatus == HotRodConstants.NO_ERROR_STATUS) {
             if (log.isTraceEnabled())
                log.tracef("Successfully validated transport: %s", transport);
