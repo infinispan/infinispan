@@ -789,12 +789,12 @@ public interface Log extends BasicLogger {
    void remoteStateRejected(Address sender, int viewId, int installedViewId);
 
    @LogMessage(level = WARN)
-   @Message(value = "Error rolling back to cache view %2$d for cache %1$s", id = 168)
-   void cacheViewRollbackFailure(@Cause Exception e, String cacheName, int committedViewId);
+   @Message(value = "Error rolling back to cache view %1$d for cache %2$s", id = 168)
+   void cacheViewRollbackFailure(@Cause Exception e, int committedViewId, String cacheName);
 
    @LogMessage(level = WARN)
-   @Message(value = "Error committing cache view %2$d for cache %1$s", id = 169)
-   void cacheViewCommitFailure(@Cause Exception e, String cacheName, int committedViewId);
+   @Message(value = "Error committing cache view %1$d for cache %2$s", id = 169)
+   void cacheViewCommitFailure(@Cause Exception e, int committedViewId, String cacheName);
 
    @LogMessage(level = INFO)
    @Message(value = "Our last committed view (%s) is not the same as the coordinator's last committed view (%s). This is normal during a merge", id = 170)
