@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ JBoss, Home of Professional Open Source
   ~ Copyright 2009 Red Hat Inc. and/or its affiliates and other
@@ -82,6 +82,13 @@
          <version>${version.solder}</version>
       </dependency>
 
+      <!-- Logging dependency -->
+      <dependency>
+         <groupId>org.jboss.logging</groupId>
+         <artifactId>jboss-logging</artifactId>
+         <version>${version.jboss.logging}</version>
+      </dependency>
+
       <!-- Test dependencies -->
       <dependency>
          <groupId>org.testng</groupId>
@@ -127,6 +134,43 @@
                      ${project.groupId}.cdi.*;version=${project.version};-split-package:=error
                   </Export-Package>
                </instructions>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+               <archive>
+                  <manifest>
+                     <mainClass>org.infinispan.cdi.util.Version</mainClass>
+                  </manifest>
+               </archive>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.jboss.maven.plugins</groupId>
+            <artifactId>maven-injection-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>inject-project-version</id>
+                  <phase>compile</phase>
+                  <goals>
+                     <goal>bytecode</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <configuration>
+               <bytecodeInjections>
+                  <bytecodeInjection>
+                     <expression>${project.version}</expression>
+                     <targetMembers>
+                        <methodBodyReturn>
+                           <className>org.infinispan.cdi.util.Version</className>
+                           <methodName>getVersion</methodName>
+                        </methodBodyReturn>
+                     </targetMembers>
+                  </bytecodeInjection>
+               </bytecodeInjections>
             </configuration>
          </plugin>
       </plugins>

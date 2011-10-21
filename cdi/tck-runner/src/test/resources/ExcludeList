@@ -1,10 +1,31 @@
-#List tests to be excluded.
-#Lines beginning with a '#' are comments
-#Enter One method per line with syntax FULL_CLASS_NAME # METHOD_NAME as in the example below
+#
+# JBoss, Home of Professional Open Source
+# Copyright 2011 Red Hat Inc. and/or its affiliates and other
+# contributors as indicated by the @author tags. All rights reserved.
+# See the copyright.txt in the distribution for a full listing of
+# individual contributors.
+#
+# This is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of
+# the License, or (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this software; if not, write to the Free
+# Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+#
 
-#Only the annotation tests are executed
+# List tests to be excluded - Only the annotation tests are executed
+# Lines beginning with a '#' are comments
+# Enter One method per line with syntax FULL_CLASS_NAME # METHOD_NAME as in the example below
 
-#Exclude CacheBuilderTest
+# Exclude CacheBuilderTest
 
 javax.cache.CacheBuilderTest#setCacheLoader_Null
 javax.cache.CacheBuilderTest#setReadThrough_NoCacheLoader
@@ -19,7 +40,7 @@ javax.cache.CacheBuilderTest#setExpiry_accessed
 javax.cache.CacheBuilderTest#setExpiry_modified
 javax.cache.CacheBuilderTest#setExpiry_both
 
-#Exclude CacheConfigurationTest
+# Exclude CacheConfigurationTest
 
 javax.cache.CacheConfigurationTest#
 javax.cache.CacheConfigurationTest#checkDefaults
@@ -35,7 +56,7 @@ javax.cache.CacheConfigurationTest#setExpiry_all
 javax.cache.CacheConfigurationTest#setExpiry_null_good
 javax.cache.CacheConfigurationTest#setExpiry_good_null
 
-#Exclude CacheLoaderTest
+# Exclude CacheLoaderTest
 
 javax.cache.CacheLoaderTest#load_NullKey
 javax.cache.CacheLoaderTest#load_Found
@@ -68,7 +89,7 @@ javax.cache.CacheLoaderTest#replace_2arg
 javax.cache.CacheLoaderTest#getAndReplace
 javax.cache.CacheLoaderTest#get_WithNonKeyKey
 
-#Exclude CacheManagerTest
+# Exclude CacheManagerTest
 
 javax.cache.CacheManagerTest#createCacheBuilder_NullCacheName
 javax.cache.CacheManagerTest#createCache_Same
@@ -99,11 +120,11 @@ javax.cache.CacheManagerTest#addImmutableClass_Null
 javax.cache.CacheManagerTest#addImmutableClass_NotImmutable
 javax.cache.CacheManagerTest#testUnwrap
 
-#Exclude CacheManagerTransactionTest
+# Exclude CacheManagerTransactionTest
 
 javax.cache.CacheManagerTransactionTest#getUserTransaction
 
-#Exclude CacheTest
+# Exclude CacheTest
 
 javax.cache.CacheTest#simpleAPI
 javax.cache.CacheTest#getCacheName
@@ -124,7 +145,7 @@ javax.cache.CacheTest#initialise
 javax.cache.CacheTest#stop
 javax.cache.CacheTest#testUnwrap
 
-#Exclude CachingClassLoaderTest
+# Exclude CachingClassLoaderTest
 
 javax.cache.CachingClassLoaderTest#getCacheManager_singleton
 javax.cache.CachingClassLoaderTest#getCacheManager_name
@@ -141,7 +162,7 @@ javax.cache.CachingClassLoaderTest#shutdown_2_hit
 javax.cache.CachingClassLoaderTest#shutdown_2_miss
 javax.cache.CachingClassLoaderTest#classLoader
 
-#Exclude CachingTest
+# Exclude CachingTest
 
 javax.cache.CachingTest#getCacheManager_singleton
 javax.cache.CachingTest#getCacheManager_name
@@ -153,7 +174,7 @@ javax.cache.CachingTest#getCacheManager_named_different
 javax.cache.CachingTest#release
 javax.cache.CachingTest#dummyTest
 
-#Exclude GetTest
+# Exclude GetTest
 
 javax.cache.GetTest#get_NotStarted
 javax.cache.GetTest#get_NullKey
@@ -165,7 +186,7 @@ javax.cache.GetTest#getAll_Null
 javax.cache.GetTest#getAll_NullKey
 javax.cache.GetTest#getAll
 
-#Exclude PutTest
+# Exclude PutTest
 
 javax.cache.PutTest#put_NotStarted
 javax.cache.PutTest#put_NullKey
@@ -189,7 +210,7 @@ javax.cache.PutTest#putAll_NullKey
 javax.cache.PutTest#putAll_NullValue
 javax.cache.PutTest#putAll
 
-#Exclude RemoveTest
+# Exclude RemoveTest
 
 javax.cache.RemoveTest#remove_1arg_NotStarted
 javax.cache.RemoveTest#remove_1arg_NullKey
@@ -217,7 +238,7 @@ javax.cache.RemoveTest#removeAll_1arg
 javax.cache.RemoveTest#removeAll_0arg_NotStarted
 javax.cache.RemoveTest#removeAll_0arg
 
-#Exclude ReplaceTest
+# Exclude ReplaceTest
 
 javax.cache.ReplaceTest#replace_3arg_NotStarted
 javax.cache.ReplaceTest#replace_3arg_NullKey
@@ -238,7 +259,7 @@ javax.cache.ReplaceTest#getAndReplace_NullValue
 javax.cache.ReplaceTest#getAndReplace_Missing
 javax.cache.ReplaceTest#getAndReplace
 
-#Exclude StoreByReferenceTest
+# Exclude StoreByReferenceTest
 
 javax.cache.StoreByReferenceTest#get_Existing
 javax.cache.StoreByReferenceTest#get_Existing_NotSameKey
@@ -253,7 +274,7 @@ javax.cache.StoreByReferenceTest#putIfAbsent_There
 javax.cache.StoreByReferenceTest#replace_3arg
 javax.cache.StoreByReferenceTest#getAndReplace
 
-#Exclude StoreByValueTest
+# Exclude StoreByValueTest
 
 javax.cache.StoreByValueTest#get_Existing_MutateValue
 javax.cache.StoreByValueTest#get_Existing_MutateKey

@@ -25,6 +25,8 @@ package org.infinispan.cdi.interceptor;
 import org.infinispan.Cache;
 import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextFactory;
 import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextImpl;
+import org.infinispan.cdi.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheKeyGenerator;
@@ -52,6 +54,8 @@ import java.io.Serializable;
 public class CacheRemoveEntryInterceptor implements Serializable {
 
    private static final long serialVersionUID = -9079291622309963969L;
+   private static final Log log = LogFactory.getLog(CacheRemoveEntryInterceptor.class, Log.class);
+
 
    private final CacheResolver cacheResolver;
    private final CacheKeyInvocationContextFactory contextFactory;
@@ -64,6 +68,10 @@ public class CacheRemoveEntryInterceptor implements Serializable {
 
    @AroundInvoke
    public Object cacheRemoveEntry(InvocationContext invocationContext) throws Exception {
+      if (log.isTraceEnabled()) {
+         log.tracef("Interception of method named '%s'", invocationContext.getMethod().getName());
+      }
+
       final CacheKeyInvocationContext<CacheRemoveEntry> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
       final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
       final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
@@ -72,12 +80,18 @@ public class CacheRemoveEntryInterceptor implements Serializable {
 
       if (!cacheRemoveEntry.afterInvocation()) {
          cache.remove(cacheKey);
+         if (log.isTraceEnabled()) {
+            log.tracef("Remove entry with key '%s' in cache '%s' before method invocation", cacheKey, cache.getName());
+         }
       }
 
       final Object result = invocationContext.proceed();
 
       if (cacheRemoveEntry.afterInvocation()) {
          cache.remove(cacheKey);
+         if (log.isTraceEnabled()) {
+            log.tracef("Remove entry with key '%s' in cache '%s' after method invocation", cacheKey, cache.getName());
+         }
       }
 
       return result;

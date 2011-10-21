@@ -25,6 +25,8 @@ package org.infinispan.cdi.interceptor;
 import org.infinispan.Cache;
 import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextFactory;
 import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextImpl;
+import org.infinispan.cdi.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheKeyGenerator;
@@ -45,6 +47,7 @@ import java.io.Serializable;
 public class CachePutInterceptor implements Serializable {
 
    private static final long serialVersionUID = 270924196162168618L;
+   private static final Log log = LogFactory.getLog(CachePutInterceptor.class, Log.class);
 
    private final CacheResolver cacheResolver;
    private final CacheKeyInvocationContextFactory contextFactory;
@@ -56,23 +59,33 @@ public class CachePutInterceptor implements Serializable {
    }
 
    @AroundInvoke
-   public Object cacheResult(InvocationContext invocationContext) throws Exception {
+   public Object cachePut(InvocationContext invocationContext) throws Exception {
+      if (log.isTraceEnabled()) {
+         log.tracef("Interception of method named '%s'", invocationContext.getMethod().getName());
+      }
+
       final CacheKeyInvocationContext<CachePut> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
       final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
-      final CachePut cacheResult = cacheKeyInvocationContext.getCacheAnnotation();
+      final CachePut cachePut = cacheKeyInvocationContext.getCacheAnnotation();
       final CacheKey cacheKey = cacheKeyGenerator.generateCacheKey(cacheKeyInvocationContext);
       final Cache<CacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
 
       final Object valueToCache = cacheKeyInvocationContext.getValueParameter().getValue();
 
-      if (!cacheResult.afterInvocation() && valueToCache != null) {
+      if (!cachePut.afterInvocation() && valueToCache != null) {
          cache.put(cacheKey, valueToCache);
+         if (log.isTraceEnabled()) {
+            log.tracef("Value '%s' cached in cache '%s' with key '%s' before method invocation", valueToCache, cache.getName(), cacheKey);
+         }
       }
 
       final Object result = invocationContext.proceed();
 
-      if (cacheResult.afterInvocation() && valueToCache != null) {
+      if (cachePut.afterInvocation() && valueToCache != null) {
          cache.put(cacheKey, valueToCache);
+         if (log.isTraceEnabled()) {
+            log.tracef("Value '%s' cached in cache '%s' with key '%s' after method invocation", valueToCache, cache.getName(), cacheKey);
+         }
       }
 
       return result;

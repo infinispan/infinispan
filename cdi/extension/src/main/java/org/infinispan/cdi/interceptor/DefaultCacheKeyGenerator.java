@@ -29,6 +29,8 @@ import javax.cache.annotation.CacheKeyInvocationContext;
 import javax.enterprise.context.ApplicationScoped;
 import java.lang.annotation.Annotation;
 
+import static org.infinispan.cdi.util.Contracts.assertNotNull;
+
 /**
  * Default {@link CacheKeyGenerator} implementation. By default all key parameters of the intercepted method compose the
  * {@link CacheKey}.
@@ -40,6 +42,8 @@ public class DefaultCacheKeyGenerator implements CacheKeyGenerator {
 
    @Override
    public CacheKey generateCacheKey(CacheKeyInvocationContext<? extends Annotation> cacheKeyInvocationContext) {
+      assertNotNull(cacheKeyInvocationContext, "cacheKeyInvocationContext parameter must not be null");
+
       final CacheInvocationParameter[] keyParameters = cacheKeyInvocationContext.getKeyParameters();
       final Object[] keyValues = new Object[keyParameters.length];
 

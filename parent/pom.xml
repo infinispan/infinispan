@@ -558,6 +558,11 @@
       <pluginManagement>
          <plugins>
             <plugin>
+               <groupId>org.jboss.maven.plugins</groupId>
+               <artifactId>maven-injection-plugin</artifactId>
+               <version>1.0.2</version>
+            </plugin>
+            <plugin>
                <groupId>org.scala-tools</groupId>
                <artifactId>maven-scala-plugin</artifactId>
                <version>2.15.2</version>

@@ -25,6 +25,8 @@ package org.infinispan.cdi.interceptor;
 import org.infinispan.Cache;
 import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextFactory;
 import org.infinispan.cdi.interceptor.context.CacheKeyInvocationContextImpl;
+import org.infinispan.cdi.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheKeyGenerator;
@@ -59,6 +61,8 @@ import java.io.Serializable;
 public class CacheResultInterceptor implements Serializable {
 
    private static final long serialVersionUID = 5275055951121834315L;
+   private static final Log log = LogFactory.getLog(CacheResultInterceptor.class, Log.class);
+
 
    private final CacheResolver cacheResolver;
    private final CacheKeyInvocationContextFactory contextFactory;
@@ -71,6 +75,10 @@ public class CacheResultInterceptor implements Serializable {
 
    @AroundInvoke
    public Object cacheResult(InvocationContext invocationContext) throws Exception {
+      if (log.isTraceEnabled()) {
+         log.tracef("Interception of method named '%s'", invocationContext.getMethod().getName());
+      }
+
       final CacheKeyInvocationContext<CacheResult> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
       final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
       final CacheResult cacheResult = cacheKeyInvocationContext.getCacheAnnotation();
@@ -81,12 +89,18 @@ public class CacheResultInterceptor implements Serializable {
 
       if (!cacheResult.skipGet()) {
          result = cache.get(cacheKey);
+         if (log.isTraceEnabled()) {
+            log.tracef("Entry with value '%s' has been found in cache '%s' with key '%s'", result, cache.getName(), cacheKey);
+         }
       }
 
       if (result == null) {
          result = invocationContext.proceed();
          if (result != null) {
             cache.put(cacheKey, result);
+            if (log.isTraceEnabled()) {
+               log.tracef("Value '%s' cached in cache '%s' with key '%s'", result, cache.getName(), cacheKey);
+            }
          }
       }
 

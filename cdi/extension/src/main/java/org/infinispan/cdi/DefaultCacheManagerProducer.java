@@ -22,9 +22,11 @@
  */
 package org.infinispan.cdi;
 
+import org.infinispan.cdi.util.logging.Log;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
@@ -43,6 +45,9 @@ import javax.enterprise.inject.Produces;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class DefaultCacheManagerProducer {
+
+   private static final Log log = LogFactory.getLog(DefaultCacheManagerProducer.class, Log.class);
+
    /**
     * Produces the default cache manager.
     *
@@ -55,6 +60,7 @@ public class DefaultCacheManagerProducer {
    @ApplicationScoped
    public EmbeddedCacheManager getDefaultCacheManager(@OverrideDefault Instance<EmbeddedCacheManager> providedDefaultCacheManager, @Default Configuration defaultConfiguration) {
       if (!providedDefaultCacheManager.isUnsatisfied()) {
+         log.tracef("Default cache manager overridden by '%s'", providedDefaultCacheManager);
          return providedDefaultCacheManager.get();
       }
       return new DefaultCacheManager(defaultConfiguration);

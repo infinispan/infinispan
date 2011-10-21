@@ -59,7 +59,7 @@ public class DefaultCacheResolver implements CacheResolver {
 
    @Override
    public <K, V> Cache<K, V> resolveCache(CacheInvocationContext<? extends Annotation> cacheInvocationContext) {
-      assertNotNull(cacheInvocationContext, "cacheInvocationContext parameter cannot be null");
+      assertNotNull(cacheInvocationContext, "cacheInvocationContext parameter must not be null");
 
       final String cacheName = cacheInvocationContext.getCacheName();
 

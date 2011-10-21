@@ -25,8 +25,9 @@ package org.infinispan.cdi.interceptor.context;
 import org.infinispan.cdi.interceptor.context.metadata.AggregatedParameterMetaData;
 import org.infinispan.cdi.interceptor.context.metadata.MethodMetaData;
 import org.infinispan.cdi.interceptor.context.metadata.ParameterMetaData;
+import org.infinispan.cdi.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
-import javax.cache.CacheException;
 import javax.cache.annotation.CacheDefaults;
 import javax.cache.annotation.CacheKeyGenerator;
 import javax.cache.annotation.CacheKeyInvocationContext;
@@ -59,13 +60,15 @@ import static org.infinispan.cdi.util.Contracts.assertNotNull;
 @ApplicationScoped
 public class CacheKeyInvocationContextFactory {
 
+   private static final Log log = LogFactory.getLog(CacheKeyInvocationContextFactory.class, Log.class);
+
    private BeanManager beanManager;
-   private ConcurrentMap<Method, MethodMetaData<? extends Annotation>> cacheMethodMetaDataCache;
+   private ConcurrentMap<Method, MethodMetaData<? extends Annotation>> methodMetaDataCache;
 
    @Inject
    public CacheKeyInvocationContextFactory(BeanManager beanManager) {
       this.beanManager = beanManager;
-      this.cacheMethodMetaDataCache = new ConcurrentHashMap<Method, MethodMetaData<? extends Annotation>>();
+      this.methodMetaDataCache = new ConcurrentHashMap<Method, MethodMetaData<? extends Annotation>>();
    }
 
    // for proxy.
@@ -79,7 +82,7 @@ public class CacheKeyInvocationContextFactory {
     * @return an instance of {@link CacheKeyInvocationContext} corresponding to the given {@link InvocationContext}.
     */
    public <A extends Annotation> CacheKeyInvocationContext<A> getCacheKeyInvocationContext(InvocationContext invocationContext) {
-      assertNotNull(invocationContext, "invocationContext parameter cannot be null");
+      assertNotNull(invocationContext, "invocationContext parameter must not be null");
 
       final MethodMetaData<A> methodMetaData = (MethodMetaData<A>) getMethodMetaData(invocationContext.getMethod());
       return new CacheKeyInvocationContextImpl<A>(invocationContext, methodMetaData);
@@ -92,7 +95,7 @@ public class CacheKeyInvocationContextFactory {
     * @return an instance of {@link MethodMetaData}.
     */
    private MethodMetaData<? extends Annotation> getMethodMetaData(Method method) {
-      MethodMetaData<? extends Annotation> methodMetaData = cacheMethodMetaDataCache.get(method);
+      MethodMetaData<? extends Annotation> methodMetaData = methodMetaDataCache.get(method);
 
       if (methodMetaData == null) {
          final String cacheName;
@@ -116,8 +119,7 @@ public class CacheKeyInvocationContextFactory {
             cacheAnnotation = cacheRemoveEntryAnnotation;
 
             if (cacheName.isEmpty()) {
-               throw new CacheException("Method named '" + method.getName() + "' annotated with CacheRemoveEntry " +
-                                              "doesn't specify a cache name");
+               throw log.cacheRemoveEntryMethodWithoutCacheName(method.getName());
             }
 
          } else if (method.isAnnotationPresent(CacheRemoveAll.class)) {
@@ -128,8 +130,7 @@ public class CacheKeyInvocationContextFactory {
             cacheAnnotation = cacheRemoveAllAnnotation;
 
             if (cacheName.isEmpty()) {
-               throw new CacheException("Method named '" + method.getName() + "' annotated with CacheRemoveAll " +
-                                              "doesn't specify a cache name");
+               throw log.cacheRemoveAllMethodWithoutCacheName(method.getName());
             }
 
          } else if (method.isAnnotationPresent(CachePut.class)) {
@@ -140,8 +141,7 @@ public class CacheKeyInvocationContextFactory {
             cacheAnnotation = cachePutAnnotation;
 
          } else {
-            throw new IllegalArgumentException("Method named '" + method.getName() + "' is not annotated with " +
-                                                     "CacheResult, CachePut, CacheRemoveEntry or CacheRemoveAll");
+            throw log.methodWithoutCacheAnnotation(method.getName());
          }
 
          final MethodMetaData<? extends Annotation> newCacheMethodMetaData = new MethodMetaData<Annotation>(
@@ -153,7 +153,7 @@ public class CacheKeyInvocationContextFactory {
                cacheName
          );
 
-         methodMetaData = cacheMethodMetaDataCache.putIfAbsent(method, newCacheMethodMetaData);
+         methodMetaData = methodMetaDataCache.putIfAbsent(method, newCacheMethodMetaData);
          if (methodMetaData == null) {
             methodMetaData = newCacheMethodMetaData;
          }
@@ -188,8 +188,7 @@ public class CacheKeyInvocationContextFactory {
 
             } else if (cacheValueAllowed && CacheValue.class.equals(type)) {
                if (valueParameter != null) {
-                  throw new CacheException("Method named '" + method.getName() + "' must have only one parameter " +
-                                                 "annotated with @CacheValue");
+                  throw log.cachePutMethodWithMoreThanOneCacheValueParameter(method.getName());
                }
                valueParameter = parameterMetaData;
             }
@@ -200,8 +199,7 @@ public class CacheKeyInvocationContextFactory {
 
       if (cacheValueAllowed && valueParameter == null) {
          if (parameters.size() > 1) {
-            throw new CacheException("Method named '" + method.getName() + "' must have at least one parameter " +
-                                           "annotated with @CacheValue");
+            throw log.cachePutMethodWithoutCacheValueParameter(method.getName());
          }
          valueParameter = parameters.get(0);
       }

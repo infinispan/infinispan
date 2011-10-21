@@ -22,7 +22,9 @@
  */
 package org.infinispan.cdi;
 
+import org.infinispan.cdi.util.logging.Log;
 import org.infinispan.config.Configuration;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
@@ -40,6 +42,9 @@ import javax.enterprise.inject.Produces;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class DefaultConfigurationProducer {
+
+   private static final Log log = LogFactory.getLog(DefaultConfigurationProducer.class, Log.class);
+
    /**
     * Produces the default configuration.
     *
@@ -52,6 +57,7 @@ public class DefaultConfigurationProducer {
    @ApplicationScoped
    public Configuration getDefaultCacheConfiguration(@OverrideDefault Instance<Configuration> providedDefaultConfiguration) {
       if (!providedDefaultConfiguration.isUnsatisfied()) {
+         log.tracef("Default cache manager configuration overridden by '%s'", providedDefaultConfiguration);
          return providedDefaultConfiguration.get();
       }
       return new Configuration();

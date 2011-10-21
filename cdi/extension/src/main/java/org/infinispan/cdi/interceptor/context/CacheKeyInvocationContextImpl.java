@@ -24,6 +24,8 @@ package org.infinispan.cdi.interceptor.context;
 
 import org.infinispan.cdi.interceptor.context.metadata.MethodMetaData;
 import org.infinispan.cdi.interceptor.context.metadata.ParameterMetaData;
+import org.infinispan.cdi.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.cache.annotation.CacheInvocationParameter;
 import javax.cache.annotation.CacheKeyGenerator;
@@ -43,6 +45,8 @@ import static java.util.Arrays.deepToString;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class CacheKeyInvocationContextImpl<A extends Annotation> implements CacheKeyInvocationContext<A> {
+
+   private static final Log log = LogFactory.getLog(CacheKeyInvocationContextImpl.class, Log.class);
 
    private final InvocationContext invocationContext;
    private final MethodMetaData<A> methodMetaData;
@@ -103,7 +107,7 @@ public class CacheKeyInvocationContextImpl<A extends Annotation> implements Cach
       if (cls.isAssignableFrom(this.getClass())) {
          return cls.cast(this);
       }
-      throw new IllegalArgumentException("The provider implementation cannot be unwrapped to " + cls);
+      throw log.unableToUnwrapProviderImplementation(cls);
    }
 
    @Override
