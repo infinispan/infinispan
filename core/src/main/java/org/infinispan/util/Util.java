@@ -48,7 +48,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
 
 /**
  * General utility methods used throughout the Infinispan code base.
@@ -63,7 +62,7 @@ public final class Util {
 
    /**
     * <p>
-    * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Inifinispan classes'
+    * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Infinispan classes'
     * classloader.
     * </p>
     * 
@@ -100,7 +99,7 @@ public final class Util {
 
    /**
     * <p>
-    * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Inifinispan classes' classloader. 
+    * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Infinispan classes' classloader.
     * </p>
     * 
     * <p>
@@ -193,7 +192,7 @@ public final class Util {
    }
 
    /**
-    * Instantiates a class based on the class name provided.  Instatiation is attempted via an appropriate, static
+    * Instantiates a class based on the class name provided.  Instantiation is attempted via an appropriate, static
     * factory method named <tt>getInstance()</tt> first, and failing the existence of an appropriate factory, falls
     * back to an empty constructor.
     * <p />
