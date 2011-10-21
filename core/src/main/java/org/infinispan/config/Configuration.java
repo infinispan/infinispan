@@ -27,6 +27,8 @@ import org.infinispan.config.FluentConfiguration.*;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.DefaultHashSeed;
+import org.infinispan.distribution.ch.HashSeed;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.group.Grouper;
@@ -1323,6 +1325,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public String getHashFunctionClass() {
       return clustering.hash.hashFunctionClass;
+   }
+
+   public String getHashSeedClass() {
+      return clustering.hash.hashSeedClass;
+   }
+
+   public HashSeed getHashSeed() {
+      return clustering.hash.hashSeed;
    }
 
    public int getNumOwners() {
@@ -3320,6 +3330,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setHashFunctionClass")
       protected String hashFunctionClass = MurmurHash3.class.getName();
 
+      @ConfigurationDocRef(bean = HashConfig.class, targetElement = "hashSeedClass")
+      protected String hashSeedClass = DefaultHashSeed.class.getName();
+
+      protected HashSeed hashSeed;
+
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setNumOwners")
       protected Integer numOwners = 2;
 
@@ -3384,6 +3399,17 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return this;
       }
 
+      @XmlAttribute
+      public String getHashSeedClass() {
+         return hashSeedClass;
+      }
+
+      @Override
+      public HashConfig hashSeed(HashSeed hashSeed) {
+         testImmutability("hashSeed");
+         this.hashSeed = hashSeed;
+         return this;
+      }
 
       @XmlAttribute
       public Integer getNumOwners() {

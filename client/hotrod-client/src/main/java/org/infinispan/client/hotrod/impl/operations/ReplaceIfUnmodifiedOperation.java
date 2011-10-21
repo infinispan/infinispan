@@ -23,6 +23,8 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
@@ -39,17 +41,17 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation {
 
    private final long version;
 
-   public ReplaceIfUnmodifiedOperation(TransportFactory transportFactory, byte[] key, byte[] cacheName,
+   public ReplaceIfUnmodifiedOperation(Codec codec, TransportFactory transportFactory, byte[] key, byte[] cacheName,
                                        AtomicInteger topologyId, Flag[] flags, byte[] value, int lifespan,
                                        int maxIdle, long version) {
-      super(transportFactory, key, cacheName, topologyId, flags, value, lifespan, maxIdle);
+      super(codec, transportFactory, key, cacheName, topologyId, flags, value, lifespan, maxIdle);
       this.version = version;
    }
 
    @Override
    protected Object executeOperation(Transport transport) {
       // 1) write header
-      long messageId = writeHeader(transport, REPLACE_IF_UNMODIFIED_REQUEST);
+      HeaderParams params = writeHeader(transport, REPLACE_IF_UNMODIFIED_REQUEST);
 
       //2) write message body
       transport.writeArray(key);
@@ -59,6 +61,6 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation {
       transport.writeArray(value);
       transport.flush();
 
-      return returnVersionedOperationResponse(transport, messageId, REPLACE_IF_UNMODIFIED_RESPONSE);
+      return returnVersionedOperationResponse(transport, params);
    }
 }

@@ -24,6 +24,8 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
@@ -38,8 +40,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Immutable
 public class ClearOperation extends RetryOnFailureOperation {
 
-   public ClearOperation(TransportFactory transportFactory, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
-      super(transportFactory, cacheName, topologyId, flags);
+   public ClearOperation(Codec codec, TransportFactory transportFactory,
+            byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
+      super(codec, transportFactory, cacheName, topologyId, flags);
    }
 
    @Override
@@ -49,10 +52,10 @@ public class ClearOperation extends RetryOnFailureOperation {
 
    @Override
    protected Object executeOperation(Transport transport) {
-      long messageId = writeHeader(transport, CLEAR_REQUEST);
+      HeaderParams params = writeHeader(transport, CLEAR_REQUEST);
       transport.flush();
 
-      readHeaderAndValidate(transport, messageId, CLEAR_RESPONSE);
+      readHeaderAndValidate(transport, params);
       return null;
    }
 }

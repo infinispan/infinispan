@@ -48,7 +48,8 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
       hotRodServers = hotRodServers ::: List(startTestHotRodServer(cacheManagers.get(0)))
       hotRodServers = hotRodServers ::: List(startTestHotRodServer(cacheManagers.get(1), hotRodServers.head.getPort + 50))
       hotRodServers.foreach {s =>
-         hotRodClients = new HotRodClient("127.0.0.1", s.getPort, cacheName, 60) :: hotRodClients
+         hotRodClients = new HotRodClient(
+            "127.0.0.1", s.getPort, cacheName, 60, protocolVersion) :: hotRodClients
       }
    }
 
@@ -62,9 +63,18 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    protected def startClusteredServer(port: Int, doCrash: Boolean): HotRodServer = {
       val cm = addClusterEnabledCacheManager()
       cm.defineConfiguration(cacheName, createCacheConfig)
+
       val newServer =
-         if (doCrash) startHotRodServer(cm, port)
-         else startCrashingHotRodServer(cm, port)
+         try {
+            if (doCrash) startCrashingHotRodServer(cm, port)
+            else startHotRodServer(cm, port)
+         } catch {
+            case e: Exception => {
+               log.error("Exception starting Hot Rod server", e)
+               TestingUtil.killCacheManagers(cm)
+               throw e
+            }
+         }
 
       TestingUtil.blockUntilViewsReceived(
          50000, true, cm, manager(0), manager(1))
@@ -102,4 +112,5 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
 
    protected def createCacheConfig: Configuration
 
+   protected def protocolVersion: Byte
 }

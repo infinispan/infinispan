@@ -30,6 +30,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
@@ -45,9 +47,9 @@ public final class MockTransportFactory implements TransportFactory {
    }
 
    @Override
-   public void start(final ConfigurationProperties props,
-            final Collection<SocketAddress> staticConfiguredServers,
-            final AtomicInteger topologyId, ClassLoader cl) {
+   public void start(Codec codec, final ConfigurationProperties props,
+                     final Collection<SocketAddress> staticConfiguredServers,
+                     final AtomicInteger topologyId, ClassLoader cl) {
    }
 
    @Override
@@ -82,4 +84,10 @@ public final class MockTransportFactory implements TransportFactory {
    public int getSoTimeout() {
       return 1000;
    }
+
+   @Override
+   public ConsistentHashFactory getConsistentHashFactory() {
+      return null;
+   }
+
 }

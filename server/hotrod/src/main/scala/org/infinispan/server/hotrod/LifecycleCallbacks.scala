@@ -39,8 +39,7 @@ class LifecycleCallbacks extends AbstractModuleLifecycle {
 
    override def cacheManagerStarting(gcr: GlobalComponentRegistry, globalCfg: GlobalConfiguration) {
       globalCfg.fluent.serialization
-         .addAdvancedExternalizer(TOPOLOGY_ADDRESS, new TopologyAddress.Externalizer)
-         .addAdvancedExternalizer(TOPOLOGY_VIEW, new TopologyView.Externalizer)
+           .addAdvancedExternalizer(SERVER_ADDRESS, new ServerAddress.Externalizer)
    }
 
 }

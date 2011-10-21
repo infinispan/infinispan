@@ -27,6 +27,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspecException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
@@ -48,8 +49,9 @@ public abstract class RetryOnFailureOperation extends HotRodOperation {
 
    protected final TransportFactory transportFactory;
 
-   protected RetryOnFailureOperation(TransportFactory transportFactory, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
-      super(flags, cacheName, topologyId);
+   protected RetryOnFailureOperation(Codec codec, TransportFactory transportFactory,
+            byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
+      super(codec, flags, cacheName, topologyId);
       this.transportFactory = transportFactory;
    }
 

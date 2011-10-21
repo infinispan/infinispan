@@ -47,7 +47,7 @@ import java.util.concurrent.Executors;
 /**
  * @author Mircea Markus
  */
-@Test (groups = "functional", testName = "client.hotrod.ConsistentHashV1IntegrationTest", enabled = false, description = "See ISPN-1123")
+@Test (groups = "functional", testName = "client.hotrod.ConsistentHashV1IntegrationTest")
 public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
 
    private HotRodServer hotRodServer1;
@@ -61,7 +61,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration conf = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, true);
+      Configuration conf = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC, false);
       conf.fluent().jmxStatistics();
       assert conf.isExposeJmxStatistics();
       conf.fluent().hash().numOwners(2);

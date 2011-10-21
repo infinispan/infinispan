@@ -55,6 +55,9 @@ class VirtualAddress implements Address {
       return realAddress;
    }
    
+   // IMPORTANT NOTE: Hot Rod protocol agrees to this calculation for a virtual
+   // node address hash code calculation, so any changes to the implementation
+   // require modification of the protocol.
    @Override
    public int hashCode() {
       // ensure that the virtual address with id 0 has the same hash code as the wrapped address

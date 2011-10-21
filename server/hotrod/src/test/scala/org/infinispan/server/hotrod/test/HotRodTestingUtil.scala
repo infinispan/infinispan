@@ -25,19 +25,24 @@ package org.infinispan.server.hotrod.test
 import java.util.concurrent.atomic.AtomicInteger
 import java.lang.reflect.Method
 import org.infinispan.server.hotrod.OperationStatus._
-import org.testng.Assert._
 import org.infinispan.server.hotrod._
 import logging.Log
-import org.infinispan.config.Configuration.CacheMode
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.Main._
 import java.util.{Properties, Arrays}
 import org.infinispan.util.{TypedProperties, Util}
 import org.infinispan.config.Configuration
+import org.testng.Assert._
+import org.infinispan.notifications.Listener
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
+import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent
+import org.infinispan.remoting.transport.Address
+import java.util.concurrent.{TimeUnit, CountDownLatch}
+import collection.mutable.ListBuffer
 
 /**
  * Test utils for Hot Rod tests.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -119,11 +124,6 @@ object HotRodTestingUtil extends Log {
             cfg.setSyncRollbackPhase(true) // Only for testing, so that asserts work fine.
             cfg
          }
-
-         override protected def removeSelfFromTopologyView {
-            // Empty to emulate a member that's crashed/unresponsive and has not executed removal,
-            // but has been evicted from JGroups cluster.
-         }
       }
       server.start(getProperties(host, port, 0, host, port), manager)
       server
@@ -184,55 +184,88 @@ object HotRodTestingUtil extends Log {
    }
 
    def assertTopologyReceived(topoResp: AbstractTopologyResponse, servers: List[HotRodServer]) {
-      assertEquals(topoResp.view.topologyId, 2)
-      assertEquals(topoResp.view.members.size, 2)
-      assertAddressEquals(topoResp.view.members.head, servers.head.getAddress)
-      assertAddressEquals(topoResp.view.members.tail.head, servers.tail.head.getAddress)
+      assertTopologyId(topoResp.viewId, servers.head.getCacheManager)
+      assertEquals(topoResp.members.size, 2)
+      topoResp.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
    }
 
-   def assertAddressEquals(actual: TopologyAddress, expected: TopologyAddress) {
-      assertEquals(actual.host, expected.host)
-      assertEquals(actual.port, expected.port)
+   def assertHashTopologyReceived(topoResp: AbstractTopologyResponse,
+            servers: List[HotRodServer], hashIds: Map[ServerAddress, Seq[Int]]) {
+      assertHashTopology10Received(topoResp, servers, hashIds, 2,
+            EXPECTED_HASH_FUNCTION_VERSION, Integer.MAX_VALUE)
    }
 
-   def assertHashTopologyReceived(topoResp: AbstractTopologyResponse, servers: List[HotRodServer], hashIds: List[Map[String, Seq[Int]]]) {
-      val hashTopologyResp = topoResp.asInstanceOf[HashDistAwareResponse]
-      assertEquals(hashTopologyResp.view.topologyId, 2)
-      assertEquals(hashTopologyResp.view.members.size, 2)
-      assertAddressEquals(hashTopologyResp.view.members.head, servers.head.getAddress, hashIds.head)
-      assertAddressEquals(hashTopologyResp.view.members.tail.head, servers.tail.head.getAddress, hashIds.tail.head)
+   def assertNoHashTopologyReceived(topoResp: AbstractTopologyResponse,
+            servers: List[HotRodServer], hashIds: Map[ServerAddress, Seq[Int]]) {
+      assertHashTopology10Received(topoResp, servers, hashIds, 0, 0, 0)
+   }
+
+   def assertHashTopology10Received(topoResp: AbstractTopologyResponse,
+            servers: List[HotRodServer], hashIds: Map[ServerAddress, Seq[Int]],
+            expectedNumOwners: Int, expectedHashFct: Int, expectedHashSpace: Int) {
+      val hashTopologyResp = topoResp.asInstanceOf[TestHashDistAware10Response]
+      assertTopologyId(hashTopologyResp.viewId, servers.head.getCacheManager)
+      assertEquals(hashTopologyResp.members.size, servers.size)
+      hashTopologyResp.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
+      assertHashIds(hashTopologyResp.hashIds, hashIds)
+      assertEquals(hashTopologyResp.numOwners, expectedNumOwners)
+      assertEquals(hashTopologyResp.hashFunction, expectedHashFct)
+      assertEquals(hashTopologyResp.hashSpace, expectedHashSpace)
+   }
+
+
+   def assertHashTopologyReceived(topoResp: AbstractTopologyResponse,
+            servers: List[HotRodServer], expectedVirtualNodes: Int) {
+      val hashTopologyResp = topoResp.asInstanceOf[TestHashDistAware11Response]
+      assertTopologyId(hashTopologyResp.viewId, servers.head.getCacheManager)
+      assertEquals(hashTopologyResp.members.size, servers.size)
+      hashTopologyResp.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
       assertEquals(hashTopologyResp.numOwners, 2)
       assertEquals(hashTopologyResp.hashFunction, EXPECTED_HASH_FUNCTION_VERSION)
       assertEquals(hashTopologyResp.hashSpace, Integer.MAX_VALUE)
+      assertEquals(hashTopologyResp.numVirtualNodes, expectedVirtualNodes)
    }
 
-   def assertNoHashTopologyReceived(topoResp: AbstractTopologyResponse, servers: List[HotRodServer], hashIds: List[Map[String, Seq[Int]]]) {
-      val hashTopologyResp = topoResp.asInstanceOf[HashDistAwareResponse]
-      assertEquals(hashTopologyResp.view.topologyId, 2)
-      assertEquals(hashTopologyResp.view.members.size, 2)
-      assertAddressEquals(hashTopologyResp.view.members.head, servers.head.getAddress, hashIds.head)
-      assertAddressEquals(hashTopologyResp.view.members.tail.head, servers.tail.head.getAddress, hashIds.tail.head)
-      assertEquals(hashTopologyResp.numOwners, 0)
-      assertEquals(hashTopologyResp.hashFunction, 0)
-      assertEquals(hashTopologyResp.hashSpace, 0)
+   def assertHashIds(hashIds: Map[ServerAddress, Seq[Int]],
+                     expectedHashIds: Map[ServerAddress, Seq[Int]]) {
+      assertEquals(hashIds, expectedHashIds)
    }
 
-   def assertAddressEquals(actual: TopologyAddress, expected: TopologyAddress, expectedHashIds: Map[String, Seq[Int]]) {
-      assertEquals(actual.host, expected.host)
-      assertEquals(actual.port, expected.port)
-      assertEquals(actual.hashIds, expectedHashIds)
+   def assertTopologyId(viewId: Int, cm: EmbeddedCacheManager) {
+      assertEquals(viewId, cm.getCache(HotRodServer.ADDRESS_CACHE_NAME)
+              .getAdvancedCache.getRpcManager.getTransport.getViewId)
    }
 
-   private def createTopologyCacheConfig: Configuration = {
-      val topologyCacheConfig = new Configuration
-      topologyCacheConfig.setCacheMode(CacheMode.REPL_SYNC)
-      topologyCacheConfig.setSyncReplTimeout(10000) // Milliseconds
-      topologyCacheConfig.setFetchInMemoryState(true) // State transfer required
-      topologyCacheConfig.setSyncCommitPhase(true) // Only for testing, so that asserts work fine.
-      topologyCacheConfig.setSyncRollbackPhase(true) // Only for testing, so that asserts work fine.
-      topologyCacheConfig
+   def getAddressCacheRemovalLatches(servers: List[HotRodServer]): Seq[CountDownLatch] = {
+      val latches = new ListBuffer[CountDownLatch]
+      servers.foreach { server =>
+         val addressRemovalLatch = new CountDownLatch(1)
+         server.getAddressCache.addListener(
+            new AddressRemovalListener(addressRemovalLatch))
+         latches += addressRemovalLatch
+      }
+      latches.toList
    }
-   
+
+   def waitAddressCacheRemoval(latches: Seq[CountDownLatch]) {
+      latches.foreach { latch =>
+         val completed = latch.await(60, TimeUnit.SECONDS)
+         if (!completed)
+          throw new Exception("Timed out waiting for address cache to be updated")
+      }
+   }
+
+   @Listener
+   private class AddressRemovalListener(latch: CountDownLatch) {
+
+      @CacheEntryRemoved
+      def addressRemoved(event: CacheEntryRemovedEvent[Address, ServerAddress]) {
+         if (!event.isPre) // Only count down latch after address has been removed
+            latch.countDown()
+      }
+
+   }
+
 } 
 
 object UniquePortThreadLocal extends ThreadLocal[Int] {

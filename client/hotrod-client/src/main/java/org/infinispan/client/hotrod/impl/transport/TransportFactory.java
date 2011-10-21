@@ -23,6 +23,8 @@
 package org.infinispan.client.hotrod.impl.transport;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 
 import java.net.SocketAddress;
 import java.util.Collection;
@@ -42,13 +44,15 @@ public interface TransportFactory {
 
    public void releaseTransport(Transport transport);
 
-   void start(ConfigurationProperties props, Collection<SocketAddress> staticConfiguredServers, AtomicInteger topologyId, ClassLoader classLoader);
+   void start(Codec codec, ConfigurationProperties props, Collection<SocketAddress> staticConfiguredServers, AtomicInteger topologyId, ClassLoader classLoader);
 
    void updateServers(Collection<SocketAddress> newServers);
 
    void destroy();
 
    void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace);
+
+   ConsistentHashFactory getConsistentHashFactory();
 
    Transport getTransport(byte[] key);
 

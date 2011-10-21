@@ -411,6 +411,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();
                } catch (ExecutionException e) {
+                  exception = e;
                   if (e.getCause() instanceof org.jgroups.TimeoutException)
                      exception = new TimeoutException("Timeout!", e);
                   else if (e.getCause() instanceof Exception)

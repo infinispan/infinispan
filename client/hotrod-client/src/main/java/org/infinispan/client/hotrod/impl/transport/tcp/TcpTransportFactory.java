@@ -29,6 +29,7 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
@@ -55,7 +56,7 @@ public class TcpTransportFactory implements TransportFactory {
    private static final Log log = LogFactory.getLog(TcpTransportFactory.class, Log.class);
 
    /**
-    * We need synchronization as the thread that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#start(org.infinispan.client.hotrod.impl.ConfigurationProperties, java.util.Collection, java.util.concurrent.atomic.AtomicInteger, ClassLoader)}
+    * We need synchronization as the thread that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#start(org.infinispan.client.hotrod.impl.protocol.Codec, org.infinispan.client.hotrod.impl.ConfigurationProperties, java.util.Collection, java.util.concurrent.atomic.AtomicInteger, ClassLoader)}
     * might(and likely will) be different from the thread(s) that calls {@link #getTransport()} or other methods
     */
    private Object lock = new Object();
@@ -71,7 +72,9 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile int soTimeout;
 
    @Override
-   public void start(ConfigurationProperties cfg, Collection<SocketAddress> staticConfiguredServers, AtomicInteger topologyId, ClassLoader classLoader) {
+   public void start(Codec codec, ConfigurationProperties cfg,
+                     Collection<SocketAddress> staticConfiguredServers,
+                     AtomicInteger topologyId, ClassLoader classLoader) {
       synchronized (lock) {
          hashFactory.init(cfg, classLoader);
          boolean pingOnStartup = cfg.getPingOnStartup();
@@ -85,7 +88,8 @@ public class TcpTransportFactory implements TransportFactory {
             log.debugf("Load balancer class: %s", balancerClass);
             log.debugf("Tcp no delay = %b; client socket timeout = %d ms", tcpNoDelay, soTimeout);
          }
-         PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TransportObjectFactory(this, topologyId, pingOnStartup), cfg.getProperties());
+         PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(
+               new TransportObjectFactory(codec, this, topologyId, pingOnStartup), cfg.getProperties());
          createAndPreparePool(staticConfiguredServers, poolFactory);
          balancer.setServers(servers);
       }
@@ -257,6 +261,11 @@ public class TcpTransportFactory implements TransportFactory {
       synchronized (lock) {
          return consistentHash;
       }
+   }
+
+   @Override
+   public ConsistentHashFactory getConsistentHashFactory() {
+      return hashFactory;
    }
 
    public boolean isTcpNoDelay() {

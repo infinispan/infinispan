@@ -24,6 +24,7 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.util.Util;
@@ -44,9 +45,10 @@ public class PutIfAbsentOperation extends AbstractKeyValueOperation {
 
    private static final Log log = LogFactory.getLog(PutIfAbsentOperation.class);
 
-   public PutIfAbsentOperation(TransportFactory transportFactory, byte[] key, byte[] cacheName, AtomicInteger topologyId,
+   public PutIfAbsentOperation(Codec codec, TransportFactory transportFactory,
+                               byte[] key, byte[] cacheName, AtomicInteger topologyId,
                                Flag[] flags, byte[] value, int lifespan, int maxIdle) {
-      super(transportFactory, key, cacheName, topologyId, flags, value, lifespan, maxIdle);
+      super(codec, transportFactory, key, cacheName, topologyId, flags, value, lifespan, maxIdle);
    }
 
    @Override

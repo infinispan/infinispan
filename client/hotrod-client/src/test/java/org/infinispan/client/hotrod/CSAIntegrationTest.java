@@ -56,7 +56,7 @@ import static org.testng.AssertJUnit.assertNotNull;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(groups = "functional", testName = "client.hotrod.CSAIntegrationTest", enabled = false, description = "See ISPN-1123")
+@Test(groups = "functional", testName = "client.hotrod.CSAIntegrationTest")
 public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
 
    private HotRodServer hotRodServer1;
@@ -121,17 +121,37 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       Properties props = new Properties();
       props.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
       props.put("infinispan.client.hotrod.ping_on_startup", "false");
+      setHotRodProtocolVersion(props);
       remoteCacheManager = new RemoteCacheManager(props);
       remoteCache = remoteCacheManager.getCache();
 
       tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
    }
 
-   @AfterClass
+   protected void setHotRodProtocolVersion(Properties props) {
+      // No-op, use default Hot Rod protocol version
+   }
+
+   @AfterClass(alwaysRun = true)
    @Override
    protected void destroy() {
-      super.destroy();
-      remoteCacheManager.stop();
+      try {
+         if (remoteCacheManager != null) remoteCacheManager.stop();
+      } finally {
+         try {
+            try {
+               if (hotRodServer1 != null) hotRodServer1.stop();
+            } finally {
+               try {
+                  if (hotRodServer2 != null) hotRodServer2.stop();
+               } finally {
+                  if (hotRodServer3 != null) hotRodServer3.stop();
+               }
+            }
+         } finally {
+            super.destroy();
+         }
+      }
    }
 
    public void testHashInfoRetrieved() throws InterruptedException {

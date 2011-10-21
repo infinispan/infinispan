@@ -30,14 +30,13 @@ import scala.collection.JavaConversions._
 import org.infinispan.server.core.ProtocolServer
 import org.infinispan.util.Util
 import org.jboss.netty.util.{ThreadNameDeterminer, ThreadRenamingRunnable}
-import org.infinispan.util.logging.LogFactory
 import org.jboss.netty.logging.{InternalLoggerFactory, Log4JLoggerFactory}
 import org.infinispan.server.core.logging.Log
 import java.util.concurrent.atomic.AtomicLong
 import org.infinispan.jmx.annotations.{ManagedAttribute, MBean}
 import org.jboss.netty.channel.{WriteCompletionEvent, MessageEvent, ChannelDownstreamHandler}
 import org.jboss.netty.buffer.ChannelBuffer
-import java.net.{InetSocketAddress, SocketAddress}
+import java.net.{InetSocketAddress}
 import org.rhq.helpers.pluginAnnotations.agent.{DataType, DisplayType, MeasurementType, Metric}
 
 /**

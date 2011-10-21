@@ -25,6 +25,8 @@ package org.infinispan.client.hotrod.impl.operations;
 import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.util.Util;
@@ -46,8 +48,9 @@ public abstract class AbstractKeyOperation extends RetryOnFailureOperation {
 
    protected final byte[] key;
 
-   protected AbstractKeyOperation(TransportFactory transportFactory, byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
-      super(transportFactory, cacheName, topologyId, flags);
+   protected AbstractKeyOperation(Codec codec, TransportFactory transportFactory,
+            byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
+      super(codec, transportFactory, cacheName, topologyId, flags);
       this.key = key;
    }
 
@@ -62,12 +65,12 @@ public abstract class AbstractKeyOperation extends RetryOnFailureOperation {
 
    protected short sendKeyOperation(byte[] key, Transport transport, byte opCode, byte opRespCode) {
       // 1) write [header][key length][key]
-      long messageId = writeHeader(transport, opCode);
+      HeaderParams params = writeHeader(transport, opCode);
       transport.writeArray(key);
       transport.flush();
 
       // 2) now read the header
-      return readHeaderAndValidate(transport, messageId, opRespCode);
+      return readHeaderAndValidate(transport, params);
    }
 
    protected byte[] returnPossiblePrevValue(Transport transport) {
@@ -89,9 +92,9 @@ public abstract class AbstractKeyOperation extends RetryOnFailureOperation {
       return false;
    }
 
-   protected VersionedOperationResponse returnVersionedOperationResponse(Transport transport, long messageId, byte response) {
+   protected VersionedOperationResponse returnVersionedOperationResponse(Transport transport, HeaderParams params) {
       //3) ...
-      short respStatus = readHeaderAndValidate(transport, messageId, response);
+      short respStatus = readHeaderAndValidate(transport, params);
 
       //4 ...
       VersionedOperationResponse.RspCode code;

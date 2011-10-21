@@ -52,6 +52,8 @@ class HotRodProxyTest extends HotRodMultiNodeTest {
       config
    }
 
+   override protected def protocolVersion = 10
+
    override protected def startTestHotRodServer(cacheManager: EmbeddedCacheManager) =
       startHotRodServer(cacheManager, proxyHost1, proxyPort1)
 
@@ -62,12 +64,9 @@ class HotRodProxyTest extends HotRodMultiNodeTest {
       val resp = clients.head.ping(2, 0)
       assertStatus(resp, Success)
       val topoResp = resp.topologyResponse.get
-      assertEquals(topoResp.view.topologyId, 2)
-      assertEquals(topoResp.view.members.size, 2)
-      assertEquals(topoResp.view.members.head.host, proxyHost1)
-      assertEquals(topoResp.view.members.head.port, proxyPort1)
-      assertEquals(topoResp.view.members.tail.head.host, proxyHost2)
-      assertEquals(topoResp.view.members.tail.head.port, proxyPort2)
+      assertTopologyId(topoResp.viewId, cacheManagers.get(0))
+      assertEquals(topoResp.members.size, 2)
+      topoResp.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
    }
 
 }

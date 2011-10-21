@@ -24,7 +24,6 @@ package org.infinispan.distribution.ch;
 
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
 import org.infinispan.util.hash.Hash;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -33,6 +32,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
+
+import static java.lang.String.format;
 
 /**
  * <p>
@@ -62,6 +63,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    protected final boolean trace;
 
    protected Hash hashFunction;
+   protected HashSeed hashSeed;
    protected int numVirtualNodes = 1;
 
    protected Set<Address> caches;
@@ -77,17 +79,25 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    }
 
    public void setHashFunction(Hash h) {
-      if (caches != null) {
-         throw new IllegalStateException("Must configure the hash function before adding the caches");
-      }
+      checkCachesUninitialized("hash function");
       hashFunction = h;
    }
-   
-   public void setNumVirtualNodes(Integer numVirtualNodes) {
+
+   private void checkCachesUninitialized(String property) {
       if (caches != null) {
-         throw new IllegalStateException("Must configure the number of virtual nodes before adding the caches");
+         throw new IllegalStateException(format(
+               "Must configure the %s before adding the caches", property));
       }
+   }
+
+   public void setNumVirtualNodes(Integer numVirtualNodes) {
+      checkCachesUninitialized("number of virtual nodes");
       this.numVirtualNodes = numVirtualNodes;
+   }
+
+   public void setHashSeed(HashSeed hashSeed) {
+      checkCachesUninitialized("hash seed");
+      this.hashSeed = hashSeed;
    }
 
    @Override
@@ -104,14 +114,14 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       // so we add the virtual nodes (if any) only after we have added all the "real" nodes
       TreeMap<Integer, Address> positions = new TreeMap<Integer, Address>();
       for (Address a : newCaches) {
-         addNode(positions, a, getNormalizedHash(a));
+         addNode(positions, a, getNormalizedHash(hashSeed.getHashSeed(a)));
       }
 
       if (isVirtualNodesEnabled()) {
          for (Address a : newCaches) {
             for (int i = 1; i < numVirtualNodes; i++) {
                // we get the normalized hash from the VirtualAddress, but we store the real address in the positions map
-               Address va = new VirtualAddress(a, i);
+               Address va = new VirtualAddress(hashSeed.getHashSeed(a), i);
                addNode(positions, a, getNormalizedHash(va));
             }
          }

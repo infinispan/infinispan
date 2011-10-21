@@ -56,6 +56,7 @@ public class ConfigurationProperties {
    public static final String HASH_FUNCTION_PREFIX = "infinispan.client.hotrod.hash_function_impl";
    public static final String DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE = "infinispan.client.hotrod.default_executor_factory.queue_size";
    public static final String SO_TIMEOUT = "infinispan.client.hotrod.socket_timeout";
+   public static final String PROTOCOL_VERSION = "infinispan.client.hotrod.protocol_version";
 
    // defaults
 
@@ -63,6 +64,9 @@ public class ConfigurationProperties {
    private static final int DEFAULT_VALUE_SIZE = 512;
    private static final int DEFAULT_HOTROD_PORT = 11222;
    private static final int DEFAULT_SO_TIMEOUT = 60000;
+   public static final String PROTOCOL_VERSION_11 = "1.1";
+   public static final String PROTOCOL_VERSION_10 = "1.0";
+   private static final String DEFAULT_PROTOCOL_VERSION = PROTOCOL_VERSION_11;
 
    private final TypedProperties props;
 
@@ -148,5 +152,8 @@ public class ConfigurationProperties {
       return props.getIntProperty(SO_TIMEOUT, DEFAULT_SO_TIMEOUT);
    }
 
+   public String getProtocolVersion() {
+      return props.getProperty(PROTOCOL_VERSION, DEFAULT_PROTOCOL_VERSION);
+   }
 
 }

@@ -37,5 +37,6 @@ object ExternalizerIds {
    val MEMCACHED_CACHE_VALUE = 1101
    val TOPOLOGY_ADDRESS = 1102
    val TOPOLOGY_VIEW = 1103
+   val SERVER_ADDRESS = 1104
 
 }
