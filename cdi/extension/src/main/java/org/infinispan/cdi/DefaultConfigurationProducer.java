@@ -57,9 +57,7 @@ public class DefaultConfigurationProducer {
    @ApplicationScoped
    public Configuration getDefaultCacheConfiguration(@OverrideDefault Instance<Configuration> providedDefaultConfiguration) {
       if (!providedDefaultConfiguration.isUnsatisfied()) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Default cache manager configuration overridden by '%s'", providedDefaultConfiguration);
-         }
+         log.tracef("Default cache manager configuration overridden by '%s'", providedDefaultConfiguration);
          return providedDefaultConfiguration.get();
       }
       return new Configuration();

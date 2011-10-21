@@ -60,9 +60,7 @@ public class DefaultCacheManagerProducer {
    @ApplicationScoped
    public EmbeddedCacheManager getDefaultCacheManager(@OverrideDefault Instance<EmbeddedCacheManager> providedDefaultCacheManager, @Default Configuration defaultConfiguration) {
       if (!providedDefaultCacheManager.isUnsatisfied()) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Default cache manager overridden by '%s'", providedDefaultCacheManager);
-         }
+         log.tracef("Default cache manager overridden by '%s'", providedDefaultCacheManager);
          return providedDefaultCacheManager.get();
       }
       return new DefaultCacheManager(defaultConfiguration);

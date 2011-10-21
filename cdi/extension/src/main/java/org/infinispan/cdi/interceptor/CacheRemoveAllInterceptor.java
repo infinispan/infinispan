@@ -74,14 +74,18 @@ public class CacheRemoveAllInterceptor implements Serializable {
 
       if (!cacheRemoveAll.afterInvocation()) {
          cache.clear();
-         log.tracef("Clear cache '%s' before method invocation", cache.getName());
+         if (log.isTraceEnabled()) {
+            log.tracef("Clear cache '%s' before method invocation", cache.getName());
+         }
       }
 
       final Object result = invocationContext.proceed();
 
       if (cacheRemoveAll.afterInvocation()) {
          cache.clear();
-         log.tracef("Clear cache '%s' after method invocation", cache.getName());
+         if (log.isTraceEnabled()) {
+            log.tracef("Clear cache '%s' after method invocation", cache.getName());
+         }
       }
 
       return result;
