@@ -25,6 +25,7 @@ package org.infinispan.spring.provider;
 
 import java.util.Collection;
 
+import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.springframework.cache.CacheManager;
 import org.springframework.util.Assert;
@@ -43,6 +44,7 @@ import org.springframework.util.Assert;
  * </p>
  * 
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Marius Bogoevici
  * 
  */
 public class SpringEmbeddedCacheManager implements CacheManager {
@@ -59,8 +61,8 @@ public class SpringEmbeddedCacheManager implements CacheManager {
    }
 
    @Override
-   public <K, V> SpringCache<K, V> getCache(final String name) {
-      return new SpringCache<K, V>(this.nativeCacheManager.<K, V> getCache(name));
+   public SpringCache getCache(final String name) {
+      return new SpringCache(this.nativeCacheManager.getCache(name));
    }
 
    @Override
