@@ -71,11 +71,11 @@ public class PendingCacheViewChanges {
       synchronized (lock) {
          // TODO Enforce view installation policy here?
          if (viewInstallationInProgress) {
-            log.tracef("Cannot prepare a new view, there is another view installation in progress");
+            log.tracef("Cannot create a new view, there is another view installation in progress");
             return null;
          }
          if (leavers.size() == 0 && joiners.size() == 0 && recoveredMembers == null) {
-            log.tracef("Cannot prepare a new view, we have no joiners or leavers");
+            log.tracef("Cannot create a new view, we have no joiners or leavers");
             return null;
          }
 

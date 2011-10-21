@@ -196,8 +196,9 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    @Override
    public void join(String cacheName, CacheViewListener listener) throws Exception {
       // first keep track of the join locally
+      CacheViewInfo cacheViewInfo = getCacheViewInfo(cacheName);
+      cacheViewInfo.setListener(listener);
       handleRequestJoin(self, cacheName);
-      viewsInfo.get(cacheName).setListener(listener);
 
       // then ask the coordinator to join and use its existing cache view
       if (!isCoordinator) {
@@ -212,6 +213,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
    @Override
    public void leave(String cacheName) {
+      log.tracef("Stopping local cache %s", cacheName);
       try {
          // remove the local listener
          viewsInfo.get(cacheName).setListener(null);
@@ -262,6 +264,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    private CacheView clusterPrepareView(final String cacheName, final CacheView pendingView) throws Exception {
       final CacheViewInfo cacheViewInfo = viewsInfo.get(cacheName);
       final CacheView committedView = cacheViewInfo.getCommittedView();
+      log.tracef("%s: Preparing view %d on members %s", cacheName, pendingView.getViewId(), pendingView.getMembers());
 
       final CacheViewControlCommand cmd = new CacheViewControlCommand(cacheName,
             CacheViewControlCommand.Type.PREPARE_VIEW, self, pendingView.getViewId(),
@@ -301,7 +304,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       final int newViewId = cacheViewInfo.getPendingChanges().getRollbackViewId();
       final List<Address> validTargets = new ArrayList<Address>(targets);
       validTargets.removeAll(cacheViewInfo.getPendingChanges().getLeavers());
-      log.tracef("%s: Rolling back to cache view %d on %s, new view id is %d", cacheName, committedViewId, validTargets, newViewId);
+      log.tracef("%s: Rolling back to cache view %d on members %s, new view id is %d", cacheName, committedViewId, validTargets, newViewId);
 
       try {
          // it's ok to send the rollback to nodes that don't have the cache yet, they will just ignore it
@@ -330,7 +333,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       final List<Address> validTargets = new ArrayList<Address>(targets);
       // TODO Retry the commit if one of the targets left the cluster (even with this precaution)
       validTargets.removeAll(cacheViewInfo.getPendingChanges().getLeavers());
-      log.tracef("%s: Committing cache view %d on %s", cacheName, viewId, targets);
+      log.tracef("%s: Committing cache view %d on members %s", cacheName, viewId, targets);
 
       try {
          // broadcast the command to all the members
@@ -400,16 +403,16 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       if (cacheViewInfo == null)
          return;
 
+      log.tracef("%s: Received leave request from nodes %s", cacheName, leavers);
       // update the list of leavers - this is only relevant on the coordinator
       if (isCoordinator) {
          cacheViewInfo.getPendingChanges().requestLeave(leavers);
       }
 
       // tell the upper layer to stop sending commands to the nodes that already left
-      if (cacheViewInfo.getListener() != null) {
-         if (cacheViewInfo.getCommittedView().contains(self)) {
-            cacheViewInfo.getListener().updateLeavers(cacheViewInfo.getPendingChanges().getLeavers());
-         }
+      CacheViewListener cacheViewListener = cacheViewInfo.getListener();
+      if (cacheViewListener != null) {
+         cacheViewListener.updateLeavers(cacheViewInfo.getPendingChanges().getLeavers());
       }
    }
 
@@ -424,14 +427,20 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
       boolean isLocal = pendingView.contains(self);
       if (isLocal || isCoordinator) {
+         log.tracef("%s: Preparing cache view %s, committed view is %s", cacheName, pendingView, committedView);
          // The first time we get a PREPARE_VIEW our committed view id is -1, we need to accept any view
          if (lastCommittedView.getViewId() > 0 && lastCommittedView.getViewId() != committedView.getViewId()) {
             log.prepareViewIdMismatch(lastCommittedView, committedView);
          }
          cacheViewInfo.prepareView(pendingView);
       }
-      if (isLocal && cacheViewInfo.getListener() != null) {
-         cacheViewInfo.getListener().prepareView(pendingView, lastCommittedView);
+      if (isLocal) {
+         CacheViewListener cacheViewListener = cacheViewInfo.getListener();
+         if (cacheViewListener != null) {
+            cacheViewListener.prepareView(pendingView, lastCommittedView);
+         } else {
+            log.tracef("%s: Received cache view prepare request after the local node has already shut down", cacheName);
+         }
       }
       // any exception here will be propagated back to the coordinator, which will roll back the view installation
    }
@@ -452,9 +461,10 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          log.debugf("%s: Committing cache view %d", cacheName, viewId);
          cacheViewInfo.commitView(viewId);
          cacheViewInfo.getPendingChanges().resetChanges(cacheViewInfo.getCommittedView());
-         if (isLocal && cacheViewInfo.getListener() != null) {
-            cacheViewInfo.getListener().updateLeavers(cacheViewInfo.getPendingChanges().getLeavers());
-            cacheViewInfo.getListener().commitView(viewId);
+         CacheViewListener cacheViewListener = cacheViewInfo.getListener();
+         if (isLocal && cacheViewListener != null) {
+            cacheViewListener.updateLeavers(cacheViewInfo.getPendingChanges().getLeavers());
+            cacheViewListener.commitView(viewId);
          }
       } else {
          log.debugf("%s: We don't have a pending view, ignoring commit", cacheName);
@@ -474,8 +484,9 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          log.debugf("%s: Rolling back to cache view %d, new view id is %d", cacheName, committedViewId, newViewId);
          cacheViewInfo.rollbackView(newViewId, committedViewId);
          cacheViewInfo.getPendingChanges().resetChanges(cacheViewInfo.getCommittedView());
-         if (isLocal && cacheViewInfo.getListener() != null) {
-            cacheViewInfo.getListener().rollbackView(committedViewId);
+         CacheViewListener cacheViewListener = cacheViewInfo.getListener();
+         if (isLocal && cacheViewListener != null) {
+            cacheViewListener.rollbackView(committedViewId);
          }
       } else {
          log.debugf("%s: We don't have a pending view, ignoring rollback", cacheName);
