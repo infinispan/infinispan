@@ -97,11 +97,11 @@ public class EvictionManagerImpl implements EvictionManager {
          try {
             if (trace) {
                log.trace("Purging data container of expired entries");
-               start = System.currentTimeMillis();
+               start = System.nanoTime();
             }
             dataContainer.purgeExpired();
             if (trace) {
-               log.tracef("Purging data container completed in %s", Util.prettyPrintTime(System.currentTimeMillis() - start));
+               log.tracef("Purging data container completed in %s", Util.prettyPrintTime(System.nanoTime() - start, TimeUnit.NANOSECONDS));
             }
          } catch (Exception e) {
             log.exceptionPurgingDataContainer(e);
@@ -113,11 +113,11 @@ public class EvictionManagerImpl implements EvictionManager {
             try {
                if (trace) {
                   log.trace("Purging cache store of expired entries");
-                  start = System.currentTimeMillis();
+                  start = System.nanoTime();
                }
                cacheStore.purgeExpired();
                if (trace) {
-                  log.tracef("Purging cache store completed in %s", Util.prettyPrintTime(System.currentTimeMillis() - start));
+                  log.tracef("Purging cache store completed in %s", Util.prettyPrintTime(System.nanoTime() - start, TimeUnit.NANOSECONDS));
                }
             } catch (Exception e) {
                log.exceptionPurgingDataContainer(e);
