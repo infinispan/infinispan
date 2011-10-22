@@ -741,10 +741,6 @@ public interface Log extends BasicLogger {
    void unableToUnlockRebalancedKeys(GlobalTransaction gtx, List<Object> keys, Address self, @Cause Throwable t);
 
    @LogMessage(level = WARN)
-   @Message(value = "You are not starting all your caches at the same time. This can lead to problems as asymmetric clusters are not supported, see ISPN-658", id = 155)
-   void asymmetricClusterWarning();
-
-   @LogMessage(level = WARN)
    @Message(value = "Timed out waiting for all cluster members to confirm pushing data for view %d, received confirmations %s. Cancelling state transfer", id = 157)
    void stateTransferTimeoutWaitingForPushConfirmations(int viewId, Map<Address, Integer> pushConfirmations);
 

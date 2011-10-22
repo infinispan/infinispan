@@ -468,15 +468,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    @Override
    public EmbeddedCacheManager startCaches(final String... cacheNames) {
       List<Thread> threads = new ArrayList<Thread>(cacheNames.length);
-      boolean haveStoppedCaches = false;
-      boolean haveRunningCaches = false;
       for (final String cacheName : cacheNames) {
-         if (isRunning(cacheName)) {
-            haveRunningCaches = true;
-            continue;
-         }
 
-         haveStoppedCaches = true;
          String threadName = "CacheStartThread," + globalConfiguration.getClusterName() + "," + cacheName;
          Thread thread = new Thread(threadName) {
             @Override
@@ -486,9 +479,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          };
          thread.start();
          threads.add(thread);
-      }
-      if (haveStoppedCaches && haveRunningCaches) {
-         log.asymmetricClusterWarning();
       }
       try {
          for (Thread thread : threads) {
