@@ -38,7 +38,6 @@
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
-            <version>1.1</version>
             <configuration>
                <mainClass>org.infinispan.demos.directory.FilesystemDirectory</mainClass>
                <systemProperties>
