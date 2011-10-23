@@ -128,8 +128,8 @@
       <version.jbossjta>4.15.1.Final</version.jbossjta>
       <version.osgi>4.3.0</version.osgi>
       <version.jboss.jandex>1.0.3.Final</version.jboss.jandex>
-      <version.jboss.logging>3.1.0.Beta2</version.jboss.logging>
-      <version.jboss.logging.processor>1.0.0.CR3</version.jboss.logging.processor>
+      <version.jboss.logging>3.0.0.GA</version.jboss.logging>
+      <version.jboss.logging.processor>1.0.0.Beta7</version.jboss.logging.processor>
       <version.jboss.spec>1.0.0.Final</version.jboss.spec>
       <version.jcipannotations>1.0</version.jcipannotations>
       <version.jclouds>1.1.0</version.jclouds>
@@ -356,6 +356,18 @@
          <version>${version.log4j}</version>
          <optional>true</optional>
       </dependency>
+      <dependency>
+         <groupId>org.jboss.logging</groupId>
+         <artifactId>jboss-logging-generator</artifactId>
+         <version>${version.jboss.logging.processor}</version>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.logging</groupId>
+         <artifactId>jboss-logging-processor</artifactId>
+         <version>${version.jboss.logging.processor}</version>
+         <scope>provided</scope>
+      </dependency>
 
       <!-- used to serialize non-serializable objects for a dummy marshaller -->
       <dependency>
@@ -403,7 +415,6 @@
                <source>1.6</source>
                <target>1.6</target>
                <encoding>UTF-8</encoding>
-               <proc>none</proc>
                <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument>
             </configuration>
          </plugin>
@@ -541,46 +552,6 @@
                </execution>
             </executions>
          </plugin>
-         <plugin>
-            <groupId>org.bsc.maven</groupId>
-            <artifactId>maven-processor-plugin</artifactId>
-            <executions>
-               <!-- Run annotation processors on src/main/java sources -->
-               <execution>
-                  <id>process</id>
-                  <goals>
-                     <goal>process</goal>
-                  </goals>
-                  <phase>generate-sources</phase>
-                  <configuration>
-                     <processors>
-                        <processor>org.jboss.logging.generator.apt.LoggingToolsProcessor</processor>
-                     </processors>
-                  </configuration>
-               </execution>
-               <!-- Run annotation processors on src/test/java sources -->
-               <execution>
-                  <id>process-test</id>
-                  <goals>
-                     <goal>process-test</goal>
-                  </goals>
-                  <phase>generate-test-sources</phase>
-                  <configuration>
-                     <processors>
-                        <processor>org.jboss.logging.generator.apt.LoggingToolsProcessor</processor>
-                     </processors>
-                  </configuration>
-               </execution>
-            </executions>
-            <dependencies>
-               <dependency>
-                   <groupId>org.jboss.logging</groupId>
-                   <artifactId>jboss-logging-processor</artifactId>
-                   <version>${version.jboss.logging.processor}</version>
-                   <scope>compile</scope>
-               </dependency>
-            </dependencies>
-         </plugin>
       </plugins>
       <finalName>${project.artifactId}</finalName>
       <pluginManagement>
@@ -604,11 +575,6 @@
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>ideauidesigner-maven-plugin</artifactId>
                <version>1.0-beta-1</version>
-            </plugin>
-            <plugin>
-               <groupId>org.bsc.maven</groupId>
-               <artifactId>maven-processor-plugin</artifactId>
-               <version>2.0.2</version>
             </plugin>
             <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
             <plugin>
@@ -671,20 +637,6 @@
                            </pluginExecutionFilter>
                            <action>
                               <ignore></ignore>
-                           </action>
-                        </pluginExecution>
-                        <pluginExecution>
-                           <pluginExecutionFilter>
-                              <groupId>org.bsc.maven</groupId>
-                              <artifactId>maven-processor-plugin</artifactId>
-                              <versionRange>[2.0.2,)</versionRange>
-                              <goals>
-                                 <goal>process-test</goal>
-                                 <goal>process</goal>
-                              </goals>
-                           </pluginExecutionFilter>
-                           <action>
-                             <ignore />
                            </action>
                         </pluginExecution>
                      </pluginExecutions>
