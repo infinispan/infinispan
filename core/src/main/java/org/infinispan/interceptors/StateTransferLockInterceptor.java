@@ -29,7 +29,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.RehashInProgressException;
+import org.infinispan.distribution.StateTransferInProgressException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -50,61 +50,61 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand cmd) throws Throwable {
-      if (!stateTransferLock.acquireForCommand(ctx, cmd)) {
-         // TODO If the super call throws a RehashInProgressException, we should release the state transfer lock
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      if (!stateTransferLock.acquireForCommand(ctx, command)) {
+         // TODO If the super call throws a StateTransferInProgressException, we should release the state transfer lock
          // to allow any pending rehash to finish and then retry the operation
-         // Then we could throw a RehashInProgressException only on remote nodes and include the view id in the
+         // Then we could throw a StateTransferInProgressException only on remote nodes and include the view id in the
          // exception message to make sure we got the right rehash
-         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
       }
       try {
-         return super.visitPrepareCommand(ctx, cmd);
+         return super.visitPrepareCommand(ctx, command);
       } finally {
-         stateTransferLock.releaseForCommand(ctx, cmd);
+         stateTransferLock.releaseForCommand(ctx, command);
       }
    }
 
    @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand cmd) throws Throwable {
-      if (!stateTransferLock.acquireForCommand(ctx, cmd)) {
-         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+      if (!stateTransferLock.acquireForCommand(ctx, command)) {
+         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
       }
       try {
-         return super.visitRollbackCommand(ctx, cmd);
+         return super.visitRollbackCommand(ctx, command);
       } finally {
-         stateTransferLock.releaseForCommand(ctx, cmd);
+         stateTransferLock.releaseForCommand(ctx, command);
       }
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand cmd) throws Throwable {
-      if (!stateTransferLock.acquireForCommand(ctx, cmd)) {
-         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      if (!stateTransferLock.acquireForCommand(ctx, command)) {
+         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
       }
       try {
-         return super.visitCommitCommand(ctx, cmd);
+         return super.visitCommitCommand(ctx, command);
       } finally {
-         stateTransferLock.releaseForCommand(ctx, cmd);
+         stateTransferLock.releaseForCommand(ctx, command);
       }
    }
 
    @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand cmd) throws Throwable {
-      if (!stateTransferLock.acquireForCommand(ctx, cmd)) {
-         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+      if (!stateTransferLock.acquireForCommand(ctx, command)) {
+         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
       }
       try {
-         return super.visitLockControlCommand(ctx, cmd);
+         return super.visitLockControlCommand(ctx, command);
       } finally {
-         stateTransferLock.releaseForCommand(ctx, cmd);
+         stateTransferLock.releaseForCommand(ctx, command);
       }
    }
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
       }
       try {
          return super.visitPutKeyValueCommand(ctx, command);
@@ -116,7 +116,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
       }
       try {
          return super.visitRemoveCommand(ctx, command);
@@ -128,7 +128,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
       }
       try {
          return super.visitReplaceCommand(ctx, command);
@@ -140,7 +140,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
       }
       try {
          return super.visitClearCommand(ctx, command);
@@ -152,7 +152,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         throw new RehashInProgressException("Timed out waiting for the transaction lock");
+         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
       }
       try {
          return super.visitPutMapCommand(ctx, command);

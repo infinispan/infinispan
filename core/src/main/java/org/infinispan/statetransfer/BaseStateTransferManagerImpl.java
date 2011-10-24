@@ -239,7 +239,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
    /**
     * @return <code>true</code> if the state transfer started successfully, <code>false</code> otherwise
     */
-   public boolean startStateTransfer(int viewId, Collection<Address> members, boolean initialView) throws TimeoutException, InterruptedException, PendingStateTransferException {
+   public boolean startStateTransfer(int viewId, Collection<Address> members, boolean initialView) throws TimeoutException, InterruptedException, StateTransferCancelledException {
       if (newView == null || viewId != newView.getViewId()) {
          log.debugf("Cannot start state transfer for view %d, we should be starting state transfer for view %s", viewId, newView);
          return false;
@@ -259,7 +259,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    public abstract CacheStore getCacheStoreForStateTransfer();
 
-   public void pushStateToNode(NotifyingNotifiableFuture<Object> stateTransferFuture, int viewId, Address target, Collection<InternalCacheEntry> state) throws PendingStateTransferException {
+   public void pushStateToNode(NotifyingNotifiableFuture<Object> stateTransferFuture, int viewId, Address target, Collection<InternalCacheEntry> state) throws StateTransferCancelledException {
       if (leavers.contains(target)) {
          log.debugf("Not pushing state to node %s since it has already left", target);
          return;
@@ -278,12 +278,6 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       return viewId == newView.getViewId();
    }
 
-   protected void checkIfCancelled(int viewId) throws PendingStateTransferException {
-      if (viewId != newView.getViewId()) {
-         throw new PendingStateTransferException();
-      }
-   }
-
    @Override
    public void prepareView(CacheView pendingView, CacheView committedView) throws Exception {
       log.tracef("Received new cache view: %s %s", configuration.getName(), pendingView);
@@ -299,12 +293,37 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    @Override
    public void commitView(int viewId) {
+      if (stateTransferTask == null) {
+         if (viewId == oldView.getViewId()) {
+            log.tracef("Ignoring commit for cache view %d as we have already committed it", viewId);
+            return;
+         } else {
+            throw new IllegalArgumentException(String.format("Cannot commit view %d, we are at view %d",
+                  viewId, oldView.getViewId()));
+         }
+      }
+
       stateTransferTask.commitStateTransfer();
+      stateTransferTask = null;
       endStateTransfer();
    }
 
    @Override
    public void rollbackView(int committedViewId) {
+      if (stateTransferTask == null) {
+         if (committedViewId == oldView.getViewId()) {
+            log.tracef("Ignoring rollback for cache view %d as we don't have a state transfer in progress",
+                  committedViewId);
+            return;
+         } else {
+            throw new IllegalArgumentException(String.format("Cannot rollback to view %d, we are at view %d",
+                  committedViewId, oldView.getViewId()));
+         }
+      }
+
+      stateTransferTask.cancelStateTransfer();
+      stateTransferTask = null;
+
       // TODO Use the new view id
       newView = oldView;
       chNew = chOld;

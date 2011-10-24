@@ -18,7 +18,7 @@
  */
 package org.infinispan.statetransfer;
 
-import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -45,7 +45,7 @@ import java.util.concurrent.TimeoutException;
  * }
  * </code>
  *
- * @author Dan Berindei <dberinde@redhat.com>
+ * @author Dan Berindei &lt;dan@infinispan.org&gt;
  * @since 5.1
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -72,11 +72,13 @@ public interface StateTransferLock {
    void releaseForCommand(TxInvocationContext ctx, LockControlCommand cmd);
 
 
-   void blockNewTransactions() throws InterruptedException;
+   void blockNewTransactions(int cacheViewId) throws InterruptedException;
 
-   void unblockNewTransactions() throws InterruptedException;
+   void unblockNewTransactions(int cacheViewId) throws InterruptedException;
 
    boolean areNewTransactionsBlocked();
 
-   void waitForStateTransferToEnd(InvocationContext ctx, ReplicableCommand command) throws TimeoutException, InterruptedException;
+   int getBlockingCacheViewId();
+
+   void waitForStateTransferToEnd(InvocationContext ctx, VisitableCommand command, int newCacheViewId) throws TimeoutException, InterruptedException;
 }
