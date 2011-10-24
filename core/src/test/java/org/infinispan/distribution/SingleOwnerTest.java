@@ -125,7 +125,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
          assert false : "Should have failed with a CacheException that contains an UnknownError";
       } catch (CacheException e) {
          if (e.getCause() != null) {
-            assert e.getCause().getCause() instanceof UnknownError : e.getCause();
+            assert e.getCause() instanceof UnknownError : e.getCause();
          } else {
             throw e;
          }
