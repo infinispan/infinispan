@@ -117,12 +117,12 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
 
    protected void assertNotLocked(Cache cache, Object key) {
       LockManager lockManager = TestingUtil.extractLockManager(cache);
-      assert !lockManager.isLocked(key) : "expected key '" + key + "' not to be locked, and it is by: " + lockManager.getOwner(key);
+      assert !lockManager.isLocked(key) : "expected key '" + key + "' not to be locked on node " + cache.getAdvancedCache().getCacheManager().getAddress() + ", and it locked is by: " + lockManager.getOwner(key);
    }
 
    protected void assertLocked(Cache cache, Object key) {
       LockManager lockManager = TestingUtil.extractLockManager(cache);
-      assert lockManager.isLocked(key) : "expected key '" + key + "' to be locked, but it is not";
+      assert lockManager.isLocked(key) : "expected key '" + key + "' to be lockedon node " + cache.getAdvancedCache().getCacheManager().getAddress() + ", but it is not";
    }
 
    public EmbeddedCacheManager manager(Cache c) {

@@ -292,7 +292,9 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             rpcManager.invokeRemotely(where, command, true, true);
             ((LocalTxInvocationContext) ctx).remoteLocksAcquired(where);
          } else {
-            rpcManager.invokeRemotely(dm.getAffectedNodes(command.getKeys()), command, true, true);
+            Collection<Address> where = dm.getAffectedNodes(command.getKeys());
+            rpcManager.invokeRemotely(where, command, true, true);
+            ((LocalTxInvocationContext) ctx).remoteLocksAcquired(where);
          }
          ctx.addAffectedKeys(command.getKeys());
       }
