@@ -84,7 +84,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          abortIfRemoteTransactionInvalid(ctx, command);
          return invokeNextAndCommitIf1Pc(ctx, command);
       } catch (Throwable t) {
-         lockManager.unlockAll(ctx);
          throw t;
       }
    }
