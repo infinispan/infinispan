@@ -26,21 +26,31 @@ import org.infinispan.CacheException;
  * Most of the time the operation will just wait for the rehash to complete and continue,
  * but if the rehash is taking too long this exception will be thrown.
  *
- * @author Dan Berindei <dberinde@redhat.com>
+ * @author Dan Berindei <dan@infinispan.org>
  */
-public class RehashInProgressException extends CacheException {
-   public RehashInProgressException() {
+public class StateTransferInProgressException extends CacheException {
+   private final int newCacheViewId;
+
+   public StateTransferInProgressException(int newCacheViewId) {
+      this.newCacheViewId = newCacheViewId;
    }
 
-   public RehashInProgressException(Throwable cause) {
+   public StateTransferInProgressException(int newCacheViewId, Throwable cause) {
       super(cause);
+      this.newCacheViewId = newCacheViewId;
    }
 
-   public RehashInProgressException(String msg) {
+   public StateTransferInProgressException(int newCacheViewId, String msg) {
       super(msg);
+      this.newCacheViewId = newCacheViewId;
    }
 
-   public RehashInProgressException(String msg, Throwable cause) {
+   public StateTransferInProgressException(int newCacheViewId, String msg, Throwable cause) {
       super(msg, cause);
+      this.newCacheViewId = newCacheViewId;
+   }
+
+   public int getNewCacheViewId() {
+      return newCacheViewId;
    }
 }

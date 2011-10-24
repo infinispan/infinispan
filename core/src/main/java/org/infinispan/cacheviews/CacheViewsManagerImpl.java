@@ -475,7 +475,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    public void handleRollbackView(String cacheName, int newViewId, int committedViewId) {
       CacheViewInfo cacheViewInfo = viewsInfo.get(cacheName);
       if (cacheViewInfo == null) {
-         log.tracef("Ignoring view rollback for unknown cache %s", cacheName);
+         log.tracef("Ignoring cache view rollback for unknown cache %s", cacheName);
          return;
       }
 

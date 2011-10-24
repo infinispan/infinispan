@@ -30,7 +30,6 @@ import org.infinispan.remoting.MembershipArithmetic;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -75,19 +74,17 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
 
 
    @Override
-   protected void performStateTransfer() throws Exception {
+   public void doPerformStateTransfer() throws Exception {
       if (!stateTransferManager.startStateTransfer(newViewId, members, initialView))
          return;
 
-      stateTransferStartMillis = System.currentTimeMillis();
       if (log.isDebugEnabled())
          log.debugf("Commencing state transfer %d on node: %s. Before start, data container had %d entries",
                newViewId, self, dataContainer.size());
-      boolean unblockTransactions = true;
 
       // Don't need to log anything, all transactions will be blocked
       //distributionManager.getTransactionLogger().enable();
-      stateTransferLock.blockNewTransactions();
+      stateTransferLock.blockNewTransactions(newViewId);
 
       Set<Address> joiners = chOld != null ? MembershipArithmetic.getMembersJoined(chOld.getCaches(), chNew.getCaches()) : chNew.getCaches();
       if (joiners.isEmpty()) {
@@ -124,18 +121,6 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
             if (!initialView) log.trace("State transfer not enabled, so not pushing state");
          }
       }
-   }
-
-   public void commitStateTransfer() {
-      try {
-         stateTransferLock.unblockNewTransactions();
-      } catch (Exception e) {
-         log.errorUnblockingTransactions(e);
-      }
-      stateTransferManager.endStateTransfer();
-
-      log.debugf("Node %s completed rehash for view %d in %s!", self, newViewId,
-            Util.prettyPrintTime(System.currentTimeMillis() - stateTransferStartMillis));
    }
 
 

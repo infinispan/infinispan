@@ -22,5 +22,5 @@ package org.infinispan.statetransfer;
 /**
  * Thrown when a state transfer is interrupted because there is another state transfer pending.
  */
-public class PendingStateTransferException extends StateTransferException {
+public class StateTransferCancelledException extends StateTransferException {
 }

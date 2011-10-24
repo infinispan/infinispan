@@ -31,7 +31,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -70,7 +69,6 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
    private List<Object> keysToRemove;
    private Collection<Address> oldCacheSet;
    private Collection<Address> newCacheSet;
-   private long stateTransferStartMillis;
 
    public DistributedStateTransferTask(RpcManager rpcManager, Configuration configuration, DataContainer dataContainer,
                                        DistributedStateTransferManagerImpl stateTransferManager,
@@ -88,11 +86,10 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
 
 
    @Override
-   protected void performStateTransfer() throws Exception {
+   public void doPerformStateTransfer() throws Exception {
       if (!stateTransferManager.startStateTransfer(newViewId, members, initialView))
          return;
 
-      stateTransferStartMillis = System.currentTimeMillis();
       if (log.isDebugEnabled())
          log.debugf("Commencing rehash %d on node: %s. Before start, data container had %d entries",
                newViewId, self, dataContainer.size());
@@ -102,7 +99,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
 
       // Don't need to log anything, all transactions will be blocked
       //distributionManager.getTransactionLogger().enable();
-      stateTransferLock.blockNewTransactions();
+      stateTransferLock.blockNewTransactions(newViewId);
 
       if (trace) {
          log.tracef("Rebalancing: chOld = %s, chNew = %s", chOld, chNew);
@@ -122,7 +119,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
             rebalance(ice.getKey(), ice, numOwners, chOld, chNew, null, states, keysToRemove);
          }
 
-         stateTransferManager.checkIfCancelled(newViewId);
+         checkIfCancelled();
 
          // Only fetch the data from the cache store if the cache store is not shared
          CacheStore cacheStore = stateTransferManager.getCacheStoreForStateTransfer();
@@ -134,7 +131,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
             if (trace) log.trace("No cache store or cache store is shared, not rebalancing stored keys");
          }
 
-         stateTransferManager.checkIfCancelled(newViewId);
+         checkIfCancelled();
 
          // Now for each server S in states.keys(): push states.get(S) to S via RPC
          pushState(states);
@@ -154,14 +151,7 @@ public class DistributedStateTransferTask extends BaseStateTransferTask {
          cacheNotifier.notifyDataRehashed(oldCacheSet, newCacheSet, newViewId, false);
       }
 
-      try {
-         stateTransferLock.unblockNewTransactions();
-      } catch (Exception e) {
-         log.errorUnblockingTransactions(e);
-      }
-      stateTransferManager.endStateTransfer();
-      log.debugf("Node %s completed rehash for view %d in %s!", self, newViewId,
-            Util.prettyPrintTime(System.currentTimeMillis() - stateTransferStartMillis));
+      super.commitStateTransfer();
    }
 
 

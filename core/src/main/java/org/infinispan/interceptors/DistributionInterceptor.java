@@ -23,6 +23,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -45,15 +46,15 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.L1Manager;
-import org.infinispan.distribution.RehashInProgressException;
+import org.infinispan.distribution.StateTransferInProgressException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
@@ -275,8 +276,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
-         allowRehashToComplete(ctx);
-
+         allowStateTransferToComplete(ctx, command, -1);
          if (configuration.isEagerLockSingleNode()) {
             //only main data owner is locked, see: https://jira.jboss.org/browse/ISPN-615
             Map<Object, List<Address>> toMulticast = dm.locateAll(command.getKeys(), 1);
@@ -312,7 +312,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         allowRehashToComplete(ctx);
+         allowStateTransferToComplete(ctx, command, -1);
 
          Collection<Address> preparedOn = ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired();
 
@@ -365,11 +365,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                rpcManager.invokeRemotely(resendTo, pc, true, true);
             }
          }
-      } catch (RehashInProgressException e) {
+      } catch (StateTransferInProgressException e) {
          // we are assuming the current node is also trying to start the rehash, but it can't
          // because we're holding the tx lock
          // there is no problem if some nodes already applied the commit
-         allowRehashToComplete(ctx);
+         allowStateTransferToComplete(ctx, command, e.getNewCacheViewId());
 
          if (retries > 0) {
             sendCommitCommand(ctx, command, preparedOn, retries - 1);
@@ -380,7 +380,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          // we are assuming the current node is also trying to start the rehash, but it can't
          // because we're holding the tx lock
          // there is no problem if some nodes already applied the commit
-         allowRehashToComplete(ctx);
+         allowStateTransferToComplete(ctx, command, -1);
 
          if (retries > 0) {
             sendCommitCommand(ctx, command, preparedOn, retries - 1);
@@ -394,8 +394,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     * If there is a pending rehash, suspend the tx lock and wait until the rehash is completed.
     * Otherwise, do nothing.
     */
-   private void allowRehashToComplete(InvocationContext ctx) throws TimeoutException, InterruptedException {
-      stateTransferLock.waitForStateTransferToEnd(ctx, null);
+   private void allowStateTransferToComplete(InvocationContext ctx, VisitableCommand command, int newCacheViewId) throws TimeoutException, InterruptedException {
+      stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
    }
 
 
@@ -406,8 +406,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       boolean sync = isSynchronous(ctx);
 
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         allowRehashToComplete(ctx);
-
+         allowStateTransferToComplete(ctx, command, -1);
          Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
          NotifyingNotifiableFuture<Object> f = null;
          if (isL1CacheEnabled && command.isOnePhaseCommit())
@@ -465,8 +464,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          if (!ctx.isInTxScope()) {
             NotifyingNotifiableFuture<Object> future = null;
             if (ctx.isOriginLocal()) {
-               allowRehashToComplete(ctx);
-
+               allowStateTransferToComplete(ctx, command, -1);
                List<Address> rec = recipientGenerator.generateRecipients();
                int numCallRecipients = rec == null ? 0 : rec.size();
                if (trace) log.tracef("Invoking command %s on hosts %s", command, rec);
