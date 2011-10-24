@@ -128,8 +128,8 @@
       <version.jbossjta>4.15.1.Final</version.jbossjta>
       <version.osgi>4.3.0</version.osgi>
       <version.jboss.jandex>1.0.3.Final</version.jboss.jandex>
-      <version.jboss.logging>3.0.0.GA</version.jboss.logging>
-      <version.jboss.logging.processor>1.0.0.Beta7</version.jboss.logging.processor>
+      <version.jboss.logging>3.1.0.Beta3</version.jboss.logging>
+      <version.jboss.logging.processor>1.0.0.CR3</version.jboss.logging.processor>
       <version.jboss.spec>1.0.0.Final</version.jboss.spec>
       <version.jcipannotations>1.0</version.jcipannotations>
       <version.jclouds>1.1.0</version.jclouds>
