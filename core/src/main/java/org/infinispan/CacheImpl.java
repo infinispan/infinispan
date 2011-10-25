@@ -433,8 +433,8 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
 
    private InvocationContext setInvocationContextFlagsAndClassLoader(InvocationContext ctx, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       if (explicitFlags != null) ctx.setFlags(explicitFlags);
-      if (explicitClassLoader != null) ctx.setClassLoader(explicitClassLoader);
-
+      ctx.setClassLoader(explicitClassLoader != null ?
+                         explicitClassLoader : getClassLoader());
       return ctx;
    }
 
