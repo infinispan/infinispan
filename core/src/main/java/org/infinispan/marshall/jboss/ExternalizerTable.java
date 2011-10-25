@@ -231,9 +231,9 @@ public class ExternalizerTable implements ObjectTable {
       Writer writer = writers.get(clazz);
       if (writer == null) {
          if (Thread.currentThread().isInterrupted())
-            throw new IOException(String.format(
+            throw new IOException(new InterruptedException(String.format(
                   "Cache manager is shutting down, so type write externalizer for type=%s cannot be resolved. Interruption being pushed up.",
-                  clazz.getName()), new InterruptedException());
+                  clazz.getName())));
       }
       return writer;
    }

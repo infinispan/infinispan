@@ -53,7 +53,9 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
 
       defineConfigurationOnAllManagers("c1", c);
       defineConfigurationOnAllManagers("c2", c);
+   }
 
+   private void startAllCaches() {
       cm1.startCaches("c1", "c2", "cache1", "cache2", CacheContainer.DEFAULT_CACHE_NAME);
       cm2.startCaches("c1", "c2", "cache1", "cache2", CacheContainer.DEFAULT_CACHE_NAME);
    }
@@ -63,6 +65,7 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
    }
 
    public void testCommitSpanningCaches() throws Exception {
+      startAllCaches();
       Cache c1 = cm1.getCache("c1");
       Cache c1Replica = cm2.getCache("c1");
       Cache c2 = cm1.getCache("c2");
@@ -116,6 +119,7 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
    }
 
    public void testRollbackSpanningCaches() throws Exception {
+      startAllCaches();
       Cache c1 = cm1.getCache("c1");
       Cache c1Replica = cm2.getCache("c1");
       Cache c2 = cm1.getCache("c2");
@@ -169,6 +173,7 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
    }
 
    public void testRollbackSpanningCaches2() throws Exception {
+      startAllCaches();
       Cache c1 = cm1.getCache("c1");
 
       assert c1.getConfiguration().getCacheMode().isClustered();
@@ -183,6 +188,7 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
    }
 
    public void testSimpleCommit() throws Exception {
+      startAllCaches();
       Cache c1 = cm1.getCache("c1");
       Cache c1Replica = cm2.getCache("c1");
 
@@ -200,6 +206,7 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
    }
 
    public void testPutIfAbsent() throws Exception {
+      startAllCaches();
       Cache c1 = cm1.getCache("c1");
       Cache c1Replica = cm2.getCache("c1");
 
@@ -240,6 +247,7 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
    }
 
    private void runTest(Cache cache1, Cache cache2) throws Exception {
+      startAllCaches();
       assertFalse(cache1.containsKey("a"));
       assertFalse(cache2.containsKey("b"));
 
