@@ -73,7 +73,7 @@ public class ResourceDMBean implements DynamicMBean {
 
    private static final String MBEAN_DESCRITION = "Dynamic MBean Description";
 
-   private final Log log = LogFactory.getLog(ResourceDMBean.class);
+   private static final Log log = LogFactory.getLog(ResourceDMBean.class);
    private final Object obj;
    private String description = "";
 

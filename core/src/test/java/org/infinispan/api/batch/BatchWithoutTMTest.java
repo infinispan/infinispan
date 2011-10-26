@@ -105,7 +105,7 @@ public class BatchWithoutTMTest extends AbstractBatchTest {
    }
 
 
-   private static Log log = LogFactory.getLog(BatchWithoutTMTest.class);
+   private static final Log log = LogFactory.getLog(BatchWithoutTMTest.class);
 
    public void testBatchVisibility() throws InterruptedException {
       Cache<String, String> cache = null;

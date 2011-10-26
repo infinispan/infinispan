@@ -61,7 +61,7 @@ import static org.infinispan.test.TestingUtil.v;
 @Test(groups = "functional", testName = "loaders.CacheLoaderFunctionalTest")
 public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
-   private static Log log = LogFactory.getLog(CacheLoaderFunctionalTest.class);
+   private static final Log log = LogFactory.getLog(CacheLoaderFunctionalTest.class);
 
    Cache cache;
    CacheStore store;

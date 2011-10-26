@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ClusterIdGenerator {
 
-   private static Log log = LogFactory.getLog(ClusterIdGenerator.class);
+   private static final Log log = LogFactory.getLog(ClusterIdGenerator.class);
 
    // TODO: Possibly seed version counter on capped System.currentTimeMillis, to avoid issues with clients holding to versions in between restarts
    private final AtomicInteger versionCounter = new AtomicInteger();

@@ -47,7 +47,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class EntryFactoryImpl implements EntryFactory {
 
-   private static Log log = LogFactory.getLog(EntryFactoryImpl.class);
+   private static final Log log = LogFactory.getLog(EntryFactoryImpl.class);
    private final boolean trace = log.isTraceEnabled();
    
    private boolean useRepeatableRead;
