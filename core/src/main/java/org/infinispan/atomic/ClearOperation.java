@@ -59,6 +59,14 @@ public class ClearOperation<K, V> extends Operation<K, V> {
    public void replay(Map<K, V> delegate) {
       delegate.clear();
    }
+   
+   @Override
+   public K keyAffected() {
+      //null means all keys are affected
+      return null;
+   }
+   
+   
 
    public static class Externalizer extends AbstractExternalizer<ClearOperation> {
       @Override

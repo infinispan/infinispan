@@ -23,8 +23,11 @@
 
 package org.infinispan.container;
 
+import org.infinispan.atomic.Delta;
+import org.infinispan.atomic.DeltaAware;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.entries.NullMarkerEntry;
@@ -147,6 +150,40 @@ public class EntryFactoryImpl implements EntryFactory {
       mvccEntry.copyForUpdate(container, writeSkewCheck);
       return mvccEntry;
    }
+   
+   @Override
+   public CacheEntry wrapEntryForDelta(InvocationContext ctx, Object deltaKey, Delta delta ) throws InterruptedException {
+      CacheEntry cacheEntry = getFromContext(ctx, deltaKey);      
+      DeltaAwareCacheEntry deltaAwareEntry = null;
+      if (cacheEntry != null) {        
+         deltaAwareEntry = wrapEntryForDelta(ctx, deltaKey, cacheEntry);
+      } else {                     
+         InternalCacheEntry ice = getFromContainer(deltaKey);
+         if(ice != null){
+            deltaAwareEntry = newDeltaAwareCacheEntry(ctx, deltaKey, (DeltaAware)ice.getValue());   
+         }                
+      } 
+      deltaAwareEntry.appendDelta(delta);      
+      return deltaAwareEntry;
+   }
+   
+   private DeltaAwareCacheEntry wrapEntryForDelta(InvocationContext ctx, Object key, CacheEntry cacheEntry) {
+      if (cacheEntry instanceof DeltaAwareCacheEntry) return (DeltaAwareCacheEntry) cacheEntry;
+      return wrapInternalCacheEntryForDelta(ctx, key, cacheEntry);
+   }
+   
+   private DeltaAwareCacheEntry wrapInternalCacheEntryForDelta(InvocationContext ctx, Object key, CacheEntry cacheEntry) {
+      DeltaAwareCacheEntry e = null;
+      if(cacheEntry instanceof MVCCEntry){
+         e = createWrappedDeltaEntry(key, (DeltaAware) cacheEntry.getValue(), cacheEntry);
+      }
+      else {
+         e = createWrappedDeltaEntry(key, (DeltaAware) cacheEntry.getValue(), null);
+      }
+      ctx.putLookedUpEntry(key, e);
+      return e;
+
+   }
 
    private CacheEntry getFromContext(InvocationContext ctx, Object key) {
       final CacheEntry cacheEntry = ctx.lookupEntry(key);
@@ -210,5 +247,16 @@ public class EntryFactoryImpl implements EntryFactory {
             : null;
 
       return useRepeatableRead ? new RepeatableReadEntry(key, value, lifespan) : new ReadCommittedEntry(key, value, lifespan);
+   }
+   
+   private DeltaAwareCacheEntry newDeltaAwareCacheEntry(InvocationContext ctx, Object key, DeltaAware deltaAware){
+      DeltaAwareCacheEntry deltaEntry = createWrappedDeltaEntry(key, deltaAware, null);
+      ctx.putLookedUpEntry(key, deltaEntry);
+      return deltaEntry;
+   }
+   
+   private  DeltaAwareCacheEntry createWrappedDeltaEntry(Object key, DeltaAware deltaAware, CacheEntry entry) {
+     
+      return new DeltaAwareCacheEntry(key,deltaAware, entry);
    }
 }

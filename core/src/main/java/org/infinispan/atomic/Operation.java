@@ -35,6 +35,8 @@ import java.util.Map;
  */
 public abstract class Operation<K, V> {
    
+   public abstract K keyAffected();
+   
    public abstract void replay(Map<K, V> delegate);
 
    public abstract void rollback(Map<K, V> delegate);

@@ -65,6 +65,11 @@ public class PutOperation<K, V> extends Operation<K, V> {
    public void replay(Map<K, V> delegate) {
       delegate.put(key, newValue);
    }
+   
+   @Override
+   public K keyAffected() {
+      return key;
+   }
 
    public static class Externalizer extends AbstractExternalizer<PutOperation> {
       @Override

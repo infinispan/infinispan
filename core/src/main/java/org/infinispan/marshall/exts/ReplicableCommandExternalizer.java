@@ -27,6 +27,7 @@ import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -128,7 +129,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
        Set<Class<? extends ReplicableCommand>> coreCommands = Util.<Class<? extends ReplicableCommand>>asSet(
             DistributedExecuteCommand.class, GetKeyValueCommand.class,
-            ClearCommand.class, EvictCommand.class,
+            ClearCommand.class, EvictCommand.class, ApplyDeltaCommand.class,
             InvalidateCommand.class, InvalidateL1Command.class,
             PutKeyValueCommand.class, PutMapCommand.class,
             RemoveCommand.class, ReplaceCommand.class);

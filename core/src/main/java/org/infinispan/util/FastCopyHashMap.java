@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * A HashMap that is optimized for fast shallow copies.
@@ -185,6 +186,38 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
 
          index = nextIndex(index, length);
       }
+   }
+   
+   /**
+    * Returns a string representation of this map.  The string representation
+    * consists of a list of key-value mappings in the order returned by the
+    * map's <tt>entrySet</tt> view's iterator, enclosed in braces
+    * (<tt>"{}"</tt>).  Adjacent mappings are separated by the characters
+    * <tt>", "</tt> (comma and space).  Each key-value mapping is rendered as
+    * the key followed by an equals sign (<tt>"="</tt>) followed by the
+    * associated value.  Keys and values are converted to strings as by
+    * {@link String#valueOf(Object)}.
+    *
+    * @return a string representation of this map
+    */
+   public String toString() {
+     Iterator<java.util.Map.Entry<K, V>> i = entrySet().iterator();
+     if (! i.hasNext())
+         return "{}";
+
+     StringBuilder sb = new StringBuilder();
+     sb.append('{');
+     for (;;) {
+         java.util.Map.Entry<K, V> e = i.next();
+         K key = e.getKey();
+         V value = e.getValue();
+         sb.append(key   == this ? "(this Map)" : key);
+         sb.append('=');
+         sb.append(value == this ? "(this Map)" : value);
+         if (! i.hasNext())
+           return sb.append('}').toString();
+         sb.append(", ");
+     }
    }
 
    public boolean containsValue(Object value) {

@@ -22,7 +22,7 @@
  */
 package org.infinispan.atomic;
 
-import org.infinispan.Cache;
+import org.infinispan.AdvancedCache;
 import org.infinispan.batch.AutoBatchSupport;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -37,6 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+
 
 /**
  * A layer of indirection around an {@link AtomicHashMap} to provide consistency and isolation for concurrent readers
@@ -59,12 +60,12 @@ import java.util.Set;
 public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements AtomicMap<K, V> {
    private static final Log log = LogFactory.getLog(AtomicHashMapProxy.class);
    private static final boolean trace = log.isTraceEnabled();
-   Object deltaMapKey;
-   Cache cache;
-   InvocationContextContainer icc;
-   volatile boolean startedReadingMap = false;
+   protected final Object deltaMapKey;
+   protected final AdvancedCache cache;
+   protected final InvocationContextContainer icc;
+   protected volatile boolean startedReadingMap = false;
 
-   AtomicHashMapProxy(Cache<?, ?> cache, Object deltaMapKey, BatchContainer batchContainer, InvocationContextContainer icc) {
+   AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey, BatchContainer batchContainer, InvocationContextContainer icc) {
       this.cache = cache;
       this.deltaMapKey = deltaMapKey;
       this.batchContainer = batchContainer;
@@ -72,13 +73,13 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    }
 
    @SuppressWarnings("unchecked")
-   private AtomicHashMap<K, V> toMap(Object object) {
+   protected AtomicHashMap<K, V> toMap(Object object) {
       Object map = (object instanceof MarshalledValue) ? ((MarshalledValue) object).get() : object;
       return (AtomicHashMap<K, V>) map;
    }
 
    // internal helper, reduces lots of casts.
-   private AtomicHashMap<K, V> getDeltaMapForRead() {
+   protected AtomicHashMap<K, V> getDeltaMapForRead() {
       AtomicHashMap<K, V> ahm = toMap(cache.get(deltaMapKey));
       if (ahm != null && !startedReadingMap) startedReadingMap = true;
       assertValid(ahm);
@@ -86,12 +87,12 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    }
 
    @SuppressWarnings("unchecked")
-   private AtomicHashMap<K, V> getDeltaMapForWrite(InvocationContext ctx) {
+   protected AtomicHashMap<K, V> getDeltaMapForWrite(InvocationContext ctx) {
       CacheEntry lookedUpEntry = ctx.lookupEntry(deltaMapKey);
       boolean lockedAndCopied = lookedUpEntry != null && lookedUpEntry.isChanged() &&
-            toMap(lookedUpEntry.getValue()).copied;
+            toMap(lookedUpEntry.getValue()).copied;          
 
-      if (lockedAndCopied) {
+      if (lockedAndCopied) {         
          return getDeltaMapForRead();
       } else {
          // acquire WL
@@ -105,20 +106,22 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
                log.trace("Forcing write lock even for reads");
          }
 
-         AtomicHashMap<K, V> map = getDeltaMapForRead();
-         // copy for write
-         AtomicHashMap<K, V> copy = map == null ? new AtomicHashMap<K, V>(true) : map.copyForWrite();
-         copy.initForWriting();
          // reinstate the flag
          if (suppressLocks) ctx.setFlags(Flag.SKIP_LOCKING);
-         cache.put(deltaMapKey, copy);
+         
+         AtomicHashMap<K, V> map = getDeltaMapForRead();
+         
+         // copy for write
+         AtomicHashMap<K, V> copy = map == null ? new AtomicHashMap<K, V>(true) : map.copyForWrite();          
+         copy.initForWriting();                 
+         cache.put(deltaMapKey, copy);         
          return copy;
       }
    }
 
    // readers
 
-   private void assertValid(AtomicHashMap<?, ?> map) {
+   protected void assertValid(AtomicHashMap<?, ?> map) {
       if (startedReadingMap && (map == null || map.removed)) throw new IllegalStateException("AtomicMap stored under key " + deltaMapKey + " has been concurrently removed!");
    }
 
@@ -137,12 +140,12 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       return map == null ? Collections.<Entry<K,V>>emptySet() : map.entrySet();
    }
 
-   public int size() {
+   public int size() {      
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map == null ? 0 : map.size();
    }
 
-   public boolean isEmpty() {
+   public boolean isEmpty() {      
       AtomicHashMap<K, V> map = getDeltaMapForRead();
       return map == null || map.isEmpty();
    }
@@ -162,57 +165,63 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       return map == null ? null : map.get(key);
    }
 
-   // writers
-
+   //writers      
    public V put(K key, V value) {
+      AtomicHashMap<K, V> deltaMapForWrite = null;
       try {
          startAtomic();
          InvocationContext ctx = icc.createInvocationContext(true);
-         AtomicHashMap<K, V> deltaMapForWrite = getDeltaMapForWrite(ctx);
+         deltaMapForWrite = getDeltaMapForWrite(ctx);            
          return deltaMapForWrite.put(key, value);
       }
-      finally {
+      finally {         
          endAtomic();
       }
    }
 
    public V remove(Object key) {
+      AtomicHashMap<K, V> deltaMapForWrite = null;
       try {
          startAtomic();
-         InvocationContext ic = icc.createInvocationContext(true);
-         return getDeltaMapForWrite(ic).remove(key);
+         InvocationContext ic = icc.createInvocationContext(true);      
+         deltaMapForWrite = getDeltaMapForWrite(ic);         
+         return deltaMapForWrite.remove(key);
       }
-      finally {
+      finally {         
          endAtomic();
       }
    }
 
    public void putAll(Map<? extends K, ? extends V> m) {
+      AtomicHashMap<K, V> deltaMapForWrite = null;
       try {
          startAtomic();
-         InvocationContext ic = icc.createInvocationContext(true);
-         getDeltaMapForWrite(ic).putAll(m);
+         InvocationContext ctx = icc.createInvocationContext(true);
+         deltaMapForWrite = getDeltaMapForWrite(ctx);         
+         deltaMapForWrite.putAll(m);
       }
-      finally {
+      finally {        
          endAtomic();
       }
    }
 
    public void clear() {
+      AtomicHashMap<K, V> deltaMapForWrite = null;
       try {
          startAtomic();
-         InvocationContext ic = icc.createInvocationContext(true);
-         getDeltaMapForWrite(ic).clear();
-      }
-      finally {
+         InvocationContext ctx = icc.createInvocationContext(true);
+         deltaMapForWrite = getDeltaMapForWrite(ctx);        
+         deltaMapForWrite.clear();
+      } finally {         
          endAtomic();
       }
    }
 
    @Override
    public String toString() {
-      return "AtomicHashMapProxy{" +
-            "deltaMapKey=" + deltaMapKey +
-            '}';
+      StringBuffer sb = new StringBuffer("AtomicHashMapProxy{deltaMapKey=");     
+      sb.append(deltaMapKey);
+      sb.append("}");
+      return sb.toString();
    }
 }

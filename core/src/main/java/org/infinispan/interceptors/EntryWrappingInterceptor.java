@@ -28,6 +28,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -135,6 +136,12 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent());
       return invokeNextAndApplyChanges(ctx, command);
    }
+   
+   @Override
+   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {      
+      entryFactory.wrapEntryForDelta(ctx, command.getDeltaAwareKey(), command.getDelta());  
+      return invokeNextInterceptor(ctx, command);
+   }
 
    @Override
    public final Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
@@ -224,6 +231,15 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
             entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent());
+            invokeNextInterceptor(ctx, command);
+         }
+         return null;
+      }
+      
+      @Override
+      public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+         if (cll.localNodeIsOwner(command.getKey())) {              
+            entryFactory.wrapEntryForDelta(ctx, command.getDeltaAwareKey(), command.getDelta());
             invokeNextInterceptor(ctx, command);
          }
          return null;

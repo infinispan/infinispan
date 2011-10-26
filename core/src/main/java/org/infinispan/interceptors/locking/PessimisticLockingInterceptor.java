@@ -27,6 +27,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -39,6 +40,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -125,6 +128,23 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             lockKey(ctx, command.getKey());
          }
          invokeNextInterceptor(ctx, command);
+         return invokeNextInterceptor(ctx, command);
+      } catch (Throwable te) {
+         throw cleanLocksAndRethrow(ctx, te);
+      }
+   }
+   
+   @Override
+   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+      Object[] compositeKeys = command.getCompositeKeys();
+      try {
+         HashSet<Object> keysToLock = new HashSet<Object>(Arrays.asList(compositeKeys));
+         acquireRemoteIfNeeded(ctx, keysToLock);
+         if (cll.localNodeIsOwner(command.getDeltaAwareKey())) {
+            for (Object key : compositeKeys) {
+               lockKey(ctx, key);   
+            }      
+         }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
