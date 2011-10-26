@@ -60,6 +60,11 @@ public class RemoveOperation<K, V> extends Operation<K, V> {
    public void replay(Map<K, V> delegate) {
       delegate.remove(key);
    }
+   
+   @Override
+   public K keyAffected() {
+      return key;
+   }
 
    public static class Externalizer extends AbstractExternalizer<RemoveOperation> {
       @Override

@@ -22,6 +22,7 @@
  */
 package org.infinispan;
 
+import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
@@ -155,6 +156,11 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    @Override
    public boolean lock(Collection<? extends K> keys) {
       return cache.lock(keys);
+   }
+   
+   @Override
+   public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire){
+      cache.applyDelta(deltaAwareValueKey, delta, locksToAcquire);
    }
    
    @Override

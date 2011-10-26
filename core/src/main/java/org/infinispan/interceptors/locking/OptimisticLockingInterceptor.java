@@ -25,6 +25,7 @@ package org.infinispan.interceptors.locking;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -83,6 +84,15 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } catch (Throwable te) {
+         throw cleanLocksAndRethrow(ctx, te);
+      }
+   }
+   
+   @Override
+   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       try {
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -160,6 +170,17 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (cll.localNodeIsOwner(command.getKey())) {
             lockKey(ctx, command.getKey());
+         }
+         return null;
+      }
+      
+      @Override
+      public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+         if (cll.localNodeIsOwner(command.getKey())) {
+            Object[] compositeKeys = command.getCompositeKeys();
+            for (Object key : compositeKeys) {
+               lockKey(ctx, key);   
+            }            
          }
          return null;
       }

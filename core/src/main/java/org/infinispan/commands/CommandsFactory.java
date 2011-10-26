@@ -22,6 +22,7 @@
  */
 package org.infinispan.commands;
 
+import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
@@ -41,6 +42,7 @@ import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -325,4 +327,14 @@ public interface CommandsFactory {
     * @see RemoveRecoveryInfoCommand
     */
    RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(long internalId);
+   
+   
+   /**
+    * Builds a ApplyDeltaCommand used for applying Delta objects to DeltaAware containers stored in cache 
+    * 
+    * @return ApplyDeltaCommand instance
+    * @see ApplyDeltaCommand
+    */
+   ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys);
+   
 }

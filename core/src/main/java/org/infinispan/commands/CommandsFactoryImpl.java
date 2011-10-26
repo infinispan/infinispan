@@ -23,8 +23,9 @@
 package org.infinispan.commands;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
@@ -43,6 +44,7 @@ import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -350,6 +352,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
             CompleteTransactionCommand ccc = (CompleteTransactionCommand)c;
             ccc.init(recoveryManager);
             break;
+         case ApplyDeltaCommand.COMMAND_ID:
+            ApplyDeltaCommand deltaCommand = (ApplyDeltaCommand) c;
+            break;            
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -415,5 +420,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public RemoveRecoveryInfoCommand buildRemoveRecoveryInfoCommand(long internalId) {
       return new RemoveRecoveryInfoCommand(internalId, cacheName);
+   }
+   
+   @Override
+   public ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys) {
+      return new ApplyDeltaCommand(deltaAwareValueKey, delta, keys);
    }
 }
