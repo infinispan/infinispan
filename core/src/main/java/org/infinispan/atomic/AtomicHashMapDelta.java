@@ -31,6 +31,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -46,6 +47,7 @@ public class AtomicHashMapDelta implements Delta {
    private static final boolean trace = log.isTraceEnabled();
 
    private List<Operation> changeLog;
+   private boolean hasClearOperation;
 
    public DeltaAware merge(DeltaAware d) {
       AtomicHashMap other;
@@ -55,24 +57,44 @@ public class AtomicHashMapDelta implements Delta {
          other = new AtomicHashMap();
       if (changeLog != null) {
          for (Operation o : changeLog) o.replay(other.delegate);
-      }
-      other.commit();
+      }      
       return other;
    }
-
+   
    public void addOperation(Operation o) {
       if (changeLog == null) {
          // lazy init
          changeLog = new LinkedList<Operation>();
       }
+      if(o instanceof ClearOperation) {
+         hasClearOperation = true;
+      }
       changeLog.add(o);
+   }
+   
+   public Collection<Object> getKeys() {
+      List<Object> keys = new LinkedList<Object>();
+      if (changeLog != null) {
+         for (Operation o : changeLog) {
+            Object key = o.keyAffected();
+            keys.add(key);
+         }
+      }
+      return keys;
+   }
+   
+   public boolean hasClearOperation(){
+      return hasClearOperation;
    }
 
    @Override
    public String toString() {
-      return "AtomicHashMapDelta{" +
-            "changeLog=" + changeLog +
-            '}';
+      StringBuffer sb = new StringBuffer( "AtomicHashMapDelta{changeLog=");
+      sb.append(changeLog);
+      sb.append( ",hasClear=");
+      sb.append(hasClearOperation);
+      sb.append("}");
+      return sb.toString();
    }
 
    public int getChangeLogSize() {

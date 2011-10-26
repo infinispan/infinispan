@@ -22,6 +22,7 @@
  */
 package org.infinispan.atomic;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 
@@ -52,9 +53,28 @@ public class AtomicMapLookup {
     * @param <V> value param of the AtomicMap
     * @return an AtomicMap
     */
-   @SuppressWarnings("unchecked")
    public static <MK, K, V> AtomicMap<K, V> getAtomicMap(Cache<MK, ?> cache, MK key) {
       return getAtomicMap(cache, key, true);
+   }
+   
+   /**
+    * Retrieves a fine grained atomic map from a given cache, stored under a given key. If a fine
+    * grained atomic map did not exist, one is created and registered in an atomic fashion.
+    * 
+    * @param cache
+    *           underlying cache
+    * @param key
+    *           key under which the atomic map exists
+    * @param <MK>
+    *           key param of the cache
+    * @param <K>
+    *           key param of the AtomicMap
+    * @param <V>
+    *           value param of the AtomicMap
+    * @return an AtomicMap
+    */
+   public static <MK, K, V> FineGrainedAtomicMap<K, V> getFineGrainedAtomicMap(Cache<MK, ?> cache, MK key) {
+      return getFineGrainedAtomicMap(cache, key, true);
    }
 
    /**
@@ -70,6 +90,28 @@ public class AtomicMapLookup {
     */
    @SuppressWarnings("unchecked")
    public static <MK, K, V> AtomicMap<K, V> getAtomicMap(Cache<MK, ?> cache, MK key, boolean createIfAbsent) {
+      return (AtomicMap<K, V>) getMap(cache, key, createIfAbsent, false);
+   }
+   
+   /**
+    * Retrieves an atomic map from a given cache, stored under a given key.
+    *
+    * @param cache underlying cache
+    * @param key key under which the atomic map exists
+    * @param createIfAbsent if true, a new atomic map is created if one doesn't exist; otherwise null is returned if the map didn't exist.
+    * @param fineGrained if true, and createIfAbsent is true then created atomic map will be fine grained.  
+    * @param <MK> key param of the cache
+    * @param <K> key param of the AtomicMap
+    * @param <V> value param of the AtomicMap
+    * @return an AtomicMap, or null if one did not exist.
+    */
+   @SuppressWarnings("unchecked")
+   public static <MK, K, V> FineGrainedAtomicMap<K, V> getFineGrainedAtomicMap(Cache<MK, ?> cache, MK key, boolean createIfAbsent) {
+      return (FineGrainedAtomicMap<K, V>) getMap(cache, key, createIfAbsent, true);
+   }
+   
+   @SuppressWarnings("unchecked")
+   private static <MK, K, V> Map<K, V> getMap(Cache<MK, ?> cache, MK key, boolean createIfAbsent, boolean fineGrained) {
       Object value = cache.get(key);
       if (value == null) {
          if (createIfAbsent)
@@ -77,7 +119,13 @@ public class AtomicMapLookup {
          else return null;
       }
       AtomicHashMap<K, V> castValue = (AtomicHashMap<K, V>) value;
-      return castValue.getProxy(cache, key, cache.getAdvancedCache().getBatchContainer(), cache.getAdvancedCache().getInvocationContextContainer());
+      AtomicHashMapProxy<K,V> proxy = castValue.getProxy((AdvancedCache<?,?>)cache, key, cache.getAdvancedCache().getBatchContainer(), cache.getAdvancedCache().getInvocationContextContainer(), fineGrained);
+      boolean typeSwitchAttempt = proxy instanceof FineGrainedAtomicHashMapProxy != fineGrained;
+      if(typeSwitchAttempt){
+         throw new IllegalArgumentException("Cannot switch type of previously used " + value
+                  + " from "+ (fineGrained ? "regular to fine-grained!" : "fine-grained to regular!"));
+      }
+      return proxy;
    }
 
    /**

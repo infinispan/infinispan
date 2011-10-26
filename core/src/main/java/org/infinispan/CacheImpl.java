@@ -22,6 +22,7 @@
  */
 package org.infinispan;
 
+import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
@@ -31,6 +32,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
+import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -454,6 +456,15 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       InvocationContext ctx = getInvocationContextForWrite(explicitFlags, explicitClassLoader);
       LockControlCommand command = commandsFactory.buildLockControlCommand(keys, false, ctx.getFlags());
       return (Boolean) invoker.invoke(ctx, command);
+   }
+   
+   public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire) {
+      if (locksToAcquire == null || locksToAcquire.length == 0) {
+         throw new IllegalArgumentException("Cannot lock empty list of keys");
+      }
+      InvocationContext ctx = getInvocationContextForWrite(null, null);
+      ApplyDeltaCommand command = commandsFactory.buildApplyDeltaCommand(deltaAwareValueKey, delta, Arrays.asList(locksToAcquire));
+      invoker.invoke(ctx, command);
    }
 
    @ManagedOperation(description = "Starts the cache.")

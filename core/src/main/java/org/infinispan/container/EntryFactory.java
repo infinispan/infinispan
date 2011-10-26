@@ -22,6 +22,7 @@
  */
 package org.infinispan.container;
 
+import org.infinispan.atomic.Delta;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -69,6 +70,12 @@ public interface EntryFactory {
     * supplied InvocationContext.
     */
    MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key) throws InterruptedException;
+   
+   /**
+    * Used for wrapping Delta entry to be applied to DeltaAware object stored in cache. The wrapped
+    * entry is added to the supplied InvocationContext.
+    */
+   CacheEntry wrapEntryForDelta(InvocationContext ctx, Object deltaKey, Delta delta) throws InterruptedException;
 
    /**
     * Used for wrapping a cache entry for addition to cache. The wrapped entry is added to the

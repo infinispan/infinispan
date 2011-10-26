@@ -22,6 +22,7 @@
  */
 package org.infinispan;
 
+import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
@@ -160,6 +161,18 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return true if the lock acquisition attempt was successful for <i>all</i> keys; false otherwise. 
     */
    boolean lock(Collection<? extends K> keys);
+   
+   
+   /**
+    * Applies the given Delta to the DeltaAware object stored under deltaAwareValueKey if and only if all
+    * locksToAcquire locks are successfully obtained
+    *     
+    *      
+    * @param deltaAwareValueKey the key for DeltaAware object 
+    * @param delta the delta to be applied to DeltaAware object
+    * @param locksToAcquire keys to be locked in DeltaAware scope
+    */
+   void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire);
 
    /**
     * Returns the component in charge of communication with other caches in

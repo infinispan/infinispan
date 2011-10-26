@@ -23,6 +23,8 @@
 package org.infinispan.atomic;
 
 import net.jcip.annotations.NotThreadSafe;
+
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.InvocationContextContainer;
@@ -152,7 +154,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
    public void clear() {
       FastCopyHashMap<K, V> originalEntries = (FastCopyHashMap<K, V>) delegate.clone();
       ClearOperation<K, V> op = new ClearOperation<K, V>(originalEntries);
-      if (delta != null) delta.addOperation(op);
+      getDelta().addOperation(op);
       delegate.clear();
    }
 
@@ -160,14 +162,18 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
     * Builds a thread-safe proxy for this instance so that concurrent reads are isolated from writes.
     * @return an instance of AtomicHashMapProxy
     */
-   AtomicMap<K, V> getProxy(Cache cache, Object mapKey,
-                             BatchContainer batchContainer, InvocationContextContainer icc) {
+   AtomicHashMapProxy<K, V> getProxy(AdvancedCache cache, Object mapKey,
+                             BatchContainer batchContainer, InvocationContextContainer icc, boolean fineGrained) {
       // construct the proxy lazily
       if (proxy == null)  // DCL is OK here since proxy is volatile (and we live in a post-JDK 5 world)
       {
          synchronized (this) {
             if (proxy == null)
-               proxy = new AtomicHashMapProxy<K, V>(cache, mapKey, batchContainer, icc);
+               if(fineGrained){
+                  proxy = new FineGrainedAtomicHashMapProxy<K, V>(cache, mapKey, batchContainer, icc);
+               } else {
+                  proxy = new AtomicHashMapProxy<K, V>(cache, mapKey, batchContainer, icc);
+               }
          }
       }
       return proxy;
@@ -200,9 +206,10 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
 
    @Override
    public String toString() {
-      return "AtomicHashMap{" +
-            "delegate=" + delegate +
-            '}';
+      StringBuffer sb = new StringBuffer("AtomicHashMap{delegate=");
+      sb.append(delegate);
+      sb.append("}");
+      return sb.toString();    
    }
 
    /**
@@ -212,7 +219,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       delta = new AtomicHashMapDelta();
    }
 
-   private AtomicHashMapDelta getDelta() {
+   AtomicHashMapDelta getDelta() {
       if (delta == null) delta = new AtomicHashMapDelta();
       return delta;
    }
