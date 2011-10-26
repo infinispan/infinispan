@@ -41,7 +41,7 @@ import org.infinispan.util.logging.LogFactory;
 
 public class L1ManagerImpl implements L1Manager {
 	
-	private final Log log = LogFactory.getLog(L1ManagerImpl.class);
+	private static final Log log = LogFactory.getLog(L1ManagerImpl.class);
 	private final boolean trace = log.isTraceEnabled();
 	
 	private RpcManager rpcManager;

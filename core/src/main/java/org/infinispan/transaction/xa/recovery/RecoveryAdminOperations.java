@@ -44,7 +44,7 @@ import java.util.Set;
 @MBean(objectName = "RecoveryAdmin", description = "Exposes tooling for handling transaction recovery.")
 public class RecoveryAdminOperations {
 
-   private static Log log = LogFactory.getLog(RecoveryAdminOperations.class);
+   private static final Log log = LogFactory.getLog(RecoveryAdminOperations.class);
 
    public static final String SEPARAOR = ", ";
 
