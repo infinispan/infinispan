@@ -23,7 +23,6 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -46,7 +45,6 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.L1Manager;
-import org.infinispan.distribution.StateTransferInProgressException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
@@ -276,7 +274,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
-         allowStateTransferToComplete(ctx, command, -1);
+         int newCacheViewId = -1;
+         stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
          if (configuration.isEagerLockSingleNode()) {
             //only main data owner is locked, see: https://jira.jboss.org/browse/ISPN-615
             Map<Object, List<Address>> toMulticast = dm.locateAll(command.getKeys(), 1);
@@ -312,7 +311,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         allowStateTransferToComplete(ctx, command, -1);
+         int newCacheViewId = -1;
+         stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
 
          Collection<Address> preparedOn = ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired();
 
@@ -321,8 +321,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             f = l1Manager.flushCache(ctx.getLockedKeys(), null, null);
          }
 
-         // We try harder to make a commit succeed even if
-         sendCommitCommand(ctx, command, preparedOn, 3);
+         sendCommitCommand(ctx, command, preparedOn);
 
          if (f != null && configuration.isSyncCommitPhase()) {
             try {
@@ -335,7 +334,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-   private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command, Collection<Address> preparedOn, int retries)
+   private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command, Collection<Address> preparedOn)
          throws TimeoutException, InterruptedException {
       // we only send the commit command to the nodes that 
       Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
@@ -349,53 +348,22 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             syncCommitPhase = true;
          }
       }
-      try {
-         Map<Address, Response> responses = rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
-         if (!responses.isEmpty()) {
-            List<Address> resendTo = new LinkedList<Address>();
-            for (Map.Entry<Address, Response> r : responses.entrySet()) {
-               if (needToResendPrepare(r.getValue()))
-                  resendTo.add(r.getKey());
-            }
 
-            if (!resendTo.isEmpty()) {
-               log.debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
-               // Make sure this is 1-Phase!!
-               PrepareCommand pc = cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
-               rpcManager.invokeRemotely(resendTo, pc, true, true);
-            }
+      Map<Address, Response> responses = rpcManager.invokeRemotely(recipients, command, syncCommitPhase, true);
+      if (!responses.isEmpty()) {
+         List<Address> resendTo = new LinkedList<Address>();
+         for (Map.Entry<Address, Response> r : responses.entrySet()) {
+            if (needToResendPrepare(r.getValue()))
+               resendTo.add(r.getKey());
          }
-      } catch (StateTransferInProgressException e) {
-         // we are assuming the current node is also trying to start the rehash, but it can't
-         // because we're holding the tx lock
-         // there is no problem if some nodes already applied the commit
-         allowStateTransferToComplete(ctx, command, e.getNewCacheViewId());
 
-         if (retries > 0) {
-            sendCommitCommand(ctx, command, preparedOn, retries - 1);
-         } else {
-            throw e;
-         }
-      } catch (SuspectException e) {
-         // we are assuming the current node is also trying to start the rehash, but it can't
-         // because we're holding the tx lock
-         // there is no problem if some nodes already applied the commit
-         allowStateTransferToComplete(ctx, command, -1);
-
-         if (retries > 0) {
-            sendCommitCommand(ctx, command, preparedOn, retries - 1);
-         } else {
-            throw e;
+         if (!resendTo.isEmpty()) {
+            log.debugf("Need to resend prepares for %s to %s", command.getGlobalTransaction(), resendTo);
+            // Make sure this is 1-Phase!!
+            PrepareCommand pc = cf.buildPrepareCommand(command.getGlobalTransaction(), ctx.getModifications(), true);
+            rpcManager.invokeRemotely(resendTo, pc, true, true);
          }
       }
-   }
-
-   /**
-    * If there is a pending rehash, suspend the tx lock and wait until the rehash is completed.
-    * Otherwise, do nothing.
-    */
-   private void allowStateTransferToComplete(InvocationContext ctx, VisitableCommand command, int newCacheViewId) throws TimeoutException, InterruptedException {
-      stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
    }
 
 
@@ -406,13 +374,17 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       boolean sync = isSynchronous(ctx);
 
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         allowStateTransferToComplete(ctx, command, -1);
-         Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
+         int newCacheViewId = -1;
+         stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
+
          NotifyingNotifiableFuture<Object> f = null;
          if (isL1CacheEnabled && command.isOnePhaseCommit())
             f = l1Manager.flushCache(ctx.getLockedKeys(), null, null);
+
+         Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
          // this method will return immediately if we're the only member (because exclude_self=true)
          rpcManager.invokeRemotely(recipients, command, sync);
+
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients);
          if (f != null) f.get();
       }
@@ -464,7 +436,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          if (!ctx.isInTxScope()) {
             NotifyingNotifiableFuture<Object> future = null;
             if (ctx.isOriginLocal()) {
-               allowStateTransferToComplete(ctx, command, -1);
+               int newCacheViewId = -1;
+               stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
                List<Address> rec = recipientGenerator.generateRecipients();
                int numCallRecipients = rec == null ? 0 : rec.size();
                if (trace) log.tracef("Invoking command %s on hosts %s", command, rec);

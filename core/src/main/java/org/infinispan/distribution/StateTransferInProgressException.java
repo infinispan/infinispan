@@ -19,7 +19,7 @@
 
 package org.infinispan.distribution;
 
-import org.infinispan.CacheException;
+import org.infinispan.util.concurrent.TimeoutException;
 
 /**
  * This exception is thrown when an operation cannot complete because a rehash is in progress.
@@ -28,7 +28,7 @@ import org.infinispan.CacheException;
  *
  * @author Dan Berindei <dan@infinispan.org>
  */
-public class StateTransferInProgressException extends CacheException {
+public class StateTransferInProgressException extends TimeoutException {
    private final int newCacheViewId;
 
    public StateTransferInProgressException(int newCacheViewId) {
@@ -36,7 +36,7 @@ public class StateTransferInProgressException extends CacheException {
    }
 
    public StateTransferInProgressException(int newCacheViewId, Throwable cause) {
-      super(cause);
+      super(cause.getMessage(), cause);
       this.newCacheViewId = newCacheViewId;
    }
 
