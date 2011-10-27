@@ -56,14 +56,10 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         // TODO If the super call throws a StateTransferInProgressException, we should release the state transfer lock
-         // to allow any pending rehash to finish and then retry the operation
-         // Then we could throw a StateTransferInProgressException only on remote nodes and include the view id in the
-         // exception message to make sure we got the right rehash
-         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
+         signalStateTransferInProgress();
       }
       try {
-         return super.visitPrepareCommand(ctx, command);
+         return handleWithRetries(ctx, command);
       } finally {
          stateTransferLock.releaseForCommand(ctx, command);
       }
@@ -72,10 +68,11 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
+         signalStateTransferInProgress();
       }
       try {
-         return super.visitRollbackCommand(ctx, command);
+         // technically rollback commands don't need retries, but we're doing it for consistency
+         return handleWithRetries(ctx, command);
       } finally {
          stateTransferLock.releaseForCommand(ctx, command);
       }
@@ -84,7 +81,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
+         signalStateTransferInProgress();
       }
       try {
          return handleWithRetries(ctx, command);
@@ -96,7 +93,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
+         return signalStateTransferInProgress();
       }
       try {
          return handleWithRetries(ctx, command);
@@ -108,7 +105,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
+         signalStateTransferInProgress();
       }
       try {
          return handleWithRetries(ctx, command);
@@ -120,7 +117,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
+         signalStateTransferInProgress();
       }
       try {
          return handleWithRetries(ctx, command);
@@ -132,7 +129,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
+         signalStateTransferInProgress();
       }
       try {
          return handleWithRetries(ctx, command);
@@ -144,7 +141,7 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
+         signalStateTransferInProgress();
       }
       try {
          return handleWithRetries(ctx, command);
@@ -156,13 +153,24 @@ public class StateTransferLockInterceptor extends CommandInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (!stateTransferLock.acquireForCommand(ctx, command)) {
-         throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(), "Timed out waiting for the transaction lock");
+         signalStateTransferInProgress();
       }
       try {
          return handleWithRetries(ctx, command);
       } finally {
          stateTransferLock.releaseForCommand(ctx, command);
       }
+   }
+
+   /**
+    * On the originator if we time out acquiring the state transfer lock the caller will see a {@code StateTransferInProgressException},
+    * which extends {@code TimeoutException}.
+    * If this happens on a remote node however the originator will catch the exception and retry the command.
+    * @return
+    */
+   private Object signalStateTransferInProgress() {
+      int viewId = stateTransferLock.getBlockingCacheViewId();
+      throw new StateTransferInProgressException(viewId, "Timed out waiting for the state transfer lock, state transfer in progress for view " + viewId);
    }
 
    private Object handleWithRetries(InvocationContext ctx, VisitableCommand command) throws Throwable {
