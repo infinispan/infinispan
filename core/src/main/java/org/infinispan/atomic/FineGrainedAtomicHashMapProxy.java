@@ -60,8 +60,8 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    private static final Log log = LogFactory.getLog(FineGrainedAtomicHashMapProxy.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   FineGrainedAtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey, BatchContainer batchContainer, InvocationContextContainer icc) {
-     super(cache,deltaMapKey,batchContainer,icc);
+   FineGrainedAtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey) {
+     super(cache, deltaMapKey);
    }
 
    @SuppressWarnings("unchecked")

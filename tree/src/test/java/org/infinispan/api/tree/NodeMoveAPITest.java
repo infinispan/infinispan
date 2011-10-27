@@ -31,6 +31,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
 import org.infinispan.tree.TreeCacheImpl;
@@ -41,6 +42,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
+import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -72,10 +74,11 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
-      Configuration c = new Configuration();
-      c.setFetchInMemoryState(false);
-      c.setInvocationBatchingEnabled(true);
-      c.setLockAcquisitionTimeout(1000);
+      Configuration c = new Configuration().fluent()
+            .stateRetrieval().fetchInMemoryState(false)
+            .invocationBatching()
+            .locking().lockAcquisitionTimeout(1000L)
+            .build();
       cm.defineConfiguration("test", c);
       cache = cm.getCache("test");
       tm = TestingUtil.extractComponent(cache, TransactionManager.class);

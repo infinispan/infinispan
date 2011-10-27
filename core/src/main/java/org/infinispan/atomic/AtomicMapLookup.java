@@ -99,7 +99,6 @@ public class AtomicMapLookup {
     * @param cache underlying cache
     * @param key key under which the atomic map exists
     * @param createIfAbsent if true, a new atomic map is created if one doesn't exist; otherwise null is returned if the map didn't exist.
-    * @param fineGrained if true, and createIfAbsent is true then created atomic map will be fine grained.  
     * @param <MK> key param of the cache
     * @param <K> key param of the AtomicMap
     * @param <V> value param of the AtomicMap
@@ -110,6 +109,18 @@ public class AtomicMapLookup {
       return (FineGrainedAtomicMap<K, V>) getMap(cache, key, createIfAbsent, true);
    }
    
+   /**
+    * Retrieves an atomic map from a given cache, stored under a given key.
+    *
+    * @param cache underlying cache
+    * @param key key under which the atomic map exists
+    * @param createIfAbsent if true, a new atomic map is created if one doesn't exist; otherwise null is returned if the map didn't exist.
+    * @param fineGrained if true, and createIfAbsent is true then created atomic map will be fine grained.
+    * @param <MK> key param of the cache
+    * @param <K> key param of the AtomicMap
+    * @param <V> value param of the AtomicMap
+    * @return an AtomicMap, or null if one did not exist.
+    */
    @SuppressWarnings("unchecked")
    private static <MK, K, V> Map<K, V> getMap(Cache<MK, ?> cache, MK key, boolean createIfAbsent, boolean fineGrained) {
       Object value = cache.get(key);
@@ -119,7 +130,8 @@ public class AtomicMapLookup {
          else return null;
       }
       AtomicHashMap<K, V> castValue = (AtomicHashMap<K, V>) value;
-      AtomicHashMapProxy<K,V> proxy = castValue.getProxy((AdvancedCache<?,?>)cache, key, cache.getAdvancedCache().getBatchContainer(), cache.getAdvancedCache().getInvocationContextContainer(), fineGrained);
+      AtomicHashMapProxy<K,V> proxy =
+            castValue.getProxy(cache.getAdvancedCache(), key, fineGrained);
       boolean typeSwitchAttempt = proxy instanceof FineGrainedAtomicHashMapProxy != fineGrained;
       if(typeSwitchAttempt){
          throw new IllegalArgumentException("Cannot switch type of previously used " + value

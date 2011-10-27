@@ -162,17 +162,16 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
     * Builds a thread-safe proxy for this instance so that concurrent reads are isolated from writes.
     * @return an instance of AtomicHashMapProxy
     */
-   AtomicHashMapProxy<K, V> getProxy(AdvancedCache cache, Object mapKey,
-                             BatchContainer batchContainer, InvocationContextContainer icc, boolean fineGrained) {
+   AtomicHashMapProxy<K, V> getProxy(AdvancedCache cache, Object mapKey, boolean fineGrained) {
       // construct the proxy lazily
       if (proxy == null)  // DCL is OK here since proxy is volatile (and we live in a post-JDK 5 world)
       {
          synchronized (this) {
             if (proxy == null)
                if(fineGrained){
-                  proxy = new FineGrainedAtomicHashMapProxy<K, V>(cache, mapKey, batchContainer, icc);
+                  proxy = new FineGrainedAtomicHashMapProxy<K, V>(cache, mapKey);
                } else {
-                  proxy = new AtomicHashMapProxy<K, V>(cache, mapKey, batchContainer, icc);
+                  proxy = new AtomicHashMapProxy<K, V>(cache, mapKey);
                }
          }
       }

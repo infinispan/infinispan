@@ -65,11 +65,11 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    protected final InvocationContextContainer icc;
    protected volatile boolean startedReadingMap = false;
 
-   AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey, BatchContainer batchContainer, InvocationContextContainer icc) {
+   AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey) {
       this.cache = cache;
       this.deltaMapKey = deltaMapKey;
-      this.batchContainer = batchContainer;
-      this.icc = icc;
+      this.batchContainer = cache.getBatchContainer();
+      this.icc = cache.getInvocationContextContainer();
    }
 
    @SuppressWarnings("unchecked")
