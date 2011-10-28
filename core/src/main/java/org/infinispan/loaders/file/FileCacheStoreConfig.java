@@ -108,7 +108,7 @@ public class FileCacheStoreConfig extends LockSupportCacheStoreConfig {
     */
    @Deprecated
    public void setStreamBufferSize(int streamBufferSize) {
-      testImmutability("steamBufferSize");
+      testImmutability("streamBufferSize");
       this.streamBufferSize = streamBufferSize;
    }
 
