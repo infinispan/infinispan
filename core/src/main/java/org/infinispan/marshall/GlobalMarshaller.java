@@ -23,7 +23,7 @@ public class GlobalMarshaller extends AbstractDelegatingMarshaller {
 
    @Inject
    public void inject(ClassLoader loader, ExternalizerTable extTable) {
-      this.marshaller.inject(null, loader, null, extTable);
+      ((VersionAwareMarshaller) this.marshaller).inject(null, loader, null, extTable);
    }
 
    @Stop(priority = 11) // Stop after transport to avoid send/receive and marshaller not being ready

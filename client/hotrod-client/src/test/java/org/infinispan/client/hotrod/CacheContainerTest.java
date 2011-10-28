@@ -22,6 +22,7 @@
  */
 package org.infinispan.client.hotrod;
 
+import org.infinispan.BasicCache;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -60,14 +61,14 @@ public class CacheContainerTest extends SingleCacheManagerTest {
    }
 
    public void testObtainingSameInstanceMultipleTimes() {
-      Cache<Object,Object> objectCache = remoteCacheManager.getCache();
-      Cache<Object,Object> objectCache2 = remoteCacheManager.getCache();
+      BasicCache<Object,Object> objectCache = remoteCacheManager.getCache();
+      BasicCache<Object,Object> objectCache2 = remoteCacheManager.getCache();
       assert objectCache == objectCache2;
    }
 
    public void testObtainingSameInstanceMultipleTimes2() {
-      Cache<Object,Object> objectCache = remoteCacheManager.getCache(CACHE_NAME);
-      Cache<Object,Object> objectCache2 = remoteCacheManager.getCache(CACHE_NAME);
+      BasicCache<Object,Object> objectCache = remoteCacheManager.getCache(CACHE_NAME);
+      BasicCache<Object,Object> objectCache2 = remoteCacheManager.getCache(CACHE_NAME);
       assert objectCache == objectCache2;
    }
 }

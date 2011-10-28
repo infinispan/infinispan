@@ -8,7 +8,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
-import org.infinispan.spring.provider.SpringCache;
 import org.infinispan.spring.provider.SpringEmbeddedCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -144,6 +143,6 @@ public class CachingBookDaoContextTest extends AbstractTestNGSpringContextTests 
    }
 
    private Cache<?,?> booksCache() {
-      return this.booksCacheManager.getCache("books").getNativeCache();
+      return (Cache)this.booksCacheManager.getCache("books").getNativeCache();
    }
 }

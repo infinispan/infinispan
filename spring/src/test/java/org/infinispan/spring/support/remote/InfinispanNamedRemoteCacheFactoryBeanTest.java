@@ -27,7 +27,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import org.infinispan.Cache;
+import org.infinispan.BasicCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -112,7 +112,7 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
       objectUnderTest.setBeanName(beanName);
       objectUnderTest.afterPropertiesSet();
 
-      final Cache<String, Object> cache = objectUnderTest.getObject();
+      final BasicCache<String, Object> cache = objectUnderTest.getObject();
 
       assertEquals("InfinispanNamedRemoteCacheFactoryBean should have used its bean name ["
                + beanName + "] as the name of the created cache. However, it didn't.", beanName,
@@ -135,7 +135,7 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
       objectUnderTest.setBeanName(TEST_BEAN_NAME);
       objectUnderTest.afterPropertiesSet();
 
-      final Cache<String, Object> cache = objectUnderTest.getObject();
+      final BasicCache<String, Object> cache = objectUnderTest.getObject();
 
       assertEquals("InfinispanNamedRemoteCacheFactoryBean should have preferred its cache name ["
                + TEST_CACHE_NAME + "] as the name of the created cache. However, it didn't.",
@@ -161,7 +161,7 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
                         + "implementation returned from getObject(). However, it didn't.",
                objectUnderTest.getObject().getClass(), objectUnderTest.getObjectType());
    }
-
+   
    /**
     * Test method for
     * {@link org.infinispan.spring.embedded.InfinispanNamedRemoteCacheFactoryBean#getObject()}.
@@ -177,7 +177,7 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
       objectUnderTest.setBeanName(TEST_BEAN_NAME);
       objectUnderTest.afterPropertiesSet();
 
-      final Cache<String, Object> cache = objectUnderTest.getObject();
+      final BasicCache<String, Object> cache = objectUnderTest.getObject();
 
       assertNotNull(
                "InfinispanNamedRemoteCacheFactoryBean should have produced a proper Infinispan cache. "

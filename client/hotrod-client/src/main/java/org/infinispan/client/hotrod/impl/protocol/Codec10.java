@@ -19,13 +19,7 @@
 
 package org.infinispan.client.hotrod.impl.protocol;
 
-import org.infinispan.client.hotrod.Flag;
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
-import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspecException;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.util.Util.hexDump;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -36,7 +30,13 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.infinispan.util.Util.hexDump;
+import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
+import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspecException;
+import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 
 /**
  * A Hot Rod encoder/decoder for version 1.0 of the protocol.

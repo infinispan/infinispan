@@ -20,39 +20,36 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan;
+package org.infinispan.util.logging;
+
+import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
+import org.jboss.logging.NDC;
 
 /**
- * Thrown when operations on {@link Cache} fail unexpectedly.
- * <p/>
- * Specific subclasses such as {@link org.infinispan.util.concurrent.TimeoutException} and {@link
- * org.infinispan.config.ConfigurationException} have more specific uses.
- * <p/>
- * Transactions: if a CacheException (including any subclasses) is thrown for an operation on a JTA transaction, then
- * the transaction is marked for rollback. 
+ * Factory that creates {@link Log} instances.
  *
- * @author <a href="mailto:bela@jboss.org">Bela Ban</a>
- * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @author Mircea.Markus@jboss.com
+ * @author Manik Surtani
  * @since 4.0
  */
-public class CacheException extends RuntimeException {
+public class BasicLogFactory {
 
-   private static final long serialVersionUID = -4386393072593859164L;
-
-   public CacheException() {
-      super();
+   public static BasicLogger getLog(Class<?> clazz) {
+      return Logger.getLogger(clazz.getName());
    }
 
-   public CacheException(Throwable cause) {
-      super(cause);
+   public static <T> T getLog(Class<?> clazz, Class<T> logClass) {
+      return Logger.getMessageLogger(logClass, clazz.getName());
    }
 
-   public CacheException(String msg) {
-      super(msg);
+   public static void pushNDC(String cacheName, boolean isTrace) {
+      if (isTrace)
+         NDC.push(cacheName);
    }
 
-   public CacheException(String msg, Throwable cause) {
-      super(msg, cause);
+   public static void popNDC(boolean isTrace) {
+      if (isTrace)
+         NDC.pop();
    }
+
 }

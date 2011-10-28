@@ -114,4 +114,9 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller implements St
          System.out.println("TestObjectStreamMarshaller: " + s);
       }
    }
+
+   @Override
+   public void stop() {      
+      
+   }
 }

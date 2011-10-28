@@ -22,7 +22,10 @@
  */
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import static org.infinispan.io.UnsignedNumeric.*;
+import static org.infinispan.io.UnsignedNumeric.readUnsignedInt;
+import static org.infinispan.io.UnsignedNumeric.readUnsignedLong;
+import static org.infinispan.io.UnsignedNumeric.writeUnsignedInt;
+import static org.infinispan.io.UnsignedNumeric.writeUnsignedLong;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -40,8 +43,8 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.util.Util;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Transport implementation based on TCP.

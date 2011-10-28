@@ -44,6 +44,8 @@ import java.io.OutputStream;
  */
 @ThreadSafe
 public interface StreamingMarshaller extends Marshaller {
+   
+   void stop();
 
    /**
     * <p>Create and open an ObjectOutput instance for the given output stream. This method should be used for opening data 

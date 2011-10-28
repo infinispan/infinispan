@@ -28,7 +28,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.BasicCacheContainer;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -58,7 +58,7 @@ public class OperationsFactory implements HotRodConstants {
    public OperationsFactory(TransportFactory transportFactory, String cacheName,
                             AtomicInteger topologyId, boolean forceReturnValue, Codec codec) {
       this.transportFactory = transportFactory;
-      this.cacheNameBytes = cacheName.equals(CacheContainer.DEFAULT_CACHE_NAME) ?
+      this.cacheNameBytes = cacheName.equals(BasicCacheContainer.DEFAULT_CACHE_NAME) ?
             DEFAULT_CACHE_NAME_BYTES : cacheName.getBytes(HOTROD_STRING_CHARSET);
       this.topologyId = topologyId;
       this.forceReturnValue = forceReturnValue;
