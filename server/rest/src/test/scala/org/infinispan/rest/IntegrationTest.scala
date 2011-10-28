@@ -30,7 +30,7 @@ import org.infinispan.remoting.MIMECacheEntry
 import java.io._
 import org.testng.annotations.{Test, BeforeClass, AfterClass}
 import java.lang.reflect.Method
-import org.infinispan.manager.CacheContainer
+import org.infinispan.manager.BasicCacheContainer
 import scala.math._
 import org.infinispan.test.TestingUtil
 import java.text.SimpleDateFormat
@@ -51,7 +51,7 @@ import org.testng.AssertJUnit._
 @Test(groups = Array("functional"), testName = "rest.IntegrationTest")
 class IntegrationTest {
    val HOST = "http://localhost:8888"
-   val cacheName = CacheContainer.DEFAULT_CACHE_NAME
+   val cacheName = BasicCacheContainer.DEFAULT_CACHE_NAME
    val fullPath = HOST + "/rest/" + cacheName
    val DATE_PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz";
 
@@ -509,9 +509,9 @@ class IntegrationTest {
 
       val obj = new MySer
       obj.name = "mic"
-      ManagerInstance getCache (CacheContainer.DEFAULT_CACHE_NAME) put (m.getName, obj)
-      ManagerInstance getCache (CacheContainer.DEFAULT_CACHE_NAME) put (m.getName + "2", "hola")
-      ManagerInstance getCache (CacheContainer.DEFAULT_CACHE_NAME) put (m.getName + "3", new MyNonSer)
+      ManagerInstance getCache (BasicCacheContainer.DEFAULT_CACHE_NAME) put (m.getName, obj)
+      ManagerInstance getCache (BasicCacheContainer.DEFAULT_CACHE_NAME) put (m.getName + "2", "hola")
+      ManagerInstance getCache (BasicCacheContainer.DEFAULT_CACHE_NAME) put (m.getName + "3", new MyNonSer)
 
       //check we can get it back as an object...
       val get = new GetMethod(fullPathKey);
@@ -552,7 +552,7 @@ class IntegrationTest {
       val bout = new ByteArrayOutputStream
       new ObjectOutputStream(bout).writeObject(new MySer)
       put(m, bout.toByteArray, "application/x-java-serialized-object")
-      ManagerInstance.getCache(CacheContainer.DEFAULT_CACHE_NAME)
+      ManagerInstance.getCache(BasicCacheContainer.DEFAULT_CACHE_NAME)
               .get(m.getName).asInstanceOf[Array[Byte]]
    }
 

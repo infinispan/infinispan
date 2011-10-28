@@ -34,7 +34,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public abstract class CacheSupport<K, V> implements Cache<K, V> {
+public abstract class CacheSupport<K, V> implements BasicCache<K, V> {
    protected long defaultLifespan;
    protected long defaultMaxIdleTime;
 

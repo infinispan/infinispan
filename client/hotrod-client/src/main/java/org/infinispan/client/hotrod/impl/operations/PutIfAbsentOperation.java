@@ -22,16 +22,17 @@
  */
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import net.jcip.annotations.Immutable;
+
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.atomic.AtomicInteger;
+import org.infinispan.util.logging.BasicLogFactory;
+import org.jboss.logging.BasicLogger;
 
 /**
  * Implements "putIfAbsent" operation as described in  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod
@@ -43,7 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Immutable
 public class PutIfAbsentOperation extends AbstractKeyValueOperation {
 
-   private static final Log log = LogFactory.getLog(PutIfAbsentOperation.class);
+   private static final BasicLogger log = BasicLogFactory.getLog(PutIfAbsentOperation.class);
 
    public PutIfAbsentOperation(Codec codec, TransportFactory transportFactory,
                                byte[] key, byte[] cacheName, AtomicInteger topologyId,

@@ -40,12 +40,12 @@ import org.springframework.util.Assert;
  */
 public class SpringCache implements Cache {
 
-   private final org.infinispan.Cache<Object, Object> nativeCache;
+   private final org.infinispan.BasicCache<Object, Object> nativeCache;
 
    /**
     * @param nativeCache
     */
-   public SpringCache(final org.infinispan.Cache<Object, Object> nativeCache) {
+   public SpringCache(final org.infinispan.BasicCache<Object, Object> nativeCache) {
       Assert.notNull(nativeCache, "A non-null Infinispan cache implementation is required");
       this.nativeCache = nativeCache;
    }
@@ -62,7 +62,7 @@ public class SpringCache implements Cache {
     * @see org.springframework.cache.Cache#getNativeCache()
     */
    @Override
-   public org.infinispan.Cache<?, ?> getNativeCache() {
+   public org.infinispan.BasicCache<?, ?> getNativeCache() {
       return this.nativeCache;
    }
 

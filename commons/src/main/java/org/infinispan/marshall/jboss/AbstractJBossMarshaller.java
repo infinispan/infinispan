@@ -1,20 +1,5 @@
 package org.infinispan.marshall.jboss;
 
-import org.infinispan.io.ByteBuffer;
-import org.infinispan.io.ExposedByteArrayOutputStream;
-import org.infinispan.marshall.AbstractMarshaller;
-import org.infinispan.util.ConcurrentWeakKeyHashMap;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.jboss.marshalling.ExceptionListener;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.MarshallerFactory;
-import org.jboss.marshalling.Marshalling;
-import org.jboss.marshalling.MarshallingConfiguration;
-import org.jboss.marshalling.TraceInformation;
-import org.jboss.marshalling.Unmarshaller;
-import org.jboss.marshalling.reflect.SunReflectiveCreator;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +11,21 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.concurrent.ConcurrentMap;
 
+import org.infinispan.io.ByteBuffer;
+import org.infinispan.io.ExposedByteArrayOutputStream;
+import org.infinispan.marshall.AbstractMarshaller;
+import org.infinispan.util.ConcurrentWeakKeyHashMap;
+import org.infinispan.util.logging.BasicLogFactory;
+import org.jboss.logging.BasicLogger;
+import org.jboss.marshalling.ExceptionListener;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.MarshallerFactory;
+import org.jboss.marshalling.Marshalling;
+import org.jboss.marshalling.MarshallingConfiguration;
+import org.jboss.marshalling.TraceInformation;
+import org.jboss.marshalling.Unmarshaller;
+import org.jboss.marshalling.reflect.SunReflectiveCreator;
+
 /**
  * Common parent for both embedded and standalone JBoss Marshalling-based marshallers.
  *
@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public abstract class AbstractJBossMarshaller extends AbstractMarshaller {
 
-   protected static final Log log = LogFactory.getLog(JBossMarshaller.class);
+   protected static final BasicLogger log = BasicLogFactory.getLog(AbstractJBossMarshaller.class);
    protected final MarshallingConfiguration baseCfg;
    protected final MarshallerFactory factory;
    /**

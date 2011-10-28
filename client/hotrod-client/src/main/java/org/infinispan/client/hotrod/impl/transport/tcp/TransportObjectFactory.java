@@ -22,14 +22,14 @@
  */
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
+import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import java.net.InetSocketAddress;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 
 /**
  * @author Mircea.Markus@jboss.com

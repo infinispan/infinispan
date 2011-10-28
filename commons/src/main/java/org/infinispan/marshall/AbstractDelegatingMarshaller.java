@@ -18,8 +18,7 @@ import java.io.OutputStream;
  */
 public abstract class AbstractDelegatingMarshaller implements StreamingMarshaller {
 
-   // TODO: Should avoid hardcoding but it's really not likely to change
-   protected VersionAwareMarshaller marshaller;
+   protected StreamingMarshaller marshaller;
 
    public void stop() {
       marshaller.stop();

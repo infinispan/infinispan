@@ -22,8 +22,8 @@
  */
 package org.infinispan.util;
 
+import org.infinispan.CacheConfigurationException;
 import org.infinispan.CacheException;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.marshall.Marshaller;
 
 import javax.naming.Context;
@@ -85,7 +85,7 @@ public final class Util {
       try {
          return loadClassStrict(classname, cl);
       } catch (ClassNotFoundException e) {
-         throw new ConfigurationException("Unable to instantiate class " + classname, e);
+         throw new CacheConfigurationException("Unable to instantiate class " + classname, e);
       }
    }
    
@@ -150,7 +150,7 @@ public final class Util {
     * Instantiates a class by first attempting a static <i>factory method</i> named <tt>getInstance()</tt> on the class
     * and then falling back to an empty constructor.
     * <p/>
-    * Any exceptions encountered are wrapped in a {@link ConfigurationException} and rethrown.
+    * Any exceptions encountered are wrapped in a {@link CacheConfigurationException} and rethrown.
     *
     * @param clazz class to instantiate
     * @return an instance of the class
@@ -159,9 +159,9 @@ public final class Util {
       try {
          return getInstanceStrict(clazz);
       } catch (IllegalAccessException iae) {
-         throw new ConfigurationException("Unable to instantiate class " + clazz.getName(), iae);
+         throw new CacheConfigurationException("Unable to instantiate class " + clazz.getName(), iae);
       } catch (InstantiationException ie) {
-         throw new ConfigurationException("Unable to instantiate class " + clazz.getName(), ie);
+         throw new CacheConfigurationException("Unable to instantiate class " + clazz.getName(), ie);
       }
    }
 

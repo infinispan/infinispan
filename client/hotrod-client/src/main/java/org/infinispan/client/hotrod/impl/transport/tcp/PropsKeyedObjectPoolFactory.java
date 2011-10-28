@@ -22,13 +22,13 @@
  */
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
+import java.util.Properties;
+
 import org.apache.commons.pool.KeyedPoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPoolFactory;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import java.util.Properties;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 
 /**
  * @author Mircea.Markus@jboss.com

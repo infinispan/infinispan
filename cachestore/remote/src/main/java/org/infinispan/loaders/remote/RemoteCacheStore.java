@@ -22,7 +22,16 @@
  */
 package org.infinispan.loaders.remote;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import net.jcip.annotations.ThreadSafe;
+
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -31,18 +40,10 @@ import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.loaders.remote.logging.Log;
+import org.infinispan.manager.BasicCacheContainer;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Cache store that delegates the call to a infinispan cluster. Communication between this cache store and the remote
@@ -158,7 +159,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
 
       if (marshaller == null) {throw new IllegalStateException("Null marshaller not allowed!");}
       remoteCacheManager = new RemoteCacheManager(marshaller, config.getHotRodClientProperties(), config.getAsyncExecutorFactory());
-      if (config.getRemoteCacheName().equals(CacheContainer.DEFAULT_CACHE_NAME))
+      if (config.getRemoteCacheName().equals(BasicCacheContainer.DEFAULT_CACHE_NAME))
          remoteCache = remoteCacheManager.getCache();
       else
          remoteCache = remoteCacheManager.getCache(config.getRemoteCacheName());

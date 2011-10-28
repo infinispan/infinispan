@@ -22,14 +22,15 @@
  */
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import net.jcip.annotations.ThreadSafe;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
+
+import net.jcip.annotations.ThreadSafe;
+
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 
 /**
  * Round-robin implementation for {@link org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy}.

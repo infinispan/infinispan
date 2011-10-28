@@ -23,16 +23,16 @@
 package org.infinispan.client.hotrod.impl.consistenthash;
 
 
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUNCTION_PREFIX;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUNCTION_PREFIX;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.util.Util;
+import org.infinispan.util.logging.BasicLogFactory;
+import org.jboss.logging.BasicLogger;
 
 /**
  * Factory for {@link org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash} function. It will try to look
@@ -50,7 +50,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUN
  */
 public class ConsistentHashFactory {
 
-   private static final Log log = LogFactory.getLog(ConsistentHashFactory.class);
+   private static final BasicLogger log = BasicLogFactory.getLog(ConsistentHashFactory.class);
 
    private final Map<Integer, String> version2ConsistentHash = new HashMap<Integer, String>();
 

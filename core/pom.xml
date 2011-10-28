@@ -39,6 +39,19 @@
    <description>Infinispan core module</description>
 
    <dependencies>
+   
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-api</artifactId>
+         <version>${project.version}</version>     
+      </dependency>
+      
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons</artifactId>
+         <version>${project.version}</version>      
+      </dependency>
+   
       <dependency>
          <groupId>org.jgroups</groupId>
          <artifactId>jgroups</artifactId>

@@ -23,6 +23,7 @@
 
 package org.infinispan.spring.support.remote;
 
+import org.infinispan.BasicCache;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.util.logging.Log;
@@ -47,7 +48,7 @@ import org.springframework.util.StringUtils;
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * 
  */
-public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>,
+public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<BasicCache<K, V>>,
          BeanNameAware, InitializingBean {
 
    private final Log logger = LogFactory.getLog(getClass());
@@ -58,7 +59,7 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
 
    private String beanName;
 
-   private Cache<K, V> infinispanCache;
+   private BasicCache<K, V> infinispanCache;
 
    // ------------------------------------------------------------------------
    // org.springframework.beans.factory.InitializingBean
@@ -112,7 +113,7 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
     * @see org.springframework.beans.factory.FactoryBean#getObject()
     */
    @Override
-   public Cache<K, V> getObject() throws Exception {
+   public BasicCache<K, V> getObject() throws Exception {
       return this.infinispanCache;
    }
 
@@ -120,7 +121,7 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
     * @see org.springframework.beans.factory.FactoryBean#getObjectType()
     */
    @Override
-   public Class<? extends Cache> getObjectType() {
+   public Class<? extends BasicCache> getObjectType() {
       return this.infinispanCache != null ? this.infinispanCache.getClass() : Cache.class;
    }
 

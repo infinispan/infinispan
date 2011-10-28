@@ -22,7 +22,17 @@
  */
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import net.jcip.annotations.ThreadSafe;
+
 import org.apache.commons.pool.KeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.exceptions.TransportException;
@@ -32,19 +42,9 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-
-import org.infinispan.util.Util;
 import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.util.Util;
 
 /**
  * @author Mircea.Markus@jboss.com

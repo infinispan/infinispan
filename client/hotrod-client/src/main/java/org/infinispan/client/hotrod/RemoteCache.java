@@ -22,15 +22,13 @@
  */
 package org.infinispan.client.hotrod;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.util.concurrent.NotifyingFuture;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.BasicCache;
+import org.infinispan.util.concurrent.NotifyingFuture;
 
 /**
  * Provides remote reference to a Hot Rod server/cluster. It implements {@link org.infinispan.Cache}, but given its
@@ -84,7 +82,7 @@ import java.util.concurrent.TimeUnit;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public interface RemoteCache<K, V> extends Cache<K, V> {
+public interface RemoteCache<K, V> extends BasicCache<K, V> {
 
    /**
     * Removes the given entry only if its version matches the supplied version. A typical use case looks like this:
@@ -169,29 +167,6 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
     */
    VersionedValue getVersioned(K key);
 
-
-   /**
-    * Operation might be supported for smart clients that will be able to register for topology changes.
-    *
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   void addListener(Object listener);
-
-   /**
-    * @throws UnsupportedOperationException
-    * @see #addListener(Object)
-    */
-   @Override
-   void removeListener(Object listener);
-
-   /**
-    * @throws UnsupportedOperationException
-    * @see #addListener(Object)
-    */
-   @Override
-   Set<Object> getListeners();
-
    /**
     * @throws UnsupportedOperationException
     */
@@ -227,30 +202,6 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
     */
    @Override
    Set<Entry<K, V>> entrySet();
-
-   /**
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   void evict(K key);
-
-   /**
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   Configuration getConfiguration();
-
-   /**
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   boolean startBatch();
-
-   /**
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   void endBatch(boolean successful);
 
    /**
     * This operation is not supported. Consider using {@link #removeWithVersion(Object, long)} instead.
@@ -315,30 +266,6 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
     */
    @Override
    NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
-
-   /**
-    * This operation is not supported.
-    *
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   AdvancedCache<K, V> getAdvancedCache();
-
-   /**
-    * This operation is not supported.
-    *
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   void compact();
-
-   /**
-    * This operation is not supported.
-    *
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   void putForExternalRead(K key, V value);
 
    /**
     * Synthetic operation. The client iterates over the set of keys and calls put for each one of them. This results in

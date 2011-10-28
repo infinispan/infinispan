@@ -782,7 +782,7 @@
                      <instructions>
                         <Bundle-DocURL>http://www.infinispan.org/</Bundle-DocURL>
                         <Export-Package>
-                           ${project.groupId}.*;version=${project.version};-split-package:=error
+                           ${project.groupId}.*;version=${project.version};-split-package:=merge-last
                         </Export-Package>
                      </instructions>
                   </configuration>
