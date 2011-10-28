@@ -81,7 +81,8 @@ public class KeyTransformationUsingClassloadersTest extends SingleCacheManagerTe
 
       List<Object> list = qf.getQuery(query).list();
       assert list.size() == 2;
-      assert classLoader.countInvocations.get() == 1;
+      int invocationsCount = classLoader.countInvocations.get();
+      assert invocationsCount >= 1 : "Received instead " + invocationsCount + " invocations";
    }
 
 }
