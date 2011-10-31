@@ -26,14 +26,22 @@ import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.distribution.TestAddress;
+import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.ch.DefaultHashSeed;
 import org.infinispan.interceptors.DistributionInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.hash.MurmurHash3;
 import org.testng.annotations.Test;
+
+import java.util.Arrays;
+import java.util.HashSet;
 
 import static org.testng.Assert.assertNull;
 
@@ -55,6 +63,7 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
       registerCacheManager(cm1, cm2);
       c1 = cm1.getCache();
       c2 = cm2.getCache();
+      waitForClusterToForm();
    }
 
    public void testNoModsCommit() throws Exception {
@@ -78,19 +87,21 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
       tm(c1).begin();
       if (mods) {
          c1.put(k1, "v1");
+         c1.put(k2, "v2");
+
          assertLocked(c1, k1);
          assertNotLocked(c2, k1);
 
-         c1.put(k2, "v2");
          assertLocked(c1, k2);
          assertLocked(c2, k2);
       } else {
          c1.getAdvancedCache().lock(k1);
+         c1.getAdvancedCache().lock(k2);
+
          assertNull(c1.get(k1));
          assertLocked(c1, k1);
          assertNotLocked(c2, k1);
 
-         c1.getAdvancedCache().lock(k2);
          assertNull(c1.get(k2));
          assertLocked(c1, k2);
          assertLocked(c2, k2);
