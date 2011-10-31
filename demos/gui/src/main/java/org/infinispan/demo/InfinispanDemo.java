@@ -64,6 +64,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * Run it with -Djgroups.bind_addr=127.0.0.1 -Djava.net.preferIPv4Stack=true
+ *
  * @author Manik Surtani
  */
 public class InfinispanDemo {

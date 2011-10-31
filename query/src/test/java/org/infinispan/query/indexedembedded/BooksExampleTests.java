@@ -66,14 +66,14 @@ public class BooksExampleTests extends SingleCacheManagerTest {
 
       SearchManager qf = Search.getSearchManager(cache);
 
-      Query query = qf.buildQueryBuilderForClass(Book.class)
+      Query luceneQuery = qf.buildQueryBuilderForClass(Book.class)
          .get()
             .phrase()
                .onField("title")
                .sentence("in action")
             .createQuery();
 
-      List<Object> list = qf.getQuery(query).list();
+      List<Object> list = qf.getQuery( luceneQuery ).list();
       assert list.size() == 2;
    }
 
