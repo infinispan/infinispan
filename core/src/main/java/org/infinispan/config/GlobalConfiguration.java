@@ -1343,6 +1343,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       }
 
       public void accept(ConfigurationBeanVisitor v) {
+         externalizerTypes.accept(v);
          v.visitSerializationType(this);
       }
 
