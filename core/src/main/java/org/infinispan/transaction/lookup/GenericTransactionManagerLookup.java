@@ -67,7 +67,8 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
     */
    private static String[][] knownJNDIManagers =
          {
-               {"java:/TransactionManager", "JBoss, JRun4"},
+               {"java:jboss/TransactionManager", "JBoss AS 7"},
+               {"java:/TransactionManager", "JBoss AS 4 ~ 6, JRun4"},
                {"java:comp/TransactionManager", "Resin 3.x"},
                {"java:appserver/TransactionManager", "Sun Glassfish"},
                {"java:pm/TransactionManager", "Borland, Sun"},
