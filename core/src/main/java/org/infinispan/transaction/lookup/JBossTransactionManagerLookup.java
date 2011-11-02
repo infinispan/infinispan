@@ -22,9 +22,11 @@
  */
 package org.infinispan.transaction.lookup;
 
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.util.Util;
 
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.transaction.TransactionManager;
 
 
@@ -37,12 +39,25 @@ import javax.transaction.TransactionManager;
 public class JBossTransactionManagerLookup implements TransactionManagerLookup {
 
    public TransactionManager getTransactionManager() throws Exception {
+      String as7Location = "java:jboss/TransactionManager";
+
       InitialContext initialContext = new InitialContext();
       try {
-         return (TransactionManager) initialContext.lookup("java:/TransactionManager");
+         // Check for JBoss AS 7
+         return (TransactionManager) initialContext.lookup(as7Location);
+      } catch (NamingException ne) {
+         // Fall back and try for AS 4 ~ 6
+         String legacyAsLocation = "java:/TransactionManager";
+
+         try {
+            // Check for JBoss AS 4 ~ 6
+            return (TransactionManager) initialContext.lookup(legacyAsLocation);
+         } catch (NamingException neAgain) {
+            throw new ConfigurationException("Unable to locate a transaction manager in JNDI, either in " + as7Location + " or " + legacyAsLocation);
+         }
+
       } finally {
          Util.close(initialContext);
       }
-   }
-
+  }
 }
