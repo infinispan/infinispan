@@ -84,6 +84,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          abortIfRemoteTransactionInvalid(ctx, command);
          return invokeNextAndCommitIf1Pc(ctx, command);
       } catch (Throwable t) {
+         // don't remove the locks here, the rollback command will clear them
          throw t;
       }
    }

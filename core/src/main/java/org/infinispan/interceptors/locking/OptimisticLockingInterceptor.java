@@ -65,7 +65,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          }
          return invokeNextAndCommitIf1Pc(ctx, command);
       } catch (Throwable te) {
-         lockManager.unlockAll(ctx);
+         // don't remove the locks here, the rollback command will clear them
          throw te;
       }
    }
