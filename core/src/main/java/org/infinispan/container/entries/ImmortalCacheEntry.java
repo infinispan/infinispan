@@ -45,6 +45,10 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       this.cacheValue = new ImmortalCacheValue(value);
    }
 
+   public final boolean isExpired(long now) {
+      return false;
+   }
+
    public final boolean isExpired() {
       return false;
    }

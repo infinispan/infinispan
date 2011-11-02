@@ -59,6 +59,10 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
       return value;
    }
 
+   public boolean isExpired(long now) {
+      return false;
+   }
+
    public boolean isExpired() {
       return false;
    }

@@ -70,6 +70,10 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       return true;
    }
 
+   public boolean isExpired(long now) {
+      return cacheValue.isExpired(now);
+   }
+
    public boolean isExpired() {
       return cacheValue.isExpired();
    }

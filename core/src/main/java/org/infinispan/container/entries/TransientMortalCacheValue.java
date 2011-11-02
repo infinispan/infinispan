@@ -74,6 +74,12 @@ public class TransientMortalCacheValue extends MortalCacheValue {
       this.lastUsed = lastUsed;
    }
 
+   @Override
+   public boolean isExpired(long now) {
+      return ExpiryHelper.isExpiredTransientMortal(maxIdle, lastUsed, lifespan, created, now);
+   }
+
+   @Override
    public boolean isExpired() {
       return ExpiryHelper.isExpiredTransientMortal(maxIdle, lastUsed, lifespan, created);
    }
