@@ -126,7 +126,7 @@ public class DefaultDataContainer implements DataContainer {
    public InternalCacheEntry get(Object k) {
       InternalCacheEntry e = peek(k);
       if (e != null) {
-         if (e.isExpired()) {
+         if (e.isExpired(System.currentTimeMillis())) {
             entries.remove(k);
             e = null;
          } else {
@@ -155,7 +155,7 @@ public class DefaultDataContainer implements DataContainer {
 
    public boolean containsKey(Object k) {
       InternalCacheEntry ice = peek(k);
-      if (ice != null && ice.isExpired()) {
+      if (ice != null && ice.isExpired(System.currentTimeMillis())) {
          entries.remove(k);
          ice = null;
       }
@@ -164,7 +164,7 @@ public class DefaultDataContainer implements DataContainer {
 
    public InternalCacheEntry remove(Object k) {
       InternalCacheEntry e = entries.remove(k);
-      return e == null || e.isExpired() ? null : e;
+      return e == null || e.isExpired(System.currentTimeMillis()) ? null : e;
    }
 
    public int size() {
@@ -188,9 +188,10 @@ public class DefaultDataContainer implements DataContainer {
    }
 
    public void purgeExpired() {
+      long currentTimeMillis = System.currentTimeMillis();
       for (Iterator<InternalCacheEntry> purgeCandidates = entries.values().iterator(); purgeCandidates.hasNext();) {
          InternalCacheEntry e = purgeCandidates.next();
-         if (e.isExpired()) {
+         if (e.isExpired(currentTimeMillis)) {
             purgeCandidates.remove();
          }
       }

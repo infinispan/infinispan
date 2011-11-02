@@ -85,10 +85,11 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
 
       @Override
       public int size() {
+         long currentTimeMillis = System.currentTimeMillis();
          int size = entrySet.size();
          // First, removed any expired ones
          for (InternalCacheEntry e: entrySet) {
-            if (e.isExpired())
+            if (e.isExpired(currentTimeMillis))
                size--;
          }
          // Update according to entries added or removed in tx
@@ -182,11 +183,12 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
 
             if (!atIt1) {
                boolean found = false;
+               long currentTimeMillis = System.currentTimeMillis();
                while (it2.hasNext()) {
                   InternalCacheEntry ice = it2.next();
                   Object key = ice.getKey();
                   CacheEntry e = lookedUpEntries.get(key);
-                  if (ice.isExpired())
+                  if (ice.isExpired(currentTimeMillis))
                      continue;
 
                   if (e == null) {
@@ -286,8 +288,9 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
       public int size() {
          // Use entry set as a way to calculate the number of values.
          int s = entrySet.size();
+         long currentTimeMillis = System.currentTimeMillis();
          for (InternalCacheEntry e: entrySet) {
-            if (e.isExpired())
+            if (e.isExpired(currentTimeMillis))
                s--;
          }
          return s;
@@ -303,9 +306,10 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
          }
 
          private void fetchNext() {
+            long currentTimeMillis = System.currentTimeMillis();
             while (it.hasNext()) {
                InternalCacheEntry e = it.next();
-               if (e.isExpired()) {
+               if (e.isExpired(currentTimeMillis)) {
                   continue;
                } else {
                   next = e.getValue();

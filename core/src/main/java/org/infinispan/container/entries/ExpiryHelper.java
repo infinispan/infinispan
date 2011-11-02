@@ -26,17 +26,46 @@ package org.infinispan.container.entries;
  * Provide utility methods for dealing with expiration of cache entries.
  *
  * @author Manik Surtani
+ * @author Sanne Grinovero
  * @since 4.0
  */
 class ExpiryHelper {
+
+   static boolean isExpiredMortal(long lifespan, long created, long now) {
+      return lifespan > -1 && created > -1 && now > created + lifespan;
+   }
+
+   static boolean isExpiredTransient(long maxIdle, long lastUsed, long now) {
+      return maxIdle > -1 && lastUsed > -1 && now > maxIdle + lastUsed;
+   }
+
+   static boolean isExpiredTransientMortal(long maxIdle, long lastUsed, long lifespan, long created, long now) {
+      return isExpiredTransient(maxIdle, lastUsed, now) || isExpiredMortal(lifespan, created, now);
+   }
+
+   /**
+    * Make sure this is not invoked in a loop, if so use {@link #isExpiredMortal(long, long, long)} instead
+    * and reuse the result of {@link System#currentTimeMillis()} multiple times
+    */
+   @Deprecated
    static boolean isExpiredMortal(long lifespan, long created) {
       return lifespan > -1 && created > -1 && System.currentTimeMillis() > created + lifespan;
    }
 
+   /**
+    * Make sure this is not invoked in a loop, if so use {@link #isExpiredTransient(long, long, long)} instead
+    * and reuse the result of {@link System#currentTimeMillis()} multiple times
+    */
+   @Deprecated
    static boolean isExpiredTransient(long maxIdle, long lastUsed) {
       return maxIdle > -1 && lastUsed > -1 && System.currentTimeMillis() > maxIdle + lastUsed;
    }
 
+   /**
+    * Make sure this is not invoked in a loop, if so use {@link #isExpiredTransientMortal(long, long, long, long, long)} instead
+    * and reuse the result of {@link System#currentTimeMillis()} multiple times
+    */
+   @Deprecated
    static boolean isExpiredTransientMortal(long maxIdle, long lastUsed, long lifespan, long created) {
       return isExpiredTransient(maxIdle, lastUsed) || isExpiredMortal(lifespan, created);
    }

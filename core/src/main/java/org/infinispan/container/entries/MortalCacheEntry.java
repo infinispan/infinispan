@@ -58,6 +58,10 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       cacheValue = new MortalCacheValue(value, created, lifespan);
    }
 
+   public final boolean isExpired(long now) {
+      return ExpiryHelper.isExpiredMortal(cacheValue.lifespan, cacheValue.created, now);
+   }
+
    public final boolean isExpired() {
       return ExpiryHelper.isExpiredMortal(cacheValue.lifespan, cacheValue.created);
    }

@@ -85,6 +85,10 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       return cacheValue.created;
    }
 
+   public boolean isExpired(long now) {
+      return cacheValue.isExpired(now);
+   }
+
    public boolean isExpired() {
       return cacheValue.isExpired();
    }

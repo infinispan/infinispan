@@ -124,9 +124,10 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
 
    @Override
    protected void purgeInternal() throws CacheLoaderException {
+      long currentTimeMillis = System.currentTimeMillis();
       for (Iterator<InternalCacheEntry> i = store.values().iterator(); i.hasNext();) {
          InternalCacheEntry se = i.next();
-         if (se.isExpired()) i.remove();
+         if (se.isExpired(currentTimeMillis)) i.remove();
       }
    }
 
@@ -144,7 +145,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       if (key == null) return null;
       InternalCacheEntry se = store.get(key);
       if (se == null) return null;
-      if (se.isExpired()) {
+      if (se.isExpired(System.currentTimeMillis())) {
          log.debugf("Key %s exists, but has expired.  Entry is %s", key, se);
          store.remove(key);
          return null;
@@ -157,9 +158,10 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    public Set<InternalCacheEntry> loadAll() {
       record("loadAll");
       Set<InternalCacheEntry> s = new HashSet<InternalCacheEntry>();
+      final long currentTimeMillis = System.currentTimeMillis();
       for (Iterator<InternalCacheEntry> i = store.values().iterator(); i.hasNext();) {
          InternalCacheEntry se = i.next();
-         if (se.isExpired()) {
+         if (se.isExpired(currentTimeMillis)) {
             log.debugf("Key %s exists, but has expired.  Entry is %s", se.getKey(), se);
             i.remove();
          } else
@@ -173,9 +175,10 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       record("load");
       if (numEntries < 0) return loadAll();
       Set<InternalCacheEntry> s = new HashSet<InternalCacheEntry>(numEntries);
+      final long currentTimeMillis = System.currentTimeMillis();
       for (Iterator<InternalCacheEntry> i = store.values().iterator(); i.hasNext() && s.size() < numEntries;) {
          InternalCacheEntry se = i.next();
-         if (se.isExpired()) {
+         if (se.isExpired(currentTimeMillis)) {
             log.debugf("Key %s exists, but has expired.  Entry is %s", se.getKey(), se);
             i.remove();
          } else if (s.size() < numEntries) {
