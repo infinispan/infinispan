@@ -614,8 +614,9 @@ public class InfinispanDemo {
       public void update() {
          // whew - expensive stuff.
          data.clear();
+         long currentTimeMillis = System.currentTimeMillis();
          for (InternalCacheEntry ice : cache.getAdvancedCache().getDataContainer()) {
-            if (!ice.isExpired()) data.add(ice);
+            if (!ice.isExpired(currentTimeMillis)) data.add(ice);
          }
          cacheContentsSizeLabel.setText("Cache contains " + data.size() + " entries");
          fireTableDataChanged();

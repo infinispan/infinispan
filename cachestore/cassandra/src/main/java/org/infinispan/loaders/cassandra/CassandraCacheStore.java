@@ -206,7 +206,7 @@ public class CassandraCacheStore extends AbstractCacheStore {
          ColumnOrSuperColumn column = cassandraClient.get(ByteBufferUtil.bytes(hashKey),
                   entryColumnPath, readConsistencyLevel);
          InternalCacheEntry ice = unmarshall(column.getColumn().getValue(), key);
-         if (ice != null && ice.isExpired()) {
+         if (ice != null && ice.isExpired(System.currentTimeMillis())) {
             remove(key);
             return null;
          }

@@ -111,8 +111,9 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          public void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException {
             InputStream binaryStream = rs.getBinaryStream(1);
             Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), binaryStream);
+            long currentTimeMillis = System.currentTimeMillis();
             for (InternalCacheEntry ice: bucket.getStoredEntries()) {
-               if (!ice.isExpired()) {
+               if (!ice.isExpired(currentTimeMillis)) {
                   result.add(ice);
                }
             }
@@ -122,8 +123,9 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          public void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result, int maxEntries) throws SQLException, CacheLoaderException {
             InputStream binaryStream = rs.getBinaryStream(1);
             Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), binaryStream);
+            long currentTimeMillis = System.currentTimeMillis();
             for (InternalCacheEntry ice: bucket.getStoredEntries()) {
-               if (!ice.isExpired())
+               if (!ice.isExpired(currentTimeMillis))
                   result.add(ice);
 
                if (result.size() == maxEntries)
@@ -135,8 +137,9 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          public void loadAllKeysProcess(ResultSet rs, Set<Object> keys, Set<Object> keysToExclude) throws SQLException, CacheLoaderException {
             InputStream binaryStream = rs.getBinaryStream(1);
             Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), binaryStream);
+            long currentTimeMillis = System.currentTimeMillis();
             for (InternalCacheEntry ice: bucket.getStoredEntries()) {
-               if (!ice.isExpired() && includeKey(ice.getKey(), keysToExclude)) {
+               if (!ice.isExpired(currentTimeMillis) && includeKey(ice.getKey(), keysToExclude)) {
                   keys.add(ice.getKey());
                }
             }
