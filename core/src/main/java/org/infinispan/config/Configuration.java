@@ -3330,7 +3330,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setHashFunctionClass")
       protected String hashFunctionClass = MurmurHash3.class.getName();
 
-      @ConfigurationDocRef(bean = HashConfig.class, targetElement = "hashSeedClass")
+      @ConfigurationDocRef(bean = HashConfig.class, targetElement = "hashSeed")
       protected String hashSeedClass = DefaultHashSeed.class.getName();
 
       protected HashSeed hashSeed;
