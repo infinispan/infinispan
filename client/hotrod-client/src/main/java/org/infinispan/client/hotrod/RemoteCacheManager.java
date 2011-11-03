@@ -22,22 +22,7 @@
  */
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
-import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
-import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResult;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.CodecFactory;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.executors.ExecutorFactory;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.util.FileLookupFactory;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.util.Util.getInstance;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +35,22 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.infinispan.util.Util.getInstance;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResult;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.CodecFactory;
+import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.executors.ExecutorFactory;
+import org.infinispan.manager.BasicCacheContainer;
+import org.infinispan.marshall.Marshaller;
+import org.infinispan.util.FileLookupFactory;
+import org.infinispan.util.Util;
 
 /**
  * Factory for {@link org.infinispan.client.hotrod.RemoteCache}s. <p/> <p> <b>Lifecycle:</b> </p> In order to be able to
@@ -147,9 +147,9 @@ import static org.infinispan.util.Util.getInstance;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class RemoteCacheManager implements CacheContainer {
+public class RemoteCacheManager implements BasicCacheContainer {
 
-   private static final Log log = LogFactory.getLog(RemoteCacheManager.class, Log.class);
+   private static final Log log = LogFactory.getLog(RemoteCacheManager.class);
 
    public static final String HOTROD_CLIENT_PROPERTIES = "hotrod-client.properties";
 
@@ -507,7 +507,7 @@ public class RemoteCacheManager implements CacheContainer {
             startRemoteCache(result);
             // If ping not successful assume that the cache does not exist
             // Default cache is always started, so don't do for it
-            if (!cacheName.equals(CacheContainer.DEFAULT_CACHE_NAME) &&
+            if (!cacheName.equals(BasicCacheContainer.DEFAULT_CACHE_NAME) &&
                   ping(result) == PingResult.CACHE_DOES_NOT_EXIST) {
                return null;
             } else {

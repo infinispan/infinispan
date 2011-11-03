@@ -22,12 +22,8 @@
  */
 package org.infinispan.client.hotrod.impl;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.CacheSupport;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.config.Configuration;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Collection;
@@ -58,34 +54,11 @@ public abstract class RemoteCacheSupport<K,V> extends CacheSupport<K,V> implemen
       return replaceWithVersion(key, newValue, version, 0);
    }
 
-   @Override
-   public EmbeddedCacheManager getCacheManager() {
-      throw new UnsupportedOperationException("Remote caches have no access to an EmbeddedCacheManager.  Use getRemoteCacheManager() instead.");
-   }
+   
 
    @Override
    public boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds) {
       return replaceWithVersion(key, newValue, version, lifespanSeconds, 0);
-   }
-
-   @Override
-   public void putForExternalRead(K key, V value) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void addListener(Object listener) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void removeListener(Object listener) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public Set<Object> getListeners() {
-      throw new UnsupportedOperationException();
    }
 
    @Override
@@ -109,26 +82,6 @@ public abstract class RemoteCacheSupport<K,V> extends CacheSupport<K,V> implemen
    }
 
    @Override
-   public void evict(K key) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public Configuration getConfiguration() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public boolean startBatch() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void endBatch(boolean successful) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
    public boolean remove(Object key, Object value) {
       throw new UnsupportedOperationException();
    }
@@ -146,21 +99,6 @@ public abstract class RemoteCacheSupport<K,V> extends CacheSupport<K,V> implemen
 
    @Override
    public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public AdvancedCache<K, V> getAdvancedCache() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void compact() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public ComponentStatus getStatus() {
       throw new UnsupportedOperationException();
    }
 }

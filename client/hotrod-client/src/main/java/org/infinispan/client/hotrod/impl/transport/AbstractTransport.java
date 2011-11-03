@@ -23,8 +23,8 @@
 package org.infinispan.client.hotrod.impl.transport;
 
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 
 /**
  * Support class for transport implementations.

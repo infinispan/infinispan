@@ -22,11 +22,6 @@
  */
 package org.infinispan.client.hotrod.impl.consistenthash;
 
-import org.infinispan.util.hash.Hash;
-import org.infinispan.util.hash.MurmurHash2;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.net.SocketAddress;
 import java.util.Iterator;
 import java.util.Map;
@@ -34,6 +29,11 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import org.infinispan.util.hash.Hash;
+import org.infinispan.util.hash.MurmurHash2;
+import org.infinispan.util.logging.BasicLogFactory;
+import org.jboss.logging.BasicLogger;
 
 /**
  * Version one consistent hash function based on {@link org.infinispan.util.hash.MurmurHash2};
@@ -43,7 +43,7 @@ import java.util.TreeMap;
  */
 public class ConsistentHashV1 implements ConsistentHash {
 
-   private static final Log log = LogFactory.getLog(ConsistentHashV1.class);
+   private static final BasicLogger log = BasicLogFactory.getLog(ConsistentHashV1.class);
    
    private final SortedMap<Integer, SocketAddress> positions = new TreeMap<Integer, SocketAddress>();
 

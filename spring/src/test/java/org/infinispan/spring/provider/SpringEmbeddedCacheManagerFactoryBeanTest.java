@@ -32,6 +32,7 @@ import java.util.Properties;
 
 import javax.management.MBeanServer;
 
+import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
@@ -109,7 +110,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
                springEmbeddedCacheManager);
       final SpringCache cacheDefinedInCustomConfiguration = springEmbeddedCacheManager
                .getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
-      final Configuration configuration = cacheDefinedInCustomConfiguration.getNativeCache()
+      final Configuration configuration = ((Cache)cacheDefinedInCustomConfiguration.getNativeCache())
                .getConfiguration();
       assertEquals(
                "The cache named ["

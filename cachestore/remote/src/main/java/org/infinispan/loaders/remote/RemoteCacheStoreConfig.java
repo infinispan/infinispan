@@ -22,19 +22,20 @@
  */
 package org.infinispan.loaders.remote;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 import org.infinispan.CacheException;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
+import org.infinispan.manager.BasicCacheContainer;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.FileLookup;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
 
 /**
  * Configuration for RemoteCacheStore.
@@ -71,7 +72,7 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
 
    public void setUseDefaultRemoteCache(boolean useDefaultRemoteCache) {
       if (useDefaultRemoteCache) {
-         setRemoteCacheName(CacheContainer.DEFAULT_CACHE_NAME);
+         setRemoteCacheName(BasicCacheContainer.DEFAULT_CACHE_NAME);
       }
    }
 

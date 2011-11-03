@@ -22,16 +22,17 @@
  */
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import net.jcip.annotations.Immutable;
+
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.atomic.AtomicInteger;
+import org.infinispan.util.logging.BasicLogFactory;
+import org.jboss.logging.BasicLogger;
 
 /**
  * Corresponds to the "ping" operation as defined in <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod protocol specification</a>.
@@ -42,7 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Immutable
 public class PingOperation extends HotRodOperation {
 
-   private static final Log log = LogFactory.getLog(PingOperation.class);
+   private static final BasicLogger log = BasicLogFactory.getLog(PingOperation.class);
 
    private final Transport transport;
 
