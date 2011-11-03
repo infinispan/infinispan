@@ -403,7 +403,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       try {
          InternalCacheEntry s = cacheMap.get(key);
-         if (s != null && s.isExpired()) {
+         if (s != null && s.isExpired(System.currentTimeMillis())) {
             s = null;
          }
          return s;
