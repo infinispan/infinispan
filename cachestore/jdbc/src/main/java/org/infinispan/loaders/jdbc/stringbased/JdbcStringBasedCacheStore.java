@@ -319,7 +319,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
    protected InternalCacheEntry loadLockSafe(Object key, String lockingKey) throws CacheLoaderException {
       InternalCacheEntry storedEntry = null;
       storedEntry = readStoredEntry(key, lockingKey);
-      if (storedEntry != null && storedEntry.isExpired()) {
+      if (storedEntry != null && storedEntry.isExpired(System.currentTimeMillis())) {
          if (log.isTraceEnabled()) {
             log.tracef("Not returning '%s' as it is expired. It will be removed from DB by purging thread!", storedEntry);
          }

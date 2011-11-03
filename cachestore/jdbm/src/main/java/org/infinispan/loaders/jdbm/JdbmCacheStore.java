@@ -153,7 +153,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       try {
          InternalCacheEntry ice = unmarshall(tree.get(key), key);
-         if (ice != null && ice.isExpired()) {
+         if (ice != null && ice.isExpired(System.currentTimeMillis())) {
             remove(key);
             return null;
          }
@@ -445,12 +445,13 @@ public class JdbmCacheStore extends AbstractCacheStore {
       if (!keys.isEmpty())
          log.debugf("purge (up to) %d entries", keys.size());
       int count = 0;
+      long currentTimeMillis = System.currentTimeMillis();
       for (Object key : keys) {
          byte[] b = (byte[]) tree.get(key);
          if (b == null)
             continue;
          InternalCacheValue ice = (InternalCacheValue) getMarshaller().objectFromByteBuffer(b);
-         if (ice.isExpired()) {
+         if (ice.isExpired(currentTimeMillis)) {
             // somewhat inefficient to FIND then REMOVE...
             tree.remove(key);
             count++;

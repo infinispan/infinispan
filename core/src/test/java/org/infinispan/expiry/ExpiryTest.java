@@ -23,7 +23,6 @@
 package org.infinispan.expiry;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.CacheContainer;

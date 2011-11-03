@@ -87,10 +87,11 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
 
       @Override
       public int size() {
+         long currentTimeMillis = System.currentTimeMillis();
          int size = entrySet.size();
          // First, removed any expired ones
          for (InternalCacheEntry e: entrySet) {
-            if (e.isExpired())
+            if (e.isExpired(currentTimeMillis))
                size--;
          }
          // Update according to entries added or removed in tx
@@ -189,6 +190,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
 
             if (!atIt1) {
                boolean found = false;
+               long currentTimeMillis = System.currentTimeMillis();
                while (it2.hasNext()) {
                   InternalCacheEntry ice = it2.next();
                   Object key = ice.getKey();
@@ -204,7 +206,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
                      found = true;
                      break;
                   }
-                  if (e.isRemoved() || ice.isExpired()) {
+                  if (e.isRemoved() || ice.isExpired(currentTimeMillis)) {
                      continue;
                   }
                }
@@ -268,8 +270,9 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
          // Size cannot be cached because even if the set is immutable,
          // over time, the expired entries could grow hence reducing the size
          int s = entrySet.size();
+         long currentTimeMillis = System.currentTimeMillis();
          for (InternalCacheEntry e: entrySet) {
-            if (e.isExpired())
+            if (e.isExpired(currentTimeMillis))
                s--;
          }
          return s;
@@ -315,9 +318,10 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
          }
 
          private void fetchNext() {
+            long currentTimeMillis = System.currentTimeMillis();
             while (it.hasNext()) {
                InternalCacheEntry e = it.next();
-               if (e.isExpired()) {
+               if (e.isExpired(currentTimeMillis)) {
                   continue;
                } else {
                   next = e;

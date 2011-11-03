@@ -48,6 +48,12 @@ public interface InternalCacheValue {
    InternalCacheEntry toInternalCacheEntry(Object key);
 
    /**
+    * @param now the current time as expressed by {@link System#currentTimeMillis()}
+    * @return true if the entry has expired; false otherwise
+    */
+   boolean isExpired(long now);
+
+   /**
     * @return true if the entry has expired; false otherwise
     */
    boolean isExpired();

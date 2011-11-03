@@ -67,6 +67,11 @@ public class TransientCacheValue extends ImmortalCacheValue {
    }
 
    @Override
+   public final boolean isExpired(long now) {
+      return ExpiryHelper.isExpiredTransient(maxIdle, lastUsed, now);
+   }
+
+   @Override
    public final boolean isExpired() {
       return ExpiryHelper.isExpiredTransient(maxIdle, lastUsed);
    }

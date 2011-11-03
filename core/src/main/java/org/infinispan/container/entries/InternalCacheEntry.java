@@ -26,9 +26,18 @@ package org.infinispan.container.entries;
  * Interface for internal cache entries that expose whether an entry has expired.
  *
  * @author Manik Surtani
+ * @author Sanne Grinovero
  * @since 4.0
  */
 public interface InternalCacheEntry extends CacheEntry, Cloneable {
+
+   /**
+    * @param the current time as defined by {@link System#currentTimeMillis()}
+    * @return true if the entry has expired; false otherwise
+    * @since 5.1
+    */
+   boolean isExpired(long now);
+
    /**
     * @return true if the entry has expired; false otherwise
     */

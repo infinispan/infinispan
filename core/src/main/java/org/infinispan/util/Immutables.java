@@ -485,6 +485,10 @@ public class Immutables {
          return entry.getLastUsed();
       }
 
+      public boolean isExpired(long now) {
+         return entry.isExpired(now);
+      }
+
       public boolean isExpired() {
          return entry.isExpired();
       }
@@ -609,6 +613,10 @@ public class Immutables {
 
       public Object getValue() {
          return entry.getValue();
+      }
+
+      public boolean isExpired(long now) {
+         return entry.isExpired(now);
       }
 
       public boolean isExpired() {

@@ -124,7 +124,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert cs.load("k").getValue().equals("v");
       assert cs.load("k").getLifespan() == -1;
       assert cs.load("k").getMaxIdle() == -1;
-      assert !cs.load("k").isExpired();
+      assert !cs.load("k").isExpired(System.currentTimeMillis());
       assert cs.containsKey("k");
 
       boolean removed = cs.remove("k2");
@@ -149,7 +149,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.store(se);
       Thread.sleep(100);
       purgeExpired();
-      assert se.isExpired();
+      assert se.isExpired(System.currentTimeMillis());
       assertEventuallyExpires("k");
       assert !cs.containsKey("k");
       assert cs.loadAll().isEmpty();
@@ -162,7 +162,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert ice.getMaxIdle() == maxIdle : ice.getMaxIdle() + " was not " + maxIdle;
       if (lifespan > -1) assert ice.getCreated() > -1 : "Created is -1 when maxIdle is set";
       if (maxIdle > -1) assert ice.getLastUsed() > -1 : "LastUsed is -1 when maxIdle is set";
-      assert expired == ice.isExpired() : "isExpired() is not " + expired;
+      assert expired == ice.isExpired(System.currentTimeMillis()) : "isExpired() is not " + expired;
    }
 
 
@@ -184,7 +184,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.store(se);
       Thread.sleep(100);
       purgeExpired();
-      assert se.isExpired();
+      assert se.isExpired(System.currentTimeMillis());
       assertEventuallyExpires("k");
       assert !cs.containsKey("k");
       assert cs.loadAll().isEmpty();
@@ -217,7 +217,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.store(se);
       Thread.sleep(100);
       purgeExpired();
-      assert se.isExpired();
+      assert se.isExpired(System.currentTimeMillis());
       assertEventuallyExpires("k");
       assert !cs.containsKey("k");
       assert cs.loadAll().isEmpty();
@@ -243,16 +243,16 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       cs.stop();
       cs.start();
-      assert se1.isExpired();
+      assert se1.isExpired(System.currentTimeMillis());
       assert cs.load("k1") == null;
       assert !cs.containsKey("k1");
       assert cs.load("k2") != null;
       assert cs.containsKey("k2");
       assert cs.load("k2").getValue().equals("v2");
-      assert se3.isExpired();
+      assert se3.isExpired(System.currentTimeMillis());
       assert cs.load("k3") == null;
       assert !cs.containsKey("k3");
-      assert se3.isExpired();
+      assert se3.isExpired(System.currentTimeMillis());
       assert cs.load("k3") == null;
       assert !cs.containsKey("k3");
    }
