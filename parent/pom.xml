@@ -368,6 +368,20 @@
          <version>${version.jboss.logging.processor}</version>
          <scope>provided</scope>
       </dependency>
+      <!-- As of v3.0.4, the RHQ annotations have a retention policy of COMPILE,
+           which means they are no longer required at runtime. -->
+      <dependency>
+         <groupId>org.rhq.helpers</groupId>
+         <artifactId>rhq-pluginAnnotations</artifactId>
+         <version>${version.rhq.pluginAnnotations}</version>
+         <scope>provided</scope>
+         <exclusions>
+            <exclusion>
+               <groupId>i18nlog</groupId>
+               <artifactId>i18nlog</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
 
       <!-- used to serialize non-serializable objects for a dummy marshaller -->
       <dependency>
@@ -380,18 +394,6 @@
 
    <dependencyManagement>
       <dependencies>
-         <dependency>
-            <groupId>org.rhq.helpers</groupId>
-            <artifactId>rhq-pluginAnnotations</artifactId>
-            <version>${version.rhq.pluginAnnotations}</version>
-            <optional>true</optional>
-            <exclusions>
-               <exclusion>
-                  <groupId>i18nlog</groupId>
-                  <artifactId>i18nlog</artifactId>
-               </exclusion>
-            </exclusions>
-         </dependency>
          <dependency>
             <groupId>org.jboss.arquillian</groupId>
             <artifactId>arquillian-bom</artifactId>

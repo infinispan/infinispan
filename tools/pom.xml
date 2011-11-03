@@ -60,12 +60,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.rhq.helpers</groupId>
-         <artifactId>rhq-pluginAnnotations</artifactId>
-         <version>${version.rhq.pluginAnnotations}</version>
-      </dependency>
-
-      <dependency>
          <groupId>javassist</groupId>
          <artifactId>javassist</artifactId>
          <version>${version.javassist}</version>

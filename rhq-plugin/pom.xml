@@ -135,10 +135,6 @@
          <scope>test</scope>
       </dependency>
 
-      <dependency>
-         <groupId>org.rhq.helpers</groupId>
-         <artifactId>rhq-pluginAnnotations</artifactId>
-      </dependency>
    </dependencies>
 
    <build>

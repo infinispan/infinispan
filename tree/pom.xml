@@ -42,12 +42,6 @@
          <artifactId>infinispan-core</artifactId>
          <version>${project.version}</version>
       </dependency>
-      
-      <dependency>
-         <groupId>org.rhq.helpers</groupId>
-         <artifactId>rhq-pluginAnnotations</artifactId>
-         <scope>provided</scope>
-      </dependency>
 
       <dependency>
          <groupId>${project.groupId}</groupId>

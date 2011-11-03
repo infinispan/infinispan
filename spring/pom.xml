@@ -98,12 +98,6 @@
          <artifactId>infinispan-core</artifactId>
          <version>${project.version}</version>
          <scope>compile</scope>
-         <exclusions>
-            <exclusion>
-               <groupId>org.rhq.helpers</groupId>
-               <artifactId>rhq-pluginAnnotations</artifactId>
-            </exclusion>
-         </exclusions>
       </dependency>
       <!-- Made the RHQ dependency non-transitive in case we only need the remote cache -->
       <dependency>

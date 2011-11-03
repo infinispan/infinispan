@@ -80,14 +80,6 @@
          <version>${version.jboss.marshalling}</version>
       </dependency>
 
-      <!-- As of v3.0.4, the RHQ annotations have a retention policy of COMPILE,
-           which means they are no longer required at runtime. -->
-      <dependency>
-         <groupId>org.rhq.helpers</groupId>
-         <artifactId>rhq-pluginAnnotations</artifactId>
-         <scope>provided</scope>
-      </dependency>
-
       <dependency>
          <groupId>org.jboss.logging</groupId>
          <artifactId>jboss-logging</artifactId>
