@@ -35,6 +35,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javassist.ClassClassPath;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtField;
+import javassist.CtMethod;
+
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
@@ -66,6 +72,7 @@ import com.sun.javadoc.RootDoc;
  */
 public class RhqPluginXmlGenerator {
    private static final Log log = LogFactory.getLog(RhqPluginXmlGenerator.class);
+   private static ClassPool classPool;
    private static String cp;
    
    public static void main(String[] args) throws Exception {
@@ -82,7 +89,7 @@ public class RhqPluginXmlGenerator {
       return true;
    }
    
-   public static boolean start(RootDoc rootDoc) throws IOException {
+   public static boolean start(RootDoc rootDoc) throws Exception {
       List<Class<?>> mbeanIspnClasses = getMBeanClasses();
       List<Class<?>> globalClasses = new ArrayList<Class<?>>();
       List<Class<?>> namedCacheClasses = new ArrayList<Class<?>>();
@@ -97,6 +104,9 @@ public class RhqPluginXmlGenerator {
          }
       }
       
+      // Init the Javassist class pool.
+      classPool = ClassPool.getDefault();
+      classPool.insertClassPath(new ClassClassPath(RhqPluginXmlGenerator.class));
       PluginGen pg = new PluginGen();
       
       Props root = new Props();
@@ -162,24 +172,29 @@ public class RhqPluginXmlGenerator {
       }
    }
    
-   private static void populateMetricsAndOperations(List<Class<?>> classes, Props props, boolean withNamePrefix) {
+   private static void populateMetricsAndOperations(List<Class<?>> classes,
+            Props props, boolean withNamePrefix) throws Exception {
       props.setHasOperations(true);
       props.setHasMetrics(true);
       for (Class<?> clazz : classes) {
          MBean mbean = clazz.getAnnotation(MBean.class);
          String prefix = withNamePrefix ? mbean.objectName() + '.' : "";
-         Method[] methods = clazz.getMethods();
-         for (Method method : methods) {
-            Metric rhqMetric = method.getAnnotation(Metric.class);
-            ManagedAttribute managedAttr = method.getAnnotation(ManagedAttribute.class);
-            ManagedOperation managedOp = method.getAnnotation(ManagedOperation.class);
-            Operation rhqOperation = method.getAnnotation(Operation.class);
+         CtClass ctClass = classPool.get(clazz.getName());
+
+         CtMethod[] ctMethods = ctClass.getMethods();
+         for (CtMethod ctMethod : ctMethods) {
+            ManagedAttribute managedAttr = (ManagedAttribute)
+                  ctMethod.getAnnotation(ManagedAttribute.class);
+            ManagedOperation managedOp = (ManagedOperation)
+                  ctMethod.getAnnotation(ManagedOperation.class);
+
+            Metric rhqMetric = (Metric) ctMethod.getAnnotation(Metric.class);
             if (rhqMetric != null) {
                debug("Metric annotation found " + rhqMetric);
                // Property and description resolution are the reason why annotation scanning is done here.
                // These two fields are calculated from either the method name or the Managed* annotations,
                // and so, only the infinispan side knows about that.
-               String property = prefix + BeanConventions.getPropertyFromBeanConvention(method);
+               String property = prefix + getPropertyFromBeanConvention(ctMethod);
                if (!rhqMetric.property().isEmpty()) {
                   property = prefix + rhqMetric.property();
                }
@@ -202,11 +217,14 @@ public class RhqPluginXmlGenerator {
                props.getMetrics().add(metric);
             }
             
+            Operation rhqOperation = (Operation) ctMethod.getAnnotation(Operation.class);
             if (rhqOperation != null) {
                debug("Operation annotation found " + rhqOperation);
-               String name = prefix + method.getName();
+               String name;
                if (!rhqOperation.name().isEmpty()) {
                   name = prefix + rhqOperation.name();
+               } else {
+                  name = prefix + ctMethod.getName();
                }
                OperationProps operation = new OperationProps(name);
                String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + rhqOperation.displayName() : rhqOperation.displayName();
@@ -222,11 +240,11 @@ public class RhqPluginXmlGenerator {
                   operation.setDescription(rhqOperation.displayName());
                }
                
-               Annotation[][] paramAnnotations = method.getParameterAnnotations();
+               Object[][] paramAnnotations = ctMethod.getParameterAnnotations();
                int i = 0;
-               for (Annotation[] paramAnnotationsInEach : paramAnnotations) {
+               for (Object[] paramAnnotationsInEach : paramAnnotations) {
                   boolean hadParameter = false;
-                  for (Annotation annot : paramAnnotationsInEach) {
+                  for (Object annot : paramAnnotationsInEach) {
                      debug("Parameter annotation " + annot);
                      if (annot instanceof Parameter) {
                         Parameter param = (Parameter) annot;
@@ -240,23 +258,29 @@ public class RhqPluginXmlGenerator {
                      operation.getParams().add(new SimpleProperty("p" + i++));
                   }
                }
-               Class<?> returnType = method.getReturnType();
-               if (!returnType.equals(Void.TYPE)) {
-                  SimpleProperty prop = new SimpleProperty("operationResult");
-                  operation.setResult(prop);
+               CtClass returnType = ctMethod.getReturnType();
+               if (!returnType.equals(CtClass.voidType)) {
+                  if (!returnType.equals(Void.TYPE)) {
+                     SimpleProperty prop = new SimpleProperty("operationResult");
+                     operation.setResult(prop);
+                  }
                }
                props.getOperations().add(operation);
             }
          }
-         Field[] fields = clazz.getDeclaredFields();
-         for (Field field : fields) {
-            debug("Inspecting field " + field);
-            Metric rhqMetric = field.getAnnotation(Metric.class);
+
+         CtField[] ctFields = ctClass.getDeclaredFields();
+         for (CtField ctField : ctFields) {
+            debug("Inspecting field " + ctField);
+
+            Metric rhqMetric = (Metric)ctField.getAnnotation(Metric.class);
             if (rhqMetric != null) {
-               debug("Field " + field + " contains Metric annotation " + rhqMetric);
-               String property = prefix + BeanConventions.getPropertyFromBeanConvention(field);
+              debug("Field " + ctField + " contains Metric annotation " + rhqMetric);
+              String property;
                if (!rhqMetric.property().isEmpty()) {
                   property = prefix + rhqMetric.property();
+               } else {
+                  property = prefix + getPropertyFromBeanConvention(ctField);
                }
                MetricProps metric = new MetricProps(property);
                String displayName = withNamePrefix ? "[" + mbean.objectName() + "] " + rhqMetric.displayName() : rhqMetric.displayName();
@@ -264,7 +288,8 @@ public class RhqPluginXmlGenerator {
                metric.setDisplayType(rhqMetric.displayType());
                metric.setDataType(rhqMetric.dataType());
                metric.setUnits(rhqMetric.units());
-               ManagedAttribute managedAttr = field.getAnnotation(ManagedAttribute.class);
+               ManagedAttribute managedAttr = (ManagedAttribute)
+                     ctField.getAnnotation(ManagedAttribute.class);
                if (managedAttr != null) {
                   debug("Metric has ManagedAttribute annotation " + managedAttr);
                   metric.setDescription(managedAttr.description());
@@ -277,6 +302,25 @@ public class RhqPluginXmlGenerator {
          }
         
       }
+   }
+
+   private static String getPropertyFromBeanConvention(CtMethod ctMethod) {
+      String getterOrSetter = ctMethod.getName();
+      if (getterOrSetter.startsWith("get") || getterOrSetter.startsWith("set")) {
+         String withoutGet = getterOrSetter.substring(4);
+         // not specifically Bean convention, but this is what is bound in JMX.
+         return Character.toUpperCase(getterOrSetter.charAt(3)) + withoutGet;
+      } else if (getterOrSetter.startsWith("is")) {
+         String withoutIs = getterOrSetter.substring(3);
+         return Character.toUpperCase(getterOrSetter.charAt(2)) + withoutIs;
+      }
+      return getterOrSetter;
+   }
+
+   private static String getPropertyFromBeanConvention(CtField ctField) {
+      String fieldName = ctField.getName();
+      String withoutFirstChar = fieldName.substring(1);
+      return Character.toUpperCase(fieldName.charAt(0)) + withoutFirstChar;
    }
 
    private static void debug(Object o) {

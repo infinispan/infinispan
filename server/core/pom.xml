@@ -53,6 +53,7 @@
       <dependency>
          <groupId>org.rhq.helpers</groupId>
          <artifactId>rhq-pluginAnnotations</artifactId>
+         <scope>provided</scope>
       </dependency>
    </dependencies>
 
