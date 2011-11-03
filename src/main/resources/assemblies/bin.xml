@@ -51,6 +51,8 @@
       <moduleSet>
          <includeSubModules>false</includeSubModules>
          <includes>
+            <include>org.infinispan:infinispan-api</include>
+            <include>org.infinispan:infinispan-commons</include>
             <include>org.infinispan:infinispan-core</include>
          </includes>
          <sources>
@@ -239,6 +241,8 @@
             <dependencySets>
                <dependencySet>
                   <excludes>
+                     <exclude>infinispan-api*</exclude>
+                     <exclude>infinispan-commons*</exclude>
                      <exclude>infinispan-core*</exclude>
                      <exclude>net.jcip:jcip-annotations</exclude>
                      <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
