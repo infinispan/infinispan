@@ -24,15 +24,17 @@ package org.infinispan.atomic;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.batch.AutoBatchSupport;
-import org.infinispan.batch.BatchContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.FlagContainer;
 import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -45,7 +47,7 @@ import java.util.Set;
  * reader MVCC model used in the {@link org.infinispan.container.entries.MVCCEntry} implementations for the core data
  * container, which closely follow software transactional memory approaches to dealing with concurrency.
  * <br /><br />
- * Implementations of this class are rarely created on their own; {@link AtomicHashMap#getProxy(org.infinispan.Cache, Object, org.infinispan.batch.BatchContainer, org.infinispan.context.InvocationContextContainer)}
+ * Implementations of this class are rarely created on their own; {@link AtomicHashMap#getProxy(org.infinispan.AdvancedCache, Object, boolean)}
  * should be used to retrieve an instance of this proxy.
  * <br /><br />
  * Typically proxies are only created by the {@link AtomicMapLookup} helper, and would not be created by end-user code
@@ -62,14 +64,22 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    private static final boolean trace = log.isTraceEnabled();
    protected final Object deltaMapKey;
    protected final AdvancedCache cache;
-   protected final InvocationContextContainer icc;
    protected volatile boolean startedReadingMap = false;
+   protected final FlagContainer flagContainer;
+   protected TransactionTable transactionTable;
+   protected TransactionManager transactionManager;
 
    AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey) {
+      this(cache, deltaMapKey, null);
+   }
+
+   AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey, FlagContainer flagContainer) {
       this.cache = cache;
       this.deltaMapKey = deltaMapKey;
       this.batchContainer = cache.getBatchContainer();
-      this.icc = cache.getInvocationContextContainer();
+      this.flagContainer = flagContainer;
+      transactionTable = cache.getComponentRegistry().getComponent(TransactionTable.class);
+      transactionManager = cache.getTransactionManager();
    }
 
    @SuppressWarnings("unchecked")
@@ -86,18 +96,39 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       return ahm;
    }
 
-   @SuppressWarnings("unchecked")
-   protected AtomicHashMap<K, V> getDeltaMapForWrite(InvocationContext ctx) {
-      CacheEntry lookedUpEntry = ctx.lookupEntry(deltaMapKey);
-      boolean lockedAndCopied = lookedUpEntry != null && lookedUpEntry.isChanged() &&
-            toMap(lookedUpEntry.getValue()).copied;          
+   /**
+    * Looks up the CacheEntry stored in transactional context corresponding to this AtomicMap.  If this AtomicMap
+    * has yet to be touched by the current transaction, this method will return a null.
+    * @return
+    */
+   protected CacheEntry lookupEntryFromCurrentTransaction() {
+      // Prior to 5.1, this used to happen by grabbing any InvocationContext in ThreadLocal.  Since ThreadLocals
+      // can no longer be relied upon in 5.1, we need to grab the TransactionTable and check if an ongoing
+      // transaction exists, peeking into transactional state instead.
+      try {
+         LocalTransaction localTransaction = transactionTable.getLocalTransaction(transactionManager.getTransaction());
 
-      if (lockedAndCopied) {         
+         // The stored localTransaction could be null, if this is the first call in a transaction.  In which case
+         // we know that there is no transactional state to refer to - i.e., no entries have been looked up as yet.
+         return localTransaction == null ? null : localTransaction.lookupEntry(deltaMapKey);
+      } catch (SystemException e) {
+         return null;
+      }
+   }
+
+   @SuppressWarnings("unchecked")
+   protected AtomicHashMap<K, V> getDeltaMapForWrite() {
+      CacheEntry lookedUpEntry = lookupEntryFromCurrentTransaction();
+
+      boolean lockedAndCopied = lookedUpEntry != null && lookedUpEntry.isChanged() &&
+            toMap(lookedUpEntry.getValue()).copied;
+
+      if (lockedAndCopied) {
          return getDeltaMapForRead();
       } else {
          // acquire WL
-         boolean suppressLocks = ctx.hasFlag(Flag.SKIP_LOCKING);
-         if (!suppressLocks) ctx.setFlags(Flag.FORCE_WRITE_LOCK);
+         boolean suppressLocks = flagContainer != null && flagContainer.hasFlag(Flag.SKIP_LOCKING);
+         if (!suppressLocks && flagContainer != null) flagContainer.setFlags(Flag.FORCE_WRITE_LOCK);
 
          if (trace) {
             if (suppressLocks)
@@ -107,7 +138,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
          }
 
          // reinstate the flag
-         if (suppressLocks) ctx.setFlags(Flag.SKIP_LOCKING);
+         if (suppressLocks) flagContainer.setFlags(Flag.SKIP_LOCKING);
          
          AtomicHashMap<K, V> map = getDeltaMapForRead();
          
@@ -167,11 +198,10 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
 
    //writers      
    public V put(K key, V value) {
-      AtomicHashMap<K, V> deltaMapForWrite = null;
+      AtomicHashMap<K, V> deltaMapForWrite;
       try {
          startAtomic();
-         InvocationContext ctx = icc.createInvocationContext(true);
-         deltaMapForWrite = getDeltaMapForWrite(ctx);            
+         deltaMapForWrite = getDeltaMapForWrite();
          return deltaMapForWrite.put(key, value);
       }
       finally {         
@@ -180,11 +210,10 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    }
 
    public V remove(Object key) {
-      AtomicHashMap<K, V> deltaMapForWrite = null;
+      AtomicHashMap<K, V> deltaMapForWrite;
       try {
          startAtomic();
-         InvocationContext ic = icc.createInvocationContext(true);      
-         deltaMapForWrite = getDeltaMapForWrite(ic);         
+         deltaMapForWrite = getDeltaMapForWrite();
          return deltaMapForWrite.remove(key);
       }
       finally {         
@@ -193,11 +222,10 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    }
 
    public void putAll(Map<? extends K, ? extends V> m) {
-      AtomicHashMap<K, V> deltaMapForWrite = null;
+      AtomicHashMap<K, V> deltaMapForWrite;
       try {
          startAtomic();
-         InvocationContext ctx = icc.createInvocationContext(true);
-         deltaMapForWrite = getDeltaMapForWrite(ctx);         
+         deltaMapForWrite = getDeltaMapForWrite();
          deltaMapForWrite.putAll(m);
       }
       finally {        
@@ -206,11 +234,10 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    }
 
    public void clear() {
-      AtomicHashMap<K, V> deltaMapForWrite = null;
+      AtomicHashMap<K, V> deltaMapForWrite;
       try {
          startAtomic();
-         InvocationContext ctx = icc.createInvocationContext(true);
-         deltaMapForWrite = getDeltaMapForWrite(ctx);        
+         deltaMapForWrite = getDeltaMapForWrite();
          deltaMapForWrite.clear();
       } finally {         
          endAtomic();
@@ -219,7 +246,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
 
    @Override
    public String toString() {
-      StringBuffer sb = new StringBuffer("AtomicHashMapProxy{deltaMapKey=");     
+      StringBuilder sb = new StringBuilder("AtomicHashMapProxy{deltaMapKey=");
       sb.append(deltaMapKey);
       sb.append("}");
       return sb.toString();

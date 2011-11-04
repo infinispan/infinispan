@@ -22,12 +22,11 @@
  */
 package org.infinispan.tree;
 
-import org.infinispan.Cache;
-import org.infinispan.atomic.AtomicMap;
+import org.infinispan.AdvancedCache;
 import org.infinispan.atomic.AtomicHashMapProxy;
+import org.infinispan.atomic.AtomicMap;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.Util;
 
@@ -47,8 +46,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    Fqn fqn;
    NodeKey dataKey, structureKey;
 
-   public NodeImpl(Fqn fqn, Cache<?, ?> cache, BatchContainer batchContainer, InvocationContextContainer icc) {
-      super(cache, batchContainer, icc);
+   public NodeImpl(Fqn fqn, AdvancedCache<?, ?> cache, BatchContainer batchContainer) {
+      super(cache, batchContainer);
       this.fqn = fqn;
       dataKey = new NodeKey(fqn, NodeKey.Type.DATA);
       structureKey = new NodeKey(fqn, NodeKey.Type.STRUCTURE);
@@ -56,11 +55,11 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
 
    public Node<K, V> getParent() {
       if (fqn.isRoot()) return this;
-      return new NodeImpl<K, V>(fqn.getParent(), cache, batchContainer, icc);
+      return new NodeImpl<K, V>(fqn.getParent(), cache, batchContainer);
    }
 
    public Node<K, V> getParent(Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return getParent();
    }
 
@@ -69,7 +68,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       try {
          Set<Node<K, V>> result = new HashSet<Node<K, V>>();
          for (Fqn f : getStructure().values()) {
-            NodeImpl<K, V> n = new NodeImpl<K, V>(f, cache, batchContainer, icc);
+            NodeImpl<K, V> n = new NodeImpl<K, V>(f, cache, batchContainer);
             result.add(n);
          }
          return Immutables.immutableSetWrap(result);
@@ -80,7 +79,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Set<Node<K, V>> getChildren(Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return getChildren();
    }
 
@@ -89,7 +88,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Set<Object> getChildrenNames(Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return getChildrenNames();
    }
 
@@ -99,7 +98,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Map<K, V> getData(Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return getData();
    }
 
@@ -114,7 +113,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Set<K> getKeys(Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return getKeys();
    }
 
@@ -134,7 +133,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
          //2) then create the structure and data maps
          createNodeInCache(absoluteChildFqn);
 
-         return new NodeImpl<K, V>(absoluteChildFqn, cache, batchContainer, icc);
+         return new NodeImpl<K, V>(absoluteChildFqn, cache, batchContainer);
       }
       finally {
          endAtomic();
@@ -142,7 +141,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Node<K, V> addChild(Fqn f, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return addChild(f);
    }
 
@@ -151,7 +150,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public boolean removeChild(Fqn f, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return removeChild(f);
    }
 
@@ -161,7 +160,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
          AtomicMap<Object, Fqn> s = getStructure();
          Fqn childFqn = s.remove(childName);
          if (childFqn != null) {
-            Node<K, V> child = new NodeImpl<K, V>(childFqn, cache, batchContainer, icc);
+            Node<K, V> child = new NodeImpl<K, V>(childFqn, cache, batchContainer);
             child.removeChildren();
             child.clearData();  // this is necessary in case we have a remove and then an add on the same node, in the same tx.
             cache.remove(new NodeKey(childFqn, NodeKey.Type.DATA));
@@ -177,7 +176,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public boolean removeChild(Object childName, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return removeChild(childName);
    }
 
@@ -185,7 +184,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       startAtomic();
       try {
          if (hasChild(f))
-            return new NodeImpl<K, V>(Fqn.fromRelativeFqn(fqn, f), cache, batchContainer, icc);
+            return new NodeImpl<K, V>(Fqn.fromRelativeFqn(fqn, f), cache, batchContainer);
          else
             return null;
       }
@@ -195,7 +194,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Node<K, V> getChild(Fqn f, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return getChild(f);
    }
 
@@ -203,7 +202,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       startAtomic();
       try {
          if (hasChild(name))
-            return new NodeImpl<K, V>(Fqn.fromRelativeElements(fqn, name), cache, batchContainer, icc);
+            return new NodeImpl<K, V>(Fqn.fromRelativeElements(fqn, name), cache, batchContainer);
          else
             return null;
       }
@@ -213,7 +212,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Node<K, V> getChild(Object name, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return getChild(name);
    }
 
@@ -229,7 +228,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public V put(K key, V value, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return put(key, value);
    }
 
@@ -247,7 +246,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public V putIfAbsent(K key, V value, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return putIfAbsent(key, value);
    }
 
@@ -266,7 +265,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public V replace(K key, V value, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return replace(key, value);
    }
 
@@ -287,7 +286,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public boolean replace(K key, V oldValue, V value, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return replace(key, oldValue, value);
    }
 
@@ -302,7 +301,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public void putAll(Map<? extends K, ? extends V> map, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       putAll(map);
    }
 
@@ -319,7 +318,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public void replaceAll(Map<? extends K, ? extends V> map, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       replaceAll(map);
    }
 
@@ -328,7 +327,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public V get(K key, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return get(key);
    }
 
@@ -343,7 +342,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public V remove(K key, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return remove(key);
    }
 
@@ -352,7 +351,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public void clearData(Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       clearData();
    }
 
@@ -361,7 +360,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public int dataSize(Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return dataSize();
    }
 
@@ -376,7 +375,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public boolean hasChild(Fqn f, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return hasChild(f);
    }
 
@@ -385,7 +384,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public boolean hasChild(Object o, Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       return hasChild(o);
    }
 
@@ -405,7 +404,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public void removeChildren(Flag... flags) {
-      icc.createInvocationContext(true).setFlags(flags);
+      tcc.createTreeContext().addFlags(flags);
       removeChildren();
    }
 

@@ -23,11 +23,9 @@
 package org.infinispan.atomic;
 
 import net.jcip.annotations.NotThreadSafe;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.batch.BatchContainer;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.FlagContainer;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.util.FastCopyHashMap;
@@ -162,7 +160,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
     * Builds a thread-safe proxy for this instance so that concurrent reads are isolated from writes.
     * @return an instance of AtomicHashMapProxy
     */
-   AtomicHashMapProxy<K, V> getProxy(AdvancedCache cache, Object mapKey, boolean fineGrained) {
+   AtomicHashMapProxy<K, V> getProxy(AdvancedCache cache, Object mapKey, boolean fineGrained, FlagContainer flagContainer) {
       // construct the proxy lazily
       if (proxy == null)  // DCL is OK here since proxy is volatile (and we live in a post-JDK 5 world)
       {
@@ -171,7 +169,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
                if(fineGrained){
                   proxy = new FineGrainedAtomicHashMapProxy<K, V>(cache, mapKey);
                } else {
-                  proxy = new AtomicHashMapProxy<K, V>(cache, mapKey);
+                  proxy = new AtomicHashMapProxy<K, V>(cache, mapKey, flagContainer);
                }
          }
       }
@@ -205,7 +203,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
 
    @Override
    public String toString() {
-      StringBuffer sb = new StringBuffer("AtomicHashMap{delegate=");
+      StringBuilder sb = new StringBuilder("AtomicHashMap{delegate=");
       sb.append(delegate);
       sb.append("}");
       return sb.toString();    
@@ -244,6 +242,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       }
 
       @Override
+      @SuppressWarnings("unchecked")
       public Set<Class<? extends AtomicHashMap>> getTypeClasses() {
          return Util.<Class<? extends AtomicHashMap>>asSet(AtomicHashMap.class);
       }

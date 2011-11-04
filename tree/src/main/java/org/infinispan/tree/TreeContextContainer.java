@@ -22,14 +22,20 @@
  */
 package org.infinispan.tree;
 
+import org.infinispan.context.Flag;
+import org.infinispan.context.FlagContainer;
+
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
- * Invocation context container holding tree invocation context for the
- * current thread.
+ * Invocation context container holding tree invocation context for the current thread.
  *
  * @author Galder Zamarreño
  * @since 4.2
  */
-public class TreeContextContainer {
+public class TreeContextContainer implements FlagContainer {
 
    private final ThreadLocal<TreeContext> tcTL = new ThreadLocal<TreeContext>();
 
@@ -52,5 +58,38 @@ public class TreeContextContainer {
       TreeContext treeContext = tcTL.get();
       tcTL.remove();
       return treeContext;
+   }
+
+   @Override
+   public boolean hasFlag(Flag o) {
+      TreeContext tc = tcTL.get();
+      return tc != null && tc.hasFlag(o);
+   }
+
+   @Override
+   public Set<Flag> getFlags() {
+      TreeContext treeContext = tcTL.get();
+      return treeContext == null ? EnumSet.noneOf(Flag.class) : treeContext.getFlags();
+   }
+
+   @Override
+   public void setFlags(Flag... flags) {
+      createTreeContext().setFlags(flags);
+   }
+
+   @Override
+   public void setFlags(Collection<Flag> flags) {
+      createTreeContext().setFlags(flags);
+   }
+
+   @Override
+   public void reset() {
+      TreeContext treeContext = tcTL.get();
+      if (treeContext != null) treeContext.reset();
+   }
+
+   public void remove(Flag flag) {
+      TreeContext treeContext = tcTL.get();
+      if (treeContext != null) treeContext.remove(flag);
    }
 }
