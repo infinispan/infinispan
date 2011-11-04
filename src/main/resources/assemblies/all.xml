@@ -159,16 +159,10 @@
          </binaries>
       </moduleSet>
 
+      <!-- Rest of modules except demos and cache stores -->
       <moduleSet>
          <includeSubModules>false</includeSubModules>
          <includes>
-            <include>org.infinispan:infinispan-cachestore-bdbje</include>
-            <include>org.infinispan:infinispan-cachestore-jdbc</include>
-            <include>org.infinispan:infinispan-cachestore-jdbm</include>
-            <include>org.infinispan:infinispan-cachestore-s3</include>
-            <include>org.infinispan:infinispan-gui-demo</include>
-            <include>org.infinispan:infinispan-ec2-demo</include>
-            <include>org.infinispan:infinispan-distexec-demo</include>
             <include>org.infinispan:infinispan-rhq-plugin</include>
             <include>org.infinispan:infinispan-tree</include>
             <include>org.infinispan:infinispan-query</include>
@@ -178,7 +172,7 @@
             <include>org.infinispan:infinispan-server-websocket</include>
             <include>org.infinispan:infinispan-client-hotrod</include>
             <include>org.infinispan:infinispan-lucene-directory</include>
-            <include>org.infinispan:infinispan-lucene-demo</include>
+            <include>org.infinispan:infinispan-spring</include>
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
@@ -290,13 +284,122 @@
          </binaries>
       </moduleSet>
 
-      <!-- REST server and ec2-demo webapps and ec2-demo application -->
+      <!-- Cache stores only! -->
+      <moduleSet>
+         <includeSubModules>false</includeSubModules>
+         <includes>
+            <include>org.infinispan:infinispan-cachestore-bdbje</include>
+            <include>org.infinispan:infinispan-cachestore-cassandra</include>
+            <include>org.infinispan:infinispan-cachestore-cloud</include>
+            <include>org.infinispan:infinispan-cachestore-jdbc</include>
+            <include>org.infinispan:infinispan-cachestore-jdbm</include>
+            <include>org.infinispan:infinispan-cachestore-remote</include>
+         </includes>
+         <sources>
+            <includeModuleDirectory>false</includeModuleDirectory>
+
+            <fileSets>
+
+               <!-- resources -->
+               <fileSet>
+                  <directory>src/main/resources/</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <excludes>
+                     <exclude>**/*.sh</exclude>
+                     <exclude>**/*.bat</exclude>
+                     <exclude>**/*.cmd</exclude>
+                     <exclude>**/*.py</exclude>
+                     <exclude>**/*.rb</exclude>
+                     <exclude>**/infinispan-module.properties</exclude>
+                     <exclude>**/*.dat.gz</exclude>
+                  </excludes>
+               </fileSet>
+
+               <!-- Executable resources -->
+               <fileSet>
+                  <directory>src/main/resources</directory>
+                  <outputDirectory>bin</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.sh</include>
+                     <include>**/*.py</include>
+                     <include>**/*.rb</include>
+                  </includes>
+                  <fileMode>0755</fileMode>
+               </fileSet>
+
+               <fileSet>
+                  <directory>src/main/distribution</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.html</include>
+                  </includes>
+               </fileSet>
+
+               <fileSet>
+                  <directory>src/main/resources</directory>
+                  <outputDirectory>bin</outputDirectory>
+                  <lineEnding>dos</lineEnding>
+                  <includes>
+                     <include>**/*.cmd</include>
+                     <include>**/*.bat</include>
+                  </includes>
+                  <fileMode>0644</fileMode>
+               </fileSet>
+
+
+               <!-- EULAs and license files -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>dos</lineEnding>
+                  <includes>
+                     <include>**/*.txt</include>
+                  </includes>
+               </fileSet>
+
+            </fileSets>
+
+         </sources>
+
+         <!-- All modules except core and Webapp modules -->
+         <binaries>
+
+            <outputDirectory>modules/cachestores/${module.basedir.name}</outputDirectory>
+            <outputFileNameMapping>
+               ${module.artifactId}.${module.extension}
+            </outputFileNameMapping>
+            <unpack>false</unpack>
+
+            <dependencySets>
+               <dependencySet>
+                  <excludes>
+                     <exclude>infinispan-api*</exclude>
+                     <exclude>infinispan-commons*</exclude>
+                     <exclude>infinispan-core*</exclude>
+                     <exclude>net.jcip:jcip-annotations</exclude>
+                     <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
+                     <exclude>org.infinispan:infinispan-core</exclude>
+                     <exclude>org.infinispan:infinispan-server-rest</exclude>
+                     <exclude>org.infinispan:infinispan-gridfs-webdav</exclude>
+                     <exclude>log4j:log4j</exclude>
+                  </excludes>
+                  <useTransitiveDependencies>true</useTransitiveDependencies>
+                  <useTransitiveFiltering>true</useTransitiveFiltering>
+                  <outputDirectory>modules/cachestores/${module.basedir.name}/lib</outputDirectory>
+               </dependencySet>
+            </dependencySets>
+
+         </binaries>
+      </moduleSet>
+
+      <!-- REST server war -->
       <moduleSet>
          <includeSubModules>false</includeSubModules>
          <includes>
             <include>org.infinispan:infinispan-server-rest</include>
-            <include>org.infinispan:infinispan-gridfs-webdav</include>
-            <include>org.infinispan:infinispan-ec2-demoui</include>
          </includes>
 
          <sources>
@@ -330,6 +433,170 @@
                   <outputDirectory>modules/${module.basedir.name}</outputDirectory>
                </dependencySet>
             </dependencySets>
+         </binaries>
+      </moduleSet>
+
+      <!-- Demo war apps -->
+      <moduleSet>
+         <includeSubModules>false</includeSubModules>
+         <includes>
+            <include>org.infinispan:infinispan-gridfs-webdav</include>
+            <include>org.infinispan:infinispan-ec2-demoui</include>
+            <include>org.infinispan:infinispan-nearcache-client</include>
+         </includes>
+
+         <sources>
+            <includeModuleDirectory>false</includeModuleDirectory>
+            <fileSets>
+               <fileSet>
+                  <directory>target</directory>
+                  <outputDirectory>modules/${module.basedir.name}</outputDirectory>
+                  <includes>
+                     <include>*.jar</include>
+                  </includes>
+                  <excludes>
+                     <exclude>*tests.jar</exclude>
+                     <exclude>*sources.jar</exclude>
+                  </excludes>
+               </fileSet>
+            </fileSets>
+         </sources>
+
+         <binaries>
+            <outputDirectory>modules/demos/${module.basedir.name}</outputDirectory>
+            <outputFileNameMapping>
+               ${module.artifactId}.${module.extension}
+            </outputFileNameMapping>
+            <unpack>false</unpack>
+            <dependencySets>
+               <dependencySet>
+                  <includes>
+                     <include>NONEXISTENT_DEPENDENCY*</include>
+                  </includes>
+                  <outputDirectory>modules/demos/${module.basedir.name}</outputDirectory>
+               </dependencySet>
+            </dependencySets>
+         </binaries>
+      </moduleSet>
+
+      <!-- Demos only! -->
+      <moduleSet>
+         <includeSubModules>false</includeSubModules>
+         <includes>
+            <include>org.infinispan:infinispan-gui-demo</include>
+            <include>org.infinispan:infinispan-ec2-demo</include>
+            <include>org.infinispan:infinispan-distexec-demo</include>
+            <include>org.infinispan:infinispan-directory-demo</include>
+            <include>org.infinispan:infinispan-nearcache-demo</include>
+            <include>org.infinispan:infinispan-lucene-demo</include>
+         </includes>
+         <sources>
+            <includeModuleDirectory>false</includeModuleDirectory>
+
+            <fileSets>
+
+               <!-- resources -->
+               <!-- Handles the binary data for the EC2 demo -->
+               <fileSet>
+                  <directory>src/main/resources</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>**/*.dat.gz</include>
+                  </includes>
+               </fileSet>
+
+               <fileSet>
+                  <directory>src/main/resources/</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <excludes>
+                     <exclude>**/*.sh</exclude>
+                     <exclude>**/*.bat</exclude>
+                     <exclude>**/*.cmd</exclude>
+                     <exclude>**/*.py</exclude>
+                     <exclude>**/*.rb</exclude>
+                     <exclude>**/infinispan-module.properties</exclude>
+                     <exclude>**/*.dat.gz</exclude>
+                  </excludes>
+               </fileSet>
+
+               <!-- Executable resources -->
+               <fileSet>
+                  <directory>src/main/resources</directory>
+                  <outputDirectory>bin</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.sh</include>
+                     <include>**/*.py</include>
+                     <include>**/*.rb</include>
+                  </includes>
+                  <fileMode>0755</fileMode>
+               </fileSet>
+
+               <fileSet>
+                  <directory>src/main/distribution</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.html</include>
+                  </includes>
+               </fileSet>
+
+               <fileSet>
+                  <directory>src/main/resources</directory>
+                  <outputDirectory>bin</outputDirectory>
+                  <lineEnding>dos</lineEnding>
+                  <includes>
+                     <include>**/*.cmd</include>
+                     <include>**/*.bat</include>
+                  </includes>
+                  <fileMode>0644</fileMode>
+               </fileSet>
+
+
+               <!-- EULAs and license files -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>dos</lineEnding>
+                  <includes>
+                     <include>**/*.txt</include>
+                  </includes>
+               </fileSet>
+
+            </fileSets>
+
+         </sources>
+
+         <!-- All modules except core and Webapp modules -->
+         <binaries>
+
+            <outputDirectory>modules/demos/${module.basedir.name}</outputDirectory>
+            <outputFileNameMapping>
+               ${module.artifactId}.${module.extension}
+            </outputFileNameMapping>
+            <unpack>false</unpack>
+
+            <dependencySets>
+               <dependencySet>
+                  <excludes>
+                     <exclude>infinispan-api*</exclude>
+                     <exclude>infinispan-commons*</exclude>
+                     <exclude>infinispan-core*</exclude>
+                     <exclude>net.jcip:jcip-annotations</exclude>
+                     <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
+                     <exclude>org.infinispan:infinispan-core</exclude>
+                     <exclude>org.infinispan:infinispan-server-rest</exclude>
+                     <exclude>org.infinispan:infinispan-gridfs-webdav</exclude>
+                     <exclude>log4j:log4j</exclude>
+                  </excludes>
+                  <useTransitiveDependencies>true</useTransitiveDependencies>
+                  <useTransitiveFiltering>true</useTransitiveFiltering>
+                  <outputDirectory>modules/demos/${module.basedir.name}/lib</outputDirectory>
+               </dependencySet>
+            </dependencySets>
+
          </binaries>
       </moduleSet>
 
