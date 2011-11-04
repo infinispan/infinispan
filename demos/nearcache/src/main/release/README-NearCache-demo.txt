@@ -4,9 +4,10 @@ Near Cache demo
 This is a near cache demo that uses JMS in order to invalidate the near caches.
 The demo is formed of two parts:
 1. Hot Rod and JMS server that registers a cache listener to send notifications
-to registered clients
+to registered clients, located in nearcache/ demo folder.
 2. CDI web app that runs a near cache configured with a remote cache store and
-a JMS client to listen for notifications
+a JMS client to listen for notifications, , located in nearcache-client/ demo
+folder.
 
 To run the demo, do the following:
 1. Start org.infinispan.demo.nearcache.server.MessagingHotRodDemo with the

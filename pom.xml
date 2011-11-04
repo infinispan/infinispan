@@ -72,6 +72,8 @@
       <module>demos/directory</module>
       <module>demos/lucene-directory-demo</module>
       <module>demos/gridfs-webdav</module>
+      <module>demos/nearcache</module>
+      <module>demos/nearcache-client</module>
       <module>cdi/extension</module>
       <module>cdi/tck-runner</module>
    </modules>
