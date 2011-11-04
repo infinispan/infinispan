@@ -62,7 +62,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    private final Transaction transaction;
 
    public LocalTransaction(Transaction transaction, GlobalTransaction tx) {
-      super.tx = tx;
+      super(tx);
       this.transaction = transaction;
    }
 
@@ -141,20 +141,13 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
       LocalTransaction that = (LocalTransaction) o;
 
-      if (isMarkedForRollback != that.isMarkedForRollback) return false;
-      if (remoteLockedNodes != null ? !remoteLockedNodes.equals(that.remoteLockedNodes) : that.remoteLockedNodes != null)
-         return false;
-      if (transaction != null ? !transaction.equals(that.transaction) : that.transaction != null) return false;
-
-      return true;
+      return tx.getId() == that.tx.getId();
    }
 
    @Override
    public int hashCode() {
-      int result = remoteLockedNodes != null ? remoteLockedNodes.hashCode() : 0;
-      result = 31 * result + (isMarkedForRollback ? 1 : 0);
-      result = 31 * result + (transaction != null ? transaction.hashCode() : 0);
-      return result;
+      long id = tx.getId();
+      return (int)(id ^ (id >>> 32));
    }
 
    @Override

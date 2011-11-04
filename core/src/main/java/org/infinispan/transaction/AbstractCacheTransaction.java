@@ -48,12 +48,15 @@ import java.util.Set;
  */
 public abstract class AbstractCacheTransaction implements CacheTransaction {
 
+   protected final GlobalTransaction tx;
    protected List<WriteCommand> modifications;
    protected BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries;
-   protected GlobalTransaction tx;
    protected Set<Object> affectedKeys = null;
    private Set<Object> lockedKeys;
 
+   public AbstractCacheTransaction(GlobalTransaction tx) {
+      this.tx = tx;
+   }
 
    protected volatile boolean prepared;
 

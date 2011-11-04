@@ -33,9 +33,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Set;
 
 /**
  * Defines the state of a remotely originated transaction.
@@ -50,15 +48,15 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    private volatile boolean valid = true;
 
    public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
+      super(tx);
       this.modifications = modifications == null || modifications.length == 0 ? Collections.<WriteCommand>emptyList() : Arrays.asList(modifications);
       lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(this.modifications.size());
-      this.tx = tx;
    }
 
    public RemoteTransaction(GlobalTransaction tx) {
+      super(tx);
       this.modifications = new LinkedList<WriteCommand>();
       lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>();
-      this.tx = tx;
    }
 
    public void invalidate() {
