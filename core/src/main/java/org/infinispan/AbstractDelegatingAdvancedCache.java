@@ -48,7 +48,7 @@ import java.util.List;
  */
 public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCache<K, V> implements AdvancedCache<K, V> {
 
-   private AdvancedCache<K, V> cache;
+   protected final AdvancedCache<K, V> cache;
 
    public AbstractDelegatingAdvancedCache(AdvancedCache<K, V> cache) {
       super(cache);
