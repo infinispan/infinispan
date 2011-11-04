@@ -28,11 +28,10 @@ import org.infinispan.context.FlagContainer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.Set;
 
 /**
- * Tree invocation context primarily used to hold flags that should be set
- * for all cache operations within a single tree cache operation.
+ * Tree invocation context primarily used to hold flags that should be set for all cache operations within a single tree
+ * cache operation.
  *
  * @author Galder Zamarreño
  * @since 4.2
@@ -47,7 +46,7 @@ public class TreeContext implements FlagContainer {
    }
 
    @Override
-   public Set<Flag> getFlags() {
+   public EnumSet<Flag> getFlags() {
       return flags;
    }
 
@@ -72,5 +71,28 @@ public class TreeContext implements FlagContainer {
    @Override
    public void reset() {
       flags = null;
+   }
+
+   public void addFlag(Flag flag) {
+      if (flags == null)
+         flags = EnumSet.of(flag);
+      else
+         flags.add(flag);
+   }
+
+   public void addFlags(Flag[] flags) {
+      if (flags != null && flags.length != 0) {
+         if (this.flags == null) {
+            this.flags = EnumSet.noneOf(Flag.class);
+            this.flags.addAll(Arrays.asList(flags));
+         } else {
+            this.flags.addAll(Arrays.asList(flags));
+         }
+      }
+   }
+
+   public void remove(Flag flag) {
+      if (flags == null || flags.isEmpty()) return;
+      flags.remove(flag);
    }
 }
