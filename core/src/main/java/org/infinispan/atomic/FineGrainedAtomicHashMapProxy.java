@@ -22,22 +22,19 @@
  */
 package org.infinispan.atomic;
 
+import org.infinispan.AdvancedCache;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.DeltaAwareCacheEntry;
+import org.infinispan.context.Flag;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import org.infinispan.AdvancedCache;
-import org.infinispan.batch.BatchContainer;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.DeltaAwareCacheEntry;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A layer of indirection around an {@link FineGrainedAtomicMap} to provide consistency and isolation for concurrent readers
@@ -65,8 +62,9 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    }
 
    @SuppressWarnings("unchecked")
-   protected AtomicHashMap<K, V> getDeltaMapForWrite(InvocationContext ctx) {
-      CacheEntry lookedUpEntry = ctx.lookupEntry(deltaMapKey);
+   @Override
+   protected AtomicHashMap<K, V> getDeltaMapForWrite() {
+      CacheEntry lookedUpEntry = lookupEntryFromCurrentTransaction();
       boolean lockedAndCopied = lookedUpEntry != null && lookedUpEntry.isChanged() &&
             toMap(lookedUpEntry.getValue()).copied;
 
@@ -74,8 +72,8 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
          return getDeltaMapForRead();
       } else {
          // acquire WL
-         boolean suppressLocks = ctx.hasFlag(Flag.SKIP_LOCKING);
-         if (!suppressLocks) ctx.setFlags(Flag.FORCE_WRITE_LOCK);
+         boolean suppressLocks = flagContainer != null && flagContainer.hasFlag(Flag.SKIP_LOCKING);
+         if (!suppressLocks && flagContainer != null) flagContainer.setFlags(Flag.FORCE_WRITE_LOCK);
 
          if (trace) {
             if (suppressLocks)
@@ -85,7 +83,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
          }
 
          // reinstate the flag
-         if (suppressLocks) ctx.setFlags(Flag.SKIP_LOCKING);
+         if (suppressLocks) flagContainer.setFlags(Flag.SKIP_LOCKING);
 
          AtomicHashMap<K, V> map = getDeltaMapForRead();
          boolean insertNewMap = map == null;
@@ -206,8 +204,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       AtomicHashMap<K, V> deltaMapForWrite = null;
       try {
          startAtomic();
-         InvocationContext ctx = icc.createInvocationContext(true);
-         deltaMapForWrite = getDeltaMapForWrite(ctx);
+         deltaMapForWrite = getDeltaMapForWrite();
          return deltaMapForWrite.put(key, value);
       } finally {
          invokeApplyDelta(deltaMapForWrite.getDelta());
@@ -219,8 +216,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       AtomicHashMap<K, V> deltaMapForWrite = null;
       try {
          startAtomic();
-         InvocationContext ic = icc.createInvocationContext(true);
-         deltaMapForWrite = getDeltaMapForWrite(ic);
+         deltaMapForWrite = getDeltaMapForWrite();
          return deltaMapForWrite.remove(key);
       } finally {
          invokeApplyDelta(deltaMapForWrite.getDelta());
@@ -232,8 +228,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       AtomicHashMap<K, V> deltaMapForWrite = null;
       try {
          startAtomic();
-         InvocationContext ctx = icc.createInvocationContext(true);
-         deltaMapForWrite = getDeltaMapForWrite(ctx);
+         deltaMapForWrite = getDeltaMapForWrite();
          deltaMapForWrite.putAll(m);
       } finally {
          invokeApplyDelta(deltaMapForWrite.getDelta());
@@ -245,8 +240,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       AtomicHashMap<K, V> deltaMapForWrite = null;
       try {
          startAtomic();
-         InvocationContext ctx = icc.createInvocationContext(true);
-         deltaMapForWrite = getDeltaMapForWrite(ctx);
+         deltaMapForWrite = getDeltaMapForWrite();
          deltaMapForWrite.clear();
       } finally {
          invokeApplyDelta(deltaMapForWrite.getDelta());
@@ -255,8 +249,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    }
 
    private DeltaAwareCacheEntry lookupEntry() {
-      InvocationContext context = icc.createInvocationContext(false);
-      CacheEntry entry = context.lookupEntry(deltaMapKey);
+      CacheEntry entry = lookupEntryFromCurrentTransaction();
       if (entry instanceof DeltaAwareCacheEntry) {
          return (DeltaAwareCacheEntry)entry;
       } else {

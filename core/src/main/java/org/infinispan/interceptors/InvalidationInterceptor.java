@@ -24,6 +24,7 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -128,7 +129,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
-      if (trace) log.trace("Entering InvalidationInterceptor's prepare phase");
+      log.tracef("Entering InvalidationInterceptor's prepare phase.  Ctx flags are %s", ctx.getFlags());
       // fetch the modifications before the transaction is committed (and thus removed from the txTable)
       if (shouldInvokeRemoteTxCommand(ctx)) {
          List<WriteCommand> mods = Arrays.asList(command.getModifications());
@@ -136,7 +137,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
          if (runningTransaction == null) throw new IllegalStateException("we must have an associated transaction");
          broadcastInvalidateForPrepare(mods, runningTransaction, ctx);
       } else {
-         if (trace) log.trace("Nothing to invalidate - no modifications in the transaction.");
+         log.tracef("Nothing to invalidate - no modifications in the transaction.");
       }
       return retval;
    }
@@ -159,11 +160,12 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
 
          if (filterVisitor.containsPutForExternalRead) {
             log.debug("Modification list contains a putForExternalRead operation.  Not invalidating.");
+         } else if (filterVisitor.containsLocalModeFlag) {
+            log.debug("Modification list contains a local mode flagged operation.  Not invalidating.");
          } else {
             try {
                invalidateAcrossCluster(defaultSynchronous, ctx, filterVisitor.result.toArray(), false, null);
-            }
-            catch (Throwable t) {
+            } catch (Throwable t) {
                log.warn("Unable to broadcast evicts as a part of the prepare phase.  Rolling back.", t);
                if (t instanceof RuntimeException)
                   throw (RuntimeException) t;
@@ -176,26 +178,35 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
 
    public static class InvalidationFilterVisitor extends AbstractVisitor {
       Set<Object> result;
-      public boolean containsPutForExternalRead;
+      public boolean containsPutForExternalRead = false;
+      public boolean containsLocalModeFlag = false;
 
       public InvalidationFilterVisitor(int maxSetSize) {
          result = new HashSet<Object>(maxSetSize);
       }
 
+      private void processCommand(FlagAffectedCommand command) {
+         containsLocalModeFlag = containsLocalModeFlag || (command.getFlags() != null && command.getFlags().contains(Flag.CACHE_MODE_LOCAL));
+      }
+
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         processCommand(command);
+         containsPutForExternalRead = containsPutForExternalRead || (command.getFlags() != null && command.getFlags().contains(Flag.PUT_FOR_EXTERNAL_READ));
          result.add(command.getKey());
          return null;
       }
 
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+         processCommand(command);
          result.add(command.getKey());
          return null;
       }
 
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+         processCommand(command);
          result.addAll(command.getAffectedKeys());
          return null;
       }
@@ -226,7 +237,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
    private void incrementInvalidations() {
       if (statisticsEnabled) invalidations.incrementAndGet();
    }
-   
+
    private boolean isPutForExternalRead(InvocationContext ctx) {
       if (ctx.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
          if (trace) log.debug("Put for external read called.  Suppressing clustered invalidation.");

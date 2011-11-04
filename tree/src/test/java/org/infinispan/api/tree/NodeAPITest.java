@@ -25,14 +25,11 @@ package org.infinispan.api.tree;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
 import org.infinispan.tree.TreeCache;
 import org.infinispan.tree.TreeCacheImpl;
-import static org.testng.AssertJUnit.*;
-
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -41,6 +38,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import static org.testng.AssertJUnit.*;
 
 /**
  * Tests {@link Node}-centric operations
@@ -62,7 +61,7 @@ public class NodeAPITest extends SingleCacheManagerTest {
       c.setInvocationBatchingEnabled(true);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       cache = new TreeCacheImpl(cm.getCache());
-      tm = TestingUtil.getTransactionManager(cache.getCache());
+      tm = cache.getCache().getAdvancedCache().getTransactionManager();
       return cm;
    }
 

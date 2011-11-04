@@ -889,7 +889,10 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
    }
 
    public AdvancedCache<K, V> withFlags(Flag... flags) {
-      return new DecoratedCache<K, V>(this, flags);
+      if (flags == null || flags.length == 0)
+         return this;
+      else
+         return new DecoratedCache<K, V>(this, flags);
    }
 
    private Transaction getOngoingTransaction() {
