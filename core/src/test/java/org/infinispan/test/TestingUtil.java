@@ -802,7 +802,9 @@ public class TestingUtil {
     * @return component registry
     */
    public static ComponentRegistry extractComponentRegistry(Cache cache) {
-      return (ComponentRegistry) extractField(cache, "componentRegistry");
+      ComponentRegistry cr = (ComponentRegistry) extractField(cache, "componentRegistry");
+      if (cr == null) cr = cache.getAdvancedCache().getComponentRegistry();
+      return cr;
    }
 
    public static GlobalComponentRegistry extractGlobalComponentRegistry(CacheContainer cacheContainer) {
