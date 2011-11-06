@@ -39,6 +39,7 @@ public class RemoteGetTest extends MultipleCacheManagersTest {
       cache(0);
       cache(1);
       cache(2);
+      waitForClusterToForm();
    }
 
    @SuppressWarnings("unchecked")

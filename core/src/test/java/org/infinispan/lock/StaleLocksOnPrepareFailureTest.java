@@ -26,48 +26,31 @@ import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.distribution.TestAddress;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
-import org.infinispan.distribution.ch.DefaultHashSeed;
 import org.infinispan.interceptors.DistributionInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.hash.MurmurHash3;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
-
-import static org.testng.Assert.assertNull;
-
-@Test(testName = "lock.StaleEagerLocksOnPrepareFailureTest", groups = "functional")
+@Test(testName = "lock.StaleLocksOnPrepareFailureTest", groups = "functional")
 @CleanupAfterMethod
-public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTest {
+public class StaleLocksOnPrepareFailureTest extends MultipleCacheManagersTest {
 
-   Cache<MagicKey, String> c1, c2;
+   public static final int NUM_CACHES = 10;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.DIST_SYNC);
-      // TODO Migrate to new pessimistic locking configuration
-      cfg.setUseEagerLocking(true);
-      cfg.setEagerLockSingleNode(true);
+      cfg.setNumOwners(NUM_CACHES);
       cfg.setLockAcquisitionTimeout(100);
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
-      registerCacheManager(cm1, cm2);
-      c1 = cm1.getCache();
-      c2 = cm2.getCache();
+      for (int i = 0; i < NUM_CACHES; i++) {
+         EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(cfg);
+         registerCacheManager(cm);
+      }
       waitForClusterToForm();
-   }
-
-   public void testNoModsCommit() throws Exception {
-      doTest(false);
    }
 
    public void testModsCommit() throws Exception {
@@ -75,6 +58,9 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
    }
 
    private void doTest(boolean mods) throws Exception {
+      Cache<Object, Object> c1 = cache(0);
+      Cache<Object, Object> c2 = cache(NUM_CACHES /2);
+
       // force the prepare command to fail on c2
       FailInterceptor interceptor = new FailInterceptor();
       interceptor.failFor(PrepareCommand.class);
@@ -82,30 +68,9 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
       ic.addInterceptorBefore(interceptor, DistributionInterceptor.class);
 
       MagicKey k1 = new MagicKey(c1, "k1");
-      MagicKey k2 = new MagicKey(c2, "k2");
 
       tm(c1).begin();
-      if (mods) {
-         c1.put(k1, "v1");
-         c1.put(k2, "v2");
-
-         assertLocked(c1, k1);
-         assertNotLocked(c2, k1);
-
-         assertLocked(c1, k2);
-         assertLocked(c2, k2);
-      } else {
-         c1.getAdvancedCache().lock(k1);
-         c1.getAdvancedCache().lock(k2);
-
-         assertNull(c1.get(k1));
-         assertLocked(c1, k1);
-         assertNotLocked(c2, k1);
-
-         assertNull(c1.get(k2));
-         assertLocked(c1, k2);
-         assertLocked(c2, k2);
-      }
+      c1.put(k1, "v1");
 
       try {
          tm(c1).commit();
@@ -114,10 +79,9 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
          // expected
       }
 
-      assertNotLocked(c1, k1);
-      assertNotLocked(c2, k1);
-      assertNotLocked(c1, k2);
-      assertNotLocked(c2, k2);
+      for (int i = 0; i < NUM_CACHES; i++) {
+        assertNotLocked(cache(i), k1);
+      }
    }
 }
 

@@ -32,7 +32,10 @@ import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 
 /**
  * A special type of key that if passed a cache in its constructor, will ensure it will always be assigned to that cache
- * (plus however many additional caches in the hash space)
+ * (plus however many additional caches in the hash space).
+ *
+ * Note that this only works if all the caches have joined a single cluster before creating the key.
+ * If the cluster membership changes then the keys may move to other servers.
  */
 public class MagicKey implements Serializable {
    /**

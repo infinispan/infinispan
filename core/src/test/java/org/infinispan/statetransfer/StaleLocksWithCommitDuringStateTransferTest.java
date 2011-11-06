@@ -52,6 +52,7 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       registerCacheManager(cm1, cm2);
       c1 = cm1.getCache();
       c2 = cm2.getCache();
+      waitForClusterToForm();
    }
 
    public void testRollbackLocalFailure() throws Exception {
