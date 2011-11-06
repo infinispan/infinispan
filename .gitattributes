@@ -1,9 +1,9 @@
 *.txt  text
-*.java text
+*.java text diff=java
 *.sh   text
 *.bat  text
 *.xml  text
-*.py   text
-*.rb   text
+*.py   text diff=python
+*.rb   text diff=ruby
 *.mkdn text
 
