@@ -109,13 +109,12 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    public final boolean skip(InvocationContext ctx, VisitableCommand command) {
       if (store == null) return true;  // could be because the cache loader does not implement cache store
       if ((!ctx.isOriginLocal() && loaderConfig.isShared()) || ctx.hasFlag(SKIP_CACHE_STORE)) {
-         if (trace)
-            log.trace("Passing up method call and bypassing this interceptor since the cache loader is shared and this call originated remotely.");
+         log.trace("Skipping cache store since the cache loader is shared and we are not the originator.");
          return true;
       }
 
       if (loaderConfig.isShared() && ctx.hasFlag(SKIP_SHARED_CACHE_STORE)) {
-         if (trace) log.trace("Explicitly requested to skip storage if cache store is shared - and it is.");
+         log.trace("Explicitly requested to skip storage if cache store is shared - and it is.");
          return true;
       }
 

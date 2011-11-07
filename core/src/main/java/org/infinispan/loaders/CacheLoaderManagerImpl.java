@@ -160,11 +160,11 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             for (InternalCacheEntry e : state) {
                if (clmConfig.isShared() || !(loader instanceof ChainingCacheStore)) {
                   cache.getAdvancedCache()
-                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL, SKIP_CACHE_STORE, SKIP_REMOTE_LOOKUP, SKIP_INDEXING)
+                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, SKIP_CACHE_STORE, SKIP_REMOTE_LOOKUP, SKIP_INDEXING)
                        .put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
                } else {
                   cache.getAdvancedCache()
-                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL, SKIP_REMOTE_LOOKUP, SKIP_INDEXING)
+                       .withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, SKIP_REMOTE_LOOKUP, SKIP_INDEXING)
                        .put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
                }
             }
