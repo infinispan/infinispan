@@ -76,7 +76,27 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
-      configuration = getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, tx);
+      configuration = buildConfiguration();
+      // Create clustered caches with failure detection protocols on
+      caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration,
+                                     new TransportFlags().withFD(true));
+
+      reorderBasedOnCHPositions();
+
+      if (INIT_CLUSTER_SIZE > 0) c1 = caches.get(0);
+      if (INIT_CLUSTER_SIZE > 1) c2 = caches.get(1);
+      if (INIT_CLUSTER_SIZE > 2) c3 = caches.get(2);
+      if (INIT_CLUSTER_SIZE > 3) c4 = caches.get(3);
+
+      cacheAddresses = new ArrayList<Address>(INIT_CLUSTER_SIZE);
+      for (Cache cache : caches) {
+         EmbeddedCacheManager cacheManager = cache.getCacheManager();
+         cacheAddresses.add(cacheManager.getAddress());
+      }
+   }
+
+   protected Configuration buildConfiguration() {
+      Configuration configuration = getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, tx);
       configuration.setRehashEnabled(performRehashing);
       if (lockingMode != null) {
          configuration.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
@@ -94,27 +114,12 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       configuration.setL1CacheEnabled(l1CacheEnabled);
       configuration.fluent().clustering().hash().numVirtualNodes(numVirtualNodes);
       if (groupsEnabled) {
-          configuration.fluent().hash().groups().enabled(true); 
+          configuration.fluent().hash().groups().enabled(true);
           configuration.fluent().hash().groups().groupers(groupers);
       }
       if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);
       if (l1CacheEnabled) configuration.setL1InvalidationThreshold(l1Threshold);
-      // Create clustered caches with failure detection protocols on
-      caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration,
-                                     new TransportFlags().withFD(true));
-
-      reorderBasedOnCHPositions();
-
-      if (INIT_CLUSTER_SIZE > 0) c1 = caches.get(0);
-      if (INIT_CLUSTER_SIZE > 1) c2 = caches.get(1);
-      if (INIT_CLUSTER_SIZE > 2) c3 = caches.get(2);
-      if (INIT_CLUSTER_SIZE > 3) c4 = caches.get(3);
-
-      cacheAddresses = new ArrayList<Address>(INIT_CLUSTER_SIZE);
-      for (Cache cache : caches) {
-         EmbeddedCacheManager cacheManager = cache.getCacheManager();
-         cacheAddresses.add(cacheManager.getAddress());
-      }
+      return configuration;
    }
 
    protected static ConsistentHash createNewConsistentHash(Collection<Address> servers) {
@@ -136,7 +141,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    private void reorderBasedOnCHPositions() {
       // wait for all joiners to join
       assert caches.size() == INIT_CLUSTER_SIZE;
-      TestingUtil.waitForRehashToComplete(caches);
+      waitForClusterToForm(cacheName);
 
       // seed this with an initial cache.  Any one will do.
       Cache seed = caches.get(0);

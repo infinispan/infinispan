@@ -195,7 +195,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          if (!hasJoinStarted(cmd.getComponentRegistry())) {
             log.cacheCanNotHandleInvocations(cmd.getCacheName());
             return new ExceptionResponse(new NamedCacheNotFoundException(cmd.getCacheName(),
-                  "Cache has not been started joined the cluster on node " + transport.getAddress()));
+                  "Cache has not been started on node " + transport.getAddress()));
          }
          // if we did start joining, the StateTransferLockInterceptor will make it wait until the state transfer is complete
          // TODO There is a small window between starting the join and blocking the transactions, we need to eliminate it
