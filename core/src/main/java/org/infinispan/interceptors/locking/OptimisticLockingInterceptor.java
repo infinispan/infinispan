@@ -166,29 +166,37 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
       @Override
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+         final TxInvocationContext txC = (TxInvocationContext) ctx;
          for (Object key : dataContainer.keySet()) {
-            lockAndRegisterBackupLock((TxInvocationContext) ctx, key);
+            lockAndRegisterBackupLock(txC, key);
+            txC.addAffectedKey(key);
          }
          return null;
       }
 
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+         final TxInvocationContext txC = (TxInvocationContext) ctx;
          for (Object key : command.getMap().keySet()) {
-            lockAndRegisterBackupLock((TxInvocationContext) ctx, key);
+            lockAndRegisterBackupLock(txC, key);
+            txC.addAffectedKey(key);
          }
          return null;
       }
 
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-         lockAndRegisterBackupLock((TxInvocationContext) ctx, command.getKey());
+         final TxInvocationContext txC = (TxInvocationContext) ctx;
+         lockAndRegisterBackupLock(txC, command.getKey());
+         txC.addAffectedKey(command.getKey());
          return null;
       }
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         lockAndRegisterBackupLock((TxInvocationContext) ctx, command.getKey());
+         final TxInvocationContext txC = (TxInvocationContext) ctx;
+         lockAndRegisterBackupLock(txC, command.getKey());
+         txC.addAffectedKey(command.getKey());
          return null;
       }
       
@@ -205,7 +213,9 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-         lockAndRegisterBackupLock((TxInvocationContext) ctx, command.getKey());
+         final TxInvocationContext txC = (TxInvocationContext) ctx;
+         lockAndRegisterBackupLock(txC, command.getKey());
+         txC.addAffectedKey(command.getKey());
          return null;
       }
    }

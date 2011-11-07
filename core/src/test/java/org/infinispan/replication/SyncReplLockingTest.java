@@ -64,6 +64,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cfg.fluent().transactionManagerLookup(new DummyTransactionManagerLookup()).lockingMode(LockingMode.PESSIMISTIC);
       cfg.setLockAcquisitionTimeout(500);
       createClusteredCaches(2, "testcache", cfg);
+      waitForClusterToForm("testcache");
    }
 
    public void testLocksReleasedWithoutExplicitUnlock() throws Exception {
@@ -101,8 +102,8 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cache1.get(k);
       mgr.commit();
 
-      assertNotLocked(cache1);
-      assertNotLocked(cache2);
+      assertNotLocked(cache1, "testcache");
+      assertNotLocked(cache2, "testcache");
 
       assert cache1.isEmpty();
       assert cache2.isEmpty();
@@ -131,8 +132,8 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
 		assertNull("Should be null", cache1.get(k));
 		mgr.commit();
 
-		assertNotLocked(cache1);
-		assertNotLocked(cache2);
+		assertNotLocked(cache1, "testcache");
+		assertNotLocked(cache2, "testcache");
 
 		assert cache1.isEmpty();
 		assert cache2.isEmpty();
@@ -140,8 +141,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
 		cache2.clear();
 	}
    
-   private void concurrentLockingHelper(final boolean sameNode, final boolean useTx)
-         throws Exception {
+   private void concurrentLockingHelper(final boolean sameNode, final boolean useTx) throws Exception {
       final Cache cache1 = cache(0, "testcache");
       final Cache cache2 = cache(1, "testcache");
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
@@ -187,6 +187,9 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       String name = "Infinispan";
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
       mgr.begin();
+
+      log.trace("Here is where the fun starts...Here is where the fun starts...");
+
       // lock node and start other thread whose write should now block
       cache1.getAdvancedCache().lock(k);
       t.start();
@@ -197,7 +200,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cache1.put(k, name);
       mgr.commit();
 
-      assertNotLocked(k);
+      assertNotLocked("testcache", k);
       t.join();
 
 
