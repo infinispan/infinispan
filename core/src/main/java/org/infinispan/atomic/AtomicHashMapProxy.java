@@ -34,6 +34,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.SystemException;
+import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.Collection;
 import java.util.Collections;
@@ -106,7 +107,8 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
       // can no longer be relied upon in 5.1, we need to grab the TransactionTable and check if an ongoing
       // transaction exists, peeking into transactional state instead.
       try {
-         LocalTransaction localTransaction = transactionTable.getLocalTransaction(transactionManager.getTransaction());
+         Transaction tx = transactionManager.getTransaction();
+         LocalTransaction localTransaction = tx == null ? null : transactionTable.getLocalTransaction(tx);
 
          // The stored localTransaction could be null, if this is the first call in a transaction.  In which case
          // we know that there is no transactional state to refer to - i.e., no entries have been looked up as yet.
