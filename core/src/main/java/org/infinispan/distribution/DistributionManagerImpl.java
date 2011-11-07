@@ -101,7 +101,7 @@ public class DistributionManagerImpl implements DistributionManager {
    // The DMI is cache-scoped, so it will always start after the RMI, which is global-scoped
    @Start(priority = 20)
    private void start() throws Exception {
-      log.tracef("starting distribution manager on %s", getAddress());
+      if (trace) log.tracef("starting distribution manager on %s", getAddress());
       consistentHash = ConsistentHashHelper.createConsistentHash(configuration, Collections.singleton(rpcManager.getAddress()));
    }
 

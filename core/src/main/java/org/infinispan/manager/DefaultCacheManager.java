@@ -549,7 +549,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    }
 
    private Cache createCache(String cacheName) {
-      boolean trace = log.isTraceEnabled();
+      final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
          Cache cache = wireCache(cacheName);

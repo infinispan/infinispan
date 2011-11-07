@@ -113,7 +113,8 @@ public class CacheViewControlCommand implements CacheRpcCommand {
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
-      LogFactory.pushNDC(cacheName, log.isTraceEnabled());
+      final boolean trace = log.isTraceEnabled();
+      LogFactory.pushNDC(cacheName, trace);
       try {
          switch (type) {
             case REQUEST_JOIN:
@@ -141,7 +142,7 @@ public class CacheViewControlCommand implements CacheRpcCommand {
          log.exceptionHandlingCommand(this, t);
          throw t;
       } finally {
-         LogFactory.popNDC(log.isTraceEnabled());
+         LogFactory.popNDC(trace);
       }
    }
 

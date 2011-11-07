@@ -99,7 +99,8 @@ public class StateTransferControlCommand extends BaseRpcCommand {
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
-      LogFactory.pushNDC(configuration.getName(), log.isTraceEnabled());
+      final boolean trace = log.isTraceEnabled();
+      LogFactory.pushNDC(configuration.getName(), trace);
       stateTransferManager.waitForJoinToStart();
       try {
          switch (type) {
@@ -113,7 +114,7 @@ public class StateTransferControlCommand extends BaseRpcCommand {
          log.exceptionHandlingCommand(this, t);
          return null;
       } finally {
-         LogFactory.popNDC(log.isTraceEnabled());
+         LogFactory.popNDC(trace);
       }
    }
 
