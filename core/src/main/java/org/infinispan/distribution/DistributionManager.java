@@ -104,11 +104,9 @@ public interface DistributionManager {
     * rehash in progress, involving nodes that the key maps to.
     *
     * @param key key to look up
-    * @param ctx
     * @return an internal cache entry, or null if it cannot be located
-    * @throws Exception if something bad happens
     */
-   InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx) throws Exception;
+   InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock) throws Exception;
 
    /**
     * Retrieves the consistent hash instance currently in use, an instance of the configured ConsistentHash

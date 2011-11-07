@@ -121,7 +121,6 @@ public abstract class AbstractNoCrashTest extends MultipleCacheManagersTest {
       assert !lockManager(2).isLocked(k);
 
       dtm.runCommitTx();
-      tm(0).suspend();
 
       assertNotLocked(k);
       assertValue(k, false);
