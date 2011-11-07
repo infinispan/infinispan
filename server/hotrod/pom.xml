@@ -33,7 +33,7 @@
    </parent>
 
    <artifactId>infinispan-server-hotrod</artifactId>
-   <packaging>${packaging}</packaging>
+   <packaging>bundle</packaging>
    <name>Infinispan Hot Rod Server</name>
    <description>Infinispan Hot Rod Server</description>
 

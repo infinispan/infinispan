@@ -32,7 +32,7 @@
       <relativePath>../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-cachestore-jdbm</artifactId>
-   <packaging>${packaging}</packaging>
+   <packaging>bundle</packaging>
    <name>Infinispan JDBM CacheStore</name>
    <description>Infinispan JDBM CacheStore module</description>
    <properties>

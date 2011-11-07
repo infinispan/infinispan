@@ -35,7 +35,7 @@
    </parent>
 
    <artifactId>infinispan-cdi</artifactId>
-   <packaging>${packaging}</packaging>
+   <packaging>bundle</packaging>
    <name>Infinispan CDI support</name>
    <description>Infinispan CDI support module</description>
 

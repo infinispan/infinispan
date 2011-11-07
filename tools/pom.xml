@@ -34,7 +34,7 @@
    </parent>
 
    <artifactId>infinispan-tools</artifactId>
-   <packaging>${packaging}</packaging>
+   <packaging>bundle</packaging>
    <name>Infinispan Tools</name>
    <description>Infinispan - Tools for project</description>
 

@@ -554,6 +554,20 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <version>${version.maven.bundle}</version>
+            <extensions>true</extensions>
+            <configuration>
+               <instructions>
+                  <Bundle-DocURL>http://www.infinispan.org/</Bundle-DocURL>
+                  <Export-Package>
+                     ${project.groupId}.*;version=${project.version};-split-package:=merge-last
+                  </Export-Package>
+               </instructions>
+            </configuration>
+         </plugin>
       </plugins>
       <finalName>${project.artifactId}</finalName>
       <pluginManagement>
@@ -774,20 +788,6 @@
                         </goals>
                      </execution>
                   </executions>
-               </plugin>
-               <plugin>
-                  <groupId>org.apache.felix</groupId>
-                  <artifactId>maven-bundle-plugin</artifactId>
-                  <version>${version.maven.bundle}</version>
-                  <extensions>true</extensions>
-                  <configuration>
-                     <instructions>
-                        <Bundle-DocURL>http://www.infinispan.org/</Bundle-DocURL>
-                        <Export-Package>
-                           ${project.groupId}.*;version=${project.version};-split-package:=merge-last
-                        </Export-Package>
-                     </instructions>
-                  </configuration>
                </plugin>
             </plugins>
          </build>

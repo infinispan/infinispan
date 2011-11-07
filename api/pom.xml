@@ -24,7 +24,7 @@
 	</parent>
 
 	<artifactId>infinispan-api</artifactId>
-	<packaging>${packaging}</packaging>
+	<packaging>bundle</packaging>
 	<name>Infinispan API</name>
 	<description>Infinispan API</description>
 
