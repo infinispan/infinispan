@@ -22,7 +22,6 @@
 
 package org.infinispan.loaders.jdbc.logging;
 
-import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.infinispan.loaders.bucket.Bucket;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
@@ -129,7 +128,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @LogMessage(level = WARN)
    @Message(value = "Could not destroy C3P0 connection pool: %s", id = 8021)
-   void couldNotDestroyC3p0ConnectionPool(ComboPooledDataSource pooledDataSource, @Cause SQLException e);
+   void couldNotDestroyC3p0ConnectionPool(String pooledDataSource, @Cause SQLException e);
 
    @LogMessage(level = WARN)
    @Message(value = "Unexpected sql failure", id = 8022)
