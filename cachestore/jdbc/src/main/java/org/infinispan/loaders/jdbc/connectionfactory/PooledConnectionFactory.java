@@ -90,7 +90,7 @@ public class PooledConnectionFactory extends ConnectionFactory {
          }
       }
       catch (SQLException sqle) {
-         log.couldNotDestroyC3p0ConnectionPool(pooledDataSource, sqle);
+         log.couldNotDestroyC3p0ConnectionPool(pooledDataSource!=null?pooledDataSource.toString():null, sqle);
       }
    }
 
