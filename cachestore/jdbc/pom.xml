@@ -42,6 +42,7 @@
          <groupId>c3p0</groupId>
          <artifactId>c3p0</artifactId>
          <version>${version.c3p0}</version>
+         <optional>true</optional>
       </dependency>
 
       <dependency>
