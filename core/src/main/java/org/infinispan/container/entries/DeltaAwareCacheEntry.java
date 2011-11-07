@@ -190,11 +190,7 @@ public class DeltaAwareCacheEntry implements CacheEntry {
    }
 
    public final boolean isChanged() {
-      if (wrappedEntry != null) {
-         return wrappedEntry.isChanged();
-      } else {
-         return isFlagSet(CHANGED);
-      }
+      return isFlagSet(CHANGED);
    }
 
    protected final void setChanged() {
