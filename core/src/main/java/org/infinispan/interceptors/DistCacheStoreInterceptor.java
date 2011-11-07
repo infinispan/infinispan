@@ -133,26 +133,23 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
     * store is a shared one and node storing the key is not the 1st owner of the key or, - This is an L1 put operation.
     */
    private boolean skip(InvocationContext ctx, Object key) {
-      if (store == null) return true;  // could be because the cache loader oes not implement cache store
-      List<Address> addresses = dm.locate(key);
-      if ((loaderConfig.isShared() && !isFirstOwner(addresses)) || ctx.hasFlag(Flag.SKIP_CACHE_STORE) || isL1Put(addresses)) {
-         if (trace)
-            log.trace("Passing up method call and bypassing this interceptor since the cache loader is either shared " +
-                  "and the caller is not the first owner of the key, or the put call is an L1 put, or the call contain a skip cache store flag");
-         return true;
-      }
-      return false;
+      return skip(ctx) || skipKey(key);
    }
 
    /**
     * Method that skips invocation if: - No store defined or, - The context contains Flag.SKIP_CACHE_STORE or,
     */
    private boolean skip(InvocationContext ctx) {
-      if (store == null) return true;  // could be because the cache loader oes not implement cache store
-      if (ctx.hasFlag(Flag.SKIP_CACHE_STORE)) {
-         if (trace)
-            log.trace("Passing up method call and bypassing this interceptor since the call contain a skip cache store flag");
+      if (store == null) {
+         log.trace("Skipping cache store because the cache loader does not implement CacheStore");
          return true;
+      }
+      if (ctx.hasFlag(Flag.SKIP_CACHE_STORE)) {
+         log.trace("Skipping cache store since the call contain a skip cache store flag");
+         return true;
+      }
+      if (loaderConfig.isShared() && ctx.hasFlag(Flag.SKIP_SHARED_CACHE_STORE)) {
+         log.trace("Skipping cache store since it is shared and the call contain a skip shared cache store flag");
       }
       return false;
    }
@@ -164,11 +161,17 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    @Override
    protected boolean skipKey(Object key) {
       List<Address> addresses = dm.locate(key);
-      if ((loaderConfig.isShared() && !isFirstOwner(addresses)) || isL1Put(addresses)) {
-         if (trace)
-            log.trace("Passing up method call and bypassing this interceptor since the cache loader is either shared " +
-                  "and the caller is not the first owner of the key, or the put call is an L1 put");
-         return true;
+      if (loaderConfig.isShared()) {
+         if (!isFirstOwner(addresses)) {
+            log.trace("Skipping cache store since the cache loader is shared " +
+                  "and the caller is not the first owner of the key");
+            return true;
+         }
+      } else {
+         if (isL1Put(addresses)) {
+            log.trace("Skipping cache store since this is an L1 put");
+            return true;
+         }
       }
       return false;
    }

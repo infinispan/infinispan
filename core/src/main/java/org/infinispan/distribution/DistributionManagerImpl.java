@@ -30,6 +30,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashHelper;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
@@ -100,7 +101,8 @@ public class DistributionManagerImpl implements DistributionManager {
    // The DMI is cache-scoped, so it will always start after the RMI, which is global-scoped
    @Start(priority = 20)
    private void start() throws Exception {
-      if (trace) log.trace("starting distribution manager on " + getAddress());
+      log.tracef("starting distribution manager on %s", getAddress());
+      consistentHash = ConsistentHashHelper.createConsistentHash(configuration, Collections.singleton(rpcManager.getAddress()));
    }
 
    private int getReplCount() {
