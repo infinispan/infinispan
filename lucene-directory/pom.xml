@@ -74,6 +74,13 @@
       </dependency>
       
       <dependency>
+         <groupId>c3p0</groupId>
+         <artifactId>c3p0</artifactId>
+         <version>${version.c3p0}</version>
+         <scope>test</scope>
+      </dependency>
+      
+      <dependency>
          <groupId>com.h2database</groupId>
          <artifactId>h2</artifactId>
          <version>${version.h2.driver}</version>
