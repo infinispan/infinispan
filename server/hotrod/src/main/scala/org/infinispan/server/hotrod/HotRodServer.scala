@@ -67,19 +67,23 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    override def start(p: Properties, cacheManager: EmbeddedCacheManager) {
       val properties = if (p == null) new Properties else p
+      val defaultPort = 11222
       isClustered = cacheManager.getGlobalConfiguration.getTransportClass != null
       if (isClustered) {
-         val typedProps: TypedProperties = TypedProperties.toTypedProperties(properties)
+         val typedProps = TypedProperties.toTypedProperties(properties)
          defineTopologyCacheConfig(cacheManager, typedProps)
-         val externalHost = typedProps.getProperty(PROP_KEY_PROXY_HOST, getHost)
-         val externalPort = typedProps.getIntProperty(PROP_KEY_PROXY_PORT, getPort)
+         // Retrieve host and port early on to populate topology cache
+         val externalHost = typedProps.getProperty(PROP_KEY_PROXY_HOST,
+               typedProps.getProperty(PROP_KEY_HOST, HOST_DEFAULT, true))
+         val externalPort = typedProps.getIntProperty(PROP_KEY_PROXY_PORT,
+               typedProps.getIntProperty(PROP_KEY_PORT, defaultPort, true))
          if (isDebugEnabled)
             debug("Externally facing address is %s:%d", externalHost, externalPort)
 
          addSelfToTopologyView(externalHost, externalPort, cacheManager)
       }
 
-      super.start(properties, cacheManager, 11222)
+      super.start(properties, cacheManager, defaultPort)
    }
 
    override def startTransport(idleTimeout: Int, tcpNoDelay: Boolean,
