@@ -75,6 +75,8 @@ public interface TxInvocationContext extends InvocationContext {
     */
    void addAffectedKeys(Collection<Object> keys);
 
+   void addAffectedKey(Object keys);
+
    /**
     *
     * @return true if the current transaction is in a valid state to perform operations on (i.e.,RUNNING or PREPARING)

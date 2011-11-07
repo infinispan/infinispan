@@ -53,13 +53,13 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
 
    public void addAffectedKeys(Collection<Object> keys) {
       if (keys != null && !keys.isEmpty()) {
-         Set<Object> affectedKeys = getCacheTransaction().getAffectedKeys();
-         if (affectedKeys == null || affectedKeys.isEmpty()) {
-            affectedKeys = new HashSet<Object>();
-         }
-         affectedKeys.addAll(keys);
-         getCacheTransaction().setAffectedKeys(affectedKeys);
+         getCacheTransaction().addAffectedKeys(keys);
       }
+   }
+
+   @Override
+   public void addAffectedKey(Object key) {
+      getCacheTransaction().addAffectedKey(key);
    }
 
    @Override

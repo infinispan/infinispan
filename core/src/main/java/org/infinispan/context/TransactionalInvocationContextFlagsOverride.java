@@ -100,4 +100,9 @@ public class TransactionalInvocationContextFlagsOverride extends InvocationConte
    public CacheTransaction getCacheTransaction() {
       return delegate.getCacheTransaction();
    }
+
+   @Override
+   public void addAffectedKey(Object keys) {
+      delegate.addAffectedKey(keys);
+   }
 }

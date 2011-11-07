@@ -53,6 +53,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.StateTransferLock;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
@@ -95,6 +96,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          return Collections.emptySet();
       }
    };
+   private boolean isPessimisticCache;
 
    @Inject
    public void injectDependencies(DistributionManager distributionManager, StateTransferLock stateTransferLock,
@@ -113,6 +115,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public void start() {
       isL1CacheEnabled = configuration.isL1CacheEnabled();
       needReliableReturnValues = !configuration.isUnsafeUnreliableReturnValues();
+      isPessimisticCache = configuration.getTransactionLockingMode() == LockingMode.PESSIMISTIC;
    }
 
    // ---- READ commands
@@ -187,8 +190,19 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    private Object realRemoteGet(InvocationContext ctx, Object key, boolean storeInL1, boolean isWrite) throws Throwable {
       if (trace) log.tracef("Doing a remote get for key %s", key);
+
+      boolean acquireRemoteLock = false;
+      if (ctx.isInTxScope()) {
+         TxInvocationContext txContext = (TxInvocationContext) ctx;
+         acquireRemoteLock = isWrite && isPessimisticCache && !txContext.getAffectedKeys().contains(key);
+      }
       // attempt a remote lookup
-      InternalCacheEntry ice = dm.retrieveFromRemoteSource(key, ctx);
+      InternalCacheEntry ice = dm.retrieveFromRemoteSource(key, ctx, acquireRemoteLock);
+
+      if (acquireRemoteLock) {
+         ((TxInvocationContext)ctx).addAffectedKey(key);
+      }
+
 
       if (ice != null) {
          if (storeInL1) {
@@ -279,7 +293,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          final Collection<Address> affectedNodes = dm.getAffectedNodes(command.getKeys());
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes);
          rpcManager.invokeRemotely(affectedNodes, command, true, true);
-         ctx.addAffectedKeys(command.getKeys());
+         ctx.addAffectedKey(command.getKeys());
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -403,7 +417,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     */
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet, boolean skipL1Invalidation) throws Throwable {
       // see if we need to load values from remote srcs first
-      if (ctx.isOriginLocal() && !skipRemoteGet) remoteGetBeforeWrite(ctx, command.isConditional(), recipientGenerator);
+      if (ctx.isOriginLocal() && !skipRemoteGet)
+         remoteGetBeforeWrite(ctx, command.isConditional(), recipientGenerator);
       boolean sync = isSynchronous(ctx);
 
       // if this is local mode then skip distributing
@@ -463,8 +478,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             		}
             	}
             }
-         } else {
-            ((TxInvocationContext) ctx).addAffectedKeys(recipientGenerator.getKeys());
          }
       }
       return returnValue;

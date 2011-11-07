@@ -384,7 +384,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected LockManager lockManager(int i, String cacheName) {
-      return TestingUtil.extractLockManager(cache(i, cacheName));
+      return TestingUtil.extractLockManager(getCache(i, cacheName));
    }
 
    public List<EmbeddedCacheManager> getCacheManagers() {
@@ -432,8 +432,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          public boolean isSatisfied() throws Exception {
             boolean aNodeIsLocked = false;
             for (int i = 0; i < caches(cacheName).size(); i++) {
-               final boolean isLocked = lockManager(i).isLocked(key);
-               if (isLocked) log.trace(key + " is locked on cache index " + i + " by " + lockManager(i).getOwner(key));
+               final boolean isLocked = lockManager(i, cacheName).isLocked(key);
+               if (isLocked) log.trace(key + " is locked on cache index " + i + " by " + lockManager(i, cacheName).getOwner(key));
                aNodeIsLocked = aNodeIsLocked || isLocked;
             }
             return !aNodeIsLocked;

@@ -240,7 +240,7 @@ public interface CommandsFactory {
     * @param key key to look up
     * @return a ClusteredGetCommand
     */
-   ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags);
+   ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags, boolean acquireRemoteLock, GlobalTransaction gtx);
 
    /**
     * Builds a LockControlCommand to control explicit remote locking
@@ -253,8 +253,8 @@ public interface CommandsFactory {
    LockControlCommand buildLockControlCommand(Collection keys, boolean implicit, Set<Flag> flags, GlobalTransaction gtx);
 
    /**
-    * Same as {@link #buildLockControlCommand(Object, boolean, java.util.Set,
-    * org.infinispan.transaction.xa.GlobalTransaction)} but for locking a single key vs a collection of keys.
+    * Same as {@link #buildLockControlCommand(Object, boolean, java.util.Set, org.infinispan.transaction.xa.GlobalTransaction)}
+    * but for locking a single key vs a collection of keys.
     */
    LockControlCommand buildLockControlCommand(Object key, boolean implicit, Set<Flag> flags, GlobalTransaction gtx);
 

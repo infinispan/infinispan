@@ -41,10 +41,10 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 /**
-* @author Mircea.Markus@jboss.com
-* @since 4.2
-*/
-   public class ControlledRpcManager implements RpcManager {
+ * @author Mircea.Markus@jboss.com
+ * @since 4.2
+ */
+public class ControlledRpcManager implements RpcManager {
 
    private static final Log log = LogFactory.getLog(ControlledRpcManager.class);
 

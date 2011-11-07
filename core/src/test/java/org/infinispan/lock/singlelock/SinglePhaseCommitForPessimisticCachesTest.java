@@ -24,9 +24,12 @@
 package org.infinispan.lock.singlelock;
 
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.transport.Address;
@@ -88,6 +91,8 @@ public class SinglePhaseCommitForPessimisticCachesTest extends MultipleCacheMana
       public volatile int prepareCount;
       public volatile int commitCount;
       public volatile int lockCount;
+      public volatile int putCount;
+      public volatile int getCount;
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
@@ -105,6 +110,18 @@ public class SinglePhaseCommitForPessimisticCachesTest extends MultipleCacheMana
       public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
          lockCount++;
          return super.visitLockControlCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         putCount++;
+         return super.visitPutKeyValueCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+         getCount++;
+         return super.visitGetKeyValueCommand(ctx, command);
       }
    }
 

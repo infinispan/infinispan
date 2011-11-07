@@ -310,7 +310,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
             RecoveryAwareLocalTransaction localTx = (RecoveryAwareLocalTransaction) txFactory.newLocalTransaction(null, globalTransaction);
             localTx.setModifications(tx.getModifications());
             localTx.setXid(xid);
-            localTx.setAffectedKeys(((RecoveryAwareRemoteTransaction) tx).getAffectedKeys());
+            localTx.addAffectedKeys(((RecoveryAwareRemoteTransaction) tx).getAffectedKeys());
             for (Object lk : ((RecoveryAwareRemoteTransaction) tx).getLockedKeys()) localTx.registerLockedKey(lk);
             return completeTransaction(localTx, commit, xid);
          }
