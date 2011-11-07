@@ -24,7 +24,7 @@
 	</parent>
 
 	<artifactId>infinispan-commons</artifactId>
-	<packaging>${packaging}</packaging>
+	<packaging>bundle</packaging>
 	<name>Infinispan Commons</name>
 	<description>Infinispan Commons</description>
 

@@ -32,7 +32,7 @@
    </parent>
 
    <artifactId>infinispan-server-websocket</artifactId>
-   <packaging>${packaging}</packaging>
+   <packaging>bundle</packaging>
    <name>Infinispan WebSocket Server</name>
    <description>WebSocket interface for Infinispan</description>
 
