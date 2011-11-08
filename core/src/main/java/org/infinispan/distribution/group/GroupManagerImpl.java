@@ -111,7 +111,7 @@ public class GroupManagerImpl implements GroupManager {
             return groupMetadataCache.get(keyClass).get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("Error extracting @Group from class hierarchy", e);
+            return null;
         } catch (ExecutionException e) {
             throw new IllegalStateException("Error extracting @Group from class hierarchy", e);
         }

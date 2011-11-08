@@ -34,6 +34,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterMethod;
 
 import java.util.Properties;
 
@@ -63,9 +64,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-
       assert cleanupAfterMethod();
-
 
       config = getCacheConfig();
       CacheContainer cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
@@ -96,7 +95,34 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
       addInterceptors();
 
       assert super.cacheManagers.size() == 3;
+   }
 
+   @AfterMethod(alwaysRun = true)
+   @Override
+   protected void clearContent() throws Throwable {
+      // Since cleanup happens after method,
+      // make sure the rest of components are also cleaned up.
+      try {
+         if (remoteCache != null) remoteCache.stop();
+      } finally {
+         try {
+            if (remoteCacheManager != null) remoteCacheManager.stop();
+         } finally {
+            try {
+               if (hotRodServer1 != null) hotRodServer1.stop();
+            } finally {
+               try {
+                  if (hotRodServer2 != null) hotRodServer2.stop();
+               } finally {
+                  try {
+                     if (hotRodServer3 != null) hotRodServer3.stop();
+                  } finally {
+                     super.clearContent(); // Now stop the cache managers
+                  }
+               }
+            }
+         }
+      }
    }
 
    protected abstract Configuration getCacheConfig();

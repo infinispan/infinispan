@@ -58,7 +58,12 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
     */
    private List<Address> locateInternal(Object key, int replCount, Address target) {
       int actualReplCount = Math.min(replCount, caches.size());
-      int normalizedHash = getNormalizedHash(getGrouping(key));
+      int normalizedHash;
+      if (key instanceof Address)
+         normalizedHash = getNormalizedHash(hashSeed.getHashSeed((Address) key));
+      else
+         normalizedHash = getNormalizedHash(getGrouping(key));
+
       List<Address> owners = new ArrayList<Address>(replCount);
 
       for (Iterator<Map.Entry<Integer, Address>> it = getPositionsIterator(normalizedHash); it.hasNext();) {

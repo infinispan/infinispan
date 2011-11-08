@@ -32,6 +32,13 @@ import org.infinispan.server.hotrod.ServerAddress
  */
 class ServerHashSeed(addressCache: Cache[Address, ServerAddress]) extends HashSeed {
 
-   def getHashSeed(clusterMember: Address) = addressCache.get(clusterMember)
+   def getHashSeed(clusterMember: Address) = {
+      val serverAddress = addressCache.get(clusterMember)
+      if (serverAddress == null)
+         throw new IllegalStateException(
+            "Server address for %s not present".format(clusterMember))
+
+      serverAddress
+   }
 
 }

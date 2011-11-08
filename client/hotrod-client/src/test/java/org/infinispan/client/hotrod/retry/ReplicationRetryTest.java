@@ -36,7 +36,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test (testName = "client.hotrod.ReplicationRetryTest", groups = "functional", enabled = false, description = "Re-enabled after ISPN-1427")
+@Test (testName = "client.hotrod.ReplicationRetryTest", groups = "functional")
 public class ReplicationRetryTest extends AbstractRetryTest {
 
    public void testGet() {

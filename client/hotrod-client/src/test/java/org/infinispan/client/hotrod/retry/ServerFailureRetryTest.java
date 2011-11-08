@@ -42,7 +42,7 @@ import static org.infinispan.test.TestingUtil.v;
  * @author Galder Zamarreño
  * @since 4.2
  */
-@Test(groups = "functional", testName = "client.hotrod.retry.ServerFailureRetryTest", enabled = false, description = "Re-enabled after ISPN-1427")
+@Test(groups = "functional", testName = "client.hotrod.retry.ServerFailureRetryTest")
 public class ServerFailureRetryTest extends AbstractRetryTest {
 
    @Override
