@@ -172,9 +172,13 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
 
    @Override
    public void stop() throws CacheLoaderException {
-      tableManipulation.stop();
-      if (config.isManageConnectionFactory()) {
-         connectionFactory.stop();
+      try {
+         tableManipulation.stop();
+      } finally {
+         if (config.isManageConnectionFactory()) {
+            log.tracef("Stopping mananged connection factory: %s", connectionFactory);            
+            connectionFactory.stop();
+         }
       }
    }
 

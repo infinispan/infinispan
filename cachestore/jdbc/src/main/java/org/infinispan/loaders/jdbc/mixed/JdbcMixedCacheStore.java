@@ -39,6 +39,8 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -98,10 +100,34 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
 
    @Override
    public void stop() throws CacheLoaderException {
-      super.stop();
-      binaryCacheStore.stop();
-      stringBasedCacheStore.stop();
-      sharedConnectionFactory.stop();
+      Throwable cause = null;
+      try {
+         super.stop();
+      } catch (Throwable t) {
+         cause = t;
+         log.debug("Exception while stopping", t);
+      }
+      try {
+         binaryCacheStore.stop();
+      } catch (Throwable t) {
+         cause = t;
+         log.debug("Exception while stopping", t);
+      }
+      try {
+         stringBasedCacheStore.stop();
+      } catch (Throwable t) {
+         cause = t;
+         log.debug("Exception while stopping", t);
+      }
+      try {
+         sharedConnectionFactory.stop();
+      } catch (Throwable t) {
+         cause = t;
+         log.debug("Exception while stopping", t);
+      }
+      if(cause!=null) {
+         throw new CacheLoaderException("Exceptions occurred while stopping store", cause);
+      }
    }
 
    @Override
