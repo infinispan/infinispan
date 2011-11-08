@@ -49,7 +49,7 @@ public class JdbcUtil {
          try {
             ps.close();
          } catch (SQLException e) {
-            e.printStackTrace();
+            log.sqlFailureUnexpected(e);
          }
       }
    }
@@ -59,7 +59,7 @@ public class JdbcUtil {
          try {
             connection.close();
          } catch (SQLException e) {
-            e.printStackTrace();
+            log.sqlFailureClosingConnection(connection, e);
          }
       }
    }
@@ -69,7 +69,7 @@ public class JdbcUtil {
          try {
             rs.close();
          } catch (SQLException e) {
-            e.printStackTrace();
+            log.sqlFailureUnexpected(e);
          }
       }
    }
