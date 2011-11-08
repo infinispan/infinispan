@@ -33,6 +33,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.Util;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
@@ -96,6 +97,11 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       for (int i = 0; i < 4; i++) {
          advancedCache(i).addInterceptor(new HitsAwareCacheManagersTest.HitCountInterceptor(), 1);
       }
+   }
+
+   @AfterMethod
+   @Override
+   protected void clearContent() throws Throwable {
    }
 
    @AfterTest
