@@ -26,10 +26,13 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.concurrent.TimeoutException;
 
+import java.util.Collection;
+
 /**
  * An interface to deal with all aspects of acquiring and releasing locks for cache entries.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public interface LockManager {
@@ -40,19 +43,18 @@ public interface LockManager {
     * org.infinispan.config.Configuration#getLockAcquisitionTimeout()}.
     * <p/>
     *
+    *
     * @param key key to lock
     * @param ctx invocation context associated with this invocation
     * @return true if the lock was acquired, false otherwise.
     * @throws InterruptedException if interrupted
     */
-   boolean lockAndRecord(Object key, InvocationContext ctx) throws InterruptedException;
+   boolean lockAndRecord(Object key, InvocationContext ctx, long timeoutMillis) throws InterruptedException;
 
    /**
-    * Releases the lock passed in, held by the specified owner
-    *
-    * @param ctx
+    * Releases the lock passed in.
     */
-   void unlock(InvocationContext ctx, Object key);
+   void unlock(Collection<Object> lockedKeys, Object lockOwner);
 
    /**
     * Releases locks present in an invocation context and transaction entry, if one is available.
@@ -140,6 +142,8 @@ public interface LockManager {
     *                              if we are unable to acquire the lock after a specified timeout.
     */
    boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException;
+
+   boolean acquireLock(InvocationContext ctx, Object key, long timeoutMillis) throws InterruptedException, TimeoutException;
 
    /**
     * Same as {@link #acquireLock(org.infinispan.context.InvocationContext, Object)}, but doesn't check whether the

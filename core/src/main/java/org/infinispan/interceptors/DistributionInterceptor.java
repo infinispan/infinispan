@@ -276,25 +276,9 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       if (ctx.isOriginLocal()) {
          int newCacheViewId = -1;
          stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
-         if (configuration.isEagerLockSingleNode()) {
-            //only main data owner is locked, see: https://jira.jboss.org/browse/ISPN-615
-            Map<Object, List<Address>> toMulticast = dm.locateAll(command.getKeys(), 1);
-
-            //now compile address reunion
-            Collection<Address> where;
-            if (toMulticast.size() == 1) {//avoid building an extra array, as most often this will be a single key
-               where = toMulticast.values().iterator().next();
-            } else {
-               where = new HashSet<Address>();
-               for (List<Address> values : toMulticast.values()) where.addAll(values);
-            }
-            rpcManager.invokeRemotely(where, command, true, true);
-            ((LocalTxInvocationContext) ctx).remoteLocksAcquired(where);
-         } else {
-            Collection<Address> where = dm.getAffectedNodes(command.getKeys());
-            rpcManager.invokeRemotely(where, command, true, true);
-            ((LocalTxInvocationContext) ctx).remoteLocksAcquired(where);
-         }
+         final Collection<Address> affectedNodes = dm.getAffectedNodes(command.getKeys());
+         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes);
+         rpcManager.invokeRemotely(affectedNodes, command, true, true);
          ctx.addAffectedKeys(command.getKeys());
       }
       return invokeNextInterceptor(ctx, command);
@@ -405,7 +389,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
       if (isNeedReliableReturnValues(ctx) || (isConditionalCommand && ctx.isInTxScope())) {
-         boolean isStillRehashingOnJoin = !dm.isJoinComplete();
          for (Object k : keygen.getKeys()) remoteGetAndStoreInL1(ctx, k, true);
       }
    }

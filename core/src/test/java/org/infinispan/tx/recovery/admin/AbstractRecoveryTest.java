@@ -88,12 +88,18 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
       return (RecoveryAwareTransactionTable) advancedCache(index).getComponentRegistry().getComponent(TransactionTable.class);
    }
 
-   protected void checkProperlyCleanup(int managerIndex) {
-      assertEquals(TestingUtil.extractLockManager(cache(managerIndex)).getNumberOfLocksHeld(), 0, "For cache " + address(managerIndex) + "(" + managerIndex + ')');
+   protected void checkProperlyCleanup(final int managerIndex) {
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return TestingUtil.extractLockManager(cache(managerIndex)).getNumberOfLocksHeld() == 0;
+         }
+      });
       final TransactionTable tt = TestingUtil.extractComponent(cache(managerIndex), TransactionTable.class);
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
+            log.tracef("For cache %s have remoteTx=%s and localTx=%s", managerIndex, tt.getRemoteTxCount(), tt.getLocalTxCount());
             return (tt.getRemoteTxCount() == 0) && (tt.getLocalTxCount() == 0);
          }
       });
@@ -112,7 +118,7 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
       }
    }
 
-   public RecoveryManagerImpl recoveryManager(int cacheIndex) {
+   protected RecoveryManagerImpl recoveryManager(int cacheIndex) {
       return (RecoveryManagerImpl) TestingUtil.extractComponent(cache(cacheIndex), RecoveryManager.class);
    }
 

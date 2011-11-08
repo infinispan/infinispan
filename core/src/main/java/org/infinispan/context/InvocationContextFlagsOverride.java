@@ -183,4 +183,9 @@ public class InvocationContextFlagsOverride implements InvocationContext {
    public void addLockedKey(Object key) {
       delegate.addLockedKey(key);
    }
+
+   @Override
+   public void clearLockedKeys() {
+      delegate.clearLockedKeys();
+   }
 }

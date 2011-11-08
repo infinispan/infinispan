@@ -63,8 +63,7 @@ public class DldPessimisticLockingReplicationTest extends BaseDldPessimisticLock
     */
    public void testDeadlockFailedToAcquireLocalLocks() throws Exception {
       //first acquire a local lock on k1
-      TransactionManager tm = TestingUtil.getTransactionManager(cache(0));
-      tm.begin();
+      tm(0).begin();
       cache(0).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).put("k1","v1");
       assert lm0.isLocked("k1");
       assert !lm1.isLocked("k1");
@@ -79,7 +78,7 @@ public class DldPessimisticLockingReplicationTest extends BaseDldPessimisticLock
             }
          });
       } finally {
-         tm.rollback();
+         tm(0).rollback();
       }
    }
 }

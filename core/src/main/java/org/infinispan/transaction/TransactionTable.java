@@ -24,33 +24,29 @@
 package org.infinispan.transaction;
 
 import org.infinispan.CacheException;
-import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
-import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
-import org.infinispan.remoting.MembershipArithmetic;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.synchronization.SyncLocalTransaction;
 import org.infinispan.transaction.synchronization.SynchronizationAdapter;
+import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -69,35 +65,50 @@ import static java.util.Collections.emptySet;
  * @author Galder Zamarreño
  * @since 4.0
  */
+@Listener(sync = false)
 public class TransactionTable {
 
    private static final Log log = LogFactory.getLog(TransactionTable.class);
-   private static boolean trace = log.isTraceEnabled();
 
-   protected final ConcurrentMap<Transaction, LocalTransaction> localTransactions = new ConcurrentHashMap<Transaction, LocalTransaction>();
+   /**
+    * Must stay private as removals from this collection trigger a {@link #minTxViewId} recalculation.
+    */
+   private final ConcurrentMap<Transaction, LocalTransaction> localTransactions = new ConcurrentHashMap<Transaction, LocalTransaction>();
 
-   protected final ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions = new ConcurrentHashMap<GlobalTransaction, RemoteTransaction>();
+   /**
+    * Must stay private as removals from this collection trigger a {@link #minTxViewId} recalculation.
+    */
+   private final ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions = new ConcurrentHashMap<GlobalTransaction, RemoteTransaction>();
 
 
-   private final Object listener = new StaleTransactionCleanup();
+   private final StaleTransactionCleanupService cleanupService = new StaleTransactionCleanupService(this);
 
    protected Configuration configuration;
    protected InvocationContextContainer icc;
    protected TransactionCoordinator txCoordinator;
    protected TransactionFactory txFactory;
+   protected RpcManager rpcManager;
+   protected CommandsFactory commandsFactory;
    private InterceptorChain invoker;
    private CacheNotifier notifier;
-   private RpcManager rpcManager;
-   private ExecutorService lockBreakingService;
    private EmbeddedCacheManager cm;
    private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
-   private LockManager lockManager;
+   protected ClusteringDependentLogic clusteringLogic;
+   private int minTxViewId = -1;
+
+   /**
+    * Invariant: minTxViewId is the minimum view id between all the local and the remote transactions. It doesn't synchronize
+    * on transaction creation, but only on removal. That's because it is not possible for a newly created transaction
+    * to have an bigger viewId than the current one.
+    */
+   protected final Object minViewIdInvariant = new Object();
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration,
                           InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier,
                           TransactionFactory gtf, EmbeddedCacheManager cm, TransactionCoordinator txCoordinator,
-                          TransactionSynchronizationRegistry transactionSynchronizationRegistry, LockManager lockManager) {
+                          TransactionSynchronizationRegistry transactionSynchronizationRegistry,
+                          CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic)  {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.icc = icc;
@@ -107,55 +118,28 @@ public class TransactionTable {
       this.cm = cm;
       this.txCoordinator = txCoordinator;
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
-      this.lockManager = lockManager;
+      this.commandsFactory = commandsFactory;
+      this.clusteringLogic = clusteringDependentLogic;
    }
 
    @Start
    private void start() {
-      ThreadFactory tf = new ThreadFactory() {
-         public Thread newThread(Runnable r) {
-            Thread th = new Thread(r, "LockBreakingService," + configuration.getName()
-                  + "," + rpcManager.getTransport().getAddress());
-            th.setDaemon(true);
-            return th;
-         }
-      };
-      lockBreakingService = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>(), tf,
-                                              new ThreadPoolExecutor.CallerRunsPolicy());
-      cm.addListener(listener);
-      notifier.addListener(listener);
+      cleanupService.start(configuration, rpcManager, invoker);
+      cm.addListener(cleanupService);
+      cm.addListener(this);
+      notifier.addListener(cleanupService);
+      if (!isStandaloneCache()) {
+         minTxViewId = getCurrentViewId();
+         log.debugf("Min view id set to %s", minTxViewId);
+      }
    }
 
    @Stop
    private void stop() {
-      notifier.removeListener(listener);
-      cm.removeListener(listener);
-      lockBreakingService.shutdownNow();
-      if (trace) log.tracef("Wait for on-going transactions to finish for %d seconds.", TimeUnit.MILLISECONDS.toSeconds(configuration.getCacheStopTimeout()));
-      long failTime = System.currentTimeMillis() + configuration.getCacheStopTimeout();
-      boolean txsOnGoing = areTxsOnGoing();
-      while (txsOnGoing && System.currentTimeMillis() < failTime) {
-         try {
-            Thread.sleep(100);
-            txsOnGoing = areTxsOnGoing();
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            if (trace) {
-               log.tracef("Interrupted waiting for on-going transactions to finish. localTransactions=%s, remoteTransactions%s",
-                     localTransactions, remoteTransactions);
-            }
-         }
-      }
-
-      if (txsOnGoing) {
-         log.unfinishedTransactionsRemain(localTransactions, remoteTransactions);
-      } else {
-         if (trace) log.trace("All transactions terminated");
-      }
-   }
-
-   private boolean areTxsOnGoing() {
-      return !localTransactions.isEmpty() || !remoteTransactions.isEmpty();
+      notifier.removeListener(cleanupService);
+      cm.removeListener(cleanupService);
+      cm.removeListener(this);
+      shutDownGracefully();
    }
 
    public Set<Object> getLockedKeysForRemoteTransaction(GlobalTransaction gtx) {
@@ -175,7 +159,8 @@ public class TransactionTable {
 
    public void enlist(Transaction transaction, LocalTransaction localTransaction) {
       if (!localTransaction.isEnlisted()) {
-         SynchronizationAdapter sync = new SynchronizationAdapter(localTransaction, txCoordinator);
+         SynchronizationAdapter sync = new SynchronizationAdapter(localTransaction, txCoordinator, commandsFactory,
+                                                                  rpcManager, this, clusteringLogic, configuration);
          if(transactionSynchronizationRegistry != null) {
             try {
                transactionSynchronizationRegistry.registerInterposedSynchronization(sync);
@@ -212,123 +197,23 @@ public class TransactionTable {
       return tx != null && localTransactions.containsKey(tx);
    }
 
-   @Listener
-   public class StaleTransactionCleanup {
-      /**
-       * Roll back remote transactions originating on nodes that have left the cluster.
-       */
-      @ViewChanged
-      public void onViewChange(ViewChangedEvent vce) {
-         final List<Address> leavers = MembershipArithmetic.getMembersLeft(vce.getOldMembers(),
-                                                                           vce.getNewMembers());
-         if (!leavers.isEmpty()) {
-            if (trace) log.tracef("Saw %d leavers - kicking off a lock breaking task", leavers.size());
-            cleanTxForWhichTheOwnerLeft(leavers);
+   public Integer getMinViewId() {
+      return minTxViewId;
+   }
+
+   public Set<CacheTransaction> getTransactionsStartedBefore(Integer viewId) {
+      Set<CacheTransaction> result = new HashSet<CacheTransaction>();
+      for (CacheTransaction ct : localTransactions.values()) {
+         if (ct.getViewId() != null && ct.getViewId() < viewId) {
+            result.add(ct);
          }
       }
-
-      /**
-       * Roll back local transactions that have acquired lock that are no longer valid,
-       * either because the main data owner left the cluster or because a node joined
-       * the cluster and is the new data owner.
-       * This method will only ever be called in distributed mode.
-       */
-      @TopologyChanged
-      public void onTopologyChange(TopologyChangedEvent tce) {
-         // do all the work AFTER the consistent hash has changed
-         if (tce.isPre())
-            return;
-
-         Address self = rpcManager.getAddress();
-         ConsistentHash chOld = tce.getConsistentHashAtStart();
-         ConsistentHash chNew = tce.getConsistentHashAtEnd();
-
-         if (configuration.isEagerLockingSingleNodeInUse()) {
-            log.tracef("Cleaning local transactions with stale eager single node locks");
-            // roll back local transactions if their main data owner has changed
-            for (LocalTransaction localTx : localTransactions.values()) {
-               for (Object key : localTx.getAffectedKeys()) {
-                  List<Address> oldPrimaryOwner = chOld.locate(key, 1);
-                  List<Address> newPrimaryOwner = chNew.locate(key, 1);
-                  if (!oldPrimaryOwner.get(0).equals(newPrimaryOwner.get(0))) {
-                     localTx.markForRollback(true);
-                     log.tracef("Marked local transaction %sfor rollback, as the main data " +
-                           "owner has changed from %s to %s", localTx.getGlobalTransaction(),
-                           oldPrimaryOwner, newPrimaryOwner);
-                     break;
-                  }
-               }
-            }
-            log.tracef("Finished cleaning local transactions with stale eager single node locks");
+      for (CacheTransaction ct : remoteTransactions.values()) {
+         if (ct.getViewId() != null && ct.getViewId() < viewId) {
+            result.add(ct);
          }
-
-         // for remote transactions, release locks for which we are no longer an owner
-         // only for remote transactions, since we acquire locks on the origin node regardless if it's the owner or not
-         log.tracef("Unlocking keys for which we are no longer an owner");
-         int numOwners = configuration.isEagerLockingSingleNodeInUse() ? 1 : configuration.getNumOwners();
-         for (RemoteTransaction remoteTx : remoteTransactions.values()) {
-            GlobalTransaction gtx = remoteTx.getGlobalTransaction();
-            List<Object> keys = new ArrayList<Object>();
-            boolean txHasLocalKeys = false;
-            for (Object key : remoteTx.getLockedKeys()) {
-               boolean wasLocal = chOld.isKeyLocalToAddress(self, key, numOwners);
-               boolean isLocal = chNew.isKeyLocalToAddress(self, key, numOwners);
-               if (wasLocal && !isLocal) {
-                  keys.add(key);
-               }
-               txHasLocalKeys |= isLocal;
-            }
-            if (keys.size() > 0) {
-               if (trace) log.tracef("Unlocking keys %s for remote transaction %s as we are no longer an owner", keys, gtx);
-               Set<Flag> flags = EnumSet.of(Flag.CACHE_MODE_LOCAL);
-               String cacheName = configuration.getName();
-               LockControlCommand unlockCmd = new LockControlCommand(keys, cacheName, flags, false);
-               unlockCmd.init(invoker, icc, TransactionTable.this);
-               unlockCmd.attachGlobalTransaction(gtx);
-               unlockCmd.setUnlock(true);
-               try {
-                  unlockCmd.perform(null);
-                  log.tracef("Unlocking moved keys for %s complete.", gtx);
-               } catch (Throwable t) {
-                  log.unableToUnlockRebalancedKeys(gtx, keys, self, t);
-               }
-
-               // if the transaction doesn't touch local keys any more, we can roll it back
-               if (!txHasLocalKeys) {
-                  if (trace) log.tracef("Killing remote transaction without any local keys %s", gtx);
-                  RollbackCommand rc = new RollbackCommand(cacheName, gtx);
-                  rc.init(invoker, icc, TransactionTable.this);
-                  try {
-                     rc.perform(null);
-                     log.tracef("Rollback of transaction %s complete.", gtx);
-                  } catch (Throwable e) {
-                     log.unableToRollbackGlobalTx(gtx, e);
-                  } finally {
-                     removeRemoteTransaction(gtx);
-                  }
-               }
-            }
-         }
-
-         log.trace("Finished cleaning locks for keys that are no longer local");
       }
-
-      private void cleanTxForWhichTheOwnerLeft(final Collection<Address> leavers) {
-         try {
-            lockBreakingService.submit(new Runnable() {
-               public void run() {
-                  try {
-                  updateStateOnNodesLeaving(leavers);
-                  } catch (Exception e) {
-                     log.error("Exception whilst updating state", e);
-                  }
-               }
-            });
-         } catch (RejectedExecutionException ree) {
-            log.debug("Unable to submit task to executor", ree);
-         }
-
-      }
+      return result;
    }
 
    protected void updateStateOnNodesLeaving(Collection<Address> leavers) {
@@ -337,28 +222,24 @@ public class TransactionTable {
          if (leavers.contains(gt.getAddress())) toKill.add(gt);
       }
 
-      if (trace) {
-         if (toKill.isEmpty())
-            log.tracef("No global transactions pertain to originator(s) %s who have left the cluster.", leavers);
-         else
-            log.tracef("%s global transactions pertain to leavers list %s and need to be killed", toKill.size(), leavers);
-      }
+      if (toKill.isEmpty())
+         log.tracef("No global transactions pertain to originator(s) %s who have left the cluster.", leavers);
+      else
+         log.tracef("%s global transactions pertain to leavers list %s and need to be killed", toKill.size(), leavers);
 
       for (GlobalTransaction gtx : toKill) {
-         if (trace) log.tracef("Killing remote transaction originating on leaver %s", gtx);
+         log.tracef("Killing remote transaction originating on leaver %s", gtx);
          RollbackCommand rc = new RollbackCommand(configuration.getName(), gtx);
          rc.init(invoker, icc, TransactionTable.this);
          try {
             rc.perform(null);
-            if (trace) log.tracef("Rollback of transaction %s complete.", gtx);
+            log.tracef("Rollback of transaction %s complete.", gtx);
          } catch (Throwable e) {
             log.unableToRollbackGlobalTx(gtx, e);
-         } finally {
-            removeRemoteTransaction(gtx);
          }
       }
 
-      if (trace) log.trace("Completed cleaning transactions originating on leavers");
+      log.trace("Completed cleaning transactions originating on leavers");
    }
 
    /**
@@ -369,17 +250,9 @@ public class TransactionTable {
       return remoteTransactions.get(txId);
    }
 
-   /**
-    * Creates and register a {@link RemoteTransaction} based on the supplied params.
-    * Returns the created transaction.
-    *
-    * @throws IllegalStateException if an attempt to create a {@link RemoteTransaction}
-    *                               for an already registered id is made.
-    */
-   public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications) {
-      RemoteTransaction remoteTransaction = txFactory.newRemoteTransaction(modifications, globalTx);
-      registerRemoteTransaction(globalTx, remoteTransaction);
-      return remoteTransaction;
+   public void remoteTransactionRollback(GlobalTransaction gtx) {
+      final RemoteTransaction remove = removeRemoteTransaction(gtx);
+      log.tracef("Removed local transaction %s? %b", gtx, remove);
    }
 
    /**
@@ -389,8 +262,10 @@ public class TransactionTable {
     * @throws IllegalStateException if an attempt to create a {@link RemoteTransaction}
     *                               for an already registered id is made.
     */
-   public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx) {
-      RemoteTransaction remoteTransaction = txFactory.newRemoteTransaction(globalTx);
+   public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications) {
+      RemoteTransaction remoteTransaction = modifications == null ? txFactory.newRemoteTransaction(globalTx)
+            : txFactory.newRemoteTransaction(modifications, globalTx);
+      updateViewId(remoteTransaction);
       registerRemoteTransaction(globalTx, remoteTransaction);
       return remoteTransaction;
    }
@@ -402,7 +277,7 @@ public class TransactionTable {
          throw new IllegalStateException("A remote transaction with the given id was already registered!!!");
       }
 
-      if (trace) log.trace("Created and registered remote transaction " + rtx);
+      log.trace("Created and registered remote transaction " + rtx);
    }
 
    /**
@@ -414,8 +289,9 @@ public class TransactionTable {
       if (current == null) {
          Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
          GlobalTransaction tx = txFactory.newGlobalTransaction(localAddress, false);
-         if (trace) log.tracef("Created a new GlobalTransaction %s", tx);
          current = txFactory.newLocalTransaction(transaction, tx);
+         updateViewId(current);
+         log.tracef("Created a new tx: %s", current);
          localTransactions.put(transaction, current);
          notifier.notifyTransactionRegistered(tx, ctx);
       }
@@ -427,24 +303,41 @@ public class TransactionTable {
     * if such an tx exists.
     */
    public boolean removeLocalTransaction(LocalTransaction localTransaction) {
-      return localTransaction != null &&
-            localTransactions.remove(localTransaction.getTransaction()) != null;
+      return localTransaction != null && (removeLocalTransactionInternal(localTransaction.getTransaction()) != null);
+   }
+
+   public LocalTransaction removeLocalTransaction(Transaction tx) {
+      return removeLocalTransactionInternal(tx);
+   }
+
+   protected final LocalTransaction removeLocalTransactionInternal(Transaction tx) {
+      LocalTransaction removed;
+      synchronized (minViewIdInvariant) {
+         removed = localTransactions.remove(tx);
+         if (removed != null) {
+            recalculateMinViewIdIfNeeded(removed);
+            removed.notifyOnTransactionFinished();
+         }
+      }
+      return removed;
    }
 
    /**
     * Removes the {@link RemoteTransaction} corresponding to the given tx.
     */
-   public void remoteTransactionCompleted(GlobalTransaction gtx, boolean committed) {
-      RemoteTransaction remove = remoteTransactions.remove(gtx);
-      if (log.isTraceEnabled()) log.tracef("Removing remote transaction as it is completed: %s", remove);
+   public void remoteTransactionCommitted(GlobalTransaction gtx) {
    }
 
-   private boolean removeRemoteTransaction(GlobalTransaction txId) {
-      boolean existed = remoteTransactions.remove(txId) != null;
-      if (trace) {
-         log.tracef("Removed %s from transaction table. Transaction existed? %b", txId, existed);
+   public final RemoteTransaction removeRemoteTransaction(GlobalTransaction txId) {
+      RemoteTransaction result;
+      synchronized (minViewIdInvariant) {
+         result = remoteTransactions.remove(txId);
+         if (result == null) return null;
+         recalculateMinViewIdIfNeeded(result);
       }
-      return existed;
+      log.tracef("Removed %s from transaction table. Transaction %s", txId, result);
+      result.notifyOnTransactionFinished();
+      return result;
    }
 
    public int getRemoteTxCount() {
@@ -465,5 +358,94 @@ public class TransactionTable {
 
    public Collection<RemoteTransaction> getRemoteTransactions() {
       return remoteTransactions.values();
+   }
+
+   protected final LocalTransaction getLocalTx(Transaction tx) {
+      return localTransactions.get(tx);
+   }
+
+   private boolean isStandaloneCache() {
+      return rpcManager == null;
+   }
+
+   private int getCurrentViewId() {
+      return rpcManager.getTransport().getViewId();
+   }
+
+   public final Collection<LocalTransaction> getLocalTransactions() {
+      return localTransactions.values();
+   }
+
+   protected final void recalculateMinViewIdIfNeeded(CacheTransaction removeTx) {
+      if (isStandaloneCache()) return;
+      if (removeTx == null)
+         throw new NullPointerException("Cannot pass a null tx here!");
+      if (removeTx.getViewId() < minTxViewId)
+         throw new IllegalStateException("Cannot have a tx that has a viewId(" + removeTx.getViewId()
+                                               + ") smaller than min view id (" + minTxViewId + ")");
+
+      if (removeTx.getViewId() != getCurrentViewId()) {
+         calculateMinViewId();
+      }
+   }
+
+   @ViewChanged
+   public void recalculateMinViewIdOnTopologyChange(ViewChangedEvent vce) {
+      log.debugf("View changed, recalculating minViewId");
+      synchronized (minViewIdInvariant) {
+         calculateMinViewId();
+      }
+   }
+
+
+   private void calculateMinViewId() {
+      int minViewId = getCurrentViewId();
+
+      for (CacheTransaction ct : localTransactions.values()) {
+         if (ct.getViewId() < minViewId) {
+            minViewId = ct.getViewId();
+            log.tracef("Setting minViewId to %s form local transaction %s", ct.getViewId(), ct);
+         }
+      }
+      for (CacheTransaction ct : remoteTransactions.values()) {
+         if (ct.getViewId() < minViewId) {
+            minViewId = ct.getViewId();
+            log.tracef("Setting minViewId to %s form remote transaction %s", ct.getViewId(), ct);
+         }
+      }
+      log.tracef("Recalculating min view id: existingValue=%s, minViewId=%s", minTxViewId, minViewId);
+      minTxViewId = minViewId;
+   }
+
+   private void updateViewId(CacheTransaction current) {
+      if (!isStandaloneCache()) {
+         current.setViewId(getCurrentViewId());
+      }
+   }
+
+   private boolean areTxsOnGoing() {
+      return !localTransactions.isEmpty() || !remoteTransactions.isEmpty();
+   }
+
+   private void shutDownGracefully() {
+      log.debugf("Wait for on-going transactions to finish for %d seconds.", TimeUnit.MILLISECONDS.toSeconds(configuration.getCacheStopTimeout()));
+      long failTime = System.currentTimeMillis() + configuration.getCacheStopTimeout();
+      boolean txsOnGoing = areTxsOnGoing();
+      while (txsOnGoing && System.currentTimeMillis() < failTime) {
+         try {
+            Thread.sleep(100);
+            txsOnGoing = areTxsOnGoing();
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.debugf("Interrupted waiting for on-going transactions to finish. localTransactions=%s, remoteTransactions%s",
+                       localTransactions, remoteTransactions);
+         }
+      }
+
+      if (txsOnGoing) {
+         log.unfinishedTransactionsRemain(localTransactions, remoteTransactions);
+      } else {
+         log.trace("All transactions terminated");
+      }
    }
 }

@@ -87,6 +87,8 @@ public interface InvocationContext extends EntryLookup, FlagContainer, Cloneable
     */
    Set<Object> getLockedKeys();
 
+   void clearLockedKeys();
+
    /**
     * Returns the class loader associated with this invocation
     *

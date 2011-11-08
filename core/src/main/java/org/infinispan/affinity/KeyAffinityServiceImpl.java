@@ -124,27 +124,24 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
 
       try {
          maxNumberInvariant.readLock().lock();
-         Object result;
+         Object result = null;
          try {
-            // first try to take an element without waiting
-            result = queue.poll();
-            if (result == null) {
-               // there are no elements in the queue, make sure the producer is started
-               keyProducerStartLatch.open();
-               // our address might have been removed from the consistent hash
-               if (!address.equals(getAddressForKey(address)))
-                  throw new IllegalStateException("Address " + address + " is no longer in the cluster");
-
-               result = queue.take();
+            while (result == null && !keyGenWorker.isStopped()) {
+               // first try to take an element without waiting
+               result = queue.poll();
+               if (result == null) {
+                  // there are no elements in the queue, make sure the producer is started
+                  keyProducerStartLatch.open();
+                  // our address might have been removed from the consistent hash
+                  if (!address.equals(getAddressForKey(address)))
+                     throw new IllegalStateException("Address " + address + " is no longer in the cluster");
+               }
             }
          } finally {
             maxNumberInvariant.readLock().unlock();
          }
          exitingNumberOfKeys.decrementAndGet();
          return result;
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         return null;
       } finally {
          if (queue.size() < maxNumberOfKeys.get() * THRESHOLD + 1) {
             keyProducerStartLatch.open();
@@ -214,7 +211,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    }
 
    public boolean isKeyGeneratorThreadAlive() {
-      return keyGenWorker.isAlive() ;
+      return !keyGenWorker.isStopped();
    }
 
    public void handleCacheStopped(CacheStoppedEvent cse) {
@@ -228,27 +225,33 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
    public class KeyGeneratorWorker implements Runnable {
 
       private volatile boolean isActive;
-      private boolean isAlive;
+      private volatile boolean  isStopped = false;
       private volatile Thread runner;
 
       @Override
       public void run() {
          this.runner = Thread.currentThread();
-         isAlive = true;
-         while (true) {
-            if (waitToBeWakenUp()) break;
-            isActive = true;
-            if (log.isTraceEnabled()) {
-               log.trace("KeyGeneratorWorker marked as ACTIVE");
+         try {
+            while (true) {
+               if (waitToBeWakenUp()) break;
+               isActive = true;
+               if (log.isTraceEnabled()) {
+                  log.trace("KeyGeneratorWorker marked as ACTIVE");
+               }
+               generateKeys();
+
+               isActive = false;
+               if (log.isTraceEnabled()) {
+                  log.trace("KeyGeneratorWorker marked as INACTIVE");
+               }
             }
-            generateKeys();
-            
-            isActive = false;
-            if (log.isTraceEnabled()) {
-               log.trace("KeyGeneratorWorker marked as INACTIVE");
-            }
+         } finally {
+            isStopped = true;
          }
-         isAlive = false;
+      }
+
+      public boolean isStopped() {
+         return isStopped;
       }
 
       private void generateKeys() {
@@ -300,10 +303,6 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
 
       public boolean isActive() {
          return isActive;
-      }
-
-      public boolean isAlive() {
-         return isAlive;
       }
 
       public void stop() {

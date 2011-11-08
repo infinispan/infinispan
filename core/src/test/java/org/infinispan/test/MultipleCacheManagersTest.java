@@ -405,8 +405,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * Creates a {@link org.infinispan.affinity.KeyAffinityService} and uses it for generating a key that maps to the given address.
     * @param nodeIndex the index of tha cache where to be the main data owner of the returned key
     */
-   protected Object getKeyForNode(int nodeIndex) {
+   protected Object getKeyForCache(int nodeIndex) {
       final Cache<Object, Object> cache = cache(nodeIndex);
+      return getKeyForCache(cache);
+   }
+
+   protected Object getKeyForCache(int nodeIndex, String cacheName) {
+      final Cache<Object, Object> cache = cache(nodeIndex, cacheName);
       return getKeyForCache(cache);
    }
 
@@ -419,5 +424,81 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       } finally {
          ex.shutdown();
       }
+   }
+
+   protected void assertNotLocked(final String cacheName, final Object key) {
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            boolean aNodeIsLocked = false;
+            for (int i = 0; i < caches(cacheName).size(); i++) {
+               final boolean isLocked = lockManager(i).isLocked(key);
+               if (isLocked) log.trace(key + " is locked on cache index " + i + " by " + lockManager(i).getOwner(key));
+               aNodeIsLocked = aNodeIsLocked || isLocked;
+            }
+            return !aNodeIsLocked;
+         }
+      });
+   }
+
+   protected void assertNotLocked(final Object key) {
+      assertNotLocked((String)null, key);
+   }
+
+   protected boolean checkTxCount(int cacheIndex, int localTx, int remoteTx) {
+      final int localTxCount = TestingUtil.getTransactionTable(cache(cacheIndex)).getLocalTxCount();
+      final int remoteTxCount = TestingUtil.getTransactionTable(cache(cacheIndex)).getRemoteTxCount();
+      log.tracef("Cache index %s, local tx %4s, remote tx %4s \n", cacheIndex, localTxCount, remoteTxCount);
+      return localTxCount == localTx && remoteTxCount == remoteTx;
+   }
+
+   protected void assertNotLocked(int cacheIndex, Object key) {
+      assertNotLocked(cache(cacheIndex), key);
+   }
+
+   protected void assertLocked(int cacheIndex, Object key) {
+      assertLocked(cache(cacheIndex), key);
+   }
+
+   protected boolean checkLocked(int index, Object key) {
+      return checkLocked(cache(index), key);
+   }
+
+   protected Cache getLockOwner(Object key) {
+      return getLockOwner(key, null);
+   }
+
+   protected Cache getLockOwner(Object key, String cacheName) {
+      Configuration c = getCache(0, cacheName).getConfiguration();
+      if (c.getCacheMode().isReplicated() || c.getCacheMode().isInvalidation()) {
+         return getCache(0, cacheName); //for replicated caches only the coordinator acquires lock
+      }  else {
+         if (!c.getCacheMode().isDistributed()) throw new IllegalStateException("This is not a clustered cache!");
+         final Address address = getCache(0, cacheName).getAdvancedCache().getDistributionManager().locate(key).get(0);
+         for (Cache cache : caches(cacheName)) {
+            if (cache.getAdvancedCache().getRpcManager().getTransport().getAddress().equals(address)) {
+               return cache;
+            }
+         }
+         throw new IllegalStateException();
+      }
+   }
+
+   protected void assertKeyLockedCorrectly(Object key) {
+      assertKeyLockedCorrectly(key, null);
+   }
+
+   protected void assertKeyLockedCorrectly(Object key, String cacheName) {
+      final Cache lockOwner = getLockOwner(key, cacheName);
+      assert checkLocked(lockOwner, key);
+      for (Cache c : caches(cacheName)) {
+         if (c != lockOwner)
+            assert !checkLocked(c, key) : "Key " + key + " is locked on cache " + c + " (" + cacheName
+                  + ") and it shouldn't";
+      }
+   }
+
+   private Cache getCache(int index, String name) {
+      return name == null ? cache(index) : cache(index, name);
    }
 }

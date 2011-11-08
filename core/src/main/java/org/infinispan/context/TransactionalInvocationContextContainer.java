@@ -24,7 +24,6 @@
 package org.infinispan.context;
 
 import org.infinispan.CacheException;
-import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
@@ -36,7 +35,6 @@ import org.infinispan.transaction.TransactionTable;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import java.util.Set;
 
 /**
  * Invocation context to be used for transactional caches.

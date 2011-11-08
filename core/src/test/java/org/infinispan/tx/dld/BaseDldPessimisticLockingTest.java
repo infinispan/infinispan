@@ -74,10 +74,8 @@ public abstract class BaseDldPessimisticLockingTest extends BaseDldTest {
       ex1.setKeyValue(k1, "v1_1");
       assertEquals(ex1.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE), PerCacheExecutorThread.OperationsResult.PUT_KEY_VALUE_OK);
 
-      assert lm0.isLocked(k0);
-//      assert lm0.isLocked(k1);
-//      assert lm1.isLocked(k0);
-      assert lm1.isLocked(k1);
+      assertKeyLockedCorrectly(k0);
+      assertKeyLockedCorrectly(k1);
 
       log.trace("After first set of puts");
 

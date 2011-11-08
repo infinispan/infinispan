@@ -30,11 +30,14 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 import java.io.Serializable;
+
+import static org.testng.Assert.assertEquals;
 
 /**
  * This is to test that contexts are properly constructed and cleaned up wven when using marshalled values and the
@@ -50,6 +53,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = TestCacheManagerFactory.getDefaultConfiguration(true);
       c.setUseLazyDeserialization(true);
+      c.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
       return new DefaultCacheManager(c);
    }
 
@@ -72,7 +76,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
 
       assert ctx.getLookedUpEntries().size() == 0 : "Looked up key should not be in transactional invocation context " +
                                                       "as we don't perform any changes";
-      assert lockManager.getNumberOfLocksHeld() == 1 : "Only one lock should be held";
+      assertEquals(lockManager.getNumberOfLocksHeld(), 1, "Only one lock should be held");
 
       c.put(new Key("k"), "v2");
 

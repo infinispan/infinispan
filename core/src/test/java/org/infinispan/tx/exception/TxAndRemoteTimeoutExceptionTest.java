@@ -175,8 +175,8 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
       assertEquals("v1", cache(1).get("k1"));
       assertEquals(0, txTable1.getLocalTxCount());
       assertEquals(0, txTable1.getLocalTxCount());
-      assertEquals(0, lm0.getNumberOfLocksHeld());
-      assertEquals(0, lm1.getNumberOfLocksHeld());
+      assertNotLocked("k1");
+      assertNotLocked("k2");
    }
 
    public interface CacheOperation {

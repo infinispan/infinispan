@@ -23,6 +23,14 @@
 package org.infinispan.commands.remote.recovery;
 
 import org.infinispan.context.InvocationContext;
+import org.infinispan.transaction.RemoteTransaction;
+import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import javax.transaction.xa.Xid;
 
 /**
@@ -31,38 +39,60 @@ import javax.transaction.xa.Xid;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-public class RemoveRecoveryInfoCommand extends RecoveryCommand {
+public class TxCompletionNotificationCommand extends RecoveryCommand {
+
+   private static Log log = LogFactory.getLog(TxCompletionNotificationCommand.class);
 
    public static final int COMMAND_ID = 22;
 
    private Xid xid;
    private long internalId;
+   private GlobalTransaction gtx;
+   private TransactionTable txTable;
+   private LockManager lockManager;
 
-   private RemoveRecoveryInfoCommand() {
+   private TxCompletionNotificationCommand() {
       super(null); // For command id uniqueness test
    }
 
-   public RemoveRecoveryInfoCommand(Xid xid, String cacheName) {
+   public TxCompletionNotificationCommand(Xid xid, GlobalTransaction gtx, String cacheName) {
       super(cacheName);
       this.xid = xid;
+      this.gtx = gtx;
    }
 
-   public RemoveRecoveryInfoCommand(long internalId, String cacheName) {
+   public void init(TransactionTable tt, LockManager lockManager, RecoveryManager rm) {
+      super.init(rm);
+      this.txTable = tt;
+      this.lockManager = lockManager;
+   }
+
+
+   public TxCompletionNotificationCommand(long internalId, String cacheName) {
       super(cacheName);
       this.internalId = internalId;
    }
 
-   public RemoveRecoveryInfoCommand(String cacheName) {
+   public TxCompletionNotificationCommand(String cacheName) {
       super(cacheName);
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      if (xid != null) {
-         recoveryManager.removeRecoveryInformation(xid);
-      } else {
-         recoveryManager.removeRecoveryInformation(internalId);
+      log.tracef("Processing completed transaction %s", gtx);
+      RemoteTransaction remoteTx = null;
+      if (recoveryManager != null) { //recovery in use
+         if (xid != null) {
+            remoteTx = (RemoteTransaction) recoveryManager.removeRecoveryInformation(xid);
+         } else {
+            remoteTx = (RemoteTransaction) recoveryManager.removeRecoveryInformation(internalId);
+         }
       }
+      if (remoteTx == null && gtx != null) {
+         remoteTx = txTable.removeRemoteTransaction(gtx);
+      }
+      if (remoteTx == null) return null;
+      lockManager.unlock(remoteTx.getLockedKeys(), remoteTx.getGlobalTransaction());
       return null;
    }
 
@@ -73,19 +103,20 @@ public class RemoveRecoveryInfoCommand extends RecoveryCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{xid != null ? xid : internalId};
+      return new Object[]{xid != null ? xid : internalId, gtx};
    }
 
    @Override
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) {
-         throw new IllegalArgumentException("Wrong command id. Received " + commandId + " and expected " + RemoveRecoveryInfoCommand.COMMAND_ID);
+         throw new IllegalArgumentException("Wrong command id. Received " + commandId + " and expected " + TxCompletionNotificationCommand.COMMAND_ID);
       }
       if (parameters[0] instanceof Xid) {
          xid = (Xid) parameters[0];
       } else {
          internalId = (Long) parameters[0];
       }
+      gtx = (GlobalTransaction) parameters[1];
    }
 
    @Override
@@ -93,6 +124,7 @@ public class RemoveRecoveryInfoCommand extends RecoveryCommand {
       return getClass().getSimpleName() +
             "{ xid=" + xid +
             ", internalId=" + internalId +
+            ", gtx=" + gtx +
             ", cacheName=" + cacheName + "} ";
    }
 }

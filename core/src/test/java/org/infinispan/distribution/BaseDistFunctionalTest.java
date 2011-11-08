@@ -99,7 +99,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       Configuration configuration = getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, tx);
       configuration.setRehashEnabled(performRehashing);
       if (lockingMode != null) {
-         configuration.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
+         configuration.fluent().transaction().lockingMode(lockingMode);
       }
       configuration.setNumOwners(numOwners);
       if (!testRetVals) {

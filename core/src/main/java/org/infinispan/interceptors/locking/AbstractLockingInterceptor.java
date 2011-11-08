@@ -50,7 +50,7 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    DataContainer dataContainer;
    EntryFactory entryFactory;
    Transport transport;
-   ClusteringDependentLogic cll;
+   ClusteringDependentLogic cdl;
 
    @Inject
    public void setDependencies(LockManager lockManager, DataContainer dataContainer, EntryFactory entryFactory, Transport transport, ClusteringDependentLogic cll) {
@@ -58,7 +58,7 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
       this.dataContainer = dataContainer;
       this.entryFactory = entryFactory;
       this.transport = transport;
-      this.cll = cll;
+      this.cdl = cll;
    }
 
    @Override

@@ -27,9 +27,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
-import org.infinispan.commands.remote.recovery.RemoveRecoveryInfoCommand;
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -146,10 +144,11 @@ public class RecoveryManagerImpl implements RecoveryManager {
    }
 
    @Override
-   public void removeRecoveryInformationFromCluster(Collection<Address> lockOwners, Xid xid, boolean sync) {
+   public void removeRecoveryInformationFromCluster(Collection<Address> lockOwners, Xid xid, boolean sync, GlobalTransaction gtx) {
+      log.tracef("Forgetting tx information for %s", gtx);
       //todo make sure this gets broad casted or at least flushed
       if (rpcManager != null) {
-         RemoveRecoveryInfoCommand ftc = commandFactory.buildRemoveRecoveryInfoCommand(xid);
+         TxCompletionNotificationCommand ftc = commandFactory.buildTxCompletionNotificationCommand(xid, gtx);
          rpcManager.invokeRemotely(lockOwners, ftc, sync);
       }
       removeRecoveryInformation(xid);
@@ -158,26 +157,27 @@ public class RecoveryManagerImpl implements RecoveryManager {
    @Override
    public void removeRecoveryInformationFromCluster(Collection<Address> where, long internalId, boolean sync) {
       if (rpcManager != null) {
-         RemoveRecoveryInfoCommand ftc = commandFactory.buildRemoveRecoveryInfoCommand(internalId);
+         TxCompletionNotificationCommand ftc = commandFactory.buildTxCompletionNotificationCommand(internalId);
          rpcManager.invokeRemotely(where, ftc, sync);
       }
       removeRecoveryInformation(internalId);
    }
 
    @Override
-   public void removeRecoveryInformation(Xid xid) {
+   public RecoveryAwareTransaction removeRecoveryInformation(Xid xid) {
       RecoveryAwareTransaction remove = inDoubtTransactions.remove(new RecoveryInfoKey(xid, cacheName));
-      if (remove != null) {
-         if (log.isTraceEnabled()) log.tracef("removed in doubt xid: %s", xid);
+      log.tracef("removed in doubt xid: %s", xid);
+      if (remove == null) {
+         return (RecoveryAwareTransaction) txTable.removeRemoteTransaction(xid);
       }
-      txTable.removeCompletedRemoteTransactions(xid);
+      return remove;
    }
 
    @Override
-   public void removeRecoveryInformation(Long internalId) {
+   public RecoveryAwareTransaction removeRecoveryInformation(Long internalId) {
       Xid remoteTransactionXid = txTable.getRemoteTransactionXid(internalId);
       if (remoteTransactionXid != null) {
-         removeRecoveryInformation(remoteTransactionXid);
+         return removeRecoveryInformation(remoteTransactionXid);
       } else {
          for (RecoveryAwareRemoteTransaction raRemoteTx : inDoubtTransactions.values()) {
             RecoverableTransactionIdentifier globalTransaction = (RecoverableTransactionIdentifier) raRemoteTx.getGlobalTransaction();
@@ -185,11 +185,12 @@ public class RecoveryManagerImpl implements RecoveryManager {
                Xid xid = globalTransaction.getXid();
                if (log.isTraceEnabled()) log.tracef("Found transaction xid %s that maps internal id %s", xid, internalId);
                removeRecoveryInformation(xid);
-               return;
+               return raRemoteTx;
             }
          }
       }
       if (log.isTraceEnabled()) log.tracef("Could not find tx to map to internal id %s", internalId);
+      return null;
    }
 
    @Override
@@ -334,7 +335,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
             return "Could not commit transaction " + xid + " : " + e.getMessage();
          }
       }
-      removeRecoveryInformationFromCluster(null, xid, false);
+      removeRecoveryInformationFromCluster(null, xid, false, localTx.getGlobalTransaction());
       return commit ? "Commit successful!" : "Rollback successful";
    }
 

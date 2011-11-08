@@ -37,6 +37,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionTable;
 
 import static org.infinispan.test.TestingUtil.k;
@@ -52,6 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Test(groups = "functional", testName = "api.mvcc.PutForExternalReadTest")
+@CleanupAfterMethod
 public class PutForExternalReadTest extends MultipleCacheManagersTest {
    final String key = "k", value = "v", value2 = "v2";   
 
@@ -164,6 +166,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
          expect(mockTransport.getMembers()).andReturn(memberList).anyTimes();
          rpcManager.setTransport(mockTransport);
 
+         expect(mockTransport.getViewId()).andReturn(originalTransport.getViewId()).anyTimes();
 
          expect(mockTransport.invokeRemotely(anyAddresses(), (CacheRpcCommand) anyObject(), anyResponseMode(),
                                              anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean()))
@@ -246,7 +249,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       TransactionManager tm1 = TestingUtil.getTransactionManager(cache1);
       TransactionManager tm2 = TestingUtil.getTransactionManager(cache2);
       ReplListener replListener2 = replListener(cache2);
-      
+
       replListener2.expect(PutKeyValueCommand.class);
       tm1.begin();
       cache1.putForExternalRead(key, value);
@@ -256,10 +259,13 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       final TransactionTable tt1 = TestingUtil.extractComponent(cache1, TransactionTable.class);
       final TransactionTable tt2 = TestingUtil.extractComponent(cache2, TransactionTable.class);
 
-      assert tt1.getRemoteTxCount() == 0 : "Cache 1 should have no stale global TXs";
-      assert tt1.getLocalTxCount() == 0 : "Cache 1 should have no stale local TXs";
-      assert tt2.getRemoteTxCount() == 0 : "Cache 2 should have no stale global TXs";
-      assert tt2.getLocalTxCount() == 0 : "Cache 2 should have no stale local TXs";
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return tt1.getRemoteTxCount() == 0 && tt1.getLocalTxCount() == 0 &&
+                  tt2.getRemoteTxCount() == 0 && tt2.getLocalTxCount() == 0;
+         }
+      });
 
       replListener2.expectWithTx(PutKeyValueCommand.class);
       tm1.begin();

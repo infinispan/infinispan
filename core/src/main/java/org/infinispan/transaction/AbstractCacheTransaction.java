@@ -29,12 +29,17 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.BidirectionalLinkedHashMap;
 import org.infinispan.util.BidirectionalMap;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Base class for local and remote transaction.
@@ -49,16 +54,24 @@ import java.util.Set;
 public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    protected final GlobalTransaction tx;
+   private static Log log = LogFactory.getLog(AbstractCacheTransaction.class);
+   private static final int INITIAL_LOCK_CAPACITY = 4;
+
    protected List<WriteCommand> modifications;
    protected BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries;
    protected Set<Object> affectedKeys = null;
-   private Set<Object> lockedKeys;
+   protected Set<Object> lockedKeys;
+   protected Set<Object> backupKeyLocks = null;
+
+   private final ReentrantLock lock = new ReentrantLock();
+   private final Condition condition = lock.newCondition();
+
+   protected volatile boolean prepared;
+   protected Integer viewId;
 
    public AbstractCacheTransaction(GlobalTransaction tx) {
       this.tx = tx;
    }
-
-   protected volatile boolean prepared;
 
    public GlobalTransaction getGlobalTransaction() {
       return tx;
@@ -94,8 +107,43 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       return getLockedKeys().contains(key);
    }
 
-   public void setLookedUpEntries(BidirectionalMap<Object, CacheEntry> lookedUpEntries) {
-      this.lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(lookedUpEntries);
+   @Override
+   public void notifyOnTransactionFinished() {
+      log.tracef("transaction %s finished, notifying listening threads.", tx);
+      lock.lock();
+      try {
+         condition.signalAll();
+      } finally {
+         lock.unlock();
+      }
+   }
+
+   @Override
+   public boolean waitForLockRelease(Object key, long lockAcquisitionTimeout) throws InterruptedException {
+      lock.lock();
+      try {
+         final boolean potentiallyLocked = hasLockOrIsLockBackup(key);
+         log.tracef("Transaction gtx=%s potentially locks key %s? %s", tx, key, potentiallyLocked);
+         return !potentiallyLocked || condition.await(lockAcquisitionTimeout, TimeUnit.MILLISECONDS);
+      } finally {
+         lock.unlock();
+      }
+   }
+
+   @Override
+   public Integer getViewId() {
+      return viewId;
+   }
+
+   @Override
+   public void setViewId(Integer viewId) {
+      this.viewId = viewId;
+   }
+
+   @Override
+   public void addBackupLockForKey(Object key) {
+      if (backupKeyLocks == null) backupKeyLocks = new HashSet<Object>(INITIAL_LOCK_CAPACITY);
+      backupKeyLocks.add(key);
    }
 
    public Set<Object> getAffectedKeys() {
@@ -107,11 +155,22 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    public void registerLockedKey(Object key) {
-      if (lockedKeys == null) lockedKeys = new HashSet<Object>(4);
+      if (lockedKeys == null) lockedKeys = new HashSet<Object>(INITIAL_LOCK_CAPACITY);
+      log.tracef("Registering locked key: %s", key);
       lockedKeys.add(key);
    }
 
    public Set<Object> getLockedKeys() {
       return lockedKeys == null ? Collections.emptySet() : lockedKeys;
+   }
+
+   public void clearLockedKeys() {
+      log.tracef("Clearing locked keys: %s", lockedKeys);
+      lockedKeys = null;
+   }
+
+   private boolean hasLockOrIsLockBackup(Object key) {
+      return (backupKeyLocks != null && backupKeyLocks.contains(key))
+            || (lockedKeys != null && lockedKeys.contains(key));
    }
 }

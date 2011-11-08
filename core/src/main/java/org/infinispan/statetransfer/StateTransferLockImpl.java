@@ -87,7 +87,7 @@ public class StateTransferLockImpl implements StateTransferLock {
    public void injectDependencies(Configuration config) {
       stateTransferEnabled = (config.getCacheMode().isDistributed() && config.isRehashEnabled())
             || (config.getCacheMode().isReplicated() && config.isStateTransferEnabled());
-      pessimisticLocking = config.isEagerLockingSingleNodeInUse() || config.getTransactionLockingMode() == LockingMode.PESSIMISTIC;
+      pessimisticLocking =  config.getTransactionLockingMode() == LockingMode.PESSIMISTIC;
       lockTimeout = config.getRehashWaitTime();
    }
 

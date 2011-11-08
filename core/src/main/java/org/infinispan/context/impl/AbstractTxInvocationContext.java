@@ -91,6 +91,11 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
       return transaction;
    }
 
+   @Override
+   public final void clearLockedKeys() {
+      getCacheTransaction().clearLockedKeys();
+   }
+
    public abstract AbstractCacheTransaction getCacheTransaction();
 
 }

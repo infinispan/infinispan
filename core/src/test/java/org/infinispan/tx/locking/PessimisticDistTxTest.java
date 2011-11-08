@@ -42,6 +42,6 @@ public class PessimisticDistTxTest extends PessimisticReplTxTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       super.createCacheManagers();
-      k = getKeyForNode(0);
+      k = getKeyForCache(0);
    }
 }

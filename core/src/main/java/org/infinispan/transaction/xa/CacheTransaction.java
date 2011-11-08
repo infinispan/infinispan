@@ -39,24 +39,41 @@ public interface CacheTransaction {
    /**
     * Returns the transaction identifier.
     */
-   public GlobalTransaction getGlobalTransaction();
+   GlobalTransaction getGlobalTransaction();
 
    /**
     * Returns the modifications visible within the current transaction.
     */
-   public List<WriteCommand> getModifications();
+   List<WriteCommand> getModifications();
 
 
-   public CacheEntry lookupEntry(Object key);
+   CacheEntry lookupEntry(Object key);
 
-   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries();
+   BidirectionalMap<Object, CacheEntry> getLookedUpEntries();
 
-   public void putLookedUpEntry(Object key, CacheEntry e);
+   void putLookedUpEntry(Object key, CacheEntry e);
 
-   public void removeLookedUpEntry(Object key);
+   void removeLookedUpEntry(Object key);
 
-   public void clearLookedUpEntries();
+   void clearLookedUpEntries();
 
-   public abstract boolean ownsLock(Object key);
+   abstract boolean ownsLock(Object key);
+   
+   void clearLockedKeys();
 
+   Integer getViewId();
+
+   void setViewId(Integer viewId);
+
+   void addBackupLockForKey(Object key);
+
+   /**
+    * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#lockKeyAndCheckOwnership(org.infinispan.context.InvocationContext, Object)
+    */
+   void notifyOnTransactionFinished();
+
+   /**
+    * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#lockKeyAndCheckOwnership(org.infinispan.context.InvocationContext, Object)
+    */
+   boolean waitForLockRelease(Object key, long lockAcquisitionTimeout) throws InterruptedException;
 }

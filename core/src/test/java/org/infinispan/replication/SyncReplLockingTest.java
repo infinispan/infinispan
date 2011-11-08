@@ -30,6 +30,7 @@ import org.infinispan.test.TestingUtil;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
@@ -37,8 +38,6 @@ import org.testng.annotations.Test;
 import javax.transaction.TransactionManager;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.TestingUtil.assertNoLocks;
 
 /**
  * Tests for lock API
@@ -62,7 +61,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       Configuration cfg = getDefaultClusteredConfig(getCacheMode(), true);
-      cfg.fluent().transactionManagerLookup(new DummyTransactionManagerLookup());
+      cfg.fluent().transactionManagerLookup(new DummyTransactionManagerLookup()).lockingMode(LockingMode.PESSIMISTIC);
       cfg.setLockAcquisitionTimeout(500);
       createClusteredCaches(2, "testcache", cfg);
    }
@@ -102,8 +101,8 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cache1.get(k);
       mgr.commit();
 
-      assertNoLocks(cache1);
-      assertNoLocks(cache2);
+      assertNotLocked(cache1);
+      assertNotLocked(cache2);
 
       assert cache1.isEmpty();
       assert cache2.isEmpty();
@@ -132,8 +131,8 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
 		assertNull("Should be null", cache1.get(k));
 		mgr.commit();
 
-		assertNoLocks(cache1);
-		assertNoLocks(cache2);
+		assertNotLocked(cache1);
+		assertNotLocked(cache2);
 
 		assert cache1.isEmpty();
 		assert cache2.isEmpty();
@@ -198,7 +197,9 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cache1.put(k, name);
       mgr.commit();
 
+      assertNotLocked(k);
       t.join();
+
 
       cache2.remove(k);
       assert cache1.isEmpty();

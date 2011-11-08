@@ -41,8 +41,6 @@ import java.util.Set;
  */
 public class AbstractCacheTest extends AbstractInfinispanTest {
 
-   protected final Log log = LogFactory.getLog(getClass());
-
    public static enum CleanupPhase {
       AFTER_METHOD, AFTER_TEST
    }
@@ -115,14 +113,23 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
       return (b1 || b2) && !(b1 && b2);
    }
 
-   protected void assertNotLocked(Cache cache, Object key) {
-      LockManager lockManager = TestingUtil.extractLockManager(cache);
-      assert !lockManager.isLocked(key) : "expected key '" + key + "' not to be locked on node " + cache.getAdvancedCache().getCacheManager().getAddress() + ", and it locked is by: " + lockManager.getOwner(key);
+   protected void assertNotLocked(final Cache cache, final Object key) {
+      //lock release happens async, hence the eventually...
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return !checkLocked(cache, key);
+         }
+      });
    }
 
    protected void assertLocked(Cache cache, Object key) {
+      assert checkLocked(cache, key) : "expected key '" + key + "' to be locked, but it is not";
+   }
+
+   protected boolean checkLocked(Cache cache, Object key) {
       LockManager lockManager = TestingUtil.extractLockManager(cache);
-      assert lockManager.isLocked(key) : "expected key '" + key + "' to be lockedon node " + cache.getAdvancedCache().getCacheManager().getAddress() + ", but it is not";
+      return lockManager.isLocked(key);
    }
 
    public EmbeddedCacheManager manager(Cache c) {
