@@ -185,12 +185,13 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore<String> {
 
    @Override
    public void stop() throws CacheLoaderException {
-      tableManipulation.stop();
-      if (config.isManageConnectionFactory()) {
-         if (log.isTraceEnabled()) {
+      try {
+         tableManipulation.stop();
+      } finally {
+         if (config.isManageConnectionFactory()) {
             log.tracef("Stopping mananged connection factory: %s", connectionFactory);
+            connectionFactory.stop();
          }
-         connectionFactory.stop();
       }
    }
 
