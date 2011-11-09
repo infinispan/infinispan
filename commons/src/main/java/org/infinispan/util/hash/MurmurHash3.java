@@ -23,6 +23,7 @@
 
 package org.infinispan.util.hash;
 
+import net.jcip.annotations.ThreadSafe;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.exts.NoStateExternalizer;
 import org.infinispan.util.ByteArrayKey;
@@ -46,7 +47,7 @@ import java.util.Set;
  * @see <a href="http://en.wikipedia.org/wiki/MurmurHash">MurmurHash entry on Wikipedia</a>
  * @since 5.0
  */
-
+@ThreadSafe
 public class MurmurHash3 implements Hash {
    private static final Charset UTF8 = Charset.forName("UTF-8");
 
