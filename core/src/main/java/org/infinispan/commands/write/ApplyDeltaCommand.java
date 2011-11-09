@@ -110,7 +110,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    }
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitApplyDeltaCommand((TxInvocationContext) ctx, this);
+      return visitor.visitApplyDeltaCommand(ctx, this);
    }
 
    public Object[] getKeys() {
