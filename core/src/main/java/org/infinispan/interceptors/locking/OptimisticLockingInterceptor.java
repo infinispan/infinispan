@@ -25,6 +25,7 @@ package org.infinispan.interceptors.locking;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.AbstractVisitor;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
@@ -38,6 +39,13 @@ import org.infinispan.container.EntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.util.hash.MurmurHash3;
+
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Locking interceptor to be used by optimistic transactional caches.
@@ -48,6 +56,16 @@ import org.infinispan.factories.annotations.Inject;
 public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    final LockAquisitionVisitor lockAquisitionVisitor = new LockAquisitionVisitor();
+
+   private final static Comparator<Object> keyComparator = new Comparator<Object>() {
+
+      private final MurmurHash3 hash = new MurmurHash3();
+
+      @Override
+      public int compare(Object o1, Object o2) {
+         return hash.hash(o1) - hash.hash(o2);
+      }
+   };
 
    EntryFactory entryFactory;
 
@@ -60,9 +78,22 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       try {
          abortIfRemoteTransactionInvalid(ctx, command);
-         for (WriteCommand wc : command.getModifications()) {
-            wc.acceptVisitor(ctx, lockAquisitionVisitor);
+
+         if (command.writesToASingleKey()) {
+            //optimisation: don't create another LockReorderingVisitor here as it is not needed.
+            log.trace("Not using lock reordering as we have a single key.");
+            acquireLocksVisitingCommands(ctx, command);
+         } else {
+            LockReorderingVisitor lre = new LockReorderingVisitor(command.getModifications());
+            if (!lre.hasClear) {
+               log.tracef("Using lock reordering, order is: %s", lre.orderedKeys);
+               acquireAllLocks(ctx, lre.orderedKeys.iterator());
+            } else {
+               log.trace("Not using lock reordering as the prepare contains a clear command.");
+               acquireLocksVisitingCommands(ctx, command);
+            }
          }
+
          return invokeNextAndCommitIf1Pc(ctx, command);
       } catch (Throwable te) {
          // don't remove the locks here, the rollback command will clear them
@@ -166,7 +197,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          if (cdl.localNodeIsOwner(command.getKey())) {
             Object[] compositeKeys = command.getCompositeKeys();
             for (Object key : compositeKeys) {
-               lockKey(ctx, key);   
+               lockAndRegisterBackupLock((TxInvocationContext) ctx, key);
             }            
          }
          return null;
@@ -176,6 +207,75 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          lockAndRegisterBackupLock((TxInvocationContext) ctx, command.getKey());
          return null;
+      }
+   }
+
+   /**
+    * This visitor doesn't handle all the possible {@link WriteCommand}s, but only the ones that can be aggregated
+    * within the {@link PrepareCommand}.
+    */
+   private final class LockReorderingVisitor extends AbstractVisitor {
+
+      private boolean hasClear;
+
+      private final SortedSet<Object> orderedKeys = new TreeSet<Object>(keyComparator);
+
+      public LockReorderingVisitor(WriteCommand[] modifications) throws Throwable {
+         for (WriteCommand wc : modifications) {
+            wc.acceptVisitor(null, this);
+         }
+      }
+
+      @Override
+      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         return orderedKeys.add(command.getKey());
+      }
+
+      @Override
+      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+         return orderedKeys.addAll(command.getAffectedKeys());
+      }
+
+      @Override
+      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+         return orderedKeys.add(command.getKey());
+      }
+
+      @Override
+      public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+         return orderedKeys.add(command.getKey());
+      }
+
+      @Override
+      public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+         if (cdl.localNodeIsOwner(command.getKey())) {
+            Object[] compositeKeys = command.getCompositeKeys();
+            orderedKeys.addAll(Arrays.asList(compositeKeys));
+         }
+         return null;
+      }
+
+      @Override
+      public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+         hasClear = true;
+         return null;
+      }
+
+      @Override
+      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+         throw new IllegalStateException("Visitable command which require lock acquisition is ignored! " + command);
+      }
+   }
+
+   private void acquireAllLocks(TxInvocationContext ctx, Iterator<Object> orderedKeys) throws InterruptedException {
+      while (orderedKeys.hasNext()) {
+         lockAndRegisterBackupLock(ctx, orderedKeys.next());
+      }
+   }
+
+   private void acquireLocksVisitingCommands(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      for (WriteCommand wc : command.getModifications()) {
+         wc.acceptVisitor(ctx, lockAquisitionVisitor);
       }
    }
 }
