@@ -41,6 +41,11 @@ public class TestAddress implements Address {
       this.addressNum = addressNum;
    }
 
+   public TestAddress(int addressNum, String name) {
+      this.addressNum = addressNum;
+      this.name = name;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -60,7 +65,7 @@ public class TestAddress implements Address {
 
    @Override
    public String toString() {
-      return "TestAddress#"+addressNum + (name != null? (" " + name) : "");
+      return "TestAddress#"+addressNum + (name != null? ("-" + name) : "");
    }
 
    public int compareTo(Object o) {
