@@ -778,7 +778,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "View installation failed for cache %s", id = 166)
-   void viewInstallationFailure(@Cause Exception e, String cacheName);
+   void viewInstallationFailure(@Cause Throwable e, String cacheName);
 
    @LogMessage(level = WARN)
    @Message(value = "Rejecting state pushed by node %s for view %d, there is no state transfer in progress (we are at view %d)", id = 167)
@@ -786,7 +786,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Error rolling back to cache view %1$d for cache %2$s", id = 168)
-   void cacheViewRollbackFailure(@Cause Exception e, int committedViewId, String cacheName);
+   void cacheViewRollbackFailure(@Cause Throwable t, int committedViewId, String cacheName);
 
    @LogMessage(level = WARN)
    @Message(value = "Error committing cache view %1$d for cache %2$s", id = 169)
