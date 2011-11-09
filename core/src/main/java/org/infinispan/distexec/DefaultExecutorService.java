@@ -71,6 +71,7 @@ import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -102,19 +103,38 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    protected final InterceptorChain invoker;
    protected final CommandsFactory factory;
    protected final Marshaller marshaller;
+   protected final ExecutorService localExecutorService;
 
    /**
-    * Create a new DefaultExecutorService given a master cache node. All distributed task executions
-    * will be initiated from this cache node.
-    *
+    * Creates a new DefaultExecutorService given a master cache node for local task execution. All
+    * distributed task executions will be initiated from this Infinispan cache node
+    * 
     * @param masterCacheNode
-    *           cache node initiating map reduce task
+    *           Cache node initiating distributed task
     */
    public DefaultExecutorService(Cache masterCacheNode) {
+      this(masterCacheNode, new WithinThreadExecutor());
+   }
+
+   /**
+    * Creates a new DefaultExecutorService given a master cache node and an ExecutorService for
+    * parallel execution of task ran on this node. All distributed task executions will be initiated
+    * from this Infinispan cache node.
+    * 
+    * @param masterCacheNode
+    *           Cache node initiating distributed task
+    * @param localExecutorService
+    *           ExecutorService to run local tasks
+    */
+   public DefaultExecutorService(Cache masterCacheNode, ExecutorService localExecutorService){
       super();
       if (masterCacheNode == null)
          throw new NullPointerException("Can not use " + masterCacheNode
                   + " cache for DefaultExecutorService");
+      
+      if (localExecutorService == null || localExecutorService.isShutdown())
+         throw new IllegalArgumentException("Can not use " + localExecutorService
+                  + " instance of ExecutorService");
 
       ensureProperCacheState(masterCacheNode.getAdvancedCache());
 
@@ -125,6 +145,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       this.invoker = registry.getComponent(InterceptorChain.class);
       this.factory = registry.getComponent(CommandsFactory.class);
       this.marshaller = registry.getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
+      this.localExecutorService = localExecutorService;
    }
 
    @Override
@@ -142,10 +163,10 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       realShutdown(false);
    }
 
-   @SuppressWarnings("unchecked")
    private List<Runnable> realShutdown(boolean interrupt) {
       isShutdown.set(true);
       // TODO cancel all tasks
+      localExecutorService.shutdownNow();
       return Collections.emptyList();
    }
 
@@ -170,7 +191,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
    @Override
    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-      long nanoTimeWait = unit.toNanos(timeout);
+      //long nanoTimeWait = unit.toNanos(timeout);
       // TODO wait for all tasks to finish
       return true;
    }
@@ -413,7 +434,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          };
          final FutureTask<Object> task = new FutureTask<Object>(call);
          future.setNetworkFuture((Future<T>) task);
-         task.run();
+         localExecutorService.submit(task);
       } catch (Throwable e1) {
          log.localExecutionFailed(e1);
       }
