@@ -78,8 +78,8 @@ CP=${CP}:${ISPN_HOME}/etc:${ISPN_HOME}/etc/config-samples/distexec-demo
 
 add_to_classpath ${ISPN_HOME}
 add_to_classpath ${ISPN_HOME}/lib
-add_to_classpath ${ISPN_HOME}/modules/distexec
-add_to_classpath ${ISPN_HOME}/modules/distexec/lib
+add_to_classpath ${ISPN_HOME}/modules/demos/distexec
+add_to_classpath ${ISPN_HOME}/modules/demos/distexec/lib
 
 if $cygwin; then
    # Turn paths into Windows style for Cygwin
