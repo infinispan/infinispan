@@ -368,11 +368,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
       }
    }
 
-   public LockControlCommand buildLockControlCommand(Collection keys, boolean implicit, Set<Flag> flags, GlobalTransaction gtx) {
+   public LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags, GlobalTransaction gtx) {
       return new LockControlCommand(keys, cacheName, flags, gtx);
    }
 
-   public LockControlCommand buildLockControlCommand(Object key, boolean implicit, Set<Flag> flags, GlobalTransaction gtx) {
+   public LockControlCommand buildLockControlCommand(Object key, Set<Flag> flags, GlobalTransaction gtx) {
       return new LockControlCommand(key, cacheName, flags, gtx);
    }
 

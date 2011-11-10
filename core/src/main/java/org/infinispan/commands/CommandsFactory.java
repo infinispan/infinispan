@@ -245,18 +245,18 @@ public interface CommandsFactory {
    /**
     * Builds a LockControlCommand to control explicit remote locking
     *
+    *
     * @param keys keys to lock
-    * @param implicit whether the lock command was implicit (triggered internally) or explicit (triggered by an API call)
     * @param gtx
     * @return a LockControlCommand
     */
-   LockControlCommand buildLockControlCommand(Collection keys, boolean implicit, Set<Flag> flags, GlobalTransaction gtx);
+   LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags, GlobalTransaction gtx);
 
    /**
-    * Same as {@link #buildLockControlCommand(Object, boolean, java.util.Set, org.infinispan.transaction.xa.GlobalTransaction)}
+    * Same as {@link #buildLockControlCommand(Object, java.util.Set}
     * but for locking a single key vs a collection of keys.
     */
-   LockControlCommand buildLockControlCommand(Object key, boolean implicit, Set<Flag> flags, GlobalTransaction gtx);
+   LockControlCommand buildLockControlCommand(Object key, Set<Flag> flags, GlobalTransaction gtx);
 
 
    LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags);
