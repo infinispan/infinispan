@@ -9,12 +9,12 @@ set my_classpath=%my_classpath:~1%
 
 set my_classpath=%my_classpath%;..\infinispan-core.jar
 
-for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\modules\gui\*.jar"') do (
+for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\modules\demos\gui\*.jar"') do (
                 call set my_classpath=%%my_classpath%%;%%~f)
         )
 set my_classpath=%my_classpath:~1%
 
-for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\modules\gui\lib\*.jar"') do (
+for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\modules\demos\gui\lib\*.jar"') do (
                 call set my_classpath=%%my_classpath%%;%%~f)
         )
 set my_classpath=%my_classpath:~1%
