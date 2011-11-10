@@ -24,6 +24,9 @@ package org.infinispan.commands.tx;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
@@ -223,5 +226,12 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
     */
    public void setReplayEntryWrapping(boolean replayEntryWrapping) {
       this.replayEntryWrapping = replayEntryWrapping;
+   }
+
+   public boolean writesToASingleKey() {
+      if (modifications == null || modifications.length != 1)
+         return false;
+      WriteCommand wc = modifications[0];
+      return wc instanceof PutKeyValueCommand || wc instanceof RemoveCommand || wc instanceof ReplaceCommand;
    }
 }

@@ -110,7 +110,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    }
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitApplyDeltaCommand((TxInvocationContext) ctx, this);
+      return visitor.visitApplyDeltaCommand(ctx, this);
    }
 
    public Object[] getKeys() {
@@ -118,8 +118,8 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    }
    
    public Object[] getCompositeKeys(){
-      List<DeltaCompositeKey> composite = new ArrayList<DeltaCompositeKey>();           
-      for (Object k : keys) {         
+      List<DeltaCompositeKey> composite = new ArrayList<DeltaCompositeKey>(keys.size());
+      for (Object k : keys) {
          composite.add(new DeltaCompositeKey(deltaAwareValueKey, k));         
       }      
       return composite.toArray();      

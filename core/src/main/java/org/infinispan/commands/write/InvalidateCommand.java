@@ -34,7 +34,7 @@ import java.util.Collection;
 
 
 /**
- * Removes an entry from memory - never removes the entry.
+ * Removes an entry from memory.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0
