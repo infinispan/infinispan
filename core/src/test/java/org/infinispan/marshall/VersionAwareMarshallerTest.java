@@ -85,6 +85,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -108,6 +109,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 import static org.infinispan.test.TestingUtil.k;
+import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "marshall.VersionAwareMarshallerTest")
 public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
@@ -553,6 +555,17 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    public void testPojoWithJBossMarshallingExternalizer(Method m) throws Exception {
       PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(27, k(m));
       marshallAndAssertEquality(pojo);
+   }
+
+   public void testErrorUnmarshallInputStreamAvailable() throws Exception {
+      byte[] bytes = marshaller.objectToByteBuffer("23");
+      Object o = marshaller.objectFromInputStream(new ByteArrayInputStream(bytes){
+         @Override
+         public int available() {
+            return 0;
+         }
+      });
+      assertEquals("23", o);
    }
 
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {
