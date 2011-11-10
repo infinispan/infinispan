@@ -6,7 +6,7 @@ add_classpath "${ISPN_HOME}"/*.jar
 add_classpath "${ISPN_HOME}/etc"
 add_classpath "${ISPN_HOME}/etc/config-sameples/ec2-demo"
 add_classpath "${ISPN_HOME}/lib"
-add_classpath "${ISPN_HOME}/modules/ec2"
+add_classpath "${ISPN_HOME}/modules/demos/ec2"
 
 add_jvm_args '-Xmx512m'
 add_jvm_args $JVM_PARAMS

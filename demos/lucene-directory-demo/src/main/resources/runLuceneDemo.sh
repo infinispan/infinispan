@@ -4,7 +4,7 @@ source "`dirname "$0"`/functions.sh"
 
 add_classpath "${ISPN_HOME}"/*.jar
 add_classpath "${ISPN_HOME}/lib"
-add_classpath "${ISPN_HOME}/modules/lucene-directory-demo"
+add_classpath "${ISPN_HOME}/modules/demos/lucene-directory-demo"
 
 add_jvm_args $JVM_PARAMS
 add_jvm_args '-Djgroups.bind_addr=127.0.0.1'
