@@ -33,6 +33,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -146,14 +147,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       backupKeyLocks.add(key);
    }
 
-   public Set<Object> getAffectedKeys() {
-      return affectedKeys == null ? Collections.emptySet() : affectedKeys;
-   }
-
-   public void setAffectedKeys(Set<Object> affectedKeys) {
-      this.affectedKeys = affectedKeys;
-   }
-
    public void registerLockedKey(Object key) {
       if (lockedKeys == null) lockedKeys = new HashSet<Object>(INITIAL_LOCK_CAPACITY);
       log.tracef("Registering locked key: %s", key);
@@ -172,5 +165,23 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    private boolean hasLockOrIsLockBackup(Object key) {
       return (backupKeyLocks != null && backupKeyLocks.contains(key))
             || (lockedKeys != null && lockedKeys.contains(key));
+   }
+
+   public Set<Object> getAffectedKeys() {
+      return affectedKeys == null ? Collections.emptySet() : affectedKeys;
+   }
+
+   public void addAffectedKey(Object key) {
+      initAffectedKeys();
+      affectedKeys.add(key);
+   }
+
+   public void addAffectedKeys(Collection<Object> keys) {
+      initAffectedKeys();
+      affectedKeys.addAll(keys);
+   }
+
+   private void initAffectedKeys() {
+      if (affectedKeys == null) affectedKeys = new HashSet<Object>(INITIAL_LOCK_CAPACITY);
    }
 }

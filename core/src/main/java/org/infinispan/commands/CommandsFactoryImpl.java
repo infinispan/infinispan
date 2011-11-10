@@ -233,8 +233,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new SingleRpcCommand(cacheName, call);
    }
 
-   public ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags) {
-      return new ClusteredGetCommand(key, cacheName, flags);
+   public ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags, boolean acquireRemoteLock, GlobalTransaction gtx) {
+      return new ClusteredGetCommand(key, cacheName, flags, acquireRemoteLock, gtx);
    }
 
    /**
@@ -305,7 +305,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ClusteredGetCommand.COMMAND_ID:
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
-            clusteredGetCommand.initialize(icc, this, interceptorChain, distributionManager);
+            clusteredGetCommand.initialize(icc, this, interceptorChain, distributionManager, txTable);
             break;
          case LockControlCommand.COMMAND_ID:
             LockControlCommand lcc = (LockControlCommand) c;
@@ -368,11 +368,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
       }
    }
 
-   public LockControlCommand buildLockControlCommand(Collection keys, boolean implicit, Set<Flag> flags, GlobalTransaction gtx) {
+   public LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags, GlobalTransaction gtx) {
       return new LockControlCommand(keys, cacheName, flags, gtx);
    }
 
-   public LockControlCommand buildLockControlCommand(Object key, boolean implicit, Set<Flag> flags, GlobalTransaction gtx) {
+   public LockControlCommand buildLockControlCommand(Object key, Set<Flag> flags, GlobalTransaction gtx) {
       return new LockControlCommand(key, cacheName, flags, gtx);
    }
 
