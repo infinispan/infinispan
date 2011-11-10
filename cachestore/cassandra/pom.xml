@@ -45,6 +45,11 @@
 			<artifactId>cassandra-connection-pool</artifactId>
 			<version>${version.cassandra.pool}</version>
 		</dependency>
+        <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>cassandra-thrift</artifactId>
+            <version>${version.cassandra}</version>
+        </dependency>
 		<dependency>
 			<groupId>org.apache.cassandra</groupId>
 			<artifactId>cassandra-all</artifactId>
