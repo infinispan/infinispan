@@ -105,7 +105,7 @@
       <version.arquillian.container.weld>1.0.0.CR2</version.arquillian.container.weld>
       <version.bdbje>4.0.92</version.bdbje>
       <version.c3p0>0.9.1.2</version.c3p0>
-      <version.cassandra>1.0.0-rc2</version.cassandra>
+      <version.cassandra>1.0.2</version.cassandra>
       <version.cassandra.pool>1.0.0.CR1</version.cassandra.pool>
       <version.cdi>1.0-SP4</version.cdi>
       <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
