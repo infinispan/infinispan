@@ -36,8 +36,13 @@ public class RpcManagerFactory extends EmptyConstructorNamedCacheFactory impleme
 
    @Override
    public <T> T construct(Class<T> componentType) {
+      if (!configuration.getCacheMode().isClustered())
+         return null;
+
       // only do this if we have a transport configured!
-      if (globalConfiguration.getTransportClass() == null) return null;
+      if (globalConfiguration.getTransportClass() == null)
+         throw new IllegalStateException("Transport should be configured in order to use clustered caches");
+
       return super.construct(componentType);
    }
 }

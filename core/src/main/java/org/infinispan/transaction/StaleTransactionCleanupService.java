@@ -173,8 +173,8 @@ public class StaleTransactionCleanupService {
       this.invoker = interceptorChain;
       ThreadFactory tf = new ThreadFactory() {
          public Thread newThread(Runnable r) {
-            Thread th = new Thread(r, "LockBreakingService," + configuration.getName()
-                  + "," + rpcManager.getTransport().getAddress());
+            String address = rpcManager != null ? rpcManager.getTransport().getAddress().toString() : "local";
+            Thread th = new Thread(r, "LockBreakingService," + configuration.getName() + "," + address);
             th.setDaemon(true);
             return th;
          }
