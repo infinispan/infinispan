@@ -236,8 +236,6 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    protected void initChannel() {
       if (channel == null) {
          buildChannel();
-         // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise invalidations targeted at
-         // remote instances will be received by self.
          String transportNodeName = configuration.getTransportNodeName();
          if (transportNodeName != null && transportNodeName.length() > 0) {
             long range = Short.MAX_VALUE * 2;
@@ -247,6 +245,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          }
       }
 
+      // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise invalidations targeted at
+      // remote instances will be received by self.
       channel.setDiscardOwnMessages(true);
 
       // if we have a TopologyAwareConsistentHash, we need to set our own address generator in JGroups:
