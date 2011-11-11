@@ -63,6 +63,7 @@ import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.REG
 public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    private static final Log log = LogFactory.getLog(GlobalComponentRegistry.class);
+   private static boolean versionLogged = false;
    /**
     * Hook to shut down the cache when the JVM exits.
     */
@@ -177,6 +178,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
             return moduleProperties.moduleCommandInitializers(defaultClassLoader);
    }
 
+
    @Override
    public void start() {
       try {
@@ -187,7 +189,12 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
             }
          }
          super.start();
-         log.version(Version.printVersion());
+
+         if (!versionLogged) {
+            log.version(Version.printVersion());
+            versionLogged = true;
+         }
+
          if (needToNotify && state == ComponentStatus.RUNNING) {
             for (ModuleLifecycle l : moduleLifecycles) {
                l.cacheManagerStarted(this);
