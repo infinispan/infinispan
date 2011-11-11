@@ -88,6 +88,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
             if (!lre.hasClear) {
                log.tracef("Using lock reordering, order is: %s", lre.orderedKeys);
                acquireAllLocks(ctx, lre.orderedKeys.iterator());
+               ctx.addAllAffectedKeys(lre.orderedKeys);
             } else {
                log.trace("Not using lock reordering as the prepare contains a clear command.");
                acquireLocksVisitingCommands(ctx, command);

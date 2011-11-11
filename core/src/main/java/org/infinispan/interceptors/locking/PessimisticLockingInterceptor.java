@@ -210,7 +210,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
             if (!localTx.getAffectedKeys().containsAll(command.getKeys())) {
                invokeNextInterceptor(ctx, command);
-               ctx.addAffectedKeys(command.getKeys());
+               ctx.addAllAffectedKeys(command.getKeys());
             } else {
                log.tracef("Already own locks on keys: %s, skipping remote call", command.getKeys());
             }
@@ -248,7 +248,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             invokeNextInterceptor(ctx, lcc);
          }
       }
-      ((TxInvocationContext) ctx).addAffectedKeys(keys);
+      ((TxInvocationContext) ctx).addAllAffectedKeys(keys);
    }
 
    private void acquireRemoteIfNeeded(InvocationContext ctx, Object key, boolean localNodeIsLockOwner) throws Throwable {
