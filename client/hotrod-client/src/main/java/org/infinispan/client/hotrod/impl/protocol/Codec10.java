@@ -91,7 +91,9 @@ public class Codec10 implements Codec {
          throw new InvalidResponseException(String.format(message, HotRodConstants.RESPONSE_MAGIC, magic));
       }
       long receivedMessageId = transport.readVLong();
-      if (receivedMessageId != params.messageId) {
+      // If received id is 0, it could be that a failure was noted before the
+      // message id was detected, so don't consider it to a message id error
+      if (receivedMessageId != params.messageId && receivedMessageId != 0) {
          String message = "Invalid message id. Expected %d and received %d";
          log.invalidMessageId(params.messageId, receivedMessageId);
          if (isTrace)

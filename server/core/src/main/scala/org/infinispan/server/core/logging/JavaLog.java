@@ -74,4 +74,8 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "Setting the number of master threads is no longer supported", id = 5008)
    void settingMasterThreadsNotSupported();
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Unexpected error before any request parameters read", id = 5009)
+   void errorBeforeReadingRequest(@Cause Throwable t);
+
 }

@@ -160,7 +160,10 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
       t match {
          case h: HotRodException => h.response
          case c: ClosedChannelException => null
-         case t: Throwable => new ErrorResponse(0, 0, "", 1, ServerError, 0, t.toString)
+         case t: Throwable => {
+            logErrorBeforeReadingRequest(t)
+            new ErrorResponse(0, 0, "", 1, ServerError, 0, t.toString)
+         }
       }
    }
 

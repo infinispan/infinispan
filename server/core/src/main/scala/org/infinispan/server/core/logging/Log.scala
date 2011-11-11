@@ -80,4 +80,7 @@ trait Log {
       log.channelStillConnected(ch, address)
 
    def logSettingMasterThreadsNotSupported = log.settingMasterThreadsNotSupported
+
+   def logErrorBeforeReadingRequest(t: Throwable) =
+      log.errorBeforeReadingRequest(t)
 }
