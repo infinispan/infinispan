@@ -30,6 +30,8 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.net.SocketAddress;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -59,13 +61,32 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class CustomReplayingDecoder<T extends Enum<T>>
       extends SimpleChannelUpstreamHandler {
 
+    private static Constructor unsafeDynamicBufferCtor;
+    private static Constructor replayingDecoderBufferCtor;
+    private static Method replayingDecoderBufferTerminate;
+    private static Class replayErrorClass;
+
     private final AtomicReference<ChannelBuffer> cumulation =
         new AtomicReference<ChannelBuffer>();
     private final boolean unfold;
-    private ReplayingDecoderBuffer replayable;
+    private ChannelBuffer replayable;
     private T state;
     private int checkpoint;
     private final int maxCapacity;
+
+    static {
+       try {
+          unsafeDynamicBufferCtor =
+                getConstructor("org.jboss.netty.handler.codec.replay.UnsafeDynamicChannelBuffer");
+          Class cl = Class.forName("org.jboss.netty.handler.codec.replay.ReplayingDecoderBuffer");
+          replayingDecoderBufferCtor = getConstructor(cl);
+          replayingDecoderBufferTerminate = getMethod(cl, "terminate");
+          replayErrorClass = Class.forName("org.jboss.netty.handler.codec.replay.ReplayError");
+       } catch (ClassNotFoundException e) {
+          throw new IllegalStateException(
+                "Unable to find a Netty class", e);
+       }
+    }
 
     protected CustomReplayingDecoder(T initialState, boolean unfold, int maxCapacity) {
         this.state = initialState;
@@ -175,7 +196,7 @@ public abstract class CustomReplayingDecoder<T extends Enum<T>>
      */
     protected void slimDownBuffer() {
        ChannelBuffer buf = cumulation.get();
-       if (buf.capacity() > maxCapacity) {
+       if (buf != null && buf.capacity() > maxCapacity) {
           if (cumulation.compareAndSet(buf, null))
              replayable = null;
        }
@@ -237,14 +258,18 @@ public abstract class CustomReplayingDecoder<T extends Enum<T>>
                         continue;
                     }
                 }
-            } catch (ReplayError replay) {
-                // Return to the checkpoint (or oldPosition) and retry.
-                int checkpoint = this.checkpoint;
-                if (checkpoint >= 0) {
-                    cumulation.readerIndex(checkpoint);
+            } catch (Error replay) {
+                if (replayErrorClass.isInstance(replay)) {
+                    // Return to the checkpoint (or oldPosition) and retry.
+                    int checkpoint = this.checkpoint;
+                    if (checkpoint >= 0) {
+                        cumulation.readerIndex(checkpoint);
+                    } else {
+                        // Called by cleanup() - no need to maintain the readerIndex
+                        // anymore because the buffer has been released already.
+                    }
                 } else {
-                    // Called by cleanup() - no need to maintain the readerIndex
-                    // anymore because the buffer has been released already.
+                   throw replay;
                 }
             }
 
@@ -293,7 +318,7 @@ public abstract class CustomReplayingDecoder<T extends Enum<T>>
                 return;
             }
 
-            replayable.terminate();
+            replayingDecoderBufferTerminate.invoke(replayable, null);
 
             if (cumulation.readable()) {
                 // Make sure all data was read before notifying a closed channel.
@@ -318,14 +343,53 @@ public abstract class CustomReplayingDecoder<T extends Enum<T>>
         ChannelBuffer buf = cumulation.get();
         if (buf == null) {
             ChannelBufferFactory factory = ctx.getChannel().getConfig().getBufferFactory();
-            buf = new UnsafeDynamicChannelBuffer(factory);
+            buf = createUnsafeDynamicChannelBuffer(factory);
             if (cumulation.compareAndSet(null, buf)) {
-                replayable = new ReplayingDecoderBuffer(buf);
+                replayable = createReplayingDecoderBuffer(buf);
             } else {
                 buf = cumulation.get();
             }
         }
         return buf;
+    }
+
+    private ChannelBuffer createReplayingDecoderBuffer(ChannelBuffer buf) {
+       try {
+          return (ChannelBuffer) replayingDecoderBufferCtor.newInstance(new Object[]{buf});
+       } catch (Exception e) {
+          throw new IllegalStateException(
+                "Unable to instantiate Netty's replaying decoder buffer", e);
+       }
+    }
+
+    private ChannelBuffer createUnsafeDynamicChannelBuffer(ChannelBufferFactory factory) {
+       try {
+          return (ChannelBuffer) unsafeDynamicBufferCtor.newInstance(new Object[]{factory});
+       } catch (Exception e) {
+          throw new IllegalStateException(
+                "Unable to instantiate Netty's unsafe dynamic channel buffer", e);
+       }
+    }
+
+    private static Constructor getConstructor(String className) throws ClassNotFoundException {
+       return getConstructor(Class.forName(className));
+    }
+
+    private static Constructor getConstructor(Class cl) throws ClassNotFoundException {
+       Constructor ctor = cl.getDeclaredConstructors()[0];
+       ctor.setAccessible(true);
+       return ctor;
+    }
+
+    private static Method getMethod(Class cl, String methodName) {
+       Method[] methods = cl.getDeclaredMethods();
+       for (Method method : methods) {
+          if (method.getName().equals(methodName)) {
+             method.setAccessible(true);
+             return method;
+          }
+       }
+       return null;
     }
 
 }
