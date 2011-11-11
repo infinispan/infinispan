@@ -27,7 +27,6 @@ import javax.transaction.Transaction;
 import org.infinispan.transaction.AbstractCacheTransaction;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -51,9 +50,9 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
       return getCacheTransaction().getAffectedKeys();
    }
 
-   public void addAffectedKeys(Collection<Object> keys) {
+   public void addAllAffectedKeys(Collection<Object> keys) {
       if (keys != null && !keys.isEmpty()) {
-         getCacheTransaction().addAffectedKeys(keys);
+         getCacheTransaction().addAllAffectedKeys(keys);
       }
    }
 

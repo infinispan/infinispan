@@ -72,8 +72,8 @@ public class TransactionalInvocationContextFlagsOverride extends InvocationConte
    }
 
    @Override
-   public void addAffectedKeys(Collection<Object> keys) {
-      delegate.addAffectedKeys(keys);
+   public void addAllAffectedKeys(Collection<Object> keys) {
+      delegate.addAllAffectedKeys(keys);
    }
 
    @Override

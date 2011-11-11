@@ -73,7 +73,7 @@ public interface TxInvocationContext extends InvocationContext {
    /**
     * Registers a new participant with the transaction.
     */
-   void addAffectedKeys(Collection<Object> keys);
+   void addAllAffectedKeys(Collection<Object> keys);
 
    void addAffectedKey(Object key);
 
