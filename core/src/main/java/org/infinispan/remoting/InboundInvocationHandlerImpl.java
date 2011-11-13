@@ -143,6 +143,9 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
 
       if (cr == null) {
+         if (!globalConfiguration.isStrictPeerToPeer())
+            return null;
+
          log.namedCacheDoesNotExist(cacheName);
          return new ExceptionResponse(new NamedCacheNotFoundException(cacheName, "Cache has not been started on node " + transport.getAddress()));
       }

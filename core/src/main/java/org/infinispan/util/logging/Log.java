@@ -795,4 +795,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Our last committed view (%s) is not the same as the coordinator's last committed view (%s). This is normal during a merge", id = 170)
    void prepareViewIdMismatch(CacheView lastCommittedView, CacheView committedView);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Strict peer-to-peer is enabled but the JGroups channel was started externally - this is very likely to result in RPC timeout errors on startup", id = 171)
+   void warnStrictPeerToPeerWithInjectedChannel();
 }
