@@ -23,10 +23,8 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -58,9 +56,7 @@ public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
       assert manager(0).getCache() != null;
       assert manager(1).getCache() != null;
 
-      TestingUtil.blockUntilViewReceived(manager(0).getCache(), 2, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
+      waitForClusterToForm();
 
       cache(0).put("k","v");
       assertEquals("v", cache(1).get("k"));
