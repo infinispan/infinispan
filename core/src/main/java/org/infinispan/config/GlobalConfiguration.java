@@ -1080,7 +1080,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       protected String siteId;
 
       @ConfigurationDocRef(bean = GlobalConfiguration.class, targetElement = "setStrictPeerToPeer")
-      protected Boolean strictPeerToPeer = true;
+      protected Boolean strictPeerToPeer = false;
 
       @ConfigurationDoc(name="distributedSyncTimeout",
                         desc="Hijacked to use as timeout for view installation tasks")
