@@ -23,10 +23,10 @@
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
+import org.infinispan.config.Configuration;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.config.Configuration;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterMethod;
@@ -67,7 +67,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
       assert c.getConfiguration().getLockAcquisitionTimeout() == 1000;
       assert !c.getConfiguration().isTransactionalCache();
       assertEquals(c.getConfiguration().getTransactionMode(), TransactionMode.NON_TRANSACTIONAL);
-      assert TestingUtil.extractComponent(c, RpcManager.class) != null : "This should not be null, since a shared RPC manager should be present";
+      assert TestingUtil.extractComponent(c, Transport.class) != null : "This should not be null, since a shared transport should be present";
 
       // test the "transactional" cache
       c = cm.getCache("transactional");
@@ -75,22 +75,21 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
       assert c.getConfiguration().getConcurrencyLevel() == 100;
       assert c.getConfiguration().getLockAcquisitionTimeout() == 1000;
       assert TestingUtil.extractComponent(c, TransactionManager.class) != null;
-
-      assert TestingUtil.extractComponent(c, RpcManager.class) != null : "This should not be null, since a shared RPC manager should be present";
+      assert TestingUtil.extractComponent(c, Transport.class) != null : "This should not be null, since a shared transport should be present";
 
       // test the "replicated" cache
       c = cm.getCache("syncRepl");
       assert c.getConfiguration().getConcurrencyLevel() == 100;
       assert c.getConfiguration().getLockAcquisitionTimeout() == 1000;
       assertEquals(c.getConfiguration().getTransactionMode(), TransactionMode.NON_TRANSACTIONAL);
-      assert TestingUtil.extractComponent(c, RpcManager.class) != null : "This should not be null, since a shared RPC manager should be present";
+      assert TestingUtil.extractComponent(c, Transport.class) != null : "This should not be null, since a shared transport should be present";
 
       // test the "txSyncRepl" cache
       c = cm.getCache("txSyncRepl");
       assert c.getConfiguration().getConcurrencyLevel() == 100;
       assert c.getConfiguration().getLockAcquisitionTimeout() == 1000;
       assert TestingUtil.extractComponent(c, TransactionManager.class) != null;
-      assert TestingUtil.extractComponent(c, RpcManager.class) != null : "This should not be null, since a shared RPC manager should be present";
+      assert TestingUtil.extractComponent(c, Transport.class) != null : "This should not be null, since a shared transport should be present";
    }
 
    public void testNamedCacheXMLClashingNames() {

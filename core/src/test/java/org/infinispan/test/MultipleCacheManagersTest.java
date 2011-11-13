@@ -347,7 +347,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected abstract void createCacheManagers() throws Throwable;
 
    protected Address address(int cacheIndex) {
-      return cache(cacheIndex).getAdvancedCache().getRpcManager().getAddress();
+      return manager(cacheIndex).getAddress();
    }
 
    protected AdvancedCache advancedCache(int i) {
