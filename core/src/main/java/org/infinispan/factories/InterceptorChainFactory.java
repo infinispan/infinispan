@@ -110,8 +110,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(CacheMgmtInterceptor.class));
 
       // load the state transfer lock interceptor
-      if ((configuration.getCacheMode().isDistributed() && configuration.isRehashEnabled())
-            || (configuration.getCacheMode().isReplicated() && configuration.isStateTransferEnabled()))
+      // the state transfer lock ensures that the cache member list is up-to-date
+      // so it's necessary even if state transfer is disabled
+      if (configuration.getCacheMode().isDistributed() || configuration.getCacheMode().isReplicated())
          interceptorChain.appendInterceptor(createInterceptor(StateTransferLockInterceptor.class));
 
       // load the tx interceptor
