@@ -300,7 +300,7 @@ public class TestCacheManagerFactory {
       return c;
    }
 
-   private static void amendTransport(GlobalConfiguration cfg) {
+   public static void amendTransport(GlobalConfiguration cfg) {
       amendTransport(cfg, new TransportFlags());
    }
 

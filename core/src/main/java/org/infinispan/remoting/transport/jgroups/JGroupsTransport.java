@@ -435,7 +435,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          case SYNCHRONOUS_IGNORE_LEAVERS:
             return org.jgroups.blocks.ResponseMode.GET_ALL;
          case WAIT_FOR_VALID_RESPONSE:
-            return org.jgroups.blocks.ResponseMode.GET_MAJORITY;
+            return org.jgroups.blocks.ResponseMode.GET_FIRST;
       }
       throw new CacheException("Unknown response mode " + mode);
    }

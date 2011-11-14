@@ -23,6 +23,7 @@
 package org.infinispan.remoting.rpc;
 
 import org.infinispan.CacheException;
+import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -36,6 +37,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.RpcException;
+import org.infinispan.remoting.responses.IgnoreExtraResponsesValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -93,18 +95,21 @@ public class RpcManagerImpl implements RpcManager {
    private ExecutorService asyncExecutor;
    private CommandsFactory cf;
    private StreamingMarshaller marshaller;
+   private CacheViewsManager cvm;
 
 
    @Inject
    public void injectDependencies(Transport t, Configuration configuration, ReplicationQueue replicationQueue, CommandsFactory cf,
                                   @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
-                                  @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller) {
+                                  @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
+                                  CacheViewsManager cvm) {
       this.t = t;
       this.configuration = configuration;
       this.replicationQueue = replicationQueue;
       this.asyncExecutor = e;
       this.cf = cf;
       this.marshaller = marshaller;
+      this.cvm = cvm;
    }
 
    @Start(priority = 9)
@@ -118,15 +123,33 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) {
-      List<Address> members = t.getMembers();
-      if (members.size() < 2) {
-         if (log.isDebugEnabled())
-            log.debug("We're the only member in the cluster; Don't invoke remotely.");
+      if (!configuration.getCacheMode().isClustered())
+         throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
+
+      List<Address> clusterMembers = t.getMembers();
+      if (clusterMembers.size() < 2) {
+         log.debug("We're the only member in the cluster; Don't invoke remotely.");
          return Collections.emptyMap();
       } else {
          long startTime = 0;
          if (statisticsEnabled) startTime = System.currentTimeMillis();
          try {
+            // add a response filter that will ensure we don't wait for replies from non-members
+            // but only if the target is the whole cluster and the call is synchronous
+            // if strict peer-to-peer is enabled we have to wait for replies from everyone, not just cache members
+            if (recipients == null && mode.isSynchronous() && !configuration.getGlobalConfiguration().isStrictPeerToPeer()) {
+               List<Address> cacheMembers =  cvm.getCommittedView(configuration.getName()).getMembers();
+               // the filter won't work if there is no other member in the cache, so we have to 
+               if (cacheMembers.size() < 2) {
+                  log.debugf("We're the only member of cache %s; Don't invoke remotely.", configuration.getName());
+                  return Collections.emptyMap();
+               }
+               // if there is already a response filter attached it means it must have its own way of dealing with non-members
+               // so skip installing the filter
+               if (responseFilter == null) {
+                  responseFilter = new IgnoreExtraResponsesValidityFilter(cacheMembers, getAddress());
+               }
+            }
             Map<Address, Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
             if (isStatisticsEnabled()) replicationCount.incrementAndGet();
             return result;
