@@ -221,8 +221,6 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          // Replay capability requires responses from all members!
          ResponseMode mode = supportReplay ? ResponseMode.GET_ALL : this.mode;
 
-         if (filter != null) mode = ResponseMode.GET_FIRST;
-
          RspList<Object> retval = null;
          Buffer buf;
          if (broadcast || FORCE_MCAST) {
