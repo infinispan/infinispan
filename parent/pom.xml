@@ -369,12 +369,15 @@
          <scope>provided</scope>
       </dependency>
       <!-- As of v3.0.4, the RHQ annotations have a retention policy of COMPILE,
-           which means they are no longer required at runtime. -->
+           which means they are no longer required at runtime. However, 
+           because of a Sun compiler bug http://bugs.sun.com/view_bug.do?bug_id=6550655
+           it still needs to be present when using the Infinispan artifacts. This
+           doesn't happen when using Java 7. Please add exclusions accordingly
+           if you don't want to pull this in -->
       <dependency>
          <groupId>org.rhq.helpers</groupId>
          <artifactId>rhq-pluginAnnotations</artifactId>
          <version>${version.rhq.pluginAnnotations}</version>
-         <scope>provided</scope>
          <exclusions>
             <exclusion>
                <groupId>i18nlog</groupId>
