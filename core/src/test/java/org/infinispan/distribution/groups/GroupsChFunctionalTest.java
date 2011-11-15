@@ -22,9 +22,6 @@
  */
 package org.infinispan.distribution.groups;
 
-import java.util.Collections;
-import java.util.List;
-
 import org.infinispan.Cache;
 import org.infinispan.distribution.DistSyncFuncTest;
 import org.infinispan.distribution.group.Grouper;
@@ -32,6 +29,9 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Pete Muir
@@ -114,8 +114,9 @@ public class GroupsChFunctionalTest extends DistSyncFuncTest {
       assert ownerIndex != -1;
 
       TestingUtil.killCacheManagers(manager(ownerIndex));
+      caches.remove(ownerIndex);
       cacheManagers.remove(ownerIndex);
-      waitForClusterToForm(cacheName);
+      TestingUtil.waitForRehashToComplete(caches);
 
       Assert.assertNotSame(getOwners(k1), owners1);
       Assert.assertNotSame(getOwners(k2), owners2);

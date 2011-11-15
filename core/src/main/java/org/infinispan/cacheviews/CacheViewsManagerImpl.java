@@ -21,6 +21,7 @@ package org.infinispan.cacheviews;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.control.CacheViewControlCommand;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -139,7 +140,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    @Start(priority = 11)
    public void start() throws Exception {
       if (transport == null)
-         return;
+         throw new ConfigurationException("CacheViewManager only works in clustered caches");
 
       self = transport.getAddress();
       running = true;
@@ -239,10 +240,14 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    boolean clusterInstallView(String cacheName, CacheView newView) throws Exception {
       boolean success = false;
       try {
+         log.debugf("Installing new view %s for cache %s", newView, cacheName);
          clusterPrepareView(cacheName, newView);
          success = true;
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
+      } catch (Throwable t) {
+         CacheView committedView = viewsInfo.get(cacheName).getCommittedView();
+         log.errorf(t, "Failed to prepare view %s for cache  %s, rolling back to view %s", newView, cacheName, committedView);
       } finally {
          // Cache manager is shutting down, don't try to commit or roll back
          if (!isRunning())
@@ -250,9 +255,11 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
          if (success) {
             clusterCommitView(cacheName, newView.getViewId(), newView.getMembers(), true);
+            log.debugf("Successfully installed view %s for cache %s", newView, cacheName);
          } else {
-            int committedViewId = viewsInfo.get(cacheName).getCommittedView().getViewId();
-            clusterRollbackView(cacheName, committedViewId, newView.getMembers(), true);
+            CacheView committedView = viewsInfo.get(cacheName).getCommittedView();
+            clusterRollbackView(cacheName, committedView.getViewId(), newView.getMembers(), true);
+            log.debugf("Rolled back to view %s for cache %s", committedView, cacheName);
          }
       }
       return success;
@@ -315,8 +322,8 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          Map<Address, Response> rspList = transport.invokeRemotely(validTargets, cmd,
                ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false, null, false);
          checkRemoteResponse(cacheName, cmd, rspList);
-      } catch (Exception e) {
-         log.cacheViewRollbackFailure(e, committedViewId, cacheName);
+      } catch (Throwable t) {
+         log.cacheViewRollbackFailure(t, committedViewId, cacheName);
       }
 
       // in the end we roll back locally, so any pending changes can trigger a new view installation
@@ -647,6 +654,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
             // iterate on the nodes, taking all the nodes in a view as a partition
             int partitionCount = 0;
             List<Address> membersToProcess = new LinkedList<Address>(recoveredMembers);
+            List<CacheView> partitions = new ArrayList(2);
             while (!membersToProcess.isEmpty()) {
                Address node = membersToProcess.get(0);
                CacheView committedView = recoveryInfo.get(node).get(cacheName);
@@ -681,17 +689,20 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
                      minViewId = pmViewId;
                }
                if (minViewId != highestViewId) {
-                  log.debugf("Found partition %d (%s) that should have committed view id %d but not all of them do (min view id %d), " +
+                  log.tracef("Found partition %d (%s) that should have committed view id %d but not all of them do (min view id %d), " +
                         "committing the view", partitionCount, partitionMembers, highestViewId, minViewId);
                   clusterCommitView(cacheName, highestViewId, partitionMembers, false);
                } else {
-                  log.debugf("Found partition %d (%s) that has committed view id %d, sending a rollback command " +
+                  log.tracef("Found partition %d (%s) that has committed view id %d, sending a rollback command " +
                         "to clear any pending prepare", partitionCount, partitionMembers, highestViewId);
                   clusterRollbackView(cacheName, highestViewId, partitionMembers, false);
                }
 
+               partitions.add(new CacheView(highestViewId, partitionMembers));
                partitionCount++;
             }
+
+            log.debugf("Recovered partitions after merge for cache %s: %s", cacheName, partitions);
 
             // we install a new view even if the member list of this cache didn't change, just to make sure
             cacheViewInfo.getPendingChanges().recoveredViews(recoveredMembers, recoveredJoiners);
@@ -800,8 +811,8 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       public Object call() throws Exception {
          try {
             clusterInstallView(cacheName, newView);
-         } catch (Exception e) {
-            log.viewInstallationFailure(e, cacheName);
+         } catch (Throwable t) {
+            log.viewInstallationFailure(t, cacheName);
          }
          return null;
       }

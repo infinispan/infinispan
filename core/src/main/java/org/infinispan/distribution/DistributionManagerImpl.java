@@ -178,7 +178,7 @@ public class DistributionManagerImpl implements DistributionManager {
       // if any of the recipients has left the cluster since the command was issued, just don't wait for its response
       targets.retainAll(rpcManager.getTransport().getMembers());
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets);
-      Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, ResponseMode.SYNCHRONOUS,
+      Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, ResponseMode.WAIT_FOR_VALID_RESPONSE,
                                                                    configuration.getSyncReplTimeout(), false, filter);
 
       if (!responses.isEmpty()) {

@@ -24,6 +24,7 @@ package org.infinispan.factories;
 
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.statetransfer.DistributedStateTransferManagerImpl;
+import org.infinispan.statetransfer.DummyInvalidationStateTransferManagerImpl;
 import org.infinispan.statetransfer.ReplicatedStateTransferManagerImpl;
 import org.infinispan.statetransfer.StateTransferManager;
 
@@ -44,6 +45,8 @@ public class StateTransferManagerFactory extends AbstractNamedCacheComponentFact
          return componentType.cast(new DistributedStateTransferManagerImpl());
       else if (configuration.getCacheMode().isReplicated())
          return componentType.cast(new ReplicatedStateTransferManagerImpl());
+      else if (configuration.getCacheMode().isInvalidation())
+         return componentType.cast(new DummyInvalidationStateTransferManagerImpl());
       else
          return null;
    }

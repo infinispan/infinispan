@@ -655,7 +655,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unable to invoke method %s on Object instance %s - " +
          "removing this target object from list of listeners!", id = 134)
-   void unableToInvokeListenerMethod(Method m, Object target, @Cause IllegalAccessException e);
+   void unableToInvokeListenerMethod(Method m, Object target, @Cause Throwable e);
 
    @LogMessage(level = WARN)
    @Message(value = "Could not lock key %s in order to invalidate from L1 at node %s, skipping....", id = 135)
@@ -778,7 +778,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "View installation failed for cache %s", id = 166)
-   void viewInstallationFailure(@Cause Exception e, String cacheName);
+   void viewInstallationFailure(@Cause Throwable e, String cacheName);
 
    @LogMessage(level = WARN)
    @Message(value = "Rejecting state pushed by node %s for view %d, there is no state transfer in progress (we are at view %d)", id = 167)
@@ -786,7 +786,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Error rolling back to cache view %1$d for cache %2$s", id = 168)
-   void cacheViewRollbackFailure(@Cause Exception e, int committedViewId, String cacheName);
+   void cacheViewRollbackFailure(@Cause Throwable t, int committedViewId, String cacheName);
 
    @LogMessage(level = WARN)
    @Message(value = "Error committing cache view %1$d for cache %2$s", id = 169)
@@ -795,4 +795,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Our last committed view (%s) is not the same as the coordinator's last committed view (%s). This is normal during a merge", id = 170)
    void prepareViewIdMismatch(CacheView lastCommittedView, CacheView committedView);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Strict peer-to-peer is enabled but the JGroups channel was started externally - this is very likely to result in RPC timeout errors on startup", id = 171)
+   void warnStrictPeerToPeerWithInjectedChannel();
 }

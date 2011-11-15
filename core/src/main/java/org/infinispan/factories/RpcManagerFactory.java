@@ -22,6 +22,7 @@
  */
 package org.infinispan.factories;
 
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.remoting.rpc.RpcManager;
 
@@ -36,8 +37,13 @@ public class RpcManagerFactory extends EmptyConstructorNamedCacheFactory impleme
 
    @Override
    public <T> T construct(Class<T> componentType) {
+      if (!configuration.getCacheMode().isClustered())
+         return null;
+
       // only do this if we have a transport configured!
-      if (globalConfiguration.getTransportClass() == null) return null;
+      if (globalConfiguration.getTransportClass() == null)
+         throw new ConfigurationException("Transport should be configured in order to use clustered caches");
+
       return super.construct(componentType);
    }
 }

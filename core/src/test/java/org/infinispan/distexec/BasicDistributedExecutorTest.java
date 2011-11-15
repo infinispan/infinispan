@@ -22,16 +22,17 @@
  */
 package org.infinispan.distexec;
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-
 import org.infinispan.Cache;
+import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 /**
  * Tests basic org.infinispan.distexec.DistributedExecutorService functionality
@@ -61,7 +62,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
     * @throws Exception
     */
    public void testSingleCacheExecution() throws Exception {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager();
+      Configuration config = TestCacheManagerFactory.getDefaultConfiguration(true, Configuration.CacheMode.REPL_SYNC);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
          DistributedExecutorService des = new DefaultExecutorService(cache);
