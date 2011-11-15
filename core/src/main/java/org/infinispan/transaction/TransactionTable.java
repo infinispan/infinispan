@@ -391,6 +391,10 @@ public class TransactionTable {
 
    @ViewChanged
    public void recalculateMinViewIdOnTopologyChange(ViewChangedEvent vce) {
+      // don't do anything if this cache is not clustered - view changes are global
+      if (rpcManager == null)
+         return;
+
       log.debugf("View changed, recalculating minViewId");
       synchronized (minViewIdInvariant) {
          calculateMinViewId();

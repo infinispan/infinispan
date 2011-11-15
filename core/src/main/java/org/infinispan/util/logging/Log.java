@@ -655,7 +655,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unable to invoke method %s on Object instance %s - " +
          "removing this target object from list of listeners!", id = 134)
-   void unableToInvokeListenerMethod(Method m, Object target, @Cause IllegalAccessException e);
+   void unableToInvokeListenerMethod(Method m, Object target, @Cause Throwable e);
 
    @LogMessage(level = WARN)
    @Message(value = "Could not lock key %s in order to invalidate from L1 at node %s, skipping....", id = 135)
