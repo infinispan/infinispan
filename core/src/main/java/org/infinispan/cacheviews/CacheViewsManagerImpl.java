@@ -21,6 +21,7 @@ package org.infinispan.cacheviews;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.control.CacheViewControlCommand;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -139,7 +140,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    @Start(priority = 11)
    public void start() throws Exception {
       if (transport == null)
-         throw new IllegalStateException("CacheViewManager only works in clustered cachesb");
+         throw new ConfigurationException("CacheViewManager only works in clustered caches");
 
       self = transport.getAddress();
       running = true;
