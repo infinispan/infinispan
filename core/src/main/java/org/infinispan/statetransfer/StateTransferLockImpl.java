@@ -247,12 +247,15 @@ public class StateTransferLockImpl implements StateTransferLock {
       synchronized (lock) {
          if (!writesBlocked)
             throw new IllegalStateException(String.format("Trying to unblock write commands for cache view %d but they were not blocked", cacheViewId));
-         if (cacheViewId != blockingCacheViewId && blockingCacheViewId != NO_BLOCKING_CACHE_VIEW)
-            throw new IllegalStateException(String.format("Trying to unblock write commands for cache view %d, but they were blocked with view id %d",
-                  cacheViewId, blockingCacheViewId));
          writesShouldBlock = false;
          writesBlocked = false;
          lock.notifyAll();
+
+         // throw the view id mismatch exception only after we have released the lock
+         // so that a future state transfer will be able to proceed normally
+         if (cacheViewId != blockingCacheViewId && blockingCacheViewId != NO_BLOCKING_CACHE_VIEW)
+            throw new IllegalStateException(String.format("Trying to unblock write commands for cache view %d, but they were blocked with view id %d",
+                  cacheViewId, blockingCacheViewId));
       }
       log.debugf("Unblocked write commands for cache view %d", cacheViewId);
    }
