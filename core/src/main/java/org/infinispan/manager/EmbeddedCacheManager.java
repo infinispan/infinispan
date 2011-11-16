@@ -31,6 +31,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 
 import java.util.List;
 import java.util.Set;
@@ -233,4 +234,8 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     */
    void removeCache(String cacheName);
 
+   /**
+    * @since 5.1
+    */
+   Transport getTransport();
 }

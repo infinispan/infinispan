@@ -832,7 +832,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          throw new IllegalStateException("Cache container has been stopped and cannot be reused. Recreate the cache container.");
    }
 
-   private Transport getTransport() {
+   @Override
+   public Transport getTransport() {
       if (globalComponentRegistry == null) return null;
       return globalComponentRegistry.getComponent(Transport.class);
    }
