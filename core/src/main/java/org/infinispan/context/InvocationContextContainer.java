@@ -109,4 +109,8 @@ public interface InvocationContextContainer {
     */
    InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand, Address origin);
 
+   /**
+    * Must be called as each thread exists the interceptor chain.
+    */
+   void clearThreadLocal();
 }
