@@ -28,6 +28,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -51,12 +52,14 @@ public class InvocationContextInterceptor extends CommandInterceptor {
    private TransactionManager tm;
    private ComponentRegistry componentRegistry;
    private TransactionTable txTable;
+   private InvocationContextContainer invocationContextContainer;
 
    @Inject
-   public void init(TransactionManager tm, ComponentRegistry componentRegistry, TransactionTable txTable) {
+   public void init(TransactionManager tm, ComponentRegistry componentRegistry, TransactionTable txTable, InvocationContextContainer invocationContextContainer) {
       this.tm = tm;
       this.componentRegistry = componentRegistry;
       this.txTable = txTable;
+      this.invocationContextContainer = invocationContextContainer;
    }
 
    @Override
@@ -72,7 +75,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
 
    private Object handleAll(InvocationContext ctx, VisitableCommand command) throws Throwable {
       boolean suppressExceptions = false;
-
+      try {
       ComponentStatus status = componentRegistry.getStatus();
       if (command.ignoreCommandOnStatus(status)) {
          log.debugf("Status: %s : Ignoring %s command", status, command);
@@ -121,6 +124,9 @@ public class InvocationContextInterceptor extends CommandInterceptor {
          }
       } finally {
          LogFactory.popNDC(trace);
+      }
+      } finally {
+         invocationContextContainer.clearThreadLocal();
       }
    }
 

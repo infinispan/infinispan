@@ -25,7 +25,6 @@ package org.infinispan.context;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Set;
@@ -66,5 +65,10 @@ public abstract class AbstractInvocationContextContainer implements InvocationCo
       InvocationContext ctx = ctxHolder.get();
       if (ctx == null && !quiet) throw new IllegalStateException("No InvocationContext associated with current thread!");
       return ctx;
+   }
+
+   @Override
+   public void clearThreadLocal() {
+      ctxHolder.remove();
    }
 }

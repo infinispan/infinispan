@@ -23,8 +23,11 @@
 package org.infinispan.context;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.impl.LocalTxInvocationContext;
+import org.infinispan.interceptors.InvocationContextInterceptor;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -51,14 +54,20 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      Configuration c = TestCacheManagerFactory.getDefaultConfiguration(true);
-      c.setUseLazyDeserialization(true);
-      c.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
+      Configuration c = TestCacheManagerFactory.getDefaultConfiguration(true)
+            .fluent()
+               .storeAsBinary()
+               .transaction()
+                  .lockingMode(LockingMode.PESSIMISTIC)
+            .build();
       return new DefaultCacheManager(c);
    }
 
    public void testContentsOfContext() throws Exception {
       Cache<Key, String> c = cacheManager.getCache();
+      ContextExtractingInterceptor cex = new ContextExtractingInterceptor();
+      c.getAdvancedCache().addInterceptorAfter(cex, InvocationContextInterceptor.class);
+
       c.put(new Key("k"), "v");
 
       assert "v".equals(c.get(new Key("k")));
@@ -67,20 +76,17 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
       tm.begin();
       c.getAdvancedCache().lock(new Key("k"));
 
-      InvocationContextContainer icc = TestingUtil.extractComponent(c, InvocationContextContainer.class);
-
       LockManager lockManager = TestingUtil.extractComponent(c, LockManager.class);
-      InvocationContext ctx = icc.getInvocationContext(true);
 
-      assert ctx instanceof LocalTxInvocationContext;
+      assert cex.ctx instanceof LocalTxInvocationContext;
 
-      assert ctx.getLookedUpEntries().size() == 0 : "Looked up key should not be in transactional invocation context " +
+      assert cex.ctx.getLookedUpEntries().size() == 0 : "Looked up key should not be in transactional invocation context " +
                                                       "as we don't perform any changes";
       assertEquals(lockManager.getNumberOfLocksHeld(), 1, "Only one lock should be held");
 
       c.put(new Key("k"), "v2");
 
-      assert ctx.getLookedUpEntries().size() == 1 : "Still should only be one entry in the context";
+      assert cex.ctx.getLookedUpEntries().size() == 1 : "Still should only be one entry in the context";
       assert lockManager.getNumberOfLocksHeld() == 1 : "Only one lock should be held";
 
       tm.commit();
@@ -88,6 +94,15 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
       assert lockManager.getNumberOfLocksHeld() == 0 : "No locks should be held anymore";
 
       assert "v2".equals(c.get(new Key("k")));
+   }
+
+   private static class ContextExtractingInterceptor extends CommandInterceptor {
+      InvocationContext ctx;
+      @Override
+      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+         this.ctx = ctx;
+         return super.invokeNextInterceptor(ctx, command);
+      }
    }
 
    private static class Key implements Serializable {
