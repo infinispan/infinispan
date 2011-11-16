@@ -22,11 +22,12 @@
  */
 package org.infinispan.transaction.tm;
 
+import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.util.Util;
 
 import javax.transaction.xa.Xid;
 import java.util.Arrays;
-import java.util.Random;
+import java.util.UUID;
 
 /**
  * Implementation of Xid.
@@ -55,9 +56,17 @@ public class DummyXid implements Xid {
    }
 
    private void initialize() {
-      Random rnd = new Random();
-      rnd.nextBytes(globalTransactionId);
-      rnd.nextBytes(branchQualifier);
+      initialize(globalTransactionId);
+      initialize(branchQualifier);
+   }
+
+   private void initialize(byte[] field) {
+      UUID uuid = UUID.randomUUID();
+      long lsb = uuid.getLeastSignificantBits();
+      long msb = uuid.getMostSignificantBits();
+      Arrays.fill(field, (byte) 0);
+      UnsignedNumeric.writeUnsignedLong(field, 0, lsb);
+      UnsignedNumeric.writeUnsignedLong(field, 10, msb);
    }
 
    @Override
