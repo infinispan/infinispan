@@ -30,13 +30,14 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.synchronization.SyncLocalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareDldGlobalTransaction;
-import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareLocalTransaction;
+import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.util.ClusterIdGenerator;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -286,7 +287,8 @@ public class TransactionFactory {
       init(dldEnabled, recoveryEnabled, xa);
       isClustered = configuration.getCacheMode().isClustered();
       if (recoveryEnabled) {
-         clusterIdGenerator = new ClusterIdGenerator(cm, rpcManager);
+         Transport transport = rpcManager != null ? rpcManager.getTransport() : null;
+         clusterIdGenerator = new ClusterIdGenerator(cm, transport);
       }
    }
 

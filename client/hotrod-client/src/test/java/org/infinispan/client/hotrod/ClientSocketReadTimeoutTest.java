@@ -31,6 +31,7 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -193,6 +194,11 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
       @Override
       public void removeCache(String cacheName) {
          delegate.removeCache(cacheName);
+      }
+
+      @Override
+      public Transport getTransport() {
+         return delegate.getTransport();
       }
 
       @Override

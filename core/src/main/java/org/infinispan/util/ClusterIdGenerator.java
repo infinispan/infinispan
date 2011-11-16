@@ -27,7 +27,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
@@ -54,14 +53,12 @@ public class ClusterIdGenerator {
    private final AtomicLong versionPrefix = new AtomicLong();
    private RankCalculator rankCalculator = new RankCalculator();
 
-   public ClusterIdGenerator(EmbeddedCacheManager cm, RpcManager rpcManager) {
+   public ClusterIdGenerator(EmbeddedCacheManager cm, Transport transport) {
       if (cm != null)
          cm.addListener(rankCalculator);
 
-      if (rpcManager != null) {
-         Transport transport = rpcManager.getTransport();
-         calculateRank(rpcManager.getAddress(),
-                       transport.getMembers(), transport.getViewId());
+      if (transport != null) {
+         calculateRank(transport.getAddress(), transport.getMembers(), transport.getViewId());
       }
    }
 
