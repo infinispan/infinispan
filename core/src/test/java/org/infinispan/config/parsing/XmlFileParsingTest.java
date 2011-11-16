@@ -250,6 +250,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getTransactionManagerLookupClass().equals("org.something.Lookup");
       assert c.getCacheStopTimeout() == 10000;
       assert c.getTransactionLockingMode().equals(LockingMode.PESSIMISTIC);
+      assert !c.isTransactionAutoCommit();
 
       c = getNamedCacheConfig(namedCaches, "syncRepl");
 
@@ -373,6 +374,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getLockAcquisitionTimeout() == 1000;
       assert c.getConcurrencyLevel() == 100;
       assert c.getIsolationLevel() == IsolationLevel.READ_COMMITTED;
+      assert c.isTransactionAutoCommit();
 
       c = defaultCfg.clone();
       c.applyOverrides(getNamedCacheConfig(namedCaches, "syncRepl"));

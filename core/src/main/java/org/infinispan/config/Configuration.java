@@ -1695,8 +1695,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "getTransactionMode")
       protected TransactionMode transactionMode = TransactionMode.NON_TRANSACTIONAL;
 
-
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "isTransactionAutoCommit")
+      @XmlAttribute
       protected boolean autoCommit = true;
 
       @XmlElement
@@ -1748,11 +1748,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @XmlAttribute
       public Boolean isSyncCommitPhase() {
          return syncCommitPhase;
-      }
-
-      @XmlAttribute
-      public Boolean isAutoCommit() {
-         return autoCommit;
       }
 
       /**
@@ -1937,6 +1932,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setLockingMode(LockingMode lockingMode) {
          testImmutability("lockingMode");
          this.lockingMode = lockingMode;
+      }
+
+      public Boolean isAutoCommit() {
+         return autoCommit;
       }
 
       @Override
