@@ -89,8 +89,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *
     * @param i                interceptor to add
     * @param afterInterceptor interceptor type after which to place custom interceptor
+    * @return true if successful, false otherwise.
     */
-   void addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor);
+   boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor);
 
    /**
     * Adds a custom interceptor to the interceptor chain, before an instance of the specified interceptor type. Throws a
@@ -98,8 +99,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *
     * @param i                 interceptor to add
     * @param beforeInterceptor interceptor type before which to place custom interceptor
+    * @return true if successful, false otherwise.
     */
-   void addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor);
+   boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor);
 
    /**
     * Removes the interceptor at a specified position, where the first interceptor in the chain is at position 0 and the

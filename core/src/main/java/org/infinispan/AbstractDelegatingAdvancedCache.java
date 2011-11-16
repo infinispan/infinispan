@@ -61,13 +61,13 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    }
 
    @Override
-   public void addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
-      cache.addInterceptorAfter(i, afterInterceptor);
+   public boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
+      return cache.addInterceptorAfter(i, afterInterceptor);
    }
 
    @Override
-   public void addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
-      cache.addInterceptorBefore(i, beforeInterceptor);
+   public boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
+      return cache.addInterceptorBefore(i, beforeInterceptor);
    }
 
    @Override
