@@ -84,12 +84,14 @@
    </default>
 
    <namedCache name="transactional">
-      <transaction useEagerLocking="true" eagerLockSingleNode="true" transactionMode="TRANSACTIONAL"/>
+      <transaction useEagerLocking="true" eagerLockSingleNode="true"
+                   transactionMode="TRANSACTIONAL" autoCommit="true" />
    </namedCache>
 
    <namedCache name="transactional2">
       <transaction transactionManagerLookupClass="org.something.Lookup"
-                   cacheStopTimeout="10000" lockingMode="PESSIMISTIC"/>
+                   cacheStopTimeout="10000" lockingMode="PESSIMISTIC"
+                   autoCommit="false" />
    </namedCache>
 
 
