@@ -144,7 +144,7 @@
       <version.log4j>1.2.16</version.log4j>
       <version.lucene>3.4.0</version.lucene>
       <version.mysql.driver>5.1.9</version.mysql.driver>
-      <version.netty>3.2.4.Final</version.netty>
+      <version.netty>3.2.5.Final</version.netty>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.resteasy>2.2.1.GA</version.resteasy>
       <version.rhq.pluginAnnotations>3.0.4</version.rhq.pluginAnnotations>
