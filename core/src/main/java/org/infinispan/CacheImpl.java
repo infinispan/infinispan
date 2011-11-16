@@ -498,12 +498,12 @@ public class CacheImpl<K, V> extends CacheSupport<K, V> implements AdvancedCache
       invoker.addInterceptor(i, position);
    }
 
-   public void addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
-      invoker.addInterceptorAfter(i, afterInterceptor);
+   public boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
+      return invoker.addInterceptorAfter(i, afterInterceptor);
    }
 
-   public void addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
-      invoker.addInterceptorBefore(i, beforeInterceptor);
+   public boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
+      return invoker.addInterceptorBefore(i, beforeInterceptor);
    }
 
    public void removeInterceptor(int position) {
