@@ -94,7 +94,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
          startDefaultCache
 
          this.versionGenerator = new ClusterIdGenerator(
-            cacheManager, cacheManager.getCache().getAdvancedCache.getRpcManager)
+            cacheManager, cacheManager.getTransport)
 
          startTransport(idleTimeout, tcpNoDelay, sendBufSize, recvBufSize, typedProps)
       }
