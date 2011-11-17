@@ -42,6 +42,7 @@ import java.util.Properties;
  * @author Vladimir Blagojevic
  * @since 5.0
  */
+@Deprecated
 public class FluentGlobalConfiguration extends AbstractConfigurationBeanWithGCR {
 
    public FluentGlobalConfiguration(GlobalConfiguration globalConfig) {
@@ -51,7 +52,7 @@ public class FluentGlobalConfiguration extends AbstractConfigurationBeanWithGCR 
    /**
     * Configures serialization and marshalling settings.
     */
-   public static interface SerializationConfig extends FluentGlobalTypes {
+   @Deprecated public static interface SerializationConfig extends FluentGlobalTypes {
       /**
        * Fully qualified name of the marshaller to use. It must implement
        * org.infinispan.marshall.StreamingMarshaller
@@ -118,7 +119,7 @@ public class FluentGlobalConfiguration extends AbstractConfigurationBeanWithGCR 
    /**
     * Configures the transport used for network communications across the cluster.
     */
-   public static interface TransportConfig extends FluentGlobalTypes {
+   @Deprecated public static interface TransportConfig extends FluentGlobalTypes {
       /**
        * Defines the name of the cluster. Nodes only connect to clusters sharing the same name.
        *
@@ -200,7 +201,7 @@ public class FluentGlobalConfiguration extends AbstractConfigurationBeanWithGCR 
    /**
     * Configures whether global statistics are gathered and reported via JMX for all caches under this cache manager.
     */
-   public static interface GlobalJmxStatisticsConfig extends FluentGlobalTypes {
+   @Deprecated public static interface GlobalJmxStatisticsConfig extends FluentGlobalTypes {
       /**
        * Sets properties which are then passed to the MBean Server Lookup implementation specified.
        *
@@ -257,7 +258,7 @@ public class FluentGlobalConfiguration extends AbstractConfigurationBeanWithGCR 
    /**
     * Configures executor factory.
     */
-   public static interface ExecutorFactoryConfig<T> extends FluentGlobalTypes {
+   @Deprecated public static interface ExecutorFactoryConfig<T> extends FluentGlobalTypes {
       /**
        * Specify factory class for executor
        *
@@ -284,13 +285,14 @@ public class FluentGlobalConfiguration extends AbstractConfigurationBeanWithGCR 
       ExecutorFactoryConfig<T> withProperties(Properties props);
    }
 
-   public static interface ShutdownConfig extends FluentGlobalTypes {
+   @Deprecated public static interface ShutdownConfig extends FluentGlobalTypes {
 
       ShutdownConfig hookBehavior(GlobalConfiguration.ShutdownHookBehavior hookBehavior);
    }
 
 }
 
+@Deprecated
 interface FluentGlobalTypes {
 
    FluentGlobalConfiguration.TransportConfig transport();
@@ -317,7 +319,7 @@ interface FluentGlobalTypes {
 
    GlobalConfiguration build();
 }
-
+@Deprecated
 abstract class AbstractConfigurationBeanWithGCR extends AbstractConfigurationBean implements FluentGlobalTypes {
 
    /**

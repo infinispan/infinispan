@@ -80,8 +80,31 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @param cacheName             name of cache whose configuration is being defined
     * @param configurationOverride configuration overrides to use
     * @return a cloned configuration instance
+    * @deprecated Use {@link #defineConfiguration(String, String, org.infinispan.configuration.cache.Configuration)} instead
     */
+   @Deprecated
    Configuration defineConfiguration(String cacheName, Configuration configurationOverride);
+   
+   /**
+    * Defines a named cache's configuration using the following algorithm:
+    * <p/>
+    * If cache name hasn't been defined before, this method creates a clone of the default cache's configuration,
+    * applies a clone of the configuration overrides passed in and returns this configuration instance.
+    * <p/>
+    * If cache name has been previously defined, this method creates a clone of this cache's existing configuration,
+    * applies a clone of the configuration overrides passed in and returns the configuration instance.
+    * <p/>
+    * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache
+    * manager.  This method enables you to override certain properties that have previously been defined via XML.
+    * <p/>
+    * Passing a brand new Configuration instance as configuration override without having called any of its setters will
+    * effectively return the named cache's configuration since no overrides where passed to it.
+    *
+    * @param cacheName             name of cache whose configuration is being defined
+    * @param configurationOverride configuration overrides to use
+    * @return a cloned configuration instance
+    */
+   org.infinispan.configuration.cache.Configuration defineConfiguration(String cacheName, org.infinispan.configuration.cache.Configuration configurationOverride);
 
    /**
     * Defines a named cache's configuration using the following algorithm:
@@ -105,7 +128,9 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     *                              defined
     * @param configurationOverride configuration overrides to use
     * @return a cloned configuration instance
+    * @deprecated Use {@link #defineConfiguration(String, org.infinispan.configuration.cache.Configuration)} instead
     */
+   @Deprecated
    Configuration defineConfiguration(String cacheName, String templateCacheName, Configuration configurationOverride);
 
    /**

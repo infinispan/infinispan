@@ -89,6 +89,7 @@ import static org.infinispan.config.Configuration.CacheMode.*;
 @XmlType(propOrder = {})
 @XmlRootElement(name = "namedCacheConfiguration")
 @ConfigurationDoc(name = "default")
+@Deprecated
 public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    private static final long serialVersionUID = 5553791890144997466L;
@@ -1657,7 +1658,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @XmlType(propOrder = {})
    @ConfigurationDoc(name = "transaction")
-   public static class TransactionType extends AbstractFluentConfigurationBean implements TransactionConfig {
+   @Deprecated public static class TransactionType extends AbstractFluentConfigurationBean implements TransactionConfig {
 
       /**
        * The serialVersionUID
@@ -2015,7 +2016,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "locking")
-   public static class LockingType extends AbstractFluentConfigurationBean implements LockingConfig {
+   @Deprecated public static class LockingType extends AbstractFluentConfigurationBean implements LockingConfig {
 
       /**
        * The serialVersionUID
@@ -2191,7 +2192,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "recovery", parentName = "transaction")
-   public static class RecoveryType extends AbstractFluentConfigurationBean implements RecoveryConfig {
+   @Deprecated public static class RecoveryType extends AbstractFluentConfigurationBean implements RecoveryConfig {
       
       /** The serialVersionUID */
       private static final long serialVersionUID = 7727835976746044904L;
@@ -2271,7 +2272,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @XmlType(propOrder = {})
    @ConfigurationDoc(name = "clustering")
-   public static class ClusteringType extends AbstractFluentConfigurationBean implements ClusteringConfig {
+   @Deprecated public static class ClusteringType extends AbstractFluentConfigurationBean implements ClusteringConfig {
 
       /**
        * The serialVersionUID
@@ -2435,7 +2436,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
    }
 
-   public static class ClusteringTypeAdapter extends XmlAdapter<ClusteringType, ClusteringType> {
+   @Deprecated public static class ClusteringTypeAdapter extends XmlAdapter<ClusteringType, ClusteringType> {
 
       @Override
       public ClusteringType marshal(ClusteringType ct) throws Exception {
@@ -2480,7 +2481,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "async", parentName = "clustering")
-   public static class AsyncType extends AbstractFluentConfigurationBean implements AsyncConfig {
+   @Deprecated public static class AsyncType extends AbstractFluentConfigurationBean implements AsyncConfig {
 
       @XmlTransient
       private boolean readFromXml = false;
@@ -2676,7 +2677,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "expiration")
-   public static class ExpirationType extends AbstractFluentConfigurationBean implements ExpirationConfig {
+   @Deprecated public static class ExpirationType extends AbstractFluentConfigurationBean implements ExpirationConfig {
 
       /**
        * The serialVersionUID
@@ -2801,7 +2802,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "eviction")
-   public static class EvictionType extends AbstractFluentConfigurationBean implements EvictionConfig {
+   @Deprecated public static class EvictionType extends AbstractFluentConfigurationBean implements EvictionConfig {
 
       /**
        * The serialVersionUID
@@ -2942,7 +2943,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "dataContainer")
-   public static class DataContainerType extends AbstractFluentConfigurationBean implements DataContainerConfig {
+   @Deprecated public static class DataContainerType extends AbstractFluentConfigurationBean implements DataContainerConfig {
 
       /**
        * The serialVersionUID
@@ -3038,7 +3039,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "stateRetrieval")
-   public static class StateRetrievalType extends AbstractFluentConfigurationBean implements StateRetrievalConfig {
+   @Deprecated public static class StateRetrievalType extends AbstractFluentConfigurationBean implements StateRetrievalConfig {
 
       /**
        * The serialVersionUID
@@ -3283,7 +3284,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "sync")
-   public static class SyncType extends AbstractFluentConfigurationBean implements SyncConfig {
+   @Deprecated public static class SyncType extends AbstractFluentConfigurationBean implements SyncConfig {
       /**
        * The serialVersionUID
        */
@@ -3353,7 +3354,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "hash")
-   public static class HashType extends AbstractFluentConfigurationBean implements HashConfig {
+   @Deprecated public static class HashType extends AbstractFluentConfigurationBean implements HashConfig {
 
       /**
        * The serialVersionUID
@@ -3624,7 +3625,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "l1")
-   public static class L1Type extends AbstractFluentConfigurationBean implements L1Config {
+   @Deprecated public static class L1Type extends AbstractFluentConfigurationBean implements L1Config {
 
       /**
        * The serialVersionUID
@@ -3753,7 +3754,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   public static class BooleanAttributeType extends AbstractFluentConfigurationBean {
+   @Deprecated public static class BooleanAttributeType extends AbstractFluentConfigurationBean {
 
       @XmlTransient
       protected final String fieldName;
@@ -3835,7 +3836,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @see <a href="../../../config.html#ce_default_lazyDeserialization">Configuration reference</a>
     */
    @ConfigurationDoc(name = "storeAsBinary")
-   public static class StoreAsBinary extends BooleanAttributeType implements StoreAsBinaryConfig {
+   @Deprecated public static class StoreAsBinary extends BooleanAttributeType implements StoreAsBinaryConfig {
 
       @ConfigurationDoc(desc = "If enabled, keys are stored as binary, in their serialized form.  If false, keys are stored as object references.")
       @XmlAttribute
@@ -3912,9 +3913,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * Deprecated configuration element. Use storeAsBinary instead.
     */
-   @Deprecated
    @ConfigurationDoc(name = "lazyDeserialization")
-   public static class LazyDeserialization extends BooleanAttributeType {
+   @Deprecated public static class LazyDeserialization extends BooleanAttributeType {
 
       public LazyDeserialization() {
          super("lazyDeserialization");
@@ -3953,7 +3953,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @see <a href="../../../config.html#ce_default_jmxStatistics">Configuration reference</a>
     */
    @ConfigurationDoc(name = "jmxStatistics")
-   public static class JmxStatistics extends BooleanAttributeType implements JmxStatisticsConfig {
+   @Deprecated public static class JmxStatistics extends BooleanAttributeType implements JmxStatisticsConfig {
       /**
        * The serialVersionUID
        */
@@ -3989,7 +3989,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @see <a href="../../../config.html#ce_default_invocationBatching">Configuration reference</a>
     */
    @ConfigurationDoc(name = "invocationBatching")
-   public static class InvocationBatching extends BooleanAttributeType implements InvocationBatchingConfig {
+   @Deprecated public static class InvocationBatching extends BooleanAttributeType implements InvocationBatchingConfig {
       /**
        * The serialVersionUID
        */
@@ -4036,7 +4036,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "deadlockDetection")
-   public static class DeadlockDetectionType extends AbstractFluentConfigurationBean implements DeadlockDetectionConfig {
+   @Deprecated public static class DeadlockDetectionType extends AbstractFluentConfigurationBean implements DeadlockDetectionConfig {
 
       /**
        * The serialVersionUID
@@ -4130,7 +4130,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "unsafe")
-   public static class UnsafeType extends AbstractFluentConfigurationBean implements UnsafeConfig {
+   @Deprecated public static class UnsafeType extends AbstractFluentConfigurationBean implements UnsafeConfig {
 
       /**
        * The serialVersionUID
@@ -4196,7 +4196,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.FIELD)
    @ConfigurationDoc(name = "customInterceptors")
-   public static class CustomInterceptorsType extends AbstractFluentConfigurationBean implements CustomInterceptorsConfig {
+   @Deprecated public static class CustomInterceptorsType extends AbstractFluentConfigurationBean implements CustomInterceptorsConfig {
 
       /**
        * The serialVersionUID
@@ -4274,7 +4274,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
    }
 
-   public static class CustomInterceptorPositionType extends AbstractFluentConfigurationBean implements CustomInterceptorPosition {
+   @Deprecated public static class CustomInterceptorPositionType extends AbstractFluentConfigurationBean implements CustomInterceptorPosition {
 
       private final CommandInterceptor interceptor;
       private final CustomInterceptorsType type;
@@ -4328,7 +4328,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "indexing")
-   public static class QueryConfigurationBean extends AbstractFluentConfigurationBean implements IndexingConfig {
+   @Deprecated public static class QueryConfigurationBean extends AbstractFluentConfigurationBean implements IndexingConfig {
 
       /**
        * The serialVersionUID
@@ -4465,6 +4465,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * Cache replication mode.
     */
+   @Deprecated
    public static enum CacheMode {
       /**
        * Data is not replicated.
