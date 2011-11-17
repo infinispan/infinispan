@@ -30,19 +30,24 @@ import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshallUtil;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Reader;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.InvalidPropertiesFormatException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -74,6 +79,7 @@ public class Immutables {
    }
 
    /**
+    * 
     * Creates an immutable copy of the list.
     *
     * @param list the list to copy
@@ -86,6 +92,17 @@ public class Immutables {
       return new ImmutableListCopy<T>(list);
    }
 
+   /**
+    * Creates an immutable copy of the properties.
+    *
+    * @param properties the TypedProperties to copy
+    * @return the immutable copy
+    */
+   public static TypedProperties immutableTypedPropreties(TypedProperties properties) {
+      if (properties == null) return null;
+      return new ImmutableTypedProperties(properties);
+   }
+   
    /**
     * Wraps an array with an immutable list. There is no copying involved.
     *
@@ -761,5 +778,74 @@ public class Immutables {
          return Util.<Class<? extends Map>>asSet(ImmutableMapWrapper.class);
       }
    }
+   
+   private static class ImmutableTypedProperties extends TypedProperties {
+      
+      ImmutableTypedProperties(TypedProperties properties) {
+         super(properties);
+      }
+
+      @Override
+      public synchronized void clear() {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public Set<java.util.Map.Entry<Object, Object>> entrySet() {
+         return new ImmutableEntrySetWrapper<Object, Object>(super.entrySet());
+      }
+      
+      @Override
+      public Set<Object> keySet() {
+         return new ImmutableSetWrapper<Object>(super.keySet());
+      }
+      
+      @Override
+      public synchronized void load(InputStream inStream) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public synchronized void load(Reader reader) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public synchronized void loadFromXML(InputStream in) throws IOException, InvalidPropertiesFormatException {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public synchronized Object put(Object key, Object value) {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public synchronized void putAll(Map<? extends Object, ? extends Object> t) {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public synchronized Object remove(Object key) {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public synchronized TypedProperties setProperty(String key, String value) {
+         throw new UnsupportedOperationException();
+      }
+      
+      @Override
+      public Set<String> stringPropertyNames() {
+         return new ImmutableSetWrapper<String>(super.stringPropertyNames());
+      }
+      
+      @Override
+      public Collection<Object> values() {
+         return new ImmutableCollectionWrapper<Object>(super.values());
+      }
+
+   }
+
 
 }

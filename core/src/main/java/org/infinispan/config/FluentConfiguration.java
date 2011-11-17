@@ -51,6 +51,7 @@ import java.util.Properties;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
+@Deprecated
 public class FluentConfiguration extends AbstractFluentConfigurationBean {
 
    public FluentConfiguration(Configuration config) {
@@ -60,7 +61,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    /**
     * Defines the local, in-VM locking and concurrency characteristics of the cache.
     */
-   public static interface LockingConfig extends FluentTypes {
+   @Deprecated public static interface LockingConfig extends FluentTypes {
       /**
        * Maximum time to attempt a particular lock acquisition
        *
@@ -110,7 +111,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    /**
     * Holds the configuration for cache loaders and stores.
     */
-   public static interface LoadersConfig extends FluentTypes {
+   @Deprecated public static interface LoadersConfig extends FluentTypes {
       /**
        * If true, when the cache starts, data stored in the cache store will be pre-loaded into memory.
        * This is particularly useful when data in the cache store will be needed immediately after
@@ -162,7 +163,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    /**
     * Defines transactional (JTA) characteristics of the cache.
     */
-   public static interface TransactionConfig extends FluentTypes {
+   @Deprecated public static interface TransactionConfig extends FluentTypes {
       /**
        * Fully qualified class name of a class that looks up a reference to a
        * {@link javax.transaction.TransactionManager}. The default provided is capable of locating
@@ -284,7 +285,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    /**
     * Defines recovery configuration for the cache.
     */
-   public static interface RecoveryConfig extends TransactionConfig {
+   @Deprecated public static interface RecoveryConfig extends TransactionConfig {
 
       RecoveryConfig disable();
 
@@ -298,7 +299,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    /**
     * Configures deadlock detection.
     */
-   public static interface DeadlockDetectionConfig extends FluentTypes {
+   @Deprecated public static interface DeadlockDetectionConfig extends FluentTypes {
 
       DeadlockDetectionConfig disable();
 
@@ -314,20 +315,20 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    /**
     * Configures custom interceptors to be added to the cache.
     */
-   public static interface CustomInterceptorsConfig extends FluentTypes, CustomInterceptorCumulator {
+   @Deprecated public static interface CustomInterceptorsConfig extends FluentTypes, CustomInterceptorCumulator {
    }
 
    /**
     * Enables addition of several customer interceptors
     */
-   public static interface CustomInterceptorCumulator {
+   @Deprecated public static interface CustomInterceptorCumulator {
       CustomInterceptorPosition add(CommandInterceptor interceptor);
    }
 
    /**
     * Configures the location of a specific custom interceptor
     */
-   public static interface CustomInterceptorPosition {
+   @Deprecated public static interface CustomInterceptorPosition {
       CustomInterceptorsConfig first();
 
       CustomInterceptorsConfig last();
@@ -342,7 +343,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    /**
     * Controls the eviction settings for the cache.
     */
-   public interface EvictionConfig extends FluentTypes {
+@Deprecated public interface EvictionConfig extends FluentTypes {
       /**
        * Eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable
        * eviction).
@@ -371,7 +372,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    /**
     * Controls the default expiration settings for entries in the cache.
     */
-   public static interface ExpirationConfig extends FluentTypes {
+   @Deprecated public static interface ExpirationConfig extends FluentTypes {
       /**
        * Maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in
        * milliseconds. -1 means the entries never expire. 
@@ -413,7 +414,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    /**
     * Defines clustered characteristics of the cache.
     */
-   public static interface ClusteringConfig extends FluentTypes {
+   @Deprecated public static interface ClusteringConfig extends FluentTypes {
       /**
        * Cache mode. For distribution, set mode to either 'd', 'dist' or 'distribution'. For
        * replication, use either 'r', 'repl' or 'replication'. Finally, for invalidation, 'i', 'inv'
@@ -466,7 +467,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
     * sent over the wire, it does not wait for an acknowledgment before returning. AsyncConfig is
     * mutually exclusive with the SyncConfig
     */
-   public interface AsyncConfig extends ClusteringConfig {
+@Deprecated public interface AsyncConfig extends ClusteringConfig {
       /**
        * If true, this forces all async communications to be queued up and sent out periodically as
        * a batch.
@@ -515,7 +516,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
     * sent over the wire, it blocks until it receives an acknowledgment from the recipient.
     * SyncConfig is mutually exclusive with the AsyncConfig.
     */
-   public interface SyncConfig extends ClusteringConfig {
+@Deprecated public interface SyncConfig extends ClusteringConfig {
       /**
        * This is the timeout used to wait for an acknowledgment when making a remote call, after
        * which the call is aborted and an exception is thrown.
@@ -529,7 +530,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
     * Configures how state is retrieved when a new cache joins the cluster.
     * Used with invalidation and replication clustered modes.
     */
-   public interface StateRetrievalConfig extends ClusteringConfig {
+@Deprecated public interface StateRetrievalConfig extends ClusteringConfig {
       /**
        * If true, this will cause the cache to ask neighboring caches for state when it starts up,
        * so the cache starts 'warm', although it will impact startup time.
@@ -596,7 +597,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
     * Configures the L1 cache behavior in 'distributed' caches instances.
     * In any other cache modes, this element is ignored.
     */
-   public interface L1Config extends ClusteringConfig {
+@Deprecated public interface L1Config extends ClusteringConfig {
       /**
        * Maximum lifespan of an entry placed in the L1 cache.
        *
@@ -637,7 +638,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    /**
     * Allows fine-tuning of rehashing characteristics. Only used with 'distributed' cache mode, and otherwise ignored.
     */
-   public interface HashConfig extends FluentTypes {
+@Deprecated public interface HashConfig extends FluentTypes {
       /**
        * Fully qualified name of class providing consistent hash algorithm
        *
@@ -712,7 +713,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       Configuration build();
    }
    
-   public interface GroupsConfig extends FluentTypes {
+@Deprecated public interface GroupsConfig extends FluentTypes {
       /**
        * Enable grouping support, such that {@link Group} annotations are honoured and any configured
        * groupers will be invoked
@@ -741,7 +742,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
    /**
     * Configures indexing of entries in the cache for searching.
     */
-   public interface IndexingConfig extends FluentTypes {
+@Deprecated public interface IndexingConfig extends FluentTypes {
       /**
        * If true, only index changes made locally, ignoring remote changes. This is useful if
        * indexes are shared across a cluster to prevent redundant indexing of updates.
@@ -783,7 +784,7 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       IndexingConfig addProperty(String key, String value);
    }
 
-   public static interface DataContainerConfig extends FluentTypes {
+   @Deprecated public static interface DataContainerConfig extends FluentTypes {
 
       DataContainerConfig dataContainerClass(Class<? extends DataContainer> dataContainerClass);
 
@@ -794,13 +795,13 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       DataContainerConfig addProperty(String key, String value);
    }
 
-   public static interface UnsafeConfig extends FluentTypes {
+   @Deprecated public static interface UnsafeConfig extends FluentTypes {
 
       UnsafeConfig unreliableReturnValues(Boolean unreliableReturnValues);
 
    }
 
-   public static interface StoreAsBinaryConfig extends FluentTypes {
+   @Deprecated public static interface StoreAsBinaryConfig extends FluentTypes {
 
       StoreAsBinaryConfig storeKeysAsBinary(Boolean storeKeysAsBinary);
 
@@ -812,12 +813,13 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
       Configuration build();
    }
 
-   public static interface JmxStatisticsConfig extends FluentTypes {}
+   @Deprecated public static interface JmxStatisticsConfig extends FluentTypes {}
 
-   public static interface InvocationBatchingConfig extends FluentTypes {
+   @Deprecated public static interface InvocationBatchingConfig extends FluentTypes {
    }
 }
 
+@Deprecated
 interface FluentTypes {
 
    FluentConfiguration.LockingConfig locking();
@@ -875,6 +877,7 @@ interface FluentTypes {
    Configuration build();
 }
 
+@Deprecated
 abstract class AbstractFluentConfigurationBean extends AbstractNamedCacheConfigurationBean implements FluentTypes {
 
    Configuration config;

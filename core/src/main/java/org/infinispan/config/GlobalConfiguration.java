@@ -80,6 +80,7 @@ import java.util.Properties;
 @XmlType(propOrder = {})
 @XmlRootElement
 @ConfigurationDoc(name = "global", desc = "Defines global settings shared among all cache instances created by a single CacheManager.")
+@Deprecated
 public class GlobalConfiguration extends AbstractConfigurationBean {
 
    private static final Log log = LogFactory.getLog(GlobalConfiguration.class);
@@ -309,6 +310,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    /**
     * Behavior of the JVM shutdown hook registered by the cache
     */
+   @Deprecated
    public static enum ShutdownHookBehavior {
       /**
        * By default a shutdown hook is registered if no MBean server (apart from the JDK default) is detected.
@@ -931,7 +933,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
                    desc = "Configuration for the executor service used to emit notifications to asynchronous listeners"),
            @ConfigurationDoc(name = "asyncTransportExecutor",
                    desc = "Configuration for the executor service used for asynchronous work on the Transport, including asynchronous marshalling and Cache 'async operations' such as Cache.putAsync().")})
-   public static class ExecutorFactoryType extends FactoryClassWithPropertiesType implements ExecutorFactoryConfig<ExecutorFactory> {
+   @Deprecated public static class ExecutorFactoryType extends FactoryClassWithPropertiesType implements ExecutorFactoryConfig<ExecutorFactory> {
 
       private static final long serialVersionUID = 6895901500645539386L;
 
@@ -997,7 +999,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
                    desc = "Configuration for the scheduled executor service used to periodically run eviction cleanup tasks."),
            @ConfigurationDoc(name = "replicationQueueScheduledExecutor",
                    desc = "Configuration for the scheduled executor service used to periodically flush replication queues, used if asynchronous clustering is enabled along with useReplQueue being set to true.")})
-   public static class ScheduledExecutorFactoryType extends FactoryClassWithPropertiesType implements ExecutorFactoryConfig<ScheduledExecutorFactory> {
+   @Deprecated public static class ScheduledExecutorFactoryType extends FactoryClassWithPropertiesType implements ExecutorFactoryConfig<ScheduledExecutorFactory> {
 
       private static final long serialVersionUID = 7806391452092647488L;
 
@@ -1060,7 +1062,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "transport")
-   public static class TransportType extends AbstractConfigurationBeanWithGCR implements TransportConfig {
+   @Deprecated public static class TransportType extends AbstractConfigurationBeanWithGCR implements TransportConfig {
 
       /**
        * The serialVersionUID
@@ -1320,7 +1322,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "serialization")
-   public static class SerializationType extends AbstractConfigurationBeanWithGCR implements SerializationConfig {
+   @Deprecated public static class SerializationType extends AbstractConfigurationBeanWithGCR implements SerializationConfig {
 
       /**
        * The serialVersionUID
@@ -1439,7 +1441,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.FIELD)
    @ConfigurationDoc(name = "advancedExternalizers")
-   public static class AdvancedExternalizersType extends AbstractConfigurationBeanWithGCR {
+   @Deprecated public static class AdvancedExternalizersType extends AbstractConfigurationBeanWithGCR {
       /**
        * The serialVersionUID
        */
@@ -1501,7 +1503,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "globalJmxStatistics")
-   public static class GlobalJmxStatisticsType extends AbstractConfigurationBeanWithGCR
+   @Deprecated public static class GlobalJmxStatisticsType extends AbstractConfigurationBeanWithGCR
          implements GlobalJmxStatisticsConfig {
 
       /**
@@ -1693,7 +1695,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    @ConfigurationDoc(name = "shutdown")
-   public static class ShutdownType extends AbstractConfigurationBeanWithGCR implements ShutdownConfig {
+   @Deprecated public static class ShutdownType extends AbstractConfigurationBeanWithGCR implements ShutdownConfig {
 
       /**
        * The serialVersionUID
