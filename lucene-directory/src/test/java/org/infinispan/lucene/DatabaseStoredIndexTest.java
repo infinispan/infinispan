@@ -40,6 +40,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.infinispan.util.Util;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -116,8 +117,8 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
             if (expected==null && actual==null)
                continue;
             if (expected instanceof byte[]){
-               expected = Arrays.toString((byte[]) expected);
-               actual = Arrays.toString((byte[]) actual);
+               expected = Util.printArray((byte[]) expected, false);
+               actual = Util.printArray((byte[]) actual, false);
             }
             if (expected == null || ! expected.equals(actual)) {
                System.out.println("Failure on key["+key.toString()+"] expected value:\n\t"+expected+"\tactual value:\n\t"+actual);

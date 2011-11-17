@@ -406,19 +406,39 @@ public final class Util {
       if (withHash)
          sb.append(", hashCode=").append(Integer.toHexString(array.hashCode()));
 
-      sb.append(", array=");
+      sb.append(", array=0x");
       if (isArraysDebug) {
-         sb.append(Arrays.toString(array));
+         // Convert the entire byte array
+         sb.append(toHexString(array));
       } else {
-         sb.append("[");
-         int length = array.length < 10 ? array.length : 10;
-         for (int i = 0; i < length; i++)
-            sb.append(array[i]).append(", ");
-         sb.append("..]");
+         // Pick the first 8 characters and convert that part
+         sb.append(toHexString(array, 8));
+         sb.append("..");
       }
       sb.append("}");
 
       return sb.toString();
+   }
+
+   public static final String toHexString(byte input[]) {
+      return toHexString(input, input.length);
+   }
+
+   public static final String toHexString(byte input[], int limit) {
+      int i = 0;
+      if (input == null || input.length <= 0)
+         return null;
+
+      char lookup[] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                       '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+      char[] result = new char[limit * 2];
+
+      while (i < limit) {
+         result[2*i] = lookup[(input[i] >> 4) & 0x0F];
+         result[2*i+1] = lookup[(input[i] & 0x0F)];
+         i++;
+      }
+      return String.valueOf(result);
    }
 
    public static String padString(String s, int minWidth) {
