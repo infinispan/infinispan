@@ -292,11 +292,13 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       });
 
       // now invoke the command on the local node
-      handlePrepareView(cacheName, pendingView, committedView);
-
-      // wait for the remote commands to finish
-      Map<Address, Response> rspList = future.get(timeout, TimeUnit.MILLISECONDS);
-      checkRemoteResponse(cacheName, cmd, rspList);
+      try {
+         handlePrepareView(cacheName, pendingView, committedView);
+      } finally {
+         // wait for the remote commands to finish
+         Map<Address, Response> rspList = future.get(timeout, TimeUnit.MILLISECONDS);
+         checkRemoteResponse(cacheName, cmd, rspList);
+      }
       return pendingView;
    }
 
