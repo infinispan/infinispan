@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
 
+import static java.lang.String.format;
 import static org.infinispan.context.Flag.FORCE_SYNCHRONOUS;
 
 /**
@@ -333,14 +334,18 @@ public class GridFile extends File {
          sb.append(tmp);
          String comp = sb.toString();
          Metadata val = exists(comp);
-         if (val != null && val.isFile())
-            throw new IOException(String.format(
-                  "cannot create %s as component %s is a file", path, comp));
-         else if (create_if_absent)
+         if (val != null) {
+            if (val.isFile())
+               throw new IOException(format("cannot create %s as component %s is a file", path, comp));
+         } else if (create_if_absent) {
             metadataCache.put(comp, new Metadata(0, System.currentTimeMillis(), chunk_size, Metadata.DIR));
-         else
+         } else {
+            // Couldn't find a component and we're not allowed to create components!
             return false;
+         }
+
       }
+      // check that we have found all the components we need.
       return true;
    }
 
