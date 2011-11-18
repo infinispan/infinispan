@@ -112,14 +112,14 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    public void testDefiningConfigurationValidation() {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       try {
-         cm.defineConfiguration("cache1", null);
+         cm.defineConfiguration("cache1", (Configuration) null);
          assert false : "Should fail";
       } catch(NullPointerException npe) {
          assert npe.getMessage() != null;
       }
       
       try {
-         cm.defineConfiguration(null, null);
+         cm.defineConfiguration(null, (Configuration) null);
          assert false : "Should fail";
       } catch(NullPointerException npe) {
          assert npe.getMessage() != null;
