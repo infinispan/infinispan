@@ -94,7 +94,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    public GlobalComponentRegistry(GlobalConfiguration configuration,
                                   EmbeddedCacheManager cacheManager,
                                   Set<String> createdCaches) {
-      super(null); // registers the default classloader
+      super(configuration.getClassLoader()); // registers the default classloader
       if (configuration == null) throw new NullPointerException("GlobalConfiguration cannot be null!");
       moduleLifecycles = moduleProperties.resolveModuleLifecycles(defaultClassLoader);
       try {
