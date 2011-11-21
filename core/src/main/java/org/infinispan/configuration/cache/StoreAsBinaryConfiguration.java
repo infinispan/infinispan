@@ -12,15 +12,15 @@ public class StoreAsBinaryConfiguration {
       this.storeValuesAsBinary = storeValuesAsBinary;
    }
 
-   public boolean isEnabled() {
+   public boolean enabled() {
       return enabled;
    }
 
-   public boolean isStoreKeysAsBinary() {
+   public boolean storeKeysAsBinary() {
       return storeKeysAsBinary;
    }
 
-   public boolean isStoreValuesAsBinary() {
+   public boolean storeValuesAsBinary() {
       return storeValuesAsBinary;
    }   
    

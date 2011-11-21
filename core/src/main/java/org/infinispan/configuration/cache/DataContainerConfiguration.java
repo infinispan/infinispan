@@ -19,7 +19,7 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
       this.dataContainer = dataContainer;
    }
    
-   public DataContainer getDataContainer() {
+   public DataContainer dataContainer() {
       return dataContainer;
    }
    

@@ -28,43 +28,43 @@ public class TransportConfiguration {
       this.properties = properties;
    }
 
-   public String getClusterName() {
+   public String clusterName() {
       return clusterName;
    }
 
-   public String getMachineId() {
+   public String machineId() {
       return machineId;
    }
 
-   public String getRackId() {
+   public String rackId() {
       return rackId;
    }
 
-   public String getSiteId() {
+   public String siteId() {
       return siteId;
    }
 
-   public long getDistributedSyncTimeout() {
+   public long distributedSyncTimeout() {
       return distributedSyncTimeout;
    }
    
-   public Transport getTransport() {
+   public Transport transport() {
       return transport;
    }
 
-   public String getNodeName() {
+   public String nodeName() {
       return nodeName;
    }
 
-   public boolean isStrictPeerToPeer() {
+   public boolean strictPeerToPeer() {
       return strictPeerToPeer;
    }
    
-   public TypedProperties getProperties() {
+   public TypedProperties properties() {
       return properties;
    }
    
    public boolean hasTopologyInfo() {
-      return getSiteId() != null || getRackId() != null || getMachineId() != null;
+      return siteId() != null || rackId() != null || machineId() != null;
    }
 }

@@ -245,7 +245,7 @@ public class CacheLoaderManagerConfig extends AbstractFluentConfigurationBean im
       return this;
    }
 
-   public boolean useChainingCacheLoader() {
+   public boolean usingChainingCacheLoader() {
       return !isPassivation() && cacheLoaderConfigs.size() > 1;
    }
 

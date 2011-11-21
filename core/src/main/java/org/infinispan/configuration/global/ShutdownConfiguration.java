@@ -8,7 +8,7 @@ public class ShutdownConfiguration {
       this.hookBehavior = hookBehavior;
    }
 
-   public ShutdownHookBehavior getHookBehavior() {
+   public ShutdownHookBehavior hookBehavior() {
       return hookBehavior;
    }
 

@@ -31,7 +31,7 @@ public class StateRetrievalConfiguration {
     * If true, this will allow the cache to provide in-memory state to a neighbor, even if the cache
     * is not configured to fetch state from its neighbors (fetchInMemoryState is false)
     */
-   public boolean isAlwaysProvideInMemoryState() {
+   public boolean alwaysProvideInMemoryState() {
       return alwaysProvideInMemoryState;
    }
 
@@ -39,14 +39,14 @@ public class StateRetrievalConfiguration {
     * If true, this will cause the cache to ask neighboring caches for state when it starts up, so
     * the cache starts 'warm', although it will impact startup time.
     */
-   public boolean isFetchInMemoryState() {
+   public boolean fetchInMemoryState() {
       return fetchInMemoryState;
    }
 
    /**
     * Initial wait time when backing off before retrying state transfer retrieval
     */
-   public long getInitialRetryWaitTime() {
+   public long initialRetryWaitTime() {
       return initialRetryWaitTime;
    }
 
@@ -54,7 +54,7 @@ public class StateRetrievalConfiguration {
     * This is the maximum amount of time to run a cluster-wide flush, to allow for syncing of
     * transaction logs.
     */
-   public long getLogFlushTimeout() {
+   public long logFlushTimeout() {
       return logFlushTimeout;
    }
 
@@ -62,21 +62,21 @@ public class StateRetrievalConfiguration {
     * This is the maximum number of non-progressing transaction log writes after which a
     * brute-force flush approach is resorted to, to synchronize transaction logs.
     */
-   public int getMaxNonPorgressingLogWrites() {
+   public int maxNonPorgressingLogWrites() {
       return maxNonPorgressingLogWrites;
    }
 
    /**
     * Number of state retrieval retries before giving up and aborting startup.
     */
-   public int getNumRetries() {
+   public int numRetries() {
       return numRetries;
    }
 
    /**
     * Wait time increase factor over successive state retrieval backoffs
     */
-   public int getRetryWaitTimeIncreaseFactor() {
+   public int retryWaitTimeIncreaseFactor() {
       return retryWaitTimeIncreaseFactor;
    }
 
@@ -84,7 +84,7 @@ public class StateRetrievalConfiguration {
     * This is the maximum amount of time - in milliseconds - to wait for state from neighboring
     * caches, before throwing an exception and aborting startup.
     */
-   public long getTimeout() {
+   public long timeout() {
       return timeout;
    }
 

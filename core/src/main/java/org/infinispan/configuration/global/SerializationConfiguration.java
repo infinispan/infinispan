@@ -20,15 +20,15 @@ public class SerializationConfiguration {
       this.advancedExternalizers = Collections.unmodifiableMap(new HashMap<Integer, AdvancedExternalizer<?>>(advancedExternalizers));
    }
 
-   public Class<? extends Marshaller> getMarshallerClass() {
+   public Class<? extends Marshaller> marshallerClass() {
       return marshallerClass;
    }
 
-   public short getVersion() {
+   public short version() {
       return version;
    }
    
-   public Map<Integer, AdvancedExternalizer<?>> getAdvancedExternalizers() {
+   public Map<Integer, AdvancedExternalizer<?>> advancedExternalizers() {
       return advancedExternalizers;
    }
    

@@ -12,15 +12,15 @@ public class SingletonStoreConfiguration {
       this.pushStateWhenCoordinator = pushStateWhenCoordinator;
    }
 
-   public boolean isEnabled() {
+   public boolean enabled() {
       return enabled;
    }
 
-   public long getPushStateTimeout() {
+   public long pushStateTimeout() {
       return pushStateTimeout;
    }
 
-   public boolean isPushStateWhenCoordinator() {
+   public boolean pushStateWhenCoordinator() {
       return pushStateWhenCoordinator;
    }
    

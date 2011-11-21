@@ -43,19 +43,19 @@ public class FileCacheStoreConfiguration extends AbstractLockSupportCacheStoreCo
       this.streamBufferSize = streamBufferSize;
    }
 
-   public long getFsyncInterval() {
+   public long fsyncInterval() {
       return fsyncInterval;
    }
 
-   public FsyncMode getFsyncMode() {
+   public FsyncMode fsyncMode() {
       return fsyncMode;
    }
 
-   public String getLocation() {
+   public String location() {
       return location;
    }
 
-   public int getStreamBufferSize() {
+   public int streamBufferSize() {
       return streamBufferSize;
    }
 

@@ -26,6 +26,7 @@ abstract class AbstractGlobalConfigurationBuilder<T> implements GlobalConfigurat
    }
 
    public ExecutorFactoryConfigurationBuilder asyncListenerExecutor() {
+      
       return globalConfig.asyncListenerExecutor();
    }
 

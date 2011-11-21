@@ -16,19 +16,19 @@ public class LoadersConfiguration {
       this.cacheLoaders = cacheLoaders;
    }
 
-   public boolean isPassivation() {
+   public boolean passivation() {
       return passivation;
    }
 
-   public boolean isPreload() {
+   public boolean preload() {
       return preload;
    }
 
-   public boolean isShared() {
+   public boolean shared() {
       return shared;
    }
 
-   public List<LoaderConfiguration> getCacheLoaders() {
+   public List<LoaderConfiguration> cacheLoaders() {
       return cacheLoaders;
    }
 
@@ -36,28 +36,28 @@ public class LoadersConfiguration {
     * Loops through all individual cache loader configs and checks if fetchPersistentState is set on
     * any of them
     */
-   public Boolean isFetchPersistentState() {
+   public Boolean fetchPersistentState() {
       for (LoaderConfiguration c : cacheLoaders) {
-         if (c.isFetchPersistentState())
+         if (c.fetchPersistentState())
             return true;
       }
       return false;
    }
    
-   public boolean isUsingCacheLoaders() {
+   public boolean usingCacheLoaders() {
       return !cacheLoaders.isEmpty();
    }
    
-   public boolean isUsingAsyncStore() {
+   public boolean usingAsyncStore() {
       for (LoaderConfiguration loaderConfig : cacheLoaders) {
-         if (loaderConfig.getAsync().isEnabled())
+         if (loaderConfig.async().enabled())
             return true;
       }
       return false;
    }
 
-   public boolean useChainingCacheLoader() {
-      return !isPassivation() && cacheLoaders.size() > 1;
+   public boolean usingChainingCacheLoader() {
+      return !passivation() && cacheLoaders.size() > 1;
    }
    
 }

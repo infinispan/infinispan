@@ -38,7 +38,7 @@ public class HashConfiguration {
    /**
     * The consistent hash in use.
     */
-   public ConsistentHash getConsistentHash() {
+   public ConsistentHash consistentHash() {
       return consistentHash;
    }
 
@@ -49,7 +49,7 @@ public class HashConfiguration {
     * {@link HashSeed} can seed based on this information instead of the traditional cluster
     * address.
     */
-   public HashSeed getHashSeed() {
+   public HashSeed hashSeed() {
       return hashSeed;
    }
    
@@ -58,14 +58,14 @@ public class HashConfiguration {
     * Typically one of the the many default {@link org.infinispan.distribution.ch.ConsistentHash}
     * implementations shipped.
     */
-   public Hash getHash() {
+   public Hash hash() {
       return hash;
    }
 
    /**
     * Number of cluster-wide replicas for each cache entry.
     */
-   public int getNumOwners() {
+   public int numOwners() {
       return numOwners;
    }
 
@@ -84,7 +84,7 @@ public class HashConfiguration {
     * A default of 1 is used.
     * </p>
     */
-   public int getNumVirtualNodes() {
+   public int numVirtualNodes() {
       return numVirtualNodes;
    }
 
@@ -99,21 +99,21 @@ public class HashConfiguration {
    /**
     * Rehashing timeout
     */
-   public long getRehashRpcTimeout() {
+   public long rehashRpcTimeout() {
       return rehashRpcTimeout;
    }
 
    /**
     * 
     */
-   public long getRehashWait() {
+   public long rehashWait() {
       return rehashWait;
    }
    
    /**
     * Configuration for various grouper definitions. See the user guide for more information.
     */
-   public GroupsConfiguration getGroupsConfiguration() {
+   public GroupsConfiguration groupsConfiguration() {
       return groupsConfiguration;
    }
 

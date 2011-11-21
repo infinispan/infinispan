@@ -37,14 +37,14 @@ public class L1Configuration {
     * will be always be used.
     * </p> 
     */
-   public int getInvalidationThreshold() {
+   public int invalidationThreshold() {
       return invalidationThreshold;
    }
 
    /**
     * Maximum lifespan of an entry placed in the L1 cache.
     */
-   public long getLifespan() {
+   public long lifespan() {
       return lifespan;
    }
 
@@ -52,7 +52,7 @@ public class L1Configuration {
     * If true, entries removed due to a rehash will be moved to L1 rather than being removed
     * altogether.
     */
-   public boolean isOnRehash() {
+   public boolean onRehash() {
       return onRehash;
    }
 

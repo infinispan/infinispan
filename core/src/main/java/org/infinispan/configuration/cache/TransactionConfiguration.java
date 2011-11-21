@@ -37,51 +37,51 @@ public class TransactionConfiguration {
       this.recovery = recovery;
    }
 
-   public boolean isAutoCommit() {
+   public boolean autoCommit() {
       return autoCommit;
    }
 
-   public int getCacheStopTimeout() {
+   public int cacheStopTimeout() {
       return cacheStopTimeout;
    }
 
-   public boolean isEagerLockingSingleNode() {
+   public boolean eagerLockingSingleNode() {
       return eagerLockingSingleNode;
    }
 
-   public LockingMode getLockingMode() {
+   public LockingMode lockingMode() {
       return lockingMode;
    }
 
-   public boolean isSyncCommitPhase() {
+   public boolean syncCommitPhase() {
       return syncCommitPhase;
    }
 
-   public boolean isSyncRollbackPhase() {
+   public boolean syncRollbackPhase() {
       return syncRollbackPhase;
    }
 
-   public TransactionManagerLookup getTransactionManagerLookup() {
+   public TransactionManagerLookup transactionManagerLookup() {
       return transactionManagerLookup;
    }
    
-   public TransactionSynchronizationRegistryLookup getTransactionSynchronizationRegistryLookup() {
+   public TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup() {
       return transactionSynchronizationRegistryLookup;
    }
 
-   public TransactionMode getTransactionMode() {
+   public TransactionMode transactionMode() {
       return transactionMode;
    }
 
-   public boolean isUseEagerLocking() {
+   public boolean useEagerLocking() {
       return useEagerLocking;
    }
 
-   public boolean isUseSynchronization() {
+   public boolean useSynchronization() {
       return useSynchronization;
    }
    
-   public RecoveryConfiguration getRecovery() {
+   public RecoveryConfiguration recovery() {
       return recovery;
    }
    
@@ -100,7 +100,7 @@ public class TransactionConfiguration {
     *
     * @see #isTransactionAutoCommit()
     */
-   public  boolean isTransactionalCache() {
+   public  boolean transactionalCache() {
       return transactionMode.equals(TransactionMode.TRANSACTIONAL);
    }
    

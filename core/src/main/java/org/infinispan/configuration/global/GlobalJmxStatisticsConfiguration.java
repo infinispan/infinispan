@@ -22,27 +22,27 @@ public class GlobalJmxStatisticsConfiguration {
       this.properties = properties;
    }
 
-   public boolean isEnabled() {
+   public boolean enabled() {
       return enabled;
    }
 
-   public String getDomain() {
+   public String domain() {
       return jmxDomain;
    }
    
-   public TypedProperties getProperties() {
+   public TypedProperties properties() {
       return properties;
    }
 
-   public boolean isAllowDuplicateDomains() {
+   public boolean allowDuplicateDomains() {
       return allowDuplicateDomains;
    }
 
-   public String getCacheManagerName() {
+   public String cacheManagerName() {
       return cacheManagerName;
    }
 
-   public MBeanServerLookup getMBeanServerLookup() {
+   public MBeanServerLookup mbeanServerLookup() {
       return mBeanServerLookup;
    }
 }

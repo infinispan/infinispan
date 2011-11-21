@@ -24,7 +24,7 @@ public class EvictionConfiguration {
     *
     * @param strategy
     */
-   public EvictionStrategy getStrategy() {
+   public EvictionStrategy strategy() {
       return strategy;
    }
    
@@ -33,7 +33,7 @@ public class EvictionConfiguration {
     *
     * @param threadPolicy
     */
-   public EvictionThreadPolicy getThreadPolicy() {
+   public EvictionThreadPolicy threadPolicy() {
       return threadPolicy;
    }
    
@@ -44,7 +44,7 @@ public class EvictionConfiguration {
     *
     * @param maxEntries
     */
-   public int getMaxEntries() {
+   public int maxEntries() {
       return maxEntries;
    }
 
