@@ -25,10 +25,8 @@ package org.infinispan.context.impl;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Set;
 
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;

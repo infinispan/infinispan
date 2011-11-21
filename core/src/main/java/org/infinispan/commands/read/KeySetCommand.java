@@ -25,6 +25,7 @@ package org.infinispan.commands.read;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -33,7 +34,6 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.util.BidirectionalMap;
 
 /**
  * Command implementation for {@link java.util.Map#keySet()} functionality.
@@ -74,10 +74,10 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
 
    private static class FilteredKeySet extends AbstractSet<Object> {
       final Set<Object> keySet;
-      final BidirectionalMap<Object, CacheEntry> lookedUpEntries;
+      final Map<Object, CacheEntry> lookedUpEntries;
       final DataContainer container;
 
-      FilteredKeySet(Set<Object> keySet, BidirectionalMap<Object, CacheEntry> lookedUpEntries, DataContainer container) {
+      FilteredKeySet(Set<Object> keySet, Map<Object, CacheEntry> lookedUpEntries, DataContainer container) {
          this.keySet = keySet;
          this.lookedUpEntries = lookedUpEntries;
          this.container = container;

@@ -25,6 +25,7 @@ package org.infinispan.commands.read;
 import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -34,7 +35,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.util.BidirectionalMap;
 
 /**
  * Command implementation for {@link java.util.Map#values()} functionality.
@@ -75,9 +75,9 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
    private static class FilteredValues extends AbstractCollection<Object> {
       final Collection<Object> values;
       final Set<InternalCacheEntry> entrySet;
-      final BidirectionalMap<Object, CacheEntry> lookedUpEntries;
+      final Map<Object, CacheEntry> lookedUpEntries;
 
-      FilteredValues(DataContainer container, BidirectionalMap<Object, CacheEntry> lookedUpEntries) {
+      FilteredValues(DataContainer container, Map<Object, CacheEntry> lookedUpEntries) {
          values = container.values();
          entrySet = container.entrySet();
          this.lookedUpEntries = lookedUpEntries;

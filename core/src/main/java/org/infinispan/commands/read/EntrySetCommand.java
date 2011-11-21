@@ -36,7 +36,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.util.BidirectionalMap;
 
 import static org.infinispan.util.Immutables.immutableInternalCacheEntry;
 
@@ -78,9 +77,9 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
 
    private static class FilteredEntrySet extends AbstractSet<InternalCacheEntry> {
       final Set<InternalCacheEntry> entrySet;
-      final BidirectionalMap<Object, CacheEntry> lookedUpEntries;
+      final Map<Object, CacheEntry> lookedUpEntries;
 
-      FilteredEntrySet(Set<InternalCacheEntry> entrySet, BidirectionalMap<Object, CacheEntry> lookedUpEntries) {
+      FilteredEntrySet(Set<InternalCacheEntry> entrySet, Map<Object, CacheEntry> lookedUpEntries) {
          this.entrySet = entrySet;
          this.lookedUpEntries = lookedUpEntries;
       }

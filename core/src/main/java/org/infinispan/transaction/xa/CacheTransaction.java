@@ -24,9 +24,9 @@ package org.infinispan.transaction.xa;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.util.BidirectionalMap;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Defines the state a infinispan transaction should have.
@@ -49,7 +49,7 @@ public interface CacheTransaction {
 
    CacheEntry lookupEntry(Object key);
 
-   BidirectionalMap<Object, CacheEntry> getLookedUpEntries();
+   Map<Object, CacheEntry> getLookedUpEntries();
 
    void putLookedUpEntry(Object key, CacheEntry e);
 

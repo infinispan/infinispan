@@ -23,11 +23,9 @@
 package org.infinispan.context.impl;
 
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.util.BidirectionalLinkedHashMap;
-import org.infinispan.util.BidirectionalMap;
-import org.infinispan.util.InfinispanCollections;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +39,7 @@ import java.util.Set;
 public class NonTxInvocationContext extends AbstractInvocationContext {
 
    private static final int INITIAL_CAPACITY = 4;
-   protected BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries = null;
+   protected Map<Object, CacheEntry> lookedUpEntries = null;
 
    protected Set<Object> lockedKeys = null;
 
@@ -70,9 +68,9 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    }
 
    @SuppressWarnings("unchecked")
-   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
-      return (BidirectionalMap<Object, CacheEntry>)
-            (lookedUpEntries == null ? InfinispanCollections.emptyBidirectionalMap() : lookedUpEntries);
+   public Map<Object, CacheEntry> getLookedUpEntries() {
+      return (Map<Object, CacheEntry>)
+            (lookedUpEntries == null ? Collections.emptyMap() : lookedUpEntries);
    }
 
    public boolean isOriginLocal() {
@@ -92,7 +90,7 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    }
 
    private void initLookedUpEntries() {
-      if (lookedUpEntries == null) lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(INITIAL_CAPACITY);
+      if (lookedUpEntries == null) lookedUpEntries = new HashMap<Object, CacheEntry>(INITIAL_CAPACITY);
    }
 
    @Override
@@ -106,7 +104,7 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    public NonTxInvocationContext clone() {
       NonTxInvocationContext dolly = (NonTxInvocationContext) super.clone();
       if (lookedUpEntries != null) {
-         dolly.lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(lookedUpEntries);
+         dolly.lookedUpEntries = new HashMap<Object, CacheEntry>(lookedUpEntries);
       }
       return dolly;
    }

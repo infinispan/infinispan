@@ -41,17 +41,6 @@ import static java.util.Collections.unmodifiableMap;
  */
 public class InfinispanCollections {
    private static final ReversibleOrderedSet EMPTY_ROS = new EmptyReversibleOrderedSet();
-   public static final BidirectionalMap EMPTY_BIDI_MAP = new EmptyBidiMap();
-
-   @SuppressWarnings("unchecked")
-   public static <T> ReversibleOrderedSet<T> emptyReversibleOrderedSet() {
-      return EMPTY_ROS;
-   }
-
-   @SuppressWarnings("unchecked")
-   public static <K, V> BidirectionalMap<K, V> emptyBidirectionalMap() {
-      return EMPTY_BIDI_MAP;
-   }
 
    private static final class EmptyReversibleOrderedSet extends AbstractSet implements ReversibleOrderedSet {
 
@@ -83,58 +72,6 @@ public class InfinispanCollections {
       }
    }
 
-   private static final class EmptyBidiMap extends AbstractMap implements BidirectionalMap {
-
-      public int size() {
-         return 0;
-      }
-
-      public boolean isEmpty() {
-         return true;
-      }
-
-      public boolean containsKey(Object key) {
-         return false;
-      }
-
-      public boolean containsValue(Object value) {
-         return false;
-      }
-
-      public Object get(Object key) {
-         return null;
-      }
-
-      public Object put(Object key, Object value) {
-         throw new UnsupportedOperationException();
-      }
-
-      public Object remove(Object key) {
-         throw new UnsupportedOperationException();
-      }
-
-      public void putAll(Map t) {
-         throw new UnsupportedOperationException();
-      }
-
-      public void clear() {
-         throw new UnsupportedOperationException();
-      }
-
-      public ReversibleOrderedSet keySet() {
-         return EMPTY_ROS;
-      }
-
-      public Collection values() {
-         return Collections.emptySet();
-      }
-
-      public ReversibleOrderedSet entrySet() {
-         return EMPTY_ROS;
-      }
-   }
-
-   // Below you can find some functional programming style helpers
 
    /**
     * A function that converts a type into another one.

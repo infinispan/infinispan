@@ -27,16 +27,16 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.BidirectionalLinkedHashMap;
-import org.infinispan.util.BidirectionalMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -59,7 +59,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    private static final int INITIAL_LOCK_CAPACITY = 4;
 
    protected List<WriteCommand> modifications;
-   protected BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries;
+   protected HashMap<Object, CacheEntry> lookedUpEntries;
    protected Set<Object> affectedKeys = null;
    protected Set<Object> lockedKeys;
    protected Set<Object> backupKeyLocks = null;
@@ -86,7 +86,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       this.modifications = Arrays.asList(modifications);
    }
 
-   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
+   public Map<Object, CacheEntry> getLookedUpEntries() {
       return lookedUpEntries;
    }
 

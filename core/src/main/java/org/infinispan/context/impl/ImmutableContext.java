@@ -29,7 +29,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.BidirectionalMap;
 import org.infinispan.util.InfinispanCollections;
 
 /**
@@ -52,8 +51,8 @@ public final class ImmutableContext implements InvocationContext {
    }
 
    @Override
-   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
-      return InfinispanCollections.EMPTY_BIDI_MAP;
+   public Map<Object, CacheEntry> getLookedUpEntries() {
+      return Collections.emptyMap();
    }
 
    @Override

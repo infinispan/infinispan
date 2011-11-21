@@ -27,7 +27,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.transaction.AbstractCacheTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.BidirectionalMap;
 
 import javax.transaction.Transaction;
 import java.util.List;
@@ -84,7 +83,7 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
       return remoteTransaction.lookupEntry(key);
    }
 
-   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
+   public Map<Object, CacheEntry> getLookedUpEntries() {
       return remoteTransaction.getLookedUpEntries();
    }
 

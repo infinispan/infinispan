@@ -48,10 +48,10 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.util.ReversibleOrderedSet;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Interceptor in charge with wrapping entries and add them in caller's context.
@@ -169,8 +169,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    }
 
    private void commitContextEntries(InvocationContext ctx) {
-      ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
-      Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
+      Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
+      Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
       if (trace) log.tracef("Number of entries in context: %s", entries.size());
       while (it.hasNext()) {
          Map.Entry<Object, CacheEntry> e = it.next();

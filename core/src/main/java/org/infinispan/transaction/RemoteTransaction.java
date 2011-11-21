@@ -26,13 +26,13 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.InvalidTransactionException;
-import org.infinispan.util.BidirectionalLinkedHashMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 /**
@@ -50,13 +50,13 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
       super(tx);
       this.modifications = modifications == null || modifications.length == 0 ? Collections.<WriteCommand>emptyList() : Arrays.asList(modifications);
-      lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(this.modifications.size());
+      lookedUpEntries = new HashMap<Object, CacheEntry>(this.modifications.size());
    }
 
    public RemoteTransaction(GlobalTransaction tx) {
       super(tx);
       this.modifications = new LinkedList<WriteCommand>();
-      lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>();
+      lookedUpEntries = new HashMap<Object, CacheEntry>();
    }
 
    public void invalidate() {
@@ -93,7 +93,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
       try {
          RemoteTransaction dolly = (RemoteTransaction) super.clone();
          dolly.modifications = new ArrayList<WriteCommand>(modifications);
-         dolly.lookedUpEntries = lookedUpEntries.clone();
+         dolly.lookedUpEntries = new HashMap<Object, CacheEntry>(lookedUpEntries);
          return dolly;
       } catch (CloneNotSupportedException e) {
          throw new IllegalStateException("Impossible!!");
