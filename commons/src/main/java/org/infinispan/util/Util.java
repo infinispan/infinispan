@@ -72,14 +72,14 @@ public final class Util {
     * </p>
     * <p>
     * If the class is not found, the {@link ClassNotFoundException} or {@link NoClassDefFoundError} is wrapped as a
-    * {@link ConfigurationException} and is re-thrown.
+    * {@link CacheConfigurationException} and is re-thrown.
     * </p>
     * 
     * @param classname name of the class to load
     * @param cl the application classloader which should be used to load the class, or null if the class is always packaged with
     *        Infinispan
     * @return the class
-    * @throws ConfigurationException if the class cannot be loaded
+    * @throws CacheConfigurationException if the class cannot be loaded
     */
    public static <T> Class<T> loadClass(String classname, ClassLoader cl) {
       try {
@@ -108,7 +108,7 @@ public final class Util {
     *
     * @param classname name of the class to load
     * @return the class
-    * @param cl the application classloader which should be used to load the class, or null if the class is always packaged with
+    * @param userClassLoader the application classloader which should be used to load the class, or null if the class is always packaged with
     *        Infinispan
     * @throws ClassNotFoundException if the class cannot be loaded
     */
@@ -196,7 +196,7 @@ public final class Util {
     * factory method named <tt>getInstance()</tt> first, and failing the existence of an appropriate factory, falls
     * back to an empty constructor.
     * <p />
-    * Any exceptions encountered loading and instantiating the class is wrapped in a {@link ConfigurationException}.
+    * Any exceptions encountered loading and instantiating the class is wrapped in a {@link CacheConfigurationException}.
     *
     * @param classname class to instantiate
     * @return an instance of classname
@@ -208,7 +208,7 @@ public final class Util {
    }
 
    /**
-    * Similar to {@link #getInstance(String)} except that exceptions are propagated to the caller.
+    * Similar to {@link #getInstance(String, ClassLoader)} except that exceptions are propagated to the caller.
     *
     * @param classname class to instantiate
     * @return an instance of classname
@@ -431,9 +431,10 @@ public final class Util {
 
       char lookup[] = {'0', '1', '2', '3', '4', '5', '6', '7',
                        '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-      char[] result = new char[limit * 2];
 
-      while (i < limit) {
+      char[] result = new char[(input.length < limit ? input.length : limit) * 2];
+
+      while (i < limit && i < input.length) {
          result[2*i] = lookup[(input[i] >> 4) & 0x0F];
          result[2*i+1] = lookup[(input[i] & 0x0F)];
          i++;
