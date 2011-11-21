@@ -1939,6 +1939,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.autoCommit = autoCommit;
       }
 
+      public Boolean getAutoCommit() {
+         return autoCommit;
+      }
+
       @Override
       public boolean equals(Object o) {
          if (this == o) return true;
@@ -2735,6 +2739,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       private void setWakeUpInterval(Long wakeUpInterval) {
          testImmutability("wakeUpInterval");
          this.wakeUpInterval = wakeUpInterval;
+      }
+
+      public Long getWakeUpInterval() {
+         return wakeUpInterval;
       }
 
       @Override
