@@ -326,6 +326,9 @@ public class TransactionTable {
     * Removes the {@link RemoteTransaction} corresponding to the given tx.
     */
    public void remoteTransactionCommitted(GlobalTransaction gtx) {
+      if (configuration.isSecondPhaseAsync()) {
+         removeRemoteTransaction(gtx);
+      }
    }
 
    public final RemoteTransaction removeRemoteTransaction(GlobalTransaction txId) {
