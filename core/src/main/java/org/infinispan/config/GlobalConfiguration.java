@@ -910,6 +910,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       }
 
       @XmlElement(name = "properties")
+      @Deprecated
+      public TypedProperties getProperties() {
+         return properties();
+      }
+
       public TypedProperties properties() {
          return properties;
       }
@@ -947,9 +952,14 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       public ExecutorFactoryType() {
       }
 
-      @XmlAttribute
       public String factory() {
          return factory;
+      }
+
+      @XmlAttribute
+      @Deprecated
+      public String getFactory() {
+         return factory();
       }
 
       public void setFactory(String factory) {
@@ -1015,6 +1025,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
 
       @XmlAttribute
+      @Deprecated
+      public String getFactory() {
+         return factory;
+      }
+
       public String factory() {
          return factory;
       }
