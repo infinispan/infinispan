@@ -58,7 +58,7 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
       return newNonTxInvocationContext(true);
    }
 
-   public InvocationContext createInvocationContext(boolean isWrite) {
+   public InvocationContext createInvocationContext(boolean isWrite, int keyCount) {
       final Transaction runningTx = getRunningTx();
       if (runningTx == null && !isWrite) {
          return newNonTxInvocationContext(true);

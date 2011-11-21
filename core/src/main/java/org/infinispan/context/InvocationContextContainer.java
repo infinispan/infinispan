@@ -46,6 +46,12 @@ import javax.transaction.Transaction;
 public interface InvocationContextContainer {
 
    /**
+    * To be used when building InvocationContext with {@link #createInvocationContext(boolean, int)} as an indicator
+    * of the fact that the size of the keys to be accessed in the context is not known.
+    */
+   public static final int UNBOUNDED = -1;
+
+   /**
     * Returns the {@link InvocationContext} that is currently associated with the calling thread. Important:
     * implementations of this method are most likely expensive, involving thread locals. It is recommended to cache
     * the result of this method rather than repeating the call.
@@ -64,7 +70,7 @@ public interface InvocationContextContainer {
     * will return an {@link org.infinispan.context.impl.NonTxInvocationContext}. Either way, both context will be marked
     * as local, i.e. {@link InvocationContext#isOriginLocal()} will be true.
     */
-   InvocationContext createInvocationContext(boolean isWrite);
+   InvocationContext createInvocationContext(boolean isWrite, int keyCount);
 
    /**
     * Creates an invocation context

@@ -100,6 +100,7 @@ public class ConcurrentNotificationTest extends AbstractInfinispanTest {
                      cache.get("key");
                   }
                   catch (Exception e) {
+                     log.error("Exception received!", e);
                      exceptions.add(new Exception("Caused on thread " + getName() + " in loop " + j + " when doing a get()", e));
                   }
                }

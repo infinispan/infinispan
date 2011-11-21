@@ -40,7 +40,7 @@ public class LockAssert {
 
    public static void assertNotLocked(Object key, InvocationContextContainer icc) {
       // can't rely on the negative test since other entries may share the same lock with lock striping.
-      assert !icc.createInvocationContext(true).hasLockedKey(key) : key + " lock recorded!";
+      assert !icc.createInvocationContext(true, -1).hasLockedKey(key) : key + " lock recorded!";
    }
 
    public static void assertNoLocks(LockManager lockManager, InvocationContextContainer icc) {
