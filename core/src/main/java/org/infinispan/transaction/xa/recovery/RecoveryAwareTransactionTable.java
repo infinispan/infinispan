@@ -121,6 +121,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
       if (remoteTransaction == null)
          throw new CacheException(String.format("Remote transaction for global transaction (%s) not found", gtx));
       remoteTransaction.markCompleted(true);
+      super.remoteTransactionCommitted(gtx);
    }
 
    public List<Xid> getLocalPreparedXids() {
