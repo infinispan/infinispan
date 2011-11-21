@@ -31,6 +31,7 @@ javax.cache.CacheBuilderTest#setCacheLoader_Null
 javax.cache.CacheBuilderTest#setReadThrough_NoCacheLoader
 javax.cache.CacheBuilderTest#setCacheWriter_Null
 javax.cache.CacheBuilderTest#setWriteThrough_NoCacheWriter
+javax.cache.CacheBuilderTest#testValidCacheNames
 javax.cache.CacheBuilderTest#setTransactionEnabled
 javax.cache.CacheBuilderTest#setStoreByValue_false
 javax.cache.CacheBuilderTest#setExpiry_null_good
@@ -42,19 +43,18 @@ javax.cache.CacheBuilderTest#setExpiry_both
 
 # Exclude CacheConfigurationTest
 
-javax.cache.CacheConfigurationTest#
 javax.cache.CacheConfigurationTest#checkDefaults
 javax.cache.CacheConfigurationTest#notSame
 javax.cache.CacheConfigurationTest#equals
 javax.cache.CacheConfigurationTest#equalsNotEquals
 javax.cache.CacheConfigurationTest#setStatisticsEnabled
-javax.cache.CacheConfigurationTest#setReadThrough
-javax.cache.CacheConfigurationTest#setWriteThrough
-javax.cache.CacheConfigurationTest#setExpiry_modified
-javax.cache.CacheConfigurationTest#setExpiry_accessed
-javax.cache.CacheConfigurationTest#setExpiry_all
-javax.cache.CacheConfigurationTest#setExpiry_null_good
-javax.cache.CacheConfigurationTest#setExpiry_good_null
+javax.cache.CacheConfigurationTest#DurationEquals
+javax.cache.CacheConfigurationTest#durationNotEqualsAmount
+javax.cache.CacheConfigurationTest#durationNotEqualsUnit
+javax.cache.CacheConfigurationTest#durationEqualsWhenSemanticallyEqualsButExpressedDifferentUnits
+javax.cache.CacheConfigurationTest#durationEqualsWhenSemanticallyEqualsButExpressedDifferentUnitsHashCode
+javax.cache.CacheConfigurationTest#durationNotEqualsUnitEquals
+javax.cache.CacheConfigurationTest#DurationExceptions
 
 # Exclude CacheLoaderTest
 
@@ -88,6 +88,12 @@ javax.cache.CacheLoaderTest#replace_2arg_Missing
 javax.cache.CacheLoaderTest#replace_2arg
 javax.cache.CacheLoaderTest#getAndReplace
 javax.cache.CacheLoaderTest#get_WithNonKeyKey
+
+# Exclude CacheManagerNoTransactionsTest
+
+javax.cache.CacheManagerNoTransactionsTest#transactionalStatusWhenNoUserTransaction
+javax.cache.CacheManagerNoTransactionsTest#isolationLevelForNonTransactionalCache
+javax.cache.CacheManagerNoTransactionsTest#modeForNonTransactionalCache
 
 # Exclude CacheManagerTest
 
@@ -127,6 +133,8 @@ javax.cache.CacheManagerTransactionTest#getUserTransaction
 # Exclude CacheTest
 
 javax.cache.CacheTest#simpleAPI
+javax.cache.CacheTest#genericsTest
+javax.cache.CacheTest#hashcode
 javax.cache.CacheTest#getCacheName
 javax.cache.CacheTest#containsKey_NotStarted
 javax.cache.CacheTest#containsKey_Null
@@ -144,6 +152,8 @@ javax.cache.CacheTest#iterator
 javax.cache.CacheTest#initialise
 javax.cache.CacheTest#stop
 javax.cache.CacheTest#testUnwrap
+javax.cache.CacheTest#testGetCacheManager
+javax.cache.CacheTest#testAnnotations
 
 # Exclude CachingClassLoaderTest
 
