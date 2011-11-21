@@ -1242,6 +1242,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return loaders.isPreload();
    }
 
+   /**
+    * Important - to be used with caution: if you have two transactions writing to the same key concurrently and
+    * the commit is configured to be performed asynchronously then inconsistencies might happen. This is because in
+    * order to have such consistency guarantees locks need to be released asynchronously after all the commits are
+    * acknowledged on the originator. In the case of an asynchronous commit messages we don't wait for all the
+    * commit messages to be acknowledged, but release the locks together with the commit message.
+    */
    public boolean isSyncCommitPhase() {
       return transaction.syncCommitPhase;
    }
@@ -1668,7 +1675,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @Dynamic
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setSyncCommitPhase")
-      protected Boolean syncCommitPhase = false;
+      protected Boolean syncCommitPhase = true;
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "setSyncRollbackPhase")
       @Dynamic
@@ -1758,6 +1765,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.syncCommitPhase = syncCommitPhase;
       }
 
+      /**
+       * Important: enabling this might cause inconsistencies if multiple transactions update the same key concurrently.
+       * See {@link org.infinispan.config.Configuration#isSyncCommitPhase()} for more details.
+       */
       @Override
       public TransactionConfig syncCommitPhase(Boolean syncCommitPhase) {
          setSyncCommitPhase(syncCommitPhase);
