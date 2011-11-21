@@ -33,7 +33,7 @@
    </parent>
 
    <artifactId>infinispan-query</artifactId>
-   <packaging>bundle</packaging>
+   <packaging>jar</packaging>
    <name>Infinispan Query API</name>
    <description>Infinispan Query API module</description>
    <dependencies>

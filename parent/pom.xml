@@ -567,7 +567,7 @@
                <instructions>
                   <Bundle-DocURL>http://www.infinispan.org/</Bundle-DocURL>
                   <Export-Package>
-                     ${project.groupId}.*;version=${project.version};-split-package:=merge-last
+                     ${project.groupId}.*;version=${project.version};-split-package:=error
                   </Export-Package>
                </instructions>
             </configuration>
@@ -750,7 +750,7 @@
          </activation>
          <properties>
             <!-- By default create OSGI bundles -->
-            <packaging>bundle</packaging>
+            <packaging>jar</packaging>
          </properties>
          <build>
             <plugins>

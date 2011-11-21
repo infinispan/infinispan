@@ -33,7 +33,7 @@
    </parent>
 
    <artifactId>infinispan-cachestore-jdbc</artifactId>
-   <packaging>bundle</packaging>
+   <packaging>jar</packaging>
    <name>Infinispan JDBC CacheStore</name>
    <description>Infinispan JDBC CacheStore module</description>
 

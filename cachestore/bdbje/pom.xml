@@ -33,7 +33,7 @@
    </parent>
 
    <artifactId>infinispan-cachestore-bdbje</artifactId>
-   <packaging>bundle</packaging>
+   <packaging>jar</packaging>
    <name>Infinispan BDBJE CacheStore</name>
    <description>Infinispan BerkeleyDB JavaEdition CacheStore module</description>
    <dependencies>
