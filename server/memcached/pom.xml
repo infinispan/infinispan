@@ -33,7 +33,7 @@
    </parent>
 
    <artifactId>infinispan-server-memcached</artifactId>
-   <packaging>bundle</packaging>
+   <packaging>jar</packaging>
    <name>Infinispan Memcached Server</name>
    <description>Infinispan Memcached Server</description>
 

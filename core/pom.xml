@@ -34,7 +34,7 @@
    </parent>
 
    <artifactId>infinispan-core</artifactId>
-   <packaging>bundle</packaging>
+   <packaging>jar</packaging>
    <name>Infinispan Core</name>
    <description>Infinispan core module</description>
 

@@ -33,7 +33,7 @@
    </parent>
 
    <artifactId>infinispan-client-hotrod</artifactId>
-   <packaging>bundle</packaging>
+   <packaging>jar</packaging>
    <name>Infinispan Hot Rod Client</name>
    <description>Infinispan Hot Rod Client</description>
    <properties>

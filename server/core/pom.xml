@@ -33,7 +33,7 @@
    </parent>
 
    <artifactId>infinispan-server-core</artifactId>
-   <packaging>bundle</packaging>
+   <packaging>jar</packaging>
    <name>Infinispan Server - Core Components</name>
    <description>Infinispan Server - Core Components</description>
 
