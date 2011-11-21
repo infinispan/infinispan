@@ -19,31 +19,31 @@ public class ClusteringConfiguration {
       this.syncConfiguration = syncConfiguration;
    }
 
-   public CacheMode getCacheMode() {
+   public CacheMode cacheMode() {
       return cacheMode;
    }
    
-   public String getCacheModeString() {
+   public String cacheModeString() {
       return cacheMode == null ? "none" : cacheMode.toString();
    }
    
-   public AsyncConfiguration getAsync() {
+   public AsyncConfiguration async() {
       return asyncConfiguration;
    }
    
-   public HashConfiguration getHash() {
+   public HashConfiguration hash() {
       return hashConfiguration;
    }
    
-   public L1Configuration getL1() {
+   public L1Configuration l1() {
       return l1Configuration;
    }
    
-   public SyncConfiguration getSync() {
+   public SyncConfiguration sync() {
       return syncConfiguration;
    }
    
-   public StateRetrievalConfiguration getStateRetrieval() {
+   public StateRetrievalConfiguration stateRetrieval() {
       return stateRetrievalConfiguration;
    }
 

@@ -18,7 +18,7 @@ public class SyncConfiguration {
     * This is the timeout used to wait for an acknowledgment when making a remote call, after which
     * the call is aborted and an exception is thrown.
     */
-   public long getReplTimeout() {
+   public long replTimeout() {
       return replTimeout;
    }
 

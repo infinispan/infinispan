@@ -12,7 +12,7 @@ public abstract class AbstractTypedPropertiesConfiguration {
       this.properties = immutableTypedPropreties(properties);
    }
 
-   public TypedProperties getProperties() {
+   public TypedProperties properties() {
       return properties;
    }
 }

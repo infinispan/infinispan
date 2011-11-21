@@ -12,35 +12,35 @@ public class LegacyConfigurationAdaptor {
       FluentConfiguration legacy = new Configuration().fluent();
       
       legacy.clustering()
-         .mode(CacheMode.valueOf(config.getClustering().getCacheMode().name()));
+         .mode(CacheMode.valueOf(config.clustering().cacheMode().name()));
       
       legacy.clustering()
          .async()
-            .asyncMarshalling(config.getClustering().getAsync().isAsyncMarshalling())
-            .replQueueClass(config.getClustering().getAsync().getReplQueue().getClass())
-            .replQueueInterval(config.getClustering().getAsync().getReplQueueInterval())
-            .replQueueMaxElements(config.getClustering().getAsync().getReplQueueMaxElements());
+            .asyncMarshalling(config.clustering().async().asyncMarshalling())
+            .replQueueClass(config.clustering().async().replQueue().getClass())
+            .replQueueInterval(config.clustering().async().replQueueInterval())
+            .replQueueMaxElements(config.clustering().async().replQueueMaxElements());
       
       legacy.clustering()
          .hash()
-            .consistentHashClass(config.getClustering().getHash().getConsistentHash().getClass())
-            .hashFunctionClass(config.getClustering().getHash().getHash().getClass())
-            .hashSeed(config.getClustering().getHash().getHashSeed())
-            .numOwners(config.getClustering().getHash().getNumOwners())
-            .numVirtualNodes(config.getClustering().getHash().getNumVirtualNodes())
-            .rehashEnabled(config.getClustering().getHash().isRehashEnabled())
-            .rehashRpcTimeout(config.getClustering().getHash().getRehashRpcTimeout())
-            .rehashWait(config.getClustering().getHash().getRehashWait())
+            .consistentHashClass(config.clustering().hash().consistentHash().getClass())
+            .hashFunctionClass(config.clustering().hash().hash().getClass())
+            .hashSeed(config.clustering().hash().hashSeed())
+            .numOwners(config.clustering().hash().numOwners())
+            .numVirtualNodes(config.clustering().hash().numVirtualNodes())
+            .rehashEnabled(config.clustering().hash().isRehashEnabled())
+            .rehashRpcTimeout(config.clustering().hash().rehashRpcTimeout())
+            .rehashWait(config.clustering().hash().rehashWait())
             .groups()
-               .enabled(config.getClustering().getHash().getGroupsConfiguration().isEnabled())
-               .groupers(config.getClustering().getHash().getGroupsConfiguration().getGroupers());
+               .enabled(config.clustering().hash().groupsConfiguration().enabled())
+               .groupers(config.clustering().hash().groupsConfiguration().groupers());
       
-      if (config.getClustering().getL1().isEnabled()) {
+      if (config.clustering().l1().isEnabled()) {
          legacy.clustering()
             .l1()
-               .invalidationThreshold(config.getClustering().getL1().getInvalidationThreshold())
-               .lifespan(config.getClustering().getL1().getLifespan())
-               .onRehash(config.getClustering().getL1().isOnRehash());
+               .invalidationThreshold(config.clustering().l1().invalidationThreshold())
+               .lifespan(config.clustering().l1().lifespan())
+               .onRehash(config.clustering().l1().onRehash());
       } else {
          legacy.clustering()
             .l1()
@@ -49,120 +49,120 @@ public class LegacyConfigurationAdaptor {
       
       legacy.clustering()
          .stateRetrieval()
-            .alwaysProvideInMemoryState(config.getClustering().getStateRetrieval().isAlwaysProvideInMemoryState())
-            .fetchInMemoryState(config.getClustering().getStateRetrieval().isFetchInMemoryState())
-            .initialRetryWaitTime(config.getClustering().getStateRetrieval().getInitialRetryWaitTime())
-            .logFlushTimeout(config.getClustering().getStateRetrieval().getLogFlushTimeout())
-            .maxNonProgressingLogWrites(config.getClustering().getStateRetrieval().getMaxNonPorgressingLogWrites())
-            .numRetries(config.getClustering().getStateRetrieval().getNumRetries())
-            .retryWaitTimeIncreaseFactor(config.getClustering().getStateRetrieval().getRetryWaitTimeIncreaseFactor())
-            .timeout(config.getClustering().getStateRetrieval().getTimeout());
+            .alwaysProvideInMemoryState(config.clustering().stateRetrieval().alwaysProvideInMemoryState())
+            .fetchInMemoryState(config.clustering().stateRetrieval().fetchInMemoryState())
+            .initialRetryWaitTime(config.clustering().stateRetrieval().initialRetryWaitTime())
+            .logFlushTimeout(config.clustering().stateRetrieval().logFlushTimeout())
+            .maxNonProgressingLogWrites(config.clustering().stateRetrieval().maxNonPorgressingLogWrites())
+            .numRetries(config.clustering().stateRetrieval().numRetries())
+            .retryWaitTimeIncreaseFactor(config.clustering().stateRetrieval().retryWaitTimeIncreaseFactor())
+            .timeout(config.clustering().stateRetrieval().timeout());
       
       legacy.clustering()
          .sync()
-            .replTimeout(config.getClustering().getSync().getReplTimeout());
+            .replTimeout(config.clustering().sync().replTimeout());
       
-      for (CommandInterceptor interceptor : config.getCustomInterceptors().getInterceptors()) {
+      for (CommandInterceptor interceptor : config.customInterceptors().interceptors()) {
          legacy.clustering()
          .customInterceptors()
             .add(interceptor);
       }
       
       legacy.dataContainer()
-         .dataContainer(config.getDataContainer().getDataContainer())
-         .withProperties(config.getDataContainer().getProperties());
+         .dataContainer(config.dataContainer().dataContainer())
+         .withProperties(config.dataContainer().properties());
       
-      if (config.getDeadlockDetection().isEnabled()) {
+      if (config.deadlockDetection().enabled()) {
          legacy.deadlockDetection()
-            .spinDuration(config.getDeadlockDetection().getSpinDuration());
+            .spinDuration(config.deadlockDetection().spinDuration());
       } else {
          legacy.deadlockDetection()
             .disable();
       }
       
       legacy.eviction()
-         .maxEntries(config.getEviction().getMaxEntries())
-         .strategy(config.getEviction().getStrategy())
-         .threadPolicy(config.getEviction().getThreadPolicy());
+         .maxEntries(config.eviction().maxEntries())
+         .strategy(config.eviction().strategy())
+         .threadPolicy(config.eviction().threadPolicy());
       
       legacy.expiration()
-         .lifespan(config.getExpiration().getLifespan())
-         .maxIdle(config.getExpiration().getMaxIdle())
-         .reaperEnabled(config.getExpiration().isReaperEnabled())
-         .wakeUpInterval(config.getExpiration().getWakeUpInterval());
+         .lifespan(config.expiration().lifespan())
+         .maxIdle(config.expiration().maxIdle())
+         .reaperEnabled(config.expiration().reaperEnabled())
+         .wakeUpInterval(config.expiration().wakeUpInterval());
          
-      if (config.getIndexing().isEnabled())
+      if (config.indexing().enabled())
          legacy.indexing()
-            .indexLocalOnly(config.getIndexing().isIndexLocalOnly());
+            .indexLocalOnly(config.indexing().indexLocalOnly());
       else
          legacy.indexing()
             .disable();
          
-      if (config.getInvocationBatching().isEnabled())
+      if (config.invocationBatching().enabled())
          legacy.invocationBatching();
 
-      if (config.getJmxStatistics().isEnabled())
+      if (config.jmxStatistics().enabled())
          legacy.jmxStatistics();
       
       // TODO lazy deserialization?
       
       legacy.loaders()
-         .passivation(config.getLoaders().isPassivation())
-         .preload(config.getLoaders().isPreload())
-         .shared(config.getLoaders().isShared());
+         .passivation(config.loaders().passivation())
+         .preload(config.loaders().preload())
+         .shared(config.loaders().shared());
 
-      for (LoaderConfiguration loader : config.getLoaders().getCacheLoaders()) {
+      for (LoaderConfiguration loader : config.loaders().cacheLoaders()) {
          AbstractCacheStoreConfig csc = new AbstractCacheStoreConfig();
-         csc.setCacheLoaderClassName(loader.getCacheLoader().getClass().getName());
-         csc.fetchPersistentState(loader.isFetchPersistentState());
-         csc.ignoreModifications(loader.isIgnoreModifications());
-         csc.purgeOnStartup(loader.isPurgeOnStartup());
-         csc.purgerThreads(loader.getPurgerThreads());
-         csc.setPurgeSynchronously(loader.isPurgeSynchronously());
-         csc.getAsyncStoreConfig().setEnabled(loader.getAsync().isEnabled());
-         csc.getAsyncStoreConfig().flushLockTimeout(loader.getAsync().getFlushLockTimeout());
-         csc.getAsyncStoreConfig().modificationQueueSize(loader.getAsync().getModificationQueueSize());
-         csc.getAsyncStoreConfig().shutdownTimeout(loader.getAsync().getShutdownTimeout());
-         csc.getAsyncStoreConfig().threadPoolSize(loader.getAsync().getThreadPoolSize());
-         csc.setProperties(loader.getProperties());
-         csc.getSingletonStoreConfig().enabled(loader.getSingletonStore().isEnabled());
-         csc.getSingletonStoreConfig().pushStateTimeout(loader.getSingletonStore().getPushStateTimeout());
-         csc.getSingletonStoreConfig().pushStateWhenCoordinator(loader.getSingletonStore().isPushStateWhenCoordinator());
+         csc.setCacheLoaderClassName(loader.cacheLoader().getClass().getName());
+         csc.fetchPersistentState(loader.fetchPersistentState());
+         csc.ignoreModifications(loader.ignoreModifications());
+         csc.purgeOnStartup(loader.purgeOnStartup());
+         csc.purgerThreads(loader.purgerThreads());
+         csc.setPurgeSynchronously(loader.purgeSynchronously());
+         csc.getAsyncStoreConfig().setEnabled(loader.async().enabled());
+         csc.getAsyncStoreConfig().flushLockTimeout(loader.async().flushLockTimeout());
+         csc.getAsyncStoreConfig().modificationQueueSize(loader.async().modificationQueueSize());
+         csc.getAsyncStoreConfig().shutdownTimeout(loader.async().shutdownTimeout());
+         csc.getAsyncStoreConfig().threadPoolSize(loader.async().threadPoolSize());
+         csc.setProperties(loader.properties());
+         csc.getSingletonStoreConfig().enabled(loader.singletonStore().enabled());
+         csc.getSingletonStoreConfig().pushStateTimeout(loader.singletonStore().pushStateTimeout());
+         csc.getSingletonStoreConfig().pushStateWhenCoordinator(loader.singletonStore().pushStateWhenCoordinator());
          legacy.loaders().addCacheLoader(csc);
       }
       
       legacy.locking()
-         .concurrencyLevel(config.getLocking().getConcurrencyLevel())
-         .isolationLevel(config.getLocking().getIsolationLevel())
-         .lockAcquisitionTimeout(config.getLocking().getLockAcquisitionTimeout())
-         .useLockStriping(config.getLocking().isUseLockStriping())
-         .writeSkewCheck(config.getLocking().isWriteSkewCheck());
+         .concurrencyLevel(config.locking().concurrencyLevel())
+         .isolationLevel(config.locking().isolationLevel())
+         .lockAcquisitionTimeout(config.locking().lockAcquisitionTimeout())
+         .useLockStriping(config.locking().useLockStriping())
+         .writeSkewCheck(config.locking().writeSkewCheck());
       
-      if (config.getStoreAsBinary().isEnabled()) 
+      if (config.storeAsBinary().enabled()) 
          legacy.storeAsBinary()
-            .storeKeysAsBinary(config.getStoreAsBinary().isStoreKeysAsBinary())
-            .storeValuesAsBinary(config.getStoreAsBinary().isStoreValuesAsBinary());
+            .storeKeysAsBinary(config.storeAsBinary().storeKeysAsBinary())
+            .storeValuesAsBinary(config.storeAsBinary().storeValuesAsBinary());
       else
          legacy.storeAsBinary()
             .disable();
    
       legacy.transaction()
-         .autoCommit(config.getTransaction().isAutoCommit())
-         .cacheStopTimeout(config.getTransaction().getCacheStopTimeout())
-         .eagerLockSingleNode(config.getTransaction().isEagerLockingSingleNode())
-         .lockingMode(config.getTransaction().getLockingMode())
-         .syncCommitPhase(config.getTransaction().isSyncCommitPhase())
-         .syncRollbackPhase(config.getTransaction().isSyncRollbackPhase())
-         .transactionManagerLookup(config.getTransaction().getTransactionManagerLookup())
-         .transactionMode(config.getTransaction().getTransactionMode())
-         .useEagerLocking(config.getTransaction().isUseEagerLocking())
-         .useSynchronization(config.getTransaction().isUseSynchronization());
+         .autoCommit(config.transaction().autoCommit())
+         .cacheStopTimeout(config.transaction().cacheStopTimeout())
+         .eagerLockSingleNode(config.transaction().eagerLockingSingleNode())
+         .lockingMode(config.transaction().lockingMode())
+         .syncCommitPhase(config.transaction().syncCommitPhase())
+         .syncRollbackPhase(config.transaction().syncRollbackPhase())
+         .transactionManagerLookup(config.transaction().transactionManagerLookup())
+         .transactionMode(config.transaction().transactionMode())
+         .useEagerLocking(config.transaction().useEagerLocking())
+         .useSynchronization(config.transaction().useSynchronization());
       
-      if (config.getTransaction().getRecovery().isEnabled()) {
+      if (config.transaction().recovery().enabled()) {
          legacy.transaction().recovery();
       }
         
-      legacy.unsafe().unreliableReturnValues(config.getUnsafe().isUnreliableReturnValues());
+      legacy.unsafe().unreliableReturnValues(config.unsafe().unreliableReturnValues());
       
       
       return legacy.build();

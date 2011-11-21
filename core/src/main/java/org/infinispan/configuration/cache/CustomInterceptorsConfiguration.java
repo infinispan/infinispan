@@ -12,7 +12,7 @@ public class CustomInterceptorsConfiguration {
       this.interceptors = interceptors;
    }
    
-   public List<CommandInterceptor> getInterceptors() {
+   public List<CommandInterceptor> interceptors() {
       return interceptors;
    }
 

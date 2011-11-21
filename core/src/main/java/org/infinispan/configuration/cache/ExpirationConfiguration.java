@@ -23,7 +23,7 @@ public class ExpirationConfiguration {
     * 
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
-   public long getLifespan() {
+   public long lifespan() {
       return lifespan;
    }
 
@@ -33,7 +33,7 @@ public class ExpirationConfiguration {
     * 
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
-   public long getMaxIdle() {
+   public long maxIdle() {
       return maxIdle;
    }
 
@@ -42,7 +42,7 @@ public class ExpirationConfiguration {
     * Regardless of whether a reaper is used, entries are tested for expiration lazily when they are
     * touched.
     */
-   public boolean isReaperEnabled() {
+   public boolean reaperEnabled() {
       return reaperEnabled;
    }
 
@@ -51,7 +51,7 @@ public class ExpirationConfiguration {
     * any cache stores. If you wish to disable the periodic eviction process altogether, set
     * wakeupInterval to -1.
     */
-   public long getWakeUpInterval() {
+   public long wakeUpInterval() {
       return wakeUpInterval;
    }
 

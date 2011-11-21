@@ -48,7 +48,7 @@ public class Configuration {
       this.classLoader = cl;
    }
 
-   public String getName() {
+   public String name() {
       return name;
    }
    
@@ -57,77 +57,77 @@ public class Configuration {
     * @return
     */
    @Deprecated
-   public ClassLoader getClassLoader() {
+   public ClassLoader classLoader() {
       return classLoader;
    }
    
-   public ClusteringConfiguration getClustering() {
+   public ClusteringConfiguration clustering() {
       return clusteringConfiguration;
    }
    
-   public CustomInterceptorsConfiguration getCustomInterceptors() {
+   public CustomInterceptorsConfiguration customInterceptors() {
       return customInterceptorsConfiguration;
    }
    
-   public DataContainerConfiguration getDataContainer() {
+   public DataContainerConfiguration dataContainer() {
       return dataContainerConfiguration;
    }
    
-   public DeadlockDetectionConfiguration getDeadlockDetection() {
+   public DeadlockDetectionConfiguration deadlockDetection() {
       return deadlockDetectionConfiguration;
    }
    
-   public EvictionConfiguration getEviction() {
+   public EvictionConfiguration eviction() {
       return evictionConfiguration;
    }
    
-   public ExpirationConfiguration getExpiration() {
+   public ExpirationConfiguration expiration() {
       return expirationConfiguration;
    }
    
-   public IndexingConfiguration getIndexing() {
+   public IndexingConfiguration indexing() {
       return indexingConfiguration;
    }
    
-   public InvocationBatchingConfiguration getInvocationBatching() {
+   public InvocationBatchingConfiguration invocationBatching() {
       return invocationBatchingConfiguration;
    }
    
-   public JMXStatisticsConfiguration getJmxStatistics() {
+   public JMXStatisticsConfiguration jmxStatistics() {
       return jmxStatisticsConfiguration;
    }
    
-   public LazyDeserializationConfiguration getLazyDeserialization() {
+   public LazyDeserializationConfiguration lazyDeserialization() {
       return lazyDeserializationConfiguration;
    }
    
-   public LoadersConfiguration getLoaders() {
+   public LoadersConfiguration loaders() {
       return loadersConfiguration;
    }
    
-   public LockingConfiguration getLocking() {
+   public LockingConfiguration locking() {
       return lockingConfiguration;
    }
    
-   public StoreAsBinaryConfiguration getStoreAsBinary() {
+   public StoreAsBinaryConfiguration storeAsBinary() {
       return storeAsBinaryConfiguration;
    }
    
-   public TransactionConfiguration getTransaction() {
+   public TransactionConfiguration transaction() {
       return transactionConfiguration;
    }
    
-   public UnsafeConfiguration getUnsafe() {
+   public UnsafeConfiguration unsafe() {
       return unsafeConfiguration;
    }
    
-   public boolean isStateTransferEnabled() {
-      return getClustering().getStateRetrieval().isFetchInMemoryState() || getLoaders().isFetchPersistentState();
+   public boolean stateTransferEnabled() {
+      return clustering().stateRetrieval().fetchInMemoryState() || loaders().fetchPersistentState();
    }
    
    @Deprecated
-   public boolean isOnePhaseCommit() {
-      return clusteringConfiguration.getCacheMode().isSynchronous();
+   public boolean onePhaseCommit() {
+      return clusteringConfiguration.cacheMode().isSynchronous();
    }
 
 

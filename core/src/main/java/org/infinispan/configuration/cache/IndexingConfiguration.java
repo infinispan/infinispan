@@ -20,7 +20,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    /**
     * Whether indexing is enabled. False by default.
     */
-   public boolean isEnabled() {
+   public boolean enabled() {
       return enabled;
    }
 
@@ -28,7 +28,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     * If true, only index changes made locally, ignoring remote changes. This is useful if indexes
     * are shared across a cluster to prevent redundant indexing of updates.
     */
-   public boolean isIndexLocalOnly() {
+   public boolean indexLocalOnly() {
       return indexLocalOnly;
    }
 
@@ -44,9 +44,9 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     *      Search</a>
     */
    @Override
-   public TypedProperties getProperties() {
+   public TypedProperties properties() {
       // Overridden to replace Javadoc
-      return super.getProperties();
+      return super.properties();
    }
 
 }

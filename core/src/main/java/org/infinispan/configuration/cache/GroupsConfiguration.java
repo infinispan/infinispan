@@ -28,14 +28,14 @@ public class GroupsConfiguration {
     * @param enabled
     * @return
     */
-   public boolean isEnabled() {
+   public boolean enabled() {
       return enabled;
    }
 
    /**
     * Get's the current groupers in use
     */
-   public List<Grouper<?>> getGroupers() {
+   public List<Grouper<?>> groupers() {
       return groupers;
    }
 

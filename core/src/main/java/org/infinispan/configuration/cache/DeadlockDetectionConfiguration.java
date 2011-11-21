@@ -17,11 +17,11 @@ public class DeadlockDetectionConfiguration {
     * Time period that determines how often is lock acquisition attempted within maximum time
     * allowed to acquire a particular lock
     */
-   public long getSpinDuration() {
+   public long spinDuration() {
       return spinDuration;
    }
    
-   public boolean isEnabled() {
+   public boolean enabled() {
       return enabled;
    }
    

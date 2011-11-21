@@ -17,23 +17,23 @@ public class AsyncLoaderConfiguration {
       this.threadPoolSize = threadPoolSize;
    }
 
-   public boolean isEnabled() {
+   public boolean enabled() {
       return enabled;
    }
 
-   public long getFlushLockTimeout() {
+   public long flushLockTimeout() {
       return flushLockTimeout;
    }
 
-   public int getModificationQueueSize() {
+   public int modificationQueueSize() {
       return modificationQueueSize;
    }
 
-   public long getShutdownTimeout() {
+   public long shutdownTimeout() {
       return shutdownTimeout;
    }
 
-   public int getThreadPoolSize() {
+   public int threadPoolSize() {
       return threadPoolSize;
    }
 

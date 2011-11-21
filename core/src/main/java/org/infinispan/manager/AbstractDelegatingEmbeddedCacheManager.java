@@ -57,6 +57,12 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    public Configuration defineConfiguration(String cacheName, String templateCacheName, Configuration configurationOverride) {
       return cm.defineConfiguration(cacheName, templateCacheName, configurationOverride);
    }
+   
+   @Override
+   public org.infinispan.configuration.cache.Configuration defineConfiguration(String cacheName,
+         org.infinispan.configuration.cache.Configuration configuration) {
+      return cm.defineConfiguration(cacheName, configuration);
+   }
 
    @Override
    public String getClusterName() {

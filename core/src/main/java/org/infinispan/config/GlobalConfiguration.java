@@ -910,7 +910,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       }
 
       @XmlElement(name = "properties")
-      public TypedProperties getProperties() {
+      public TypedProperties properties() {
          return properties;
       }
 
@@ -948,7 +948,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       }
 
       @XmlAttribute
-      public String getFactory() {
+      public String factory() {
          return factory;
       }
 
@@ -1015,7 +1015,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
 
       @XmlAttribute
-      public String getFactory() {
+      public String factory() {
          return factory;
       }
 

@@ -32,14 +32,14 @@ public class AsyncConfiguration {
     * href="https://docs.jboss.org/author/display/ISPN/Asynchronous+Options"
     * >https://docs.jboss.org/author/display/ISPN/Asynchronous+Options</a>.
     */
-   public boolean isAsyncMarshalling() {
+   public boolean asyncMarshalling() {
       return asyncMarshalling;
    }
 
    /**
     * The replication queue in use, by default {@link ReplicationQueueImpl}.
     */
-   public ReplicationQueue getReplQueue() {
+   public ReplicationQueue replQueue() {
       return replicationQueue;
    }
 
@@ -47,7 +47,7 @@ public class AsyncConfiguration {
     * If useReplQueue is set to true, this attribute controls how often the asynchronous thread
     * used to flush the replication queue runs.
     */
-   public long getReplQueueInterval() {
+   public long replQueueInterval() {
       return replicationQueueInterval;
    }
 
@@ -55,7 +55,7 @@ public class AsyncConfiguration {
     * If useReplQueue is set to true, this attribute can be used to trigger flushing of the queue
     * when it reaches a specific threshold.
     */
-   public int getReplQueueMaxElements() {
+   public int replQueueMaxElements() {
       return replicationQueueMaxElements;
    }
 
@@ -63,7 +63,7 @@ public class AsyncConfiguration {
     * If true, this forces all async communications to be queued up and sent out periodically as a
     * batch.
     */
-   public boolean isUseReplQueue() {
+   public boolean useReplQueue() {
       return useReplicationQueue;
    }
 

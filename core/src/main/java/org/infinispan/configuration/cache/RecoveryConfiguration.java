@@ -12,11 +12,11 @@ public class RecoveryConfiguration {
       this.recoveryInfoCacheName = recoveryInfoCacheName;
    }
 
-   public boolean isEnabled() {
+   public boolean enabled() {
       return enabled;
    }
 
-   public String getRecoveryInfoCacheName() {
+   public String recoveryInfoCacheName() {
       return recoveryInfoCacheName;
    }
    

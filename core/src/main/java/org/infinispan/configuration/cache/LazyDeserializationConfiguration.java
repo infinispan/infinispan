@@ -8,7 +8,7 @@ public class LazyDeserializationConfiguration {
       this.enabled = enabled;
    }
    
-   public boolean isEnabled() {
+   public boolean enabled() {
       return enabled;
    }
    

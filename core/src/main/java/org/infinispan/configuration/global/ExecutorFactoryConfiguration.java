@@ -13,7 +13,7 @@ public class ExecutorFactoryConfiguration extends AbstractTypedPropertiesConfigu
       this.factory = factory;
    }
 
-   public ExecutorFactory getFactory() {
+   public ExecutorFactory factory() {
       return factory;
    }
 

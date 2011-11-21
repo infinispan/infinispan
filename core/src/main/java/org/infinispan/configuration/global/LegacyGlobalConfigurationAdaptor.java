@@ -9,56 +9,56 @@ public class LegacyGlobalConfigurationAdaptor {
    
    public org.infinispan.config.GlobalConfiguration adapt(GlobalConfiguration config) {
       
-      FluentGlobalConfiguration legacy = new org.infinispan.config.GlobalConfiguration(config.getClassLoader()).fluent();
+      FluentGlobalConfiguration legacy = new org.infinispan.config.GlobalConfiguration(config.classLoader()).fluent();
 
       legacy.transport()
-         .clusterName(config.getTransport().getClusterName())
-         .machineId(config.getTransport().getMachineId())
-         .rackId(config.getTransport().getRackId())
-         .siteId(config.getTransport().getSiteId())
-         .strictPeerToPeer(config.getTransport().isStrictPeerToPeer())
-         .distributedSyncTimeout(config.getTransport().getDistributedSyncTimeout())
-         .transportClass(config.getTransport().getTransport().getClass())
-         .nodeName(config.getTransport().getNodeName())
-         .withProperties(config.getTransport().getProperties());
+         .clusterName(config.transport().clusterName())
+         .machineId(config.transport().machineId())
+         .rackId(config.transport().rackId())
+         .siteId(config.transport().siteId())
+         .strictPeerToPeer(config.transport().strictPeerToPeer())
+         .distributedSyncTimeout(config.transport().distributedSyncTimeout())
+         .transportClass(config.transport().transport().getClass())
+         .nodeName(config.transport().nodeName())
+         .withProperties(config.transport().properties());
       
-      if (config.getGlobalJmxStatistics().isEnabled()) {
+      if (config.globalJmxStatistics().enabled()) {
          legacy.globalJmxStatistics()
-            .jmxDomain(config.getGlobalJmxStatistics().getDomain())
-            .mBeanServerLookup(config.getGlobalJmxStatistics().getMBeanServerLookup())
-            .allowDuplicateDomains(config.getGlobalJmxStatistics().isAllowDuplicateDomains())
-            .cacheManagerName(config.getGlobalJmxStatistics().getCacheManagerName())
-            .withProperties(config.getGlobalJmxStatistics().getProperties());
+            .jmxDomain(config.globalJmxStatistics().domain())
+            .mBeanServerLookup(config.globalJmxStatistics().mbeanServerLookup())
+            .allowDuplicateDomains(config.globalJmxStatistics().allowDuplicateDomains())
+            .cacheManagerName(config.globalJmxStatistics().cacheManagerName())
+            .withProperties(config.globalJmxStatistics().properties());
       }
       else
          legacy.globalJmxStatistics().disable();
          
       
       legacy.serialization()
-         .marshallerClass(config.getSerialization().getMarshallerClass())
-         .version(config.getSerialization().getVersion());
+         .marshallerClass(config.serialization().marshallerClass())
+         .version(config.serialization().version());
       
-      for (Entry<Integer, AdvancedExternalizer<?>> entry : config.getSerialization().getAdvancedExternalizers().entrySet()) {
+      for (Entry<Integer, AdvancedExternalizer<?>> entry : config.serialization().advancedExternalizers().entrySet()) {
          legacy.serialization().addAdvancedExternalizer(entry.getValue());
       }
       
       legacy.asyncTransportExecutor()
-         .factory(config.getAsyncTransportExecutor().getFactory().getClass())
-         .withProperties(config.getAsyncTransportExecutor().getProperties());
+         .factory(config.asyncTransportExecutor().factory().getClass())
+         .withProperties(config.asyncTransportExecutor().properties());
       
       legacy.asyncListenerExecutor()
-         .factory(config.getAsyncListenerExecutor().getFactory().getClass())
-         .withProperties(config.getAsyncListenerExecutor().getProperties());
+         .factory(config.asyncListenerExecutor().factory().getClass())
+         .withProperties(config.asyncListenerExecutor().properties());
       
       legacy.evictionScheduledExecutor()
-         .factory(config.getEvictionScheduledExecutor().getFactory().getClass())
-         .withProperties(config.getAsyncListenerExecutor().getProperties());
+         .factory(config.evictionScheduledExecutor().factory().getClass())
+         .withProperties(config.asyncListenerExecutor().properties());
       
       legacy.replicationQueueScheduledExecutor()
-         .factory(config.getReplicationQueueScheduledExecutor().getFactory().getClass())
-         .withProperties(config.getReplicationQueueScheduledExecutor().getProperties());
+         .factory(config.replicationQueueScheduledExecutor().factory().getClass())
+         .withProperties(config.replicationQueueScheduledExecutor().properties());
       
-      legacy.shutdown().hookBehavior(org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.valueOf(config.getShutdown().getHookBehavior().name()));
+      legacy.shutdown().hookBehavior(org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.valueOf(config.shutdown().hookBehavior().name()));
       
       return legacy.build();
    }

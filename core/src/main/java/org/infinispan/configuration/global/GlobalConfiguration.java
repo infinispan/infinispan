@@ -72,35 +72,35 @@ public class GlobalConfiguration {
       this.cl = cl;
    }
    
-   public ExecutorFactoryConfiguration getAsyncListenerExecutor() {
+   public ExecutorFactoryConfiguration asyncListenerExecutor() {
       return asyncListenerExecutor;
    }
    
-   public ExecutorFactoryConfiguration getAsyncTransportExecutor() {
+   public ExecutorFactoryConfiguration asyncTransportExecutor() {
       return asyncTransportExecutor;
    }
    
-   public ScheduledExecutorFactoryConfiguration getEvictionScheduledExecutor() {
+   public ScheduledExecutorFactoryConfiguration evictionScheduledExecutor() {
       return evictionScheduledExecutor;
    }
    
-   public ScheduledExecutorFactoryConfiguration getReplicationQueueScheduledExecutor() {
+   public ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor() {
       return replicationQueueScheduledExecutor;
    }
    
-   public GlobalJmxStatisticsConfiguration getGlobalJmxStatistics() {
+   public GlobalJmxStatisticsConfiguration globalJmxStatistics() {
       return globalJmxStatistics;
    }
    
-   public TransportConfiguration getTransport() {
+   public TransportConfiguration transport() {
       return transport;
    }
    
-   public SerializationConfiguration getSerialization() {
+   public SerializationConfiguration serialization() {
       return serialization;
    }
    
-   public ShutdownConfiguration getShutdown() {
+   public ShutdownConfiguration shutdown() {
       return shutdown;
    }
    
@@ -109,7 +109,7 @@ public class GlobalConfiguration {
     * 
     * @return
     */
-   public ClassLoader getClassLoader() {
+   public ClassLoader classLoader() {
       return cl;
    }
 }

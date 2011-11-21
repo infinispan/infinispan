@@ -24,28 +24,28 @@ public class InterceptorConfiguration {
       this.position = position;
    }
    
-   public Class<? extends CommandInterceptor> getAfter() {
+   public Class<? extends CommandInterceptor> after() {
       return after;
    }
-   public Class<? extends CommandInterceptor> getBefore() {
+   public Class<? extends CommandInterceptor> before() {
       return before;
    }
-   public CommandInterceptor getInterceptor() {
+   public CommandInterceptor interceptor() {
       return interceptor;
    }
-   public int getIndex() {
+   public int index() {
       return index;
    }
-   public Position getPosition() {
+   public Position position() {
       return position;
    }
    
-   public boolean isFirst() {
-      return getPosition() == Position.FIRST;
+   public boolean first() {
+      return position() == Position.FIRST;
    }
 
-   public boolean isLast() {
-      return getPosition() == Position.LAST;
+   public boolean last() {
+      return position() == Position.LAST;
    }
 
 }

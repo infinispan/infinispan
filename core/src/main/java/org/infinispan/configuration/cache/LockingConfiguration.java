@@ -19,23 +19,23 @@ public class LockingConfiguration {
       this.writeSkewCheck = writeSkewCheck;
    }
 
-   public int getConcurrencyLevel() {
+   public int concurrencyLevel() {
       return concurrencyLevel;
    }
 
-   public IsolationLevel getIsolationLevel() {
+   public IsolationLevel isolationLevel() {
       return isolationLevel;
    }
 
-   public long getLockAcquisitionTimeout() {
+   public long lockAcquisitionTimeout() {
       return lockAcquisitionTimeout;
    }
 
-   public boolean isUseLockStriping() {
+   public boolean useLockStriping() {
       return useLockStriping;
    }
 
-   public boolean isWriteSkewCheck() {
+   public boolean writeSkewCheck() {
       return writeSkewCheck;
    }
 

@@ -117,17 +117,12 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public Configuration defineConfiguration(String cacheName, org.infinispan.configuration.cache.Configuration configurationOverride) {
+      public org.infinispan.configuration.cache.Configuration defineConfiguration(String cacheName, org.infinispan.configuration.cache.Configuration configurationOverride) {
          return delegate.defineConfiguration(cacheName, configurationOverride);
       }
 
       @Override
       public Configuration defineConfiguration(String cacheName, String templateCacheName, Configuration configurationOverride) {
-         return delegate.defineConfiguration(cacheName, templateCacheName, configurationOverride);
-      }
-
-      @Override
-      public Configuration defineConfiguration(String cacheName, String templateCacheName, org.infinispan.configuration.cache.Configuration configurationOverride) {
          return delegate.defineConfiguration(cacheName, templateCacheName, configurationOverride);
       }
 

@@ -13,7 +13,7 @@ public class ScheduledExecutorFactoryConfiguration extends AbstractTypedProperti
       this.factory = factory;
    }
 
-   public ScheduledExecutorFactory getFactory() {
+   public ScheduledExecutorFactory factory() {
       return factory;
    }
 

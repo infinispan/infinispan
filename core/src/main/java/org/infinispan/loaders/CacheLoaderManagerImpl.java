@@ -221,7 +221,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       // if we only have a single cache loader configured in the chaining cacheloader then
       // don't use a chaining cache loader at all.
       // also if we are using passivation then just directly use the first cache loader.
-      if (clmConfig.useChainingCacheLoader()) {
+      if (clmConfig.usingChainingCacheLoader()) {
          // create chaining cache loader.
          ChainingCacheStore ccl = new ChainingCacheStore();
          tmpLoader = ccl;

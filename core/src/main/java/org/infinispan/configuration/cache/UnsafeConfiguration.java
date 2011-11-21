@@ -8,7 +8,7 @@ public class UnsafeConfiguration {
       this.unreliableReturnValues = unreliableReturnValues;
    }
    
-   public boolean isUnreliableReturnValues() {
+   public boolean unreliableReturnValues() {
       return unreliableReturnValues;
    }
    

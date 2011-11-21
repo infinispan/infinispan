@@ -29,35 +29,35 @@ public class LoaderConfiguration extends AbstractTypedPropertiesConfiguration {
       this.singletonStore = singletonStore;
    }
 
-   public CacheLoader getCacheLoader() {
+   public CacheLoader cacheLoader() {
       return cacheLoader;
    }
 
-   public boolean isFetchPersistentState() {
+   public boolean fetchPersistentState() {
       return fetchPersistentState;
    }
 
-   public boolean isIgnoreModifications() {
+   public boolean ignoreModifications() {
       return ignoreModifications;
    }
 
-   public boolean isPurgeOnStartup() {
+   public boolean purgeOnStartup() {
       return purgeOnStartup;
    }
 
-   public int getPurgerThreads() {
+   public int purgerThreads() {
       return purgerThreads;
    }
 
-   public boolean isPurgeSynchronously() {
+   public boolean purgeSynchronously() {
       return purgeSynchronously;
    }
 
-   public AsyncLoaderConfiguration getAsync() {
+   public AsyncLoaderConfiguration async() {
       return async;
    }
 
-   public SingletonStoreConfiguration getSingletonStore() {
+   public SingletonStoreConfiguration singletonStore() {
       return singletonStore;
    }
 
