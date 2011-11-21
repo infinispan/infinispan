@@ -1696,8 +1696,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       protected TransactionMode transactionMode = TransactionMode.NON_TRANSACTIONAL;
 
       @ConfigurationDocRef(bean = Configuration.class, targetElement = "isTransactionAutoCommit")
-      @XmlAttribute
-      protected boolean autoCommit = true;
+      protected Boolean autoCommit = true;
 
       @XmlElement
       protected RecoveryType recovery = new RecoveryType();
@@ -1934,7 +1933,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.lockingMode = lockingMode;
       }
 
-      public Boolean isAutoCommit() {
+      @XmlAttribute
+      private void setAutoCommit(Boolean autoCommit) {
+         testImmutability("autoCommit");
+         this.autoCommit = autoCommit;
+      }
+
+      public Boolean getAutoCommit() {
          return autoCommit;
       }
 
@@ -2674,7 +2679,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       protected Long maxIdle = -1L;
 
       @ConfigurationDocRef(bean = ExpirationConfig.class, targetElement = "wakeUpInterval")
-      @XmlAttribute
       protected Long wakeUpInterval = TimeUnit.MINUTES.toMillis(1);
 
       @ConfigurationDocRef(bean = ExpirationConfig.class, targetElement = "reaperEnabled")
@@ -2727,9 +2731,18 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @Override
       public ExpirationConfig wakeUpInterval(Long wakeUpInterval) {
+         setWakeUpInterval(wakeUpInterval);
+         return this;
+      }
+
+      @XmlAttribute
+      private void setWakeUpInterval(Long wakeUpInterval) {
          testImmutability("wakeUpInterval");
          this.wakeUpInterval = wakeUpInterval;
-         return this;
+      }
+
+      public Long getWakeUpInterval() {
+         return wakeUpInterval;
       }
 
       @Override
