@@ -35,8 +35,8 @@ import javax.transaction.Transaction;
  */
 public class SyncLocalTransaction extends LocalTransaction {
 
-   public SyncLocalTransaction(Transaction transaction, GlobalTransaction tx) {
-      super(transaction, tx);
+   public SyncLocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction) {
+      super(transaction, tx, implicitTransaction);
    }
 
    private boolean enlisted;

@@ -66,8 +66,8 @@ public class TransactionFactory {
 
       DLD_RECOVERY_XA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx) {
-            return new RecoveryAwareLocalTransaction(tx, gtx);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction) {
+            return new RecoveryAwareLocalTransaction(tx, gtx, implicitTransaction);
          }
 
          @Override
@@ -95,8 +95,8 @@ public class TransactionFactory {
 
       DLD_NORECOVERY_XA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx) {
-            return new LocalXaTransaction(tx, gtx);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction) {
+            return new LocalXaTransaction(tx, gtx, implicitTransaction);
          }
 
          @Override
@@ -122,8 +122,8 @@ public class TransactionFactory {
 
       DLD_NORECOVERY_NOXA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx) {
-            return new SyncLocalTransaction(tx, gtx);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction) {
+            return new SyncLocalTransaction(tx, gtx, implicitTransaction);
          }
 
          @Override
@@ -148,8 +148,8 @@ public class TransactionFactory {
       },
       NODLD_RECOVERY_XA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx) {
-            return new RecoveryAwareLocalTransaction(tx, gtx);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction) {
+            return new RecoveryAwareLocalTransaction(tx, gtx, implicitTransaction);
          }
 
          @Override
@@ -176,8 +176,8 @@ public class TransactionFactory {
       },
       NODLD_NORECOVERY_XA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx) {
-            return new LocalXaTransaction(tx, gtx);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction) {
+            return new LocalXaTransaction(tx, gtx, implicitTransaction);
          }
 
          @Override
@@ -202,8 +202,8 @@ public class TransactionFactory {
       },
       NODLD_NORECOVERY_NOXA {
          @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx) {
-            return new SyncLocalTransaction(tx, gtx);
+         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction) {
+            return new SyncLocalTransaction(tx, gtx, implicitTransaction);
          }
 
          @Override
@@ -228,7 +228,7 @@ public class TransactionFactory {
       };
 
 
-      public abstract LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx);
+      public abstract LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction);
       public abstract GlobalTransaction newGlobalTransaction(Address addr, boolean remote, ClusterIdGenerator clusterIdGenerator, boolean clustered);
       public abstract GlobalTransaction newGlobalTransaction();
 
@@ -260,8 +260,8 @@ public class TransactionFactory {
       return txFactoryEnum.newGlobalTransaction(addr, remote, this.clusterIdGenerator, isClustered);
    }
 
-   public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx) {
-      return txFactoryEnum.newLocalTransaction(tx, gtx);
+   public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction) {
+      return txFactoryEnum.newLocalTransaction(tx, gtx, implicitTransaction);
    }
 
    public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {

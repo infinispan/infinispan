@@ -280,6 +280,12 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @see org.infinispan.config.Configuration#isTransactionAutoCommit().
        */
       TransactionConfig autoCommit(boolean enabled);
+
+      /**
+       * This configuration option was added for the following situation:
+       * - pre 5.1 code is using the cache
+       */
+      Configuration.TransactionType use1PcForAutoCommitTransactions(boolean b);
    }
 
    /**
