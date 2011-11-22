@@ -194,7 +194,7 @@ public class TxInterceptor extends CommandInterceptor {
 
    private void enlistIfNeeded(InvocationContext ctx) throws SystemException {
       if (shouldEnlist(ctx)) {
-         LocalTransaction localTransaction = enlist(ctx);
+         LocalTransaction localTransaction = enlist((TxInvocationContext) ctx);
          LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
          localTxContext.setLocalTransaction(localTransaction);
       }
@@ -204,7 +204,7 @@ public class TxInterceptor extends CommandInterceptor {
       LocalTransaction localTransaction = null;
       boolean shouldAddMod = false;
       if (shouldEnlist(ctx)) {
-         localTransaction = enlist(ctx);
+         localTransaction = enlist((TxInvocationContext) ctx);
          LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
          if (localModeNotForced(ctx)) shouldAddMod = true;
          localTxContext.setLocalTransaction(localTransaction);
@@ -227,8 +227,8 @@ public class TxInterceptor extends CommandInterceptor {
       return rv;
    }
 
-   public LocalTransaction enlist(InvocationContext ctx) throws SystemException {
-      Transaction transaction = ((TxInvocationContext) ctx).getTransaction();
+   public LocalTransaction enlist(TxInvocationContext ctx) throws SystemException {
+      Transaction transaction = ctx.getTransaction();
       if (transaction == null) throw new IllegalStateException("This should only be called in an tx scope");
       int status = transaction.getStatus();
       if (isNotValid(status)) throw new IllegalStateException("Transaction " + transaction +

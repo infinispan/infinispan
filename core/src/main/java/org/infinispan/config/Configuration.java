@@ -1197,6 +1197,32 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return transaction.autoCommit;
    }
 
+   /**
+    * Enabling this would cause autoCommit transactions ({@link #isTransactionAutoCommit()}) to complete with 1 RPC
+    * instead of 2 RPCs (which is default).
+    * <br/>
+    * Important: enabling this feature might cause inconsistencies when two transactions concurrently write on the same key. This is
+    * explained here: {@link org.infinispan.config.Configuration#isSyncCommitPhase()}.
+    * <br/>
+    * The reason this configuration was added is the following:
+    * <ul>
+    *    <li>
+    *  before infinispan 5.1 caches could be used in a mixed way, i.e. transactional and non transactional
+    *    </li>
+    *    <li>
+    *  for this mixed access mode, the non transactional calls were more efficient (1 RPC vs 2 RPCs needed by 2PC) but
+    *    </li>
+    * also offer fewer guarantees when it comes to concurrent access
+    *    <li>
+    *  for these existing use cases, and similar new ones, it makes sense to enable <b>use1PcForAutoCommitTransactions</b>
+    * in order to better trade between consistency and performance.
+    *   </li>
+    * </ul>
+    */
+   public boolean isUse1PcForAutoCommitTransactions() {
+      return transaction.use1PcForAutoCommitTransactions;
+   }
+
    public IsolationLevel getIsolationLevel() {
       return locking.isolationLevel;
    }
@@ -1709,6 +1735,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @XmlElement
       protected RecoveryType recovery = new RecoveryType();
 
+      @ConfigurationDocRef(bean = Configuration.class, targetElement = "isUse1PcForAutoCommitTransactions")
+      private Boolean use1PcForAutoCommitTransactions = Boolean.FALSE;
 
       public TransactionType(String transactionManagerLookupClass) {
          this.transactionManagerLookupClass = transactionManagerLookupClass;
@@ -1757,6 +1785,15 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return syncCommitPhase;
       }
 
+      @XmlAttribute
+      public Boolean getUse1PcForAutoCommitTransactions() {
+         return use1PcForAutoCommitTransactions;
+      }
+
+      public void setUse1PcForAutoCommitTransactions(Boolean use1PcForAutoCommitTransactions) {
+         this.use1PcForAutoCommitTransactions = use1PcForAutoCommitTransactions;
+      }
+
       /**
        * @deprecated The visibility of this will be reduced, use {@link #syncCommitPhase(Boolean)} instead
        */
@@ -1792,6 +1829,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public TransactionConfig autoCommit(boolean enabled) {
          testImmutability("autoCommit");
          this.autoCommit = enabled;
+         return this;
+      }
+
+      /**
+       * Please refer to {@link org.infinispan.config.Configuration#isUse1PcForAutoCommitTransactions()}.
+       */
+      @Override
+      public TransactionType use1PcForAutoCommitTransactions(boolean b) {
+         testImmutability("use1PcForAutoCommitTransactions");
+         this.use1PcForAutoCommitTransactions = b;
          return this;
       }
 
@@ -2260,6 +2307,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public TransactionConfig transactionMode(TransactionMode transactionMode) {
          return transaction().transactionMode(transactionMode);
+      }
+
+      @Override
+      public TransactionType use1PcForAutoCommitTransactions(boolean b) {
+         return transaction().use1PcForAutoCommitTransactions(b);
       }
    }
 

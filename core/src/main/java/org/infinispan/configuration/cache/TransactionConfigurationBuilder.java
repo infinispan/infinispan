@@ -19,7 +19,8 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    private boolean useEagerLocking;
    private boolean useSynchronization;
    private final RecoveryConfigurationBuilder recovery;
-   
+   private boolean use1PcForAutoCommitTransactions;
+
    TransactionConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       this.recovery = new RecoveryConfigurationBuilder(this);
@@ -84,6 +85,11 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return recovery;
    }
 
+   public TransactionConfigurationBuilder use1PcForAutoCommitTransactions(boolean b) {
+      this.use1PcForAutoCommitTransactions = b;
+      return this;
+   }
+
    @Override
    void validate() {
       // TODO Auto-generated method stub
@@ -97,7 +103,4 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       }
       return new TransactionConfiguration(autoCommit, cacheStopTimeout, eagerLockingSingleNode, lockingMode, syncCommitPhase, syncRollbackPhase, transactionManagerLookup, transactionSynchronizationRegistryLookup, transactionMode, useEagerLocking, useSynchronization, recovery.create());
    }
-   
-   
-   
 }

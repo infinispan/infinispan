@@ -77,7 +77,7 @@ public class TransactionCoordinator {
    public final int prepare(LocalTransaction localTransaction, boolean replayEntryWrapping) throws XAException {
       validateNotMarkedForRollback(localTransaction);
 
-      if (configuration.isOnePhaseCommit()) {
+      if (configuration.isOnePhaseCommit() || is1PcForAutoCommitTransaction(localTransaction)) {
          if (trace) log.tracef("Received prepare for tx: %s. Skipping call as 1PC will be used.", localTransaction);
          return XA_OK;
       }
@@ -113,7 +113,7 @@ public class TransactionCoordinator {
       if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
       ctx.setLocalTransaction(localTransaction);
-      if (configuration.isOnePhaseCommit() || isOnePhase) {
+      if (configuration.isOnePhaseCommit() || isOnePhase || is1PcForAutoCommitTransaction(localTransaction)) {
          validateNotMarkedForRollback(localTransaction);
 
          if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
@@ -178,5 +178,9 @@ public class TransactionCoordinator {
          rollback(localTransaction);
          throw new XAException(XAException.XA_RBROLLBACK);
       }
+   }
+
+   private boolean is1PcForAutoCommitTransaction(LocalTransaction localTransaction) {
+      return configuration.isUse1PcForAutoCommitTransactions() && localTransaction.isImplicitTransaction();
    }
 }

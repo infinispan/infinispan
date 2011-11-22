@@ -28,8 +28,8 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -284,12 +284,12 @@ public class TransactionTable {
     * Returns the {@link org.infinispan.transaction.xa.TransactionXaAdapter} corresponding to the supplied transaction.
     * If none exists, will be created first.
     */
-   public LocalTransaction getOrCreateLocalTransaction(Transaction transaction, InvocationContext ctx) {
+   public LocalTransaction getOrCreateLocalTransaction(Transaction transaction, TxInvocationContext ctx) {
       LocalTransaction current = localTransactions.get(transaction);
       if (current == null) {
          Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
          GlobalTransaction tx = txFactory.newGlobalTransaction(localAddress, false);
-         current = txFactory.newLocalTransaction(transaction, tx);
+         current = txFactory.newLocalTransaction(transaction, tx, ctx.isImplicitTransaction());
          updateViewId(current);
          log.tracef("Created a new tx: %s", current);
          localTransactions.put(transaction, current);

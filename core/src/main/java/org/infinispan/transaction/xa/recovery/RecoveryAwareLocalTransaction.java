@@ -39,8 +39,8 @@ public class RecoveryAwareLocalTransaction extends LocalXaTransaction implements
 
    private boolean completionFailed;
 
-   public RecoveryAwareLocalTransaction(Transaction transaction, GlobalTransaction tx) {
-      super(transaction, tx);
+   public RecoveryAwareLocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction) {
+      super(transaction, tx, implicitTransaction);
    }
 
    @Override

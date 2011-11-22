@@ -59,9 +59,12 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    private final Transaction transaction;
 
-   public LocalTransaction(Transaction transaction, GlobalTransaction tx) {
+   private final boolean implicitTransaction;
+
+   public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction) {
       super(tx);
       this.transaction = transaction;
+      this.implicitTransaction = implicitTransaction;
    }
 
    public void addModification(WriteCommand mod) {
@@ -102,6 +105,10 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    public Map<Object, CacheEntry> getLookedUpEntries() {
       return (Map<Object, CacheEntry>)
             (lookedUpEntries == null ? Collections.emptyMap() : lookedUpEntries);
+   }
+
+   public boolean isImplicitTransaction() {
+      return implicitTransaction;
    }
 
    public void putLookedUpEntry(Object key, CacheEntry e) {
