@@ -14,17 +14,28 @@ public class LegacyConfigurationAdaptor {
       legacy.clustering()
          .mode(CacheMode.valueOf(config.clustering().cacheMode().name()));
       
-      legacy.clustering()
-         .async()
-            .asyncMarshalling(config.clustering().async().asyncMarshalling())
-            .replQueueClass(config.clustering().async().replQueue().getClass())
-            .replQueueInterval(config.clustering().async().replQueueInterval())
-            .replQueueMaxElements(config.clustering().async().replQueueMaxElements());
+      if (!config.clustering().cacheMode().isSynchronous()) {
+         legacy.clustering()
+            .async()
+               .asyncMarshalling(config.clustering().async().asyncMarshalling())
+               .replQueueClass(config.clustering().async().replQueue().getClass())
+               .replQueueInterval(config.clustering().async().replQueueInterval())
+               .replQueueMaxElements(config.clustering().async().replQueueMaxElements());
+      }
       
+      if (config.clustering().hash().consistentHash() != null) {
+         legacy.clustering()
+            .hash()
+               .consistentHashClass(config.clustering().hash().consistentHash().getClass());
+      
+      }
+      if (config.clustering().hash().hash() != null) {
+         legacy.clustering()
+            .hash()
+               .hashFunctionClass(config.clustering().hash().hash().getClass());
+      }
       legacy.clustering()
-         .hash()
-            .consistentHashClass(config.clustering().hash().consistentHash().getClass())
-            .hashFunctionClass(config.clustering().hash().hash().getClass())
+      .hash()
             .hashSeed(config.clustering().hash().hashSeed())
             .numOwners(config.clustering().hash().numOwners())
             .numVirtualNodes(config.clustering().hash().numVirtualNodes())
@@ -58,9 +69,11 @@ public class LegacyConfigurationAdaptor {
             .retryWaitTimeIncreaseFactor(config.clustering().stateRetrieval().retryWaitTimeIncreaseFactor())
             .timeout(config.clustering().stateRetrieval().timeout());
       
-      legacy.clustering()
-         .sync()
-            .replTimeout(config.clustering().sync().replTimeout());
+      if (config.clustering().cacheMode().isSynchronous()) {
+         legacy.clustering()
+            .sync()
+               .replTimeout(config.clustering().sync().replTimeout());
+      }
       
       for (CommandInterceptor interceptor : config.customInterceptors().interceptors()) {
          legacy.clustering()

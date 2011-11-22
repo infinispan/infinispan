@@ -1,5 +1,6 @@
 package org.infinispan.configuration.cache;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -8,7 +9,7 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    private boolean passivation;
    private boolean preload;
    private boolean shared;
-   private List<LoaderConfigurationBuilder> cacheLoaders;
+   private List<LoaderConfigurationBuilder> cacheLoaders = new ArrayList<LoaderConfigurationBuilder>();
    
 
    protected LoadersConfigurationBuilder(ConfigurationBuilder builder) {
