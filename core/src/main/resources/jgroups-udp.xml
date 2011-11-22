@@ -67,7 +67,7 @@
                    use_mcast_xmit="true"
                    retransmit_timeout="300,600,1200"
                    discard_delivered_msgs="true"/>
-   <UNICAST timeout="300,600,1200"/>
+   <UNICAST2 timeout="300,600,1200"/>
    <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000" max_bytes="1000000"/>
    <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
    <UFC max_credits="500000" min_threshold="0.20"/>
