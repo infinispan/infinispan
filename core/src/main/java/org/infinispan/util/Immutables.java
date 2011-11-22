@@ -241,17 +241,6 @@ public class Immutables {
       return null;
    }
 
-   public static <T> ReversibleOrderedSet<T> immutableReversibleOrderedSetCopy(ReversibleOrderedSet<T> set) {
-      Set<? extends T> copy = ObjectDuplicator.duplicateSet(set);
-      if (copy == null)
-         // Set uses Collection copy-ctor
-         copy = attemptCopyConstructor(set, ReversibleOrderedSet.class);
-      if (copy == null)
-         copy = new VisitableBidirectionalLinkedHashSet<T>(false, set);
-
-      return new ImmutableReversibleOrderedSetWrapper<T>(copy);
-   }
-
    /**
     * Wraps a {@link Map.Entry}} with an immutable {@link Map.Entry}}. There is no copying involved.
     *

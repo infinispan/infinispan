@@ -23,7 +23,6 @@
 package org.infinispan.context;
 
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.util.BidirectionalMap;
 
 import java.util.Map;
 
@@ -48,7 +47,7 @@ public interface EntryLookup {
     * <p/>
     * @return a map of looked up entries.
     */
-   BidirectionalMap<Object, CacheEntry> getLookedUpEntries();
+   Map<Object, CacheEntry> getLookedUpEntries();
 
    /**
     * Puts an entry in the registry of looked up entries in the current scope.

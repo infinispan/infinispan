@@ -917,7 +917,7 @@ public class TestingUtil {
       ComponentRegistry cr = extractComponentRegistry(cache);
       InterceptorChain ic = cr.getComponent(InterceptorChain.class);
       InvocationContextContainer icc = cr.getComponent(InvocationContextContainer.class);
-      InvocationContext ctxt = icc.createInvocationContext(true);
+      InvocationContext ctxt = icc.createInvocationContext(true, -1);
       ic.invoke(ctxt, command);
    }
 

@@ -28,19 +28,17 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.BidirectionalLinkedHashMap;
-import org.infinispan.util.BidirectionalMap;
-import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -101,16 +99,16 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       return transaction;
    }
 
-   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
-      return (BidirectionalMap<Object, CacheEntry>)
-            (lookedUpEntries == null ? InfinispanCollections.emptyBidirectionalMap() : lookedUpEntries);
+   public Map<Object, CacheEntry> getLookedUpEntries() {
+      return (Map<Object, CacheEntry>)
+            (lookedUpEntries == null ? Collections.emptyMap() : lookedUpEntries);
    }
 
    public void putLookedUpEntry(Object key, CacheEntry e) {
       if (isMarkedForRollback()) {
          throw new CacheException("This transaction is marked for rollback and cannot acquire locks!");
       }
-      if (lookedUpEntries == null) lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(4);
+      if (lookedUpEntries == null) lookedUpEntries = new HashMap<Object, CacheEntry>(4);
       lookedUpEntries.put(key, e);
    }
 

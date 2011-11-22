@@ -30,7 +30,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -212,7 +211,7 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
       log.debugf("Applying new state from %s: received %d keys", sender, state.size());
       if (trace) log.tracef("Received keys: %s", keys(state));
       for (InternalCacheEntry e : state) {
-         InvocationContext ctx = icc.createInvocationContext(false);
+         InvocationContext ctx = icc.createInvocationContext(false, 1);
          // locking not necessary as during rehashing we block all transactions
          ctx.setFlags(CACHE_MODE_LOCAL, SKIP_CACHE_LOAD, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_LOCKING,
                       SKIP_OWNERSHIP_CHECK);

@@ -30,7 +30,6 @@ import java.util.Set;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.BidirectionalMap;
 
 
 /**
@@ -64,7 +63,7 @@ public class InvocationContextFlagsOverride implements InvocationContext {
    }
 
    @Override
-   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
+   public Map<Object, CacheEntry> getLookedUpEntries() {
       return delegate.getLookedUpEntries();
    }
 

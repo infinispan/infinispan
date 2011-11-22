@@ -23,11 +23,9 @@
 package org.infinispan.context.impl;
 
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.util.BidirectionalLinkedHashMap;
-import org.infinispan.util.BidirectionalMap;
-import org.infinispan.util.InfinispanCollections;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -41,38 +39,45 @@ import java.util.Set;
 public class NonTxInvocationContext extends AbstractInvocationContext {
 
    private static final int INITIAL_CAPACITY = 4;
-   protected BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries = null;
+   protected final Map<Object, CacheEntry> lookedUpEntries;
 
-   protected Set<Object> lockedKeys = null;
+   protected Set<Object> lockedKeys;
+
+   public NonTxInvocationContext(int numEntries, boolean local) {
+      lookedUpEntries = new HashMap<Object, CacheEntry>(numEntries);
+      setOriginLocal(local);
+   }
+
+   public NonTxInvocationContext() {
+      lookedUpEntries = new HashMap<Object, CacheEntry>(INITIAL_CAPACITY);
+   }
 
    public CacheEntry lookupEntry(Object k) {
-      return lookedUpEntries == null ? null : lookedUpEntries.get(k);
+      return lookedUpEntries.get(k);
    }
 
    public void removeLookedUpEntry(Object key) {
-      if (lookedUpEntries != null) lookedUpEntries.remove(key);
+      lookedUpEntries.remove(key);
    }
 
    public void putLookedUpEntry(Object key, CacheEntry e) {
-      initLookedUpEntries();
       lookedUpEntries.put(key, e);
    }
 
    public void putLookedUpEntries(Map<Object, CacheEntry> newLookedUpEntries) {
-      initLookedUpEntries();
       for (Map.Entry<Object, CacheEntry> ce: newLookedUpEntries.entrySet()) {
          lookedUpEntries.put(ce.getKey(), ce.getValue());
       }
    }
 
    public void clearLookedUpEntries() {
-      lookedUpEntries = null;
+      lookedUpEntries.clear();
    }
 
    @SuppressWarnings("unchecked")
-   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
-      return (BidirectionalMap<Object, CacheEntry>)
-            (lookedUpEntries == null ? InfinispanCollections.emptyBidirectionalMap() : lookedUpEntries);
+   public Map<Object, CacheEntry> getLookedUpEntries() {
+      return (Map<Object, CacheEntry>)
+            (lookedUpEntries == null ? Collections.emptyMap() : lookedUpEntries);
    }
 
    public boolean isOriginLocal() {
@@ -91,10 +96,6 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
       return Thread.currentThread();
    }
 
-   private void initLookedUpEntries() {
-      if (lookedUpEntries == null) lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(INITIAL_CAPACITY);
-   }
-
    @Override
    public void reset() {
       super.reset();
@@ -105,9 +106,7 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    @Override
    public NonTxInvocationContext clone() {
       NonTxInvocationContext dolly = (NonTxInvocationContext) super.clone();
-      if (lookedUpEntries != null) {
-         dolly.lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(lookedUpEntries);
-      }
+      dolly.lookedUpEntries.putAll(lookedUpEntries);
       return dolly;
    }
 
@@ -119,7 +118,7 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
 
    @Override
    public Set<Object> getLockedKeys() {
-      return lockedKeys == null ? Collections.<Object>emptySet() : lockedKeys;
+      return lockedKeys == null ? Collections.emptySet() : lockedKeys;
    }
 
    @Override

@@ -38,7 +38,16 @@ import javax.transaction.Transaction;
  */
 public class NonTransactionalInvocationContextContainer extends AbstractInvocationContextContainer {
 
-   public InvocationContext createInvocationContext(boolean isWrite) {
+   public InvocationContext createInvocationContext(boolean isWrite, int keyCount) {
+      if (keyCount == 1) {
+         SingleKeyNonTxInvocationContext result = new SingleKeyNonTxInvocationContext(true);
+         ctxHolder.set(result);
+         return result;
+      } else if (keyCount > 0) {
+         NonTxInvocationContext ctx = new NonTxInvocationContext(keyCount, true);
+         ctxHolder.set(ctx);
+         return ctx;
+      }
       return createInvocationContext(null);
    }
 

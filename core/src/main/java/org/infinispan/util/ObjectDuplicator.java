@@ -73,14 +73,6 @@ public class ObjectDuplicator {
       return attemptClone(original);
    }
 
-   @SuppressWarnings("unchecked")
-   public static <E> ReversibleOrderedSet<E> duplicateReversibleOrderedSet(ReversibleOrderedSet<E> original) {
-      if (original instanceof VisitableBidirectionalLinkedHashSet)
-         return ((VisitableBidirectionalLinkedHashSet) original).clone();
-
-      return attemptClone(original);
-   }
-
 
    @SuppressWarnings("unchecked")
    public static <E> Collection<E> duplicateCollection(Collection<E> original) {
