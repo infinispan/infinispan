@@ -9,6 +9,11 @@ import org.infinispan.loaders.AbstractCacheStoreConfig;
 public class LegacyConfigurationAdaptor {
 
    public org.infinispan.config.Configuration adapt(org.infinispan.configuration.cache.Configuration config) {
+      
+      // Handle the case that null is passed in
+      if (config == null)
+         return null;
+      
       FluentConfiguration legacy = new Configuration().fluent();
       
       legacy.clustering()

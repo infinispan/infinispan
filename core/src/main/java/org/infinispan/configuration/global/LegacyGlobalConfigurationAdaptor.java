@@ -9,6 +9,10 @@ public class LegacyGlobalConfigurationAdaptor {
    
    public org.infinispan.config.GlobalConfiguration adapt(GlobalConfiguration config) {
       
+      // Handle the case that null is passed in
+      if (config == null)
+         return null;
+      
       FluentGlobalConfiguration legacy = new org.infinispan.config.GlobalConfiguration(config.classLoader()).fluent();
 
       legacy.transport()

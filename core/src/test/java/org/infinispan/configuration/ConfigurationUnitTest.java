@@ -27,6 +27,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
+import org.infinispan.manager.DefaultCacheManager;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -39,6 +40,11 @@ public class ConfigurationUnitTest {
       // Simple test to ensure we can actually build a config
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.build();
+   }
+   
+   @Test
+   public void testCreateCache() {
+      new DefaultCacheManager(new ConfigurationBuilder().build());
    }
    
    @Test
