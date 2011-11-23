@@ -7,19 +7,19 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
 
 public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder<TransactionConfiguration> {
 
-   private boolean autoCommit;
-   private int cacheStopTimeout;
-   private boolean eagerLockingSingleNode;
-   private LockingMode lockingMode;
-   private boolean syncCommitPhase;
-   private boolean syncRollbackPhase;
-   private TransactionManagerLookup transactionManagerLookup;
+   private boolean autoCommit = true;
+   private int cacheStopTimeout = 30000;
+   private boolean eagerLockingSingleNode = false;
+   private LockingMode lockingMode = LockingMode.OPTIMISTIC;
+   private boolean syncCommitPhase = true;
+   private boolean syncRollbackPhase = false;
+   private TransactionManagerLookup transactionManagerLookup ;
    private TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
-   private TransactionMode transactionMode;
-   private boolean useEagerLocking;
-   private boolean useSynchronization;
+   private TransactionMode transactionMode = TransactionMode.NON_TRANSACTIONAL;
+   private boolean useEagerLocking = false;
+   private boolean useSynchronization = false;
    private final RecoveryConfigurationBuilder recovery;
-   private boolean use1PcForAutoCommitTransactions;
+   private boolean use1PcForAutoCommitTransactions = false;
 
    TransactionConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);

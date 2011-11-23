@@ -8,9 +8,9 @@ import org.infinispan.eviction.EvictionThreadPolicy;
  */
 public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuilder<EvictionConfiguration> {
 
-   private int maxEntries;
-   private EvictionStrategy strategy;
-   private EvictionThreadPolicy threadPolicy;
+   private int maxEntries = -1;
+   private EvictionStrategy strategy = EvictionStrategy.NONE;
+   private EvictionThreadPolicy threadPolicy = EvictionThreadPolicy.DEFAULT;
    
    EvictionConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
