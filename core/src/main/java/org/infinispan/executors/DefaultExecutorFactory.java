@@ -22,8 +22,6 @@
  */
 package org.infinispan.executors;
 
-import org.infinispan.util.TypedProperties;
-
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -31,6 +29,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.api.executors.ExecutorFactory;
+import org.infinispan.util.TypedProperties;
 
 /**
  * Default executor factory that creates executors using the JDK Executors service.

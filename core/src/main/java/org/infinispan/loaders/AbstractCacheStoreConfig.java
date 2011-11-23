@@ -22,15 +22,19 @@
  */
 package org.infinispan.loaders;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
+
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationDoc;
 import org.infinispan.config.ConfigurationDocRef;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
-
-import javax.xml.bind.annotation.*;
 
 /**
  * Configures {@link AbstractCacheStore}. This allows you to tune a number of characteristics of the

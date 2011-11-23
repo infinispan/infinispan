@@ -22,8 +22,15 @@
  */
 package org.infinispan.loaders.cluster;
 
+import static java.util.Collections.emptySet;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.api.marshall.StreamingMarshaller;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -33,7 +40,6 @@ import org.infinispan.loaders.AbstractCacheLoader;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -43,12 +49,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
-import static java.util.Collections.emptySet;
 
 /**
  * Cache loader that consults other members in the cluster for values. A <code>remoteCallTimeout</code> property is

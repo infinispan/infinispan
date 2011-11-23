@@ -23,20 +23,20 @@
 package org.infinispan.distribution;
 
 
-import org.infinispan.Cache;
-import org.infinispan.CacheException;
-import org.infinispan.config.Configuration;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.annotations.Test;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.Cache;
+import org.infinispan.api.CacheException;
+import org.infinispan.config.Configuration;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.Test;
 
 /**
  * Test single owner distributed cache configurations.
@@ -99,7 +99,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
       try {
          nonOwnerCache.get("yourkey");
          assert false : "Should have failed with a org.infinispan.marshall.NotSerializableException";
-      } catch (org.infinispan.marshall.NotSerializableException e) {
+      } catch (org.infinispan.commons.marshall.NotSerializableException e) {
       }
    }
 

@@ -22,8 +22,8 @@
  */
 package org.infinispan.remoting.transport.jgroups;
 
-import org.infinispan.io.ByteBuffer;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.api.io.ByteBuffer;
+import org.infinispan.api.marshall.StreamingMarshaller;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.util.Buffer;
 

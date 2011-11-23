@@ -22,21 +22,29 @@
  */
 package org.infinispan.loaders.dummy;
 
-import org.infinispan.Cache;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.*;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import org.infinispan.Cache;
+import org.infinispan.api.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Util;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.AbstractCacheStore;
+import org.infinispan.loaders.AbstractCacheStoreConfig;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheStore;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 public class DummyInMemoryCacheStore extends AbstractCacheStore {
    private static final Log log = LogFactory.getLog(DummyInMemoryCacheStore.class);

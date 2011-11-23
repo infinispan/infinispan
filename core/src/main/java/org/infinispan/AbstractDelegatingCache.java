@@ -22,15 +22,15 @@
  */
 package org.infinispan;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.util.concurrent.NotifyingFuture;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.api.util.concurrent.NotifyingFuture;
+import org.infinispan.config.Configuration;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * This is a convenient base class for implementing a cache delegate. The only constructor takes a {@link Cache}

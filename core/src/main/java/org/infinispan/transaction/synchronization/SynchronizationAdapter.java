@@ -22,7 +22,11 @@
  */
 package org.infinispan.transaction.synchronization;
 
-import org.infinispan.CacheException;
+import javax.transaction.Status;
+import javax.transaction.Synchronization;
+import javax.transaction.xa.XAException;
+
+import org.infinispan.api.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -33,10 +37,6 @@ import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Status;
-import javax.transaction.Synchronization;
-import javax.transaction.xa.XAException;
 
 /**
  * {@link Synchronization} implementation for integrating with the TM.

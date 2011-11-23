@@ -23,6 +23,7 @@
 
 package org.infinispan.marshall;
 
+import org.infinispan.commons.marshall.AdaptiveBufferSizePredictor;
 import org.testng.annotations.Test;
 
 /**

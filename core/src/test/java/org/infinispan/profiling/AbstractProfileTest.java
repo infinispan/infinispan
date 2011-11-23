@@ -22,20 +22,23 @@
  */
 package org.infinispan.profiling;
 
+import static org.infinispan.config.Configuration.CacheMode.DIST_ASYNC;
+import static org.infinispan.config.Configuration.CacheMode.DIST_SYNC;
+import static org.infinispan.config.Configuration.CacheMode.REPL_ASYNC;
+import static org.infinispan.config.Configuration.CacheMode.REPL_SYNC;
+
+import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+
+import org.infinispan.api.executors.ExecutorFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
-
-import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-
-import static org.infinispan.config.Configuration.CacheMode.*;
 
 @Test(groups = "profiling", enabled = false, testName = "profiling.AbstractProfileTest")
 public abstract class AbstractProfileTest extends SingleCacheManagerTest {

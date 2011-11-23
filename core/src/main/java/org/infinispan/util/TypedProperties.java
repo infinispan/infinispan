@@ -22,13 +22,15 @@
  */
 package org.infinispan.util;
 
-import org.infinispan.config.TypedPropertiesAdapter;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import java.util.Properties;
 
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import java.util.Properties;
+
+import org.infinispan.commons.util.StringPropertyReplacer;
+import org.infinispan.config.TypedPropertiesAdapter;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Type-aware properties.  Extends the JDK {@link Properties} class to provide accessors that convert values to certain

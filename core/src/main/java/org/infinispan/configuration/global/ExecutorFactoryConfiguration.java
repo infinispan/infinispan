@@ -1,7 +1,7 @@
 package org.infinispan.configuration.global;
 
+import org.infinispan.api.executors.ExecutorFactory;
 import org.infinispan.configuration.AbstractTypedPropertiesConfiguration;
-import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.util.TypedProperties;
 
 public class ExecutorFactoryConfiguration extends AbstractTypedPropertiesConfiguration {

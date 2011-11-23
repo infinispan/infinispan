@@ -23,7 +23,16 @@
 
 package org.infinispan.marshall.jboss;
 
-import org.infinispan.CacheException;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
+
+import org.infinispan.api.CacheException;
+import org.infinispan.api.marshall.AdvancedExternalizer;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.atomic.AtomicHashMapDelta;
 import org.infinispan.atomic.ClearOperation;
@@ -31,6 +40,13 @@ import org.infinispan.atomic.PutOperation;
 import org.infinispan.atomic.RemoveOperation;
 import org.infinispan.cacheviews.CacheView;
 import org.infinispan.commands.RemoteCommandsFactory;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.ByteArrayKey;
+import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.hash.MurmurHash2;
+import org.infinispan.commons.util.hash.MurmurHash2Compat;
+import org.infinispan.commons.util.hash.MurmurHash3;
 import org.infinispan.config.AdvancedExternalizerConfig;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.GlobalConfiguration;
@@ -52,10 +68,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.loaders.bucket.Bucket;
-import org.infinispan.marshall.AdvancedExternalizer;
-import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.exts.ArrayListExternalizer;
 import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
@@ -79,25 +92,12 @@ import org.infinispan.transaction.xa.recovery.InDoubtTxInfoImpl;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareDldGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.SerializableXid;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.Immutables;
-import org.infinispan.util.Util;
-import org.infinispan.util.hash.MurmurHash2;
-import org.infinispan.util.hash.MurmurHash2Compat;
-import org.infinispan.util.hash.MurmurHash3;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.ObjectTable;
 import org.jboss.marshalling.Unmarshaller;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
 
 /**
  * The externalizer table maintains information necessary to be able to map a particular type with the corresponding

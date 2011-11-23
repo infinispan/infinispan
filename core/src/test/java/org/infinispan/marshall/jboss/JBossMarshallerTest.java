@@ -22,32 +22,34 @@
  */
 package org.infinispan.marshall.jboss;
 
-import org.infinispan.CacheException;
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.manager.EmbeddedCacheManagerStartupException;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.AdvancedExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import static org.infinispan.marshall.AdvancedExternalizerTest.*;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
+import org.infinispan.api.CacheException;
+import org.infinispan.api.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.Util;
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.EmbeddedCacheManagerStartupException;
+import org.infinispan.marshall.AdvancedExternalizerTest.IdViaAnnotationObj;
+import org.infinispan.marshall.AdvancedExternalizerTest.IdViaBothObj;
+import org.infinispan.marshall.AdvancedExternalizerTest.IdViaConfigObj;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
 /**
  * Test the behaviour of JBoss Marshalling based {@link org.infinispan.marshall.StreamingMarshaller} implementation

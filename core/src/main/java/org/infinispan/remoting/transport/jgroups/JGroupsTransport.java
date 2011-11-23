@@ -22,12 +22,31 @@
  */
 package org.infinispan.remoting.transport.jgroups;
 
-import org.infinispan.CacheException;
+import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
+import org.infinispan.api.CacheException;
+import org.infinispan.api.marshall.StreamingMarshaller;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.jmx.JmxUtil;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.responses.Response;
@@ -35,9 +54,7 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractTransport;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -53,22 +70,6 @@ import org.jgroups.stack.AddressGenerator;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 import org.jgroups.util.TopologyUUID;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-
-import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
 /**
  * An encapsulation of a JGroups transport.  JGroups transports can be configured using a variety of methods, usually by

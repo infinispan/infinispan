@@ -23,7 +23,7 @@
 package org.infinispan.loaders;
 
 import org.infinispan.Cache;
-import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.api.marshall.StreamingMarshaller;
 
 /**
  * An abstract {@link org.infinispan.loaders.CacheLoader} that holds common implementations for some methods

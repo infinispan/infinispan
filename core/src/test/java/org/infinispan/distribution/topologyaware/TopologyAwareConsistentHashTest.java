@@ -22,16 +22,7 @@
  */
 package org.infinispan.distribution.topologyaware;
 
-import org.infinispan.distribution.TestAddress;
-import org.infinispan.distribution.TestTopologyAwareAddress;
-import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.hash.MurmurHash3;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,7 +30,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.testng.Assert.assertEquals;
+import org.infinispan.commons.util.hash.MurmurHash3;
+import org.infinispan.distribution.TestAddress;
+import org.infinispan.distribution.TestTopologyAwareAddress;
+import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea.Markus@jboss.com

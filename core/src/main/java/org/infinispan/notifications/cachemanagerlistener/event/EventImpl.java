@@ -22,11 +22,11 @@
  */
 package org.infinispan.notifications.cachemanagerlistener.event;
 
+import java.util.List;
+
+import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
-
-import java.util.List;
 
 /**
  * Implementation of cache manager events

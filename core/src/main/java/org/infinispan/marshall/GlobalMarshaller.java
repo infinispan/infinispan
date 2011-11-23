@@ -1,5 +1,6 @@
 package org.infinispan.marshall;
 
+import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;

@@ -22,6 +22,16 @@
  */
 package org.infinispan.test.fwk;
 
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.getJGroupsConfig;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.FluentConfiguration;
 import org.infinispan.config.GlobalConfiguration;
@@ -32,18 +42,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.LegacyKeySupportSystemProperties;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.infinispan.test.fwk.JGroupsConfigBuilder.getJGroupsConfig;
 
 /**
  * CacheManagers in unit tests should be created with this factory, in order to avoid resource clashes. See

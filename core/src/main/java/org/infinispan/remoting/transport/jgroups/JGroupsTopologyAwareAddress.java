@@ -19,16 +19,16 @@
 
 package org.infinispan.remoting.transport.jgroups;
 
-import org.infinispan.marshall.Ids;
-import org.infinispan.remoting.transport.TopologyAwareAddress;
-import org.jgroups.Address;
-import org.jgroups.util.TopologyUUID;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.remoting.transport.TopologyAwareAddress;
+import org.jgroups.Address;
+import org.jgroups.util.TopologyUUID;
 
 /**
  * An encapsulation of a JGroups Address
@@ -78,7 +78,7 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
       return getMachineId() == null ? addr.getMachineId() == null : getMachineId().equals(addr.getMachineId());
    }
 
-   public static class Externalizer implements org.infinispan.marshall.AdvancedExternalizer<JGroupsTopologyAwareAddress> {
+   public static class Externalizer implements org.infinispan.api.marshall.AdvancedExternalizer<JGroupsTopologyAwareAddress> {
       @Override
       public void writeObject(ObjectOutput output, JGroupsTopologyAwareAddress address) throws IOException {
          try {

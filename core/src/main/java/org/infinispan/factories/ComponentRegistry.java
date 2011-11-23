@@ -22,8 +22,14 @@
  */
 package org.infinispan.factories;
 
+import static java.util.Collections.emptyMap;
+import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.infinispan.AdvancedCache;
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
@@ -35,12 +41,6 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static java.util.Collections.emptyMap;
-import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
 
 /**
  * Named cache specific components

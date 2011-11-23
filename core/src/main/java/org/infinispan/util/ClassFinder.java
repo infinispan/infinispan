@@ -22,9 +22,6 @@
  */
 package org.infinispan.util;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -35,6 +32,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
+import org.infinispan.commons.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Find infinispan classes utility

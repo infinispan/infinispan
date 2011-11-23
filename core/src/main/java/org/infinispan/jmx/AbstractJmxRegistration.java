@@ -25,6 +25,7 @@ package org.infinispan.jmx;
 import java.util.Set;
 
 import javax.management.MBeanServer;
+
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
 

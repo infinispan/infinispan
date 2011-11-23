@@ -9,9 +9,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.FluentConfiguration.GroupsConfig;
 import org.infinispan.distribution.group.Grouper;
-import org.infinispan.util.Util;
 
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @ConfigurationDoc(name="groups",desc="Configuration for various grouper definitions. See the user guide for more information")

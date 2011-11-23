@@ -22,14 +22,15 @@
  */
 package org.infinispan.api;
 
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.TransactionManager;
+
+import org.infinispan.api.util.concurrent.NotifyingFuture;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.concurrent.NotifyingFuture;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mircea.Markus@jboss.com

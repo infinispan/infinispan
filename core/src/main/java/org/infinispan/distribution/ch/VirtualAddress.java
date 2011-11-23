@@ -22,8 +22,7 @@
  */
 package org.infinispan.distribution.ch;
 
-import static org.infinispan.util.Util.formatString;
-
+import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -42,7 +41,7 @@ class VirtualAddress implements Address {
    
    public VirtualAddress(Address realAddress, int id) {
       if (realAddress == null)
-         throw new IllegalArgumentException(formatString("readAddress must not be null"));
+         throw new IllegalArgumentException(Util.formatString("readAddress must not be null"));
       this.realAddress = realAddress;
       this.id = id;
    }
@@ -77,6 +76,6 @@ class VirtualAddress implements Address {
    
    @Override
    public String toString() {
-      return formatString("%s-%d", realAddress, id);
+      return Util.formatString("%s-%d", realAddress, id);
    }
 }

@@ -24,11 +24,11 @@ package org.infinispan.factories;
 
 import javax.transaction.TransactionManager;
 
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
+import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

@@ -22,17 +22,18 @@
  */
 package org.infinispan.transaction.lookup;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.transaction.tm.DummyTransactionManager;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import java.lang.reflect.Method;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.transaction.TransactionManager;
-import java.lang.reflect.Method;
+
+import org.infinispan.commons.util.Util;
+import org.infinispan.config.Configuration;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A transaction manager lookup class that attempts to locate a TransactionManager. A variety of different classes and

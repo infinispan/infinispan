@@ -22,28 +22,20 @@
  */
 package org.infinispan.lock;
 
+import static org.testng.Assert.assertNull;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.distribution.TestAddress;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
-import org.infinispan.distribution.ch.DefaultHashSeed;
 import org.infinispan.interceptors.DistributionInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.hash.MurmurHash3;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.HashSet;
-
-import static org.testng.Assert.assertNull;
 
 @Test(testName = "lock.StaleEagerLocksOnPrepareFailureTest", groups = "functional")
 @CleanupAfterMethod

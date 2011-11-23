@@ -22,9 +22,9 @@
  */
 package org.infinispan.factories;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.Util;
 
 /**
  * Factory for Transport implementations

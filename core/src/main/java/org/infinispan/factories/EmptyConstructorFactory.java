@@ -23,6 +23,7 @@
 package org.infinispan.factories;
 
 import org.infinispan.commands.RemoteCommandsFactory;
+import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
@@ -30,7 +31,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.jboss.ExternalizerTable;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.util.Util;
 
 /**
  * Factory for building global-scope components which have default empty constructors

@@ -22,18 +22,19 @@
  */
 package org.infinispan.invalidation;
 
-import org.infinispan.Cache;
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.config.Configuration;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.data.Key;
-import org.infinispan.util.Util;
-import org.testng.annotations.Test;
 
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+
+import org.infinispan.Cache;
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.Util;
+import org.infinispan.config.Configuration;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.data.Key;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "invalidation.AsyncAPISyncInvalTest")
 public class AsyncAPISyncInvalTest extends MultipleCacheManagersTest {   

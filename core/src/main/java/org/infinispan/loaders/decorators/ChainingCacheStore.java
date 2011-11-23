@@ -22,17 +22,6 @@
  */
 package org.infinispan.loaders.decorators;
 
-import org.infinispan.Cache;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoader;
-import org.infinispan.loaders.CacheLoaderConfig;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.loaders.modifications.Modification;
-
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
@@ -41,6 +30,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.Cache;
+import org.infinispan.api.marshall.StreamingMarshaller;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.CacheLoader;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.CacheStoreConfig;
+import org.infinispan.loaders.modifications.Modification;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * A chaining cache loader that allows us to configure > 1 cache loader.

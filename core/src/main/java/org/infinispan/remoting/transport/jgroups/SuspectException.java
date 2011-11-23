@@ -22,7 +22,7 @@
  */
 package org.infinispan.remoting.transport.jgroups;
 
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 import org.infinispan.remoting.transport.Address;
 
 /**

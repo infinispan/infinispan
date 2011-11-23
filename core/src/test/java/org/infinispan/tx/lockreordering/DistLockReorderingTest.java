@@ -1,15 +1,15 @@
 package org.infinispan.tx.lockreordering;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.util.hash.MurmurHash3;
-import org.testng.annotations.Test;
+import static org.infinispan.tx.lockreordering.LocalLockReorderingTest.runTest;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.infinispan.tx.lockreordering.LocalLockReorderingTest.runTest;
+import org.infinispan.commons.util.hash.MurmurHash3;
+import org.infinispan.config.Configuration;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus

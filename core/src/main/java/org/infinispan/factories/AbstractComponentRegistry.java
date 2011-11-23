@@ -22,22 +22,6 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.CacheException;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.factories.annotations.ComponentName;
-import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.lifecycle.Lifecycle;
-import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.reflect.AnnotatedMethodCache;
-import org.infinispan.util.reflect.CachedMethod;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -48,6 +32,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+
+import org.infinispan.api.CacheException;
+import org.infinispan.api.lifecycle.Lifecycle;
+import org.infinispan.config.Configuration;
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.util.ReflectionUtil;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.reflect.AnnotatedMethodCache;
+import org.infinispan.util.reflect.CachedMethod;
 
 /**
  * A registry where components which have been created are stored.  Components are stored as singletons, registered

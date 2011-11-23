@@ -22,18 +22,21 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.executors.ExecutorFactory;
-import org.infinispan.executors.ScheduledExecutorFactory;
-import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.util.Util;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR;
 
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static org.infinispan.factories.KnownComponentNames.*;
+import org.infinispan.api.executors.ExecutorFactory;
+import org.infinispan.commons.util.Util;
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.executors.ScheduledExecutorFactory;
+import org.infinispan.factories.annotations.DefaultFactoryFor;
 
 /**
  * A factory that specifically knows how to create named executors.

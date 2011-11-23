@@ -22,10 +22,7 @@
  */
 package org.infinispan.distribution.ch;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
+import static java.lang.Math.min;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -38,7 +35,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import static java.lang.Math.min;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.Util;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * <a href = "http://weblogs.java.net/blog/tomwhite/archive/2007/11/consistent_hash.html">Consistent hashing

@@ -23,6 +23,10 @@
 
 package org.infinispan.config;
 
+import java.util.List;
+import java.util.Properties;
+
+import org.infinispan.commons.util.hash.Hash;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.HashSeed;
@@ -38,10 +42,6 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.hash.Hash;
-
-import java.util.List;
-import java.util.Properties;
 
 /**
  * Fluent configuration base class.

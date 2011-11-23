@@ -22,14 +22,31 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.CacheException;
-import org.infinispan.config.Configuration.*;
-import org.infinispan.util.ReflectionUtil;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import org.infinispan.api.CacheException;
+import org.infinispan.config.Configuration.AsyncType;
+import org.infinispan.config.Configuration.BooleanAttributeType;
+import org.infinispan.config.Configuration.ClusteringType;
+import org.infinispan.config.Configuration.CustomInterceptorsType;
+import org.infinispan.config.Configuration.DataContainerType;
+import org.infinispan.config.Configuration.DeadlockDetectionType;
+import org.infinispan.config.Configuration.EvictionType;
+import org.infinispan.config.Configuration.ExpirationType;
+import org.infinispan.config.Configuration.HashType;
+import org.infinispan.config.Configuration.L1Type;
+import org.infinispan.config.Configuration.LockingType;
+import org.infinispan.config.Configuration.QueryConfigurationBean;
+import org.infinispan.config.Configuration.RecoveryType;
+import org.infinispan.config.Configuration.StateRetrievalType;
+import org.infinispan.config.Configuration.StoreAsBinary;
+import org.infinispan.config.Configuration.SyncType;
+import org.infinispan.config.Configuration.TransactionType;
+import org.infinispan.config.Configuration.UnsafeType;
+import org.infinispan.util.ReflectionUtil;
 
 /**
  * OverrideConfigurationVisitor breaks down fields of Configuration object to individual components

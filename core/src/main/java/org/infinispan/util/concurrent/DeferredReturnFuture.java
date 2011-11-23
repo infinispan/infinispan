@@ -23,7 +23,12 @@
 
 package org.infinispan.util.concurrent;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.api.util.concurrent.FutureListener;
+import org.infinispan.api.util.concurrent.NotifyingFuture;
 
 /**
  * This is a notifying and notifiable future whose return value is not known

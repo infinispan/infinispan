@@ -22,6 +22,9 @@
  */
 package org.infinispan.util.concurrent;
 
+import org.infinispan.api.util.concurrent.FutureListener;
+import org.infinispan.api.util.concurrent.NotifyingFuture;
+
 /**
  * An abstract NotifyingFuture that has "completed"
  *

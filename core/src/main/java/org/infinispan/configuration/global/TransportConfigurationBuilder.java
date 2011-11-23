@@ -2,10 +2,10 @@ package org.infinispan.configuration.global;
 
 import java.util.Properties;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
 
 /**
  * Configures the transport used for network communications across the cluster.

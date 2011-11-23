@@ -4,8 +4,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.marshall.AdvancedExternalizer;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.api.marshall.AdvancedExternalizer;
+import org.infinispan.api.marshall.Marshaller;
 
 public class SerializationConfiguration {
 

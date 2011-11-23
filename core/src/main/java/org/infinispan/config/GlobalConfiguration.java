@@ -22,11 +22,31 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.CacheException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
+
 import org.infinispan.Version;
+import org.infinispan.api.CacheException;
+import org.infinispan.api.executors.ExecutorFactory;
+import org.infinispan.api.marshall.AdvancedExternalizer;
+import org.infinispan.api.marshall.Marshaller;
+import org.infinispan.commons.util.Util;
+import org.infinispan.config.FluentGlobalConfiguration.ExecutorFactoryConfig;
+import org.infinispan.config.FluentGlobalConfiguration.GlobalJmxStatisticsConfig;
+import org.infinispan.config.FluentGlobalConfiguration.SerializationConfig;
+import org.infinispan.config.FluentGlobalConfiguration.ShutdownConfig;
+import org.infinispan.config.FluentGlobalConfiguration.TransportConfig;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
-import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -36,26 +56,12 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.marshall.AdvancedExternalizer;
-import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.config.FluentGlobalConfiguration.SerializationConfig;
-import org.infinispan.config.FluentGlobalConfiguration.TransportConfig;
-import org.infinispan.config.FluentGlobalConfiguration.GlobalJmxStatisticsConfig;
-import org.infinispan.config.FluentGlobalConfiguration.ExecutorFactoryConfig;
-import org.infinispan.config.FluentGlobalConfiguration.ShutdownConfig;
-
-import javax.xml.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
 
 /**
  * Configuration component that encapsulates the global configuration.

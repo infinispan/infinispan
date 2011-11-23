@@ -1,19 +1,18 @@
 package org.infinispan.api;
 
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
+import java.io.Serializable;
+
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
 import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CherryPickClassLoader;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
 
 /**
  * A test that verifies the correctness of {@link org.infinispan.AdvancedCache#with(ClassLoader)} API.

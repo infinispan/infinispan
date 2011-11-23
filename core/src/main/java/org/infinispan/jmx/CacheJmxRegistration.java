@@ -22,20 +22,8 @@
  */
 package org.infinispan.jmx;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.CacheException;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.factories.AbstractComponentRegistry;
-import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.AbstractComponentRegistry.Component;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
@@ -43,8 +31,20 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-import java.util.HashSet;
-import java.util.Set;
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.api.CacheException;
+import org.infinispan.config.Configuration;
+import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.factories.AbstractComponentRegistry;
+import org.infinispan.factories.AbstractComponentRegistry.Component;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * If {@link Configuration#isExposeJmxStatistics()} is true, then class will register all the MBeans from cache local's

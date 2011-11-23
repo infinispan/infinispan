@@ -24,12 +24,11 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.InfinispanCollections;
 
 /**
  * This context is a non-context for operations such as eviction which are not related

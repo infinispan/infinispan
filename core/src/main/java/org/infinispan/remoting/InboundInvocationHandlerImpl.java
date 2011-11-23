@@ -22,6 +22,9 @@
  */
 package org.infinispan.remoting;
 
+import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
+
+import org.infinispan.api.marshall.StreamingMarshaller;
 import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.CacheViewControlCommand;
@@ -40,7 +43,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.NamedCacheNotFoundException;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
@@ -50,8 +52,6 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
 /**
  * Sets the cache interceptor chain on an RPCCommand before calling it to perform

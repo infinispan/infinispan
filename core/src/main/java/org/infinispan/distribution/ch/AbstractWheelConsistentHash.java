@@ -22,18 +22,27 @@
  */
 package org.infinispan.distribution.ch;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.hash.Hash;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static java.lang.String.format;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
-import static java.lang.String.format;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.hash.Hash;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * <p>

@@ -22,25 +22,6 @@
  */
 package org.infinispan.loaders.decorators;
 
-import net.jcip.annotations.GuardedBy;
-import org.infinispan.Cache;
-import org.infinispan.CacheException;
-import org.infinispan.config.Configuration;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderConfig;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.modifications.Clear;
-import org.infinispan.loaders.modifications.Modification;
-import org.infinispan.loaders.modifications.ModificationsList;
-import org.infinispan.loaders.modifications.Remove;
-import org.infinispan.loaders.modifications.Store;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +40,26 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import net.jcip.annotations.GuardedBy;
+
+import org.infinispan.Cache;
+import org.infinispan.api.CacheException;
+import org.infinispan.api.marshall.StreamingMarshaller;
+import org.infinispan.config.Configuration;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.modifications.Clear;
+import org.infinispan.loaders.modifications.Modification;
+import org.infinispan.loaders.modifications.ModificationsList;
+import org.infinispan.loaders.modifications.Remove;
+import org.infinispan.loaders.modifications.Store;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * The AsyncStore is a delegating CacheStore that extends AbstractDelegatingStore, overriding methods to that should not

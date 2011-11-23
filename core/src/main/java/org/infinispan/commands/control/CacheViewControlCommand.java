@@ -22,7 +22,9 @@
  */
 package org.infinispan.commands.control;
 
-import org.infinispan.CacheException;
+import java.util.List;
+
+import org.infinispan.api.CacheException;
 import org.infinispan.cacheviews.CacheView;
 import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -32,8 +34,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.List;
 
 /**
  * A control command to coordinate the installation of cache views between the members of the cluster.

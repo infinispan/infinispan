@@ -22,8 +22,10 @@
  */
 package org.infinispan.remoting.jgroups;
 
+import java.util.Properties;
+
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -35,8 +37,6 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.jgroups.Channel;
 import org.jgroups.JChannel;
 import org.testng.annotations.Test;
-
-import java.util.Properties;
 
 /**
  * When the JGroups channel is started externally and injected via {@code ChannelLookup},

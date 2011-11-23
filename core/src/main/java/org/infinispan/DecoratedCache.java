@@ -19,8 +19,7 @@
 
 package org.infinispan;
 
-import org.infinispan.context.Flag;
-import org.infinispan.util.concurrent.NotifyingFuture;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,7 +28,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import org.infinispan.api.util.concurrent.NotifyingFuture;
+import org.infinispan.context.Flag;
 
 /**
  * A decorator to a cache, which can be built with a specific {@link ClassLoader} and a set of {@link Flag}s.  This
@@ -129,27 +129,27 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public V put(K key, V value, long lifespan, TimeUnit unit) {
-      return cacheImplementation.put(key, value, lifespan, unit, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.put(key, value, lifespan, unit, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
-      return cacheImplementation.putIfAbsent(key, value, lifespan, unit, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.putIfAbsent(key, value, lifespan, unit, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit) {
-      cacheImplementation.putAll(map, lifespan, unit, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      cacheImplementation.putAll(map, lifespan, unit, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
    public V replace(K key, V value, long lifespan, TimeUnit unit) {
-      return cacheImplementation.replace(key, value, lifespan, unit, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.replace(key, value, lifespan, unit, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
-      return cacheImplementation.replace(key, oldValue, value, lifespan, unit, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.replace(key, oldValue, value, lifespan, unit, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
@@ -179,12 +179,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public NotifyingFuture<V> putAsync(K key, V value) {
-      return cacheImplementation.putAsync(key, value, cacheImplementation.defaultLifespan, MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.putAsync(key, value, cacheImplementation.getDefaultLifespan(), MILLISECONDS, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
    public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return cacheImplementation.putAsync(key, value, lifespan, unit, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.putAsync(key, value, lifespan, unit, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
@@ -194,12 +194,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
-      return cacheImplementation.putAllAsync(data, cacheImplementation.defaultLifespan, MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.putAllAsync(data, cacheImplementation.getDefaultLifespan(), MILLISECONDS, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
    public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
-      return cacheImplementation.putAllAsync(data, lifespan, unit, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.putAllAsync(data, lifespan, unit, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
@@ -214,12 +214,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
-      return cacheImplementation.putIfAbsentAsync(key, value, cacheImplementation.defaultLifespan, MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.putIfAbsentAsync(key, value, cacheImplementation.getDefaultLifespan(), MILLISECONDS, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
    public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return cacheImplementation.putIfAbsentAsync(key, value, lifespan, unit, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.putIfAbsentAsync(key, value, lifespan, unit, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
@@ -239,12 +239,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public NotifyingFuture<V> replaceAsync(K key, V value) {
-      return cacheImplementation.replaceAsync(key, value, cacheImplementation.defaultLifespan, MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.replaceAsync(key, value, cacheImplementation.getDefaultLifespan(), MILLISECONDS, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
    public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return cacheImplementation.replaceAsync(key, value, lifespan, unit, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.replaceAsync(key, value, lifespan, unit, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
@@ -254,12 +254,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
-      return cacheImplementation.replaceAsync(key, oldValue, newValue, cacheImplementation.defaultLifespan, MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.replaceAsync(key, oldValue, newValue, cacheImplementation.getDefaultLifespan(), MILLISECONDS, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
    public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
-      return cacheImplementation.replaceAsync(key, oldValue, newValue, lifespan, unit, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.replaceAsync(key, oldValue, newValue, lifespan, unit, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
@@ -294,7 +294,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public V put(K key, V value) {
-      return cacheImplementation.put(key, value, cacheImplementation.defaultLifespan, MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.put(key, value, cacheImplementation.getDefaultLifespan(), MILLISECONDS, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
@@ -304,7 +304,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public void putAll(Map<? extends K, ? extends V> m) {
-      cacheImplementation.putAll(m, cacheImplementation.defaultLifespan, MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      cacheImplementation.putAll(m, cacheImplementation.getDefaultLifespan(), MILLISECONDS, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
@@ -329,7 +329,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public V putIfAbsent(K key, V value) {
-      return cacheImplementation.putIfAbsent(key, value, cacheImplementation.defaultLifespan, MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.putIfAbsent(key, value, cacheImplementation.getDefaultLifespan(), MILLISECONDS, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
@@ -339,11 +339,11 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public boolean replace(K key, V oldValue, V newValue) {
-      return cacheImplementation.replace(key, oldValue, newValue, cacheImplementation.defaultLifespan, MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.replace(key, oldValue, newValue, cacheImplementation.getDefaultLifespan(), MILLISECONDS, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 
    @Override
    public V replace(K key, V value) {
-      return cacheImplementation.replace(key, value, cacheImplementation.defaultLifespan, MILLISECONDS, cacheImplementation.defaultMaxIdleTime, MILLISECONDS, flags, classLoader);
+      return cacheImplementation.replace(key, value, cacheImplementation.getDefaultLifespan(), MILLISECONDS, cacheImplementation.getDefaultMaxIdleTime(), MILLISECONDS, flags, classLoader);
    }
 }

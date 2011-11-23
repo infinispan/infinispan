@@ -23,7 +23,19 @@
 
 package org.infinispan.transaction;
 
-import org.infinispan.CacheException;
+import static java.util.Collections.emptySet;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.Transaction;
+import javax.transaction.TransactionSynchronizationRegistry;
+
+import org.infinispan.api.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -49,13 +61,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionSynchronizationRegistry;
-import java.util.*;
-import java.util.concurrent.*;
-
-import static java.util.Collections.emptySet;
 
 /**
  * Repository for {@link RemoteTransaction} and {@link

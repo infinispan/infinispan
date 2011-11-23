@@ -22,11 +22,11 @@
  */
 package org.infinispan.loaders;
 
-import org.infinispan.Cache;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.marshall.StreamingMarshaller;
-
 import java.util.Set;
+
+import org.infinispan.Cache;
+import org.infinispan.api.marshall.StreamingMarshaller;
+import org.infinispan.container.entries.InternalCacheEntry;
 
 /**
  * Responsible for loading cache data from an external source

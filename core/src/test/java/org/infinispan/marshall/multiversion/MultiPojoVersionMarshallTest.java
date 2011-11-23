@@ -22,22 +22,9 @@
 
 package org.infinispan.marshall.multiversion;
 
-import javassist.ClassClassPath;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtField;
-import javassist.CtMethod;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.AbstractDelegatingMarshaller;
-import org.infinispan.marshall.Externalizer;
-import org.infinispan.marshall.SerializeWith;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.CherryPickClassLoader;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.Util;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -48,9 +35,23 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 
-import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import javassist.ClassClassPath;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtField;
+import javassist.CtMethod;
+
+import org.infinispan.api.marshall.Externalizer;
+import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
+import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.util.Util;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.CherryPickClassLoader;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
 /**
  * Test how marshalling code can deal with new versions of classes being used

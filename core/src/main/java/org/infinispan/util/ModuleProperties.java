@@ -22,16 +22,6 @@
  */
 package org.infinispan.util;
 
-import org.infinispan.CacheException;
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.module.ModuleCommandFactory;
-import org.infinispan.commands.module.ModuleCommandInitializer;
-import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -43,6 +33,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
+import org.infinispan.api.CacheException;
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.module.ModuleCommandFactory;
+import org.infinispan.commands.module.ModuleCommandInitializer;
+import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.Util;
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * The <code>ModuleProperties</code> class represents Infinispan's module configuration key value pairs. Each Infinispan

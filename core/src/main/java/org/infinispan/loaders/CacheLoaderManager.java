@@ -22,7 +22,7 @@
  */
 package org.infinispan.loaders;
 
-import org.infinispan.lifecycle.Lifecycle;
+import org.infinispan.api.lifecycle.Lifecycle;
 
 /**
  * The cache loader manager interface

@@ -22,10 +22,10 @@
  */
 package org.infinispan.util.concurrent;
 
-import org.infinispan.lifecycle.Lifecycle;
-
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
+
+import org.infinispan.api.lifecycle.Lifecycle;
 
 /**
  * A class that handles restarts of components via multiple threads.  Specifically, if a component needs to be restarted

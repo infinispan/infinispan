@@ -23,6 +23,10 @@
 package org.infinispan.factories;
 
 
+import static org.infinispan.commons.util.Util.getInstance;
+import static org.infinispan.commons.util.Util.loadClass;
+
+import org.infinispan.api.marshall.StreamingMarshaller;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.container.EntryFactory;
@@ -30,21 +34,17 @@ import org.infinispan.container.EntryFactoryImpl;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.NonTransactionalInvocationContextContainer;
 import org.infinispan.context.TransactionalInvocationContextContainer;
-import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
-
-import static org.infinispan.util.Util.getInstance;
-import static org.infinispan.util.Util.loadClass;
 
 /**
  * Simple factory that just uses reflection and an empty constructor of the component type.

@@ -23,12 +23,35 @@
 package org.infinispan.factories;
 
 
-import org.infinispan.CacheException;
+import java.util.List;
+
+import org.infinispan.api.CacheException;
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.interceptors.*;
+import org.infinispan.interceptors.ActivationInterceptor;
+import org.infinispan.interceptors.BatchingInterceptor;
+import org.infinispan.interceptors.CacheLoaderInterceptor;
+import org.infinispan.interceptors.CacheMgmtInterceptor;
+import org.infinispan.interceptors.CacheStoreInterceptor;
+import org.infinispan.interceptors.CallInterceptor;
+import org.infinispan.interceptors.DeadlockDetectingInterceptor;
+import org.infinispan.interceptors.DistCacheStoreInterceptor;
+import org.infinispan.interceptors.DistTxInterceptor;
+import org.infinispan.interceptors.DistributionInterceptor;
+import org.infinispan.interceptors.EntryWrappingInterceptor;
+import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.InvalidationInterceptor;
+import org.infinispan.interceptors.InvocationContextInterceptor;
+import org.infinispan.interceptors.IsMarshallableInterceptor;
+import org.infinispan.interceptors.MarshalledValueInterceptor;
+import org.infinispan.interceptors.NotificationInterceptor;
+import org.infinispan.interceptors.PassivationInterceptor;
+import org.infinispan.interceptors.ReplicationInterceptor;
+import org.infinispan.interceptors.StateTransferLockInterceptor;
+import org.infinispan.interceptors.TxInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
@@ -36,11 +59,8 @@ import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.List;
 
 /**
  * Factory class that builds an interceptor chain based on cache configuration.
