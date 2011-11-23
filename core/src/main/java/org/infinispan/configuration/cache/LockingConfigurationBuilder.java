@@ -4,11 +4,11 @@ import org.infinispan.util.concurrent.IsolationLevel;
 
 public class LockingConfigurationBuilder extends AbstractConfigurationChildBuilder<LockingConfiguration> {
 
-   private int concurrencyLevel;
-   private IsolationLevel isolationLevel;
-   private long lockAcquisitionTimeout;
-   private boolean useLockStriping;
-   private boolean writeSkewCheck;
+   private int concurrencyLevel = 32;
+   private IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
+   private long lockAcquisitionTimeout = 10000L;
+   private boolean useLockStriping = false;
+   private boolean writeSkewCheck = false;
 
    protected LockingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
