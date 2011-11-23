@@ -9,7 +9,7 @@
    </parent>
 
    <artifactId>infinispan-spring</artifactId>
-   <packaging>jar</packaging>
+   <packaging>bundle</packaging>
 
    <name>Infinispan Spring Integration</name>
    <description>

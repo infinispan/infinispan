@@ -30,7 +30,7 @@ import org.infinispan.remoting.MIMECacheEntry
 import java.io._
 import org.testng.annotations.{Test, BeforeClass, AfterClass}
 import java.lang.reflect.Method
-import org.infinispan.manager.BasicCacheContainer
+import org.infinispan.api.BasicCacheContainer
 import scala.math._
 import org.infinispan.test.TestingUtil
 import java.text.SimpleDateFormat

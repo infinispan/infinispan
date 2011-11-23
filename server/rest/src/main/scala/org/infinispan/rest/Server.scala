@@ -29,11 +29,12 @@ import java.util.concurrent.TimeUnit
 import javax.ws.rs._
 import core._
 import core.Response.{ResponseBuilder, Status}
+import org.infinispan.api.BasicCacheContainer
 import org.infinispan.remoting.MIMECacheEntry
 import org.infinispan.manager._
 import org.codehaus.jackson.map.ObjectMapper
 import org.infinispan.{CacheException, Cache}
-import org.infinispan.util.hash.MurmurHash3
+import org.infinispan.commons.hash.MurmurHash3
 
 /**
  * Integration server linking REST requests with Infinispan calls.

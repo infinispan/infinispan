@@ -1,8 +1,8 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.hash.Hash;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.HashSeed;
-import org.infinispan.util.hash.Hash;
 
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.

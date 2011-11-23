@@ -32,7 +32,7 @@
       <relativePath>../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-cachestore-cloud</artifactId>
-   <packaging>jar</packaging>
+   <packaging>bundle</packaging>
    <name>Infinispan CloudCacheStore</name>
    <description>Infinispan CloudCacheStore module</description>
 

@@ -23,13 +23,13 @@
 
 package org.infinispan.distribution.virtualnodes;
 
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.TestTopologyAwareAddress;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.hash.MurmurHash3;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.BeforeMethod;

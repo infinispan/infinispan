@@ -1,11 +1,11 @@
 package org.infinispan.tx.lockreordering;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.hash.MurmurHash2;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.util.hash.MurmurHash2;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;

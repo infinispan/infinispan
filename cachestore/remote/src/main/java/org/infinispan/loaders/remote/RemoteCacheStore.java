@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import net.jcip.annotations.ThreadSafe;
 
 import org.infinispan.Cache;
+import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -41,7 +42,6 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.remote.logging.Log;
-import org.infinispan.manager.BasicCacheContainer;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.LogFactory;
 

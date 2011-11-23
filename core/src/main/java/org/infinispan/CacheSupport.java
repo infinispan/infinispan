@@ -23,6 +23,7 @@
 
 package org.infinispan;
 
+import org.infinispan.api.BasicCache;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Map;

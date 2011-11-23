@@ -24,7 +24,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1;
-import org.infinispan.util.hash.Hash;
+import org.infinispan.commons.hash.Hash;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;

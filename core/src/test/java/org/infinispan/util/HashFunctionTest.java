@@ -22,11 +22,11 @@
  */
 package org.infinispan.util;
 
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash2;
+import org.infinispan.commons.hash.MurmurHash2Compat;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.hash.Hash;
-import org.infinispan.util.hash.MurmurHash2;
-import org.infinispan.util.hash.MurmurHash2Compat;
-import org.infinispan.util.hash.MurmurHash3;
 import org.testng.annotations.Test;
 
 @Test(testName = "util.HashFunctionTest", groups = "unit")

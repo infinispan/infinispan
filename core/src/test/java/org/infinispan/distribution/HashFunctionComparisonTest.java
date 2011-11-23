@@ -325,7 +325,7 @@ class SuperFastHash extends HashFunction {
 }
 
 class MurmurHash2 extends HashFunction {
-   org.infinispan.util.hash.MurmurHash2 h = new org.infinispan.util.hash.MurmurHash2();
+   org.infinispan.commons.hash.MurmurHash2 h = new org.infinispan.commons.hash.MurmurHash2();
    public String functionName() {
       return "MurmurHash2 (neutral)";
    }
@@ -337,7 +337,7 @@ class MurmurHash2 extends HashFunction {
 }
 
 class MurmurHash2Compat extends HashFunction {
-   org.infinispan.util.hash.MurmurHash2Compat h = new org.infinispan.util.hash.MurmurHash2Compat();
+   org.infinispan.commons.hash.MurmurHash2Compat h = new org.infinispan.commons.hash.MurmurHash2Compat();
    public String functionName() {
       return "MurmurHash2Compat (neutral)";
    }
@@ -349,7 +349,7 @@ class MurmurHash2Compat extends HashFunction {
 }
 
 class MurmurHash3 extends HashFunction {
-   org.infinispan.util.hash.MurmurHash3 h = new org.infinispan.util.hash.MurmurHash3();
+   org.infinispan.commons.hash.MurmurHash3 h = new org.infinispan.commons.hash.MurmurHash3();
    public String functionName() {
       return "MurmurHash3";
    }

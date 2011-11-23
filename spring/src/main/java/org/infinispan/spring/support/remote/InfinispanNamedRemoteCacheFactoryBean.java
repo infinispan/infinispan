@@ -23,7 +23,7 @@
 
 package org.infinispan.spring.support.remote;
 
-import org.infinispan.BasicCache;
+import org.infinispan.api.BasicCache;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.util.logging.Log;
