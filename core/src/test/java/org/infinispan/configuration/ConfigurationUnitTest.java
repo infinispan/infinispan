@@ -28,6 +28,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -73,6 +74,15 @@ public class ConfigurationUnitTest {
       Assert.assertTrue(legacy.isTransactionAutoCommit());
       Assert.assertEquals(org.infinispan.config.Configuration.CacheMode.DIST_SYNC.name(), CacheMode.DIST_SYNC.name());
    }
+   
+  @Test
+  public void testDummyTMGetCache() {
+     ConfigurationBuilder cb = new ConfigurationBuilder();
+     cb.transaction().use1PcForAutoCommitTransactions(true)
+        .transactionManagerLookup(new DummyTransactionManagerLookup());
+     DefaultCacheManager cm = new DefaultCacheManager(cb.build());
+     cm.getCache();
+  }
    
    @Test
    public void testGetCache() {
