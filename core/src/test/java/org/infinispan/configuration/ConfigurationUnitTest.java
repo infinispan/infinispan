@@ -74,6 +74,10 @@ public class ConfigurationUnitTest {
       Assert.assertEquals(org.infinispan.config.Configuration.CacheMode.DIST_SYNC.name(), CacheMode.DIST_SYNC.name());
    }
    
+   @Test
+   public void testGetCache() {
+      new DefaultCacheManager(new ConfigurationBuilder().build()).getCache();
+   }
    
 
 }
