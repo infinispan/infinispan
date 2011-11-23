@@ -22,6 +22,32 @@
  */
 package org.infinispan.marshall;
 
+import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
+import static org.infinispan.test.TestingUtil.k;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.ByteArrayInputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commands.ReplicableCommand;
@@ -39,6 +65,11 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
+import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.commons.util.ByteArrayKey;
+import org.infinispan.commons.util.hash.MurmurHash2;
+import org.infinispan.commons.util.hash.MurmurHash3;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
@@ -70,12 +101,9 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.hash.MurmurHash2;
-import org.infinispan.util.hash.MurmurHash3;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.TraceInformation;
@@ -84,32 +112,6 @@ import org.jgroups.util.UUID;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
-import static org.infinispan.test.TestingUtil.k;
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "marshall.VersionAwareMarshallerTest")
 public class VersionAwareMarshallerTest extends AbstractInfinispanTest {

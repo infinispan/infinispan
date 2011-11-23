@@ -22,9 +22,15 @@
  */
 package org.infinispan.interceptors;
 
-import org.infinispan.CacheException;
-import org.infinispan.config.ConfigurationException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
+
+import org.infinispan.api.CacheException;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -32,12 +38,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Knows how to build and manage an chain of interceptors. Also in charge with invoking methods on the chain.

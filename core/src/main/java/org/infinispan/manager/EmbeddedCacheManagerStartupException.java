@@ -22,7 +22,7 @@
  */
 package org.infinispan.manager;
 
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 
 /**
  * An exception to encapsulate an error when starting up a cache manager

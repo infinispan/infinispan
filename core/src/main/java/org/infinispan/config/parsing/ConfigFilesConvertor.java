@@ -22,20 +22,8 @@
  */
 package org.infinispan.config.parsing;
 
-import org.infinispan.util.FileLookupFactory;
-import org.infinispan.util.Util;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
+import static java.util.Collections.sort;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -49,7 +37,20 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Collections.sort;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
+
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.Util;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 /**
  * Class used for converting different configuration files to INFINISPAN format.

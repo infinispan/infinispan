@@ -22,21 +22,22 @@
  */
 package org.infinispan.atomic;
 
-import net.jcip.annotations.NotThreadSafe;
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.context.FlagContainer;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.FastCopyHashMap;
-import org.infinispan.util.Util;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+
+import net.jcip.annotations.NotThreadSafe;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.Util;
+import org.infinispan.context.FlagContainer;
+import org.infinispan.util.FastCopyHashMap;
 
 /**
  * The default implementation of {@link AtomicMap}.  Note that this map cannot be constructed directly, and callers

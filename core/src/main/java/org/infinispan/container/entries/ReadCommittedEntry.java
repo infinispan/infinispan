@@ -22,14 +22,18 @@
  */
 package org.infinispan.container.entries;
 
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.CHANGED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.CREATED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EVICTED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.LOCK_PLACEHOLDER;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.REMOVED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.VALID;
+
 import org.infinispan.atomic.AtomicHashMap;
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.container.entries.ReadCommittedEntry.Flags.*;
-import static org.infinispan.container.entries.ReadCommittedEntry.Flags.LOCK_PLACEHOLDER;
 
 /**
  * A wrapper around a cached entry that encapsulates read committed semantics when writes are initiated, committed or

@@ -22,7 +22,7 @@
  */
 package org.infinispan.transaction.xa;
 
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 
 /**
  * Thrown if an operation is to be performed on an invalid transaction context.

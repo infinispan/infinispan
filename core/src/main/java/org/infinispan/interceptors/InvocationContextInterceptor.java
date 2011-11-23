@@ -23,7 +23,12 @@
 package org.infinispan.interceptors;
 
 
-import org.infinispan.CacheException;
+import javax.transaction.Status;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
+import org.infinispan.api.CacheException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.context.Flag;
@@ -37,11 +42,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
 
 /**
  * @author Mircea.Markus@jboss.com

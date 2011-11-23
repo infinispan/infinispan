@@ -750,7 +750,7 @@
          </activation>
          <properties>
             <!-- By default create OSGI bundles -->
-            <packaging>jar</packaging>
+            <packaging>bundle</packaging>
          </properties>
          <build>
             <plugins>

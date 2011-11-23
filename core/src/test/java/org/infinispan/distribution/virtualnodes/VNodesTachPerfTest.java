@@ -23,15 +23,10 @@
 
 package org.infinispan.distribution.virtualnodes;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashHelper;
-import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.Util;
-import org.testng.annotations.Test;
+import static java.lang.Math.abs;
+import static java.lang.Math.min;
+import static java.lang.Math.sqrt;
+import static org.testng.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,8 +37,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static java.lang.Math.*;
-import static org.testng.Assert.assertEquals;
+import org.infinispan.commons.util.Util;
+import org.infinispan.config.Configuration;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashHelper;
+import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.Test;
 
 /**
  * Tests the uniformity and performance of the distribution hash algo with virtual nodes.

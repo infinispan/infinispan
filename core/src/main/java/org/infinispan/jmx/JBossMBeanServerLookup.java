@@ -23,11 +23,12 @@
 
 package org.infinispan.jmx;
 
-import org.infinispan.CacheException;
-import org.infinispan.util.Util;
+import java.util.Properties;
 
 import javax.management.MBeanServer;
-import java.util.Properties;
+
+import org.infinispan.api.CacheException;
+import org.infinispan.commons.util.Util;
 
 /**
  * MBeanServer lookup implementation to locate the JBoss MBeanServer.

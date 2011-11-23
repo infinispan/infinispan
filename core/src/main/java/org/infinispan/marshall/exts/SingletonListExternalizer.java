@@ -22,18 +22,18 @@
  */
 package org.infinispan.marshall.exts;
 
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
+import net.jcip.annotations.Immutable;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.Util;
 
 /**
  * SingletonListExternalizer.

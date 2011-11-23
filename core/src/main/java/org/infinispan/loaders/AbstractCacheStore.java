@@ -22,16 +22,6 @@
  */
 package org.infinispan.loaders;
 
-import org.infinispan.Cache;
-import org.infinispan.loaders.modifications.Modification;
-import org.infinispan.loaders.modifications.Remove;
-import org.infinispan.loaders.modifications.Store;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -42,6 +32,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.Cache;
+import org.infinispan.api.marshall.StreamingMarshaller;
+import org.infinispan.loaders.modifications.Modification;
+import org.infinispan.loaders.modifications.Remove;
+import org.infinispan.loaders.modifications.Store;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * An abstract {@link org.infinispan.loaders.CacheStore} that holds common implementations for some methods

@@ -31,7 +31,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 import org.infinispan.config.AbstractNamedCacheConfigurationBean;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationBeanVisitor;

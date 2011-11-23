@@ -23,12 +23,33 @@
 
 package org.infinispan.test;
 
+import static java.io.File.separator;
+
+import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+
+import javax.management.ObjectName;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
+import org.infinispan.api.marshall.StreamingMarshaller;
 import org.infinispan.cacheviews.CacheViewsManager;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -43,8 +64,6 @@ import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.AbstractDelegatingMarshaller;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.jboss.ExternalizerTable;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -61,24 +80,6 @@ import org.jgroups.protocols.DELAY;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
 import org.jgroups.stack.ProtocolStack;
-
-import javax.management.ObjectName;
-import javax.transaction.TransactionManager;
-import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
-
-import static java.io.File.separator;
 
 public class TestingUtil {
 

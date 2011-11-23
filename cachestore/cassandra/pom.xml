@@ -31,7 +31,7 @@
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<artifactId>infinispan-cachestore-cassandra</artifactId>
-   <packaging>jar</packaging>
+   <packaging>bundle</packaging>
 	<name>Infinispan CassandraCacheStore</name>
 	<description>Infinispan CassandraCacheStore module</description>
 

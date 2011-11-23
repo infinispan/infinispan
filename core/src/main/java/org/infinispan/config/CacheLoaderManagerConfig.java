@@ -22,10 +22,8 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.config.FluentConfiguration.LoadersConfig;
-import org.infinispan.loaders.CacheLoaderConfig;
-import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.util.Util;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -33,8 +31,10 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import java.util.LinkedList;
-import java.util.List;
+import org.infinispan.commons.util.Util;
+import org.infinispan.config.FluentConfiguration.LoadersConfig;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheStoreConfig;
 
 /**
  * Holds the configuration of the cache loader chain. All cache loaders should be defined using this

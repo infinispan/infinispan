@@ -23,21 +23,23 @@
 
 package org.infinispan.marshall;
 
-import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.Util;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Set;
+
+import org.infinispan.Cache;
+import org.infinispan.api.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.config.Configuration;
+import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Test;
 
 /**
  * Tests configuration of user defined {@link AdvancedExternalizer} implementations

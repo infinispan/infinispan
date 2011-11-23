@@ -22,7 +22,7 @@
  */
 package org.infinispan.jmx;
 
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 
 /**
  * @author Mircea.Markus@jboss.com

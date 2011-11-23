@@ -2,8 +2,8 @@ package org.infinispan.configuration.global;
 
 import java.util.Map.Entry;
 
+import org.infinispan.api.marshall.AdvancedExternalizer;
 import org.infinispan.config.FluentGlobalConfiguration;
-import org.infinispan.marshall.AdvancedExternalizer;
 
 public class LegacyGlobalConfigurationAdaptor {
    

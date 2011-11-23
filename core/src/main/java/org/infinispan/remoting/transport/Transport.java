@@ -22,6 +22,16 @@
  */
 package org.infinispan.remoting.transport;
 
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+
+import org.infinispan.api.lifecycle.Lifecycle;
+import org.infinispan.api.marshall.StreamingMarshaller;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.ComponentName;
@@ -30,22 +40,12 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.lifecycle.Lifecycle;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.util.logging.Log;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-
-import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
  * An interface that provides a communication link with remote caches.  Also allows remote caches to invoke commands on

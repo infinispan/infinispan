@@ -22,7 +22,7 @@
  */
 package org.infinispan.remoting;
 
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;

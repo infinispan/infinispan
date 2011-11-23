@@ -23,14 +23,14 @@
 
 package org.infinispan.api;
 
+import java.util.Collections;
+
+import org.infinispan.api.util.concurrent.NotifyingFuture;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.util.concurrent.NotifyingFuture;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
 
 /**
  * @author Mircea Markus

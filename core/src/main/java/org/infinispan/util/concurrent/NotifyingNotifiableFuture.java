@@ -24,6 +24,8 @@ package org.infinispan.util.concurrent;
 
 import java.util.concurrent.Future;
 
+import org.infinispan.api.util.concurrent.NotifyingFuture;
+
 /**
  * An internal interface which adds the ability to inform the future of completion.
  *

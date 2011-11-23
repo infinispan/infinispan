@@ -30,29 +30,29 @@
  */
 package org.infinispan.replication;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.CacheException;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.config.Configuration;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.marshall.NotSerializableException;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransactionManager;
-import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.concurrent.TimeoutException;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.fail;
+
+import java.io.Serializable;
 
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
-import java.io.Serializable;
 
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.fail;
+import org.infinispan.AdvancedCache;
+import org.infinispan.api.CacheException;
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.config.Configuration;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "replication.ReplicationExceptionTest")
 public class ReplicationExceptionTest extends MultipleCacheManagersTest {

@@ -1,5 +1,6 @@
 package org.infinispan.marshall;
 
+import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;

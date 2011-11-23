@@ -23,11 +23,12 @@
 
 package org.infinispan.marshall;
 
+import java.util.List;
+
+import org.infinispan.api.marshall.AdvancedExternalizer;
 import org.infinispan.config.AdvancedExternalizerConfig;
 import org.infinispan.config.GlobalConfiguration;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 /**
  * Tests configuration of user defined {@link AdvancedExternalizer} implementations

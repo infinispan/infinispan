@@ -22,12 +22,12 @@
  */
 package org.infinispan.transaction.lookup;
 
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.util.Util;
-
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.transaction.TransactionManager;
+
+import org.infinispan.commons.util.Util;
+import org.infinispan.config.ConfigurationException;
 
 
 /**

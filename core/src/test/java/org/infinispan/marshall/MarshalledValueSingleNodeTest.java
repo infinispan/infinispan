@@ -22,7 +22,7 @@
  */
 package org.infinispan.marshall;
 
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;

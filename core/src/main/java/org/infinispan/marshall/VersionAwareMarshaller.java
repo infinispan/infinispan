@@ -22,15 +22,6 @@
  */
 package org.infinispan.marshall;
 
-import org.infinispan.config.Configuration;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.io.ByteBuffer;
-import org.infinispan.io.ExposedByteArrayOutputStream;
-import org.infinispan.marshall.jboss.ExternalizerTable;
-import org.infinispan.marshall.jboss.JBossMarshaller;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -38,6 +29,17 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+
+import org.infinispan.api.io.ByteBuffer;
+import org.infinispan.api.io.ExposedByteArrayOutputStream;
+import org.infinispan.api.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.AbstractMarshaller;
+import org.infinispan.config.Configuration;
+import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.marshall.jboss.ExternalizerTable;
+import org.infinispan.marshall.jboss.JBossMarshaller;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A delegate to various other marshallers like {@link JBossMarshaller}. This delegating marshaller adds versioning
@@ -89,9 +91,9 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
       ObjectOutput out = startObjectOutput(baos, false);
       try {
          defaultMarshaller.objectToObjectStream(obj, out);
-      } catch (java.io.NotSerializableException nse) {
+      } catch (org.infinispan.commons.marshall.NotSerializableException nse) {
          if (log.isDebugEnabled()) log.debug("Object is not serializable", nse);
-         throw new org.infinispan.marshall.NotSerializableException(nse.getMessage(), nse.getCause());
+         throw new org.infinispan.commons.marshall.NotSerializableException(nse.getMessage(), nse.getCause());
       } catch (IOException ioe) {
          if (ioe.getCause() instanceof InterruptedException) {
             if (log.isTraceEnabled()) log.trace("Interrupted exception while marshalling", ioe.getCause());

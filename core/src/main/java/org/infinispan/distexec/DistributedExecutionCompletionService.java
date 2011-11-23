@@ -30,8 +30,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.util.concurrent.FutureListener;
-import org.infinispan.util.concurrent.NotifyingFuture;
+import org.infinispan.api.util.concurrent.FutureListener;
+import org.infinispan.api.util.concurrent.NotifyingFuture;
 
 /**
  * A {@link CompletionService} that uses a supplied {@link DistributedExecutorService}

@@ -22,16 +22,16 @@
  */
 package org.infinispan.distribution.ch;
 
-import org.infinispan.marshall.Ids;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
-import org.infinispan.util.hash.Hash;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.hash.Hash;
+import org.infinispan.remoting.transport.Address;
 
 public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 

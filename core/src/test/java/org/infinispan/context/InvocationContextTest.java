@@ -22,8 +22,15 @@
  */
 package org.infinispan.context;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -34,12 +41,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 @Test(groups = {"functional"}, testName = "context.InvocationContextTest")
 public class InvocationContextTest extends MultipleCacheManagersTest {

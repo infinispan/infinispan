@@ -22,6 +22,7 @@
  */
 package org.infinispan.factories;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.container.DataContainer;
@@ -29,7 +30,6 @@ import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.util.Util;
 
 /**
  * Constructs the data container

@@ -30,6 +30,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.infinispan.api.util.concurrent.FutureListener;
+import org.infinispan.api.util.concurrent.NotifyingFuture;
+
 /**
  * Constructs an instance of a {@link org.infinispan.util.concurrent.NotifyingFuture}.
  * <p/>

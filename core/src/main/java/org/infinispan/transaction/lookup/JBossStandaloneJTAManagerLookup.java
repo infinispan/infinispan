@@ -23,15 +23,16 @@
 package org.infinispan.transaction.lookup;
 
 
-import org.infinispan.config.Configuration;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import java.lang.reflect.Method;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
-import java.lang.reflect.Method;
+
+import org.infinispan.commons.util.Util;
+import org.infinispan.config.Configuration;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * JTA standalone TM lookup.

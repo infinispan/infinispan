@@ -23,6 +23,7 @@
 
 package org.infinispan.util;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

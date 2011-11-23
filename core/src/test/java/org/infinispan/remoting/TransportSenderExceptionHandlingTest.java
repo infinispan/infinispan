@@ -22,15 +22,24 @@
  */
 package org.infinispan.remoting;
 
+import static org.easymock.EasyMock.anyInt;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+
+import java.io.EOFException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.EmptyStackException;
+
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
-import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -41,12 +50,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.jgroups.blocks.RpcDispatcher;
 import org.testng.annotations.Test;
-
-import java.io.EOFException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.EmptyStackException;
-
-import static org.easymock.EasyMock.*;
 
 @Test(groups = "functional", testName = "remoting.TransportSenderExceptionHandlingTest")
 public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersTest {

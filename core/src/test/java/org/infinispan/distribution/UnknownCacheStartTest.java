@@ -22,8 +22,12 @@
  */
 package org.infinispan.distribution;
 
+import static org.infinispan.test.AbstractCacheTest.getDefaultClusteredConfig;
+import static org.infinispan.test.TestingUtil.killCacheManagers;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
+
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -32,10 +36,6 @@ import org.testng.TestException;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import static org.infinispan.test.AbstractCacheTest.getDefaultClusteredConfig;
-import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 
 @Test(groups = "functional", testName = "distribution.UnknownCacheStartTest", enabled = false)
 public class UnknownCacheStartTest extends AbstractInfinispanTest {

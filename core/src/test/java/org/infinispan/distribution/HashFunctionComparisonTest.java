@@ -22,9 +22,11 @@
  */
 package org.infinispan.distribution;
 
-import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
-import org.infinispan.remoting.transport.Address;
-import org.testng.annotations.Test;
+import static org.infinispan.commons.util.Util.padString;
+import static org.infinispan.commons.util.Util.prettyPrintTime;
+import static org.infinispan.profiling.testinternals.Generator.generateAddress;
+import static org.infinispan.profiling.testinternals.Generator.getRandomByteArray;
+import static org.infinispan.profiling.testinternals.Generator.getRandomString;
 
 import java.nio.charset.Charset;
 import java.text.NumberFormat;
@@ -38,9 +40,9 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import static org.infinispan.profiling.testinternals.Generator.*;
-import static org.infinispan.util.Util.padString;
-import static org.infinispan.util.Util.prettyPrintTime;
+import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
+import org.infinispan.remoting.transport.Address;
+import org.testng.annotations.Test;
 
 /**
  * This test benchmarks different hash functions.
@@ -325,7 +327,7 @@ class SuperFastHash extends HashFunction {
 }
 
 class MurmurHash2 extends HashFunction {
-   org.infinispan.util.hash.MurmurHash2 h = new org.infinispan.util.hash.MurmurHash2();
+   org.infinispan.commons.util.hash.MurmurHash2 h = new org.infinispan.commons.util.hash.MurmurHash2();
    public String functionName() {
       return "MurmurHash2 (neutral)";
    }
@@ -337,7 +339,7 @@ class MurmurHash2 extends HashFunction {
 }
 
 class MurmurHash2Compat extends HashFunction {
-   org.infinispan.util.hash.MurmurHash2Compat h = new org.infinispan.util.hash.MurmurHash2Compat();
+   org.infinispan.commons.util.hash.MurmurHash2Compat h = new org.infinispan.commons.util.hash.MurmurHash2Compat();
    public String functionName() {
       return "MurmurHash2Compat (neutral)";
    }
@@ -349,7 +351,7 @@ class MurmurHash2Compat extends HashFunction {
 }
 
 class MurmurHash3 extends HashFunction {
-   org.infinispan.util.hash.MurmurHash3 h = new org.infinispan.util.hash.MurmurHash3();
+   org.infinispan.commons.util.hash.MurmurHash3 h = new org.infinispan.commons.util.hash.MurmurHash3();
    public String functionName() {
       return "MurmurHash3";
    }

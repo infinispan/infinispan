@@ -23,8 +23,14 @@
 
 package org.infinispan.notifications.cachelistener;
 
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.fail;
+
+import java.lang.reflect.Method;
+
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -33,12 +39,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.lang.reflect.Method;
-
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.fail;
 
 /**
  * Tests the behaviour of caches when hooked listeners

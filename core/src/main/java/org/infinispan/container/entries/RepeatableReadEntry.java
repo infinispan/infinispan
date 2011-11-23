@@ -22,7 +22,7 @@
  */
 package org.infinispan.container.entries;
 
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

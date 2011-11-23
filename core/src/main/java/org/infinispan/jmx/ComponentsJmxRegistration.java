@@ -22,17 +22,18 @@
  */
 package org.infinispan.jmx;
 
-import org.infinispan.CacheException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
+import org.infinispan.api.CacheException;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Registers a set of components on an MBean server.

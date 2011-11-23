@@ -19,14 +19,14 @@
 
 package org.infinispan.lock;
 
-import org.infinispan.CacheException;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import org.infinispan.api.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
-
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Interceptor that can selectively fail or skip executing commands.

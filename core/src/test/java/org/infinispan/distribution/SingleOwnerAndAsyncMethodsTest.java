@@ -23,17 +23,17 @@
 
 package org.infinispan.distribution;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.context.Flag;
-import org.infinispan.util.concurrent.NotifyingFuture;
-import org.testng.annotations.Test;
-
-import java.lang.reflect.Method;
-
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.Assert.assertEquals;
+
+import java.lang.reflect.Method;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.api.util.concurrent.NotifyingFuture;
+import org.infinispan.context.Flag;
+import org.testng.annotations.Test;
 
 /**
  * Non-transactional tests for asynchronous methods in a distributed

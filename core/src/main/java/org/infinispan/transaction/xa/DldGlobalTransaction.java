@@ -22,11 +22,7 @@
  */
 package org.infinispan.transaction.xa;
 
-import org.infinispan.marshall.Ids;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static java.util.Collections.emptySet;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -34,7 +30,11 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Set;
 
-import static java.util.Collections.emptySet;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.Util;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * This class is used when deadlock detection is enabled.

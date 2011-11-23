@@ -22,7 +22,7 @@
  */
 package org.infinispan.remoting;
 
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 
 /**
  * Thrown when an RPC problem occurred

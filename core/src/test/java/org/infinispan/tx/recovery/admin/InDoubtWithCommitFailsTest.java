@@ -23,7 +23,13 @@
 
 package org.infinispan.tx.recovery.admin;
 
-import org.infinispan.CacheException;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.rollbackTransaction;
+import static org.testng.Assert.assertEquals;
+
+import org.infinispan.api.CacheException;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.config.Configuration;
@@ -35,9 +41,6 @@ import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
-
-import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
-import static org.testng.Assert.assertEquals;
 
 /**
  * This test makes sure that when a transaction fails during commit it is reported as in-doubt transaction.

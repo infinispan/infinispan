@@ -22,8 +22,10 @@
  */
 package org.infinispan.distexec;
 
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+
 import java.io.Externalizable;
-import java.io.NotSerializableException;
+import org.infinispan.commons.marshall.NotSerializableException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,9 +35,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
@@ -55,27 +57,25 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.api.marshall.Marshaller;
+import org.infinispan.api.marshall.StreamingMarshaller;
+import org.infinispan.api.util.concurrent.FutureListener;
+import org.infinispan.api.util.concurrent.NotifyingFuture;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
+import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.FutureListener;
-import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 /**
  * Infinispan's implementation of an {@link ExecutorService} and {@link DistributedExecutorService}.

@@ -18,7 +18,10 @@
  */
 package org.infinispan.statetransfer;
 
-import org.infinispan.CacheException;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.api.CacheException;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -39,9 +42,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class implements a specialized lock that allows the state transfer process (which is not a single thread)

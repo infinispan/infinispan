@@ -22,8 +22,23 @@
  */
 package org.infinispan.loaders;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.infinispan.context.Flag.REMOVE_DATA_ON_STOP;
+import static org.infinispan.context.Flag.SKIP_CACHE_STATUS_CHECK;
+import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
+import static org.infinispan.context.Flag.SKIP_INDEXING;
+import static org.infinispan.context.Flag.SKIP_OWNERSHIP_CHECK;
+import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+
+import java.util.Collections;
+import java.util.Set;
+
 import org.infinispan.AdvancedCache;
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
+import org.infinispan.api.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
@@ -39,18 +54,9 @@ import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.loaders.decorators.ReadOnlyStore;
 import org.infinispan.loaders.decorators.SingletonStore;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collections;
-import java.util.Set;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.context.Flag.*;
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 public class CacheLoaderManagerImpl implements CacheLoaderManager {
 

@@ -22,6 +22,8 @@
  */
 package org.infinispan.distexec.mapreduce;
 
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,30 +40,28 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
+import org.infinispan.api.marshall.Marshaller;
+import org.infinispan.api.marshall.StreamingMarshaller;
+import org.infinispan.api.util.concurrent.FutureListener;
+import org.infinispan.api.util.concurrent.NotifyingFuture;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.MapReduceCommand;
+import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.AbstractInProcessFuture;
-import org.infinispan.util.concurrent.FutureListener;
-import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
  * MapReduceTask is a distributed task allowing a large scale computation to be transparently

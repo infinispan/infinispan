@@ -22,13 +22,6 @@
  */
 package org.infinispan.distribution.ch;
 
-import org.infinispan.CacheException;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Immutables;
-import org.infinispan.util.Util;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -36,6 +29,13 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.infinispan.api.CacheException;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.Util;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Immutables;
 
 /**
  * A delegating wrapper that locates keys by getting a union of locations reported by two other ConsistentHash

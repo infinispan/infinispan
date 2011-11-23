@@ -23,17 +23,17 @@
 
 package org.infinispan.config;
 
-import org.infinispan.executors.ExecutorFactory;
+import java.util.Properties;
+
+import org.infinispan.api.executors.ExecutorFactory;
+import org.infinispan.api.marshall.AdvancedExternalizer;
+import org.infinispan.api.marshall.Marshaller;
 import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.marshall.AdvancedExternalizer;
-import org.infinispan.marshall.Marshaller;
 import org.infinispan.remoting.transport.Transport;
-
-import java.util.Properties;
 
 /**
  * Fluent global configuration base class.

@@ -22,12 +22,24 @@
  */
 package org.infinispan.marshall;
 
-import com.thoughtworks.xstream.XStream;
-import org.infinispan.io.ByteBuffer;
-import org.infinispan.io.ExposedByteArrayOutputStream;
-import org.infinispan.util.Util;
+import java.io.ByteArrayInputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
 
-import java.io.*;
+import org.infinispan.api.io.ByteBuffer;
+import org.infinispan.api.io.ExposedByteArrayOutputStream;
+import org.infinispan.api.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.AbstractMarshaller;
+import org.infinispan.commons.util.Util;
+
+import com.thoughtworks.xstream.XStream;
 
 /**
  * A dummy marshaller impl that uses object streams converted via XStream as current JBoss Marshalling implementation

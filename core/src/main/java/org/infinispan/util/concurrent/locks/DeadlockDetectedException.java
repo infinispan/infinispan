@@ -22,7 +22,7 @@
  */
 package org.infinispan.util.concurrent.locks;
 
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 
 /**
  * Exception signaling detected deadlocks.

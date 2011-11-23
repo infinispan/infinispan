@@ -22,8 +22,20 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.CacheException;
+import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.DEFAULT;
+import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.REGISTER;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.management.MBeanServerFactory;
+
 import org.infinispan.Version;
+import org.infinispan.api.CacheException;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.config.GlobalConfiguration;
@@ -40,17 +52,6 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImp
 import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.management.MBeanServerFactory;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.DEFAULT;
-import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.REGISTER;
 
 /**
  * A global component registry where shared components are stored.

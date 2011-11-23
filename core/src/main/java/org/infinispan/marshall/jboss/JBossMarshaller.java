@@ -22,13 +22,15 @@
  */
 package org.infinispan.marshall.jboss;
 
+import java.io.IOException;
+
+import org.infinispan.api.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.jboss.AbstractJBossMarshaller;
+import org.infinispan.commons.marshall.jboss.DefaultContextClassResolver;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.Unmarshaller;
-
-import java.io.IOException;
 
 /**
  * A JBoss Marshalling based marshaller that is oriented at internal, embedded,

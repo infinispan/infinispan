@@ -22,15 +22,16 @@
  */
 package org.infinispan.marshall;
 
-import org.infinispan.test.AbstractInfinispanTest;
-import org.testng.annotations.Test;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "marshall.DuplicateIdTest")
 public class DuplicateIdTest extends AbstractInfinispanTest {

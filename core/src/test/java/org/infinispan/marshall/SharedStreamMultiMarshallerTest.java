@@ -19,23 +19,24 @@
 
 package org.infinispan.marshall;
 
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.context.Flag;
-import org.infinispan.io.ExposedByteArrayOutputStream;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.jgroups.stack.IpAddress;
-import org.testng.annotations.Test;
+import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
+import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 
-import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
-import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.api.io.ExposedByteArrayOutputStream;
+import org.infinispan.api.marshall.StreamingMarshaller;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.context.Flag;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.jgroups.stack.IpAddress;
+import org.testng.annotations.Test;
 
 /**
  * Test to verify whether the same stream can be used with different marshallers.

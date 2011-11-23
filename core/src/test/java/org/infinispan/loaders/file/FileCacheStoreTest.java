@@ -22,22 +22,6 @@
  */
 package org.infinispan.loaders.file;
 
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
-import org.infinispan.io.UnclosableObjectInputStream;
-import org.infinispan.io.UnclosableObjectOutputStream;
-import org.infinispan.loaders.BaseCacheStoreTest;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.bucket.Bucket;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.test.TestingUtil;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -46,6 +30,22 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.infinispan.api.marshall.StreamingMarshaller;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.io.UnclosableObjectInputStream;
+import org.infinispan.io.UnclosableObjectOutputStream;
+import org.infinispan.loaders.BaseCacheStoreTest;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.bucket.Bucket;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "loaders.file.FileCacheStoreTest")
 public class FileCacheStoreTest extends BaseCacheStoreTest {

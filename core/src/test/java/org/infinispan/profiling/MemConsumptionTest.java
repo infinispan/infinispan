@@ -22,18 +22,18 @@
  */
 package org.infinispan.profiling;
 
+import java.io.IOException;
+import java.text.NumberFormat;
+import java.util.Arrays;
+import java.util.Random;
+
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.text.NumberFormat;
-import java.util.Arrays;
-import java.util.Random;
 
 @Test(groups = "profiling", enabled = false, testName = "profiling.MemConsumptionTest")
 public class MemConsumptionTest extends AbstractInfinispanTest {

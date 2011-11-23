@@ -22,8 +22,8 @@
  */
 package org.infinispan.remoting;
 
+import org.infinispan.api.lifecycle.Lifecycle;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.lifecycle.Lifecycle;
 
 /**
  * Periodically (or when certain size is exceeded) takes elements and replicates them.

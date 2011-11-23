@@ -19,11 +19,19 @@
 
 package org.infinispan.marshall.exts;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Set;
+
+import org.infinispan.api.io.ExposedByteArrayOutputStream;
+import org.infinispan.api.marshall.StreamingMarshaller;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.commands.control.CacheViewControlCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.MapReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -36,24 +44,16 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.BufferSizePredictor;
+import org.infinispan.commons.marshall.BufferSizePredictorFactory;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.jboss.ExtendedRiverUnmarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.io.ExposedByteArrayOutputStream;
-import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.BufferSizePredictor;
-import org.infinispan.marshall.BufferSizePredictorFactory;
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.marshall.jboss.ExtendedRiverUnmarshaller;
-import org.infinispan.util.Util;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
 
 /**
  * Externalizer in charge of marshalling cache specific commands. At read time,

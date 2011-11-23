@@ -22,13 +22,6 @@
  */
 package org.infinispan.marshall.exts;
 
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.MarshallUtil;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.FastCopyHashMap;
-import org.infinispan.util.Util;
-import org.jboss.marshalling.util.IdentityIntMap;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -36,6 +29,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.Util;
+import org.infinispan.util.FastCopyHashMap;
+import org.jboss.marshalling.util.IdentityIntMap;
 
 /**
  * Map externalizer for all map implementations except immutable maps and singleton maps, i.e. FastCopyHashMap, HashMap,

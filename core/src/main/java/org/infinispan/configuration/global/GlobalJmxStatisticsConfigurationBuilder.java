@@ -2,10 +2,10 @@ package org.infinispan.configuration.global;
 
 import java.util.Properties;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
 
 /**
  * Configures whether global statistics are gathered and reported via JMX for all caches under this cache manager.

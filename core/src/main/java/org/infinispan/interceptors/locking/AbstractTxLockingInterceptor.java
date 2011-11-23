@@ -23,7 +23,9 @@
 
 package org.infinispan.interceptors.locking;
 
-import org.infinispan.CacheException;
+import java.util.Set;
+
+import org.infinispan.api.CacheException;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -37,8 +39,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.concurrent.TimeoutException;
-
-import java.util.Set;
 
 /**
  * Base class for transaction based locking interceptors.

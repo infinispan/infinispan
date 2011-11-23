@@ -22,19 +22,19 @@
  */
 package org.infinispan.commands.control;
 
-import org.infinispan.CacheException;
+import java.util.Collection;
+
+import org.infinispan.api.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
 
 /**
  * A control command to coordinate state transfer that may occur when nodes join or leave a cluster.

@@ -22,17 +22,19 @@
  */
 package org.infinispan.transaction.xa.recovery;
 
-import net.jcip.annotations.Immutable;
-import org.infinispan.marshall.AbstractExternalizer;
-import org.infinispan.marshall.Ids;
-import org.infinispan.util.Util;
-
-import javax.transaction.xa.Xid;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Set;
+
+import javax.transaction.xa.Xid;
+
+import net.jcip.annotations.Immutable;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.Util;
 
 /**
  * This xid implementation is needed because {@link javax.transaction.xa.Xid} is not {@link java.io.Serializable} and

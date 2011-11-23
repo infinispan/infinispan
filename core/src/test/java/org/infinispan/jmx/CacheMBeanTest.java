@@ -22,18 +22,21 @@
  */
 package org.infinispan.jmx;
 
+import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.infinispan.test.TestingUtil.getMethodSpecificJmxDomain;
+
 import java.lang.reflect.Method;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.infinispan.CacheException;
+import org.infinispan.api.CacheException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
-import static org.infinispan.test.TestingUtil.*;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

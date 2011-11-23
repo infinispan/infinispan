@@ -23,12 +23,12 @@
 
 package org.infinispan.config;
 
-import org.infinispan.marshall.AdvancedExternalizer;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
+
+import org.infinispan.api.marshall.AdvancedExternalizer;
 
 /**
  * Defines custom Externalizers to be registered with marshalling framework

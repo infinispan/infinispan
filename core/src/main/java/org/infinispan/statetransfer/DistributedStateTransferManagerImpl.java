@@ -18,7 +18,13 @@
  */
 package org.infinispan.statetransfer;
 
-import org.infinispan.CacheException;
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.infinispan.context.Flag.SKIP_LOCKING;
+
+import java.util.Collection;
+import java.util.List;
+
+import org.infinispan.api.CacheException;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
@@ -30,12 +36,6 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
-import java.util.List;
-
-import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
-import static org.infinispan.context.Flag.SKIP_LOCKING;
 
 /**
  * The distributed mode implementation of {@link StateTransferManager}

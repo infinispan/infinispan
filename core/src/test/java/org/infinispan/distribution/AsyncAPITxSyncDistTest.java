@@ -22,14 +22,14 @@
  */
 package org.infinispan.distribution;
 
+import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
+
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.Configuration;
 import org.infinispan.replication.AsyncAPITxSyncReplTest;
 import org.infinispan.test.data.Key;
-import org.infinispan.util.Util;
 import org.testng.annotations.Test;
-
-import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 
 @Test(groups = "functional", testName = "distribution.AsyncAPISyncDistTest")
 public class AsyncAPITxSyncDistTest extends AsyncAPITxSyncReplTest {

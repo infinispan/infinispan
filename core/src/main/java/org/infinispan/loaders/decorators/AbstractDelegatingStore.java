@@ -22,20 +22,20 @@
  */
 package org.infinispan.loaders.decorators;
 
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.List;
+import java.util.Set;
+
 import org.infinispan.Cache;
-import org.infinispan.marshall.StreamingMarshaller;
-import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.api.marshall.StreamingMarshaller;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.modifications.Modification;
-
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.List;
-import java.util.Set;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * Simple delegate that delegates all calls.  This is intended as a building block for other decorators who wish to add

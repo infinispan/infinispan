@@ -2,8 +2,8 @@ package org.infinispan.configuration.global;
 
 import java.util.Properties;
 
+import org.infinispan.api.executors.ExecutorFactory;
 import org.infinispan.executors.DefaultExecutorFactory;
-import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.util.TypedProperties;
 
 /**

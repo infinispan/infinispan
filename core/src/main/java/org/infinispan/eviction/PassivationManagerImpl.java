@@ -22,6 +22,9 @@
  */
 package org.infinispan.eviction;
 
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.infinispan.commons.util.Util;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.DataContainer;
@@ -34,11 +37,8 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 public class PassivationManagerImpl implements PassivationManager {
 

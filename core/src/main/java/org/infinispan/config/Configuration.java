@@ -22,14 +22,61 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.CacheException;
-import org.infinispan.config.FluentConfiguration.*;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.infinispan.config.Configuration.CacheMode.DIST_ASYNC;
+import static org.infinispan.config.Configuration.CacheMode.DIST_SYNC;
+import static org.infinispan.config.Configuration.CacheMode.INVALIDATION_ASYNC;
+import static org.infinispan.config.Configuration.CacheMode.INVALIDATION_SYNC;
+import static org.infinispan.config.Configuration.CacheMode.LOCAL;
+import static org.infinispan.config.Configuration.CacheMode.REPL_ASYNC;
+import static org.infinispan.config.Configuration.CacheMode.REPL_SYNC;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
+import org.infinispan.api.CacheException;
+import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.hash.Hash;
+import org.infinispan.commons.util.hash.MurmurHash3;
+import org.infinispan.config.FluentConfiguration.AsyncConfig;
+import org.infinispan.config.FluentConfiguration.ClusteringConfig;
+import org.infinispan.config.FluentConfiguration.CustomInterceptorPosition;
+import org.infinispan.config.FluentConfiguration.CustomInterceptorsConfig;
+import org.infinispan.config.FluentConfiguration.DataContainerConfig;
+import org.infinispan.config.FluentConfiguration.DeadlockDetectionConfig;
+import org.infinispan.config.FluentConfiguration.EvictionConfig;
+import org.infinispan.config.FluentConfiguration.ExpirationConfig;
+import org.infinispan.config.FluentConfiguration.HashConfig;
+import org.infinispan.config.FluentConfiguration.IndexingConfig;
+import org.infinispan.config.FluentConfiguration.InvocationBatchingConfig;
+import org.infinispan.config.FluentConfiguration.JmxStatisticsConfig;
+import org.infinispan.config.FluentConfiguration.L1Config;
+import org.infinispan.config.FluentConfiguration.LockingConfig;
+import org.infinispan.config.FluentConfiguration.RecoveryConfig;
+import org.infinispan.config.FluentConfiguration.StateRetrievalConfig;
+import org.infinispan.config.FluentConfiguration.StoreAsBinaryConfig;
+import org.infinispan.config.FluentConfiguration.SyncConfig;
+import org.infinispan.config.FluentConfiguration.TransactionConfig;
+import org.infinispan.config.FluentConfiguration.UnsafeConfig;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.DefaultHashSeed;
 import org.infinispan.distribution.ch.HashSeed;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.TopologyAwareConsistentHash;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
@@ -47,30 +94,9 @@ import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.hash.Hash;
-import org.infinispan.util.hash.MurmurHash3;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.infinispan.config.Configuration.CacheMode.*;
 
 /**
  * Encapsulates the configuration of a Cache. Configures the default cache which can be retrieved via

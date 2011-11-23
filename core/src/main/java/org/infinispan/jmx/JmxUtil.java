@@ -23,15 +23,15 @@
 
 package org.infinispan.jmx;
 
-import org.infinispan.CacheException;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+
+import org.infinispan.api.CacheException;
+import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Class containing JMX related utility methods.

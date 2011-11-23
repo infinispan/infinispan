@@ -22,10 +22,10 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.CacheException;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.infinispan.api.CacheException;
 
 /**
  * An exception that represents an error in the configuration.  This could be a parsing error or a logical error

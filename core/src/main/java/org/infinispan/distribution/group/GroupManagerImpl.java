@@ -13,8 +13,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.Util;
 
 public class GroupManagerImpl implements GroupManager {
     

@@ -22,17 +22,17 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.CacheException;
-import org.infinispan.config.GlobalConfiguration;
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
+
+import org.infinispan.api.CacheException;
+import org.infinispan.api.marshall.Marshaller;
+import org.infinispan.api.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.marshall.CacheMarshaller;
 import org.infinispan.marshall.GlobalMarshaller;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
-import org.infinispan.util.Util;
-
-import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
  * MarshallerFactory.

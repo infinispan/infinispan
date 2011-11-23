@@ -22,7 +22,9 @@
  */
 package org.infinispan.remoting.transport;
 
-import org.infinispan.CacheException;
+import java.util.Map;
+
+import org.infinispan.api.CacheException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.NamedCacheNotFoundException;
 import org.infinispan.remoting.RpcException;
@@ -31,8 +33,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
-
-import java.util.Map;
 
 /**
  * Common transport-related behaviour
