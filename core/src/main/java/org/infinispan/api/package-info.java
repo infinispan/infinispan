@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2010 Red Hat Inc. and/or its affiliates and other
+ * Copyright 2009 Red Hat Inc. and/or its affiliates and other
  * contributors as indicated by the @author tags. All rights reserved.
  * See the copyright.txt in the distribution for a full listing of
  * individual contributors.
@@ -22,6 +22,6 @@
  */
 
 /**
- * Hooks to bridge Infinispan's marshalling APIs with JBoss Marshalling internals.
+ * API package
  */
-package org.infinispan.marshall.jboss;
+package org.infinispan.api;

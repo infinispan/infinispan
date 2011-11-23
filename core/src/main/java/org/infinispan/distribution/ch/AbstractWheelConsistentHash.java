@@ -22,9 +22,9 @@
  */
 package org.infinispan.distribution.ch;
 
+import org.infinispan.commons.hash.Hash;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.hash.Hash;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

@@ -25,6 +25,7 @@ package org.infinispan.config;
 import java.util.List;
 import java.util.Properties;
 
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
@@ -46,7 +47,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.hash.MurmurHash3;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;

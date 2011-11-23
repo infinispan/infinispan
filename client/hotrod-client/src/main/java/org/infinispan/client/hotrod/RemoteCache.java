@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.BasicCache;
+import org.infinispan.api.BasicCache;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 /**

@@ -2,11 +2,11 @@ package org.infinispan.configuration.cache;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.DefaultHashSeed;
 import org.infinispan.distribution.ch.HashSeed;
-import org.infinispan.util.hash.Hash;
-import org.infinispan.util.hash.MurmurHash3;
 
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.

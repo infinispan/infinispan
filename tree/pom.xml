@@ -33,7 +33,7 @@
    </parent>
 
    <artifactId>infinispan-tree</artifactId>
-   <packaging>jar</packaging>
+   <packaging>bundle</packaging>
    <name>Infinispan Tree API</name>
    <description>Infinispan tree API module</description>
    <dependencies>

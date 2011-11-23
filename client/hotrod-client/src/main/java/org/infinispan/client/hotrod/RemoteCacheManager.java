@@ -35,6 +35,7 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
@@ -47,7 +48,6 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.executors.ExecutorFactory;
-import org.infinispan.manager.BasicCacheContainer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.FileLookupFactory;
 import org.infinispan.util.Util;

@@ -22,10 +22,10 @@
  */
 package org.infinispan.distribution.ch;
 
+import org.infinispan.commons.hash.Hash;
 import org.infinispan.marshall.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
-import org.infinispan.util.hash.Hash;
 
 import java.util.ArrayList;
 import java.util.Iterator;

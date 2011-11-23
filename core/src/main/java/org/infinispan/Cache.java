@@ -22,6 +22,7 @@
  */
 package org.infinispan;
 
+import org.infinispan.api.BasicCache;
 import org.infinispan.config.Configuration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;

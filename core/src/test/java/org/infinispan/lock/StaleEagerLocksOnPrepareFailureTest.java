@@ -24,6 +24,7 @@ package org.infinispan.lock;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.TestAddress;
@@ -37,7 +38,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.hash.MurmurHash3;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
