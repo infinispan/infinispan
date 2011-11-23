@@ -33,7 +33,7 @@
    </parent>
 
    <artifactId>infinispan-client-hotrod</artifactId>
-   <packaging>jar</packaging>
+   <packaging>bundle</packaging>
    <name>Infinispan Hot Rod Client</name>
    <description>Infinispan Hot Rod Client</description>
    <properties>
@@ -44,7 +44,7 @@
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-commons</artifactId>
+         <artifactId>infinispan-core</artifactId>
          <version>${project.version}</version>
       </dependency>
 
