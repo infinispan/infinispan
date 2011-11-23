@@ -87,6 +87,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
    protected final boolean shouldInvokeRemoteTxCommand(TxInvocationContext ctx) {
       // just testing for empty modifications isn't enough - the Lock API may acquire locks on keys but won't
       // register a Modification.  See ISPN-711.
-      return ctx.isOriginLocal() && (ctx.hasModifications() || !ctx.getLockedKeys().isEmpty());
+      return ctx.isOriginLocal() && (ctx.hasModifications()  ||
+                                           !((LocalTxInvocationContext) ctx).getRemoteLocksAcquired().isEmpty());
    }
 }
