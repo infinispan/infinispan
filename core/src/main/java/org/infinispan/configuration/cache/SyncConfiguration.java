@@ -7,7 +7,7 @@ package org.infinispan.configuration.cache;
  */
 public class SyncConfiguration {
 
-   private final long replTimeout;
+   private long replTimeout;
 
 
    SyncConfiguration(long replTimeout) {
@@ -20,6 +20,15 @@ public class SyncConfiguration {
     */
    public long replTimeout() {
       return replTimeout;
+   }
+   
+   /**
+    * This is the timeout used to wait for an acknowledgment when making a remote call, after which
+    * the call is aborted and an exception is thrown.
+    */
+   public SyncConfiguration replTimeout(long l) {
+      this.replTimeout = l;
+      return this;
    }
 
 }

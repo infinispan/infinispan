@@ -166,7 +166,7 @@ public class LegacyConfigurationAdaptor {
    
       legacy.transaction()
          .autoCommit(config.transaction().autoCommit())
-         .cacheStopTimeout(config.transaction().cacheStopTimeout())
+         .cacheStopTimeout((int) config.transaction().cacheStopTimeout())
          .eagerLockSingleNode(config.transaction().eagerLockingSingleNode())
          .lockingMode(config.transaction().lockingMode())
          .syncCommitPhase(config.transaction().syncCommitPhase())
