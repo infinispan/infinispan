@@ -64,7 +64,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
 
          this.workerThreads = typedProps.getIntProperty(PROP_KEY_WORKER_THREADS, WORKER_THREADS_DEFAULT, true)
          if (workerThreads < 0)
-            throw new IllegalArgumentException("Worker threads can't be lower than 0: " + masterThreads)
+            throw new IllegalArgumentException("Worker threads can't be lower than 0: " + workerThreads)
 
          this.cacheManager = cacheManager
          this.isGlobalStatsEnabled = cacheManager.getGlobalConfiguration.isExposeGlobalJmxStatistics
