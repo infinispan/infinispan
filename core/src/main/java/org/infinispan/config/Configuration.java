@@ -3181,7 +3181,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        */
       @Deprecated
       public void setInitialRetryWaitTime(Long initialRetryWaitTime) {
-         testImmutability("initialWaitTime");
+         testImmutability("initialRetryWaitTime");
          this.initialRetryWaitTime = initialRetryWaitTime;
       }
 

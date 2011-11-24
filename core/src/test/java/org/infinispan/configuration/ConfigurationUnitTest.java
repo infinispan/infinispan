@@ -89,5 +89,11 @@ public class ConfigurationUnitTest {
       new DefaultCacheManager(new ConfigurationBuilder().build()).getCache();
    }
    
+   @Test
+   public void testDefineNamedCache() {
+      DefaultCacheManager cacheManager = new DefaultCacheManager(new ConfigurationBuilder().build());
+      cacheManager.defineConfiguration("foo", new ConfigurationBuilder().build());
+   }
+   
 
 }
