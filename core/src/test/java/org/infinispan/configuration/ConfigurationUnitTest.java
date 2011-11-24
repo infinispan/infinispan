@@ -23,6 +23,7 @@
 
 package org.infinispan.configuration;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -95,5 +96,18 @@ public class ConfigurationUnitTest {
       cacheManager.defineConfiguration("foo", new ConfigurationBuilder().build());
    }
    
+   @Test
+   public void testGetAndPut() {
+   // new configuration
+      DefaultCacheManager cacheManager = new DefaultCacheManager(new ConfigurationBuilder().build());
 
+      Cache<String, String> cache = cacheManager.getCache();
+      cache.put("Foo", "2");
+      cache.put("Bar", "4");
+
+      Assert.assertEquals(cache.get("Foo"), "2");
+      Assert.assertEquals(cache.get("Bar"), "4");
+   }
+   
+   
 }

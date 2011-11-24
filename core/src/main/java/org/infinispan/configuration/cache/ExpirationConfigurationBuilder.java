@@ -1,14 +1,16 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Controls the default expiration settings for entries in the cache.
  */
 public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBuilder<ExpirationConfiguration> {
 
-   private long lifespan;
-   private long maxIdle;
-   private boolean reaperEnabled;
-   private long wakeUpInterval;
+   private long lifespan = -1L;
+   private long maxIdle = -1L;
+   private boolean reaperEnabled = true;
+   private long wakeUpInterval = TimeUnit.MINUTES.toMillis(1);
    
    ExpirationConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);

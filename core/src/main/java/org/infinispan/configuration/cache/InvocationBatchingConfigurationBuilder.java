@@ -2,7 +2,7 @@ package org.infinispan.configuration.cache;
 
 public class InvocationBatchingConfigurationBuilder extends AbstractConfigurationChildBuilder<InvocationBatchingConfiguration> {
 
-   private boolean enabled;
+   private boolean enabled = false;
    
    InvocationBatchingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);

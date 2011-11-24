@@ -1,5 +1,10 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Configures the L1 cache behavior in 'distributed' caches instances. In any other cache modes,
@@ -8,11 +13,12 @@ package org.infinispan.configuration.cache;
 
 public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder<L1Configuration> {
 
+   private static final Log log = LogFactory.getLog(L1ConfigurationBuilder.class);
+   
    private boolean enabled = true;
    private int invalidationThreshold = 0;
-   private long lifespan = 600000L;
-   private boolean onRehash = true;
-   
+   private long lifespan = TimeUnit.MINUTES.toMillis(10);
+   private Boolean onRehash = null;
 
    L1ConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
@@ -81,13 +87,22 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-      
+      // If L1 is disabled, L1ForRehash should also be disabled
+      if (!enabled && onRehash)
+         throw new ConfigurationException("Can only move entries to L1 on rehash when L1 is enabled");
    }
 
    @Override
    L1Configuration create() {
-      return new L1Configuration(enabled, invalidationThreshold, lifespan, onRehash);
+      
+      if (!enabled && onRehash == null) {
+         log.debug("L1 is disabled and L1OnRehash was not defined, disabling it");
+         onRehash = false;
+      }
+      if (onRehash == null)
+         onRehash = true;
+      
+      return new L1Configuration(enabled, invalidationThreshold, lifespan, onRehash.booleanValue());
    }
 
 }

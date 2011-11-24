@@ -8,8 +8,8 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
    private Class<? extends CommandInterceptor> after;
    private Class<? extends CommandInterceptor> before;
    private CommandInterceptor interceptor;
-   private int index;
-   private Position position;
+   private int index = -1;
+   private Position position = Position.OTHER_THAN_FIRST_OR_LAST;
    
    InterceptorConfigurationBuilder(CustomInterceptorsConfigurationBuilder builder) {
       super(builder);

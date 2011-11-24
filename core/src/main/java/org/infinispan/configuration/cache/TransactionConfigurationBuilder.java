@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
@@ -8,7 +10,7 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
 public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder<TransactionConfiguration> {
 
    private boolean autoCommit = true;
-   private int cacheStopTimeout = 30000;
+   private long cacheStopTimeout = TimeUnit.SECONDS.toMillis(30);
    private boolean eagerLockingSingleNode = false;
    private LockingMode lockingMode = LockingMode.OPTIMISTIC;
    private boolean syncCommitPhase = true;
@@ -31,8 +33,14 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
+   @Deprecated
    public TransactionConfigurationBuilder cacheStopTimeout(int i) {
       this.cacheStopTimeout = i;
+      return this;
+   }
+   
+   public TransactionConfigurationBuilder cacheStopTimeout(long l) {
+      this.cacheStopTimeout = l;
       return this;
    }
 

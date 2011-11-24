@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
    private String name;
+   private ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
    private final ClusteringConfigurationBuilder clustering;
    private final CustomInterceptorsConfigurationBuilder customInterceptors;
    private final DataContainerConfigurationBuilder dataContainer;
@@ -40,6 +41,15 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    public ConfigurationBuilder name(String name) {
       this.name = name;
       return this;
+   }
+   
+   public ConfigurationBuilder classLoader(ClassLoader cl) {
+      this.classLoader = cl;
+      return this;
+   }
+   
+   ClassLoader classLoader() {
+      return classLoader;
    }
 
    @Override
@@ -132,6 +142,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       storeAsBinary.validate();
       transaction.validate();
       unsafe.validate();
+      
+      // TODO validate that a transport is set if a singleton store is set
    }
 
    @Override
@@ -152,7 +164,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
             locking.create(),
             storeAsBinary.create(),
             transaction.create(),
-            unsafe.create(), null );// TODO
+            unsafe.create(), classLoader );// TODO
    }
 
    

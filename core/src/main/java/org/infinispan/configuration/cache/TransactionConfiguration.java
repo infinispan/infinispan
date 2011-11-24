@@ -8,7 +8,7 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
 public class TransactionConfiguration {
 
    private final boolean autoCommit;
-   private final int cacheStopTimeout;
+   private final long cacheStopTimeout;
    private final boolean eagerLockingSingleNode;
    private final LockingMode lockingMode;
    private final boolean syncCommitPhase;
@@ -20,7 +20,7 @@ public class TransactionConfiguration {
    private final boolean useSynchronization;
    private final RecoveryConfiguration recovery;
    
-   TransactionConfiguration(boolean autoCommit, int cacheStopTimeout, boolean eagerLockingSingleNode, LockingMode lockingMode,
+   TransactionConfiguration(boolean autoCommit, long cacheStopTimeout, boolean eagerLockingSingleNode, LockingMode lockingMode,
          boolean syncCommitPhase, boolean syncRollbackPhase, TransactionManagerLookup transactionManagerLookup, TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup,
          TransactionMode transactionMode, boolean useEagerLocking, boolean useSynchronization, RecoveryConfiguration recovery) {
       this.autoCommit = autoCommit;
@@ -41,7 +41,7 @@ public class TransactionConfiguration {
       return autoCommit;
    }
 
-   public int cacheStopTimeout() {
+   public long cacheStopTimeout() {
       return cacheStopTimeout;
    }
 

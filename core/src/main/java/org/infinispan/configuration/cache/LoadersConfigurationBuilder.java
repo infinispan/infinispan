@@ -6,9 +6,9 @@ import java.util.List;
 
 public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuilder<LoadersConfiguration> {
 
-   private boolean passivation;
-   private boolean preload;
-   private boolean shared;
+   private boolean passivation = false;
+   private boolean preload = false;
+   private boolean shared = false;
    private List<LoaderConfigurationBuilder> cacheLoaders = new ArrayList<LoaderConfigurationBuilder>();
    
 
@@ -19,6 +19,10 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
    public LoadersConfigurationBuilder passivation(boolean b) {
       this.passivation = b;
       return this;
+   }
+   
+   boolean passivation() {
+      return passivation;
    }
 
    public LoadersConfigurationBuilder preload(boolean b) {
@@ -31,16 +35,25 @@ public class LoadersConfigurationBuilder extends AbstractConfigurationChildBuild
       return this;
    }
    
+   boolean shared() {
+      return shared;
+   }
+   
    public LoaderConfigurationBuilder addCacheLoader() {
       LoaderConfigurationBuilder builder = new LoaderConfigurationBuilder(this);
       this.cacheLoaders.add(builder);
       return builder;
    }
    
+   List<LoaderConfigurationBuilder> cacheLoaders() {
+      return cacheLoaders;
+   }
+   
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-      
+      for (LoaderConfigurationBuilder b : cacheLoaders) {
+         b.validate();
+      }
    }
 
    @Override

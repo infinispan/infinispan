@@ -3,8 +3,8 @@ package org.infinispan.configuration.cache;
 
 public class RecoveryConfigurationBuilder extends AbstractTransportConfigurationChildBuilder<RecoveryConfiguration> {
 
-   private boolean enabled;
-   private String recoveryInfoCacheName;
+   private boolean enabled = false;
+   private String recoveryInfoCacheName = "__recoveryInfoCacheName__";
 
    RecoveryConfigurationBuilder(TransactionConfigurationBuilder builder) {
       super(builder);

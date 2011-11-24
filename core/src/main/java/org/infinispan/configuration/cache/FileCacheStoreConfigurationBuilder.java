@@ -20,6 +20,7 @@
 package org.infinispan.configuration.cache;
 
 import java.beans.PropertyEditorSupport;
+import java.util.concurrent.TimeUnit;
 
 /**
  * // TODO: Document this
@@ -30,10 +31,10 @@ import java.beans.PropertyEditorSupport;
 public class FileCacheStoreConfigurationBuilder
       extends AbstractLockSupportCacheStoreConfigurationBuilder<FileCacheStoreConfiguration> {
 
-   private String location;
-   private long fsyncInterval;
-   private FsyncMode fsyncMode;
-   private int streamBufferSize;
+   private String location = "Infinispan-FileCacheStore";
+   private long fsyncInterval = TimeUnit.SECONDS.toMillis(1);
+   private FsyncMode fsyncMode = FsyncMode.DEFAULT;
+   private int streamBufferSize = 8192;
 
    protected FileCacheStoreConfigurationBuilder(LoaderConfigurationBuilder builder) {
       super(builder);

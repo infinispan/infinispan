@@ -3,16 +3,21 @@ package org.infinispan.configuration.cache;
 import java.util.Properties;
 
 import org.infinispan.util.TypedProperties;
+import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Configures indexing of entries in the cache for searching.
  */
 public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder<IndexingConfiguration>{
 
-   private boolean enabled;
-   private boolean indexLocalOnly;
-   private Properties properties;
+   private static final Log log = LogFactory.getLog(IndexingConfigurationBuilder.class);
    
+   private boolean enabled = false;
+   private boolean indexLocalOnly = false;
+   private Properties properties = new Properties();
+
    IndexingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
    }
@@ -93,8 +98,14 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-      
+      if (enabled) {
+         // Check that the query module is on the classpath.
+         try {
+            Util.loadClassStrict("org.infinispan.query.Search", getBuilder().classLoader());
+         } catch (ClassNotFoundException e) {
+            log.warnf("Indexing can only be enabled if infinispan-query.jar is available on your classpath, and this jar has not been detected. Intended behavior may not be exhibited.");
+         }
+      }
    }
 
    @Override

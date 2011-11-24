@@ -1,27 +1,36 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 /**
  * Configures how state is retrieved when a new cache joins the cluster. Used with invalidation and
  * replication clustered modes.
  */
-public class StateRetrievalConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder<StateRetrievalConfiguration> {
+public class StateRetrievalConfigurationBuilder extends
+      AbstractClusteringConfigurationChildBuilder<StateRetrievalConfiguration> {
+
+   private static final Log log = LogFactory.getLog(StateRetrievalConfigurationBuilder.class);
    
-   private boolean alwaysProvideInMemoryState;
-   private boolean fetchInMemoryState;
-   private long initialRetryWaitTime;
-   private long logFlushTimeout;
-   private int maxNonPorgressingLogWrites;
-   private int numRetries;
-   private int retryWaitTimeIncreaseFactor;
-   private long timeout;
-   
+   private boolean alwaysProvideInMemoryState = false;
+   private Boolean fetchInMemoryState = null;
+   private long initialRetryWaitTime = 500L;
+   private long logFlushTimeout = TimeUnit.MINUTES.toMillis(1);
+   private int maxNonPorgressingLogWrites = 100;
+   private int numRetries = 5;
+   private int retryWaitTimeIncreaseFactor = 2;
+   private long timeout = TimeUnit.MINUTES.toMillis(4);
+
    StateRetrievalConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
    }
 
    /**
-    * If true, allows the cache to provide in-memory state to a neighbor, even if the cache is not configured
-    * to fetch state from its neighbors (fetchInMemoryState is false)
+    * If true, allows the cache to provide in-memory state to a neighbor, even if the cache is not
+    * configured to fetch state from its neighbors (fetchInMemoryState is false)
     */
    public StateRetrievalConfigurationBuilder alwaysProvideInMemoryState(boolean b) {
       this.alwaysProvideInMemoryState = b;
@@ -90,13 +99,25 @@ public class StateRetrievalConfigurationBuilder extends AbstractClusteringConfig
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-      
+      // certain combinations are illegal, such as state transfer + DIST
+      if (fetchInMemoryState != null && fetchInMemoryState && getClusteringBuilder().cacheMode().isDistributed())
+         throw new ConfigurationException(
+               "Cache cannot use DISTRIBUTION mode and have fetchInMemoryState set to true.  Perhaps you meant to enable rehashing?");
    }
 
    @Override
    StateRetrievalConfiguration create() {
-      return new StateRetrievalConfiguration(alwaysProvideInMemoryState, fetchInMemoryState, initialRetryWaitTime, logFlushTimeout, maxNonPorgressingLogWrites, numRetries, retryWaitTimeIncreaseFactor, timeout);
+
+      // If replicated and fetch state transfer was not explicitly
+      // disabled, then force enabling of state transfer
+      if (getClusteringBuilder().cacheMode().isReplicated() && fetchInMemoryState == null) {
+         log.debug("Cache is replicated but state transfer was not defined, so force enabling it");
+         fetchInMemoryState(true);
+      }
+      if (fetchInMemoryState == null)
+         fetchInMemoryState = false;
+      return new StateRetrievalConfiguration(alwaysProvideInMemoryState, fetchInMemoryState.booleanValue(),
+            initialRetryWaitTime, logFlushTimeout, maxNonPorgressingLogWrites, numRetries, retryWaitTimeIncreaseFactor, timeout);
    }
 
 }

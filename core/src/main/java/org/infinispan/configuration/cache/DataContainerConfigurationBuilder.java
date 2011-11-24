@@ -13,8 +13,9 @@ import org.infinispan.util.TypedProperties;
  */
 public class DataContainerConfigurationBuilder extends AbstractConfigurationChildBuilder<DataContainerConfiguration> {
 
+   // TODO provide a deafult here
    private DataContainer dataContainer;
-   private Properties properties;
+   private Properties properties = new Properties();
    
    DataContainerConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);

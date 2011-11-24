@@ -1,12 +1,14 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
 public class AsyncLoaderConfigurationBuilder extends AbstractLoaderConfigurationChildBuilder<AsyncLoaderConfiguration> {
 
-   private boolean enabled;
-   private long flushLockTimeout;
-   private int modificationQueueSize;
-   private long shutdownTimeout;
-   private int threadPoolSize;
+   private boolean enabled = false;
+   private long flushLockTimeout = 1;
+   private int modificationQueueSize = 1024;
+   private long shutdownTimeout = TimeUnit.SECONDS.toMillis(25);
+   private int threadPoolSize = 1;
    
    AsyncLoaderConfigurationBuilder(LoaderConfigurationBuilder builder) {
       super(builder);

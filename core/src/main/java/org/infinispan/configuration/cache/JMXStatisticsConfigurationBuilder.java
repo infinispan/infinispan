@@ -2,7 +2,7 @@ package org.infinispan.configuration.cache;
 
 public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChildBuilder<JMXStatisticsConfiguration> {
 
-   private boolean enabled;
+   private boolean enabled = false;
    
    JMXStatisticsConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);

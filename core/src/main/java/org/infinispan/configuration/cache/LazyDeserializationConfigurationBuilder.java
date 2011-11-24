@@ -3,7 +3,7 @@ package org.infinispan.configuration.cache;
 
 public class LazyDeserializationConfigurationBuilder extends AbstractConfigurationChildBuilder<LazyDeserializationConfiguration> {
 
-   private boolean enabled;
+   private boolean enabled = false;
    
    LazyDeserializationConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);

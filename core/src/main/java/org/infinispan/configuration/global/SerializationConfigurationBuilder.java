@@ -3,6 +3,7 @@ package org.infinispan.configuration.global;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infinispan.Version;
 import org.infinispan.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
@@ -13,7 +14,7 @@ import org.infinispan.marshall.VersionAwareMarshaller;
 public class SerializationConfigurationBuilder extends AbstractGlobalConfigurationBuilder<SerializationConfiguration> {
    
    private Class<? extends Marshaller> marshallerClass = VersionAwareMarshaller.class;
-   private short marshallVersion;
+   private short marshallVersion = Short.valueOf(Version.MAJOR_MINOR);
    private Map<Integer, AdvancedExternalizer<?>> advancedExternalizers = new HashMap<Integer, AdvancedExternalizer<?>>();
    
    SerializationConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
