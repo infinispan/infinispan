@@ -8,7 +8,7 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
 public class TransactionConfiguration {
 
    private final boolean autoCommit;
-   private final long cacheStopTimeout;
+   private long cacheStopTimeout;
    private final boolean eagerLockingSingleNode;
    private final LockingMode lockingMode;
    private final boolean syncCommitPhase;
