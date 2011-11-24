@@ -33,7 +33,7 @@
    </parent>
 
    <artifactId>infinispan-lucene-directory</artifactId>
-   <packaging>jar</packaging>
+   <packaging>bundle</packaging>
    <name>Infinispan Lucene Directory Implementation</name>
    <description>A Lucene directory implementation based on Infinispan</description>
 
