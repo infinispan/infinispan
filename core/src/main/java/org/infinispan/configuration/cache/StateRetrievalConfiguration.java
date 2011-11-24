@@ -7,13 +7,13 @@ package org.infinispan.configuration.cache;
 public class StateRetrievalConfiguration {
 
    private final boolean alwaysProvideInMemoryState;
-   private final boolean fetchInMemoryState;
+   private boolean fetchInMemoryState;
    private final long initialRetryWaitTime;
    private final long logFlushTimeout;
    private final int maxNonPorgressingLogWrites;
    private final int numRetries;
    private final int retryWaitTimeIncreaseFactor;
-   private final long timeout;
+   private long timeout;
 
    StateRetrievalConfiguration(boolean alwaysProvideInMemoryState, boolean fetchInMemoryState, long initialRetryWaitTime,
          long logFlushTimeout, int maxNonPorgressingLogWrites, int numRetries, int retryWaitTimeIncreaseFactory, long timeout) {
@@ -41,6 +41,15 @@ public class StateRetrievalConfiguration {
     */
    public boolean fetchInMemoryState() {
       return fetchInMemoryState;
+   }
+   
+   /**
+    * If true, this will cause the cache to ask neighboring caches for state when it starts up, so
+    * the cache starts 'warm', although it will impact startup time.
+    */
+   public StateRetrievalConfiguration fetchInMemoryState(boolean b) {
+      this.fetchInMemoryState = b;
+      return this;
    }
 
    /**
@@ -86,6 +95,15 @@ public class StateRetrievalConfiguration {
     */
    public long timeout() {
       return timeout;
+   }
+   
+   /**
+    * This is the maximum amount of time - in milliseconds - to wait for state from neighboring
+    * caches, before throwing an exception and aborting startup.
+    */
+   public StateRetrievalConfiguration timeout(long l) {
+      this.timeout = l;
+      return this;
    }
 
 }

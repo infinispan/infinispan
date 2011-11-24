@@ -11,12 +11,12 @@ public class TransactionConfiguration {
    private long cacheStopTimeout;
    private final boolean eagerLockingSingleNode;
    private final LockingMode lockingMode;
-   private final boolean syncCommitPhase;
-   private final boolean syncRollbackPhase;
+   private boolean syncCommitPhase;
+   private boolean syncRollbackPhase;
    private final TransactionManagerLookup transactionManagerLookup;
    private final TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
    private final TransactionMode transactionMode;
-   private final boolean useEagerLocking;
+   private boolean useEagerLocking;
    private final boolean useSynchronization;
    private final RecoveryConfiguration recovery;
    
@@ -44,7 +44,12 @@ public class TransactionConfiguration {
    public long cacheStopTimeout() {
       return cacheStopTimeout;
    }
-
+   
+   public TransactionConfiguration cacheStopTimeout(long l) {
+      this.cacheStopTimeout = l;
+      return this;
+   }
+   
    public boolean eagerLockingSingleNode() {
       return eagerLockingSingleNode;
    }
@@ -56,9 +61,19 @@ public class TransactionConfiguration {
    public boolean syncCommitPhase() {
       return syncCommitPhase;
    }
+   
+   public TransactionConfiguration syncCommitPhase(boolean b) {
+      this.syncCommitPhase = b;
+      return this;
+   }
 
    public boolean syncRollbackPhase() {
       return syncRollbackPhase;
+   }
+   
+   public TransactionConfiguration syncRollbackPhase(boolean b) {
+      this.syncRollbackPhase = b;
+      return this;
    }
 
    public TransactionManagerLookup transactionManagerLookup() {
@@ -75,6 +90,11 @@ public class TransactionConfiguration {
 
    public boolean useEagerLocking() {
       return useEagerLocking;
+   }
+   
+   public TransactionConfiguration useEagerLocking(boolean b) {
+      this.useEagerLocking = b;
+      return this;
    }
 
    public boolean useSynchronization() {

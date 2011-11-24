@@ -3,9 +3,9 @@ package org.infinispan.configuration.cache;
 public class AsyncLoaderConfiguration {
    
    private final boolean enabled;
-   private final long flushLockTimeout;
+   private long flushLockTimeout;
    private final int modificationQueueSize;
-   private final long shutdownTimeout;
+   private long shutdownTimeout;
    private final int threadPoolSize;
    
    AsyncLoaderConfiguration(boolean enabled, long flushLockTimeout, int modificationQueueSize, long shutdownTimeout,
@@ -24,6 +24,11 @@ public class AsyncLoaderConfiguration {
    public long flushLockTimeout() {
       return flushLockTimeout;
    }
+   
+   public AsyncLoaderConfiguration flushLockTimeout(long l) {
+      this.flushLockTimeout = l;
+      return this;
+   }
 
    public int modificationQueueSize() {
       return modificationQueueSize;
@@ -31,6 +36,11 @@ public class AsyncLoaderConfiguration {
 
    public long shutdownTimeout() {
       return shutdownTimeout;
+   }
+   
+   public AsyncLoaderConfiguration shutdownTimeout(long l) {
+      this.shutdownTimeout = l;
+      return this;
    }
 
    public int threadPoolSize() {
