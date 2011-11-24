@@ -13,7 +13,6 @@ public class Configuration {
    private final IndexingConfiguration indexingConfiguration;
    private final InvocationBatchingConfiguration invocationBatchingConfiguration;
    private final JMXStatisticsConfiguration jmxStatisticsConfiguration;
-   private final LazyDeserializationConfiguration lazyDeserializationConfiguration;
    private final LoadersConfiguration loadersConfiguration;
    private final LockingConfiguration lockingConfiguration;
    private final StoreAsBinaryConfiguration storeAsBinaryConfiguration;
@@ -26,7 +25,7 @@ public class Configuration {
          EvictionConfiguration evictionConfiguration, ExpirationConfiguration expirationConfiguration,
          IndexingConfiguration indexingConfiguration, InvocationBatchingConfiguration invocationBatchingConfiguration,
          JMXStatisticsConfiguration jmxStatisticsConfiguration,
-         LazyDeserializationConfiguration lazyDeserializationConfiguration, LoadersConfiguration loadersConfiguration,
+         LoadersConfiguration loadersConfiguration,
          LockingConfiguration lockingConfiguration, StoreAsBinaryConfiguration storeAsBinaryConfiguration,
          TransactionConfiguration transactionConfiguration, UnsafeConfiguration unsafeConfiguration, ClassLoader cl) {
       this.name = name;
@@ -39,7 +38,6 @@ public class Configuration {
       this.indexingConfiguration = indexingConfiguration;
       this.invocationBatchingConfiguration = invocationBatchingConfiguration;
       this.jmxStatisticsConfiguration = jmxStatisticsConfiguration;
-      this.lazyDeserializationConfiguration = lazyDeserializationConfiguration;
       this.loadersConfiguration = loadersConfiguration;
       this.lockingConfiguration = lockingConfiguration;
       this.storeAsBinaryConfiguration = storeAsBinaryConfiguration;
@@ -95,10 +93,6 @@ public class Configuration {
    
    public JMXStatisticsConfiguration jmxStatistics() {
       return jmxStatisticsConfiguration;
-   }
-   
-   public LazyDeserializationConfiguration lazyDeserialization() {
-      return lazyDeserializationConfiguration;
    }
    
    public LoadersConfiguration loaders() {

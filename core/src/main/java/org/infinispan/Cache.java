@@ -148,6 +148,14 @@ public interface Cache<K, V> extends BasicCache<K, V>, Listenable {
     */
    void evict(K key);
 
+   /**
+    * This method's return type will be replaced with
+    * {@link org.infinispan.configuration.cache.Configuration} in a later release, at which point it
+    * will no longer be deprecated.
+    * 
+    * @return
+    */
+   @Deprecated
    Configuration getConfiguration();
 
    /**
