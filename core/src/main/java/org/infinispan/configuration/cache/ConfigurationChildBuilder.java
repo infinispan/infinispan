@@ -20,8 +20,6 @@ public interface ConfigurationChildBuilder {
    
    public JMXStatisticsConfigurationBuilder jmxStatistics();
    
-   public LazyDeserializationConfigurationBuilder lazyDeserialization();
-   
    public LoadersConfigurationBuilder loaders();
    
    public LockingConfigurationBuilder locking();

@@ -12,7 +12,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final IndexingConfigurationBuilder indexing;
    private final InvocationBatchingConfigurationBuilder invocationBatching;
    private final JMXStatisticsConfigurationBuilder jmxStatistics;
-   private final LazyDeserializationConfigurationBuilder lazyDeserialization;
    private final LoadersConfigurationBuilder loaders;
    private final LockingConfigurationBuilder locking;
    private final StoreAsBinaryConfigurationBuilder storeAsBinary;
@@ -29,7 +28,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.indexing = new IndexingConfigurationBuilder(this);
       this.invocationBatching = new InvocationBatchingConfigurationBuilder(this);
       this.jmxStatistics = new JMXStatisticsConfigurationBuilder(this);
-      this.lazyDeserialization = new LazyDeserializationConfigurationBuilder(this);
       this.loaders = new LoadersConfigurationBuilder(this);
       this.locking = new LockingConfigurationBuilder(this);
       this.storeAsBinary = new StoreAsBinaryConfigurationBuilder(this);
@@ -88,11 +86,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    }
    
    @Override
-   public LazyDeserializationConfigurationBuilder lazyDeserialization() {
-      return lazyDeserialization;
-   }
-   
-   @Override
    public StoreAsBinaryConfigurationBuilder storeAsBinary() {
       return storeAsBinary;
    }
@@ -126,7 +119,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       indexing.validate();
       invocationBatching.validate();
       jmxStatistics.validate();
-      lazyDeserialization.validate();
       loaders.validate();
       locking.validate();
       storeAsBinary.validate();
@@ -147,7 +139,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
             indexing.create(),
             invocationBatching.create(),
             jmxStatistics.create(),
-            lazyDeserialization.create(),
             loaders.create(),
             locking.create(),
             storeAsBinary.create(),

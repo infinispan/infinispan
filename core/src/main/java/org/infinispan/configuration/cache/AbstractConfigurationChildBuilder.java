@@ -54,11 +54,6 @@ abstract class AbstractConfigurationChildBuilder<T> implements ConfigurationChil
    }
    
    @Override
-   public LazyDeserializationConfigurationBuilder lazyDeserialization() {
-      return builder.lazyDeserialization();
-   }
-   
-   @Override
    public LoadersConfigurationBuilder loaders() {
       return builder.loaders();
    }
