@@ -3,9 +3,9 @@ package org.infinispan.configuration.cache;
 
 public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChildBuilder<StoreAsBinaryConfiguration> {
 
-   private boolean enabled;
-   private boolean storeKeysAsBinary;
-   private boolean storeValuesAsBinary;
+   private boolean enabled = false;
+   private boolean storeKeysAsBinary = true;
+   private boolean storeValuesAsBinary = true;
    
    StoreAsBinaryConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);

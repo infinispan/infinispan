@@ -1,12 +1,14 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.util.concurrent.IsolationLevel;
 
 public class LockingConfigurationBuilder extends AbstractConfigurationChildBuilder<LockingConfiguration> {
 
    private int concurrencyLevel = 32;
    private IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
-   private long lockAcquisitionTimeout = 10000L;
+   private long lockAcquisitionTimeout = TimeUnit.SECONDS.toMillis(10);
    private boolean useLockStriping = false;
    private boolean writeSkewCheck = false;
 

@@ -2,7 +2,7 @@ package org.infinispan.configuration.cache;
 
 public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilder<UnsafeConfiguration> {
 
-   private boolean unreliableReturnValues;
+   private boolean unreliableReturnValues = false;
 
    protected UnsafeConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);

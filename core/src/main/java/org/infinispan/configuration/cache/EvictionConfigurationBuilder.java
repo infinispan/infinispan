@@ -1,13 +1,18 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Controls the eviction settings for the cache.
  */
 public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuilder<EvictionConfiguration> {
 
+   private static final Log log = LogFactory.getLog(EvictionConfigurationBuilder.class);
+   
    private int maxEntries = -1;
    private EvictionStrategy strategy = EvictionStrategy.NONE;
    private EvictionThreadPolicy threadPolicy = EvictionThreadPolicy.DEFAULT;
@@ -52,8 +57,10 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
-      
+      if (!strategy.isEnabled() && getBuilder().loaders().passivation())
+         log.passivationWithoutEviction();
+      if (strategy.isEnabled() && maxEntries <= 0)
+         throw new ConfigurationException("Eviction maxEntries value cannot be less than or equal to zero if eviction is enabled");
    }
 
    @Override

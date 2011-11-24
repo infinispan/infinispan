@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * If configured all communications are synchronous, in that whenever a thread sends a message sent
  * over the wire, it blocks until it receives an acknowledgment from the recipient. SyncConfig is
@@ -7,7 +9,7 @@ package org.infinispan.configuration.cache;
  */
 public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder<SyncConfiguration> {
 
-   private long replTimeout;
+   private long replTimeout = TimeUnit.SECONDS.toMillis(15);
    
    protected SyncConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
@@ -24,7 +26,6 @@ public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChi
 
    @Override
    void validate() {
-      // TODO Auto-generated method stub
       
    }
 

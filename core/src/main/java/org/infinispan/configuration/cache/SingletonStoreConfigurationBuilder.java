@@ -1,10 +1,12 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
 public class SingletonStoreConfigurationBuilder extends AbstractLoaderConfigurationChildBuilder<SingletonStoreConfiguration> {
 
-   private boolean enabled;
-   private long pushStateTimeout;
-   private boolean pushStateWhenCoordinator;
+   private boolean enabled = false;
+   private long pushStateTimeout = TimeUnit.SECONDS.toMillis(10);
+   private boolean pushStateWhenCoordinator = true;
    
    SingletonStoreConfigurationBuilder(LoaderConfigurationBuilder builder) {
       super(builder);

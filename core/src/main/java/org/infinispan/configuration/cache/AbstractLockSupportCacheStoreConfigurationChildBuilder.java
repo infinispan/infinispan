@@ -28,6 +28,7 @@ package org.infinispan.configuration.cache;
 public abstract class AbstractLockSupportCacheStoreConfigurationChildBuilder<T>
       extends AbstractLoaderConfigurationChildBuilder<T> {
 
+   // TODO Add defaults
    private int lockConcurrencyLevel;
    private long lockAcquistionTimeout;
 

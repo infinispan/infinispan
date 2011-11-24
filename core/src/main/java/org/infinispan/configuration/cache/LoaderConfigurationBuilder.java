@@ -4,18 +4,23 @@ import java.util.Properties;
 
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.util.TypedProperties;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
-public class LoaderConfigurationBuilder extends AbstractLoadersConfigurationChildBuilder<LoaderConfiguration> implements LoaderConfigurationChildBuilder {
+public class LoaderConfigurationBuilder extends AbstractLoadersConfigurationChildBuilder<LoaderConfiguration> implements
+      LoaderConfigurationChildBuilder {
+
+   private static final Log log = LogFactory.getLog(LoaderConfigurationBuilder.class);
 
    private CacheLoader cacheLoader;
-   private boolean fetchPersistentState;
-   private boolean ignoreModifications;
-   private boolean purgeOnStartup;
-   private int purgerThreads;
-   private boolean purgeSynchronously;
+   private boolean fetchPersistentState = false;
+   private boolean ignoreModifications = false;
+   private boolean purgeOnStartup = false;
+   private int purgerThreads = 1;
+   private boolean purgeSynchronously = false;
    private final AsyncLoaderConfigurationBuilder async;
    private final SingletonStoreConfigurationBuilder singletonStore;
-   private Properties properties;
+   private Properties properties = new Properties();
 
    LoaderConfigurationBuilder(LoadersConfigurationBuilder builder) {
       super(builder);
@@ -81,6 +86,9 @@ public class LoaderConfigurationBuilder extends AbstractLoadersConfigurationChil
    void validate() {
       async.validate();
       singletonStore.validate();
+      if (!getLoadersBuilder().shared() && fetchPersistentState && purgeOnStartup
+            && getBuilder().clustering().cacheMode().isClustered())
+         log.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
    }
 
    @Override

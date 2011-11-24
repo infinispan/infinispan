@@ -26,6 +26,10 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       return this;
    }
    
+   CacheMode cacheMode() {
+      return cacheMode;
+   }
+
    @Override
    public AsyncConfigurationBuilder async() {
       if (!cacheMode.isSynchronous())

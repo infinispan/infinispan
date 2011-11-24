@@ -1,6 +1,7 @@
 package org.infinispan.configuration.global;
 
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -19,7 +20,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    private String machineId;
    private String rackId;
    private String siteId;
-   private long distributedSyncTimeout = 240000L;
+   private long distributedSyncTimeout = TimeUnit.MINUTES.toMillis(4);
    private Transport transport;
    
    private String nodeName;
