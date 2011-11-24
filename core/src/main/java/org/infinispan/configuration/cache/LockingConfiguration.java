@@ -6,7 +6,7 @@ public class LockingConfiguration {
    
    private final int concurrencyLevel;
    private final IsolationLevel isolationLevel;
-   private final long lockAcquisitionTimeout;
+   private long lockAcquisitionTimeout;
    private final boolean useLockStriping;
    private final boolean writeSkewCheck;
    
@@ -29,6 +29,11 @@ public class LockingConfiguration {
 
    public long lockAcquisitionTimeout() {
       return lockAcquisitionTimeout;
+   }
+   
+   public LockingConfiguration lockAcquisitionTimeout(long lockAcquisitionTimeout) {
+      this.lockAcquisitionTimeout = lockAcquisitionTimeout;
+      return this;
    }
 
    public boolean useLockStriping() {
