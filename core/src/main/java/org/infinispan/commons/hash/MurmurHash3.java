@@ -21,7 +21,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.util.hash;
+package org.infinispan.commons.hash;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.marshall.Ids;

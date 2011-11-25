@@ -23,6 +23,8 @@
 package org.infinispan.config;
 
 import org.infinispan.CacheException;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.config.FluentConfiguration.*;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
@@ -49,8 +51,6 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.hash.Hash;
-import org.infinispan.util.hash.MurmurHash3;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

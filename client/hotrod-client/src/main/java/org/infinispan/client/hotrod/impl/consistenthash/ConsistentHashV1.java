@@ -30,13 +30,13 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.infinispan.util.hash.Hash;
-import org.infinispan.util.hash.MurmurHash2;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash2;
 import org.infinispan.util.logging.BasicLogFactory;
 import org.jboss.logging.BasicLogger;
 
 /**
- * Version one consistent hash function based on {@link org.infinispan.util.hash.MurmurHash2};
+ * Version one consistent hash function based on {@link org.infinispan.commons.hash.MurmurHash2};
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1

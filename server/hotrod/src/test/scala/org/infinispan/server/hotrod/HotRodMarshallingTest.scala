@@ -27,7 +27,7 @@ import org.testng.Assert._
 import org.infinispan.commands.remote.ClusteredGetCommand
 import org.infinispan.server.core.AbstractMarshallingTest
 import org.infinispan.util.ByteArrayKey
-import org.infinispan.manager.BasicCacheContainer
+import org.infinispan.api.BasicCacheContainer
 
 /**
  * Tests marshalling of Hot Rod classes.

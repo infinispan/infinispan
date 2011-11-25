@@ -1,8 +1,8 @@
 package org.infinispan.tx.lockreordering;
 
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.util.hash.MurmurHash3;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;

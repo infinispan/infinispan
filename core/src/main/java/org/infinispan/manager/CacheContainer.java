@@ -1,7 +1,8 @@
 package org.infinispan.manager;
 
-import org.infinispan.BasicCache;
 import org.infinispan.Cache;
+import org.infinispan.api.BasicCache;
+import org.infinispan.api.BasicCacheContainer;
 
 public interface CacheContainer extends BasicCacheContainer {
    /**

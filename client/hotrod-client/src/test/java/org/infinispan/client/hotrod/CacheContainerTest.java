@@ -22,7 +22,7 @@
  */
 package org.infinispan.client.hotrod;
 
-import org.infinispan.BasicCache;
+import org.infinispan.api.BasicCache;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
