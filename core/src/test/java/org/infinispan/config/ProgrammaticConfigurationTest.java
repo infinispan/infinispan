@@ -193,7 +193,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
          .expiration()
             .maxIdle(8392L).lifespan(4372L).wakeUpInterval(7585L)
          .clustering()
-            .mode(Configuration.CacheMode.INVALIDATION_SYNC)
+            .mode(Configuration.CacheMode.INVALIDATION_ASYNC)
             .async()
                .replQueueClass(ReplicationQueueImpl.class)
                .asyncMarshalling(false)
@@ -257,7 +257,7 @@ public class ProgrammaticConfigurationTest extends AbstractInfinispanTest {
       assert c.isL1CacheEnabled();
       assert c.isL1OnRehash();
       assert 65738L == c.getL1Lifespan();
-      assert Configuration.CacheMode.INVALIDATION_SYNC == c.getCacheMode();
+      assert Configuration.CacheMode.INVALIDATION_ASYNC == c.getCacheMode();
       assert !c.isUseAsyncMarshalling();
       assertEquals(ReplicationQueueImpl.class.getName(), c.getReplQueueClass());
       assert 5738L == c.getReplQueueInterval();

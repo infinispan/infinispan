@@ -136,6 +136,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
       val topologyCacheConfig = new Configuration
       topologyCacheConfig.setCacheMode(CacheMode.REPL_SYNC)
+      topologyCacheConfig.setUseReplQueue(false) // Avoid getting mixed up with default config
       topologyCacheConfig.setSyncReplTimeout(replTimeout) // Milliseconds
       topologyCacheConfig.setLockAcquisitionTimeout(lockTimeout) // Milliseconds
       topologyCacheConfig.setEvictionStrategy(EvictionStrategy.NONE); // No eviction
