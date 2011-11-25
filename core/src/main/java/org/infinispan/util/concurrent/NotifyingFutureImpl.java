@@ -71,12 +71,16 @@ public class NotifyingFutureImpl implements NotifyingNotifiableFuture<Object> {
    }
 
    public Object get() throws InterruptedException, ExecutionException {
-      ioFuture.get();
+      if (!callCompleted) {
+         ioFuture.get();
+      }
       return actualReturnValue;
    }
 
    public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, java.util.concurrent.TimeoutException {
-      ioFuture.get(timeout, unit);
+      if (!callCompleted) {
+         ioFuture.get(timeout, unit);
+      }
       return actualReturnValue;
    }
 
