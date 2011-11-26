@@ -34,22 +34,22 @@ import javax.enterprise.inject.Produces;
 /**
  * <p>The default configuration producer.</p>
  *
- * <p>The default configuration is used by the default cache manager. The default configuration can be overridden by
- * creating a producer which produces the new default configuration. The new default configuration produced must be
- * qualified by {@link OverrideDefault}.</p>
+ * <p>The default configuration is used by the default embedded cache manager. The default configuration can be
+ * overridden by creating a producer which produces the new default configuration. The new default configuration
+ * produced must be qualified by {@link OverrideDefault}.</p>
  *
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-public class DefaultConfigurationProducer {
+public class DefaultEmbeddedCacheConfigurationProducer {
 
-   private static final Log log = LogFactory.getLog(DefaultConfigurationProducer.class, Log.class);
+   private static final Log log = LogFactory.getLog(DefaultEmbeddedCacheConfigurationProducer.class, Log.class);
 
    /**
     * Produces the default configuration.
     *
     * @param providedDefaultConfiguration the provided default configuration.
-    * @return the default configuration used by the default cache manager.
+    * @return the default configuration used by the default embedded cache manager.
     */
    @Produces
    @Default

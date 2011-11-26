@@ -47,7 +47,7 @@ import static org.jboss.solder.bean.Beans.getQualifiers;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @GenericConfiguration(ConfigureCache.class)
-public class CacheManager {
+public class AdvancedCacheProducer {
 
    @Inject
    private CacheContainer defaultCacheContainer;

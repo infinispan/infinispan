@@ -37,8 +37,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * This annotation is used to qualify the provided default configuration or/and default cache manager.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
- * @see DefaultConfigurationProducer
- * @see DefaultCacheManagerProducer
+ * @see DefaultEmbeddedCacheConfigurationProducer
+ * @see DefaultEmbeddedCacheManagerProducer
  */
 @Target({METHOD, FIELD, PARAMETER, TYPE})
 @Retention(RUNTIME)
