@@ -48,6 +48,9 @@ import static org.testng.AssertJUnit.assertEquals;
 @Test(groups = "functional", testName = "expiry.ExpiryTest")
 public class ExpiryTest extends AbstractInfinispanTest {
 
+   public static final int EXPIRATION_TIMEOUT = 3000;
+   public static final int IDLE_TIMEOUT = 3000;
+   public static final int EVICTION_CHECK_TIMEOUT = 2000;
    CacheContainer cm;
 
    @BeforeMethod
@@ -63,7 +66,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
    public void testLifespanExpiryInPut() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
-      long lifespan = 30000;
+      long lifespan = EXPIRATION_TIMEOUT;
       cache.put("k", "v", lifespan, MILLISECONDS);
 
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
@@ -81,7 +84,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
    public void testIdleExpiryInPut() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
-      long idleTime = 30000;
+      long idleTime = IDLE_TIMEOUT;
       cache.put("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS);
 
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
@@ -100,7 +103,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
    public void testLifespanExpiryInPutAll() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
       final long startTime = System.currentTimeMillis();
-      final long lifespan = 10000;
+      final long lifespan = EXPIRATION_TIMEOUT;
       Map<String, String> m = new HashMap();
       m.put("k1", "v");
       m.put("k2", "v");
@@ -113,7 +116,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       }
 
       //make sure that in the next 30 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 30000) {
+      while (System.currentTimeMillis() < startTime + lifespan + EXPIRATION_TIMEOUT) {
          if (cache.get("k1") == null && cache.get("k2") == null) return;
       }
       assert cache.get("k1") == null;
@@ -122,7 +125,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
    public void testIdleExpiryInPutAll() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
-      final long idleTime = 10000;
+      final long idleTime = EXPIRATION_TIMEOUT;
       Map<String, String> m = new HashMap();
       m.put("k1", "v");
       m.put("k2", "v");
@@ -139,7 +142,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
    public void testLifespanExpiryInPutIfAbsent() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
       final long startTime = System.currentTimeMillis();
-      final long lifespan = 10000;
+      final long lifespan = EXPIRATION_TIMEOUT;
       assert cache.putIfAbsent("k", "v", lifespan, MILLISECONDS) == null;
       long partial = lifespan / 10;
        // Sleep some time within the lifespan boundaries
@@ -150,7 +153,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       assert cache.get("k") == null;
 
       //make sure that in the next 2 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 2000) {
+      while (System.currentTimeMillis() < startTime + lifespan + EVICTION_CHECK_TIMEOUT) {
          if (cache.get("k") == null) break;
          Thread.sleep(50);
       }
@@ -162,7 +165,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
    public void testIdleExpiryInPutIfAbsent() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
-      long idleTime = 30000;
+      long idleTime = EXPIRATION_TIMEOUT;
       assert cache.putIfAbsent("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS) == null;
       assert cache.get("k").equals("v");
 
@@ -176,7 +179,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
    public void testLifespanExpiryInReplace() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
-      final long lifespan = 10000;
+      final long lifespan = EXPIRATION_TIMEOUT;
       assert cache.get("k") == null;
       assert cache.replace("k", "v", lifespan, MILLISECONDS) == null;
       assert cache.get("k") == null;
@@ -191,7 +194,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       }
 
       //make sure that in the next 2 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 2000) {
+      while (System.currentTimeMillis() < startTime + lifespan + EVICTION_CHECK_TIMEOUT) {
          if (cache.get("k") == null) break;
          Thread.sleep(50);
       }
@@ -211,7 +214,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       }
 
       //make sure that in the next 2 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 2000) {
+      while (System.currentTimeMillis() < startTime + lifespan + EVICTION_CHECK_TIMEOUT) {
          if (cache.get("k") == null) break;
          Thread.sleep(50);
       }
@@ -220,7 +223,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
    public void testIdleExpiryInReplace() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
-      long idleTime = 30000;
+      long idleTime = EXPIRATION_TIMEOUT;
       assert cache.get("k") == null;
       assert cache.replace("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS) == null;
       assert cache.get("k") == null;
@@ -265,7 +268,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       Set entriesIn = dataIn.entrySet();
 
       final long startTime = System.currentTimeMillis();
-      final long lifespan = 5000;
+      final long lifespan = EXPIRATION_TIMEOUT;
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
       entries = Collections.emptySet();
@@ -277,7 +280,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       }
 
       // Make sure that in the next 20 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+      while (System.currentTimeMillis() < startTime + lifespan + EVICTION_CHECK_TIMEOUT) {
          entries = cache.entrySet();
          if (entries.size() == 0) return;
       }
@@ -293,7 +296,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       dataIn.put(2, v(m, 2));
 
       final long startTime = System.currentTimeMillis();
-      final long lifespan = 5000;
+      final long lifespan = EXPIRATION_TIMEOUT;
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
       cache.getAdvancedCache().getTransactionManager().begin();
@@ -315,7 +318,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
          }
 
          // Make sure that in the next 20 secs data is removed
-         while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+         while (System.currentTimeMillis() < startTime + lifespan + EVICTION_CHECK_TIMEOUT) {
             entries = cache.entrySet();
             if (entries.size() == 1) return;
          }
@@ -335,7 +338,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       Set keysIn = dataIn.keySet();
 
       final long startTime = System.currentTimeMillis();
-      final long lifespan = 5000;
+      final long lifespan = EXPIRATION_TIMEOUT;
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
       keys = Collections.emptySet();
@@ -347,7 +350,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       }
 
       // Make sure that in the next 20 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+      while (System.currentTimeMillis() < startTime + lifespan + EVICTION_CHECK_TIMEOUT) {
          keys = cache.keySet();
          if (keys.size() == 0) return;
       }
@@ -372,7 +375,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       dataIn.put(2, v(m, 2));
 
       final long startTime = System.currentTimeMillis();
-      final long lifespan = 5000;
+      final long lifespan = EXPIRATION_TIMEOUT;
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
       cache.getAdvancedCache().getTransactionManager().begin();
@@ -394,7 +397,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
          }
 
          // Make sure that in the next 20 secs data is removed
-         while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+         while (System.currentTimeMillis() < startTime + lifespan + EVICTION_CHECK_TIMEOUT) {
             keys = cache.keySet();
             if (keys.size() == 1) return;
          }
@@ -419,7 +422,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       Set valuesIn = new HashSet(dataIn.values());
 
       final long startTime = System.currentTimeMillis();
-      final long lifespan = 5000;
+      final long lifespan = EXPIRATION_TIMEOUT;
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
       values = Collections.emptySet();
@@ -431,7 +434,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       }
 
       // Make sure that in the next 20 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+      while (System.currentTimeMillis() < startTime + lifespan + EVICTION_CHECK_TIMEOUT) {
          values = new HashSet(cache.values());
          if (values.size() == 0) return;
       }
@@ -459,7 +462,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       dataIn.put(2, v(m, 2));
 
       final long startTime = System.currentTimeMillis();
-      final long lifespan = 5000;
+      final long lifespan = EXPIRATION_TIMEOUT;
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
       cache.getAdvancedCache().getTransactionManager().begin();
@@ -481,7 +484,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
          }
 
          // Make sure that in the next 20 secs data is removed
-         while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+         while (System.currentTimeMillis() < startTime + lifespan + EVICTION_CHECK_TIMEOUT) {
             values = new HashSet(cache.values());
             if (values.size() == 1) return;
          }
