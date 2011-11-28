@@ -98,6 +98,7 @@
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
       <packaging>jar</packaging>
+      <infinispan.log4j.configuration>log4j.xml</infinispan.log4j.configuration>
 
       <!-- Versions for dependencies -->
       <version.apacheds.jdbm>1.5.7</version.apacheds.jdbm>
@@ -464,12 +465,12 @@
                      <value>true</value>
                   </property>
                   <property>
-                     <name>infinispan.test.marshaller.class</name>
-                     <value>${infinispan.test.marshaller.class}</value>
-                  </property>
-                  <property>
                      <name>infinispan.suppress_cache_creation_warning</name>
                      <value>true</value>
+                  </property>
+                  <property>
+                     <name>log4j.configuration</name>
+                     <value>${infinispan.log4j.configuration}</value>
                   </property>
                </systemProperties>
                <trimStackTrace>false</trimStackTrace>
@@ -856,6 +857,16 @@
          </activation>
          <properties>
             <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
+            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+         </properties>
+      </profile>
+      <profile>
+         <id>traceTests</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <infinispan.log4j.configuration>log4j-trace.xml</infinispan.log4j.configuration>
             <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
       </profile>
