@@ -126,9 +126,11 @@ public class ModuleProperties extends Properties {
          List<ModuleLifecycle> lifecycles = new ArrayList<ModuleLifecycle>();
          Map<String, ModuleProperties> p = getModuleProperties(cl);
          for (Map.Entry<String, ModuleProperties> m : p.entrySet()) {
+            log.debugf("Loading module properties: %s", m.getValue());
             try {
                String lifecycleClassName = m.getValue().getLifecycleClassName();
                if (lifecycleClassName != null && !lifecycleClassName.isEmpty()) {
+                  log.debugf("Loading lifecycle SPI class: %s", lifecycleClassName);
                   Class<?> loadClass = Util.loadClassStrict(lifecycleClassName, cl);
                   Object proxy = Proxies.newCatchThrowableProxy(loadClass.newInstance());
                   ModuleLifecycle ml = (ModuleLifecycle) proxy;
