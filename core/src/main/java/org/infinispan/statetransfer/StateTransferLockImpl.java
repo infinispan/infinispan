@@ -185,10 +185,6 @@ public class StateTransferLockImpl implements StateTransferLock {
 
    @Override
    public void waitForStateTransferToEnd(InvocationContext ctx, VisitableCommand command, int newCacheViewId) throws TimeoutException, InterruptedException {
-      // if state transfer is disabled we never have to wait
-      if (!stateTransferEnabled)
-         return;
-
       // in the most common case there we don't know anything about a state transfer in progress so we return immediately
       // it's ok to access blockingCacheViewId without a lock here, in the worst case scenario we do the lock below
       if (!writesShouldBlock && newCacheViewId <= blockingCacheViewId)
