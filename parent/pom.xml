@@ -98,7 +98,6 @@
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
       <packaging>jar</packaging>
-      <infinispan.log4j.configuration>log4j.xml</infinispan.log4j.configuration>
 
       <!-- Versions for dependencies -->
       <version.apacheds.jdbm>1.5.7</version.apacheds.jdbm>
@@ -467,10 +466,6 @@
                   <property>
                      <name>infinispan.suppress_cache_creation_warning</name>
                      <value>true</value>
-                  </property>
-                  <property>
-                     <name>log4j.configuration</name>
-                     <value>${infinispan.log4j.configuration}</value>
                   </property>
                </systemProperties>
                <trimStackTrace>false</trimStackTrace>
@@ -865,8 +860,54 @@
          <activation>
             <activeByDefault>false</activeByDefault>
          </activation>
+         <build>
+            <plugins>
+               <!-- Redefine surefire plugin to avoid external log4j settings
+               not being discovered when passed as command line arguments -->
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <version>2.4.3-JBOSS</version>
+                  <configuration>
+                     <parallel>tests</parallel>
+                     <threadCount>${infinispan.test.parallel.threads}</threadCount>
+                     <forkMode>none</forkMode>
+                     <groups>${defaultTestGroup}</groups>
+                     <systemProperties>
+                        <property>
+                           <name>infinispan.test.jgroups.protocol</name>
+                           <value>${infinispan.test.jgroups.protocol}</value>
+                        </property>
+                        <property>
+                           <name>jgroups.bind_addr</name>
+                           <value>127.0.0.1</value>
+                        </property>
+                        <property>
+                           <name>java.net.preferIPv4Stack</name>
+                           <value>true</value>
+                        </property>
+                        <property>
+                           <name>infinispan.suppress_cache_creation_warning</name>
+                           <value>true</value>
+                        </property>
+                        <property>
+                           <name>log4j.configuration</name>
+                           <value>log4j-trace.xml</value>
+                        </property>
+                     </systemProperties>
+                     <trimStackTrace>false</trimStackTrace>
+                     <properties>
+                        <property>
+                           <name>listener</name>
+                           <value>${testNGListener}</value>
+                        </property>
+                     </properties>
+                     <argLine>-Xmx1024m -XX:MaxPermSize=1024m</argLine>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
          <properties>
-            <infinispan.log4j.configuration>log4j-trace.xml</infinispan.log4j.configuration>
             <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
       </profile>
