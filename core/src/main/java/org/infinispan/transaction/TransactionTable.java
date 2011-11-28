@@ -138,6 +138,7 @@ public class TransactionTable {
    private void stop() {
       notifier.removeListener(cleanupService);
       cm.removeListener(cleanupService);
+      cleanupService.stop();
       cm.removeListener(this);
       shutDownGracefully();
    }
