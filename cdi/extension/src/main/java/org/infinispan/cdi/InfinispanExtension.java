@@ -33,10 +33,12 @@ import org.infinispan.cdi.interceptor.literal.CacheRemoveEntryLiteral;
 import org.infinispan.cdi.interceptor.literal.CacheResultLiteral;
 import org.infinispan.cdi.util.Version;
 import org.infinispan.cdi.util.logging.Log;
+import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.solder.bean.Beans;
+import org.jboss.solder.bean.BeanBuilder;
+import org.jboss.solder.bean.ContextualLifecycle;
 import org.jboss.solder.reflection.annotated.AnnotatedTypeBuilder;
 
 import javax.cache.annotation.CachePut;
@@ -48,18 +50,32 @@ import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.spi.AfterBeanDiscovery;
 import javax.enterprise.inject.spi.AfterDeploymentValidation;
+import javax.enterprise.inject.spi.Annotated;
 import javax.enterprise.inject.spi.AnnotatedMember;
+import javax.enterprise.inject.spi.AnnotatedType;
+import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.BeforeBeanDiscovery;
 import javax.enterprise.inject.spi.Extension;
+import javax.enterprise.inject.spi.InjectionPoint;
+import javax.enterprise.inject.spi.InjectionTarget;
 import javax.enterprise.inject.spi.ProcessAnnotatedType;
+import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import javax.enterprise.inject.spi.ProcessProducer;
 import javax.enterprise.inject.spi.Producer;
 import javax.enterprise.util.AnnotationLiteral;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+
+import static org.jboss.solder.bean.Beans.getQualifiers;
+import static org.jboss.solder.reflection.Reflections.getAnnotationsWithMetaAnnotation;
+import static org.jboss.solder.reflection.Reflections.getRawType;
 
 /**
  * The Infinispan CDI extension class.
@@ -71,10 +87,13 @@ public class InfinispanExtension implements Extension {
 
    private static final Log log = LogFactory.getLog(InfinispanExtension.class, Log.class);
 
+   private Producer<RemoteCache> remoteCacheProducer;
    private final Set<ConfigurationHolder> configurations;
+   private final Map<Type, Set<Annotation>> remoteCacheInjectionPoints;
 
    InfinispanExtension() {
       this.configurations = new HashSet<InfinispanExtension.ConfigurationHolder>();
+      this.remoteCacheInjectionPoints = new HashMap<Type, Set<Annotation>>();
    }
 
    void registerInterceptorBindings(@Observes BeforeBeanDiscovery event) {
@@ -114,16 +133,66 @@ public class InfinispanExtension implements Extension {
                                    .create());
    }
 
+   void saveRemoteCacheProducer(@Observes ProcessProducer<RemoteCacheProducer, RemoteCache> event) {
+      remoteCacheProducer = event.getProducer();
+   }
+
+   <T> void saveRemoteInjectionPoints(@Observes ProcessInjectionTarget<T> event, BeanManager beanManager) {
+      final InjectionTarget<T> injectionTarget = event.getInjectionTarget();
+
+      for (InjectionPoint injectionPoint : injectionTarget.getInjectionPoints()) {
+         final Annotated annotated = injectionPoint.getAnnotated();
+         final Class<?> rawType = getRawType(annotated.getBaseType());
+         final Set<Annotation> qualifiers = getQualifiers(beanManager, annotated.getAnnotations());
+
+         if (!annotated.isAnnotationPresent(Remote.class)
+               && !getAnnotationsWithMetaAnnotation(qualifiers, Remote.class).isEmpty()
+               && rawType.isAssignableFrom(RemoteCache.class)) {
+
+            Set<Annotation> current = remoteCacheInjectionPoints.get(annotated.getBaseType());
+            if (current == null) {
+               remoteCacheInjectionPoints.put(annotated.getBaseType(), qualifiers);
+            } else {
+               current.addAll(qualifiers);
+            }
+         }
+      }
+   }
+
    void saveCacheConfigurations(@Observes ProcessProducer<?, Configuration> event, BeanManager beanManager) {
       ConfigureCache annotation = event.getAnnotatedMember().getAnnotation(ConfigureCache.class);
       if (annotation != null) {
          String name = annotation.value();
+         AnnotatedMember<?> annotatedMember = event.getAnnotatedMember();
+
          configurations.add(new ConfigurationHolder(
                event.getProducer(),
                name,
-               event.getAnnotatedMember(),
-               beanManager
+               getQualifiers(beanManager, annotatedMember.getAnnotations())
          ));
+      }
+   }
+
+   @SuppressWarnings("unchecked")
+   void registerRemoteCacheBeans(@Observes AfterBeanDiscovery event, BeanManager beanManager) {
+      for (Map.Entry<Type, Set<Annotation>> entry : remoteCacheInjectionPoints.entrySet()) {
+         final AnnotatedType<?> annotatedType = beanManager.createAnnotatedType(getRawType(entry.getKey()));
+
+         event.addBean(new BeanBuilder(beanManager)
+                             .readFromType(annotatedType)
+                             .addType(entry.getKey())
+                             .addQualifiers(entry.getValue())
+                             .beanLifecycle(new ContextualLifecycle<RemoteCache>() {
+                                @Override
+                                public RemoteCache create(Bean<RemoteCache> bean, CreationalContext<RemoteCache> ctx) {
+                                   return remoteCacheProducer.produce(ctx);
+                                }
+
+                                @Override
+                                public void destroy(Bean<RemoteCache> bean, RemoteCache instance, CreationalContext<RemoteCache> ctx) {
+                                   remoteCacheProducer.dispose(instance);
+                                }
+                             }).create());
       }
    }
 
@@ -161,17 +230,17 @@ public class InfinispanExtension implements Extension {
       private final Set<Annotation> qualifiers;
       private final String name;
 
-      ConfigurationHolder(Producer<Configuration> producer, String name, AnnotatedMember<?> annotatedMember, BeanManager beanManager) {
+      ConfigurationHolder(Producer<Configuration> producer, String name, Set<Annotation> qualifiers) {
          this.producer = producer;
          this.name = name;
-         this.qualifiers = Beans.getQualifiers(beanManager, annotatedMember.getAnnotations());
+         this.qualifiers = qualifiers;
       }
 
-      Producer<Configuration> getProducer() {
+      public Producer<Configuration> getProducer() {
          return producer;
       }
 
-      String getName() {
+      public String getName() {
          return name;
       }
 
