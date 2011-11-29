@@ -52,20 +52,20 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * AbstractConfigurationBeanVisitor is a convenience super class for ConfigurationBeanVisitor
  * classes.
- * 
+ *
  * <p>
- * 
+ *
  * Subclasses of AbstractConfigurationBeanVisitor should define the most parameter type specific
  * definitions of <code>void visit(AbstractConfigurationBean bean); </code> method. These methods
  * are going to be invoked by traverser as it comes across these types during traversal of
  * <code>InfinispanConfiguration</code> tree.
- * 
+ *
  * <p>
- * 
+ *
  * For example, method <code>public void visit(SingletonStoreConfig ssc)</code> defined in a
  * subclass of this class is going to be invoked as the traverser comes across instance(s) of
  * SingletonStoreConfig.
- * 
+ *
  * @author Vladimir Blagojevic
  * @since 4.0
  */
@@ -76,7 +76,7 @@ public abstract class AbstractConfigurationBeanVisitor implements ConfigurationB
    @Override
    public void visitInfinispanConfiguration(InfinispanConfiguration bean) {
    }
-   
+
    @Override
    public void visitAsyncStoreConfig(AsyncStoreConfig bean) {
       defaultVisit(bean);
@@ -94,7 +94,8 @@ public abstract class AbstractConfigurationBeanVisitor implements ConfigurationB
 
    @Override
    public void visitCacheLoaderConfig(CacheLoaderConfig bean) {
-
+      if(bean instanceof AbstractConfigurationBean)
+         defaultVisit((AbstractConfigurationBean) bean);
    }
 
    @Override
@@ -116,7 +117,7 @@ public abstract class AbstractConfigurationBeanVisitor implements ConfigurationB
    public void visitCustomInterceptorsType(CustomInterceptorsType bean) {
       defaultVisit(bean);
    }
-   
+
    @Override
    public void visitDataContainerType(DataContainerType bean) {
       defaultVisit(bean);
@@ -151,7 +152,7 @@ public abstract class AbstractConfigurationBeanVisitor implements ConfigurationB
    public void visitGlobalJmxStatisticsType(GlobalJmxStatisticsType bean) {
       defaultVisit(bean);
    }
-   
+
    @Override
    public void visitGroupConfig(GroupsConfiguration bean) {
       defaultVisit(bean);
@@ -171,7 +172,7 @@ public abstract class AbstractConfigurationBeanVisitor implements ConfigurationB
    public void visitLockingType(LockingType bean) {
       defaultVisit(bean);
    }
-   
+
    @Override
    public void visitQueryConfigurationBean(QueryConfigurationBean bean) {
       defaultVisit(bean);
@@ -216,17 +217,17 @@ public abstract class AbstractConfigurationBeanVisitor implements ConfigurationB
    public void visitUnsafeType(UnsafeType bean) {
       defaultVisit(bean);
    }
-   
+
    @Override
    public void visitCustomInterceptorConfig(CustomInterceptorConfig bean) {
       defaultVisit(bean);
    }
-   
+
    @Override
    public void visitAdvancedExternalizerConfig(AdvancedExternalizerConfig bean) {
       defaultVisit(bean);
    }
-   
+
    @Override
    public void visitAdvancedExternalizersType(GlobalConfiguration.AdvancedExternalizersType bean) {
       defaultVisit(bean);
