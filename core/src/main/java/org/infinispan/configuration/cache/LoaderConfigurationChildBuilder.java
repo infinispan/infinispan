@@ -2,8 +2,8 @@ package org.infinispan.configuration.cache;
 
 public interface LoaderConfigurationChildBuilder extends ConfigurationChildBuilder {
 
-   public AsyncLoaderConfigurationBuilder async();
+   AsyncLoaderConfigurationBuilder async();
    
-   public SingletonStoreConfigurationBuilder singletonStore();
+   SingletonStoreConfigurationBuilder singletonStore();
    
 }
