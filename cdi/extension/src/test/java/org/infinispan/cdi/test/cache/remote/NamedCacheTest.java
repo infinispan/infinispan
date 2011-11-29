@@ -26,10 +26,8 @@ import org.infinispan.BasicCache;
 import org.infinispan.cdi.Remote;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -43,6 +41,8 @@ import javax.inject.Inject;
 import java.util.Properties;
 
 import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
+import static org.infinispan.client.hotrod.TestHelper.startHotRodServer;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createLocalCacheManager;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -58,7 +58,8 @@ public class NamedCacheTest extends Arquillian {
    @Deployment
    public static Archive<?> deployment() {
       return baseDeployment()
-            .addClass(NamedCacheTest.class);
+            .addClass(NamedCacheTest.class)
+            .addClass(Small.class);
    }
 
    private static HotRodServer hotRodServer;
@@ -72,11 +73,19 @@ public class NamedCacheTest extends Arquillian {
    @Remote("small")
    private RemoteCache<String, String> remoteCache;
 
+   @Inject
+   @Small
+   private BasicCache<String, String> cacheWithQualifier;
+
+   @Inject
+   @Small
+   private RemoteCache<String, String> remoteCacheWithQualifier;
+
    @BeforeTest
    public void beforeMethod() {
-      embeddedCacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      embeddedCacheManager = createLocalCacheManager(false);
       embeddedCacheManager.defineConfiguration("small", embeddedCacheManager.getDefaultConfiguration());
-      hotRodServer = TestHelper.startHotRodServer(embeddedCacheManager);
+      hotRodServer = startHotRodServer(embeddedCacheManager);
    }
 
    @AfterTest(alwaysRun = true)
@@ -89,12 +98,29 @@ public class NamedCacheTest extends Arquillian {
       cache.put("pete", "British");
       cache.put("manik", "Sri Lankan");
 
+      assertEquals(cache.getName(), "small");
       assertEquals(cache.get("pete"), "British");
       assertEquals(cache.get("manik"), "Sri Lankan");
+
+      assertEquals(remoteCache.getName(), "small");
       assertEquals(remoteCache.get("pete"), "British");
       assertEquals(remoteCache.get("manik"), "Sri Lankan");
+
+      // here we check that the cache injection with the @Small qualifier works
+      // like the injection with the @Remote qualifier
+
+      assertEquals(cacheWithQualifier.getName(), "small");
+      assertEquals(cacheWithQualifier.get("pete"), "British");
+      assertEquals(cacheWithQualifier.get("manik"), "Sri Lankan");
+
+      assertEquals(remoteCacheWithQualifier.getName(), "small");
+      assertEquals(remoteCacheWithQualifier.get("pete"), "British");
+      assertEquals(remoteCacheWithQualifier.get("manik"), "Sri Lankan");
    }
 
+   /**
+    * Overrides the default remote cache manager.
+    */
    @Produces
    @ApplicationScoped
    public static RemoteCacheManager defaultRemoteCacheManager() {
