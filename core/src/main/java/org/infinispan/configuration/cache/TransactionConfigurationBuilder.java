@@ -106,7 +106,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    TransactionConfiguration create() {
-      if (useEagerLocking = true) {
+      if (useEagerLocking) {
          lockingMode = LockingMode.PESSIMISTIC;
       }
       return new TransactionConfiguration(autoCommit, cacheStopTimeout, eagerLockingSingleNode, lockingMode, syncCommitPhase, syncRollbackPhase, transactionManagerLookup, transactionSynchronizationRegistryLookup, transactionMode, useEagerLocking, useSynchronization, recovery.create());

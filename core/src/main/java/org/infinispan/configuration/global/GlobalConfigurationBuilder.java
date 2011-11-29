@@ -23,6 +23,8 @@
 
 package org.infinispan.configuration.global;
 
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+
 public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
    
    private ClassLoader cl;
@@ -135,4 +137,14 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             );
    }
 
+   public static GlobalConfigurationBuilder defaultClusteredBuilder() {
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+      builder
+            .transport()
+               .transport(new JGroupsTransport())
+            .asyncTransportExecutor()
+               .addProperty("threadNamePrefix", "asyncTransportThread");
+
+      return builder;
+   }
 }
