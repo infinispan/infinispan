@@ -121,17 +121,20 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
             Response.status(Status.CONFLICT).build()
          } else {
             ManagerInstance.getEntry(cacheName, key) match {
-               case b: MIMECacheEntry => {
+               case mime: MIMECacheEntry => {
                   // The item already exists in the cache, evaluate preconditions based on its attributes and the headers
-                  val lastMod = new Date(b.lastModified)
-                  request.evaluatePreconditions(lastMod, calcETAG(b)) match {
+                  val lastMod = new Date(mime.lastModified)
+                  request.evaluatePreconditions(lastMod, calcETAG(mime)) match {
                      // One of the preconditions failed, build a response
                      case bldr: ResponseBuilder => bldr.build
                      // Preconditions passed
                      case null => putInCache(cache, mediaType, key, data, ttl, idleTime)
                   }
                }
-               case null => putInCache(cache, mediaType, key, data, ttl, idleTime)
+               case binary: Array[Byte] =>
+                  putInCache(cache, mediaType, key, data, ttl, idleTime)
+               case null =>
+                  putInCache(cache, mediaType, key, data, ttl, idleTime)
             }
          }
       }

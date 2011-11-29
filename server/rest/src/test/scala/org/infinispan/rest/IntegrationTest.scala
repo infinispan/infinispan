@@ -46,6 +46,7 @@ import org.testng.AssertJUnit._
  *
  * @author Michael Neale
  * @author Galder Zamarreño
+ * @author Michal Linhard
  * @since 4.0
  */
 @Test(groups = Array("functional"), testName = "rest.IntegrationTest")
@@ -679,6 +680,25 @@ class IntegrationTest {
       // Sleep way beyond the default in the config
       Thread.sleep(2500)
       assertEquals(HttpServletResponse.SC_NOT_FOUND, Client.call(new GetMethod(fullPathKey)).getStatusCode)
+   }
+
+   def testPutByteArrayTwice(m: Method) {
+      val fullPathKey = fullPath + "/" + m.getName
+      val put = new PutMethod(fullPathKey)
+      val data = new Array[Byte](3);
+      data(0) = 42
+      data(1) = 42
+      data(2) = 42
+
+      put.setRequestEntity(new ByteArrayRequestEntity(data, "application/x-java-serialized-object"))
+      assertEquals(HttpServletResponse.SC_OK, Client.call(put).getStatusCode)
+
+      val get = Client.call(new GetMethod(fullPathKey))
+      assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
+
+      val reput = new PutMethod(fullPathKey)
+      reput.setRequestEntity(new ByteArrayRequestEntity(data, "application/x-java-serialized-object"))
+      assertEquals(HttpServletResponse.SC_OK, Client.call(reput).getStatusCode)
    }
 
    private def waitNotFound(startTime: Long, lifespan: Int, fullPathKey: String) {
