@@ -160,15 +160,13 @@ public class InfinispanExtension implements Extension {
    }
 
    void saveCacheConfigurations(@Observes ProcessProducer<?, Configuration> event, BeanManager beanManager) {
-      ConfigureCache annotation = event.getAnnotatedMember().getAnnotation(ConfigureCache.class);
-      if (annotation != null) {
-         String name = annotation.value();
-         AnnotatedMember<?> annotatedMember = event.getAnnotatedMember();
+      final ConfigureCache annotation = event.getAnnotatedMember().getAnnotation(ConfigureCache.class);
 
+      if (annotation != null) {
          configurations.add(new ConfigurationHolder(
                event.getProducer(),
-               name,
-               getQualifiers(beanManager, annotatedMember.getAnnotations())
+               annotation.value(),
+               getQualifiers(beanManager, event.getAnnotatedMember().getAnnotations())
          ));
       }
    }
@@ -176,10 +174,9 @@ public class InfinispanExtension implements Extension {
    @SuppressWarnings("unchecked")
    void registerRemoteCacheBeans(@Observes AfterBeanDiscovery event, BeanManager beanManager) {
       for (Map.Entry<Type, Set<Annotation>> entry : remoteCacheInjectionPoints.entrySet()) {
-         final AnnotatedType<?> annotatedType = beanManager.createAnnotatedType(getRawType(entry.getKey()));
 
          event.addBean(new BeanBuilder(beanManager)
-                             .readFromType(annotatedType)
+                             .readFromType(beanManager.createAnnotatedType(getRawType(entry.getKey())))
                              .addType(entry.getKey())
                              .addQualifiers(entry.getValue())
                              .beanLifecycle(new ContextualLifecycle<RemoteCache>() {

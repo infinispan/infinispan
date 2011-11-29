@@ -52,8 +52,8 @@ public class RemoteCacheProducer {
    public <K, V> RemoteCache<K, V> getRemoteCache(InjectionPoint injectionPoint) {
       final Set<Annotation> qualifiers = injectionPoint.getQualifiers();
       final RemoteCacheManager cacheManager = getRemoteCacheManager(qualifiers.toArray(new Annotation[0]));
-
       final Remote remote = getRemoteAnnotation(injectionPoint.getQualifiers());
+
       if (remote != null && !remote.value().isEmpty()) {
          return cacheManager.getCache(remote.value());
       }
@@ -72,6 +72,7 @@ public class RemoteCacheProducer {
    private Remote getRemoteAnnotation(Set<Annotation> annotations) {
       for (Annotation annotation : annotations) {
          final Class<?> type = annotation.annotationType();
+
          if (type.equals(Remote.class)) {
             return (Remote) annotation;
          } else if (type.isAnnotationPresent(Remote.class)) {
