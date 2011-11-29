@@ -46,6 +46,7 @@ import java.util.Set;
  */
 public class ByteArrayKey implements Serializable {
 
+   private static final long serialVersionUID = 7305972805432411725L;
    private final byte[] data;
 
    public ByteArrayKey(byte[] data) {
