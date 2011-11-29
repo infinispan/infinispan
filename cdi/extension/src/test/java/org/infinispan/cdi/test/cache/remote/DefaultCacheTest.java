@@ -26,10 +26,8 @@ import org.infinispan.BasicCache;
 import org.infinispan.cdi.Remote;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -43,6 +41,8 @@ import javax.inject.Inject;
 import java.util.Properties;
 
 import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
+import static org.infinispan.client.hotrod.TestHelper.startHotRodServer;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createLocalCacheManager;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -74,8 +74,8 @@ public class DefaultCacheTest extends Arquillian {
 
    @BeforeTest
    public void beforeMethod() {
-      embeddedCacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
-      hotRodServer = TestHelper.startHotRodServer(embeddedCacheManager);
+      embeddedCacheManager = createLocalCacheManager(false);
+      hotRodServer = startHotRodServer(embeddedCacheManager);
    }
 
    @AfterTest(alwaysRun = true)
@@ -94,6 +94,9 @@ public class DefaultCacheTest extends Arquillian {
       assertEquals(remoteCache.get("manik"), "Sri Lankan");
    }
 
+   /**
+    * Overrides the default remote cache manager.
+    */
    @Produces
    @ApplicationScoped
    public static RemoteCacheManager defaultRemoteCacheManager() {

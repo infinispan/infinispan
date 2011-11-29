@@ -23,13 +23,10 @@
 package org.infinispan.cdi.test.cache.remote;
 
 import org.infinispan.BasicCache;
-import org.infinispan.cdi.Remote;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -40,22 +37,15 @@ import org.testng.annotations.Test;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
-import javax.inject.Qualifier;
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
 import java.util.Properties;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
+import static org.infinispan.client.hotrod.TestHelper.startHotRodServer;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createLocalCacheManager;
 import static org.testng.Assert.assertEquals;
 
 /**
- * Tests that the default remote cache manager can be overridden.
+ * Tests that the use of a specific cache manager for one cache.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
@@ -67,7 +57,8 @@ public class SpecificCacheManagerTest extends Arquillian {
    @Deployment
    public static Archive<?> deployment() {
       return baseDeployment()
-            .addClass(SpecificCacheManagerTest.class);
+            .addClass(SpecificCacheManagerTest.class)
+            .addClass(Small.class);
    }
 
    private static HotRodServer hotRodServer;
@@ -75,17 +66,17 @@ public class SpecificCacheManagerTest extends Arquillian {
 
    @Inject
    @Small
-   public BasicCache<String, String> cache;
+   private BasicCache<String, String> cache;
 
    @Inject
    @Small
-   public RemoteCache<String, String> remoteCache;
+   private RemoteCache<String, String> remoteCache;
 
    @BeforeTest
    public void beforeMethod() {
-      embeddedCacheManager = TestCacheManagerFactory.createLocalCacheManager(false);
+      embeddedCacheManager = createLocalCacheManager(false);
       embeddedCacheManager.defineConfiguration("small", embeddedCacheManager.getDefaultConfiguration());
-      hotRodServer = TestHelper.startHotRodServer(embeddedCacheManager);
+      hotRodServer = startHotRodServer(embeddedCacheManager);
    }
 
    @AfterTest(alwaysRun = true)
@@ -107,6 +98,11 @@ public class SpecificCacheManagerTest extends Arquillian {
       assertEquals(remoteCache.get("manik"), "Sri Lankan");
    }
 
+   /**
+    * Produces a specific cache manager for the small cache.
+    *
+    * @see Small
+    */
    @Small
    @Produces
    @ApplicationScoped
@@ -115,13 +111,5 @@ public class SpecificCacheManagerTest extends Arquillian {
       properties.put(SERVER_LIST_KEY, "127.0.0.1:" + hotRodServer.getPort());
 
       return new RemoteCacheManager(properties);
-   }
-
-   @Remote("small")
-   @Qualifier
-   @Target({TYPE, METHOD, PARAMETER, FIELD})
-   @Retention(RUNTIME)
-   @Documented
-   public static @interface Small {
    }
 }
