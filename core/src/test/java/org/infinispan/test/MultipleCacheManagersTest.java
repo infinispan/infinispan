@@ -28,6 +28,8 @@ import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.RndKeyGenerator;
 import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -39,6 +41,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
+import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
@@ -182,6 +185,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return addClusterEnabledCacheManager(defaultConfig, new TransportFlags());
    }
 
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder defaultConfig) {
+      return addClusterEnabledCacheManager(defaultConfig, new TransportFlags());
+   }
+
    /**
     * Creates a new optionally transactional cache manager, starts it, and adds it to the list of known cache managers on
     * the current thread.  Uses a default clustered cache manager global config.
@@ -191,6 +198,12 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig, TransportFlags flags) {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(defaultConfig, flags);
+      cacheManagers.add(cm);
+      return cm;
+   }
+
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder builder, TransportFlags flags) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(builder, flags);
       cacheManagers.add(cm);
       return cm;
    }
@@ -213,6 +226,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected void createCluster(Configuration.CacheMode mode, boolean transactional, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(mode, transactional);
+   }
+
+   protected void createCluster(ConfigurationBuilder builder, int count) {
+      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(builder);
    }
 
    protected void createCluster(Configuration config, int count) {
@@ -317,7 +334,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return cacheManagers.get(i);
    }
 
-   protected Cache cache(int managerIndex, String cacheName) {
+   protected <K, V> Cache<K, V> cache(int managerIndex, String cacheName) {
       return manager(managerIndex).getCache(cacheName);
    }
 
@@ -500,5 +517,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    private Cache getCache(int index, String name) {
       return name == null ? cache(index) : cache(index, name);
+   }
+
+   protected void forceTwoPhase(int cacheIndex, String cacheName) throws SystemException, RollbackException {
+      TransactionManager tm = tm(cacheIndex, cacheName);
+      Transaction tx = tm.getTransaction();
+      tx.enlistResource(new XAResourceAdapter());
    }
 }

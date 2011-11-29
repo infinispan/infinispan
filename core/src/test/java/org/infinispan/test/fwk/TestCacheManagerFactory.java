@@ -26,11 +26,15 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.FluentConfiguration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.InfinispanConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.Marshaller;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.LegacyKeySupportSystemProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -73,6 +77,14 @@ public class TestCacheManagerFactory {
       }
       return newDefaultCacheManager(start, gc, c);
    }
+
+   private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc, ConfigurationBuilder c, boolean keepJmxDomain) {
+      if (!keepJmxDomain) {
+         gc.globalJmxStatistics().jmxDomain("infinispan" + jmxDomainPostfix.incrementAndGet());
+      }
+      return newDefaultCacheManager(start, gc, c);
+   }
+
 
    public static EmbeddedCacheManager fromXml(String xmlFile, boolean allowDupeDomains) throws IOException {
       InfinispanConfiguration parser = InfinispanConfiguration.newInfinispanConfiguration(
@@ -135,14 +147,26 @@ public class TestCacheManagerFactory {
       c.fluent().transaction().transactionMode(transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL);
    }
 
+   private static void markAsTransactional(boolean transactional, ConfigurationBuilder builder) {
+      builder.transaction().transactionMode(transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL);
+   }
+
    private static void updateTransactionSupport(Configuration c) {
       if (c.isTransactionalCache()) amendJTA(c);
+   }
+
+   private static void updateTransactionSupport(boolean transactional, ConfigurationBuilder builder) {
+      if (transactional) amendJTA(builder);
    }
 
    private static void amendJTA(Configuration c) {
       if (c.isTransactionalCache() && c.getTransactionManagerLookupClass() == null && c.getTransactionManagerLookup() == null) {
          c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
       }
+   }
+
+   private static void amendJTA(ConfigurationBuilder builder) {
+      builder.transaction().transactionManagerLookup((TransactionManagerLookup) Util.getInstance(TransactionSetup.getManagerLookup(), TestCacheManagerFactory.class.getClassLoader()));
    }
 
    /**
@@ -168,6 +192,15 @@ public class TestCacheManagerFactory {
       amendTransport(globalConfiguration, flags);
       amendJTA(defaultCacheConfig);
       return newDefaultCacheManager(true, globalConfiguration, defaultCacheConfig, false);
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManager(ConfigurationBuilder defaultCacheConfig, TransportFlags flags) {
+      GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      amendMarshaller(gcb);
+      minimizeThreads(gcb);
+      amendTransport(gcb, flags);
+      amendJTA(defaultCacheConfig);
+      return newDefaultCacheManager(true, gcb, defaultCacheConfig, false);
    }
 
    /**
@@ -288,6 +321,14 @@ public class TestCacheManagerFactory {
       return c;
    }
 
+   public static ConfigurationBuilder getDefaultCacheConfiguration(boolean transactional) {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      markAsTransactional(transactional, builder);
+      updateTransactionSupport(transactional, builder);
+      return builder;
+   }
+
+
    public static Configuration getDefaultConfiguration(boolean transactional, Configuration.CacheMode cacheMode) {
       Configuration c = new Configuration();
       markAsTransactional(transactional, c);
@@ -339,10 +380,44 @@ public class TestCacheManagerFactory {
       }
    }
 
+   private static void amendTransport(GlobalConfigurationBuilder builder, TransportFlags flags) {
+      org.infinispan.configuration.global.GlobalConfiguration gc = builder.build();
+      if (gc.transport().transport() != null) { //this is local
+         String fullTestName = perThreadCacheManagers.get().fullTestName;
+         String nextCacheName = perThreadCacheManagers.get().getNextCacheName();
+         if (fullTestName == null) {
+            // Either we're running from within the IDE or it's a
+            // @Test(timeOut=nnn) test. We rely here on some specific TestNG
+            // thread naming convention which can break, but TestNG offers no
+            // other alternative. It does not offer any callbacks within the
+            // thread that runs the test that can timeout.
+            String threadName = Thread.currentThread().getName();
+            String pattern = "TestNGInvoker-";
+            if (threadName.startsWith(pattern)) {
+               // This is a timeout test, so for the moment rely on the test
+               // method name that comes in the thread name.
+               fullTestName = threadName;
+               nextCacheName = threadName.substring(
+                     threadName.indexOf("-") + 1, threadName.indexOf('('));
+            } // else, test is being run from IDE
+         }
+
+         builder
+               .transport()
+                  .addProperty(JGroupsTransport.CONFIGURATION_STRING, getJGroupsConfig(fullTestName, flags))
+                  .nodeName(nextCacheName);
+      }
+   }
+
+
    public static void minimizeThreads(GlobalConfiguration gc) {
       Properties p = new Properties();
       p.setProperty("maxThreads", "2");
       gc.setAsyncTransportExecutorProperties(p);
+   }
+
+   public static void minimizeThreads(GlobalConfigurationBuilder builder) {
+      builder.asyncTransportExecutor().addProperty("maxThreads", "2");
    }
 
    public static void amendMarshaller(GlobalConfiguration configuration) {
@@ -350,6 +425,18 @@ public class TestCacheManagerFactory {
          try {
             Util.loadClassStrict(MARSHALLER, Thread.currentThread().getContextClassLoader());
             configuration.setMarshallerClass(MARSHALLER);
+         } catch (ClassNotFoundException e) {
+            // No-op, stick to GlobalConfiguration default.
+         }
+      }
+   }
+
+   @SuppressWarnings("unchecked")
+   public static void amendMarshaller(GlobalConfigurationBuilder builder) {
+      if (MARSHALLER != null) {
+         try {
+            Class<? extends Marshaller> mClass = Util.loadClassStrict(MARSHALLER, Thread.currentThread().getContextClassLoader());
+            builder.serialization().marshallerClass(mClass);
          } catch (ClassNotFoundException e) {
             // No-op, stick to GlobalConfiguration default.
          }
@@ -364,6 +451,16 @@ public class TestCacheManagerFactory {
       threadCacheManagers.add(methodName, defaultCacheManager);
       return defaultCacheManager;
    }
+
+   private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc, ConfigurationBuilder c) {
+      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc.build(), c.build(), start);
+      PerThreadCacheManagers threadCacheManagers = perThreadCacheManagers.get();
+      String methodName = extractMethodName();
+      log.trace("Adding DCM (" + defaultCacheManager.getAddress() + ") for method: '" + methodName + "'");
+      threadCacheManagers.add(methodName, defaultCacheManager);
+      return defaultCacheManager;
+   }
+
 
    private static String extractMethodName() {
       StackTraceElement[] stack = Thread.currentThread().getStackTrace();
