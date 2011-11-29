@@ -69,7 +69,6 @@ public class DefaultCacheTest extends Arquillian {
    private BasicCache<String, String> cache;
 
    @Inject
-   @Remote
    private RemoteCache<String, String> remoteCache;
 
    @BeforeTest

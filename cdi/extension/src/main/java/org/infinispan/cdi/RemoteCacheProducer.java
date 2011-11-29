@@ -28,13 +28,16 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.spi.Annotated;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 
+import static org.jboss.solder.reflection.AnnotationInspector.getMetaAnnotation;
+
 /**
- * The remote cache producer.
+ * The {@link RemoteCache} producer.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
@@ -47,12 +50,20 @@ public class RemoteCacheProducer {
    @Inject
    private Instance<RemoteCacheManager> cacheManagers;
 
+   /**
+    * Produces the remote cache.
+    *
+    * @param injectionPoint the injection point.
+    * @param <K>            the type of the key.
+    * @param <V>            the type of the value.
+    * @return the remote cache instance.
+    */
    @Remote
    @Produces
    public <K, V> RemoteCache<K, V> getRemoteCache(InjectionPoint injectionPoint) {
       final Set<Annotation> qualifiers = injectionPoint.getQualifiers();
       final RemoteCacheManager cacheManager = getRemoteCacheManager(qualifiers.toArray(new Annotation[0]));
-      final Remote remote = getRemoteAnnotation(injectionPoint.getQualifiers());
+      final Remote remote = getRemoteAnnotation(injectionPoint.getAnnotated());
 
       if (remote != null && !remote.value().isEmpty()) {
          return cacheManager.getCache(remote.value());
@@ -60,6 +71,13 @@ public class RemoteCacheProducer {
       return cacheManager.getCache();
    }
 
+   /**
+    * Retrieves the {@link RemoteCacheManager} bean with the following qualifiers.
+    *
+    * @param qualifiers the qualifiers.
+    * @return the {@link RemoteCacheManager} qualified or the default one if no bean with the given qualifiers has been
+    *         found.
+    */
    private RemoteCacheManager getRemoteCacheManager(Annotation[] qualifiers) {
       final Instance<RemoteCacheManager> specificCacheManager = cacheManagers.select(qualifiers);
 
@@ -69,16 +87,18 @@ public class RemoteCacheProducer {
       return specificCacheManager.get();
    }
 
-   private Remote getRemoteAnnotation(Set<Annotation> annotations) {
-      for (Annotation annotation : annotations) {
-         final Class<?> type = annotation.annotationType();
+   /**
+    * Retrieves the {@link Remote} annotation instance on the given annotated element.
+    *
+    * @param annotated the annotated element.
+    * @return the {@link Remote} annotation instance or {@code null} if not found.
+    */
+   private Remote getRemoteAnnotation(Annotated annotated) {
+      Remote remote = annotated.getAnnotation(Remote.class);
 
-         if (type.equals(Remote.class)) {
-            return (Remote) annotation;
-         } else if (type.isAnnotationPresent(Remote.class)) {
-            return type.getAnnotation(Remote.class);
-         }
+      if (remote == null) {
+         remote = getMetaAnnotation(annotated, Remote.class);
       }
-      return null;
+      return remote;
    }
 }

@@ -53,8 +53,6 @@ import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.spi.AfterBeanDiscovery;
 import javax.enterprise.inject.spi.AfterDeploymentValidation;
 import javax.enterprise.inject.spi.Annotated;
-import javax.enterprise.inject.spi.AnnotatedMember;
-import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.BeforeBeanDiscovery;
@@ -74,7 +72,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.jboss.solder.bean.Beans.getQualifiers;
-import static org.jboss.solder.reflection.Reflections.getAnnotationsWithMetaAnnotation;
+import static org.jboss.solder.reflection.AnnotationInspector.getMetaAnnotation;
 import static org.jboss.solder.reflection.Reflections.getRawType;
 
 /**
@@ -142,20 +140,30 @@ public class InfinispanExtension implements Extension {
 
       for (InjectionPoint injectionPoint : injectionTarget.getInjectionPoints()) {
          final Annotated annotated = injectionPoint.getAnnotated();
+         final Type type = annotated.getBaseType();
          final Class<?> rawType = getRawType(annotated.getBaseType());
          final Set<Annotation> qualifiers = getQualifiers(beanManager, annotated.getAnnotations());
 
-         if (!annotated.isAnnotationPresent(Remote.class)
-               && !getAnnotationsWithMetaAnnotation(qualifiers, Remote.class).isEmpty()
+         if (rawType.equals(RemoteCache.class) && qualifiers.isEmpty()) {
+            qualifiers.add(new AnnotationLiteral<Default>() {});
+            addRemoteCacheInjectionPoint(type, qualifiers);
+
+         } else if (!annotated.isAnnotationPresent(Remote.class)
+               && getMetaAnnotation(annotated, Remote.class) != null
                && rawType.isAssignableFrom(RemoteCache.class)) {
 
-            Set<Annotation> current = remoteCacheInjectionPoints.get(annotated.getBaseType());
-            if (current == null) {
-               remoteCacheInjectionPoints.put(annotated.getBaseType(), qualifiers);
-            } else {
-               current.addAll(qualifiers);
-            }
+            addRemoteCacheInjectionPoint(type, qualifiers);
          }
+      }
+   }
+
+   private void addRemoteCacheInjectionPoint(Type type, Set<Annotation> qualifiers) {
+      final Set<Annotation> currentQualifiers = remoteCacheInjectionPoints.get(type);
+
+      if (currentQualifiers == null) {
+         remoteCacheInjectionPoints.put(type, qualifiers);
+      } else {
+         currentQualifiers.addAll(qualifiers);
       }
    }
 
