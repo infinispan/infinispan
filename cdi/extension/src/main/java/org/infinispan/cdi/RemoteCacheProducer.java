@@ -25,10 +25,13 @@ package org.infinispan.cdi;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;
+import java.util.Set;
 
 /**
  * The remote cache producer.
@@ -40,18 +43,41 @@ public class RemoteCacheProducer {
    @Inject
    private RemoteCacheManager defaultRemoteCacheManager;
 
+   @Any
+   @Inject
+   private Instance<RemoteCacheManager> cacheManagers;
+
    @Remote
    @Produces
    public <K, V> RemoteCache<K, V> getRemoteCache(InjectionPoint injectionPoint) {
-      for (Annotation qualifier : injectionPoint.getQualifiers()) {
-         if (qualifier.annotationType().equals(Remote.class)) {
-            Remote remote = (Remote) qualifier;
-            if (!remote.value().isEmpty()) {
-               return defaultRemoteCacheManager.getCache(remote.value());
-            }
+      final Set<Annotation> qualifiers = injectionPoint.getQualifiers();
+      final RemoteCacheManager cacheManager = getRemoteCacheManager(qualifiers.toArray(new Annotation[0]));
+
+      final Remote remote = getRemoteAnnotation(injectionPoint.getQualifiers());
+      if (remote != null && !remote.value().isEmpty()) {
+         return cacheManager.getCache(remote.value());
+      }
+      return cacheManager.getCache();
+   }
+
+   private RemoteCacheManager getRemoteCacheManager(Annotation[] qualifiers) {
+      final Instance<RemoteCacheManager> specificCacheManager = cacheManagers.select(qualifiers);
+
+      if (specificCacheManager.isUnsatisfied()) {
+         return defaultRemoteCacheManager;
+      }
+      return specificCacheManager.get();
+   }
+
+   private Remote getRemoteAnnotation(Set<Annotation> annotations) {
+      for (Annotation annotation : annotations) {
+         final Class<?> type = annotation.annotationType();
+         if (type.equals(Remote.class)) {
+            return (Remote) annotation;
+         } else if (type.isAnnotationPresent(Remote.class)) {
+            return type.getAnnotation(Remote.class);
          }
       }
-
-      return defaultRemoteCacheManager.getCache();
+      return null;
    }
 }
