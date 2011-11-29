@@ -29,33 +29,33 @@ public class DefaultTwoWayKey2StringMapperTest {
 
    DefaultTwoWayKey2StringMapper mapper = new DefaultTwoWayKey2StringMapper();
 
-	public void testKeyMapper() {
-		String skey = mapper.getStringMapping("k1");
-		assert skey.equals("k1");
-		
-		skey = mapper.getStringMapping(Integer.valueOf(100));
-		
-		assert !skey.equals("100");
-		
-		Integer i = (Integer) mapper.getKeyMapping(skey);
-		assert i == 100;
-		
-		skey = mapper.getStringMapping(Boolean.TRUE);
-		
-		assert !skey.equalsIgnoreCase("true");
-		
-		Boolean b = (Boolean) mapper.getKeyMapping(skey);
-		
-		assert b;
-		
-		skey = mapper.getStringMapping(Double.valueOf(3.141592d));
-		
-		assert !skey.equals("3.141592");
-		
-		Double d = (Double) mapper.getKeyMapping(skey);
-		
-		assert d == 3.141592d;
-	}
+   public void testKeyMapper() {
+      String skey = mapper.getStringMapping("k1");
+      assert skey.equals("k1");
+
+      skey = mapper.getStringMapping(Integer.valueOf(100));
+
+      assert !skey.equals("100");
+
+      Integer i = (Integer) mapper.getKeyMapping(skey);
+      assert i == 100;
+
+      skey = mapper.getStringMapping(Boolean.TRUE);
+
+      assert !skey.equalsIgnoreCase("true");
+
+      Boolean b = (Boolean) mapper.getKeyMapping(skey);
+
+      assert b;
+
+      skey = mapper.getStringMapping(Double.valueOf(3.141592d));
+
+      assert !skey.equals("3.141592");
+
+      Double d = (Double) mapper.getKeyMapping(skey);
+
+      assert d == 3.141592d;
+   }
 
    public void testPrimitivesAreSupported() {
       assert mapper.isSupportedType(Integer.class);
@@ -69,7 +69,7 @@ public class DefaultTwoWayKey2StringMapperTest {
    }
 
    public void testTwoWayContract() {
-      Object[] toTest = {0, new Byte("1"), new Short("2"), (long) 3, new Double("3.4"), new Float("3.5"), Boolean.FALSE, "some string"};
+      Object[] toTest = { 0, new Byte("1"), new Short("2"), (long) 3, new Double("3.4"), new Float("3.5"), Boolean.FALSE, "some string" };
       for (Object o : toTest) {
          Class<?> type = o.getClass();
          String rep = mapper.getStringMapping(o);
@@ -77,15 +77,15 @@ public class DefaultTwoWayKey2StringMapperTest {
       }
    }
 
-      public void testAssumption() {
-      //even if they have the same value, they have a different type
-      assert ! new Float(3.0f).equals(new Integer(3));
+   public void testAssumption() {
+      // even if they have the same value, they have a different type
+      assert !new Float(3.0f).equals(new Integer(3));
    }
 
    public void testString() {
       assert mapper.isSupportedType(String.class);
       assert assertWorks("") : "Expected empty string, was " + mapper.getStringMapping("");
-      assert assertWorks("mircea"): "Expected 'mircea', was " + mapper.getStringMapping("mircea");
+      assert assertWorks("mircea") : "Expected 'mircea', was " + mapper.getStringMapping("mircea");
    }
 
    public void testShort() {
