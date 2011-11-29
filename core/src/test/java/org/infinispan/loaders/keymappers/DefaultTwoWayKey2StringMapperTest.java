@@ -22,6 +22,7 @@
  */
 package org.infinispan.loaders.keymappers;
 
+import org.infinispan.util.ByteArrayKey;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "loaders.keymappers.DefaultTwoWayKey2StringMapperTest")
@@ -55,6 +56,12 @@ public class DefaultTwoWayKey2StringMapperTest {
       Double d = (Double) mapper.getKeyMapping(skey);
 
       assert d == 3.141592d;
+
+      byte[] bytes = new byte[] { 0, 1, 2, 40, -128, -127, 127, 126, 0 };
+
+      skey = mapper.getStringMapping(new ByteArrayKey(bytes));
+
+      assert !skey.equals("\000\001\002\050\0377\0376\0177\0176\000");
    }
 
    public void testPrimitivesAreSupported() {
@@ -66,10 +73,11 @@ public class DefaultTwoWayKey2StringMapperTest {
       assert mapper.isSupportedType(Float.class);
       assert mapper.isSupportedType(Boolean.class);
       assert mapper.isSupportedType(String.class);
+      assert mapper.isSupportedType(ByteArrayKey.class);
    }
 
    public void testTwoWayContract() {
-      Object[] toTest = { 0, new Byte("1"), new Short("2"), (long) 3, new Double("3.4"), new Float("3.5"), Boolean.FALSE, "some string" };
+      Object[] toTest = { 0, new Byte("1"), new Short("2"), (long) 3, new Double("3.4"), new Float("3.5"), Boolean.FALSE, "some string", new ByteArrayKey("\000\001\002\050\0377\0376\0177\0176\000".getBytes()) };
       for (Object o : toTest) {
          Class<?> type = o.getClass();
          String rep = mapper.getStringMapping(o);
@@ -124,6 +132,11 @@ public class DefaultTwoWayKey2StringMapperTest {
       assert mapper.isSupportedType(Boolean.class);
       assert assertWorks(true);
       assert assertWorks(false);
+   }
+
+   public void testByteArrayKey() {
+      assert mapper.isSupportedType(ByteArrayKey.class);
+      assert assertWorks(new ByteArrayKey("\000\001\002\050\0377\0376\0177\0176\000".getBytes()));
    }
 
    private boolean assertWorks(Object key) {
