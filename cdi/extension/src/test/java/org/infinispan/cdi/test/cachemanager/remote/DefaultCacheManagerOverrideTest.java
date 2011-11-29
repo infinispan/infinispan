@@ -64,7 +64,7 @@ public class DefaultCacheManagerOverrideTest extends Arquillian {
 
    /**
     * The default remote cache manager producer. This producer will override the default remote cache manager producer
-    * provided by the CDi extension.
+    * provided by the CDI extension.
     */
    @Produces
    @ApplicationScoped
