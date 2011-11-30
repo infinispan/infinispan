@@ -143,4 +143,8 @@ public class CacheViewInfo {
          committedView = new CacheView(newViewId, committedView.getMembers());
       }
    }
+
+   boolean hasPendingView() {
+      return getPendingView() != null || getPendingChanges().isViewInstallationInProgress();
+   }
 }

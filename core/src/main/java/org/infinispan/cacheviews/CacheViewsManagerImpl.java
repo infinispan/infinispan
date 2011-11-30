@@ -47,7 +47,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -174,8 +173,13 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       cacheViewInstallerExecutor.shutdown();
       try {
          viewTriggerThread.join(timeout);
+         if (viewTriggerThread.isAlive()) {
+            log.debugf("The cache view trigger thread did not stop in %d millis", timeout);
+         }
          cacheViewInstallerExecutor.awaitTermination(timeout, TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
+         // reset interruption flag
+         Thread.currentThread().interrupt();
       }
    }
 
@@ -238,6 +242,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
     * It follows the protocol in the class description.
     */
    boolean clusterInstallView(String cacheName, CacheView newView) throws Exception {
+      CacheViewInfo cacheViewInfo = viewsInfo.get(cacheName);
       boolean success = false;
       try {
          log.debugf("Installing new view %s for cache %s", newView, cacheName);
@@ -246,8 +251,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
       } catch (Throwable t) {
-         CacheView committedView = viewsInfo.get(cacheName).getCommittedView();
-         log.errorf(t, "Failed to prepare view %s for cache  %s, rolling back to view %s", newView, cacheName, committedView);
+         log.cacheViewPrepareFailure(t, newView, cacheName, cacheViewInfo.getCommittedView());
       } finally {
          // Cache manager is shutting down, don't try to commit or roll back
          if (!isRunning())
@@ -257,9 +261,9 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
             clusterCommitView(cacheName, newView.getViewId(), newView.getMembers(), true);
             log.debugf("Successfully installed view %s for cache %s", newView, cacheName);
          } else {
-            CacheView committedView = viewsInfo.get(cacheName).getCommittedView();
-            clusterRollbackView(cacheName, committedView.getViewId(), newView.getMembers(), true);
-            log.debugf("Rolled back to view %s for cache %s", committedView, cacheName);
+            CacheView previousCommittedView = cacheViewInfo.getCommittedView();
+            clusterRollbackView(cacheName, previousCommittedView.getViewId(), newView.getMembers(), true);
+            log.debugf("Rolled back to view %s for cache %s", previousCommittedView, cacheName);
          }
       }
       return success;
@@ -330,7 +334,11 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
       // in the end we roll back locally, so any pending changes can trigger a new view installation
       if (includeCoordinator || validTargets.contains(self)) {
-         handleRollbackView(cacheName, newViewId, committedViewId);
+         try {
+            handleRollbackView(cacheName, newViewId, committedViewId);
+         } catch (Throwable t) {
+            log.cacheViewRollbackFailure(t, committedViewId, cacheName);
+         }
       }
    }
 
@@ -352,13 +360,17 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          Map<Address, Response> rspList = transport.invokeRemotely(validTargets, cmd,
                ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, false, null, false);
          checkRemoteResponse(cacheName, cmd, rspList);
-      } catch (Exception e) {
-         log.cacheViewCommitFailure(e, viewId, cacheName);
+      } catch (Throwable t) {
+         log.cacheViewCommitFailure(t, viewId, cacheName);
       }
 
       // in the end we commit locally, so any pending changes can trigger a new view installation
       if (includeCoordinator || validTargets.contains(self)) {
-         handleCommitView(cacheName, viewId);
+         try {
+            handleCommitView(cacheName, viewId);
+         } catch (Throwable t) {
+            log.cacheViewCommitFailure(t, viewId, cacheName);
+         }
       }
    }
 
@@ -465,12 +477,14 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          return;
       }
 
-      boolean isLocal = cacheViewInfo.getPendingView() != null && cacheViewInfo.getPendingView().contains(self);
-      if (isLocal || isCoordinator) {
+      if (cacheViewInfo.hasPendingView()) {
          log.debugf("%s: Committing cache view %d", cacheName, viewId);
          cacheViewInfo.commitView(viewId);
-         cacheViewInfo.getPendingChanges().resetChanges(cacheViewInfo.getCommittedView());
+         CacheView committedView = cacheViewInfo.getCommittedView();
+         cacheViewInfo.getPendingChanges().resetChanges(committedView);
          CacheViewListener cacheViewListener = cacheViewInfo.getListener();
+         // we only prepared the view if it was local, so we can't commit it here
+         boolean isLocal = committedView.contains(self);
          if (isLocal && cacheViewListener != null) {
             cacheViewListener.updateLeavers(cacheViewInfo.getPendingChanges().getLeavers());
             cacheViewListener.commitView(viewId);
@@ -488,13 +502,12 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          return;
       }
 
-      boolean isLocal = cacheViewInfo.getCommittedView().contains(self);
-      if (isLocal || isCoordinator) {
+      if (cacheViewInfo.hasPendingView()) {
          log.debugf("%s: Rolling back to cache view %d, new view id is %d", cacheName, committedViewId, newViewId);
          cacheViewInfo.rollbackView(newViewId, committedViewId);
          cacheViewInfo.getPendingChanges().resetChanges(cacheViewInfo.getCommittedView());
          CacheViewListener cacheViewListener = cacheViewInfo.getListener();
-         if (isLocal && cacheViewListener != null) {
+         if (cacheViewListener != null) {
             cacheViewListener.rollbackView(committedViewId);
          }
       } else {
@@ -655,7 +668,7 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
 
             // iterate on the nodes, taking all the nodes in a view as a partition
             int partitionCount = 0;
-            List<Address> membersToProcess = new LinkedList<Address>(recoveredMembers);
+            List<Address> membersToProcess = new ArrayList<Address>(recoveredMembers);
             List<CacheView> partitions = new ArrayList(2);
             while (!membersToProcess.isEmpty()) {
                Address node = membersToProcess.get(0);
