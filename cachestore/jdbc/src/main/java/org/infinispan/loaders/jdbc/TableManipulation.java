@@ -424,6 +424,8 @@ public class TableManipulation implements Cloneable {
                loadSomeRowsSql = String.format("SELECT FIRST ? %s, %s FROM %s", dataColumnName, idColumnName, getTableName());
                break;
             case SQL_SERVER:
+               loadSomeRowsSql = String.format("SELECT TOP (?) %s, %s FROM %s", dataColumnName, idColumnName, getTableName());
+               break;
             case ACCESS:
             case HSQL:
                loadSomeRowsSql = String.format("SELECT TOP ? %s, %s FROM %s", dataColumnName, idColumnName, getTableName());
