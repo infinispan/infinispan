@@ -80,6 +80,8 @@ public class PendingCacheViewChanges {
          }
 
          Collection<Address> baseMembers = recoveredMembers != null ? recoveredMembers : committedView.getMembers();
+         log.tracef("Previous members are %s, joiners are %s, leavers are %s, recovered after merge = %s",
+               baseMembers, joiners, leavers, recoveredMembers != null);
          List<Address> members = new ArrayList<Address>(baseMembers);
          // If a node is both in leavers and in joiners we should install a view without it first
          // so that other nodes don't consider it an old owner, so we first add it as a joiner
@@ -152,10 +154,11 @@ public class PendingCacheViewChanges {
    public Set<Address> requestLeave(Collection<Address> leavers) {
       synchronized (lock) {
          log.tracef("%s: Nodes %s are leaving", cacheName, leavers);
+
          // if the node wanted to join earlier, just remove it from the list of joiners
          Set<Address> leavers2 = new HashSet<Address>(leavers);
-         // removeAll will also remove any joiners from leavers2
          joiners.removeAll(leavers2);
+         leavers2.removeAll(joiners);
          log.tracef("%s: After pruning nodes that have joined but have never installed a view, leavers are %s", cacheName, leavers2);
 
          this.leavers.addAll(leavers2);
@@ -172,9 +175,10 @@ public class PendingCacheViewChanges {
          recoveredMembers = new HashSet<Address>(newMembers);
          // Apply any changes that we may have received before we realized we're the coordinator
          recoveredMembers.removeAll(leavers);
-         recoveredJoiners.removeAll(recoveredMembers);
          joiners.addAll(recoveredJoiners);
-         log.tracef("%s: Members after coordinator change: %s, joiners: %s, leavers: %s", cacheName, recoveredMembers, recoveredJoiners, leavers);
+         joiners.removeAll(recoveredMembers);
+         log.tracef("%s: Members after coordinator change: %s, joiners: %s, leavers: %s",
+               cacheName, recoveredMembers, joiners, leavers);
       }
    }
 
