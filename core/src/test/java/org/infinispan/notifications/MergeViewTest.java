@@ -25,15 +25,12 @@ package org.infinispan.notifications;
 import org.infinispan.config.Configuration;
 import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
-import org.infinispan.remoting.rpc.RpcManagerImpl;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.protocols.DISCARD;
-import org.jgroups.stack.ProtocolStack;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -58,7 +55,8 @@ public class MergeViewTest extends MultipleCacheManagersTest {
       ml0 = new MergeListener();
       manager(0).addListener(ml0);
 
-      discard();
+      discard = TestingUtil.getDiscardForCache(cache(0));
+      discard.setDiscardAll(true);
 
       addClusterEnabledCacheManager(Configuration.CacheMode.REPL_SYNC, true,
                                     new TransportFlags().withMerge(true));
@@ -67,36 +65,23 @@ public class MergeViewTest extends MultipleCacheManagersTest {
 
       cache(0).put("k", "v0");
       cache(1).put("k", "v1");
-      Thread.sleep(10000);
+      Thread.sleep(2000);
 
 
       assert advancedCache(0).getRpcManager().getTransport().getMembers().size() == 1;
       assert advancedCache(1).getRpcManager().getTransport().getMembers().size() == 1;
    }
 
-   private void discard() throws Exception {
-      RpcManagerImpl rpcManager = (RpcManagerImpl) advancedCache(0).getRpcManager();
-      JGroupsTransport transport = (JGroupsTransport) rpcManager.getTransport();
-      ProtocolStack protocolStack = transport.getChannel().getProtocolStack();
-
-      discard = new DISCARD();
-      discard.setDiscardAll(true);
-      protocolStack.insertProtocol(discard, ProtocolStack.ABOVE, protocolStack.getTransport().getClass());
-   }
-
    public void testMergeViewHappens() {
       discard.setDiscardAll(false);
       TestingUtil.blockUntilViewsReceived(60000, cache(0), cache(1));
+      TestingUtil.waitForRehashToComplete(cache(0), cache(1));
 
-      cache(0).put("k", "v0");
-      assertEquals(cache(0).get("k"), "v0");
-      assertEquals(cache(1).get("k"), "v0");
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return ml0.isMerged && ml1.isMerged;
-         }
-      });
+      assert ml0.isMerged && ml1.isMerged;
+
+      cache(0).put("k", "v2");
+      assertEquals(cache(0).get("k"), "v2");
+      assertEquals(cache(1).get("k"), "v2");
    }
 
    @Listener
