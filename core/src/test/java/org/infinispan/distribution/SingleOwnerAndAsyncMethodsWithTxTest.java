@@ -84,6 +84,7 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
    }
 
    public void testAsyncGetToL1AndConcurrentModification(final Method m) throws Throwable {
+      // The storage to L1 should fail "silently" and not affect other transactions.
       modifyConcurrently(m, getNonOwner(k(m)), false);
    }
 
@@ -132,7 +133,7 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
                // and put() should timeout
                cache.put(k, v(m, 1));
                getAsynclatch.countDown();
-               assert false : "Put operation should have timed out";
+               assert !withFlag : "Put operation should have timed out if the get operation acquires a write lock";
             } catch (TimeoutException e) {
                tm.setRollbackOnly();
                getAsynclatch.countDown();
@@ -153,7 +154,7 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
       f1.get();
       try {
          f2.get();
-         assert false : "Should throw a TimeoutException";
+         assert !withFlag : "Should throw a TimeoutException if the get operation acquired a lock";
       } catch (ExecutionException e) {
          Throwable cause = e.getCause();
          if (cause instanceof AssertionError)
