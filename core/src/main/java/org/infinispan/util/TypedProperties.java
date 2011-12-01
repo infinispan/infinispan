@@ -55,7 +55,7 @@ public class TypedProperties extends Properties {
     * @param p properties instance to from.  If null, then it is treated as an empty Properties instance.
     */
    public TypedProperties(Properties p) {
-      if (p != null && !p.isEmpty()) putAll(p);
+      if (p != null && !p.isEmpty()) super.putAll(p);
    }
 
    /**
