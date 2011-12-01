@@ -66,6 +66,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -313,22 +314,30 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
          Collection<Address> preparedOn = ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired();
 
-         NotifyingNotifiableFuture<Object> f = null;
-         if (isL1CacheEnabled) {
-            f = l1Manager.flushCache(ctx.getLockedKeys(), null, null);
-         }
-
+         Future<?> f = flushL1Caches(ctx);
          sendCommitCommand(ctx, command, preparedOn);
+         blockOnL1FutureIfNeeded(f);
 
-         if (f != null && configuration.isSyncCommitPhase()) {
-            try {
-               f.get();
-            } catch (Exception e) {
-               if (log.isInfoEnabled()) log.failedInvalidatingRemoteCache(e);
-            }
-         }
+      } else if (isL1CacheEnabled && !ctx.isOriginLocal() && !ctx.getLockedKeys().isEmpty()) {
+         // We fall into this block if we are a remote node, happen to be the primary data owner and have locked keys.
+         // it is still our responsibility to invalidate L1 caches in the cluster.
+         blockOnL1FutureIfNeeded(flushL1Caches(ctx));
       }
       return invokeNextInterceptor(ctx, command);
+   }
+
+   private Future<?> flushL1Caches(InvocationContext ctx) {
+      return isL1CacheEnabled ? l1Manager.flushCache(ctx.getLockedKeys(), null, ctx.getOrigin()) : null;
+   }
+
+   private void blockOnL1FutureIfNeeded(Future<?> f) {
+      if (f != null && configuration.isSyncCommitPhase()) {
+         try {
+            f.get();
+         } catch (Exception e) {
+            if (log.isInfoEnabled()) log.failedInvalidatingRemoteCache(e);
+         }
+      }
    }
 
    private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command, Collection<Address> preparedOn)
@@ -374,16 +383,17 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          int newCacheViewId = -1;
          stateTransferLock.waitForStateTransferToEnd(ctx, command, newCacheViewId);
 
-         NotifyingNotifiableFuture<Object> f = null;
-         if (isL1CacheEnabled && command.isOnePhaseCommit())
-            f = l1Manager.flushCache(ctx.getLockedKeys(), null, null);
+         if (command.isOnePhaseCommit()) flushL1Caches(ctx); // if we are one-phase, don't block on this future.
 
          Collection<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
          // this method will return immediately if we're the only member (because exclude_self=true)
          rpcManager.invokeRemotely(recipients, command, sync);
 
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients);
-         if (f != null) f.get();
+      } else if (isL1CacheEnabled && command.isOnePhaseCommit() && !ctx.isOriginLocal() && !ctx.getLockedKeys().isEmpty()) {
+         // We fall into this block if we are a remote node, happen to be the primary data owner and have locked keys.
+         // it is still our responsibility to invalidate L1 caches in the cluster.
+         flushL1Caches(ctx);
       }
       return retVal;
    }
