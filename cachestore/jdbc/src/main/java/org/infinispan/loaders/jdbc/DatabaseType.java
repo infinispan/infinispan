@@ -33,5 +33,5 @@ public enum DatabaseType {
    DB2, DB2_390,
    INFORMIX, INTERBASE, FIREBIRD,
    SQL_SERVER, ACCESS,
-   ORACLE;
+   ORACLE, SYBASE;
 }

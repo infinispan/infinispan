@@ -402,7 +402,7 @@ public class TableManipulation implements Cloneable {
 
    public boolean isVariableLimitSupported() {
       DatabaseType type = getDatabaseType();
-      return type != DatabaseType.DB2_390;
+      return !(type == DatabaseType.DB2_390 || type == DatabaseType.SYBASE);
    }
 
    public String getLoadSomeRowsSql() {
@@ -428,6 +428,7 @@ public class TableManipulation implements Cloneable {
                break;
             case ACCESS:
             case HSQL:
+            case SYBASE:
                loadSomeRowsSql = String.format("SELECT TOP ? %s, %s FROM %s", dataColumnName, idColumnName, getTableName());
                break;
             default:
@@ -465,14 +466,13 @@ public class TableManipulation implements Cloneable {
          }
          if (databaseType == null) {
             log.debug("Unable to detect database type using connection metadata.  Attempting to guess on driver name.");
+            try {
+               String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
+               databaseType = guessDatabaseType(dbProduct);
+            } catch (Exception e) {
+               log.debug("Unable to guess database type from JDBC driver name.", e);
+            }
          }
-         try {
-            String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
-            databaseType = guessDatabaseType(dbProduct);
-         } catch (Exception e) {
-            log.debug("Unable to guess database type from JDBC driver name.", e);
-         }
-
          if (databaseType == null) {
             throw new ConfigurationException("Unable to detect database type from JDBC driver name or connection metadata.  Please provide this manually using the 'databaseType' property in your configuration.  Supported database type strings are " + Arrays.toString(DatabaseType.values()));
          } else {
@@ -511,6 +511,8 @@ public class TableManipulation implements Cloneable {
             type = DatabaseType.ACCESS;
          } else if (name.toLowerCase().contains("oracle")) {
             type = DatabaseType.ORACLE;
+         } else if (name.toLowerCase().contains("adaptive")) {
+            type = DatabaseType.SYBASE;
          }
       }
       return type;
