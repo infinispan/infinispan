@@ -22,11 +22,6 @@
  */
 package org.infinispan.distribution;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.config.Configuration;
@@ -38,6 +33,11 @@ import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class L1ManagerImpl implements L1Manager {
 	
@@ -116,8 +116,10 @@ public class L1ManagerImpl implements L1Manager {
    	
    	for (Object key : keys) {
    	   Collection<Address> as = requestors.remove(key);
-   	   if (as != null)
+   	   if (as != null) {
    		   addresses.addAll(as);
+            if (origin != null && as.contains(origin)) addRequestor(key, origin);
+         }
    	}
    	if (origin != null)
    		addresses.remove(origin);
