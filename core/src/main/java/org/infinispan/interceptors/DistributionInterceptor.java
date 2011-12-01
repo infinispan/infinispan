@@ -137,8 +137,9 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          }
 
          // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
-         // available.  It could just have been removed in the same tx beforehand.
-         if (needsRemoteGet(ctx, command.getKey(), returnValue == null))
+         // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
+         // the entry is mapped to the local node.
+         if (needsRemoteGet(ctx, command.getKey(), returnValue == null) && !dm.getLocality(command.getKey()).isLocal())
             returnValue = remoteGetAndStoreInL1(ctx, command.getKey(), false);
          return returnValue;
       } catch (SuspectException e) {
@@ -209,10 +210,17 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          if (storeInL1) {
             if (isL1CacheEnabled) {
                if (trace) log.tracef("Caching remotely retrieved entry for key %s in L1", key);
-               long lifespan = ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(), configuration.getL1Lifespan());
-               PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1, ctx.getFlags());
-               lockAndWrap(ctx, key, ice);
-               invokeNextInterceptor(ctx, put);
+               // This should be fail-safe
+               try {
+                  long lifespan = ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(), configuration.getL1Lifespan());
+                  PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1, ctx.getFlags());
+                  lockAndWrap(ctx, key, ice);
+                  invokeNextInterceptor(ctx, put);
+               } catch (Exception e) {
+                  // Couldn't store in L1 for some reason.  But don't fail the transaction!
+                  log.infof("Unable to store entry %s in L1 cache", key);
+                  log.debug("Inability to store in L1 caused by", e);
+               }
             } else {
                CacheEntry ce = ctx.lookupEntry(key);
                if (ce == null || ce.isNull() || ce.isLockPlaceholder() || ce.getValue() == null) {
