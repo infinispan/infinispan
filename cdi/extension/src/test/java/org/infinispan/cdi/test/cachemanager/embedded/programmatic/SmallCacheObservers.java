@@ -20,29 +20,35 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi;
+package org.infinispan.cdi.test.cachemanager.embedded.programmatic;
 
-import javax.inject.Qualifier;
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
 
 /**
- * This annotation is used to qualify the provided default configuration or/and default cache manager.
- *
- * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
- * @see DefaultEmbeddedCacheConfigurationProducer
- * @see DefaultEmbeddedCacheManagerProducer
+ * @author Pete Muir
  */
-@Target({METHOD, FIELD, PARAMETER, TYPE})
-@Retention(RUNTIME)
-@Qualifier
-@Documented
-public @interface OverrideDefault {
+@ApplicationScoped
+public class SmallCacheObservers {
+
+   private CacheStartedEvent cacheStartedEvent;
+   private int cacheStartedEventCount;
+
+   /**
+    * Observe the cache started event for the cache associated with @Cache1
+    */
+   void observeCacheStarted(@Observes @Small CacheStartedEvent event) {
+      this.cacheStartedEventCount++;
+      this.cacheStartedEvent = event;
+   }
+
+   public CacheStartedEvent getCacheStartedEvent() {
+      return cacheStartedEvent;
+   }
+
+   public int getCacheStartedEventCount() {
+      return cacheStartedEventCount;
+   }
 }

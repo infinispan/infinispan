@@ -20,7 +20,9 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi;
+package org.infinispan.cdi.test.cache.remote;
+
+import org.infinispan.cdi.Remote;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.Documented;
@@ -34,15 +36,12 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * This annotation is used to qualify the provided default configuration or/and default cache manager.
- *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
- * @see DefaultEmbeddedCacheConfigurationProducer
- * @see DefaultEmbeddedCacheManagerProducer
  */
-@Target({METHOD, FIELD, PARAMETER, TYPE})
-@Retention(RUNTIME)
+@Remote("small")
 @Qualifier
+@Target({TYPE, METHOD, PARAMETER, FIELD})
+@Retention(RUNTIME)
 @Documented
-public @interface OverrideDefault {
+public @interface Small {
 }

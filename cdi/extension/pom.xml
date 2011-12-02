@@ -72,14 +72,19 @@
          <version>${version.cdi}</version>
       </dependency>
       <dependency>
+         <groupId>org.jboss.solder</groupId>
+         <artifactId>solder-impl</artifactId>
+         <version>${version.solder}</version>
+      </dependency>
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-core</artifactId>
          <version>${project.version}</version>
       </dependency>
       <dependency>
-         <groupId>org.jboss.solder</groupId>
-         <artifactId>solder-impl</artifactId>
-         <version>${version.solder}</version>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-client-hotrod</artifactId>
+         <version>${project.version}</version>
       </dependency>
 
       <!-- Logging dependency -->
@@ -101,6 +106,26 @@
          <artifactId>infinispan-core</artifactId>
          <version>${project.version}</version>
          <classifier>tests</classifier>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-client-hotrod</artifactId>
+         <version>${project.version}</version>
+         <classifier>tests</classifier>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-hotrod</artifactId>
+         <version>${project.version}</version>
+         <classifier>tests</classifier>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-hotrod</artifactId>
+         <version>${project.version}</version>
          <scope>test</scope>
       </dependency>
       <dependency>

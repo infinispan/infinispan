@@ -22,27 +22,31 @@
  */
 package org.infinispan.cdi;
 
-import javax.inject.Qualifier;
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.jboss.solder.bean.defaultbean.DefaultBean;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Produces;
 
 /**
- * This annotation is used to qualify the provided default configuration or/and default cache manager.
+ * <p>The default {@link RemoteCacheManager} producer.</p>
+ *
+ * <p>The remote cache manager used by default can be overridden by creating a producer which produces the new default
+ * remote cache manager. This producer must have the scope {@link ApplicationScoped} and no qualifiers.</p>
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
- * @see DefaultEmbeddedCacheConfigurationProducer
- * @see DefaultEmbeddedCacheManagerProducer
  */
-@Target({METHOD, FIELD, PARAMETER, TYPE})
-@Retention(RUNTIME)
-@Qualifier
-@Documented
-public @interface OverrideDefault {
+public class DefaultRemoteCacheManagerProducer {
+   /**
+    * Produces the default remote cache manager with the default settings.
+    *
+    * @return the default remote cache manager.
+    * @see org.infinispan.client.hotrod.RemoteCacheManager#RemoteCacheManager()
+    */
+   @Produces
+   @ApplicationScoped
+   @DefaultBean(RemoteCacheManager.class)
+   public RemoteCacheManager getDefaultRemoteCacheManager() {
+      return new RemoteCacheManager();
+   }
 }

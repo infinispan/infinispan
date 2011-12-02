@@ -20,29 +20,43 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.cdi;
+package org.infinispan.cdi.test.cachemanager.embedded.programmatic;
 
-import javax.inject.Qualifier;
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import org.infinispan.cdi.ConfigureCache;
+import org.infinispan.cdi.OverrideDefault;
+import org.infinispan.config.Configuration;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Produces;
 
 /**
- * This annotation is used to qualify the provided default configuration or/and default cache manager.
+ * Creates a cache, based on some external mechanism.
  *
+ * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
- * @see DefaultEmbeddedCacheConfigurationProducer
- * @see DefaultEmbeddedCacheManagerProducer
  */
-@Target({METHOD, FIELD, PARAMETER, TYPE})
-@Retention(RUNTIME)
-@Qualifier
-@Documented
-public @interface OverrideDefault {
+public class Config {
+   /**
+    * <p>Associates the "small" cache with the qualifier {@link Small}.</p>
+    *
+    * <p>The default configuration will be used.</p>
+    */
+   @Produces
+   @ConfigureCache("small")
+   @Small
+   public Configuration smallConfiguration;
+
+   /**
+    * Overrides the default cache manager.
+    */
+   @Produces
+   @OverrideDefault
+   @ApplicationScoped
+   public EmbeddedCacheManager defaultCacheManager() {
+      return new DefaultCacheManager(new Configuration().fluent()
+                                           .eviction().maxEntries(7)
+                                           .build());
+   }
 }
