@@ -73,7 +73,7 @@ public class ConfigurationUnitTest {
          .build();
       org.infinispan.config.Configuration legacy = new LegacyConfigurationAdaptor().adapt(configuration);
       Assert.assertTrue(legacy.isTransactionAutoCommit());
-      Assert.assertEquals(org.infinispan.config.Configuration.CacheMode.DIST_SYNC.name(), CacheMode.DIST_SYNC.name());
+      Assert.assertEquals(legacy.getCacheMode().name(), CacheMode.DIST_SYNC.name());
    }
    
   @Test
