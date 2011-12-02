@@ -32,7 +32,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
 
    @Override
    public AsyncConfigurationBuilder async() {
-      if (!cacheMode.isSynchronous())
+      if (cacheMode.isSynchronous())
          throw new IllegalStateException("Cannot configure a async for an sync cache. Set the cache mode to async first.");
       return asyncConfigurationBuilder;
    }
@@ -67,6 +67,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       l1ConfigurationBuilder.validate();
       stateRetrievalConfigurationBuilder.validate();
       syncConfigurationBuilder.validate();
+      
    }
 
    @Override

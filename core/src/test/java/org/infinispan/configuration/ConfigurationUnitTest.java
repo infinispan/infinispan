@@ -109,5 +109,14 @@ public class ConfigurationUnitTest {
       Assert.assertEquals(cache.get("Bar"), "4");
    }
    
+   @Test
+   public void testReplAsyncWithQueue() {
+      Configuration configuration = new ConfigurationBuilder()
+         .clustering().cacheMode(CacheMode.REPL_ASYNC)
+         .async().useReplQueue(true).replQueueInterval(1222)
+         .build();
+      org.infinispan.config.Configuration legacy = new LegacyConfigurationAdaptor().adapt(configuration);
+   }
+   
    
 }
