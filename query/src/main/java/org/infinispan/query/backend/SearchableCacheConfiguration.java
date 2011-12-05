@@ -26,8 +26,8 @@ package org.infinispan.query.backend;
 import org.hibernate.annotations.common.reflection.ReflectionManager;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
-import org.hibernate.search.impl.SimpleClassNavigator;
-import org.hibernate.search.spi.ClassNavigator;
+import org.hibernate.search.impl.SimpleInitializer;
+import org.hibernate.search.spi.InstanceInitializer;
 import org.hibernate.search.spi.ServiceProvider;
 
 import java.util.Collections;
@@ -46,7 +46,7 @@ public class SearchableCacheConfiguration implements SearchConfiguration {
    protected Map<String, Class<?>> classes;
    private Properties properties;
 
-   private static final SimpleClassNavigator classHelper = new SimpleClassNavigator();
+   private static final SimpleInitializer classHelper = new SimpleInitializer();
 
    public SearchableCacheConfiguration(Class[] classArray, Properties properties) {
       // null chks
@@ -102,7 +102,8 @@ public class SearchableCacheConfiguration implements SearchConfiguration {
    }
 
    @Override
-   public ClassNavigator getClassHelper() {
+   public InstanceInitializer getInstanceInitializer() {
       return classHelper;
    }
+
 }
