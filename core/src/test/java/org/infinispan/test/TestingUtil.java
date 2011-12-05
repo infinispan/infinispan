@@ -699,7 +699,7 @@ public class TestingUtil {
       if (queue != null) queue.reset();
    }
 
-   private static void clearCacheLoader(Cache cache) {
+   public static void clearCacheLoader(Cache cache) {
       CacheLoaderManager cacheLoaderManager = TestingUtil.extractComponent(cache, CacheLoaderManager.class);
       if (cacheLoaderManager != null && cacheLoaderManager.getCacheStore() != null) {
          try {
