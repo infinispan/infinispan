@@ -32,15 +32,13 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
-import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.loaders.jdbc.stringbased.Person;
+import org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -82,14 +80,11 @@ public class JdbcMixedCacheStoreTest {
    }
 
    @AfterMethod
-   public void clearStore() throws Exception {
+   public void destroyStore() throws Exception {
       cacheStore.clear();
       assertBinaryRowCount(0);
       assertStringsRowCount(0);
-   }
 
-   @AfterTest
-   public void destroyStore() throws CacheLoaderException {
       cacheStore.stop();
    }
 

@@ -232,7 +232,9 @@ public class JdbmCacheStore extends AbstractCacheStore {
     * Closes all databases, ignoring exceptions, and nulls references to all database related information.
     */
    @Override
-   public void stop() {
+   public void stop() throws CacheLoaderException {
+      super.stop();
+
       if (recman != null) {
          try {
             recman.close();

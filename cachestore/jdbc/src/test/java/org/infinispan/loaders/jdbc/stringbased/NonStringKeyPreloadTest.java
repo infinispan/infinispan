@@ -148,6 +148,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
          if (!started) {
             sharedFactory = new PooledConnectionFactory();
             sharedFactory.start(config, classLoader);
+            started = true;
          }
       }
 

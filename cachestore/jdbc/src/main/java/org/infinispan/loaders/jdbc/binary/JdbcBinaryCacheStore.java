@@ -22,19 +22,6 @@
  */
 package org.infinispan.loaders.jdbc.binary;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.io.ByteBuffer;
@@ -50,6 +37,19 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.logging.Log;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.LogFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * {@link BucketBasedCacheStore} implementation that will store all the buckets as rows in database, each row
@@ -172,13 +172,27 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
 
    @Override
    public void stop() throws CacheLoaderException {
+      super.stop();
+
+      Throwable cause = null;
       try {
          tableManipulation.stop();
-      } finally {
+      } catch (Throwable t) {
+         if (cause == null) cause = t;
+         log.debug("Exception while stopping", t);
+      }
+
+      try {
          if (config.isManageConnectionFactory()) {
             log.tracef("Stopping mananged connection factory: %s", connectionFactory);
             connectionFactory.stop();
          }
+      } catch (Throwable t) {
+         if (cause == null) cause = t;
+         log.debug("Exception while stopping", t);
+      }
+      if (cause != null) {
+         throw new CacheLoaderException("Exceptions occurred while stopping store", cause);
       }
    }
 
