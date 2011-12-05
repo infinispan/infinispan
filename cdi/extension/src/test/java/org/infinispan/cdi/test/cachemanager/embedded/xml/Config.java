@@ -23,7 +23,6 @@
 package org.infinispan.cdi.test.cachemanager.embedded.xml;
 
 import org.infinispan.cdi.ConfigureCache;
-import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -60,10 +59,9 @@ public class Config {
    public Configuration quickVeryLargeConfiguration;
 
    /**
-    * Overrides the default cache manager.
+    * Overrides the default embedded cache manager.
     */
    @Produces
-   @OverrideDefault
    @ApplicationScoped
    public EmbeddedCacheManager defaultCacheManager(@Resource("infinispan.xml") InputStream xml) throws IOException {
       EmbeddedCacheManager externalCacheContainerManager = new DefaultCacheManager(xml);

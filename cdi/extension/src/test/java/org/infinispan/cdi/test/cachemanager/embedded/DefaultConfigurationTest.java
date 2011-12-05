@@ -23,7 +23,6 @@
 package org.infinispan.cdi.test.cachemanager.embedded;
 
 import org.infinispan.Cache;
-import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.config.Configuration;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -39,7 +38,7 @@ import static org.infinispan.manager.CacheContainer.DEFAULT_CACHE_NAME;
 import static org.testng.Assert.assertEquals;
 
 /**
- * Tests that the default configuration of the default cache manager can be overridden.
+ * Tests that the default embedded cache configuration can be overridden.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
@@ -61,11 +60,11 @@ public class DefaultConfigurationTest extends Arquillian {
    }
 
    /**
-    * Overrides the default configuration used for the initialization of the default cache manager.
+    * Overrides the default embedded cache configuration used for the initialization of the default embedded cache
+    * manager.
     */
    public static class Config {
       @Produces
-      @OverrideDefault
       @ApplicationScoped
       public Configuration customDefaultConfiguration() {
          return new Configuration().fluent()
