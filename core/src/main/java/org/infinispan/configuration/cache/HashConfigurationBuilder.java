@@ -5,8 +5,6 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.DefaultHashSeed;
-import org.infinispan.distribution.ch.HashSeed;
 
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
@@ -18,7 +16,6 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
 
    private ConsistentHash consistentHash;
    private Hash hash = new MurmurHash3();
-   private HashSeed hashSeed = new DefaultHashSeed();
    private int numOwners = 2;
    private int numVirtualNodes = 1;
    private boolean rehashEnabled = true;
@@ -37,18 +34,6 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     */
    public HashConfigurationBuilder consistentHash(ConsistentHash consistentHash) {
       this.consistentHash = consistentHash;
-      return this;
-   }
-
-   /**
-    * A hash seed implementation which allows seed address to for consistent hash calculation to be
-    * configured. This is particularly useful when Infinispan is accessed remotely and clients are
-    * to calculate hash ids. Since clients are only aware of server endpoints, implementations of
-    * {@link HashSeed} can seed based on this information instead of the traditional cluster
-    * address.
-    */
-   public HashConfigurationBuilder hashSeed(HashSeed hashSeed) {
-      this.hashSeed = hashSeed;
       return this;
    }
 
@@ -138,7 +123,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
 
    @Override
    HashConfiguration create() {
-      return new HashConfiguration(consistentHash, hashSeed, hash, numOwners, numVirtualNodes, rehashEnabled, rehashRpcTimeout,
+      return new HashConfiguration(consistentHash, hash, numOwners, numVirtualNodes, rehashEnabled, rehashRpcTimeout,
             rehashWait, groupsConfigurationBuilder.create());
    }
 

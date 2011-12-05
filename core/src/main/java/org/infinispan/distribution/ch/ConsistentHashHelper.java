@@ -66,19 +66,16 @@ public class ConsistentHashHelper {
    private static ConsistentHash constructConsistentHashInstance(Configuration c) {
       Class<? extends ConsistentHash> chClass = Util.loadClass(c.getConsistentHashClass(), c.getClassLoader());
       Hash h = (Hash) Util.getInstance(c.getHashFunctionClass(), c.getClassLoader());
-      HashSeed hs = c.getHashSeed() != null ? c.getHashSeed() :
-            (HashSeed) Util.getInstance(c.getHashSeedClass(), c.getClassLoader());
-      return constructConsistentHashInstance(chClass, h, hs, c.getNumVirtualNodes(), new GroupManagerImpl(c.getGroupers()));
+      return constructConsistentHashInstance(chClass, h, c.getNumVirtualNodes(), new GroupManagerImpl(c.getGroupers()));
    }
 
    private static ConsistentHash constructConsistentHashInstance(
             Class<? extends ConsistentHash> clazz, Hash hashFunction,
-            HashSeed hashSeed, int numVirtualNodes, GroupManager groupManager) {
+            int numVirtualNodes, GroupManager groupManager) {
       ConsistentHash ch = Util.getInstance(clazz);
       if (ch instanceof AbstractWheelConsistentHash) {
          AbstractWheelConsistentHash wch = (AbstractWheelConsistentHash) ch;
          wch.setHashFunction(hashFunction);
-         wch.setHashSeed(hashSeed);
          wch.setNumVirtualNodes(numVirtualNodes);
       }
       if (ch instanceof AbstractConsistentHash) {
@@ -157,17 +154,15 @@ public class ConsistentHashHelper {
     */
    public static ConsistentHash createConsistentHash(ConsistentHash template, Collection<Address> addresses) {
       Hash hf = null;
-      HashSeed hs = null;
       int numVirtualNodes = 1;
       GroupManager groupManager = null;
       if (template instanceof AbstractWheelConsistentHash) {
          AbstractWheelConsistentHash wTemplate = (AbstractWheelConsistentHash) template;
          hf = wTemplate.hashFunction;
-         hs = wTemplate.hashSeed;
          numVirtualNodes = wTemplate.numVirtualNodes;
          groupManager = wTemplate.groupManager;
       }
-      ConsistentHash ch = constructConsistentHashInstance(template.getClass(), hf, hs, numVirtualNodes, groupManager);
+      ConsistentHash ch = constructConsistentHashInstance(template.getClass(), hf, numVirtualNodes, groupManager);
       if (addresses != null && !addresses.isEmpty())  ch.setCaches(toSet(addresses));
       return ch;
    }

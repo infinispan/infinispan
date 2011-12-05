@@ -22,7 +22,6 @@
  */
 package org.infinispan.server.hotrod
 
-import ch.ServerHashSeed
 import logging.Log
 import org.infinispan.config.Configuration.CacheMode
 import org.infinispan.notifications.Listener
@@ -95,7 +94,6 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    override def startDefaultCache = {
-      injectServerHashSeed(cacheManager.getDefaultConfiguration)
       cacheManager.getCache()
    }
 
@@ -103,14 +101,10 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       // Start defined caches to avoid issues with lazily started caches
       for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator)) {
          if (cacheName != ADDRESS_CACHE_NAME) {
-            cacheManager.defineConfiguration(cacheName, injectServerHashSeed(new Configuration))
             cacheManager.getCache(cacheName)
          }
       }
    }
-
-   private def injectServerHashSeed(cfg: Configuration): Configuration =
-      cfg.fluent().clustering().hash().hashSeed(new ServerHashSeed(addressCache)).build()
 
    private def addSelfToTopologyView(host: String, port: Int, cacheManager: EmbeddedCacheManager) {
       addressCache = cacheManager.getCache(ADDRESS_CACHE_NAME)

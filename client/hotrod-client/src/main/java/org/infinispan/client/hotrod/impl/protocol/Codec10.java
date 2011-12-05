@@ -175,8 +175,8 @@ public class Codec10 implements Codec {
       for (int i = 0; i < clusterSize; i++) {
          String host = transport.readString();
          int port = transport.readUnsignedShort();
-         log.tracef("Server read: %s:%d", host, port);
          int hashCode = transport.read4ByteInt();
+         log.tracef("Server read: %s:%d - hash code is %d", host, port, hashCode);
          InetSocketAddress address = new InetSocketAddress(host, port);
          Set<Integer> hashes = servers2Hash.get(address);
          if (hashes == null) {

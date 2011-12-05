@@ -25,6 +25,7 @@ package org.infinispan.distribution.ch;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.marshall.AbstractExternalizer;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -63,7 +64,6 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    protected final boolean trace;
 
    protected Hash hashFunction;
-   protected HashSeed hashSeed;
    protected int numVirtualNodes = 1;
 
    protected Set<Address> caches;
@@ -95,11 +95,6 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       this.numVirtualNodes = numVirtualNodes;
    }
 
-   public void setHashSeed(HashSeed hashSeed) {
-      checkCachesUninitialized("hash seed");
-      this.hashSeed = hashSeed;
-   }
-
    @Override
    public void setCaches(Set<Address> newCaches) {
       if (newCaches.size() == 0 || newCaches.contains(null))
@@ -114,14 +109,14 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
       // so we add the virtual nodes (if any) only after we have added all the "real" nodes
       TreeMap<Integer, Address> positions = new TreeMap<Integer, Address>();
       for (Address a : newCaches) {
-         addNode(positions, a, getNormalizedHash(hashSeed.getHashSeed(a)));
+         addNode(positions, a, getNormalizedHash(a));
       }
 
       if (isVirtualNodesEnabled()) {
          for (Address a : newCaches) {
             for (int i = 1; i < numVirtualNodes; i++) {
                // we get the normalized hash from the VirtualAddress, but we store the real address in the positions map
-               Address va = new VirtualAddress(hashSeed.getHashSeed(a), i);
+               Address va = new VirtualAddress(a, i);
                addNode(positions, a, getNormalizedHash(va));
             }
          }
@@ -236,8 +231,7 @@ public abstract class AbstractWheelConsistentHash extends AbstractConsistentHash
    }
 
    public int getNormalizedHash(Object key) {
-      // more efficient impl
-      return hashFunction.hash(key) & Integer.MAX_VALUE; // make sure no negative numbers are involved.
+      return Util.getNormalizedHash(key, hashFunction);
    }
 
    protected boolean isVirtualNodesEnabled() {

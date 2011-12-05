@@ -126,9 +126,10 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
          val resp = clients.head.put(k(m) , 0, 0, v(m, "v4-"), 2, 1)
          assertStatus(resp, Success)
          assertTopologyId(resp.topologyResponse.get.viewId, cacheManagers.get(0))
-         assertEquals(resp.topologyResponse.get.members.size, 3)
+         val topoResp = resp.asTopologyAwareResponse
+         assertEquals(topoResp.members.size, 3)
          (newServer.getAddress :: servers.map(_.getAddress)).foreach(
-            addr => assertTrue(resp.topologyResponse.get.members.exists(_ == addr)))
+            addr => assertTrue(topoResp.members.exists(_ == addr)))
          assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v4-"))
       } finally {
          stopClusteredServer(newServer)
@@ -138,9 +139,10 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       resp = clients.head.put(k(m) , 0, 0, v(m, "v5-"), 2, 2)
       assertStatus(resp, Success)
       assertTopologyId(resp.topologyResponse.get.viewId, cacheManagers.get(0))
-      assertEquals(resp.topologyResponse.get.members.size, 2)
+      var topoResp = resp.asTopologyAwareResponse
+      assertEquals(topoResp.members.size, 2)
       servers.map(_.getAddress).foreach(
-         addr => assertTrue(resp.topologyResponse.get.members.exists(_ == addr)))
+         addr => assertTrue(topoResp.members.exists(_ == addr)))
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v5-"))
 
       val crashingServer = startClusteredServer(servers.tail.head.getPort + 25, true)
@@ -149,9 +151,10 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
          val resp = clients.head.put(k(m) , 0, 0, v(m, "v6-"), 2, 3)
          assertStatus(resp, Success)
          assertTopologyId(resp.topologyResponse.get.viewId, cacheManagers.get(0))
-         assertEquals(resp.topologyResponse.get.members.size, 3)
+         val topoResp = resp.asTopologyAwareResponse
+         assertEquals(topoResp.members.size, 3)
          (crashingServer.getAddress :: servers.map(_.getAddress)).foreach(
-            addr => assertTrue(resp.topologyResponse.get.members.exists(_ == addr)))
+            addr => assertTrue(topoResp.members.exists(_ == addr)))
          assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v6-"))
       } finally {
          stopClusteredServer(crashingServer)
@@ -161,9 +164,10 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       resp = clients.head.put(k(m) , 0, 0, v(m, "v7-"), 2, 4)
       assertStatus(resp, Success)
       assertTopologyId(resp.topologyResponse.get.viewId, cacheManagers.get(0))
-      assertEquals(resp.topologyResponse.get.members.size, 2)
+      topoResp = resp.asTopologyAwareResponse
+      assertEquals(topoResp.members.size, 2)
       servers.map(_.getAddress).foreach(
-         addr => assertTrue(resp.topologyResponse.get.members.exists(_ == addr)))
+         addr => assertTrue(topoResp.members.exists(_ == addr)))
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v7-"))
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v8-"), 3, 1)

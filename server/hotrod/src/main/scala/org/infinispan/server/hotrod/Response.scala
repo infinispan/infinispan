@@ -25,6 +25,8 @@ package org.infinispan.server.hotrod
 import OperationStatus._
 import OperationResponse._
 import org.infinispan.util.Util
+import org.infinispan.Cache
+import org.infinispan.remoting.transport.Address
 
 /**
  * A basic responses. The rest of this file contains other response types.
@@ -139,20 +141,16 @@ class StatsResponse(override val version: Byte, override val messageId: Long, ov
    }
 }
 
-abstract class AbstractTopologyResponse(val viewId: Int,
-                                        val members: Iterable[ServerAddress])
+abstract class AbstractTopologyResponse(val viewId: Int)
 
-case class TopologyAwareResponse(override val viewId: Int,
-                                 override val members: Iterable[ServerAddress])
-      extends AbstractTopologyResponse(viewId, members)
+case class TopologyAwareResponse(override val viewId: Int)
+      extends AbstractTopologyResponse(viewId)
 
 case class HashDistAwareResponse(override val viewId: Int,
-                                 override val members: Iterable[ServerAddress],
                                  numOwners: Int, hashFunction: Byte, hashSpace: Int)
-      extends AbstractTopologyResponse(viewId, members)
+      extends AbstractTopologyResponse(viewId)
 
 case class HashDistAware11Response(override val viewId: Int,
-                                 override val members: Iterable[ServerAddress],
                                  numOwners: Int, hashFunction: Byte, hashSpace: Int,
                                  numVNodes: Int)
-      extends AbstractTopologyResponse(viewId, members)
+      extends AbstractTopologyResponse(viewId)

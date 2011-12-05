@@ -32,6 +32,7 @@ import java.util.TreeMap;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash2;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.BasicLogFactory;
 import org.jboss.logging.BasicLogger;
 
@@ -116,7 +117,7 @@ public class ConsistentHashV1 implements ConsistentHash {
 
    @Override
    public int getNormalizedHash(Object key) {
-      return hash.hash(key) & Integer.MAX_VALUE; // make sure no negative numbers are involved.
+      return Util.getNormalizedHash(key, hash);
    }
 
 }
