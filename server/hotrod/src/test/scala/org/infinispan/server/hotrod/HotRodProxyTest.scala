@@ -29,6 +29,7 @@ import org.testng.annotations.Test
 import org.testng.Assert._
 import org.infinispan.config.Configuration
 import org.infinispan.test.AbstractCacheTest._
+import collection.JavaConversions._
 
 /**
  * Tests Hot Rod instances that are behind a proxy.
@@ -63,7 +64,7 @@ class HotRodProxyTest extends HotRodMultiNodeTest {
    def testTopologyWithProxiesReturned {
       val resp = clients.head.ping(2, 0)
       assertStatus(resp, Success)
-      val topoResp = resp.topologyResponse.get
+      val topoResp = resp.asTopologyAwareResponse
       assertTopologyId(topoResp.viewId, cacheManagers.get(0))
       assertEquals(topoResp.members.size, 2)
       topoResp.members.foreach(member => servers.map(_.getAddress).exists(_ == member))

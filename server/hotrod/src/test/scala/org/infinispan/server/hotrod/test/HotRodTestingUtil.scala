@@ -183,10 +183,19 @@ object HotRodTestingUtil extends Log {
       status == KeyDoesNotExist
    }
 
-   def assertTopologyReceived(topoResp: AbstractTopologyResponse, servers: List[HotRodServer]) {
-      assertTopologyId(topoResp.viewId, servers.head.getCacheManager)
-      assertEquals(topoResp.members.size, 2)
-      topoResp.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
+   def assertTopologyReceived(resp: AbstractTopologyResponse, servers: List[HotRodServer]) {
+      assertTopologyId(resp.viewId, servers.head.getCacheManager)
+      resp match {
+         case t: TestTopologyAwareResponse =>
+            assertEquals(t.members.size, 2)
+            t.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
+         case h10: TestHashDistAware10Response =>
+            assertEquals(h10.members.size, 2)
+            h10.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
+         case h11: TestHashDistAware11Response =>
+            assertEquals(h11.membersToHash.size, 2)
+            h11.membersToHash.foreach(member => servers.map(_.getAddress).exists(_ == member))
+      }
    }
 
    def assertHashTopologyReceived(topoResp: AbstractTopologyResponse,
@@ -218,8 +227,8 @@ object HotRodTestingUtil extends Log {
             servers: List[HotRodServer], expectedVirtualNodes: Int) {
       val hashTopologyResp = topoResp.asInstanceOf[TestHashDistAware11Response]
       assertTopologyId(hashTopologyResp.viewId, servers.head.getCacheManager)
-      assertEquals(hashTopologyResp.members.size, servers.size)
-      hashTopologyResp.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
+      assertEquals(hashTopologyResp.membersToHash.size, servers.size)
+      hashTopologyResp.membersToHash.foreach(member => servers.map(_.getAddress).exists(_ == member))
       assertEquals(hashTopologyResp.numOwners, 2)
       assertEquals(hashTopologyResp.hashFunction, EXPECTED_HASH_FUNCTION_VERSION)
       assertEquals(hashTopologyResp.hashSpace, Integer.MAX_VALUE)

@@ -24,6 +24,7 @@ package org.infinispan.util;
 
 import org.infinispan.CacheConfigurationException;
 import org.infinispan.CacheException;
+import org.infinispan.commons.hash.Hash;
 import org.infinispan.marshall.Marshaller;
 
 import javax.naming.Context;
@@ -592,6 +593,11 @@ public final class Util {
          return Double.valueOf((String) o);
 
       throw new IllegalStateException(String.format("Expected a value that can be converted into a double: type=%s, value=%s", type, o));
+   }
+
+   public static int getNormalizedHash(Object key, Hash hashFct) {
+      // more efficient impl
+      return hashFct.hash(key) & Integer.MAX_VALUE; // make sure no negative numbers are involved.
    }
 
 }

@@ -26,7 +26,6 @@ package org.infinispan.config;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.HashSeed;
 import org.infinispan.distribution.group.Group;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
@@ -660,18 +659,6 @@ public class FluentConfiguration extends AbstractFluentConfigurationBean {
        * @param hashFunctionClass
        */
       HashConfig hashFunctionClass(Class<? extends Hash> hashFunctionClass);
-
-      /**
-       * A hash seed implementation which allows seed address to for consistent
-       * hash calculation to be configured. This is particularly useful when
-       * Infinispan is accessed remotely and clients are to calculate hash ids.
-       * Since clients are only aware of server endpoints, implementations of
-       * {@link HashSeed} can seed based on this information instead of the
-       * traditional cluster address.
-       *
-       * @param hashSeed
-       */
-      HashConfig hashSeed(HashSeed hashSeed);
 
       /**
        * Number of cluster-wide replicas for each cache entry.

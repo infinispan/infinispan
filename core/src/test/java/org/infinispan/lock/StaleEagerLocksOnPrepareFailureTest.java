@@ -29,7 +29,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
-import org.infinispan.distribution.ch.DefaultHashSeed;
 import org.infinispan.interceptors.DistributionInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;

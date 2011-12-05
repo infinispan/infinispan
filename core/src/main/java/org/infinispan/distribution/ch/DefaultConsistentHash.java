@@ -40,7 +40,6 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
 
    public DefaultConsistentHash(Hash hash) {
       setHashFunction(hash);
-      setHashSeed(new DefaultHashSeed());
    }
 
    public List<Address> locate(Object key, int replCount) {
@@ -59,10 +58,7 @@ public class DefaultConsistentHash extends AbstractWheelConsistentHash {
    private List<Address> locateInternal(Object key, int replCount, Address target) {
       int actualReplCount = Math.min(replCount, caches.size());
       int normalizedHash;
-      if (key instanceof Address)
-         normalizedHash = getNormalizedHash(hashSeed.getHashSeed((Address) key));
-      else
-         normalizedHash = getNormalizedHash(getGrouping(key));
+      normalizedHash = getNormalizedHash(getGrouping(key));
 
       List<Address> owners = new ArrayList<Address>(replCount);
 

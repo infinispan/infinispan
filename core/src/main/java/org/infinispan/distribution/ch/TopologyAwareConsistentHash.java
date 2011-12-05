@@ -67,7 +67,6 @@ public class TopologyAwareConsistentHash extends AbstractWheelConsistentHash {
 
    public TopologyAwareConsistentHash(Hash hash) {
       setHashFunction(hash);
-      setHashSeed(new DefaultHashSeed());
    }
 
    @Override
