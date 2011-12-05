@@ -134,8 +134,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    private final ReentrantLock cacheCreateLock;
    private volatile boolean stopping;
 
-   private static final boolean SUPPRESS_CACHE_CREATION_WARNING = Boolean.getBoolean("infinispan.suppress_cache_creation_warning");
-
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults.  See {@link
     * Configuration} and {@link GlobalConfiguration} for details of these defaults.

@@ -463,10 +463,6 @@
                      <name>java.net.preferIPv4Stack</name>
                      <value>true</value>
                   </property>
-                  <property>
-                     <name>infinispan.suppress_cache_creation_warning</name>
-                     <value>true</value>
-                  </property>
                </systemProperties>
                <trimStackTrace>false</trimStackTrace>
                <properties>
@@ -884,10 +880,6 @@
                         </property>
                         <property>
                            <name>java.net.preferIPv4Stack</name>
-                           <value>true</value>
-                        </property>
-                        <property>
-                           <name>infinispan.suppress_cache_creation_warning</name>
                            <value>true</value>
                         </property>
                         <property>
