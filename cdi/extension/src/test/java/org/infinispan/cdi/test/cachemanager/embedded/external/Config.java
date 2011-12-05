@@ -23,7 +23,6 @@
 package org.infinispan.cdi.test.cachemanager.embedded.external;
 
 import org.infinispan.cdi.ConfigureCache;
-import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -55,10 +54,9 @@ public class Config {
    public Configuration quickConfiguration;
 
    /**
-    * Overrides the default cache manager to define the quick and large cache configurations externally.
+    * Overrides the default embedded cache manager to define the quick and large cache configurations externally.
     */
    @Produces
-   @OverrideDefault
    @ApplicationScoped
    public EmbeddedCacheManager defaultCacheManager() {
       EmbeddedCacheManager externalCacheContainerManager = new DefaultCacheManager();

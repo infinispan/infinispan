@@ -23,7 +23,6 @@
 package org.infinispan.cdi.test.cachemanager.embedded.programmatic;
 
 import org.infinispan.cdi.ConfigureCache;
-import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -49,10 +48,9 @@ public class Config {
    public Configuration smallConfiguration;
 
    /**
-    * Overrides the default cache manager.
+    * Overrides the default embedded cache manager.
     */
    @Produces
-   @OverrideDefault
    @ApplicationScoped
    public EmbeddedCacheManager defaultCacheManager() {
       return new DefaultCacheManager(new Configuration().fluent()
