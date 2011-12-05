@@ -98,29 +98,25 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
 
    @Override
    public void stop() throws CacheLoaderException {
+      super.stop();
+
       Throwable cause = null;
-      try {
-         super.stop();
-      } catch (Throwable t) {
-         cause = t;
-         log.debug("Exception while stopping", t);
-      }
       try {
          binaryCacheStore.stop();
       } catch (Throwable t) {
-         cause = t;
+         if (cause == null) cause = t;
          log.debug("Exception while stopping", t);
       }
       try {
          stringBasedCacheStore.stop();
       } catch (Throwable t) {
-         cause = t;
+         if (cause == null) cause = t;
          log.debug("Exception while stopping", t);
       }
       try {
          sharedConnectionFactory.stop();
       } catch (Throwable t) {
-         cause = t;
+         if (cause == null) cause = t;
          log.debug("Exception while stopping", t);
       }
       if (cause != null) {

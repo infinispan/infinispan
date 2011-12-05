@@ -176,6 +176,8 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
          if (viewTriggerThread.isAlive()) {
             log.debugf("The cache view trigger thread did not stop in %d millis", timeout);
          }
+         // otherwise the thread will hang onto its context ClassLoader
+         viewTriggerThread = null;
          cacheViewInstallerExecutor.awaitTermination(timeout, TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
          // reset interruption flag
@@ -416,7 +418,8 @@ public class CacheViewsManagerImpl implements CacheViewsManager {
    @Override
    public void handleRequestLeave(Address sender, String cacheName) {
       handleLeavers(Collections.singleton(sender), cacheName);
-      viewTriggerThread.wakeUp();
+      if (isRunning())
+         viewTriggerThread.wakeUp();
    }
 
    private void handleLeavers(Collection<Address> leavers, String cacheName) {

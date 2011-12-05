@@ -22,16 +22,7 @@
  */
 package org.infinispan.loaders.remote;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
 import net.jcip.annotations.ThreadSafe;
-
 import org.infinispan.Cache;
 import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -44,6 +35,14 @@ import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.remote.logging.Log;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.LogFactory;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Cache store that delegates the call to a infinispan cluster. Communication between this cache store and the remote
@@ -167,6 +166,7 @@ public class RemoteCacheStore extends AbstractCacheStore {
 
    @Override
    public void stop() throws CacheLoaderException {
+      super.stop();
       remoteCacheManager.stop();
    }
 

@@ -69,6 +69,7 @@ public class RemoteEventCacheStore extends RemoteCacheStore {
 
    @Override
    public void stop() throws CacheLoaderException {
+      super.stop();
       if (con != null) {
          try {
             con.close();
