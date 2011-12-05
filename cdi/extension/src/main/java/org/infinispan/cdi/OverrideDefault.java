@@ -34,11 +34,14 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * This annotation is used to qualify the provided default configuration or/and default cache manager.
+ * This annotation is used to qualify the provided default embedded cache configuration or/and the default embedded
+ * cache manager.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
- * @see DefaultEmbeddedCacheConfigurationProducer
- * @see DefaultEmbeddedCacheManagerProducer
+ * @deprecated The Infinispan CDI integration module now uses the {@link org.jboss.solder.bean.defaultbean.DefaultBean
+ *             DefaultBean} from Solder. The OverrideDefault annotation is not necessary and will be removed in a future
+ *             release. See {@link DefaultEmbeddedCacheManagerProducer} and {@link DefaultEmbeddedCacheConfigurationProducer}
+ *             for more details.
  */
 @Target({METHOD, FIELD, PARAMETER, TYPE})
 @Retention(RUNTIME)
