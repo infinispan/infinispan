@@ -357,7 +357,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       SearchFactoryImplementor searchFactoryIntegrator = (SearchFactoryImplementor) cr.getComponent(SearchFactoryIntegrator.class);
       Assert.assertNotNull(searchFactoryIntegrator);
-      Map<Class<?>, EntityIndexBinder<?>> indexBindingForEntity = searchFactoryIntegrator.getIndexBindingForEntity();
+      Map<Class<?>, EntityIndexBinder> indexBindingForEntity = searchFactoryIntegrator.getIndexBindingForEntity();
       Assert.assertNotNull(indexBindingForEntity);
       Set<Class<?>> keySet = indexBindingForEntity.keySet();
       Assert.assertEquals(types.length, keySet.size());
