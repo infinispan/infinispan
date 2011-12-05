@@ -86,7 +86,7 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
    @Test(dependsOnMethods="simpleIndexTest") //depends as otherwise the Person index is not initialized yet
    public void testPropertiesWhereRead() {
       SearchFactoryIntegrator searchFactory = TestQueryHelperFactory.extractSearchFactory(cache);
-      EntityIndexBinder<Person> indexBindingForEntity = searchFactory.getIndexBindingForEntity(Person.class);
+      EntityIndexBinder indexBindingForEntity = searchFactory.getIndexBindingForEntity(Person.class);
       IndexManager[] managers = indexBindingForEntity.getIndexManagers();
       assertEquals(1, managers.length);
       assertNotNull(managers[0]);
