@@ -49,9 +49,9 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
          topologyResp match {
             case t: TopologyAwareResponse => {
                if (r.clientIntel == 2)
-                  writeTopologyHeader(t, buf)
+                  writeTopologyHeader(t, buf, addressCache)
                else
-                  writeHashTopologyHeader(t, buf)
+                  writeHashTopologyHeader(t, buf, addressCache)
             }
             case h: HashDistAwareResponse =>
                writeHashTopologyHeader(h, buf, r, addressCache)
@@ -116,11 +116,11 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
                   val cache = getCacheInstance(r.cacheName, addressCache.getCacheManager)
                   val config = cache.getConfiguration
                   if (r.clientIntel == 2 || !config.getCacheMode.isDistributed) {
-                     TopologyAwareResponse(viewId, addressCache.values())
+                     TopologyAwareResponse(viewId)
                   } else { // Must be 3 and distributed
                      // TODO: Retrieve hash function when we have specified functions
-                     HashDistAwareResponse(viewId, addressCache.values(),
-                           config.getNumOwners, DEFAULT_HASH_FUNCTION_VERSION, Integer.MAX_VALUE)
+                     HashDistAwareResponse(viewId, config.getNumOwners,
+                           DEFAULT_HASH_FUNCTION_VERSION, Integer.MAX_VALUE)
                   }
                } else null
             }
@@ -129,26 +129,30 @@ object Encoder10 extends AbstractVersionedEncoder with Constants with Log {
       } else null
    }
 
-   def writeTopologyHeader(t: TopologyAwareResponse, buffer: ChannelBuffer) {
+   def writeTopologyHeader(t: TopologyAwareResponse, buffer: ChannelBuffer,
+                           addrCache: Cache[Address, ServerAddress]) {
       trace("Write topology change response header %s", t)
       buffer.writeByte(1) // Topology changed
       writeUnsignedInt(t.viewId, buffer)
-      writeUnsignedInt(t.members.size, buffer)
-      t.members.foreach{address =>
+      val serverAddresses = addrCache.values()
+      writeUnsignedInt(serverAddresses.size, buffer)
+      serverAddresses.foreach{address =>
          writeString(address.host, buffer)
          writeUnsignedShort(address.port, buffer)
       }
    }
 
-   private def writeHashTopologyHeader(t: TopologyAwareResponse, buffer: ChannelBuffer) {
+   private def writeHashTopologyHeader(t: TopologyAwareResponse,
+            buffer: ChannelBuffer, addrCache: Cache[Address, ServerAddress]) {
       trace("Return limited hash distribution aware header in spite of having a hash aware client %s", t)
       buffer.writeByte(1) // Topology changed
       writeUnsignedInt(t.viewId, buffer)
       writeUnsignedShort(0, buffer) // Num key owners
       buffer.writeByte(0) // Hash function
       writeUnsignedInt(0, buffer) // Hash space
-      writeUnsignedInt(t.members.size, buffer)
-      t.members.foreach{address =>
+      val serverAddresses = addrCache.values()
+      writeUnsignedInt(serverAddresses.size, buffer)
+      serverAddresses.foreach{address =>
          writeString(address.host, buffer)
          writeUnsignedShort(address.port, buffer)
          buffer.writeInt(0) // Address' hash id

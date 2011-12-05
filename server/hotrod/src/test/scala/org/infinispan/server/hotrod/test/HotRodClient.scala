@@ -35,15 +35,16 @@ import org.infinispan.server.hotrod.OperationResponse._
 import collection.mutable
 import collection.immutable
 import java.lang.reflect.Method
-import mutable.ListBuffer
 import HotRodTestingUtil._
 import java.util.concurrent.{ConcurrentHashMap, Executors}
 import java.util.concurrent.atomic.{AtomicLong}
+import mutable.{HashMap, ListBuffer}
 import org.infinispan.test.TestingUtil
 import org.infinispan.util.{ByteArrayKey, Util}
 import org.infinispan.server.core.transport.ExtendedChannelBuffer._
 import org.jboss.netty.handler.codec.replay.{VoidEnum, ReplayingDecoder}
 import org.infinispan.server.hotrod._
+import java.lang.IllegalStateException
 
 /**
  * A very simply Hot Rod client for testing purpouses. It's a quick and dirty client implementation done for testing
@@ -244,7 +245,7 @@ private class ClientPipelineFactory(client: HotRodClient, rspTimeoutSeconds: Int
 
 private class Encoder extends OneToOneEncoder {
 
-   override def encode(ctx: ChannelHandlerContext, ch: Channel, msg: Any) = {
+   override def encode(ctx: ChannelHandlerContext, ch: Channel, msg: AnyRef) = {
       trace("Encode %s so that it's sent to the server", msg)
       msg match {
          case partial: PartialOp => {
@@ -319,7 +320,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
                   val port = readUnsignedShort(buf)
                   viewArray(i) = new ServerAddress(host, port)
                }
-               Some(TopologyAwareResponse(topologyId, viewArray.toList))
+               Some(TestTopologyAwareResponse(topologyId, viewArray.toList))
             } else if (op.clientIntel == 3) {
                val numOwners = readUnsignedShort(buf)
                val hashFunction = buf.readByte
@@ -502,11 +503,11 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
             numOwners: Int, hashFunction: Byte, hashSpace: Int,
             numServersInTopo: Int): Option[AbstractTopologyResponse] = {
       val numVirtualNodes = readUnsignedInt(buf)
-      val members = new ListBuffer[ServerAddress]()
+      val hashToAddress = mutable.Map[ServerAddress, Int]()
       for (i <- 1 to numServersInTopo)
-         members += new ServerAddress(readString(buf), readUnsignedShort(buf))
+         hashToAddress += ((new ServerAddress(readString(buf), readUnsignedShort(buf)) -> buf.readInt()))
 
-      Some(TestHashDistAware11Response(topologyId, members.toList,
+      Some(TestHashDistAware11Response(topologyId, immutable.Map[ServerAddress, Int]() ++ hashToAddress,
             numOwners, hashFunction, hashSpace, numVirtualNodes))
    }
 
@@ -624,6 +625,13 @@ class TestResponse(override val version: Byte, override val messageId: Long,
          .append(", topologyResponse=").append(topologyResponse)
          .append("}").toString()
    }
+
+   def asTopologyAwareResponse: TestTopologyAwareResponse = {
+      topologyResponse.get match {
+         case t: TestTopologyAwareResponse => t
+         case _ => throw new IllegalStateException("Unexpected response: " + topologyResponse.get);
+      }
+   }
 }
 
 class TestResponseWithPrevious(override val version: Byte, override val messageId: Long,
@@ -671,14 +679,18 @@ class TestBulkGetResponse(override val version: Byte, override val messageId: Lo
 
 case class ServerNode(val host: String, val port: Int)
 
+case class TestTopologyAwareResponse(override val viewId: Int,
+                                     val members: Iterable[ServerAddress])
+        extends AbstractTopologyResponse(viewId)
+
 case class TestHashDistAware10Response(override val viewId: Int,
-                        override val members: Iterable[ServerAddress],
+                        val members: Iterable[ServerAddress],
                         hashIds: Map[ServerAddress, Seq[Int]],
                         numOwners: Int, hashFunction: Byte, hashSpace: Int)
-      extends AbstractTopologyResponse(viewId, members)
+      extends AbstractTopologyResponse(viewId)
 
 case class TestHashDistAware11Response(override val viewId: Int,
-                        override val members: Iterable[ServerAddress],
+                        val membersToHash: Map[ServerAddress, Int],
                         numOwners: Int, hashFunction: Byte, hashSpace: Int,
                         numVirtualNodes: Int)
-      extends AbstractTopologyResponse(viewId, members)
+      extends AbstractTopologyResponse(viewId)

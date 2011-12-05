@@ -215,6 +215,11 @@ public class ReplListener {
       eagerCommands.clear();
    }
 
+   public void reconfigureListener(boolean recordCommandsEagerly, boolean watchLocal) {
+      this.recordCommandsEagerly = recordCommandsEagerly;
+      this.watchLocal = watchLocal;
+   }
+
    protected class ReplListenerInterceptor extends CommandInterceptor {
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
@@ -223,6 +228,7 @@ public class ReplListener {
          try {
             o = invokeNextInterceptor(ctx, cmd);
          } finally {//make sure we do mark this command as received even in the case of exceptions(e.g. timeouts)
+            info("Checking whether command " + cmd.getClass().getSimpleName() + " should be marked as local with watch local set to " + watchLocal);
             if (!ctx.isOriginLocal() || watchLocal) markAsVisited(cmd);
          }
          return o;

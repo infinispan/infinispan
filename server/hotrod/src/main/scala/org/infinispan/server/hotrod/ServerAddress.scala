@@ -55,11 +55,13 @@ class ServerAddress(val host: String, val port: Int) extends Address {
 
    import ServerAddress._
 
-   // IMPORTANT NOTE: Hot Rod protocol agrees to this calculation for a node
-   // address hash code calculation, so any changes to the implementation
-   // require modification of the protocol.
-   override def hashCode() = Arrays.hashCode(
-      "%s:%d".format(host, port).getBytes(UTF8))
+//   // IMPORTANT NOTE: Hot Rod protocol agrees to this calculation for a node
+//   // address hash code calculation, so any changes to the implementation
+//   // require modification of the protocol.
+//   override def hashCode() = Arrays.hashCode(
+//      "%s:%d".format(host, port).getBytes(UTF8))
+
+   override def hashCode() = (31 * host.hashCode()) + port
 
    override def equals(obj: Any): Boolean = {
       obj match {
@@ -74,11 +76,11 @@ class ServerAddress(val host: String, val port: Int) extends Address {
 
 object ServerAddress {
 
-   val UTF8 = Charset.forName("UTF-8")
+//   val UTF8 = Charset.forName("UTF-8")
 
    class Externalizer extends AbstractExternalizer[ServerAddress] {
 
-      def writeObject(out: ObjectOutput, obj : ServerAddress) {
+      def writeObject(out: ObjectOutput, obj: ServerAddress) {
          out.writeObject(obj.host)
          out.writeShort(obj.port)
       }

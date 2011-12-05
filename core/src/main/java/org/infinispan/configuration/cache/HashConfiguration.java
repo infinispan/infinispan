@@ -2,7 +2,6 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.HashSeed;
 
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
@@ -13,7 +12,6 @@ import org.infinispan.distribution.ch.HashSeed;
 public class HashConfiguration {
 
    private final ConsistentHash consistentHash;
-   private final HashSeed hashSeed;
    private final Hash hash;
    private final int numOwners;
    private final int numVirtualNodes;
@@ -22,10 +20,9 @@ public class HashConfiguration {
    private final long rehashWait;
    private final GroupsConfiguration groupsConfiguration;
 
-   HashConfiguration(ConsistentHash consistentHash, HashSeed hashSeed, Hash hash, int numOwners, int numVirtualNodes,
+   HashConfiguration(ConsistentHash consistentHash, Hash hash, int numOwners, int numVirtualNodes,
          boolean rehashEnabled, long rehashRpcTimeout, long rehashWait, GroupsConfiguration groupsConfiguration) {
       this.consistentHash = consistentHash;
-      this.hashSeed = hashSeed;
       this.hash = hash;
       this.numOwners = numOwners;
       this.numVirtualNodes = numVirtualNodes;
@@ -42,17 +39,6 @@ public class HashConfiguration {
       return consistentHash;
    }
 
-   /**
-    * A hash seed implementation which allows seed address to for consistent hash calculation to be
-    * configured. This is particularly useful when Infinispan is accessed remotely and clients are
-    * to calculate hash ids. Since clients are only aware of server endpoints, implementations of
-    * {@link HashSeed} can seed based on this information instead of the traditional cluster
-    * address.
-    */
-   public HashSeed hashSeed() {
-      return hashSeed;
-   }
-   
    /**
     * The hash function in use. Used as a bit spreader and a general hash code generator.
     * Typically one of the the many default {@link org.infinispan.distribution.ch.ConsistentHash}

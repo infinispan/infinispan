@@ -48,11 +48,12 @@ object Encoder11 extends AbstractVersionedEncoder with Constants with Log {
          topologyResp match {
             case t: TopologyAwareResponse => {
                if (r.clientIntel == 2)
-                  encoder10.writeTopologyHeader(t, buf)
+                  encoder10.writeTopologyHeader(t, buf, addressCache)
                else
-                  writeHashTopologyHeader(t, buf)
+                  writeHashTopologyHeader(t, buf, addressCache)
             }
-            case h: HashDistAware11Response => writeHashTopologyHeader(h, buf)
+            case h: HashDistAware11Response =>
+               writeHashTopologyHeader(h, buf, addressCache)
          }
       } else {
          buf.writeByte(0) // No topology change
@@ -73,12 +74,12 @@ object Encoder11 extends AbstractVersionedEncoder with Constants with Log {
                   val cache = getCacheInstance(r.cacheName, addressCache.getCacheManager)
                   val config = cache.getConfiguration
                   if (r.clientIntel == 2 || !config.getCacheMode.isDistributed) {
-                     TopologyAwareResponse(viewId, addressCache.values())
+                     TopologyAwareResponse(viewId)
                   } else { // Must be 3 and distributed
                      // TODO: Retrieve hash function when we have specified functions
-                     HashDistAware11Response(viewId, addressCache.values(),
-                           config.getNumOwners, DEFAULT_HASH_FUNCTION_VERSION,
-                           Integer.MAX_VALUE, config.getNumVirtualNodes)
+                     HashDistAware11Response(viewId, config.getNumOwners,
+                           DEFAULT_HASH_FUNCTION_VERSION, Integer.MAX_VALUE,
+                           config.getNumVirtualNodes)
                   }
                } else null
             }
@@ -87,20 +88,22 @@ object Encoder11 extends AbstractVersionedEncoder with Constants with Log {
       } else null
    }
 
-   private def writeHashTopologyHeader(t: TopologyAwareResponse, buf: ChannelBuffer) {
+   private def writeHashTopologyHeader(t: TopologyAwareResponse, buf: ChannelBuffer,
+            addrCache: Cache[Address, ServerAddress]) {
       trace("Return limited hash distribution aware header in spite of having a hash aware client %s", t)
-      writeTopologyHeader(buf, t.viewId, 0, 0, 0, t.members, 0)
+      writeTopologyHeader(buf, t.viewId, 0, 0, 0, 0, addrCache)
    }
 
-   private def writeHashTopologyHeader(h: HashDistAware11Response, buf: ChannelBuffer) {
+   private def writeHashTopologyHeader(h: HashDistAware11Response, buf: ChannelBuffer,
+            addrCache: Cache[Address, ServerAddress]) {
       trace("Write hash distribution change response header %s", h)
       writeTopologyHeader(buf, h.viewId, h.numOwners, h.hashFunction,
-                          h.hashSpace, h.members, h.numVNodes)
+                          h.hashSpace, h.numVNodes, addrCache)
    }
 
    private def writeTopologyHeader(buf: ChannelBuffer, viewId: Int,
             numOwners: Int, hashFct: Byte, hashSpace: Int,
-            members: Iterable[ServerAddress], numVNodes: Int) {
+            numVNodes: Int, members: Cache[Address, ServerAddress]) {
       buf.writeByte(1) // Topology changed
       writeUnsignedInt(viewId, buf) // View id
       writeUnsignedShort(numOwners, buf) // Num key owners
@@ -108,10 +111,13 @@ object Encoder11 extends AbstractVersionedEncoder with Constants with Log {
       writeUnsignedInt(hashSpace, buf) // Hash space
       writeUnsignedInt(members.size, buf) // Num servers in topology
       writeUnsignedInt(numVNodes, buf) // Num virtual nodes
-      members.foreach {address =>
-         writeString(address.host, buf)
-         writeUnsignedShort(address.port, buf)
-         // New in 1.1, no hash id is written
+      mapAsScalaMap(members).foreach { case (addr, serverAddr) =>
+         writeString(serverAddr.host, buf)
+         writeUnsignedShort(serverAddr.port, buf)
+         // Send the address' hash code as is
+         // With virtual nodes off, clients will have to normalize it
+         // With virtual nodes on, it's used as root to calculate hash code and then normalize it
+         buf.writeInt(if (hashFct == 0) 0 else addr.hashCode())
       }
    }
 

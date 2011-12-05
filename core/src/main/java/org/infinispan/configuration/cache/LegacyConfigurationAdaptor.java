@@ -41,7 +41,6 @@ public class LegacyConfigurationAdaptor {
       }
       legacy.clustering()
       .hash()
-            .hashSeed(config.clustering().hash().hashSeed())
             .numOwners(config.clustering().hash().numOwners())
             .numVirtualNodes(config.clustering().hash().numVirtualNodes())
             .rehashEnabled(config.clustering().hash().isRehashEnabled())
