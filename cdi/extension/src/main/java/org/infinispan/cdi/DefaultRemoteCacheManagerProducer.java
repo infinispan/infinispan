@@ -32,7 +32,8 @@ import javax.enterprise.inject.Produces;
  * <p>The default {@link RemoteCacheManager} producer.</p>
  *
  * <p>The remote cache manager used by default can be overridden by creating a producer which produces the new default
- * remote cache manager. This producer must have the scope {@link ApplicationScoped} and no qualifiers.</p>
+ * remote cache manager. The remote cache manager produced must have the scope {@link ApplicationScoped} and the
+ * {@linkplain javax.enterprise.inject.Default Default} qualifier.</p>
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
