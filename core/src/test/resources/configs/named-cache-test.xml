@@ -94,6 +94,12 @@
                    autoCommit="false" />
    </namedCache>
 
+   <namedCache>
+      <locking lockAcquisitionTimeout="20000"/>
+      <clustering mode="invalidation">
+         <async useReplQueue="false" asyncMarshalling="false"/>
+      </clustering>
+   </namedCache>
 
    <namedCache name="syncRepl">
       <clustering mode="repl">
