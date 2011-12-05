@@ -102,6 +102,14 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    @Override
    public void cacheStarted(ComponentRegistry cr, String cacheName) {
+      Configuration configuration = cr.getComponent(Configuration.class);
+      boolean indexingEnabled = configuration.isIndexingEnabled();
+      if ( ! indexingEnabled ) {
+         if ( verifyChainContainsQueryInterceptor(cr) ) {
+            throw new IllegalStateException( "It was NOT expected to find the Query interceptor registered in the InterceptorChain as indexing was disabled, but it was found" );
+         }
+         return;
+      }
       if ( ! verifyChainContainsQueryInterceptor(cr) ) {
          throw new IllegalStateException( "It was expected to find the Query interceptor registered in the InterceptorChain but it wasn't found" );
       }
@@ -117,24 +125,18 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    }
 
    private boolean verifyChainContainsQueryInterceptor(ComponentRegistry cr) {
-      Configuration cfg = cr.getComponent(Configuration.class);
-      if (cfg.isIndexingEnabled()) {
-         InterceptorChain interceptorChain = cr.getComponent(InterceptorChain.class);
-         CommandInterceptor chainElement = interceptorChain.getFirstInChain();
+      InterceptorChain interceptorChain = cr.getComponent(InterceptorChain.class);
+      CommandInterceptor chainElement = interceptorChain.getFirstInChain();
+      if (chainElement instanceof QueryInterceptor) {
+         return true;
+      }
+      while (chainElement.hasNext()) {
+         chainElement = chainElement.getNext();
          if (chainElement instanceof QueryInterceptor) {
             return true;
          }
-         while (chainElement.hasNext()) {
-            chainElement = chainElement.getNext();
-            if (chainElement instanceof QueryInterceptor) {
-               return true;
-            }
-         }
-         return false;
       }
-      else {
-         return true;
-      }
+      return false;
    }
 
    private SearchFactoryIntegrator getSearchFactory(Properties indexingProperties, ComponentRegistry cr) {
