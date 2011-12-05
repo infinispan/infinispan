@@ -22,7 +22,7 @@
  */
 package org.infinispan.cdi.test.cache.remote;
 
-import org.infinispan.BasicCache;
+import org.infinispan.api.BasicCache;
 import org.infinispan.cdi.Remote;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
