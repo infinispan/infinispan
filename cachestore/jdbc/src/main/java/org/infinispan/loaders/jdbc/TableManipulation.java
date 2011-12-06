@@ -257,21 +257,34 @@ public class TableManipulation implements Cloneable {
 
    public String getUpdateRowSql() {
       if (updateRowSql == null) {
-         updateRowSql = "UPDATE " + getTableName() + " SET " + dataColumnName + " = ? , " + timestampColumnName + "=? WHERE " + idColumnName + " = ?";
+         //handle type conversion specifically for SYBASE -> ISPN-1592 
+         if (DatabaseType.SYBASE == getDatabaseType()) { 
+            updateRowSql = "UPDATE " + getTableName() + " SET " + dataColumnName + " = ? , " + timestampColumnName + "=? WHERE " + idColumnName + " = convert(" + idColumnType + "," + "?)";
+         } else {
+            updateRowSql = "UPDATE " + getTableName() + " SET " + dataColumnName + " = ? , " + timestampColumnName + "=? WHERE " + idColumnName + " = ?";
+         }
       }
       return updateRowSql;
    }
 
    public String getSelectRowSql() {
       if (selectRowSql == null) {
-         selectRowSql = "SELECT " + idColumnName + ", " + dataColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
+         if (DatabaseType.SYBASE == getDatabaseType()) { 
+            selectRowSql = "SELECT " + idColumnName + ", " + dataColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = convert(" + idColumnType + "," + "?)";
+         } else { 
+            selectRowSql = "SELECT " + idColumnName + ", " + dataColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
+         }
       }
       return selectRowSql;
    }
 
    public String getDeleteRowSql() {
       if (deleteRowSql == null) {
-         deleteRowSql = "DELETE FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
+         if (DatabaseType.SYBASE == getDatabaseType()) { 
+            deleteRowSql = "DELETE FROM " + getTableName() + " WHERE " + idColumnName + " = convert(" + idColumnType + "," + "?)";
+         } else {
+            deleteRowSql = "DELETE FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
+         }
       }
       return deleteRowSql;
    }
