@@ -29,15 +29,14 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.MembershipArithmetic;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByRef;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -93,30 +92,30 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
          log.tracef("Replicating: chOld = %s, chNew = %s", chOld, chNew);
 
          if (configuration.isStateTransferEnabled() && !initialView) {
-            // Contains the state to be pushed to various servers. The state is a hashmap of keys and values
-            final Collection<InternalCacheEntry> state = new ArrayList<InternalCacheEntry>();
+            // Contains the state to be pushed to the joiners. The state is a collection of cache entries
+            // We're keeping it inside a ByRef so that the replicate() method can reset it when it pushes a chunk
+            // The transfer is on a separate thread so we can't modify the collection itself
+            final ByRef<Collection<InternalCacheEntry>> state = new ByRef<Collection<InternalCacheEntry>>(new ArrayList<InternalCacheEntry>());
 
             for (InternalCacheEntry ice : dataContainer) {
-               replicate(ice.getKey(), ice, chOld, chNew, null, state);
+               replicate(ice.getKey(), ice, chOld, joiners, null, state);
             }
 
             // Only fetch the data from the cache store if the cache store is not shared
             CacheStore cacheStore = stateTransferManager.getCacheStoreForStateTransfer();
             if (cacheStore != null) {
                for (Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
-                  replicate(key, null, chOld, chNew, cacheStore, state);
+                  replicate(key, null, chOld, joiners, cacheStore, state);
                }
             } else {
                if (trace) log.trace("No cache store or cache store is shared, not replicating stored keys");
             }
 
-            // Now for each joiner S : push state to S via RPC
-            // TODO We are sending the same stuff to all the joiners, we should use multicast instead
-            final Map<Address, Collection<InternalCacheEntry>> states = new HashMap<Address, Collection<InternalCacheEntry>>();
-            for (Address joiner : joiners) {
-               states.put(joiner, state);
-            }
-            pushState(states);
+            // Push any remaining state chunks
+            pushPartialState(joiners, state.get());
+
+            // And wait for all the push RPCs to end
+            finishPushingState();
          } else {
             if (!initialView) log.trace("State transfer not enabled, so not pushing state");
          }
@@ -132,12 +131,12 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
     * @param key          The key
     * @param value        The value; <code>null</code> if the value is not in the data container
     * @param chOld        The old (current) consistent hash
-    * @param chNew        The new consistent hash
+    * @param joiners      The new members of the cache
     * @param cacheStore   If the value is <code>null</code>, try to load it from this cache store
-    * @param state       The result collection of entries to be pushed to the joiners
+    * @param stateRef        The result collection of entries to be pushed to the joiners
     */
-   private void replicate(Object key, InternalCacheEntry value, ConsistentHash chOld, ConsistentHash chNew,
-                          CacheStore cacheStore, Collection<InternalCacheEntry> state) {
+   private void replicate(Object key, InternalCacheEntry value, ConsistentHash chOld, Collection<Address> joiners,
+                          CacheStore cacheStore, ByRef<Collection<InternalCacheEntry>> stateRef) throws StateTransferCancelledException {
       // 1. Get the old primary owner for key K
       // That node will be the "pushing owner" for key K
       List<Address> oldOwners = chOld.locate(key, 1);
@@ -156,9 +155,17 @@ public class ReplicatedStateTransferTask extends BaseStateTransferTask {
             }
          }
 
+         Collection<InternalCacheEntry> state = stateRef.get();
          if (value != null)
             state.add(value);
+
+         // if we have a full chunk, start pushing it to the joiners
+         if (state.size() >= stateTransferChunkSize) {
+            pushPartialState(joiners, state);
+            stateRef.set(new ArrayList());
+         }
       }
    }
 
 }
+

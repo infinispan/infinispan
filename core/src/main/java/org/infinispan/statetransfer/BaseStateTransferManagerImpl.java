@@ -19,6 +19,7 @@
 
 package org.infinispan.statetransfer;
 
+import org.infinispan.CacheException;
 import org.infinispan.cacheviews.CacheViewListener;
 import org.infinispan.cacheviews.CacheView;
 import org.infinispan.cacheviews.CacheViewsManager;
@@ -50,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -259,19 +261,21 @@ public abstract class BaseStateTransferManagerImpl implements StateTransferManag
 
    public abstract CacheStore getCacheStoreForStateTransfer();
 
-   public void pushStateToNode(NotifyingNotifiableFuture<Object> stateTransferFuture, int viewId, Address target, Collection<InternalCacheEntry> state) throws StateTransferCancelledException {
-      if (leavers.contains(target)) {
-         log.debugf("Not pushing state to node %s since it has already left", target);
-         return;
+   public void pushStateToNode(NotifyingNotifiableFuture<Object> stateTransferFuture, int viewId, Collection<Address> targets,
+                               Collection<InternalCacheEntry> state) throws StateTransferCancelledException {
+      for (Address target : targets) {
+         if (leavers.contains(target)) {
+            log.debugf("One of the nodes we were supposed to push state to (%s) has already left, cancelling state push", target);
+            throw new CacheException("One of the nodes we were supposed to push state to has already left, cancelling state push");
+         }
       }
 
-      log.debugf("Pushing to node %s %d keys", target, state.size());
-      log.tracef("Pushing to node %s keys: %s", target, keys(state));
+      log.debugf("Pushing to nodes %s %d keys", targets, state.size());
+      log.tracef("Pushing to nodes %s keys: %s", targets, keys(state));
 
       final StateTransferControlCommand cmd = cf.buildStateTransferCommand(StateTransferControlCommand.Type.APPLY_STATE, getAddress(), viewId, state);
 
-      rpcManager.invokeRemotelyInFuture(Collections.singleton(target), cmd,
-            false, stateTransferFuture, configuration.getRehashRpcTimeout());
+      rpcManager.invokeRemotelyInFuture(targets, cmd, false, stateTransferFuture, configuration.getRehashRpcTimeout());
    }
 
    public boolean isLastViewId(int viewId) {
